@@ -14,7 +14,7 @@
 @mixin section-title {
   display: flex;
   align-items: center;
-  gap: 6px; // 图标与文案的紧凑间距（无对应 Token）
+  gap: $spacing-6px; // 图标与文案的紧凑间距（已收敛为全局 Token）
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
@@ -43,7 +43,7 @@
 
 .card-title {
   @include section-title;
-  margin-bottom: 14px; // 卡片标题与内容的间距（介于 Token 之间，保持原视觉节奏）
+  margin-bottom: $spacing-14px; // 卡片标题与内容的间距（介于 Token 之间，保持原视觉节奏）
 }
 
 .title-icon {
@@ -61,7 +61,7 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface-variant);
-  margin-bottom: 6px; // 标签与控件的紧凑间距（无对应 Token）
+  margin-bottom: $spacing-6px; // 标签与控件的紧凑间距（已收敛为全局 Token）
 }
 
 .slider-value {
@@ -84,7 +84,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  padding: 10px $spacing-3;
+  padding: $spacing-10px $spacing-3;
   cursor: pointer;
   background: var(--b3-theme-surface);
   user-select: none;
@@ -143,7 +143,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: $spacing-6px;
   padding: $spacing-2 $spacing-4;
   width: 100%;
   margin-top: $spacing-4;

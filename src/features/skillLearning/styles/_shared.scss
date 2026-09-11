@@ -7,7 +7,7 @@
 // ---- 空状态 ----
 @mixin shared-empty {
   text-align: center;
-  padding: 32px $spacing-4;
+  padding: $spacing-8 $spacing-4;
   font-style: italic;
   opacity: 0.35;
   font-size: $font-size-sm;
@@ -35,18 +35,18 @@
     flex: 1;
     height: $spacing-1;
     background: rgba(99, 102, 241, 0.12);
-    border-radius: 2px;
+    border-radius: $radius-2px;
     overflow: hidden;
   }
   &__progress-fill {
     height: 100%;
     background: var(--b3-theme-primary);
-    border-radius: 2px;
+    border-radius: $radius-2px;
     transition: width 0.35s ease;
   }
   &__counter {
     font-size: $font-size-xs;
-    color: #94a3b8;
+    color: var(--b3-theme-on-surface-variant);
     font-feature-settings: "tnum";
     font-family: $vp-mono;
     flex-shrink: 0;

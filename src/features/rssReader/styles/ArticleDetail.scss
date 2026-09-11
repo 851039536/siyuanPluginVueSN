@@ -8,7 +8,7 @@
 
     .detail-header {
       display: flex; align-items: center; gap: $spacing-1;
-      padding: 6px $spacing-3;
+      padding: $spacing-6px $spacing-3;
       border-bottom: 1px solid var(--b3-border-color);
       flex-shrink: 0; min-height: 36px;
 
@@ -21,8 +21,8 @@
       .detail-actions {
         margin-left: auto; display: flex; gap: $spacing-1;
         button {
-          display: flex; align-items: center; gap: 3px;
-          padding: 3px 7px;
+          display: flex; align-items: center; gap: $spacing-px;
+          padding: $spacing-px $spacing-7px;
           border: 1px solid var(--b3-border-color);
           border-radius: $radius-sm;
           background: transparent; cursor: pointer;
@@ -62,7 +62,7 @@
           text-transform: uppercase;
           color: var(--b3-theme-on-surface);
           opacity: 0.45;
-          margin-right: 2px;
+          margin-right: $spacing-2px;
         }
       }
       .detail-body {
@@ -87,7 +87,7 @@
   .detail-font-controls {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: $spacing-2px;
     flex-shrink: 0;
 
     .font-btn {

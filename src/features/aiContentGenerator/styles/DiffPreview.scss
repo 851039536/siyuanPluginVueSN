@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px;
+  padding: $spacing-1 $spacing-2;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
@@ -25,7 +25,7 @@
 .diff-toolbar-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: $spacing-2;
 }
 
 .diff-toolbar-title {
@@ -36,7 +36,7 @@
 
 .diff-stats {
   display: flex;
-  gap: 6px;
+  gap: $spacing-6px;
   font-size: $font-size-2xs;
   font-weight: $font-weight-medium;
 }
@@ -59,8 +59,8 @@
   display: inline-flex;
   gap: $spacing-px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 3px;
-  padding: 1px;
+  border-radius: $radius-px;
+  padding: $spacing-1px;
 }
 
 .diff-viewer-wrapper {

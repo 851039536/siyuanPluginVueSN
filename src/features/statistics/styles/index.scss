@@ -148,7 +148,7 @@ $color-rank-bronze: #cd7f32;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
-    padding: 10px $spacing-2;
+    padding: $spacing-10px $spacing-2;
     text-align: center;
 
     @include card-hover-border;
@@ -169,7 +169,7 @@ $color-rank-bronze: #cd7f32;
 }
 
 @mixin small-action-btn {
-  padding: $spacing-1 10px;
+  padding: $spacing-1 $spacing-10px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   background: var(--b3-theme-surface);
@@ -239,7 +239,7 @@ $color-rank-bronze: #cd7f32;
   min-height: 0;
   overflow-y: auto;
   // 右侧留白 8px，避免滚动条/内容紧贴侧边栏
-  padding: 4px $spacing-2;
+  padding: $spacing-1 $spacing-2;
   background: var(--b3-theme-background);
 
   // Custom scrollbar (6px width, themed colors)
@@ -257,12 +257,12 @@ $color-rank-bronze: #cd7f32;
 }
 
 .doc-change-section {
-  margin: 4px 0;
+  margin: $spacing-1 0;
 }
 
 .chart-section {
   margin: $spacing-1 0;
-  padding: 6px;
+  padding: $spacing-6px;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
@@ -297,7 +297,7 @@ $color-rank-bronze: #cd7f32;
 }
 
 .tab-item {
-  padding: $spacing-2 14px;
+  padding: $spacing-2 $spacing-14px;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
@@ -309,7 +309,7 @@ $color-rank-bronze: #cd7f32;
   position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
   transition: color 0.12s;
 
   &:hover {
@@ -336,7 +336,7 @@ $color-rank-bronze: #cd7f32;
 .tab-badge {
   font-family: $font-mono;
   font-size: $font-size-2xs;
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   border-radius: $radius-sm;
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
   color: var(--b3-theme-primary);
@@ -399,7 +399,7 @@ $color-rank-bronze: #cd7f32;
 }
 
 .dist-section-title {
-  margin: 0 0 10px 0;
+  margin: 0 0 $spacing-10px 0;
   font-family: $font-mono;
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
@@ -409,7 +409,7 @@ $color-rank-bronze: #cd7f32;
   opacity: 0.6;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .loading-wrapper {

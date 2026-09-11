@@ -5,7 +5,7 @@
 .cmp-line-chart {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .cmp-line-svg {
@@ -56,7 +56,7 @@
 
 .cmp-legend {
   display: flex;
-  gap: 12px;
+  gap: $spacing-3;
   align-items: center;
   font-family: stats.$font-mono;
   font-size: $font-size-2xs;
@@ -66,7 +66,7 @@
 .cmp-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
 }
 
 .cmp-legend-dot {

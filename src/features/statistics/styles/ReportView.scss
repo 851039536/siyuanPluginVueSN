@@ -3,22 +3,22 @@
 @use "../styles/index.scss" as stats;
 
 .report-view {
-  padding: 4px 0;
+  padding: $spacing-1 0;
 }
 
 .report-mode-toggle {
   display: flex;
-  gap: 4px;
+  gap: $spacing-1;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
-  padding: 3px;
+  padding: $spacing-px;
   width: fit-content;
   margin-bottom: $spacing-1; // 模块上下间距统一 4px
 }
 
 .mode-btn {
-  padding: 4px 14px;
+  padding: $spacing-1 $spacing-14px;
   border: none;
   border-radius: stats.$radius-sm;
   background: transparent;
@@ -47,12 +47,12 @@
 
 .report-selector {
   display: flex;
-  gap: 6px;
+  gap: $spacing-6px;
   align-items: center;
 }
 
 .report-select {
-  padding: 4px 8px;
+  padding: $spacing-1 $spacing-2;
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
@@ -76,7 +76,7 @@
 .report-prompt,
 .report-loading {
   text-align: center;
-  padding: 20px;
+  padding: $spacing-5;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -84,7 +84,7 @@
 
 .report-card {
   @include stats.stats-card-base;
-  padding: 12px;
+  padding: $spacing-3;
   margin-bottom: $spacing-1; // 模块上下间距统一 4px
 }
 
@@ -92,7 +92,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: $spacing-10px;
 }
 
 .report-title {
@@ -111,7 +111,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 6px;
+  padding: $spacing-2px $spacing-6px;
   border-radius: stats.$radius-sm;
   transition: opacity 0.15s, background 0.15s;
 
@@ -124,8 +124,8 @@
 .report-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: $spacing-2;
+  margin-bottom: $spacing-10px;
 }
 
 .report-stat {
@@ -133,12 +133,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 4px;
+  padding: $spacing-2 $spacing-1;
 }
 
 .stat-icon {
   font-size: $font-size-base; // 图标字形尺寸（非正文文字）
-  margin-bottom: 2px;
+  margin-bottom: $spacing-2px;
 }
 
 .stat-value {
@@ -156,7 +156,7 @@
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  margin-top: 1px;
+  margin-top: $spacing-1px;
 }
 
 .stat-sub {
@@ -165,16 +165,16 @@
   font-weight: $font-weight-bold;
   color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  margin-top: 1px;
+  margin-top: $spacing-1px;
 }
 
 .report-highlight {
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
-  padding: 6px 8px;
+  padding: $spacing-6px $spacing-2;
   background: rgba(var(--b3-theme-primary-rgb), 0.05);
   border-radius: stats.$radius-sm;
-  margin-bottom: 6px;
+  margin-bottom: $spacing-6px;
 
   strong {
     color: var(--b3-theme-primary);
@@ -182,12 +182,12 @@
 }
 
 .report-breakdown {
-  margin-top: 8px;
+  margin-top: $spacing-2;
 }
 
 .breakdown-title {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
-  margin: 0 0 6px 0;
+  margin: 0 0 $spacing-6px 0;
 }

@@ -21,7 +21,7 @@
 .setting-item {
   display: flex;
   flex-direction: column;
-  gap: 6px; // 标签与控件的紧凑间距（无对应 Token）
+  gap: $spacing-6px; // 标签与控件的紧凑间距（已收敛为全局 Token）
   width: 100%;
 }
 
@@ -80,7 +80,7 @@
 .color-item {
   display: flex;
   flex-direction: column;
-  gap: 6px; // 层级标签与颜色控件的紧凑间距（无对应 Token）
+  gap: $spacing-6px; // 层级标签与颜色控件的紧凑间距（已收敛为全局 Token）
 }
 
 .color-label {
@@ -103,7 +103,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  padding: 10px $spacing-3; // 10px 垂直内边距介于 Token 之间，保持原折叠头高度
+  padding: $spacing-10px $spacing-3; // 10px 垂直内边距介于 Token 之间，保持原折叠头高度
   cursor: pointer;
   background: var(--b3-theme-surface);
   user-select: none;
@@ -210,7 +210,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px; // 图标与文案的紧凑间距（无对应 Token）
+  gap: $spacing-6px; // 图标与文案的紧凑间距（已收敛为全局 Token）
   padding: $spacing-2 $spacing-4;
   width: 100%;
   border: 1px solid var(--b3-theme-outline);

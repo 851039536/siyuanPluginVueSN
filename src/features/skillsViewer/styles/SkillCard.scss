@@ -210,7 +210,7 @@
     :deep(h5),
     :deep(h6) {
       color: var(--b3-theme-on-surface, $color-fg);
-      margin: $spacing-3 0 6px;
+      margin: $spacing-3 0 $spacing-6px;
       font-weight: $font-weight-semibold;
       line-height: $line-height-tight;
 

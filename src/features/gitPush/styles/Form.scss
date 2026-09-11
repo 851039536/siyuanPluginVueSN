@@ -15,7 +15,7 @@
 .gp-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 7px 10px;
+  padding: $spacing-7px $spacing-10px;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   font-size: $font-size-xs;
@@ -54,7 +54,7 @@
   font-size: $font-size-2xs;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
   opacity: 0.6;
 }
 

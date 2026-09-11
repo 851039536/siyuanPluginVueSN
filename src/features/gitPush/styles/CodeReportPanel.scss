@@ -31,7 +31,7 @@
 // 生成/重新生成按钮（紧凑，与头部按钮一致）
 .gpr-run-btn {
   flex-shrink: 0;
-  padding: $spacing-1 6px; // 水平 6px 与头部按钮统一，无对应 Token
+  padding: $spacing-1 $spacing-6px; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
 // ── 生成信息行（生成时间 + 时间范围 + 数据源概况）──
@@ -95,7 +95,7 @@
   font-size: $font-size-2xs;
   font-family: $vp-mono;
   font-weight: $font-weight-bold;
-  padding: 0 4px;
+  padding: 0 $spacing-1;
   border-radius: $radius-full;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);

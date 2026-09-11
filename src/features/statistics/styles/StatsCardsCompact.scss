@@ -6,8 +6,8 @@
 .stats-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-top: 4px;
+  gap: $spacing-6px;
+  padding-top: $spacing-1;
 }
 
 // 核心指标：4 列大卡片（无界——仅列间竖线分隔）
@@ -19,7 +19,7 @@
 .core-card {
   display: flex;
   flex-direction: column;
-  padding: 6px 4px;
+  padding: $spacing-6px $spacing-1;
   text-align: center;
   border-left: 1px solid var(--b3-border-color);
 
@@ -36,14 +36,14 @@
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  margin-bottom: 2px;
+  margin-bottom: $spacing-2px;
 }
 
 .core-value-row {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 2px;
+  gap: $spacing-2px;
 }
 
 .core-value {
@@ -55,7 +55,7 @@
 }
 
 .core-change {
-  padding: 1px 3px;
+  padding: $spacing-1px $spacing-px;
   border-radius: stats.$radius-sm;
   font-family: stats.$font-mono;
   font-size: 8px; // 无精确 Token（小于 $font-size-2xs 的涨跌角标）
@@ -78,7 +78,7 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: 1px;
+  gap: $spacing-1px;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-border-color);
 }
@@ -88,7 +88,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 6px 2px;
+  padding: $spacing-6px $spacing-2px;
   background: var(--b3-theme-surface);
   text-align: center;
 }
@@ -109,7 +109,7 @@
   text-transform: uppercase;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  margin-top: 2px;
+  margin-top: $spacing-2px;
 }
 
 @include mobile-only {

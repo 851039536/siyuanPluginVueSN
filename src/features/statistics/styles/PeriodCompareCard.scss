@@ -16,8 +16,8 @@
     .comparison-header {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: $spacing-2 10px;
+      gap: $spacing-6px;
+      padding: $spacing-2 $spacing-10px;
       background: rgba(var(--b3-theme-primary-rgb), 0.06);
       border-bottom: 1px solid var(--b3-border-color);
 
@@ -36,7 +36,7 @@
     }
 
     .comparison-body {
-      padding: 6px $spacing-2;
+      padding: $spacing-6px $spacing-2;
 
       .comparison-item {
         display: flex;
@@ -64,7 +64,7 @@
         .item-values {
           display: flex;
           align-items: center;
-          gap: 3px;
+          gap: $spacing-px;
           font-size: $font-size-2xs;
 
           .current-value {
@@ -83,7 +83,7 @@
         }
 
         .change-tag {
-          padding: 1px $spacing-1;
+          padding: $spacing-1px $spacing-1;
           border-radius: stats.$radius-sm;
           font-family: stats.$font-mono;
           font-size: $font-size-2xs;

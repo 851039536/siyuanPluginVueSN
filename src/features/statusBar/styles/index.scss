@@ -34,7 +34,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     @extend %flex-center;
     gap: 0;
     height: 100%;
-    padding: 0 3px;
+    padding: 0 $spacing-px;
 
     .monitor-icon {
       font-size: $font-size-sm; // 图标尺寸
@@ -90,7 +90,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-block;
     width: 1px;
     height: 18px;
-    margin: 0 2px;
+    margin: 0 $spacing-2px;
     background: var(--b3-theme-border);
     align-self: center;
   }
@@ -111,7 +111,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   .password-vault-item {
     color: var(--b3-theme-success);
     border-left: 1px solid var(--b3-theme-border);
-    padding-left: 6px;
+    padding-left: $spacing-6px;
   }
 
   // 功能快捷入口颜色（硬编码色值提取为 CSS 自定义属性，便于主题化）

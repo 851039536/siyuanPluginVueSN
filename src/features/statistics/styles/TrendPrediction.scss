@@ -3,7 +3,7 @@
 @use "../styles/index.scss" as stats;
 
 .trend-prediction {
-  padding: 4px 0;
+  padding: $spacing-1 0;
 }
 
 .pred-loading,
@@ -167,7 +167,7 @@
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
-  padding: 4px 8px;
+  padding: $spacing-1 $spacing-2;
   font-size: $font-size-2xs;
   z-index: 10;
 }
@@ -183,9 +183,9 @@
   background: stats.$color-warning;
   color: #fff;
   font-size: $font-size-2xs;
-  padding: 1px 4px;
+  padding: $spacing-1px $spacing-1;
   border-radius: stats.$radius-sm;
-  margin-left: 4px;
+  margin-left: $spacing-1;
 }
 
 .tooltip-val {
@@ -203,7 +203,7 @@
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
   font-family: stats.$font-mono;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);

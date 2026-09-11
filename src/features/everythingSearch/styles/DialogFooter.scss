@@ -9,14 +9,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 16px;
+  padding: $spacing-6px $spacing-4;
   background: var(--b3-theme-surface);
   border-top: 1px solid var(--b3-border-color);
 
   &__config {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $spacing-6px;
   }
 
   &__key {
@@ -39,7 +39,7 @@
     letter-spacing: 0.06em;
     color: var(--b3-theme-on-surface);
     opacity: 0.5;
-    padding: 1px 5px;
+    padding: $spacing-1px $spacing-5px;
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-sm;
   }
@@ -48,6 +48,6 @@
     font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
     opacity: 0.3;
-    margin: 0 2px;
+    margin: 0 $spacing-2px;
   }
 }

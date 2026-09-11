@@ -150,11 +150,6 @@ function convertToUnit(targetUnit: string): string {
 </script>
 
 <style lang="scss" scoped>
-@use "../styles/index.scss" as *;
-
-.base-unit-converter {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+@use "../styles/BaseUnitConverter.scss";
+@use "../styles/index.scss";
 </style>

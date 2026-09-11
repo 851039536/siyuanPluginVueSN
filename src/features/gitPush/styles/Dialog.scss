@@ -101,7 +101,7 @@
   position: absolute;
   bottom: 100%;
   left: 0;
-  margin-bottom: 8px;
+  margin-bottom: $spacing-2;
   width: 420px;
   max-width: min(420px, calc(100vw - 48px));
   background: var(--b3-theme-surface);
@@ -113,8 +113,8 @@
 .gp-help-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 12px 16px;
+  gap: $spacing-6px;
+  padding: $spacing-3 $spacing-4;
   border-bottom: 1px solid var(--b3-border-color);
   font-size: 0.875rem;
   font-weight: $font-weight-semibold;
@@ -122,22 +122,22 @@
 }
 
 .gp-help-body {
-  padding: 12px 16px;
+  padding: $spacing-3 $spacing-4;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: $spacing-10px;
   max-height: min(420px, calc(100vh - 220px));
   overflow-y: auto;
 }
 
 .gp-help-item {
   display: flex;
-  gap: 8px;
+  gap: $spacing-2;
   align-items: flex-start;
 
   .gp-help-item-icon {
     flex-shrink: 0;
-    margin-top: 3px;
+    margin-top: $spacing-px;
     opacity: 0.45;
     color: var(--b3-theme-on-surface);
   }
@@ -154,6 +154,6 @@
 .gp-help-footer {
   display: flex;
   justify-content: flex-end;
-  padding: 10px 16px;
+  padding: $spacing-10px $spacing-4;
   border-top: 1px solid var(--b3-border-color);
 }

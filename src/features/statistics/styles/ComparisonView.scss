@@ -2,12 +2,12 @@
 @use "../styles/index.scss" as stats;
 
 .comparison-view {
-  padding: 4px 0;
+  padding: $spacing-1 0;
 }
 
 .comparison-controls {
   display: flex;
-  gap: 8px;
+  gap: $spacing-2;
   align-items: center;
   margin-bottom: $spacing-1; // 模块上下间距统一 4px
   flex-wrap: wrap;
@@ -36,7 +36,7 @@
 .compare-loading,
 .compare-empty {
   text-align: center;
-  padding: 20px;
+  padding: $spacing-5;
   font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -74,7 +74,7 @@
   }
 
   th, td {
-    padding: 8px 10px;
+    padding: $spacing-2 $spacing-10px;
     text-align: right;
 
     &.col-metric {
@@ -127,7 +127,7 @@
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
-  padding: 12px;
+  padding: $spacing-3;
 }
 
 .breakdown-title {
@@ -135,7 +135,7 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
-  margin: 0 0 8px 0;
+  margin: 0 0 $spacing-2 0;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }

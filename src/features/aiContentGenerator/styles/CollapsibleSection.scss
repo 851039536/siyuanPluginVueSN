@@ -4,7 +4,7 @@
 // ============ 折叠卡片基础样式（原共享 mixin 内联，仅本组件消费） ============
 .collapsible-section {
   margin: 0 0px;
-  border-radius: 6px;
+  border-radius: $vp-radius;
   border: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);
   overflow: hidden;
@@ -13,9 +13,9 @@
 .collapsible-toggle {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: $spacing-5px;
   width: 100%;
-  padding: 6px 10px;
+  padding: $spacing-6px $spacing-10px;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
   color: var(--b3-theme-on-surface);
@@ -46,11 +46,11 @@
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
 }
 
 .collapsible-body {
-  padding: 8px 10px 10px;
+  padding: $spacing-2 $spacing-10px $spacing-10px;
   border-top: 1px solid var(--b3-theme-surface-lighter);
-  margin: 0 2px 4px;
+  margin: 0 $spacing-2px $spacing-1;
 }

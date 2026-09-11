@@ -4,7 +4,7 @@
 .db-address-bar {
   @include flex-align-center;
   justify-content: space-between;
-  padding: 6px 8px;
+  padding: $spacing-6px $spacing-2;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid $border;
   flex-shrink: 0;
@@ -35,11 +35,11 @@
 .db-crumb {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 5px;
+  gap: $spacing-px;
+  padding: $spacing-2px $spacing-5px;
   border: none;
   background: transparent;
-  border-radius: 3px;
+  border-radius: $radius-px;
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   font-weight: $font-weight-medium;
@@ -66,12 +66,12 @@
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.35;
-  margin: 0 1px;
+  margin: 0 $spacing-1px;
 }
 
 .db-toolbar-actions {
   @include flex-align-center;
-  gap: 2px;
+  gap: $spacing-2px;
   flex-shrink: 0;
   margin-left: $spacing-1;
 }
@@ -82,9 +82,9 @@
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  padding: 1px 5px;
+  padding: $spacing-1px $spacing-5px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 3px;
+  border-radius: $radius-px;
   white-space: nowrap;
-  margin-right: 2px;
+  margin-right: $spacing-2px;
 }

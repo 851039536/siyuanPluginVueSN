@@ -6,13 +6,13 @@
   display: inline-flex; // 收缩为内容宽度：远程项少时行不占满卡片，杜绝任何拉伸导致的松散观感
   align-items: center;
   gap: $spacing-1; // 4px：隐藏未配置远程后项变短，8px 间距视觉上被放大，收紧与项内间距一致
-  margin: 3px 0;
+  margin: $spacing-px 0;
   max-width: 100%;
 }
 
 .gp-remotes-label {
   @include gp-label-base;
-  margin-right: 2px;
+  margin-right: $spacing-2px;
 }
 
 .gp-section-refresh {
@@ -58,8 +58,8 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  padding: 4px 8px;
-  margin-top: 6px;
+  padding: $spacing-1 $spacing-2;
+  margin-top: $spacing-6px;
   font-size: $font-size-xs;
   color: var(--b3-theme-warning);
   background: var(--b3-theme-warning-lightest);
@@ -70,9 +70,9 @@
 .gp-status-badge {
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
-  padding: 1px 5px;
+  padding: $spacing-1px $spacing-5px;
   border-radius: $radius-sm;
-  margin-left: 4px;
+  margin-left: $spacing-1;
   letter-spacing: 0;
 
   &.gp-ahead {

@@ -99,7 +99,7 @@
 .gp-md-body {
   flex: 1;
   overflow-y: auto;
-  padding: 28px 32px; // 阅读区大留白（GitHub 风格排版，无对应间距 Token）
+  padding: 28px $spacing-8; // 阅读区大留白（GitHub 风格排版，无对应间距 Token）
   // 关键：确保内容区可选中文本（继承链可能被 button/user-select:none 截断）
   user-select: text;
   -webkit-user-select: text;

@@ -57,7 +57,7 @@
   justify-content: center;
   min-width: 20px;
   height: 20px;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary, #fff);
   border-radius: $radius-full;
@@ -82,7 +82,7 @@
 
 .shortcut-content::-webkit-scrollbar-thumb {
   background: var(--b3-theme-surface-lighter);
-  border-radius: 2px;
+  border-radius: $radius-2px;
 }
 
 .shortcut-content::-webkit-scrollbar-thumb:hover {

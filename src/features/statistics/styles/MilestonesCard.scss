@@ -18,8 +18,8 @@
 .btn-settings {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
+  gap: $spacing-5px;
+  padding: $spacing-5px $spacing-10px;
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
   background: var(--b3-theme-surface);
@@ -45,9 +45,9 @@
 .hero-banner {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 6px;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border-radius: $vp-radius;
   background: linear-gradient(135deg, rgba(var(--b3-theme-primary-rgb), 0.1) 0%, rgba(var(--b3-theme-primary-rgb), 0.03) 100%);
   border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
 }
@@ -58,7 +58,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: $radius-lg;
   background: rgba(var(--b3-theme-primary-rgb), 0.12);
   flex-shrink: 0;
 }
@@ -85,7 +85,7 @@
   font-size: $font-size-xs;
   font-weight: $font-weight-bold;
   color: var(--b3-theme-on-surface);
-  margin-top: 1px;
+  margin-top: $spacing-1px;
 }
 
 .hero-meta {
@@ -93,20 +93,20 @@
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  margin-top: 2px;
+  margin-top: $spacing-2px;
 }
 
 .hero-stats {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
+  gap: $spacing-6px;
+  margin-top: $spacing-6px;
 }
 
 .hero-stat {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
   font-size: $font-size-2xs;
 }
 
@@ -173,8 +173,8 @@
 .level-next-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 4px;
+  gap: $spacing-2;
+  padding: 0 $spacing-1;
 }
 
 .level-next-label {
@@ -202,8 +202,8 @@
 
 // ===== 2. Next Goal =====
 .next-goal-card {
-  padding: 12px;
-  border-radius: 6px;
+  padding: $spacing-3;
+  border-radius: $vp-radius;
   background: rgba(var(--b3-theme-primary-rgb), 0.04);
   border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.2);
 }
@@ -212,7 +212,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: $spacing-6px;
 }
 
 .next-goal-prefix {
@@ -235,8 +235,8 @@
 .next-goal-main {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: $spacing-2;
+  margin-bottom: $spacing-2;
 }
 
 .next-goal-icon {
@@ -255,7 +255,7 @@
   background: rgba(var(--b3-theme-primary-rgb), 0.1);
   border-radius: stats.$radius-sm;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: $spacing-6px;
 }
 
 .next-goal-bar-fill {
@@ -276,7 +276,7 @@
 .categories-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: $spacing-2;
 }
 
 .section-label {
@@ -287,7 +287,7 @@
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface);
   opacity: 0.45;
-  padding-bottom: 4px;
+  padding-bottom: $spacing-1;
   border-bottom: 1px solid var(--b3-border-color);
 }
 
@@ -305,9 +305,9 @@
 .category-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
   width: 100%;
-  padding: 10px 12px;
+  padding: $spacing-10px $spacing-3;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface);
@@ -352,7 +352,7 @@
 
 .category-body,
 .category-preview {
-  padding: 8px 12px 10px;
+  padding: $spacing-2 $spacing-3 $spacing-10px;
   border-top: 1px solid var(--b3-border-color);
 }
 
@@ -360,14 +360,14 @@
 .milestone-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .category-preview {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
 }
 
 .more-hint {
@@ -375,7 +375,7 @@
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.35;
-  padding: 4px 8px;
+  padding: $spacing-1 $spacing-2;
 }
 
 // ===== 4. Achievement Wall =====
@@ -387,15 +387,15 @@
 .ach-category-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin: 8px 0;
+  gap: $spacing-1;
+  margin: $spacing-2 0;
 }
 
 .ach-category-tab {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-10px;
   border: 1px solid var(--b3-border-color);
   border-radius: stats.$radius-sm;
   background: transparent;
@@ -436,7 +436,7 @@
 // Tier bar active colors
 .ach-tier-bar {
   margin-top: 0;
-  margin-bottom: 4px;
+  margin-bottom: $spacing-1;
 }
 
 .ach-tier-tab {
@@ -468,11 +468,11 @@
 .achievement-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 6px;
-  margin-top: 8px;
+  gap: $spacing-6px;
+  margin-top: $spacing-2;
 
   &.locked {
-    margin-top: 6px;
+    margin-top: $spacing-6px;
   }
 }
 
@@ -480,7 +480,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 8px;
+  padding: $spacing-10px $spacing-2;
   border-radius: stats.$radius-sm;
   text-align: center;
   position: relative;
@@ -512,7 +512,7 @@
 
   .ach-icon {
     font-size: 22px; // 无精确 Token（成就大图标字形）
-    margin-bottom: 4px;
+    margin-bottom: $spacing-1;
   }
 
   .ach-title {
@@ -527,7 +527,7 @@
     color: var(--b3-theme-on-surface);
     opacity: 0.4;
     line-height: $line-height-tight;
-    margin-top: 2px;
+    margin-top: $spacing-2px;
   }
 
   &.locked-card {
@@ -543,8 +543,8 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 6px 10px;
-  margin-top: 8px;
+  padding: $spacing-6px $spacing-10px;
+  margin-top: $spacing-2;
   border: 1px dashed var(--b3-border-color);
   border-radius: stats.$radius-sm;
   background: transparent;
@@ -570,7 +570,7 @@
 // ===== Custom achievement card =====
 .achievement-card.custom-ach {
   position: relative;
-  padding-top: 14px;
+  padding-top: $spacing-14px;
 }
 
 .btn-del-ach {
@@ -589,7 +589,7 @@
   font-size: $font-size-xs;
   line-height: $line-height-tight;
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: $radius-2px;
   padding: 0;
 
   &:hover {
@@ -604,8 +604,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 8px 10px;
+  gap: $spacing-2px;
+  padding: $spacing-2 $spacing-10px;
   min-width: 68px;
   border-radius: stats.$radius-sm;
   position: relative;
@@ -649,8 +649,8 @@
 
 .chip-tier {
   font-size: $font-size-2xs;
-  padding: 0 4px;
-  border-radius: 3px;
+  padding: 0 $spacing-1;
+  border-radius: $radius-px;
   font-weight: $font-weight-bold;
   line-height: $line-height-normal;
 }
@@ -661,7 +661,7 @@
   background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
   border-radius: stats.$radius-sm;
   overflow: hidden;
-  margin-top: 2px;
+  margin-top: $spacing-2px;
 }
 
 .chip-progress-fill {

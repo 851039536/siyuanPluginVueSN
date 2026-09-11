@@ -41,7 +41,7 @@
     box-sizing: border-box;
     width: 48px;
     height: 28px;
-    padding: 0 6px;
+    padding: 0 $spacing-6px;
     font-size: $font-size-sm;
     font-family: $vp-mono;
     color: var(--b3-theme-on-surface);

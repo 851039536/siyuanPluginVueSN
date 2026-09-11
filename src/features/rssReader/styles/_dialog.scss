@@ -13,7 +13,7 @@
     .dialog-header,
     .settings-header {
       display: flex; align-items: center;
-      padding: 6px $spacing-3;
+      padding: $spacing-6px $spacing-3;
       border-bottom: 1px solid var(--b3-border-color);
       min-height: 36px;
 
@@ -46,7 +46,7 @@
           &.hint { margin-bottom: 0; margin-top: $spacing-1; }
         }
         input, select {
-          width: 100%; padding: 7px 10px;
+          width: 100%; padding: $spacing-7px $spacing-10px;
           border: 1px solid var(--b3-border-color);
           border-radius: $radius-sm;
           background: var(--b3-theme-background);
@@ -64,7 +64,7 @@
       display: flex; justify-content: flex-end; gap: $spacing-2;
 
       button {
-        padding: 5px 12px; border-radius: $radius-sm;
+        padding: $spacing-5px $spacing-3; border-radius: $radius-sm;
         font-size: $font-size-sm; font-weight: $font-weight-semibold; cursor: pointer;
         transition: $rr-transition;
         border: 1px solid var(--b3-border-color);

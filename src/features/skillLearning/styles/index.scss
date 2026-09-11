@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: $font-zh;
   background: var(--b3-theme-background, #fff);
 
   &__header {
@@ -22,11 +22,11 @@
   }
 
   &__tab {
-    padding: 6px $spacing-3;
+    padding: $spacing-6px $spacing-3;
     border: none;
     border-radius: $vp-radius;
     background: transparent;
-    color: #94a3b8;
+    color: var(--b3-theme-on-surface-variant);
     font-size: $font-size-xs;
     font-weight: $font-weight-medium;
     cursor: pointer;
@@ -45,7 +45,7 @@
 
   &__actions {
     display: flex;
-    gap: 6px;
+    gap: $spacing-6px;
   }
 
   &__btn {
@@ -81,7 +81,7 @@
     padding: $spacing-2 $spacing-3;
     border-top: 1px solid var(--b3-border-color);
     font-size: $font-size-2xs;
-    color: #94a3b8;
+    color: var(--b3-theme-on-surface-variant);
     flex-shrink: 0;
     font-feature-settings: "tnum";
     font-family: $vp-mono;

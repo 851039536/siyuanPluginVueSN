@@ -107,7 +107,7 @@
 
     &::-webkit-scrollbar-thumb {
       background: var(--b3-border-color);
-      border-radius: 2px;
+      border-radius: $radius-2px;
     }
   }
 }
@@ -129,7 +129,7 @@
 .gpa-section-count {
   font-size: $font-size-2xs;
   font-family: $vp-mono;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   border-radius: $radius-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
@@ -170,14 +170,14 @@
   flex: 1;
   height: 4px;
   background: var(--b3-theme-surface);
-  border-radius: 2px;
+  border-radius: $radius-2px;
   overflow: hidden;
 }
 
 .gpa-bar-fill {
   display: block;
   height: 100%;
-  border-radius: 2px;
+  border-radius: $radius-2px;
   background: var(--b3-theme-primary);
 }
 
@@ -194,7 +194,7 @@
 .gpa-daily {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
+  gap: $spacing-2px;
   height: 64px; // 条形图固定高度，视觉稳定
   padding: $spacing-1 0 0;
   border-bottom: 1px solid var(--b3-border-color);

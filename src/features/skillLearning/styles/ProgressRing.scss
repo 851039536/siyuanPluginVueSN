@@ -50,6 +50,6 @@
   }
   &__ring-sub {
     font-size: $font-size-2xs;
-    color: #94a3b8;
+    color: var(--b3-theme-on-surface-variant);
   }
 }

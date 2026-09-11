@@ -6,8 +6,8 @@
 @mixin status-badge {
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;
-  padding: 1px $spacing-1;
-  border-radius: 3px;
+  padding: $spacing-1px $spacing-1;
+  border-radius: $radius-px;
 }
 
 // 成功态（绿色）

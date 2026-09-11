@@ -97,7 +97,7 @@
 .compare-select {
   width: 100%;
   max-width: 160px;
-  padding: 2px $spacing-1;
+  padding: $spacing-2px $spacing-1;
   font-size: $font-size-2xs;
   border: 1px solid var(--b3-theme-surface-lighter);
   border-radius: $radius-sm;

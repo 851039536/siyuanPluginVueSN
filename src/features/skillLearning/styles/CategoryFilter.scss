@@ -5,12 +5,12 @@
 
   &__row {
     display: flex;
-    gap: 6px;
+    gap: $spacing-6px;
   }
 
   &__select {
     flex: 1;
-    padding: 6px $spacing-2;
+    padding: $spacing-6px $spacing-2;
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
     background: var(--b3-theme-background, #fff);

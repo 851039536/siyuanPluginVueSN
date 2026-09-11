@@ -28,7 +28,7 @@
 }
 
 .gp-fix-reason {
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   border-radius: $radius-full;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-warning);
@@ -57,7 +57,7 @@
 .gp-fix-date-option {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
   font-size: $font-size-xs;
   cursor: pointer;
 }

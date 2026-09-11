@@ -8,13 +8,13 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 4px 0;
+  padding: $spacing-1 0;
 }
 
 .pie-layout {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: $spacing-3;
 }
 
 .pie-chart-area {
@@ -67,14 +67,14 @@
   display: grid;
   // 多列自适应网格：图例项均分卡片剩余横向空间，消除单列列表在宽卡片下的空位
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 4px 12px;
+  gap: $spacing-1 $spacing-3;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: $spacing-6px;
+  padding: $spacing-1 $spacing-2;
   border-radius: stats.$radius-sm;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface);

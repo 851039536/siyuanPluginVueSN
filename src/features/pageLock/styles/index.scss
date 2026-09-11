@@ -86,7 +86,7 @@
     width: 14px;
     height: 14px;
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: $spacing-2px;
     color: var(--b3-theme-primary);
   }
 }
@@ -145,7 +145,7 @@
   }
 
   .page-lock-dialog__form {
-    gap: 14px;
+    gap: $spacing-14px;
   }
 
   .page-lock-dialog__footer {
@@ -313,7 +313,7 @@
   width: $spacing-8;
   height: $spacing-8;
   padding: 0;
-  margin: 0 2px;
+  margin: 0 $spacing-2px;
   border: none;
   background: transparent;
   border-radius: $radius-sm;
@@ -350,7 +350,7 @@
 .protyle-title__icons--right {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: $spacing-2px;
 }
 
 @media (max-width: 480px) {
@@ -377,7 +377,7 @@
 
   .enter-key {
     font-size: $font-size-2xs;
-    padding: 1px 5px;
+    padding: $spacing-1px $spacing-5px;
   }
 
   .input-container {

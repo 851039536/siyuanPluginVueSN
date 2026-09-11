@@ -21,7 +21,7 @@
 
   &__title {
     margin: 0;
-    padding: 14px $spacing-5;
+    padding: $spacing-14px $spacing-5;
     font-size: $font-size-sm;
     font-weight: $font-weight-bold;
     text-align: center;
@@ -37,7 +37,7 @@
   }
   &__title-row {
     display: flex;
-    gap: 6px;
+    gap: $spacing-6px;
     .skill-dialog__input { flex: 1; }
   }
   &__ai-btn {
@@ -75,12 +75,12 @@
     text-transform: uppercase;
     opacity: 0.45;
     margin-bottom: $spacing-1;
-    margin-top: 10px;
+    margin-top: $spacing-10px;
     &:first-child { margin-top: 0; }
   }
   &__input, &__select {
     width: 100%;
-    padding: 7px 10px;
+    padding: $spacing-7px $spacing-10px;
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
     font-size: $font-size-sm;
@@ -95,7 +95,7 @@
   }
   &__textarea {
     width: 100%;
-    padding: 7px 10px;
+    padding: $spacing-7px $spacing-10px;
     border: 1px solid var(--b3-border-color);
     border-radius: $vp-radius;
     font-size: $font-size-sm;
@@ -121,7 +121,7 @@
   }
   &__row {
     display: flex;
-    gap: 10px;
+    gap: $spacing-10px;
   }
   &__field {
     flex: 1;
@@ -155,11 +155,11 @@
   }
   &__ai-error {
     margin-top: $spacing-1;
-    padding: $spacing-2 10px;
+    padding: $spacing-2 $spacing-10px;
     border-radius: $vp-radius;
     background: rgba(239, 68, 68, 0.08);
     border: 1px solid rgba(239, 68, 68, 0.2);
-    color: #dc2626;
+    color: var(--b3-theme-error);
     font-size: $font-size-xs;
     line-height: 1.4;
   }

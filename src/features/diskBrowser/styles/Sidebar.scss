@@ -12,8 +12,8 @@
 
 .db-sidebar-header {
   @include flex-align-center;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: $spacing-6px;
+  padding: $spacing-2 $spacing-10px;
   border-bottom: 1px solid $border;
   flex-shrink: 0;
 }
@@ -37,8 +37,8 @@
 
 .db-drive-row {
   @include flex-align-center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: $spacing-2;
+  padding: $spacing-6px $spacing-10px;
   cursor: pointer;
   transition: background-color 0.12s;
   position: relative;
@@ -77,12 +77,12 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: $spacing-1px;
 }
 
 .db-drive-heading {
   @include flex-align-center;
-  gap: 6px;
+  gap: $spacing-6px;
   min-width: 0;
 }
 
@@ -105,7 +105,7 @@
 
 .db-drive-capacity {
   @include flex-align-center;
-  gap: 6px;
+  gap: $spacing-6px;
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
@@ -130,8 +130,8 @@
 
 .db-favorites-title {
   @include flex-align-center;
-  gap: 5px;
-  padding: 6px 10px;
+  gap: $spacing-5px;
+  padding: $spacing-6px $spacing-10px;
   border-bottom: 1px dashed $border;
   flex-shrink: 0;
 
@@ -143,14 +143,14 @@
 }
 
 .db-fav-list {
-  padding: 2px 0;
+  padding: $spacing-2px 0;
   overflow-y: auto;
 }
 
 .db-fav-row {
   @include flex-align-center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: $spacing-6px;
+  padding: $spacing-1 $spacing-10px;
   cursor: pointer;
   transition: background-color 0.12s;
 
@@ -179,7 +179,7 @@
 }
 
 .db-fav-empty {
-  padding: $spacing-3 10px;
+  padding: $spacing-3 $spacing-10px;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.55;
@@ -189,7 +189,7 @@
 
 .db-sidebar-footer {
   flex-shrink: 0;
-  padding: $spacing-1 10px;
+  padding: $spacing-1 $spacing-10px;
   border-top: 1px solid $border;
 }
 
@@ -199,8 +199,8 @@
   font-weight: $font-weight-semibold;
   letter-spacing: 0.04em;
   white-space: nowrap;
-  padding: 1px 6px;
-  border-radius: 3px;
+  padding: $spacing-1px $spacing-6px;
+  border-radius: $radius-px;
   color: var(--b3-theme-primary);
   background: var(--b3-theme-primary-lightest);
 

@@ -1,0 +1,8 @@
+// 单位换算器组件样式
+@use "@/variables.scss" as *;
+
+.base-unit-converter {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}

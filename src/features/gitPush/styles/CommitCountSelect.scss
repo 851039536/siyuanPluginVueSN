@@ -9,7 +9,7 @@
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
-  padding: 2px 4px;
+  padding: $spacing-2px $spacing-1;
   cursor: pointer;
 
   &:focus {

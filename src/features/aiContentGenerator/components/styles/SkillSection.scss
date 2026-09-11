@@ -29,7 +29,7 @@
 .skill-source-dots {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: $spacing-px;
   margin-left: $spacing-1;
   flex-shrink: 0;
 }

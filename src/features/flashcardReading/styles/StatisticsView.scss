@@ -1,5 +1,7 @@
 // 单词阅读 - 统计视图样式
 @use 'variables' as *;
+// 本模块本地 `_variables.scss` 已占用 `*` 命名空间，全局 Token 以 `g.` 命名空间引用
+@use "@/variables.scss" as g;
 
 .flashcard-reading-panel {
   .statistics-view {
@@ -73,13 +75,13 @@
       .progress-bar {
         height: 4px;
         background: var(--b3-theme-surface-lighter);
-        border-radius: 2px;
+        border-radius: g.$radius-2px;
         overflow: hidden;
 
         .progress-fill {
           height: 100%;
           background: linear-gradient(90deg, var(--b3-theme-primary), $color-info);
-          border-radius: 2px;
+          border-radius: g.$radius-2px;
           transition: width 0.3s ease;
         }
       }

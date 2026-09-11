@@ -65,7 +65,7 @@
   gap: $spacing-1;
   flex: 0 1 200px;
   min-width: 120px;
-  padding: 2px $spacing-2;
+  padding: $spacing-2px $spacing-2;
   border: 1px solid var(--b3-border-color);
   border-radius: $radius-sm;
   color: var(--b3-theme-on-surface-light);
@@ -112,9 +112,9 @@
   @include btn-reset;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: $spacing-2px;
   font-size: $font-size-2xs;
-  padding: 2px 8px;
+  padding: $spacing-2px $spacing-2;
   border-radius: $radius-sm;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
@@ -143,7 +143,7 @@
 .gp-log-clear-btn {
   @include btn-reset;
   opacity: 0.35;
-  padding: 2px;
+  padding: $spacing-2px;
   border-radius: $radius-sm;
   transition: opacity 0.12s;
 
@@ -260,7 +260,7 @@
   font-family: $vp-mono;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  padding: 1px 6px;
+  padding: $spacing-1px $spacing-6px;
   border-radius: $radius-sm;
 
   &--push {
@@ -379,7 +379,7 @@
 .gp-log-platforms {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: $spacing-2px;
 }
 
 .gp-log-platform-item {

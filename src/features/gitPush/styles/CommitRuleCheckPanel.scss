@@ -125,7 +125,7 @@
 .grc-select-all {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: $spacing-1;
   font-size: $font-size-2xs;
   cursor: pointer;
   opacity: 0.75;
@@ -151,7 +151,7 @@
 .grc-section-count {
   font-size: $font-size-2xs;
   font-family: $vp-mono;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   border-radius: $radius-sm;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
@@ -235,7 +235,7 @@
 }
 
 .grc-item-reason {
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   border-radius: $radius-full;
   font-weight: $font-weight-semibold;
   color: var(--b3-theme-warning);
@@ -265,7 +265,7 @@
 // 违规列表中的修正/删除按钮（共用样式）
 .grc-item-fix,
 .grc-item-drop {
-  padding: 0 4px;
+  padding: 0 $spacing-1;
   border-radius: $radius-sm;
   opacity: 0.6;
 

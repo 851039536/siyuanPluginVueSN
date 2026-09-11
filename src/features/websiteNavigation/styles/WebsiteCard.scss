@@ -7,7 +7,7 @@
   width: 100%;
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
-  padding: 8px 10px;
+  padding: $spacing-2 $spacing-10px;
   background: var(--b3-theme-surface);
   transition: border-color 0.15s;
 

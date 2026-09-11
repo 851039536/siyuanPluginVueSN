@@ -60,7 +60,7 @@
   .hero-health-bar {
     flex: 1;
     height: 6px;
-    border-radius: 3px;
+    border-radius: $radius-px;
     background: var(--b3-theme-surface-light);
     overflow: hidden;
     min-width: 40px;
@@ -68,7 +68,7 @@
 
   .hero-health-fill {
     height: 100%;
-    border-radius: 3px;
+    border-radius: $radius-px;
     background: var(--b3-theme-primary);
     transition: width 0.5s ease;
   }

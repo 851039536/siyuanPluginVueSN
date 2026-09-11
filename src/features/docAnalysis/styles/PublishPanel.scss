@@ -48,8 +48,8 @@
 .toolbar-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-10px;
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;
   background: transparent;
@@ -117,8 +117,8 @@
 .publish-tip-bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: $spacing-6px;
+  padding: $spacing-1 $spacing-10px;
   background: var(--b3-theme-surface, rgba(255, 255, 255, 0.04));
   border-bottom: 1px solid var(--b3-border-color-transient, rgba(255, 255, 255, 0.06));
   flex-shrink: 0;
@@ -266,7 +266,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 12px;
+  padding: $spacing-1 $spacing-3;
   border-top: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
   flex-shrink: 0;

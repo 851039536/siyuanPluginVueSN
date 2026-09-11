@@ -163,14 +163,14 @@
 .grcp-item-bar-wrap {
   margin-top: $spacing-1;
   height: 3px;
-  border-radius: 2px;
+  border-radius: $radius-2px;
   background: var(--b3-theme-background-light, var(--b3-border-color));
   overflow: hidden;
 }
 
 .grcp-item-bar {
   height: 100%;
-  border-radius: 2px;
+  border-radius: $radius-2px;
   background: var(--b3-theme-primary-lighter, var(--b3-theme-primary));
   transition: width 0.12s ease;
 }
@@ -313,7 +313,7 @@
 .grcp-step {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: $spacing-px;
   font-size: $font-size-2xs;
   color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
   opacity: 0.6;

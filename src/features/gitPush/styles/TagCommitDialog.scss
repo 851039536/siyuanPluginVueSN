@@ -64,10 +64,10 @@
 .gp-tagc-chip {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: $spacing-2px;
   max-width: 160px;
   @include text-ellipsis;
-  padding: 0 6px;
+  padding: 0 $spacing-6px;
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   line-height: 18px;

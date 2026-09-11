@@ -29,7 +29,7 @@ $stats-header-height: 56px;
   .header-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: $spacing-4;
   }
 
   .last-update {
@@ -47,14 +47,14 @@ $stats-header-height: 56px;
 @include mobile-only {
   .statistics-header {
     height: auto;
-    padding: 12px 16px;
+    padding: $spacing-3 $spacing-4;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: $spacing-3;
 
     .header-right {
       width: 100%;
       justify-content: space-between;
-      gap: 8px;
+      gap: $spacing-2;
     }
   }
 }
@@ -114,12 +114,12 @@ $stats-header-height: 56px;
 }
 
 .storage-paths {
-  padding: 6px 12px;
+  padding: $spacing-6px $spacing-3;
   background: var(--b3-theme-background);
   border-bottom: 1px solid var(--b3-border-color);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: $spacing-px;
   font-family: $font-zh;
   user-select: all;
 }
@@ -127,7 +127,7 @@ $stats-header-height: 56px;
 .storage-path-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: $spacing-2;
   font-size: $font-size-2xs;
 }
 

@@ -11,7 +11,7 @@
   @include codex-meta-label;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: $spacing-px;
   font-family: $vp-mono;
   font-variant-numeric: tabular-nums;
 
@@ -23,7 +23,7 @@
 
 // ============ 流式输出提示 ============
 .generation-tip {
-  margin-left: 8px;
+  margin-left: $spacing-2;
   font-size: $font-size-2xs;
   font-weight: $font-weight-normal;
   opacity: 0.5;
@@ -45,12 +45,12 @@
   min-height: 0;
 }
 
-.error-icon { color: var(--b3-theme-error); margin-bottom: 16px; }
+.error-icon { color: var(--b3-theme-error); margin-bottom: $spacing-4; }
 
 .result-container {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: $spacing-6px;
   flex: 1;
   min-height: 0;
 }
@@ -59,7 +59,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
+  padding: $spacing-1 0;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
@@ -68,19 +68,19 @@
   color: var(--b3-theme-on-surface);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
   min-height: 20px;
 }
 
 .generating-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: $spacing-6px;
   font-size: $font-size-xs;
   color: var(--b3-theme-primary);
 }
 
-.result-actions { display: flex; gap: 4px; }
+.result-actions { display: flex; gap: $spacing-1; }
 
 .result-content {
   display: flex;
@@ -128,6 +128,6 @@
   align-items: center;
   gap: $spacing-px;
   background: var(--b3-theme-surface-lighter);
-  border-radius: 4px;
-  padding: 1px;
+  border-radius: $radius-sm;
+  padding: $spacing-1px;
 }

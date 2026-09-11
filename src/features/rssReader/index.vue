@@ -383,8 +383,4 @@ onBeforeUnmount(() => {
 
 <style lang="scss">
 @use "./styles/index.scss";
-
-.loading-icon {
-  animation: spin 1s linear infinite;
-}
 </style>

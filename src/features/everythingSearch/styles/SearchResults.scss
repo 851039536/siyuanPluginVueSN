@@ -24,7 +24,7 @@
   }
 
   &__header {
-    padding: $spacing-1 16px;
+    padding: $spacing-1 $spacing-4;
     background: var(--b3-theme-surface-light);
     border-bottom: 1px solid var(--b3-border-color);
   }
@@ -50,7 +50,7 @@
 
     &::-webkit-scrollbar-thumb {
       background: $color-surface;
-      border-radius: 3px;
+      border-radius: $radius-px;
 
       &:hover {
         background: $color-muted;
@@ -88,10 +88,10 @@
 
     code {
       font-family: $vp-mono;
-      padding: 1px $spacing-1;
+      padding: $spacing-1px $spacing-1;
       background: var(--b3-theme-surface);
       border: 1px solid var(--b3-border-color);
-      border-radius: 2px;
+      border-radius: $radius-2px;
       font-size: $font-size-2xs;
       opacity: 0.7;
     }

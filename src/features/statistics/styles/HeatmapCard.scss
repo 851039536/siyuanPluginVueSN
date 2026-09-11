@@ -15,14 +15,14 @@
 .summary-cards {
   gap: 0;
   border-bottom: 1px solid var(--b3-border-color);
-  padding-bottom: 6px;
+  padding-bottom: $spacing-6px;
 }
 
 .summary-card {
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 6px 4px;
+  padding: $spacing-6px $spacing-1;
   border-left: 1px solid var(--b3-border-color);
 
   &:first-child {
@@ -59,7 +59,7 @@
 }
 
 .range-btn {
-  padding: $spacing-1 10px; // 10px 无精确 Token，保留
+  padding: $spacing-1 $spacing-10px; // 10px 无精确 Token，保留
   border: none;
   border-radius: stats.$radius-sm;
   background: transparent;
@@ -112,7 +112,7 @@
 .calendar-wrapper {
   // 无界化：去卡片盒子，保留顶部横线分隔
   border-top: 1px solid var(--b3-border-color);
-  padding: 14px 0 0; // 无精确 Token
+  padding: $spacing-14px 0 0; // 无精确 Token
   overflow-x: auto;
 }
 
@@ -144,7 +144,7 @@
   flex-direction: column;
   justify-content: space-between;
   width: 24px;
-  padding: 2px 0;
+  padding: $spacing-2px 0;
   flex-shrink: 0;
 
   .weekday-label {
@@ -158,9 +158,9 @@
     line-height: 14px; // 与格子高度对齐，保留像素值
     height: 14px;
 
-    &:nth-child(1) { margin-top: 14px; }
-    &:nth-child(2) { margin-top: 14px; }
-    &:nth-child(3) { margin-top: 14px; }
+    &:nth-child(1) { margin-top: $spacing-14px; }
+    &:nth-child(2) { margin-top: $spacing-14px; }
+    &:nth-child(3) { margin-top: $spacing-14px; }
   }
 }
 
@@ -204,7 +204,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: $spacing-px;
-  margin-top: 10px; // 无精确 Token
+  margin-top: $spacing-10px; // 无精确 Token
 
   .legend-text {
     font-family: stats.$font-mono;
@@ -214,7 +214,7 @@
     text-transform: uppercase;
     color: var(--b3-theme-on-surface-light);
     opacity: 0.45;
-    margin: 0 2px;
+    margin: 0 $spacing-2px;
   }
 
   .legend-cell {
@@ -237,7 +237,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px; // 无精确 Token
+  margin-bottom: $spacing-10px; // 无精确 Token
 }
 
 .daily-detail-title {
@@ -279,7 +279,7 @@
 }
 
 .detail-group {
-  margin-bottom: 10px; // 无精确 Token
+  margin-bottom: $spacing-10px; // 无精确 Token
   &:last-child { margin-bottom: 0; }
 }
 
@@ -294,7 +294,7 @@
 .detail-item {
   display: flex;
   align-items: center;
-  gap: 6px; // 无精确 Token（$spacing-1=4px 偏小，$spacing-2=8px 偏大）
+  gap: $spacing-6px; // 无精确 Token（$spacing-1=4px 偏小，$spacing-2=8px 偏大）
   padding: $spacing-1 $spacing-2;
   border-radius: stats.$radius-sm;
   cursor: pointer;
@@ -347,7 +347,7 @@
 .weekday-section {
   // 无界化：去卡片盒子，保留顶部横线分隔
   border-top: 1px solid var(--b3-border-color);
-  padding: 14px 0 0; // 无精确 Token
+  padding: $spacing-14px 0 0; // 无精确 Token
 
   .section-title {
     @include stats.codex-label;
@@ -360,7 +360,7 @@
 .weekday-bars {
   display: flex;
   flex-direction: column;
-  gap: 6px; // 无精确 Token
+  gap: $spacing-6px; // 无精确 Token
 }
 
 .weekday-row {

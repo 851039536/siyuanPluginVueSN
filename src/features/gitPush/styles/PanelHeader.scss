@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: $spacing-2;
-  padding: $spacing-2px 10px; // 水平 10px：紧凑头部留白，介于 spacing-2/3 之间无对应 Token
+  padding: $spacing-2px $spacing-10px; // 水平 10px：紧凑头部留白，介于 spacing-2/3 之间已收敛为全局 Token
 }
 
 // 项目搜索框（头部按钮区末位）
@@ -31,9 +31,9 @@
 .gp-header-progress {
   display: inline-flex;
   align-items: center;
-  gap: 4px; // 徽章内图标与计数间距，无对应尺寸 Token
+  gap: $spacing-1; // 徽章内图标与计数间距，无对应尺寸 Token
   height: 18px; // 与 gp-count-badge 徽章同高
-  padding: 0 7px;
+  padding: 0 $spacing-7px;
   border-radius: $radius-full;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
@@ -84,7 +84,7 @@
   justify-content: center;
   min-width: 18px; // 18px 圆形徽章（两位数字可容纳），无对应尺寸 Token
   height: 18px;
-  padding: 0 5px; // 三位以上数字时的水平留白，无对应 Token
+  padding: 0 $spacing-5px; // 三位以上数字时的水平留白，已收敛为全局 Token
   font-size: $font-size-2xs;
   font-weight: $font-weight-bold;
   font-family: $vp-mono;
@@ -99,7 +99,7 @@
   gap: $spacing-1;
 
   .vp-btn--sm {
-    padding: $spacing-1 6px; // 水平 6px：4px 过窄 8px 过宽，无对应 Token
+    padding: $spacing-1 $spacing-6px; // 水平 6px：4px 过窄 8px 过宽，已收敛为全局 Token
   }
 }
 
@@ -138,7 +138,7 @@
 .gp-view-toggle .vp-btn.gp-view-btn {
   border-radius: 0;
   border: none;
-  padding: $spacing-1 6px; // 水平 6px 与头部按钮统一，无对应 Token
+  padding: $spacing-1 $spacing-6px; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
 // 平台官网下拉
@@ -148,13 +148,13 @@
 
 // 平台下拉按钮的展开指示小箭头
 .gp-platform-caret {
-  margin-left: 1px;
+  margin-left: $spacing-1px;
   opacity: 0.5;
 }
 
 .gp-platform-dropdown-btn {
   border-radius: $radius-sm;
-  padding: $spacing-1 6px; // 水平 6px 与头部按钮统一，无对应 Token
+  padding: $spacing-1 $spacing-6px; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
 .gp-platform-popover {

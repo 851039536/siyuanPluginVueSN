@@ -24,7 +24,7 @@
   display: flex;
   flex-direction: column;
   @include flex-center;
-  padding: 40px 32px;
+  padding: $spacing-10 $spacing-8;
   overflow-y: auto;
 }
 
@@ -45,7 +45,7 @@
 .password-hint-display {
   width: 100%;
   max-width: 280px;
-  padding: 8px 12px;
+  padding: $spacing-2 $spacing-3;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
   border-radius: $vp-radius;

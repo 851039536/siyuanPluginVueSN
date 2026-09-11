@@ -32,8 +32,8 @@
     overflow-y: auto;
     transition: border-color 0.12s;
 
-    &--correct { border-color: #22c55e; }
-    &--wrong   { border-color: #ef4444; }
+    &--correct { border-color: var(--b3-theme-success); }
+    &--wrong   { border-color: var(--b3-theme-error); }
   }
 
   // ---- question ----
@@ -52,7 +52,7 @@
 
   &__q-meta {
     display: flex;
-    gap: 6px;
+    gap: $spacing-6px;
     align-items: center;
     margin-top: $spacing-2;
   }
@@ -61,7 +61,7 @@
     font-size: $font-size-2xs;
     font-weight: $font-weight-bold;
     text-transform: uppercase;
-    padding: 1px 6px;
+    padding: $spacing-1px $spacing-6px;
     border-radius: $radius-sm;
     color: #fff;
     @include lang-tag-colors;
@@ -94,14 +94,14 @@
     &:disabled { cursor: default; }
 
     &--correct-reveal {
-      border-color: #22c55e;
+      border-color: var(--b3-theme-success);
       background: rgba(34, 197, 94, 0.08);
-      color: #16a34a;
+      color: var(--b3-theme-success);
     }
     &--wrong-reveal {
-      border-color: #ef4444;
+      border-color: var(--b3-theme-error);
       background: rgba(239, 68, 68, 0.08);
-      color: #dc2626;
+      color: var(--b3-theme-error);
     }
   }
 
@@ -148,12 +148,12 @@
 
     &--ok {
       background: rgba(34, 197, 94, 0.08);
-      color: #16a34a;
+      color: var(--b3-theme-success);
       border-color: rgba(34, 197, 94, 0.3);
     }
     &--fail {
       background: rgba(239, 68, 68, 0.08);
-      color: #dc2626;
+      color: var(--b3-theme-error);
       border-color: rgba(239, 68, 68, 0.3);
     }
   }
@@ -213,7 +213,7 @@
 
   &__result-label {
     font-size: $font-size-sm;
-    color: #64748b;
+    color: var(--b3-theme-on-surface-variant);
   }
 
   &__result-icon {
@@ -235,7 +235,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $radius-md;
     background: transparent;
-    color: #64748b;
+    color: var(--b3-theme-on-surface-variant);
     font-size: $font-size-xs;
     cursor: pointer;
     transition: all 0.12s;
@@ -255,19 +255,19 @@
     display: flex;
     align-items: flex-start;
     gap: $spacing-2;
-    padding: 6px $spacing-2;
+    padding: $spacing-6px $spacing-2;
     font-size: $font-size-xs;
     line-height: $line-height-normal;
     border-radius: $vp-radius;
 
-    &--ok { color: #16a34a; }
-    &--fail { color: #dc2626; }
+    &--ok { color: var(--b3-theme-success); }
+    &--fail { color: var(--b3-theme-error); }
   }
 
   &__result-mark {
     flex-shrink: 0;
     font-weight: $font-weight-bold;
-    margin-top: 1px;
+    margin-top: $spacing-1px;
   }
 
   &__result-title {

@@ -10,7 +10,7 @@
     flex-wrap: wrap;
     align-items: center;
     gap: $spacing-2;
-    padding: 0 6px $spacing-1;
+    padding: 0 $spacing-6px $spacing-1;
     font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
 
@@ -25,7 +25,7 @@
     .kline-legend-dot {
       width: 8px;
       height: 8px;
-      border-radius: 2px;
+      border-radius: $radius-2px;
 
       &.kline-legend-dot--up {
         background: #ef4444; // chartConfig UP_COLOR
@@ -68,13 +68,13 @@
 
     &::-webkit-scrollbar-thumb {
       background: var(--b3-border-color);
-      border-radius: 2px;
+      border-radius: $radius-2px;
     }
   }
 
   // 图表画布容器（固定高度撑起 canvas；min-width 由行内样式按蜡烛数动态控制）
   .kline-chart-wrap {
     height: 260px;
-    padding: $spacing-1 6px;
+    padding: $spacing-1 $spacing-6px;
   }
 }

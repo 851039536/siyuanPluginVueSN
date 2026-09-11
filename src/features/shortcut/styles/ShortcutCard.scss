@@ -47,7 +47,7 @@
 
 .platform-badge {
   display: inline-block;
-  padding: 1px 5px;
+  padding: $spacing-1px $spacing-5px;
   background: var(--b3-theme-surface-lighter);
   color: var(--b3-theme-on-surface-variant);
   border-radius: $radius-sm;
@@ -60,7 +60,7 @@
 
 .tool-badge {
   display: inline-block;
-  padding: 1px 5px;
+  padding: $spacing-1px $spacing-5px;
   background: var(--b3-theme-primary-lightest);
   color: var(--b3-theme-primary);
   border-radius: $radius-sm;
@@ -99,7 +99,7 @@
 // Codex 风格按键徽章：等宽字体、边框、浅色背景
 .key-badge {
   display: inline-block;
-  padding: 2px 7px;
+  padding: $spacing-2px $spacing-7px;
   font-family: $vp-mono;
   font-size: $font-size-2xs;
   font-weight: $font-weight-semibold;

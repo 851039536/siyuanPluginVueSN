@@ -3,7 +3,7 @@
 .preview-pane {
   height: 100%;
   overflow-y: auto;
-  background: #f0f0f0;
+  background: var(--b3-theme-surface);
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -11,7 +11,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.15);
-    border-radius: 3px;
+    border-radius: $radius-px;
   }
 
   &::-webkit-scrollbar-track {
@@ -25,13 +25,13 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  padding: 40px 24px;
+  padding: $spacing-10 $spacing-6;
   text-align: center;
 }
 
 .preview-empty-icon {
   font-size: $font-size-4xl;
-  margin-bottom: 16px;
+  margin-bottom: $spacing-4;
   opacity: 0.5;
 }
 
@@ -43,7 +43,7 @@
 }
 
 .preview-empty-desc {
-  margin: 8px 0 0;
+  margin: $spacing-2 0 0;
   font-size: $font-size-xs;
   color: rgba(0, 0, 0, 0.3);
   line-height: 1.6;
@@ -53,7 +53,7 @@
 .preview-card-wrapper {
   display: flex;
   justify-content: center;
-  padding: 20px 12px;
+  padding: $spacing-5 $spacing-3;
   min-height: 100%;
 }
 
@@ -61,7 +61,7 @@
   width: 100%;
   max-width: 480px;
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: $radius-md;
   overflow: hidden;
 }
 
@@ -73,8 +73,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  border-top: 1px solid #f0f0f0;
+  padding: $spacing-2 $spacing-4;
+  border-top: 1px solid var(--b3-border-color);
   background: #fafafa;
   font-size: $font-size-2xs;
   color: rgba(0, 0, 0, 0.3);

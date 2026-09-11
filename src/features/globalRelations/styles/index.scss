@@ -1,8 +1,24 @@
 // 全局关系列表面板样式
 // 对齐项目 compact 风格：基准字号继承 .vp-dock-root / Modal 容器 12px，使用思源 CSS 变量
+@use "@/variables.scss" as *;
 
-// 双向关系强调色（与 icons.ts globalRelations 图标色保持一致）
-$gr-accent: #06b6d4;
+// 双向关系强调色（与 icons.ts:globalRelations 的图标色成对，须保持一致）
+$gr-accent: #06b6d4; // 无对应 Token：全局 $color-* 无语义青色档位
+
+// ---------- 全局 Token 无对应档位的取值 ----------
+// 集中声明以保证单一来源，避免散落硬编码；$spacing-* / $radius-* / $font-size-* / $line-height-* 均无这些档位
+$gr-space-1: 1px; // 无对应 Token（发丝级间隔）
+$gr-space-5: 5px; // 无对应 Token
+$gr-space-6: 6px; // 无对应 Token（全局间距档为 4px → 8px，无 6px）
+$gr-space-7: 7px; // 无对应 Token
+$gr-space-10: 10px; // 无对应 Token（全局间距档为 8px → 12px，无 10px）
+$gr-space-14: 14px; // 无对应 Token（面板横向内边距）
+$gr-space-26: 26px; // 无对应 Token（搜索框内图标占位宽度）
+$gr-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs）
+$gr-radius-3: 3px; // 无对应 Token（$radius-sm 为 4px）
+$gr-radius-5: 5px; // 无对应 Token（$radius-sm / $vp-radius 为 4px / 6px）
+$gr-lh-12: 1.2; // 无对应 Token（$line-height-tight 为 1.25）
+$gr-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
 
 .global-relations-panel {
   display: flex;
@@ -19,20 +35,20 @@ $gr-accent: #06b6d4;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: $gr-space-10 $gr-space-14;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 
   &__left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: $spacing-2;
     min-width: 0;
   }
 
   &__title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -41,7 +57,7 @@ $gr-accent: #06b6d4;
   &__actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $gr-space-6;
     flex-shrink: 0;
   }
 }
@@ -50,16 +66,16 @@ $gr-accent: #06b6d4;
 .gr-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  font-size: 12px;
-  line-height: 1.5;
+  gap: $gr-space-5;
+  padding: $spacing-1 $gr-space-10;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
   color: var(--b3-theme-on-background);
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 5px;
+  border-radius: $gr-radius-5;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.12s ease, border-color 0.12s ease;
 
   &:hover:not(:disabled) {
     background: var(--b3-list-hover);
@@ -71,12 +87,12 @@ $gr-accent: #06b6d4;
   }
 
   &--icon {
-    padding: 4px 7px;
+    padding: $spacing-1 $gr-space-7;
   }
 
   &--small {
-    padding: 2px 8px;
-    font-size: 11px;
+    padding: $spacing-2px $spacing-2;
+    font-size: $gr-font-11;
   }
 
   &.active {
@@ -90,8 +106,8 @@ $gr-accent: #06b6d4;
 .gr-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 10px 14px;
+  gap: $spacing-2;
+  padding: $gr-space-10 $gr-space-14;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -100,21 +116,21 @@ $gr-accent: #06b6d4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 8px 4px;
+  gap: $spacing-2px;
+  padding: $spacing-2 $spacing-1;
   background: var(--b3-theme-surface);
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $vp-radius;
 
   &__value {
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1.2;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    line-height: $gr-lh-12;
     color: var(--b3-theme-on-background);
   }
 
   &__label {
-    font-size: 11px;
+    font-size: $gr-font-11;
     color: var(--b3-theme-on-surface);
     text-align: center;
   }
@@ -128,8 +144,8 @@ $gr-accent: #06b6d4;
 .gr-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: $spacing-2;
+  padding: $spacing-2 $gr-space-14;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
@@ -141,7 +157,7 @@ $gr-accent: #06b6d4;
 
   &__icon {
     position: absolute;
-    left: 8px;
+    left: $spacing-2;
     top: 50%;
     transform: translateY(-50%);
     color: var(--b3-theme-on-surface);
@@ -151,12 +167,12 @@ $gr-accent: #06b6d4;
   &__input {
     width: 100%;
     box-sizing: border-box;
-    padding: 5px 8px 5px 26px;
-    font-size: 12px;
+    padding: $gr-space-5 $spacing-2 $gr-space-5 $gr-space-26;
+    font-size: $font-size-xs;
     color: var(--b3-theme-on-background);
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 5px;
+    border-radius: $gr-radius-5;
     outline: none;
 
     &:focus {
@@ -167,7 +183,7 @@ $gr-accent: #06b6d4;
 
 .gr-direction-filter {
   display: flex;
-  gap: 4px;
+  gap: $spacing-1;
   flex-shrink: 0;
 }
 
@@ -176,7 +192,7 @@ $gr-accent: #06b6d4;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 8px 14px;
+  padding: $spacing-2 $gr-space-14;
 }
 
 .gr-empty {
@@ -184,10 +200,10 @@ $gr-accent: #06b6d4;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: $spacing-2;
   height: 100%;
   min-height: 120px;
-  font-size: 12px;
+  font-size: $font-size-xs;
   color: var(--b3-theme-on-surface);
 
   &--error {
@@ -202,20 +218,20 @@ $gr-accent: #06b6d4;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: $gr-space-6;
 }
 
 .gr-row {
   border: 1px solid var(--b3-border-color);
-  border-radius: 6px;
+  border-radius: $vp-radius;
   background: var(--b3-theme-surface);
   overflow: hidden;
 
   &__main {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
+    gap: $spacing-2;
+    padding: $spacing-2 $gr-space-10;
     cursor: pointer;
 
     &:hover {
@@ -239,8 +255,8 @@ $gr-accent: #06b6d4;
   }
 
   &__doc-name {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -253,7 +269,7 @@ $gr-accent: #06b6d4;
   }
 
   &__doc-path {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
     white-space: nowrap;
     overflow: hidden;
@@ -268,13 +284,13 @@ $gr-accent: #06b6d4;
   &__meta {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: $gr-space-6;
     flex-shrink: 0;
   }
 
   &__chevron {
     color: var(--b3-theme-on-surface);
-    transition: transform 0.2s ease;
+    transition: transform 0.12s ease;
 
     &--open {
       transform: rotate(180deg);
@@ -283,21 +299,21 @@ $gr-accent: #06b6d4;
 
   &__details {
     border-top: 1px solid var(--b3-border-color);
-    padding: 8px 10px;
+    padding: $spacing-2 $gr-space-10;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: $gr-space-6;
     background: var(--b3-theme-background);
   }
 
   &__details-title {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: $gr-font-11;
+    font-weight: $font-weight-semibold;
     color: var(--b3-theme-on-surface);
   }
 
   &__details-empty {
-    font-size: 11px;
+    font-size: $gr-font-11;
     color: var(--b3-theme-on-surface);
     opacity: 0.7;
   }
@@ -308,15 +324,15 @@ $gr-accent: #06b6d4;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: $spacing-1;
   }
 
   &__content-item {
-    font-size: 11px;
-    padding: 4px 8px;
+    font-size: $gr-font-11;
+    padding: $spacing-1 $spacing-2;
     background: var(--b3-theme-surface);
     border-left: 2px solid var(--b3-theme-primary);
-    border-radius: 3px;
+    border-radius: $gr-radius-3;
     word-break: break-all;
   }
 
@@ -326,18 +342,18 @@ $gr-accent: #06b6d4;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: $spacing-1;
   }
 
   &__backlink-item {
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    padding: 5px 8px;
-    font-size: 11px;
+    gap: $gr-space-1;
+    padding: $gr-space-5 $spacing-2;
+    font-size: $gr-font-11;
     background: var(--b3-theme-surface);
     border: 1px solid var(--b3-border-color);
-    border-radius: 4px;
+    border-radius: $radius-sm;
     cursor: pointer;
 
     &:hover {
@@ -346,7 +362,7 @@ $gr-accent: #06b6d4;
   }
 
   &__backlink-name {
-    font-weight: 500;
+    font-weight: $font-weight-medium;
     color: var(--b3-theme-on-background);
     white-space: nowrap;
     overflow: hidden;
@@ -354,7 +370,7 @@ $gr-accent: #06b6d4;
   }
 
   &__backlink-path {
-    font-size: 10px;
+    font-size: $font-size-2xs;
     color: var(--b3-theme-on-surface);
     white-space: nowrap;
     overflow: hidden;
@@ -366,10 +382,10 @@ $gr-accent: #06b6d4;
 .gr-badge {
   display: inline-flex;
   align-items: center;
-  padding: 1px 7px;
-  font-size: 10px;
-  line-height: 1.6;
-  border-radius: 999px;
+  padding: $gr-space-1 $gr-space-7;
+  font-size: $font-size-2xs;
+  line-height: $gr-lh-16;
+  border-radius: $radius-full;
   white-space: nowrap;
 
   &--bidirectional {

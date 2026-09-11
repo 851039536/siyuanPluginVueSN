@@ -72,7 +72,7 @@ feature/
 5. **设置** `src/config/settings.ts` — 在 `PluginSettings` 接口添加 `enableXxx: boolean` + `DEFAULT_SETTINGS` 添加默认值。含缩写词的 ID（如 `qrCode`、`aiContentGenerator`）需要在 `FEATURE_ID_TO_KEY_MAP` 中添加映射
 6. **i18n** `src/i18n/{zh_CN,en_US}/<feature>.json` — 添加翻译，运行 `pnpm i18n:verify`
 7. **配置** `src/features/config.ts` — 在 `FEATURE_CONFIG` 数组中添加条目；纯配置型功能（无 register 函数）还须加入 `_ConfigOnly` 白名单
-8. **图标** `src/config/icons.ts` — 添加到 `FEATURE_ICONS`，运行 `pnpm validate:icons`
+8. **图标** `src/components/kit/icons.ts`（真源，`src/config/icons.ts` 为转发壳）— 添加到 `FEATURE_ICONS`，运行 `pnpm validate:icons`
 
 **迁移现有功能为 Config-Only**：若功能不再独立注册（如 `base64Image` 迁移到 `toolCollection` 内），需：
 - 将 `register` 函数改为 no-op（保留导出以维持编译通过）
@@ -169,7 +169,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
-- 图标只能传 `src/config/icons.ts` 已注册的 `IconKey`，不能传任意 Iconify 名
+- 图标只能传 `src/components/kit/icons.ts`（真源）已注册的 `IconKey`，不能传任意 Iconify 名
 - 尺寸档位统一 `xsmall` / `small` / `medium` / `large`（默认 `small`）；字号阶梯与按钮交互/无障碍约定见 [AGENTS_STYLE.md § 强制规则：按钮交互与无障碍](./AGENTS_STYLE.md#强制规则按钮交互与无障碍2026-09-10)
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
@@ -253,7 +253,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 - **README 文档**：每个 `src/features/*/` 目录下必须有 `README.md`
 - **全局样式**：`@use "@/index.scss" as *;`
 - **优先思源内置图标** 或 @iconify/vue
-- **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/config/icons.ts` 中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
+- **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/components/kit/icons.ts`（真源）中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
 - **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [AGENTS_ARCH.md § 强制规则：文件头注释](./AGENTS_ARCH.md#强制规则文件头注释)
 - **功能模块内代码分层**：模块内共享常量/工具函数禁止复制粘贴，提取到 `types/index.ts` / `utils.ts`（见上方「功能模块内代码分层」）
 - **单文件行数上限**：300 行警戒线，500 行硬阈值，≥1000 行必须重构；单一函数 ≤30 行最佳。详见 [AGENTS_ARCH.md § 强制规则：单文件行数上限](./AGENTS_ARCH.md#强制规则单文件行数上限)
@@ -425,7 +425,7 @@ Vite library 模式 → 从 `src/index.ts` 输出 CJS 格式。`vite.config.ts` 
 
 ## 图标系统
 
-使用 `@iconify/vue`，离线预加载 MDI 和 Phosphor 图标集（在 `iconifySetup.ts` 中配置）。所有功能图标必须在 `src/config/icons.ts` 的 `FEATURE_ICONS` 映射中注册，验证脚本（`scripts/validate-icons.mjs`）检查其是否存在于预加载图标集中。图标使用规范见上方「图标规则」。
+使用 `@iconify/vue`，离线预加载 MDI 和 Phosphor 图标集（在 `iconifySetup.ts` 中配置）。所有功能图标必须在 `src/components/kit/icons.ts`（真源）的 `FEATURE_ICONS` 映射中注册，验证脚本（`scripts/validate-icons.mjs`）检查其是否存在于预加载图标集中。图标使用规范见上方「图标规则」。
 
 ---
 

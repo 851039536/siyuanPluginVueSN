@@ -1,6 +1,6 @@
 // ========== ConfirmDialog.scss ==========
 // 通用确认对话框：遮罩 + 卡片（头/体/脚），面板底色 + 卡片 surface 凸出
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-confirm-mask {
   position: fixed;

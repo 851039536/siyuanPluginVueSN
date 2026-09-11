@@ -677,6 +677,6 @@ openWindow({ tab, width?, height?, position?: { x, y } })
 2. **视觉自然**：仅图标旋转（`animation: spin 1s linear infinite`），按钮布局/尺寸不跳动；若按钮已有文字，保留文字仅替换图标；若为纯图标按钮，图标直径不变。
 3. **禁用态**：请求期间按钮同时进入 `disabled` 状态，防止重复提交；`loading` ref 用 `isFetching` / `isSubmitting` / `isGenerating` 等语义命名。
 4. **结束还原**：请求结束（成功/失败/超时）后 `loading` 置 false，图标恢复原状，禁用解除。
-5. **CSS 动画统一**：旋转动画放按钮所在 SCSS 文件（如 `.vp-btn-loading` / `.spin`），禁止内联 style 硬编码动画；`mdi:loading` 图标需在 `src/config/icons.ts` 已注册的图标集中（运行 `pnpm validate:icons`）。
+5. **CSS 动画统一**：旋转动画放按钮所在 SCSS 文件（如 `.vp-btn-loading` / `.spin`），禁止内联 style 硬编码动画；`mdi:loading` 图标需在 `src/components/kit/icons.ts`（真源）已注册的图标集中（运行 `pnpm validate:icons`）。
 
 > 参考实现：`src/features/aiContentGenerator/components/GeneratePanel.vue`（`isGenerating` ref + `mdi:loading` 旋转 + disabled）

@@ -27,14 +27,15 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import {
   computed,
   onMounted,
   ref,
 } from "vue"
-import Button from "@/components/Button.vue"
-import FormField from "@/components/FormField.vue"
+import Button from "./Button.vue"
+import FormField from "./FormField.vue"
+import "./kit/theme"
 
 type ToggleButtonSize = "xsmall" | "small" | "medium" | "large"
 type ToggleButtonSeverity = "primary" | "danger"

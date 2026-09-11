@@ -2,7 +2,7 @@
 // 依赖入口根类的三个 CSS 变量（单一数据源，避免三份 SCSS 重复档位块）：
 // --dp-cell-size / --dp-cell-font / --dp-cell-alpha
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-datepicker {
   &__calendar {

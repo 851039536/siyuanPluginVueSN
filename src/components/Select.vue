@@ -184,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import type {
   OptionType,
   SelectGroupOption as SelectGroupOptionShape,
@@ -200,8 +200,8 @@ import {
   useAttrs,
   watch,
 } from "vue"
-import FormField from "@/components/FormField.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import FormField from "./FormField.vue"
+import IconWrapper from "./IconWrapper.vue"
 import { isGroupOption as isGroupLike } from "./select/navigation"
 import { useSelectKeyboard } from "./select/useSelectKeyboard"
 import { useSelectNavigation } from "./select/useSelectNavigation"
@@ -211,6 +211,7 @@ import {
   hasGroupOption,
   resolveOptionKey,
 } from "./select/utils"
+import "./kit/theme"
 
 /**
  * 选项类型对外导出：`Listbox.vue` 与多个 feature 依赖 `@/components/Select.vue` 这一导入路径，

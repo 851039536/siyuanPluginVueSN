@@ -1,7 +1,7 @@
 // ========== DatePickerPanel.scss ==========
 // 面板内部结构（头部导航 / 视图标题 / 底部按钮栏）；面板外壳与定位在 DatePicker.scss
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-datepicker {
   &__header {

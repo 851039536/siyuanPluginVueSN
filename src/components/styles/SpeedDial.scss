@@ -1,6 +1,6 @@
 // ========== SpeedDial.scss ==========
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 // 仅承载「定位 + 轨迹排布 + 开合动效」：主按钮与动作按钮的外观全部来自内部共享 Button（零样式复制）
 .si-speeddial {

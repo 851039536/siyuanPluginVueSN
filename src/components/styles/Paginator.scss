@@ -1,6 +1,6 @@
 // ========== Paginator.scss ==========
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 // 仅承载布局、报告文本与省略号：按钮/下拉/输入的外观全部来自共享组件（零样式复制）
 .si-paginator {

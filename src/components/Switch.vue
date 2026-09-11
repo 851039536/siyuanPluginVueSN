@@ -35,6 +35,7 @@ import {
   computed,
   useSlots,
 } from "vue"
+import "./kit/theme"
 
 type SwitchSize = "xsmall" | "small" | "medium" | "large"
 

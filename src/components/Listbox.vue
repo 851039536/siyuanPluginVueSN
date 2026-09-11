@@ -88,17 +88,18 @@
 
 <script setup lang="ts">
 import type { ComponentPublicInstance } from "vue"
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import {
   computed,
   ref,
   useId,
   watch,
 } from "vue"
-import FormField from "@/components/FormField.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import Input from "@/components/Input.vue"
-import type { SelectOption } from "@/components/Select.vue"
+import FormField from "./FormField.vue"
+import IconWrapper from "./IconWrapper.vue"
+import Input from "./Input.vue"
+import type { SelectOption } from "./Select.vue"
+import "./kit/theme"
 
 type ListboxSize = "xsmall" | "small" | "medium" | "large"
 /** 单选为单值、多选为数组、未选为 null */

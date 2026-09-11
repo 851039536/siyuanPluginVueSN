@@ -7,7 +7,7 @@
 // 若写成 `.si-input-group > .si-input` 会被编译为 `.si-input-group[data-v-x] > .si-input[data-v-x]` 而永不匹配。
 // 保留 `>` 前缀可把匹配范围限制为直接子元素（成员根），成员**内部**的边框承载元素用后代形式（更耐受成员内部结构变化）。
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 // 四角圆角工具（组内仅最外侧保留圆角）
 @mixin ig-radius($tl, $tr, $br, $bl) {

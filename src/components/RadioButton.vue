@@ -52,7 +52,8 @@ import {
   nextTick,
   ref,
 } from "vue"
-import FormField from "@/components/FormField.vue"
+import FormField from "./FormField.vue"
+import "./kit/theme"
 
 type RadioButtonSize = "xsmall" | "small" | "medium" | "large"
 type RadioButtonVariant = "outlined" | "filled"

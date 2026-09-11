@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import {
   computed,
   nextTick,
@@ -121,8 +121,9 @@ import {
   useAttrs,
   watch,
 } from "vue"
-import FormField from "@/components/FormField.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import FormField from "./FormField.vue"
+import IconWrapper from "./IconWrapper.vue"
+import "./kit/theme"
 
 type InputType =
   | "text"

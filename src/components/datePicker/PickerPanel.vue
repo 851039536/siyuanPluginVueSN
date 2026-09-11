@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "../kit/icons"
 import type {
   DatePickerAriaLabels,
   DisabledOptions,
@@ -144,7 +144,7 @@ import {
   nextTick,
   ref,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import IconWrapper from "../IconWrapper.vue"
 import CalendarPanel from "./CalendarPanel.vue"
 import MonthYearPanel from "./MonthYearPanel.vue"
 import { MONTH_LABELS } from "./types"

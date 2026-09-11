@@ -1,7 +1,7 @@
 // SpeedDial 类型与常量：方向/轨迹/定位/尺寸字面量类型 + 8 向角度与档位按钮边长单一数据源
 // （SpeedDial.vue 的私有模块，禁止 feature 直接导入）
 
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "../kit/icons"
 
 /** 展开方向（8 向） */
 export type SpeedDialDirection =

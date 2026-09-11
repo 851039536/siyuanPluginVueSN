@@ -60,8 +60,9 @@ import {
   useId,
   watch,
 } from "vue"
-import FormField from "@/components/FormField.vue"
+import FormField from "./FormField.vue"
 import { applyAutoResize, clearAutoResize } from "./textarea/autoResize"
+import "./kit/theme"
 
 type TextareaSize = "xsmall" | "small" | "medium" | "large"
 type TextareaVariant = "outlined" | "filled"

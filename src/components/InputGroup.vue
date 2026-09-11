@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import "./kit/theme"
 
 type InputGroupSize = "xsmall" | "small" | "medium" | "large"
 

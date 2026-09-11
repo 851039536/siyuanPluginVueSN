@@ -35,6 +35,9 @@
 </template>
 
 <script setup lang="ts">
+// 引入组件库默认主题（自包含迁移，详见 kit/README.md）
+import "./kit/theme"
+
 type FormFieldSize = "xsmall" | "small" | "medium" | "large"
 
 interface Props {

@@ -143,10 +143,9 @@ src/
 ├── App.vue                      # 根组件（全局对话框容器）
 ├── api.ts                       # 思源笔记 API 封装（60+ 函数）
 ├── index.scss                   # 全局样式入口
-├── _variables.scss              # SCSS 变量
 ├── commands/                    # 斜杠命令
-├── components/                  # 共享 UI 组件（26 个原子组件）
-├── config/                      # 配置（settings.ts, icons.ts）
+├── components/                  # 共享 UI 组件（26 个原子组件；自包含：kit/ 内含 icons.ts 与 variables.scss 真源）
+├── config/                      # 配置（settings.ts；icons.ts 为 kit/icons.ts 转发壳）
 ├── features/                    # 40+ 功能模块
 │   ├── config.ts                # FEATURE_CONFIG 单一数据源
 │   ├── index.ts                 # 统一导出 + 编译时断言
@@ -181,7 +180,7 @@ src/
 5. `src/config/settings.ts` — `PluginSettings` 接口 + 默认值
 6. `src/i18n/` — 中英文翻译
 7. `src/features/config.ts` — `FEATURE_CONFIG` 条目
-8. `src/config/icons.ts` — `FEATURE_ICONS` 图标映射
+8. `src/components/kit/icons.ts` — `FEATURE_ICONS` 图标映射（真源）
 
 ---
 

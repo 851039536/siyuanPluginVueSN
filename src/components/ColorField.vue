@@ -48,6 +48,7 @@ import {
   onUnmounted,
   ref,
 } from "vue"
+import "./kit/theme"
 
 interface Props {
   /** 当前颜色（hex） */

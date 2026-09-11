@@ -59,7 +59,8 @@ import {
   useAttrs,
   useId,
 } from "vue"
-import FormField from "@/components/FormField.vue"
+import FormField from "./FormField.vue"
+import "./kit/theme"
 
 type SliderSize = "xsmall" | "small" | "medium" | "large"
 

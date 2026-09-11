@@ -1,7 +1,7 @@
 // ========== Listbox.scss ==========
 // 内联列表选择：面板 + 选项列表。无浮层，故面板可安全 overflow: hidden（列表自带纵向滚动）
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-listbox {
   display: inline-flex;

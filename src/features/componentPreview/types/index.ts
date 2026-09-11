@@ -64,6 +64,11 @@ export interface PreviewExample {
    * 存在时优先于 slotText，用于 InputGroup 这类默认插槽需放多个子组件的示例。
    */
   render?: (props: Record<string, any>) => VNode | VNode[]
+  /**
+   * 具名 / 作用域插槽渲染：键为插槽名，值为接收该插槽作用域参数的 VNode 工厂。
+   * 工厂可能被多次调用（如列表类组件每个事件一次），因此必须在工厂内部新建 VNode，不可复用同一实例。
+   */
+  slots?: Record<string, (slotProps: Record<string, any>) => VNode | VNode[]>
   /** 与该示例等价的可复制 Vue 模板代码 */
   code: string
 }

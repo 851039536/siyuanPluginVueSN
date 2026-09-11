@@ -49,6 +49,9 @@ import {
   speedDialPreviewGroups,
 } from "./speedDial"
 import {
+  splitterPreviewGroups,
+} from "./splitter"
+import {
   tagAvatarPreviewGroups,
 } from "./tagAvatar"
 import {
@@ -69,6 +72,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...inputGroupPreviewGroups,
   ...toggleButtonPreviewGroups,
   ...speedDialPreviewGroups,
+  ...splitterPreviewGroups,
   ...paginatorPreviewGroups,
   ...panelPreviewGroups,
   ...controlPreviewGroups,

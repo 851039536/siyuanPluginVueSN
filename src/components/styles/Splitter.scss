@@ -1,0 +1,26 @@
+// ========== Splitter.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 分割面板容器：只负责方向与拖拽期的整体反馈
+// （面板与分隔条的样式在 SplitterPanel.scss —— 分隔条由 SplitterPanel 渲染，样式须与其 scoped 保持一致）
+.si-splitter {
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+
+  &--horizontal {
+    flex-direction: row;
+  }
+
+  &--vertical {
+    flex-direction: column;
+  }
+
+  // 拖拽中：避免选中文本导致选区飞走
+  &--resizing {
+    user-select: none;
+  }
+}
+
+// ⚠️ 分隔条的样式一律放 SplitterPanel.scss：分隔条由 SplitterPanel 渲染，
+// 带的是 SplitterPanel 的 scoped 属性，写在 Splitter.scss 里不会命中。

@@ -26,12 +26,13 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import {
   computed,
   ref,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import IconWrapper from "./IconWrapper.vue"
+import "./kit/theme"
 
 type AvatarSize = "xsmall" | "small" | "medium" | "large" | "xlarge"
 type AvatarShape = "circle" | "square"

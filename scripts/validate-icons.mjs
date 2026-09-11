@@ -29,7 +29,8 @@ async function validateIcons() {
     ])
 
     // 读取项目图标配置
-    const configPath = path.resolve(process.cwd(), 'src/config/icons.ts')
+    // 真源已迁至 src/components/kit/icons.ts（组件库自包含迁移；src/config/icons.ts 仅为转发壳）
+    const configPath = path.resolve(process.cwd(), 'src/components/kit/icons.ts')
     const configContent = await fs.readFile(configPath, 'utf-8')
 
     // 提取所有图标名称

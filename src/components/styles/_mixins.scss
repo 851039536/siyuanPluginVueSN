@@ -1,6 +1,6 @@
 // ========== src/components/styles/_mixins.scss ==========
 // 共享 mixins 与局部 Token（仅限 src/components 范围使用）
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 // ========== 语义化透明度变量 ==========
 $opacity-disabled: 0.5;

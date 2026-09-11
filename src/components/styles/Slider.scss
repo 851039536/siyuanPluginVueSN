@@ -1,6 +1,6 @@
 // ========== Slider.scss ==========
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-slider {
   // 档位单点驱动：基础规则与 4 个伪元素统一消费（沿用 DatePicker --dp-* / InputGroup --ig-addon-* 范式）

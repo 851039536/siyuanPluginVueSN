@@ -2,7 +2,7 @@
 // 纯 CSS 动画 Loader（飞船造型 + 长光带穿越）→ 转为 SCSS
 // 注：此组件主要使用绝对定位和固定像素值实现动画效果，
 // 大部分数值为动画数学计算结果，不适用设计 Token 替换
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 $loader-color: var(--b3-theme-on-background);
 

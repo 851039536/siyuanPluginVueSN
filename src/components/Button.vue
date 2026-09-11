@@ -29,14 +29,15 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import {
   computed,
   onMounted,
   ref,
   useSlots,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import IconWrapper from "./IconWrapper.vue"
+import "./kit/theme"
 
 /** 颜色轴（与外观轴正交；variant 的既有取值会推导出对应颜色族） */
 type ButtonSeverity = "primary" | "secondary" | "success" | "info" | "warning" | "danger"

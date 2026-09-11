@@ -59,7 +59,8 @@ import {
   ref,
   watch,
 } from "vue"
-import Button from "@/components/Button.vue"
+import Button from "./Button.vue"
+import "./kit/theme"
 
 type ConfirmDialogSize = "xsmall" | "small" | "medium" | "large"
 

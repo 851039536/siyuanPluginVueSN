@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import type {
   SpeedDialAction as SpeedDialActionShape,
   SpeedDialActionSeverity as SpeedDialActionSeverityShape,
@@ -63,7 +63,7 @@ import {
   ref,
   watch,
 } from "vue"
-import Button from "@/components/Button.vue"
+import Button from "./Button.vue"
 import { resolveActionOffset, toItemStyle } from "./speedDial/geometry"
 import type { FocusableHandle } from "./speedDial/useSpeedDial"
 import { useSpeedDial } from "./speedDial/useSpeedDial"
@@ -73,6 +73,7 @@ import {
   LINEAR_ITEM_GAP,
   SIZE_BUTTON_EDGE,
 } from "./speedDial/types"
+import "./kit/theme"
 
 export type SpeedDialAction = SpeedDialActionShape
 export type SpeedDialActionSeverity = SpeedDialActionSeverityShape

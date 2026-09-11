@@ -107,16 +107,16 @@ import type {
   PaginatorLabels as PaginatorLabelsShape,
   PaginatorSize as PaginatorSizeShape,
 } from "./paginator/types"
-import type { SelectOption } from "@/components/Select.vue"
+import type { SelectOption } from "./Select.vue"
 import {
   computed,
   onMounted,
   ref,
   watch,
 } from "vue"
-import Button from "@/components/Button.vue"
-import Input from "@/components/Input.vue"
-import Select from "@/components/Select.vue"
+import Button from "./Button.vue"
+import Input from "./Input.vue"
+import Select from "./Select.vue"
 import { resolvePageLinks } from "./paginator/pageLinks"
 import {
   formatReport,
@@ -128,6 +128,7 @@ import {
   DEFAULT_LABELS,
   PAGE_LINK_ELLIPSIS,
 } from "./paginator/types"
+import "./kit/theme"
 
 export type PaginatorChangePayload = PaginatorChangePayloadShape
 export type PaginatorLabels = PaginatorLabelsShape

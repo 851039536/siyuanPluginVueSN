@@ -79,6 +79,7 @@ import {
   Line,
   Pie,
 } from "vue-chartjs"
+import "./kit/theme"
 
 type ChartType = "line" | "bar" | "pie" | "doughnut" | "area"
 type ChartSize = "xsmall" | "small" | "medium" | "large" | "full"

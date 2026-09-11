@@ -30,9 +30,10 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import { computed } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import IconWrapper from "./IconWrapper.vue"
+import "./kit/theme"
 
 type TagSize = "xsmall" | "small" | "medium" | "large"
 type TagVariant =

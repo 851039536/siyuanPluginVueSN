@@ -1,6 +1,6 @@
 // ========== RadioButton.scss ==========
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-radiobutton {
   display: inline-flex;

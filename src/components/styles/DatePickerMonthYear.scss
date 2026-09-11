@@ -1,7 +1,7 @@
 // ========== DatePickerMonthYear.scss ==========
 // 月视图 4 列 × 3 行 = 12；年视图 5 列 × 2 行 = 10（两视图等宽，均为 7 个日期格的宽度）
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-datepicker {
   &__matrix {

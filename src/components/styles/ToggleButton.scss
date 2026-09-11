@@ -1,5 +1,5 @@
 // ========== ToggleButton.scss ==========
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 // 仅承载容器：按下/未按下的视觉、四档尺寸、禁用与焦点环全部由内部共享 Button 表达（零样式复制）
 .si-togglebutton {

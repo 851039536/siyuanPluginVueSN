@@ -9,10 +9,12 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { getIconConfig } from "@/config/icons"
+import { getIconConfig } from "./kit/icons"
+import "./kit/theme"
+import "./kit/iconify"
 
 interface Props {
   /** 图标键名 */

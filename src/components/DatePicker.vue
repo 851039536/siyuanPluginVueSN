@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/config/icons"
+import type { IconKey } from "./kit/icons"
 import type {
   DatePickerAriaLabels,
   DatePickerSize,
@@ -131,8 +131,8 @@ import {
   ref,
   useId,
 } from "vue"
-import FormField from "@/components/FormField.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import FormField from "./FormField.vue"
+import IconWrapper from "./IconWrapper.vue"
 import PickerPanel from "./datePicker/PickerPanel.vue"
 import {
   DEFAULT_ARIA_LABELS,
@@ -143,6 +143,7 @@ import {
   useDatePicker,
   type DatePickerPanelHandle,
 } from "./datePicker/useDatePicker"
+import "./kit/theme"
 
 /** 尺寸档位 → 图标像素尺寸（与其它组件的档位图标约定一致） */
 const TIER_ICON_SIZE: Record<DatePickerSize, number> = {

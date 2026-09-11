@@ -1,7 +1,7 @@
 // ========== DatePicker.scss ==========
 // 根类上定义档位 CSS 变量（单一数据源），供 DatePickerCalendar / DatePickerMonthYear 跨文件消费
 @use './_mixins.scss' as m;
-@use '@/variables.scss' as *;
+@use '../kit/variables.scss' as *;
 
 .si-datepicker {
   // 档位变量默认值（等同 S 档，被下方 --xsmall/--medium/--large 覆盖）

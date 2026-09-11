@@ -76,6 +76,7 @@ import {
   useAttrs,
   useSlots,
 } from "vue"
+import "./kit/theme"
 
 type CardVariant = "bordered" | "elevated" | "flat" | "outlined"
 type CardSize = "xsmall" | "small" | "medium" | "large"

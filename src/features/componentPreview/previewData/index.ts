@@ -40,6 +40,9 @@ import {
   paginatorPreviewGroups,
 } from "./paginator"
 import {
+  panelPreviewGroups,
+} from "./panel"
+import {
   radioButtonPreviewGroups,
 } from "./radioButton"
 import {
@@ -67,6 +70,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...toggleButtonPreviewGroups,
   ...speedDialPreviewGroups,
   ...paginatorPreviewGroups,
+  ...panelPreviewGroups,
   ...controlPreviewGroups,
   ...listboxPreviewGroups,
   ...colorFieldPreviewGroups,

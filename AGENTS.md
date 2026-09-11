@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（31 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（36 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 31 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 36 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -174,11 +174,11 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
-- 需要按钮 / 按钮式开关 / 浮动动作按钮 / 输入框 / 多行文本域 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框 / **分页** / **时间线** / **分隔线** / **可折叠面板** / **可调整的分割面板**时，**必须**使用共享组件（多行输入用 `Textarea`，不用 `Input` 的 `type="textarea"` 旧入口；**单按钮布尔开关用 `ToggleButton`，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`**；**多动作浮钮用 `SpeedDial`**）
+- 需要按钮 / 按钮式开关 / 浮动动作按钮 / 输入框 / 多行文本域 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框 / **分页** / **时间线** / **分隔线** / **可折叠面板** / **可调整的分割面板** / **标签页切换**时，**必须**使用共享组件（多行输入用 `Textarea`，不用 `Input` 的 `type="textarea"` 旧入口；**单按钮布尔开关用 `ToggleButton`，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`**；**多动作浮钮用 `SpeedDial`**）
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（31 个）
+### 3. 组件清单（36 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
@@ -206,6 +206,11 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `Card.vue` | 卡片容器（标题/副标题/封面/主体/底部/加载/激活）；具名插槽 `title` / `subtitle` / `content`（`content` 未传时**回落默认插槽**，官方写法可直接照搬），另有 `header`（**本项目为带下边框的标题栏，非官方通栏语义**） / `header-extra` / `cover`（对应官方通栏区） / `footer` | `variant` / `size` / `title` / `subtitle` / `cover` / `clickable` / `loading` / `rounded` / `bodyNoPadding` / `contentClass`（主体容器类名钩子，对应官方 `contentClass`） / `captionClass`（标题区容器类名钩子，对应官方 PT 的 `caption`） |
 | `ConfirmDialog.vue` | 确认对话框（受控显示、标题 + 多行消息、危险配色、遮罩点关、Esc 取消、打开聚焦容器避免误触） | `visible` / `title` / `message` / `confirmText` / `cancelText` / `danger` / `size` / `closeOnMask` |
 | `Timeline.vue` | 时间线：`value` 事件集合 + 两向 `layout`（`vertical` 默认：事件自上而下、线在左/右；`horizontal`：事件自左向右、线在上/下）× 三档 `align`（竖向 `left` 默认 / `right` 镜像 / `alternate` 左右交替；横向 `top` 默认 / `bottom` 镜像 / `alternate` 上下交替），渲染由 `content`（必填）/ `opposite` / `marker` 三个插槽驱动（作用域 `{ item, index }`）；**纯展示无交互、无自有事件**（节点上的点击由调用方在插槽内自行提供）；`opposite` 容器恒渲染（两侧等宽 / 等高、线位置稳定），`alternate` 按奇数索引反向；默认节点为主题色空心圆，连接线取 `--b3-border-color` 且**末项不延长**；四档 `size` **只驱动字号**（节点直径 10px / 线宽 2px 恒定）；私有目录 `timeline/`（types，禁止 feature 直接导入） | `value`（必填）/ `layout` / `align` / `size` |
+| `Tabs.vue` | 标签页容器（**五件套之首**，与 `TabList` / `Tab` / `TabPanels` / `TabPanel` 共用「Tabs」一个预览分区）：`value`（**传入即受控**，配 `v-model:value`；不传时内部自持 = 非受控，两种模式都派发 `update:value`）+ `lazy`（未激活面板是否完全**不进 DOM**，默认 `false` 时仅 `display:none` 隐藏并**保留面板内状态**）+ `selectOnFocus`（焦点移入即选中）+ `tabindex`（roving tabindex 基准：激活标签取该值、其余 `-1`，面板共用，传 `-1` 可把整组移出 Tab 序列）+ `scrollStrategy`（激活标签滚动策略：`nearest` 默认（越界才滚，留 10% 缓冲）/ `center` / `false` / 自定义函数）；`update:value` **幂等**（值未变不派发）；四档 `size` 驱动字号 10/12/14/16 与标签水平内边距、面板上边距（**下划线厚度与标签栏分隔线恒定**）；根 `width: 100%`；私有目录 `tabs/`（types/context，禁止 feature 直接导入）；**与官方有意差异**：不做 `showNavigators` 与 `previcon` / `nexticon`、不做已废弃的 `scrollable`、不做 `as` / `asChild` 多态渲染与 `dt` / `pt` | `value` / `lazy` / `selectOnFocus` / `tabindex` / `scrollStrategy` / `size` |
+| `TabList.vue` | 标签栏容器（配套组件）：`div > div[role="tablist"][aria-orientation="horizontal"]`，内容容器**横向可滚动且滚动条隐藏**；激活值变化（含首次挂载）时把激活标签**自动滚入视野**；`ariaLabel` / `ariaLabelledby` 命名整组（其余 attrs 透传到根）。**滚动导航按钮不提供**（官方 `showNavigators` 的产物） | `ariaLabel` / `ariaLabelledby` |
+| `Tab.vue` | 单个标签（配套组件）：`<button type="button" role="tab">` + `aria-selected` / `aria-controls` / `id`（`${tabsId}-tab-${value}`）+ roving `tabindex` + 原生 `disabled`；`value` **必填**（与同值 `TabPanel` 配对，**用严格相等判定激活** —— 官方 `equals()` 深比较是为支持任意类型，本项目 `value` 限定 `string \| number`）；**键盘键位完全对齐官方**：←/→ 移焦点并回绕、Home / End 跳首末、PageUp / PageDown **仅滚动不聚焦**、Enter / 空格选中（焦点移动 = `focus()` + `scrollIntoView({ block: "nearest" })`；相邻项查找走容器内 `[role="tab"]` 过滤禁用项后按索引取，官方为兄弟遍历并跳过其墨条元素） | `value`（必填）/ `disabled` |
+| `TabPanels.vue` | 面板容器（配套组件）：纯结构 `div` + 默认插槽，无 role；隐藏由各自的 `TabPanel` 负责 | — |
+| `TabPanel.vue` | 单个面板（配套组件）：`role="tabpanel"` + `id`（`${tabsId}-tabpanel-${value}`）+ `aria-labelledby` 指向对应标签 + `tabindex`（取 `Tabs` 的 `tabindex`）；**`lazy` 双开关**：`v-if="lazy ? active : true"` + `v-show="lazy ? true : active"`；**默认插槽无作用域参数**（官方仅 `asChild` 模式下才传 `{ class, active, a11yAttrs }`，本项目不做 `asChild`） | `value`（必填） |
 | `Divider.vue` | 分隔线：三种线型（`solid` 默认 / `dashed` / `dotted`）× 两个方向（`horizontal` 默认 / `vertical`）× 三档内容位置（水平 `left`/`center`/`right`，垂直 `top`/`center`/`bottom`；**未传按居中、取值与方向不匹配时静默回落居中**，与官方一致）；**仅有默认插槽**（无具名/作用域参数），不传时整条线贯通；**纯展示无交互、无自有事件**；**用两段真实线段实现**（非官方「内容遮罩底色」法，因本项目父容器底色有多种）；垂直方向需父容器有确定高度且内置 `min-height` 兜底；线色取 `--b3-border-color`，水平 `margin: $s-3 0` / 垂直 `margin: 0 $s-3`（可被调用方覆盖）；单根元素 ⇒ `class` / `style` 直接透传 | `type` / `layout` / `align` |
 | `Panel.vue` | 面板：可折叠的内容容器（`header` 文本 + `toggleable` 折叠 + `collapsed` 受控/非受控双模式，**不传 `collapsed` 时内部自持、可独立开合**；**未开启 `toggleable` 时忽略 `collapsed`**）；6 个插槽 = `default` / `header`（作用域 `{ collapsed }`）/ `icons` / `togglebutton`（作用域 `{ collapsed, toggleCallback, keydownCallback }`）/ `toggleicon`（`{ collapsed }`）/ `footer`，2 个事件 = `update:collapsed` / `toggle`；**与官方三处有意差异**：不提供 `toggleButtonProps`（改由 `togglebutton` 插槽覆盖）、`header` 作用域只给 `{ collapsed }`、**折叠用 `v-show` 瞬时收起 + 图标 0.12s 旋转（不做官方高度动画）**；切换按钮为共享 `Button` 纯图标 ⇒ `aria-label` 走 `toggleLabel`（中文默认值，零 i18n 改动）+ `aria-expanded` / `aria-controls` | `header` / `toggleable` / `collapsed` / `toggleLabel` |
 | `Splitter.vue` | 分割面板容器：`layout`（`horizontal` 默认 / `vertical`）+ `gutterSize`（分隔条 px，默认 4，同时决定拖拽命中区）+ `step`（方向键步进百分比，默认 5）+ `disabled` + `sizes`（**传入即受控**，配合 `v-model:sizes`）+ `stateKey` / `stateStorage`（Web Storage 持久化，受控时不读写）+ `resizeLabel`（分隔条无障碍名称，中文默认值 ⇒ 零 i18n）；事件 = `update:sizes` / `resizestart` / `resize` / `resizeend` / `collapse`，另暴露 `resetState()`；**分隔条渲染在面板内侧**（见 `SplitterPanel.vue`），拖拽走 Pointer Events + `setPointerCapture`，键盘 ←→ / ↑↓ 按 `step` 调整；私有目录 `splitter/`（types/sizes，禁止 feature 直接导入） | `layout` / `gutterSize` / `step` / `disabled` / `sizes` / `stateKey` / `stateStorage` / `resizeLabel` |
@@ -456,7 +461,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 31 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/ConfirmDialog/Card/Timeline/Divider/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 36 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/ConfirmDialog/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Divider/Chart 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/
@@ -494,4 +499,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（31 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（36 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

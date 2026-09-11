@@ -1,0 +1,44 @@
+// ========== Tabs.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 标签页容器：纵向排列「标签栏 + 面板区」，档位变量在此单点输出，供四个子组件消费
+.si-tabs {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-tabs-font: #{$t-xs};
+  --si-tabs-tab-padding-x: #{$s-2};
+  --si-tabs-panel-padding-y: #{$s-3};
+
+  display: flex;
+  flex-direction: column;
+  width: 100%; // 铺满容器：预览舞台的居中 flex 下也能占满，无需专属舞台高度类
+  font-family: $ff-zh;
+  font-size: var(--si-tabs-font, #{$t-xs});
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-background, $c-fg);
+
+  // 尺寸档位：字号阶梯 10/12/14/16，标签水平内边距与面板上边距同步收放
+  // （下划线厚度与标签栏分隔线恒定，切档时结构不抖动）
+  &--xsmall {
+    --si-tabs-font: #{$t-2xs}; // 10px
+    --si-tabs-tab-padding-x: #{$s-px6};
+    --si-tabs-panel-padding-y: #{$s-2};
+  }
+
+  &--small {
+    --si-tabs-font: #{$t-xs}; // 12px
+    --si-tabs-tab-padding-x: #{$s-2};
+    --si-tabs-panel-padding-y: #{$s-3};
+  }
+
+  &--medium {
+    --si-tabs-font: #{$t-sm}; // 14px
+    --si-tabs-tab-padding-x: #{$s-3};
+    --si-tabs-panel-padding-y: #{$s-3};
+  }
+
+  &--large {
+    --si-tabs-font: #{$t-base}; // 16px
+    --si-tabs-tab-padding-x: #{$s-4};
+    --si-tabs-panel-padding-y: #{$s-4};
+  }
+}

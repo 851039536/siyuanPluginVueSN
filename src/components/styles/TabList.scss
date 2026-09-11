@@ -1,0 +1,24 @@
+// ========== TabList.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 标签栏：外层承载下边线与滚动裁切，内层是 role="tablist" 的横向滚动容器
+.si-tablist {
+  width: 100%;
+  // 分隔线取中性边框色（相邻色陷阱：surface 与 background 灰度仅差约 3%，画细线不可辨）
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
+}
+
+.si-tablist__content {
+  display: flex;
+  align-items: stretch;
+  gap: $s-px2;
+  overflow-x: auto;
+  overflow-y: hidden;
+  // 滚动条隐藏：标签栏高度固定，滚动条会挤压标签并把下边线顶歪
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

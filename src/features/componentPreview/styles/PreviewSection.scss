@@ -86,6 +86,12 @@
     z-index: 1;
   }
 
+  // Drawer 同为「fixed 遮罩 + 卡片」，只是卡片贴合舞台某一条边（同 Dialog 的收敛机制）
+  .si-drawer-mask.si-drawer-mask {
+    position: absolute;
+    z-index: 1;
+  }
+
   // ConfirmPopup 也是 position: fixed，但它是「贴锚点的小气泡」而非铺满视口 ⇒ 无需覆盖定位；
   // 卡片 overflow: hidden 同样裁不到它（fixed 元素不受祖先 overflow 裁剪），仅可能压到相邻卡片上。
 
@@ -113,6 +119,18 @@
   height: 300px; // 弹窗三段结构展示所需高度，无对应 Token
 
   .si-dialog.si-dialog {
+    max-height: 100%;
+  }
+}
+
+// Drawer：贴边卡片需足够纵向空间演示左右抽屉与三段结构；同时把延伸量限制在舞台内
+// （真实调用处贴死视口边缘铺满对应方向，沙箱内收敛后「长内容」示例演示的才是内容区内部滚动）
+// 类名写两遍抬到 (0,3,0)，同 .cp-card__stage 内弹层覆盖的写法
+.cp-card__stage--drawer {
+  height: 260px; // 抽屉三段结构展示所需高度，无对应 Token
+
+  .si-drawer.si-drawer {
+    max-width: 100%;
     max-height: 100%;
   }
 }

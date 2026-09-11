@@ -1,6 +1,6 @@
 // 弹层共享外壳：遮罩点关判定 + Esc 监听 + 焦点接管与归还
-// （Dialog / ConfirmDialog 共用的组件库私有能力，禁止 feature 直接导入）
-// 只抽「行为」，不抽遮罩 DOM 结构：两个组件内部结构差异大（ConfirmBody / header+content+footer）
+// （Dialog / ConfirmDialog / Drawer 共用的组件库私有能力，禁止 feature 直接导入）
+// 只抽「行为」，不抽遮罩 DOM 结构：各组件内部结构差异大（ConfirmBody / header+content+footer）
 import type {
   Ref,
 } from "vue"

@@ -1,4 +1,4 @@
-// 弹层类组件（Dialog / ConfirmDialog）共享的类型与常量（组件库私有模块，禁止 feature 直接导入）
+// 弹层类组件（Dialog / ConfirmDialog / Drawer）共享的类型与常量（组件库私有模块，禁止 feature 直接导入）
 // 沿 confirm/types.ts 的「类型集中 + 别名转出」先例：消费方仍从各自的私有模块取类型，外部公开名不变
 // （ConfirmPopup 非模态、无遮罩，不使用本模块）
 
@@ -19,6 +19,12 @@ export type OverlayPosition =
 
 /** 尺寸档位（与全库控件阶梯一致：xsmall / small / medium / large） */
 export type OverlaySize = "xsmall" | "small" | "medium" | "large"
+
+/**
+ * 抽屉贴合边（四档，参考官方 Drawer `position` 去掉 `full`）：
+ * 遮罩定位直接复用 `OverlayPosition` 中的同值档位，故不另设遮罩类拼接函数。
+ */
+export type DrawerSide = "left" | "right" | "top" | "bottom"
 
 /** 位置修饰类名（`si-dialog-mask--topleft` 形态）：遮罩基础类名前缀由各组件自定，拼接规则单点收敛 */
 export const overlayPositionClass = (

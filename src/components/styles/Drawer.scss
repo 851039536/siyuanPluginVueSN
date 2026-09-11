@@ -1,0 +1,186 @@
+// ========== Drawer.scss ==========
+// 抽屉外壳：遮罩（基础样式与四档贴边来自共享 _overlay.scss）+ 卡片（贴边 + 单侧圆角/描边 + 滑入过渡）
+@use '../kit/variables.scss' as *;
+@use './_overlay.scss' as overlay;
+
+@include overlay.overlay-mask('si-drawer-mask');
+// 九档位置类全部输出，本组件只用 left / right / top / bottom 四档（复用同一 mixin，零额外成本）
+@include overlay.overlay-positions('si-drawer-mask');
+
+// 遮罩默认带 $s-4 内边距（居中弹层用），抽屉需贴死视口边缘 ⇒ 清零
+.si-drawer-mask {
+  padding: 0;
+}
+
+// 非模态：遮罩不加深且不遮断页面其余交互（卡片自身恢复可交互），与 Dialog 同一套范式
+.si-drawer-mask--plain {
+  background: transparent;
+  pointer-events: none;
+
+  .si-drawer {
+    pointer-events: auto;
+  }
+}
+
+.si-drawer {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-drawer-font: #{$t-xs}; // 12px
+  --si-drawer-extent: 400px; // 贴合边方向上的延伸量
+  --si-drawer-pad: #{$s-4};
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: $ff-zh;
+  font-size: var(--si-drawer-font, #{$t-xs});
+  line-height: $lh-normal;
+  background: var(--b3-theme-background, $c-bg);
+  color: var(--b3-theme-on-background, $c-fg);
+  border: 1px solid var(--b3-border-color, $c-border);
+
+  &:focus {
+    outline: none;
+  }
+
+  // ==================== 四档贴合边 ====================
+  // 贴边方向 = 档位延伸量（宽度或高度），沿边方向恒铺满；
+  // 圆角与描边只在朝内一侧出现（贴死视口边缘的一侧不画），层级靠遮罩对比区分、不用阴影
+  &--left,
+  &--right {
+    width: var(--si-drawer-extent);
+    max-width: 100%;
+    height: 100%;
+  }
+
+  &--left {
+    border-left: none;
+    border-radius: 0 $r-base $r-base 0;
+  }
+
+  &--right {
+    border-right: none;
+    border-radius: $r-base 0 0 $r-base;
+  }
+
+  &--top,
+  &--bottom {
+    width: 100%;
+    height: var(--si-drawer-extent);
+    max-height: 100%;
+  }
+
+  &--top {
+    border-top: none;
+    border-radius: 0 0 $r-base $r-base;
+  }
+
+  &--bottom {
+    border-bottom: none;
+    border-radius: $r-base $r-base 0 0;
+  }
+
+  // ==================== 四档尺寸 ====================
+  // 字号阶梯 10/12/14/16；延伸量 320/400/520/680px 与 Dialog 宽度台阶一致（同一套档位心智）
+  // （1px 描边与朝内圆角恒定，切档时结构不抖动）
+  &--xsmall {
+    --si-drawer-font: #{$t-2xs}; // 10px
+    --si-drawer-extent: 320px;
+    --si-drawer-pad: #{$s-3};
+  }
+
+  &--small {
+    --si-drawer-font: #{$t-xs}; // 12px
+    --si-drawer-extent: 400px;
+    --si-drawer-pad: #{$s-4};
+  }
+
+  &--medium {
+    --si-drawer-font: #{$t-sm}; // 14px
+    --si-drawer-extent: 520px;
+    --si-drawer-pad: #{$s-4};
+  }
+
+  &--large {
+    --si-drawer-font: #{$t-base}; // 16px
+    --si-drawer-extent: 680px;
+    --si-drawer-pad: #{$s-5};
+  }
+
+  &__header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    padding: $s-3 var(--si-drawer-pad);
+    font-weight: $fw-semibold;
+    background: var(--b3-theme-surface, $c-surface);
+    border-bottom: 1px solid var(--b3-border-color, $c-border);
+  }
+
+  // 标题字号与正文同档、仅以字重区分（同 Dialog，不引入第二套字号阶梯）
+  &__title {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  &__header-actions {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+  }
+
+  &__content {
+    flex: 1;
+    min-height: 0; // 允许内容区在卡片高度约束下收缩并内部滚动
+    overflow-y: auto;
+    padding: var(--si-drawer-pad);
+    overflow-wrap: anywhere;
+  }
+
+  &__footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $s-2;
+    padding: $s-3 var(--si-drawer-pad);
+    background: var(--b3-theme-surface, $c-surface);
+    border-top: 1px solid var(--b3-border-color, $c-border);
+  }
+}
+
+// ==================== 过渡 ====================
+// 0.12s ease（全库统一时长），沿贴合边轴向滑入 / 滑出，不叠加缩放
+// （Dialog 是 fade + scale 0.98；抽屉沿轴向位移更贴合「从边缘推入」的物理直觉）
+.si-drawer-slide-enter-active,
+.si-drawer-slide-leave-active {
+  transition: opacity 0.12s ease;
+
+  .si-drawer {
+    transition: transform 0.12s ease;
+  }
+}
+
+.si-drawer-slide-enter-from,
+.si-drawer-slide-leave-to {
+  opacity: 0;
+
+  // 方向类由 position 决定：无该类时（非法 position）不位移，仅淡入淡出兜底
+  .si-drawer--left {
+    transform: translateX(-100%);
+  }
+
+  .si-drawer--right {
+    transform: translateX(100%);
+  }
+
+  .si-drawer--top {
+    transform: translateY(-100%);
+  }
+
+  .si-drawer--bottom {
+    transform: translateY(100%);
+  }
+}

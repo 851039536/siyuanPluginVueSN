@@ -34,6 +34,9 @@ import {
   dividerPreviewGroups,
 } from "./divider"
 import {
+  drawerPreviewGroups,
+} from "./drawer"
+import {
   inputPreviewGroups,
 } from "./input"
 import {
@@ -102,4 +105,5 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...confirmDialogPreviewGroups,
   ...confirmPopupPreviewGroups,
   ...dialogPreviewGroups,
+  ...drawerPreviewGroups,
 ]

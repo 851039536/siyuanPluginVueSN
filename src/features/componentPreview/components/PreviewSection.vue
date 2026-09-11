@@ -28,6 +28,7 @@
             'cp-card__stage--loader': group.id === 'loader',
             'cp-card__stage--speeddial': group.id === 'speedDial',
             'cp-card__stage--dialog': group.id === 'dialog',
+            'cp-card__stage--drawer': group.id === 'drawer',
           }"
         >
           <!-- 受控示例由 PreviewStage 持有本地值，使 v-model 在预览中真正可交互 -->

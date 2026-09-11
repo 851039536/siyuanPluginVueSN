@@ -1,0 +1,88 @@
+// ========== SplitterPanel.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 分割面板：自身尺寸由 Splitter 下发的 flex-basis 决定（内联 style）
+.si-splitter-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--b3-theme-background, $c-bg);
+
+  // 方向随容器：水平布局时面板内横向排列（分隔条在左），垂直布局时纵向（分隔条在上）
+  .si-splitter--horizontal & {
+    flex-direction: row;
+  }
+
+  .si-splitter--vertical & {
+    flex-direction: column;
+  }
+
+  // 折叠后内容退出 a11y 树与 Tab 序列，避免 Tab 落到不可见内容里
+  &--collapsed .si-splitter-panel__content {
+    visibility: hidden;
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+  }
+}
+
+// 分隔条：固定 px 尺寸的拖拽命中区，内部 2px 细线是视觉本体
+.si-splitter__gutter {
+  position: relative;
+  flex-grow: 0;
+  flex-shrink: 0;
+  background: transparent;
+  touch-action: none; // 触屏拖拽不被页面滚动接管
+
+  .si-splitter--horizontal & {
+    cursor: col-resize;
+  }
+
+  .si-splitter--vertical & {
+    cursor: row-resize;
+  }
+
+  &-handle {
+    position: absolute;
+    background: var(--b3-border-color, $c-border);
+    transition: background-color 0.12s ease;
+  }
+
+  .si-splitter--horizontal &-handle {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px; // 细线宽度恒定，无对应 Token
+    transform: translateX(-50%);
+  }
+
+  .si-splitter--vertical &-handle {
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px; // 细线宽度恒定，无对应 Token
+    transform: translateY(-50%);
+  }
+
+  // 悬停 / 拖拽 / 键盘聚焦时细线变主题色（键盘焦点即以此色变作为可见焦点指示，故不另加 outline）
+  &:hover &-handle,
+  &--active &-handle,
+  &:focus-visible &-handle {
+    background: var(--b3-theme-primary, $c-danger);
+  }
+
+  // 禁用态：不可拖拽（tabindex 已由组件移除），统一光标提示
+  // （必须写在这里而非 Splitter.scss —— 分隔条带的是 SplitterPanel 的 scoped 属性）
+  .si-splitter--disabled & {
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: none;
+  }
+}

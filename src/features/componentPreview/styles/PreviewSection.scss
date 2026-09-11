@@ -80,6 +80,12 @@
     z-index: 1;
   }
 
+  // Dialog 同为「fixed 遮罩 + 卡片」（卡片宽度由组件侧 max-width: 100% 自动收敛到舞台宽度）
+  .si-dialog-mask.si-dialog-mask {
+    position: absolute;
+    z-index: 1;
+  }
+
   // ConfirmPopup 也是 position: fixed，但它是「贴锚点的小气泡」而非铺满视口 ⇒ 无需覆盖定位；
   // 卡片 overflow: hidden 同样裁不到它（fixed 元素不受祖先 overflow 裁剪），仅可能压到相邻卡片上。
 
@@ -98,6 +104,17 @@
 // SpeedDial 展开后动作会沿轨迹外扩，需给足舞台高度（卡片为 overflow: hidden 会裁掉溢出部分）
 .cp-card__stage--speeddial {
   height: 260px; // 轨迹展开所需高度，无对应 Token
+}
+
+// Dialog：三段结构比确认框更高，给足舞台高度；并把卡片最大高度限制在舞台内
+// （真实调用处为 80vh，沙箱内收敛后「长内容」示例演示的才是内容区内部滚动，而非整块被卡片裁掉）
+// 类名写两遍抬到 (0,3,0)，同 .cp-card__stage 内弹层覆盖的写法
+.cp-card__stage--dialog {
+  height: 300px; // 弹窗三段结构展示所需高度，无对应 Token
+
+  .si-dialog.si-dialog {
+    max-height: 100%;
+  }
 }
 
 // ==================== Card 容器钩子演示类 ====================

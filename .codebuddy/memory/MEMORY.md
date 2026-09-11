@@ -12,9 +12,9 @@
 - 独立窗体精简：`isFloating`（`getFrontend() === "desktop-window"`）+ `v-if="!isFloating"` 隐藏重复标题
 - 新功能 8 处注册；i18n 只改分片（顶层 JSON 由 merge 生成）；**禁止跨 feature 直接导入**（走事件总线 + App.vue 调度）；**禁止在 feature 内自建共享组件已覆盖的控件**
 
-## 共享组件库（`src/components/`，38 个公开组件）
+## 共享组件库（`src/components/`，39 个公开组件）
 - 计数**必须实测**（并行会话频繁变动）；**私有子目录也计入文件数基线**（Splitter 轮次把 96 写成 94，就因漏了 `splitter/` 的 3 个文件）。新增组件 = `<Name>.vue` + `styles/<Name>.scss` + `previewData/<name>.ts`（**双导出**「分组对象 + 分组数组」并接入 `previewData/index.ts`）+ 文档计数（`AGENTS.md` 5 处 + 清单行 + 复用枚举、根 `README.md`、`componentPreview/README.md`、`kit/README.md`、迁移指南 3 处 + 私有目录清单）
-- 私有子部件与纯函数放同名小写目录（`datePicker/ select/ speedDial/ paginator/ textarea/ timeline/ splitter/ tabs/ confirm/`），不计入清单、**禁止 feature 直接导入**；配套但需 feature 直接使用的组件平铺（`InputGroup` + `InputGroupAddon`、`Splitter` + `SplitterPanel`，后两者共用同一预览分区）
+- 私有子部件与纯函数放同名小写目录（`datePicker/ select/ speedDial/ paginator/ textarea/ timeline/ splitter/ tabs/ confirm/ overlay/`），不计入清单、**禁止 feature 直接导入**；配套但需 feature 直接使用的组件平铺（`InputGroup` + `InputGroupAddon`、`Splitter` + `SplitterPanel`，后两者共用同一预览分区）
 - 四档 `xsmall/small/medium/large`（默认 small），字号 10/12/14/16 禁同号；**原则上只改字号，不联动 padding/min-height/gap/图标**（Slider/DatePicker 的几何联动是已登记特例，勿再扩）
 - 分段档位/模式切换用 **`Button` 分组**（选中 `variant="primary"`、未选中 `ghost`+`text`+`size="xsmall"`+`:aria-pressed`）；`RadioButton` 用于表单式互斥选项
 - 允许自建例外：纯展示局部布局容器、无档位 26×26 `.icon-btn`
@@ -22,7 +22,7 @@
 - 预览框架：`PreviewExample` = `props` + `slotText`/`render`（默认插槽）+ **`slots`**（具名/作用域插槽工厂，**第二参为注入档位后的实际渲染 props**）；数据文件超 300 行时另建 `previewData/<name>.ts`（`control.ts` 339 / `input.ts` 309 说明该线非硬约束）
 - **预览里需要宿主样式**（如垂直分隔线高度）→ 直接给示例传 `props: { style: "height: 80px" }`（单根组件 fallthrough），**无需改框架、无需加舞台类**
 - 受控示例在预览中可交互：`PreviewStage` 持本地 `modelValue` 并回写；①`isControlledComponent()` 用 `component.props` 判断，未声明则**一个额外属性都不注入**（否则多根 `FormField` 报 extraneous attrs）；②`hasSlot` 仅表示「有默认插槽内容」
-- 弹层类预览必须沙箱覆盖：`.cp-card__stage{position:relative}` + 舞台内遮罩覆盖为 `absolute; z-index:1`（覆盖须抬特异性：类名写两遍 =(0,3,0)）；`.cp-card` 是 `overflow: hidden`
+- 弹层类预览必须沙箱覆盖：`.cp-card__stage{position:relative}` + 舞台内遮罩覆盖为 `absolute; z-index:1`（覆盖须抬特异性：类名写两遍 =(0,3,0)）；`.cp-card` 是 `overflow: hidden`。**三段结构的 Dialog 另需 `--dialog` 高度类（300px）并把卡片 `max-height` 收敛为 `100%`**（否则被卡片边界裁掉、长内容演示不了内部滚动；宽度不用管，组件侧 `max-width:100%` 已收敛）
 
 ### 组件特有陷阱
 - `Button`：既有 5 个 variant 语义不可改（180+ 处依赖）；新能力走 `--severity-*`/`--outlined`/`--text`；纯图标必须 `aria-label`；loading 用 `visibility:hidden` 保宽；图标随档 12/14/16/18。`isIconOnly` 陈旧 computed 属**有意保留，勿重提**
@@ -37,7 +37,8 @@
 - `Splitter` + `SplitterPanel`：①分隔条渲染在**面板内侧**（首个面板没有），拖动调整「所属面板 + 前一个面板」，两侧之和恒定；②面板顺序靠注册，**子 `onMounted` 先于父** ⇒ 父级 `onMounted` 是「全部面板已就绪」的可靠时点；③尺寸计算外置纯函数（`splitter/sizes.ts`）；④受控/非受控（`sizes` 不传即自持）+ `stateKey` 走**浏览器原生 Storage**（组件库不引 `@/utils/pluginStorage`）；⑤**scoped 归属陷阱（真踩过）**：分隔条由 SplitterPanel 渲染 ⇒ 其样式必须写在 `SplitterPanel.scss`，写进 `Splitter.scss` 会因 scoped 属性不匹配**静默失效**；⑥`role="separator"` + `aria-orientation` 取**自身物理方向**；⑦垂直/嵌套布局必须给父容器确定高度；⑧Pointer Events + `setPointerCapture` + `touch-action: none`
 - `Tabs` 五件套：`Tabs.value` 受控/非受控双模式、`update:value` 幂等；`Tab` 是原生 button + roving tabindex + `role="tab"`；`TabPanel` 的 `lazy` 双开关（true = 未激活**不进 DOM**、状态会丢）；键盘逻辑在 `Tab` 不在 `TabList`；活动指示器是**静态下划线**（不做官方滑动墨条）；档位只驱动字号 + 标签水平内边距 + 面板上边距；**激活态不改字重**（字重变化会让标签左右抖动）。**待迁移**：36 个 feature 文件命中自建 tab（含 gitPush `CardTabs.vue`）
 - `Toolbar`：`start`/`center`/`end` 三容器**恒定渲染**；两端 `flex: 1 1 0` 配平使 center 精确居中；四档 min-height 28/36/44/54（= 同档 Button 最小高度 + 2×上下内边距）；`variant` 与 `padded` 解耦（`padded=false` 仍保留档位最小高度）；⚠️ **档位传不进插槽** ⇒ 内部共享控件必须显式传同档 `size`。**待迁移**：86 个 feature 文件命中工具栏类实现（gitPush 一家 6 个 `*Toolbar.vue`）
-- `ConfirmDialog`：`visible` 受控；`confirm` 后**不自动关闭**；**只监听 Esc，Enter 不绑定**。`dataSnapshot` 已迁；`prompts`/`skillsViewer` 的 `DeleteConfirmModal` 与三处 feature 本地确认弹窗（s3FileManager / gitPush / shortcut）**尚未迁移**
+- `Dialog`：`visible` 受控 + header/内容/footer 三段 + 九档 position + 四档 size（宽度 320/400/520/680px）。①`dismissableMask` 默认 **false**（官方同；ConfirmDialog 是 true，差异已登记）；②`modal` 默认 **true**（官方 false，有意差异：遮罩恒渲染，非模态 `--plain` = 遮罩透明 + `pointer-events:none` + 卡片 auto，点关随之失效）；③**点关 = 遮罩上按下并抬起**（官方 mousedown/mouseup 同目标判定，ConfirmDialog 已从 `@click.self` 迁移）；④初始焦点 `[autofocus]`（footer→header→content）→ 容器回退，ConfirmDialog 刻意只聚焦容器 ⇒ **外壳的 `initialFocus` 必须可注入**；⑤`showHeader:false` 连带不渲染关闭按钮；⑥裁剪 draggable/maximizable/appendTo/Teleport/blockScroll/ZIndex/FocusTrap。**待迁移**：47 个 `*Dialog.vue` + 12 个 `*Modal.vue`（59 个自建弹窗、48 份自画遮罩 SCSS）
+- `ConfirmDialog`：`visible` 受控；`confirm` 后**不自动关闭**；**只监听 Esc，Enter 不绑定**；遮罩点关 / Esc / 焦点接管与归还已抽到私有 `overlay/useOverlay`（与 `Dialog` 共用；`ConfirmPosition`/`ConfirmSize`/`DEFAULT_CLOSE_LABEL` 改为 overlay 模块别名转出，外部名零变更）。`dataSnapshot` 已迁；`prompts`/`skillsViewer` 的 `DeleteConfirmModal` 与三处 feature 本地确认弹窗（s3FileManager / gitPush / shortcut）**尚未迁移**
 - `Checkbox`：`isGroup = !binary && Array.isArray(modelValue)`；`indeterminate` 只能写 DOM 属性（`flush:"post"` + `onMounted`）；分组模式返回**新数组**。`label` prop 只能是字符串 ⇒ 要自定义文案样式（如等宽）走**默认插槽**放自己的 span，别去覆盖 `.si-checkbox__label`
 - `RadioButton`：无数组模式、无 `indeterminate`、纯 CSS 圆点；emit `binary ? true : value`（**不可取消**）；**同组必须传同一 `name`**；只读拦截必须含方向键
 - `Textarea`：`fluid` **默认 true**；`autoResize` 时 `rows` 兼任初始高度与 `minRows` 兜底，`maxRows` 不传则不设上限；实底聚焦必须用内嵌 outline（`-1px`）。⚠️ `Input` 的 `type="textarea"` 按用户决定**保留为兼容入口**

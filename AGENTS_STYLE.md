@@ -359,7 +359,7 @@ src/features/myFeature/
 
 1. **禁止在 `.vue` 文件中编写 SCSS 样式代码**。仅允许 `@use` 导入语句。
 2. 每个组件对应一个 `styles/<ComponentName>.scss` 文件（PascalCase，无 `_` 前缀）。
-3. **`_` 下划线前缀仅限纯 mixins/变量**（如 `_mixins.scss`）。包含实际 CSS 选择器的样式文件**禁止**使用 `_` 前缀。例外：`components/kit/variables.scss` 是组件库自包含迁移后的设计 Token 真源，为与组件 scss 的显式扩展名引用（`../kit/variables.scss`）保持字面一致而不带 `_` 前缀。
+3. **`_` 下划线前缀仅限纯 mixins/变量**（如 `_mixins.scss`、`components/styles/_overlay.scss` —— 后者只导出 `overlay-mask` / `overlay-positions` 两个 mixin，无顶层选择器）。包含实际 CSS 选择器的样式文件**禁止**使用 `_` 前缀。例外：`components/kit/variables.scss` 是组件库自包含迁移后的设计 Token 真源，为与组件 scss 的显式扩展名引用（`../kit/variables.scss`）保持字面一致而不带 `_` 前缀。
 4. Feature 主入口 `index.vue` 的样式放在 `styles/index.scss`。此文件同时作为**共享基座**（如 `.vp-overlay`、`.vp-modal-header` 等），子组件通过第二行 `@use "../styles/index.scss"` 导入。
 5. **子组件导入模式：双行导入**——第一行导入自身专属 SCSS，第二行导入共享的 `index.scss`：
    ```scss

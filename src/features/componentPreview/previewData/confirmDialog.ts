@@ -17,7 +17,7 @@ export const confirmDialogGroup: PreviewGroup = {
   id: "confirm-dialog",
   component: ConfirmDialog,
   name: "ConfirmDialog",
-  summary: "确认对话框：受控显示 + 八档位置，标题 / 消息 / 图标 / 确认按钮配色与加载态，官方五个插槽",
+  summary: "确认对话框：受控显示 + 九档位置，标题 / 消息 / 图标 / 确认按钮配色与加载态，官方五个插槽",
   importCode: "import ConfirmDialog from \"@/components/ConfirmDialog.vue\"",
   sizeable: true,
   examples: [
@@ -94,14 +94,14 @@ export const confirmDialogGroup: PreviewGroup = {
       title: "位置 - 左上（position=\"topleft\"）",
       props: {
         visible: true,
-        header: "位置八档",
+        header: "位置九档",
         message: "position 支持 center / 四边 / 四角。",
         acceptSeverity: "primary",
         position: "topleft",
       },
       code: `<ConfirmDialog
   v-model:visible="visible"
-  header="位置八档"
+  header="位置九档"
   message="position 支持 center / 四边 / 四角。"
   accept-severity="primary"
   position="topleft"
@@ -111,14 +111,14 @@ export const confirmDialogGroup: PreviewGroup = {
       title: "位置 - 右下（position=\"bottomright\"）",
       props: {
         visible: true,
-        header: "位置八档",
+        header: "位置九档",
         message: "模板类驱动，零 JS 定位。",
         acceptSeverity: "primary",
         position: "bottomright",
       },
       code: `<ConfirmDialog
   v-model:visible="visible"
-  header="位置八档"
+  header="位置九档"
   position="bottomright"
   accept-severity="primary"
 />`,

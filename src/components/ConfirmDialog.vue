@@ -1,10 +1,11 @@
-<!-- 确认对话框：受控显示（v-model:visible）+ 八档位置 + 官方命名的插槽，内容段由 ConfirmBody 渲染 -->
+<!-- 确认对话框：受控显示（v-model:visible）+ 九档位置 + 官方命名的插槽，内容段由 ConfirmBody 渲染 -->
 <template>
   <Transition name="si-confirm-fade">
     <div
       v-if="visible"
       :class="maskClasses"
-      @click.self="handleMaskClick"
+      @mousedown="handleMaskMouseDown"
+      @mouseup="handleMaskMouseUp"
     >
       <div
         ref="dialogRef"
@@ -91,17 +92,16 @@ import type {
 } from "./confirm/types"
 import {
   computed,
-  nextTick,
-  onBeforeUnmount,
   ref,
   useId,
-  watch,
 } from "vue"
 import {
   DEFAULT_ACCEPT_LABEL,
   DEFAULT_CLOSE_LABEL,
   DEFAULT_REJECT_LABEL,
 } from "./confirm/types"
+import { overlayPositionClass } from "./overlay/types"
+import { useOverlay } from "./overlay/useOverlay"
 import ConfirmBody from "./confirm/ConfirmBody.vue"
 import "./kit/theme"
 
@@ -139,7 +139,7 @@ interface Props {
   dismissableMask?: boolean
   /** 按 Esc 是否触发取消 */
   closeOnEscape?: boolean
-  /** 位置八档：`center`（默认）/ `left` / `right` / `top` / `bottom` / 四角 */
+  /** 位置九档：`center`（默认）/ `left` / `right` / `top` / `bottom` / 四角 */
   position?: ConfirmPosition
   /** 按钮尺寸档位 */
   size?: ConfirmSize
@@ -172,12 +172,10 @@ const emit = defineEmits<{
 const titleId = `${useId()}-title`
 
 const dialogRef = ref<HTMLElement | null>(null)
-/** 打开前的焦点元素，关闭时归还，避免键盘用户丢失位置 */
-let previousActive: HTMLElement | null = null
 
 const maskClasses = computed(() => [
   "si-confirm-mask",
-  `si-confirm-mask--${props.position}`,
+  overlayPositionClass("si-confirm-mask", props.position),
 ])
 
 /** `container` 插槽作用域：关闭与取消同义（都派发 cancel + 关闭） */
@@ -203,44 +201,20 @@ function handleReject(): void {
   emit("update:visible", false)
 }
 
-function handleMaskClick(): void {
-  if (props.dismissableMask) {
-    handleReject()
-  }
-}
-
 /**
- * 仅监听 Esc：Enter 交由聚焦按钮的原生键盘行为触发，
- * 避免 window 监听与按钮 click 重复派发确认
+ * 遮罩点关 / Esc / 焦点接管与归还统一交给共享弹层外壳（overlay/useOverlay，与 Dialog 同一套）：
+ * 点关需「在遮罩上按下并抬起」才算数（官方语义，替代此前的 `@click.self`）；
+ * 打开时仍聚焦容器而非确认按钮（危险操作默认聚焦按钮会被 Enter 误触），关闭时归还焦点。
  */
-function handleKeydown(event: KeyboardEvent): void {
-  if (event.key === "Escape") {
-    if (!props.closeOnEscape) return
-    event.preventDefault()
-    handleReject()
-  }
-}
-
-watch(
-  () => props.visible,
-  async (visible) => {
-    if (visible) {
-      previousActive = document.activeElement as HTMLElement | null
-      window.addEventListener("keydown", handleKeydown)
-      await nextTick()
-      // 焦点给对话框容器而非确认按钮：危险操作默认聚焦按钮会被 Enter 误触
-      dialogRef.value?.focus()
-    } else {
-      window.removeEventListener("keydown", handleKeydown)
-      previousActive?.focus()
-      previousActive = null
-    }
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleKeydown)
+const {
+  handleMaskMouseDown,
+  handleMaskMouseUp,
+} = useOverlay({
+  visible: () => props.visible,
+  dismissableMask: () => props.dismissableMask,
+  closeOnEscape: () => props.closeOnEscape,
+  onDismiss: handleReject,
+  containerRef: dialogRef,
 })
 </script>
 

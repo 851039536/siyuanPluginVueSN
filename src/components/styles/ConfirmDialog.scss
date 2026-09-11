@@ -1,61 +1,11 @@
 // ========== ConfirmDialog.scss ==========
 // 确认对话框外壳：遮罩 + 卡片；内容段（标题 / 消息 / 操作区）样式在 ConfirmBody.scss
+// 遮罩基础样式与九档位置声明来自共享 _overlay.scss（与 Dialog 同一套，避免两处重复）
 @use '../kit/variables.scss' as *;
+@use './_overlay.scss' as overlay;
 
-.si-confirm-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 10000; // 全屏遮罩统一层级
-  display: flex;
-  padding: $s-4;
-  background: rgba(0, 0, 0, 0.5);
-
-  // ========== 位置八档（模板类驱动，零 JS 定位） ==========
-  &--center {
-    align-items: center;
-    justify-content: center;
-  }
-
-  &--left {
-    align-items: center;
-    justify-content: flex-start;
-  }
-
-  &--right {
-    align-items: center;
-    justify-content: flex-end;
-  }
-
-  &--top {
-    align-items: flex-start;
-    justify-content: center;
-  }
-
-  &--bottom {
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  &--topleft {
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-
-  &--topright {
-    align-items: flex-start;
-    justify-content: flex-end;
-  }
-
-  &--bottomleft {
-    align-items: flex-end;
-    justify-content: flex-start;
-  }
-
-  &--bottomright {
-    align-items: flex-end;
-    justify-content: flex-end;
-  }
-}
+@include overlay.overlay-mask('si-confirm-mask');
+@include overlay.overlay-positions('si-confirm-mask');
 
 .si-confirm {
   width: 360px; // 弹窗宽度，尺寸级固定值无对应 Token

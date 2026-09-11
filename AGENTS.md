@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（38 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（39 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 38 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 39 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -174,11 +174,11 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
-- 需要按钮 / 按钮式开关 / 浮动动作按钮 / 输入框 / 多行文本域 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框 / **分页** / **时间线** / **分隔线** / **可折叠面板** / **可调整的分割面板** / **标签页切换** / **工具栏** / **气泡确认**时，**必须**使用共享组件（多行输入用 `Textarea`，不用 `Input` 的 `type="textarea"` 旧入口；**单按钮布尔开关用 `ToggleButton`，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`**；**多动作浮钮用 `SpeedDial`**）
+- 需要按钮 / 按钮式开关 / 浮动动作按钮 / 输入框 / 多行文本域 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框 / **分页** / **时间线** / **分隔线** / **可折叠面板** / **可调整的分割面板** / **标签页切换** / **工具栏** / **气泡确认** / **对话框（模态弹层）**时，**必须**使用共享组件（多行输入用 `Textarea`，不用 `Input` 的 `type="textarea"` 旧入口；**单按钮布尔开关用 `ToggleButton`，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`**；**多动作浮钮用 `SpeedDial`**）
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（38 个）
+### 3. 组件清单（39 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
@@ -204,7 +204,8 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `Badge.vue` | 徽标/角标（圆点、四角定位、上限折叠） | `content` / `dot` / `size` / `variant` / `position` / `max` / `offset` / `hidden` |
 | `Avatar.vue` | 头像（图片/文字/图标，5 档尺寸含 `xlarge`） | `src` / `text` / `icon` / `size` / `shape` / `customSize` / `clickable` |
 | `Card.vue` | 卡片容器（标题/副标题/封面/主体/底部/加载/激活）；具名插槽 `title` / `subtitle` / `content`（`content` 未传时**回落默认插槽**，官方写法可直接照搬），另有 `header`（**本项目为带下边框的标题栏，非官方通栏语义**） / `header-extra` / `cover`（对应官方通栏区） / `footer` | `variant` / `size` / `title` / `subtitle` / `cover` / `clickable` / `loading` / `rounded` / `bodyNoPadding` / `contentClass`（主体容器类名钩子，对应官方 `contentClass`） / `captionClass`（标题区容器类名钩子，对应官方 PT 的 `caption`） |
-| `ConfirmDialog.vue` | 确认对话框：受控显示（`v-model:visible`）+ **八档 `position`**（`center` 默认 / 四边 / 四角，模板类驱动、零 JS 定位）；**命名对齐官方 `ConfirmationOptions`**（`header` / `message` / `icon` / `acceptLabel` / `rejectLabel`），但**驱动方式为受控**（官方靠 `useConfirm().require()` 命令式服务 + `group`，本项目零全局服务）；`acceptSeverity`（`danger` 默认 / `primary`）取代官方 `acceptProps.severity` 对象袋（与 Panel 拒绝 `toggleButtonProps` 同一判据，更自由诉求走 `container` 插槽）；另有 `acceptIcon` / `rejectIcon` / `acceptLoading`（异步确认）/ `closable`（**默认 `false`**，官方 Dialog 默认 `true` 属有意差异）/ `closeOnEscape` / `dismissableMask`（官方 Dialog 命名，替代旧的 `closeOnMask`）/ `size`；插槽 = 官方五个（`message` 作用域 `{ message, icon }`（官方给 `ConfirmationOptions` 对象，属有意差异）/ `icon` `{ class }` / `accepticon` / `rejecticon` / `container`（作用域含 `header` / `message` / `icon` / `acceptLabel` / `rejectLabel` 与 `closeCallback` / `rejectCallback` / `acceptCallback`；**不提供官方 `initDragCallback`**，因不做 `draggable`））+ 保留**默认插槽**（优先级：默认插槽 > `message` 插槽 > `message` prop）；内容段由私有子部件 `confirm/ConfirmBody.vue` 渲染（私有目录 `confirm/` 含 types / position / ConfirmBody，禁止 feature 直接导入）；事件 = `update:visible` / `confirm`（**不自动关闭**，便于异步）/ `cancel`；⚠️ 官方**没有 `header` / `footer` 插槽**（`header` / `footer` / `title` / `headerActions` / `content` / `mask` 只是 PT 段落名） | `visible` / `header` / `message` / `icon` / `acceptLabel` / `rejectLabel` / `acceptSeverity` / `acceptIcon` / `rejectIcon` / `acceptLoading` / `closable` / `closeOnEscape` / `dismissableMask` / `position` / `size` |
+| `Dialog.vue` | 对话框（**通用模态容器**，与 `ConfirmDialog` 共用私有目录 `overlay/` 的弹层外壳）：受控 `visible`（配 `v-model:visible`）+ `header` / 内容区 / `footer` 三段结构（`showHeader` 控制标题栏、`closable` 控制右上角关闭按钮、`footer` 文本或插槽存在才渲染页脚）+ **九档 `position`**（`center` 默认 / 四边 / 四角，模板类驱动、零 JS 定位）+ 四档 `size`（驱动弹窗宽度 320/400/520/680px、内边距与基准字号 10/12/14/16；`max-height: 80vh`、1px 描边、圆角 `$r-base` **恒定**，**不用阴影**——层级靠遮罩对比）；关闭路径 = 关闭按钮 / Esc（`closeOnEscape` 默认开）/ 遮罩点关（`dismissableMask` **默认 `false`，与官方一致**，且**需在遮罩上按下并抬起**才算数，弹层内按下、遮罩上抬起不误关）/ 插槽内自建按钮；`modal` **默认 `true`**（官方默认 `false`，属**有意差异**：本项目遮罩恒定渲染，非模态时加 `--plain` 让遮罩透明且 `pointer-events: none`，页面其余部分仍可交互，点关随之失效）；**焦点**：打开时优先聚焦容器内 `[autofocus]`（footer → header → content 顺序）、否则聚焦容器，关闭时归还打开前元素；`aria-labelledby` 指向标题元素（`showHeader` 且有 `header` 文本或 `header` 插槽时），否则回退 `ariaLabel`；六个插槽 = `default`（**内容区**）/ `header`（作用域 `{ class, headerId }`）/ `footer` / `closebutton`（`{ closeCallback }`）/ `closeicon` / `container`（`{ closeCallback }`）；四个事件 = `update:visible` / `show`（过渡 enter）/ `hide`（过渡 leave）/ `after-hide`（过渡 after-leave）；私有目录 `overlay/`（types / useOverlay，禁止 feature 直接导入）；**与官方有意差异**：不做 `draggable`（官方默认开）/ `maximizable` / `breakpoints` / `appendTo`（**不 Teleport，就地 fixed**）/ `blockScroll` / ZIndex 管理 / FocusTrap 与 `dt` / `pt` / `ptOptions` / `unstyled`，`container` 插槽亦无官方 `maximizeCallback` / `initDragCallback` | `visible` / `header` / `footer` / `modal` / `closable` / `dismissableMask` / `closeOnEscape` / `showHeader` / `position` / `size` / `closeLabel` / `ariaLabel` |
+| `ConfirmDialog.vue` | 确认对话框：受控显示（`v-model:visible`）+ **九档 `position`**（`center` 默认 / 四边 / 四角，模板类驱动、零 JS 定位）；**命名对齐官方 `ConfirmationOptions`**（`header` / `message` / `icon` / `acceptLabel` / `rejectLabel`），但**驱动方式为受控**（官方靠 `useConfirm().require()` 命令式服务 + `group`，本项目零全局服务）；`acceptSeverity`（`danger` 默认 / `primary`）取代官方 `acceptProps.severity` 对象袋（与 Panel 拒绝 `toggleButtonProps` 同一判据，更自由诉求走 `container` 插槽）；另有 `acceptIcon` / `rejectIcon` / `acceptLoading`（异步确认）/ `closable`（**默认 `false`**，官方 Dialog 默认 `true` 属有意差异）/ `closeOnEscape` / `dismissableMask`（官方 Dialog 命名，替代旧的 `closeOnMask`）/ `size`；插槽 = 官方五个（`message` 作用域 `{ message, icon }`（官方给 `ConfirmationOptions` 对象，属有意差异）/ `icon` `{ class }` / `accepticon` / `rejecticon` / `container`（作用域含 `header` / `message` / `icon` / `acceptLabel` / `rejectLabel` 与 `closeCallback` / `rejectCallback` / `acceptCallback`；**不提供官方 `initDragCallback`**，因不做 `draggable`））+ 保留**默认插槽**（优先级：默认插槽 > `message` 插槽 > `message` prop）；内容段由私有子部件 `confirm/ConfirmBody.vue` 渲染（私有目录 `confirm/` 含 types / position / ConfirmBody，禁止 feature 直接导入）；**遮罩点关 / Esc / 焦点接管与归还已改由私有目录 `overlay/` 提供**（`useOverlay`，与 `Dialog` 共用，禁止 feature 直接导入）——点关判定由原 `@click.self` 升级为官方「在遮罩上按下并抬起」语义（弹层内按下、遮罩上抬起不误关），公开 props / 事件 / 插槽 / 类名零变更；事件 = `update:visible` / `confirm`（**不自动关闭**，便于异步）/ `cancel`；⚠️ 官方**没有 `header` / `footer` 插槽**（`header` / `footer` / `title` / `headerActions` / `content` / `mask` 只是 PT 段落名） | `visible` / `header` / `message` / `icon` / `acceptLabel` / `rejectLabel` / `acceptSeverity` / `acceptIcon` / `rejectIcon` / `acceptLoading` / `closable` / `closeOnEscape` / `dismissableMask` / `position` / `size` |
 | `ConfirmPopup.vue` | 气泡确认：受控显示 + **`target` 锚点**（`HTMLElement \| (() => HTMLElement \| null)`），弹出在触发元素旁（**非模态、无遮罩**）；定位为 `position: fixed` + 视口坐标（**不 Teleport**，与 Select / DatePicker 的相对定位范式一致），**八向 `placement`**（`auto` 默认：优先下方、放不下上翻、水平居中；显式方位只做视口 8px 钳制、**不翻转**）并带 8px 指向三角；监听 `window` 的 `scroll`（`capture: true`，覆盖任意滚动容器）与 `resize`，**rAF 节流**重算；定位计算外置为纯函数 `confirm/position.ts`；`dismissable`（默认 `true`：点组件与锚点之外关闭）/ `closeOnEscape` / `ariaLabel`；内容段与插槽集合**与 `ConfirmDialog` 完全一致**（共用 `confirm/ConfirmBody.vue`），但**无 `closable`**（气泡靠点外部 / Esc 关闭）；事件 = `update:visible` / `confirm` / `cancel`；打开时焦点给气泡容器（避免 Enter 误触危险操作），关闭时归还锚点 | `visible` / `target` / `header` / `message` / `icon` / `acceptLabel` / `rejectLabel` / `acceptSeverity` / `acceptIcon` / `rejectIcon` / `acceptLoading` / `placement` / `dismissable` / `closeOnEscape` / `size` / `ariaLabel` |
 | `Timeline.vue` | 时间线：`value` 事件集合 + 两向 `layout`（`vertical` 默认：事件自上而下、线在左/右；`horizontal`：事件自左向右、线在上/下）× 三档 `align`（竖向 `left` 默认 / `right` 镜像 / `alternate` 左右交替；横向 `top` 默认 / `bottom` 镜像 / `alternate` 上下交替），渲染由 `content`（必填）/ `opposite` / `marker` 三个插槽驱动（作用域 `{ item, index }`）；**纯展示无交互、无自有事件**（节点上的点击由调用方在插槽内自行提供）；`opposite` 容器恒渲染（两侧等宽 / 等高、线位置稳定），`alternate` 按奇数索引反向；默认节点为主题色空心圆，连接线取 `--b3-border-color` 且**末项不延长**；四档 `size` **只驱动字号**（节点直径 10px / 线宽 2px 恒定）；私有目录 `timeline/`（types，禁止 feature 直接导入） | `value`（必填）/ `layout` / `align` / `size` |
 | `Tabs.vue` | 标签页容器（**五件套之首**，与 `TabList` / `Tab` / `TabPanels` / `TabPanel` 共用「Tabs」一个预览分区）：`value`（**传入即受控**，配 `v-model:value`；不传时内部自持 = 非受控，两种模式都派发 `update:value`）+ `lazy`（未激活面板是否完全**不进 DOM**，默认 `false` 时仅 `display:none` 隐藏并**保留面板内状态**）+ `selectOnFocus`（焦点移入即选中）+ `tabindex`（roving tabindex 基准：激活标签取该值、其余 `-1`，面板共用，传 `-1` 可把整组移出 Tab 序列）+ `scrollStrategy`（激活标签滚动策略：`nearest` 默认（越界才滚，留 10% 缓冲）/ `center` / `false` / 自定义函数）；`update:value` **幂等**（值未变不派发）；四档 `size` 驱动字号 10/12/14/16 与标签水平内边距、面板上边距（**下划线厚度与标签栏分隔线恒定**）；根 `width: 100%`；私有目录 `tabs/`（types/context，禁止 feature 直接导入）；**与官方有意差异**：不做 `showNavigators` 与 `previcon` / `nexticon`、不做已废弃的 `scrollable`、不做 `as` / `asChild` 多态渲染与 `dt` / `pt` | `value` / `lazy` / `selectOnFocus` / `tabindex` / `scrollStrategy` / `size` |
@@ -463,7 +464,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 38 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/ConfirmDialog/ConfirmPopup/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Toolbar/Divider/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 39 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/Dialog/ConfirmDialog/ConfirmPopup/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Toolbar/Divider/Chart 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/
@@ -501,4 +502,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（38 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（39 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

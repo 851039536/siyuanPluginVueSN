@@ -34,6 +34,7 @@
             :component="group.component"
             :component-props="resolveProps(example)"
             :has-slot="!!example.render || !!example.slotText"
+            :named-slots="example.slots"
           >
             <!-- 复合示例：默认插槽需放多个子组件，交由 render 函数组装 -->
             <SlotRenderer
@@ -147,6 +148,13 @@ const PreviewStage = defineComponent({
       type: Boolean,
       default: false,
     },
+    /**
+     * 具名 / 作用域插槽：键为插槽名，值为接收该插槽作用域参数的 VNode 工厂。
+     * 工厂每次调用都必须新建 VNode —— 同一实例重复挂载会触发 Vue 告警。
+     */
+    namedSlots: {
+      type: Object as PropType<Record<string, (slotProps: Record<string, any>) => VNode | VNode[]>>,
+    },
   },
   setup: (stageProps, { slots }) => {
     const resolvedProps = toRef(stageProps, "componentProps")
@@ -165,14 +173,22 @@ const PreviewStage = defineComponent({
         }
       }
 
-      const children = stageProps.hasSlot && slots.default
-        ? { default: slots.default }
-        : undefined
+      // 默认插槽与具名插槽合并为 h() 的 children；两者皆空时传 undefined（不传空对象）
+      const children: Record<string, any> = {}
+      if (stageProps.hasSlot && slots.default) {
+        children.default = slots.default
+      }
+      for (const [name, factory] of Object.entries(stageProps.namedSlots ?? {})) {
+        children[name] = (slotProps: Record<string, any>) => {
+          const rendered = factory(slotProps ?? {})
+          return Array.isArray(rendered) ? rendered : [rendered]
+        }
+      }
 
       return h(
         stageProps.component as Component,
         componentProps,
-        children,
+        Object.keys(children).length > 0 ? children : undefined,
       )
     }
   },

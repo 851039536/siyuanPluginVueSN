@@ -1,0 +1,145 @@
+// ========== Timeline.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 时间线：一条线（竖向为竖线、横向为横线）串起一串事件，行内三段式（对侧 / 分隔列 / 内容）
+.si-timeline {
+  // 档位字号单点驱动（与全库 10/12/14/16 阶梯对齐）
+  --si-timeline-font: #{$t-xs};
+
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: $ff-zh;
+  font-size: var(--si-timeline-font, #{$t-xs});
+  color: var(--b3-theme-on-background, $c-fg);
+
+  // 尺寸档位：仅调整字号，节点直径 / 线宽 / 间距恒定，切档时线条结构不抖动
+  &--xsmall {
+    --si-timeline-font: #{$t-2xs}; // XS 档字号阶梯：10px
+  }
+
+  &--small {
+    --si-timeline-font: #{$t-xs}; // S 档字号阶梯：12px
+  }
+
+  &--medium {
+    --si-timeline-font: #{$t-sm}; // M 档字号阶梯：14px
+  }
+
+  &--large {
+    --si-timeline-font: #{$t-base}; // L 档字号阶梯：16px
+  }
+
+  // 事件行：三段横排，纵向留白放在两侧列上（分隔列贯通，连接线才不断裂）
+  &__event {
+    display: flex;
+    align-items: stretch;
+    gap: $s-3; // 12px：节点列与两侧内容列的间距
+
+    // 反向行：对侧落在右侧、内容落在左侧（align="right" 整表镜像、alternate 奇数索引）
+    &--reverse {
+      flex-direction: row-reverse;
+    }
+  }
+
+  // 对侧信息：默认在竖线左侧 → 右对齐贴线
+  &__opposite {
+    flex: 1;
+    min-width: 0; // 允许长文本换行，不撑破行
+    padding-bottom: $s-4; // 16px：事件之间的纵向留白
+    text-align: right;
+  }
+
+  // 反向行的对侧落在竖线右侧 → 改为左对齐贴线
+  &__event--reverse &__opposite {
+    text-align: left;
+  }
+
+  // 内容：一律左对齐（长文本右对齐会破坏可读性）
+  &__content {
+    flex: 1;
+    min-width: 0;
+    padding-bottom: $s-4; // 16px：事件之间的纵向留白
+    text-align: left;
+  }
+
+  // 末行不再留纵向空白，列表自然收口
+  &__event:last-child {
+    > .si-timeline__opposite,
+    > .si-timeline__content {
+      padding-bottom: 0;
+    }
+  }
+
+  // 分隔列：节点与连接线的纵向通道（宽度由节点决定，不被两侧列挤压）
+  &__separator {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__marker {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // 默认节点：主题色描边 + 背景色填充的空心圆（填充遮住穿行的连接线）
+  &__dot {
+    width: 10px; // 节点直径恒定，无对应 Token（不随档位缩放）
+    height: 10px;
+    border: 2px solid var(--b3-theme-primary, $c-danger);
+    border-radius: $r-full;
+    background: var(--b3-theme-background, $c-bg);
+    box-sizing: border-box;
+  }
+
+  // 连接线：撑满本行剩余长度（竖向为高、横向为宽）；取中性边框色（相邻色陷阱：surface 与 background 灰度仅差约 3%，画细线不可辨）
+  &__connector {
+    flex: 1;
+    width: 2px; // 线宽恒定，无对应 Token（不随档位缩放）
+    background: var(--b3-border-color, $c-border);
+  }
+
+  // 横向布局：事件自左向右排列，线为横线，对侧 / 内容分居线的上下两侧
+  &--horizontal {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch; // 各列等高（列高由该列内容决定），节点跨列对齐的前提
+
+    // 每列即一个事件：对侧 / 分隔行 / 内容（纵向排列）
+    .si-timeline__event {
+      flex: 1; // 事件等分宽度
+      min-width: 0;
+      flex-direction: column;
+    }
+
+    // 反向列：上下互换（align="bottom" 整表镜像、alternate 奇数索引）
+    .si-timeline__event--reverse {
+      flex-direction: column-reverse;
+    }
+
+    // 两侧块等分列高 ⇒ 分隔行落在垂直中线上；横向布局下文本不再贴线对齐
+    .si-timeline__opposite,
+    .si-timeline__content {
+      flex: 1;
+      padding-bottom: 0; // 横向布局的行距由 gap 承担，不需要纵向留白
+      text-align: left;
+    }
+
+    // 分隔行：节点 + 向右延伸的连接线（末列同样不渲染连接线，列表自然收口）
+    .si-timeline__separator {
+      flex-direction: row;
+      width: 100%;
+    }
+
+    .si-timeline__connector {
+      width: auto;
+      height: 2px; // 线宽恒定，无对应 Token（不随档位缩放）
+      flex: 1;
+    }
+  }
+}

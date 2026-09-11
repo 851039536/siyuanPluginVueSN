@@ -49,6 +49,9 @@ import {
   textareaPreviewGroups,
 } from "./textarea"
 import {
+  timelinePreviewGroups,
+} from "./timeline"
+import {
   toggleButtonPreviewGroups,
 } from "./toggleButton"
 
@@ -68,6 +71,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...radioButtonPreviewGroups,
   ...datePickerPreviewGroups,
   ...tagAvatarPreviewGroups,
+  ...timelinePreviewGroups,
   ...displayPreviewGroups,
   ...confirmDialogPreviewGroups,
 ]

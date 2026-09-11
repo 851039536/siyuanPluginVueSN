@@ -31,12 +31,6 @@
           @click="emit('openExtDialog')"
         />
       </Badge>
-      <!-- 条数选择（公共组件：数字直显，"all" 显示「全部」） -->
-      <CommitCountSelect
-        :i18n="i18n"
-        :commit-count="commitCount"
-        @update-count="emit('updateCount', $event)"
-      />
       <!-- 按钮文案："开始行数分析"/"重新分析"；分析中由组件 loading 态保宽（图标与文案隐占位） -->
       <Button
         variant="ghost"
@@ -53,13 +47,11 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 行数统计顶部工具条（分析状态 + 过滤配置 + 条数选择 + 分析按钮）
-import type { CommitCount } from "../../composables/useCommitAnalysis"
+// gitPush 行数统计顶部工具条（分析状态 + 过滤配置 + 分析按钮；统计范围固定为全部提交，无条数选择）
 import { computed } from "vue"
 import Badge from "@/components/Badge.vue"
 import Button from "@/components/Button.vue"
 import Toolbar from "@/components/Toolbar.vue"
-import CommitCountSelect from "../common/CommitCountSelect.vue"
 import { analysisStatusText } from "../../utils"
 
 const props = defineProps<{
@@ -68,14 +60,12 @@ const props = defineProps<{
   analyzed: boolean
   /** 上次分析完成时间（ISO） */
   analyzedAt: string
-  commitCount: CommitCount
   /** 选中的文件扩展名过滤（空数组 = 不过滤） */
   selectedExtensions: string[]
 }>()
 
 const emit = defineEmits<{
   runAnalysis: []
-  updateCount: [n: CommitCount]
   openExtDialog: []
 }>()
 

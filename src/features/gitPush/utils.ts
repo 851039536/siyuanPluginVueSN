@@ -1,6 +1,6 @@
 // gitPush 工具函数与多路径解析
 import type { Ref } from "vue"
-import type { CommitAnalysisEntry, CommitAnalysisType, FileChange, GitOpLogEntry, GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "./types"
+import type { CommitAnalysisEntry, CommitAnalysisType, FileChange, GitOpLogEntry, GitProject, GitRemoteInfo, PlatformKey, ProjectLineRankItem, RemotePushStatus } from "./types"
 import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, FILE_STATUS_META, HEAT_LEVEL_THRESHOLDS, PLATFORM_META } from "./types"
 import type { IconKey } from "@/config/icons"
 import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
@@ -568,6 +568,12 @@ export function withLineBarPct<T>(rows: T[], pick: (r: T) => number): (T & { pct
       share: `${((v / total) * 100).toFixed(1)}%`,
     }
   })
+}
+
+/** 项目行数排行排序比较器（单一来源）：按总行数（存量）降序，同存量再按净增、新增降序。
+ * buildLineRankings（全量分析）与 refreshLineStatsProject（单项目刷新 upsert 重排）共用，保证两处口径一致。 */
+export function compareProjectLineRank(a: ProjectLineRankItem, b: ProjectLineRankItem): number {
+  return (b.totalLines ?? 0) - (a.totalLines ?? 0) || b.net - a.net || b.added - a.added
 }
 
 // ── 时间格式化与项目排序（纯函数，无 Vue 响应式依赖）──

@@ -482,8 +482,6 @@ export interface LineStatsSummary {
 
 /** 行数统计独立缓存（与提交分析缓存解耦，独立持久化到 git-push-line-stats-cache） */
 export interface LineStatsCache {
-  /** 每项目抓取条数（"all" = 全部提交；缓存对应的设置，加载时回填选择器） */
-  commitCount: number | "all"
   /** 上次分析完成时间（ISO，面板展示"上次分析"文案） */
   analyzedAt: string
   /** 抓取失败的项目数 */

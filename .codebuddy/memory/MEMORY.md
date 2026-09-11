@@ -89,7 +89,9 @@
 
 ## 功能模块待办（只留仍可执行的事实）
 - **待迁移**：feature 内原生 radio 5 处（`video/CompressDialog`、`wordQuery/WordQueryPanel`、`gitPush` 的 `SettingsDialog`/`CommitFixDialog`/`BatchFixDialog`）；**原生 `<input type="color">` 8 处**（`prompts/CategoryManageModal`、`toolCollection/tools/colorPicker`、`imageCreation/{CoverDecorationSettings,CodeImageTab}`、`superPanel/FeatureCard`、`gitPush/{common/CategoryDialog,CommitAnalysis/AnalysisSettingsForm}`、`generalSettings/TabPinSettings`）；`ReviewRadarChart` 未迁到 `Chart`
-- **gitPush**：多本地路径（`resolveValidPath`）；历史重写 fast-import 化；提交规则 14 条经 `DEFAULT_COMMIT_RULE_CONFIG` / `readCommitRuleConfig(prefs)` 单一入口；**LineStats 六个组件已于 2026-09-11 完成共享组件迁移**（Toolbar/Button/Badge/Card/Checkbox/Tabs+Tag/IconWrapper，弹窗复用 `.gp-mask`）；`gitPush/README.md` 中 `LineRankingSection`「通用区块（mode prop 区分）」是过期描述（实际无 `mode`，作者排行在详情弹窗内）
+- **gitPush**：多本地路径（`resolveValidPath`）；历史重写 fast-import 化；提交规则 14 条经 `DEFAULT_COMMIT_RULE_CONFIG` / `readCommitRuleConfig(prefs)` 单一入口；**行数统计（LineStats）2026-09-11 已完成两轮整改**：①六个组件迁共享组件（Toolbar/Button/Badge/Card/Checkbox/Tabs+Tag/IconWrapper）+ 弹窗复用 `.gp-mask` + 排行表 grid 列模板/吸顶表头/键盘可达行；②移除条数选择（固定全部提交）+ 抽 `common/LineRankRow.vue` / `LineShareBar.vue` + 净增语义色统一 `lrr-net` + `compareProjectLineRank` / `sumLineDeltas` 去重
+- **gitPush 行数统计的口径常识**：`fetchProjectLineStats` 混两个维度 —— 提交维度受条数限制（`git log -N`），**「当前总行数」是工作区存量维度（`git ls-files` + 逐文件 `readFileSync`，同步阻塞、与条数无关、不过滤扩展名）**；排行排序与条形都取存量 ⇒ 改条数看不出差别。行数统计现固定全部提交且不再读写共享 `commitCount`（`LineStatsCache` 已无该字段）
+- **gitPush README 属历史欠账**：`styles/` 目录树仅列 26 项（实测 54 个 `*.scss`，缺 30 项登记），`common/` 清单曾缺 7 个组件（已补）。改该文件时计数一律实测，别信既有数字
 - **componentPreview**：addTab + openWindow 双形态；`usePreviewSize`（key `component-preview-size`）；`sizeable` + `resolveProps` 只注入未显式指定 size 的示例
 - **compactMode**：3 档密度 + 6 档字号 + 5 区域开关；`applyCompactMode` 先复位再置位（幂等）
 - **statistics**：`BLOCK_TYPE_LABELS` 仍被 `baseStats` 使用，勿删

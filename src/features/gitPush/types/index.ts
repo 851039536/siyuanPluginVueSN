@@ -68,6 +68,7 @@ export {
   ANALYSIS_MONTH_KEYS,
   ANALYSIS_WEEKDAY_KEYS,
   DEFAULT_COMMIT_RULE_CONFIG,
+  FETCH_FAILURE_KIND_KEYS,
   PLATFORM_META,
   FILE_STATUS_META,
   REMOTES,
@@ -78,7 +79,7 @@ export {
   HEAT_LEVEL_THRESHOLDS,
   readCommitRuleConfig,
 } from "./meta"
-export type { AuthorLineRankItem, BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FileLineDetailRow, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { AuthorLineRankItem, BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FetchFailureKind, FileLineDetailRow, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"
 
 // ── 重导出代码统计报告类型与常量（来自 report.ts）──

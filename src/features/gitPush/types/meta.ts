@@ -480,12 +480,51 @@ export interface LineStatsSummary {
   totalLines: number
 }
 
+/** 失败原因分类 → i18n 标签键（弹窗与统计共用同一映射；新增分类必须在此登记） */
+export const FETCH_FAILURE_KIND_KEYS = {
+  /** 本地路径不存在（多设备未配置该机路径 / 盘符或目录已变更） */
+  pathMissing: "fetchFailReasonPathMissing",
+  /** 目录存在但不是 Git 仓库（指向了非仓库目录或仓库子目录被移动） */
+  notRepo: "fetchFailReasonNotRepo",
+  /** 仓库已初始化但没有任何提交（git log 退出码非 0，属合法空数据但命令层报错） */
+  noCommits: "fetchFailReasonNoCommits",
+  /** git 命令超时（大仓库/网络盘，execFile 以 SIGTERM 终止子进程） */
+  timeout: "fetchFailReasonTimeout",
+  /** Git 环境不可用（未安装 git / PATH 缺失 / 非 Electron 环境） */
+  gitUnavailable: "fetchFailReasonGitUnavailable",
+  /** 仓库所有权校验失败（git 2.35+ safe.directory，常见于其他用户创建的目录） */
+  dubiousOwner: "fetchFailReasonDubiousOwner",
+  /** index.lock 残留（上一次超时被硬终止，后续写操作全部失败） */
+  lock: "fetchFailReasonLock",
+  /** 其他未归类错误（原因文本保留原始报错供排查） */
+  other: "fetchFailReasonOther",
+} as const
+
+/** 项目抓取失败原因分类（由标签键映射推导，保证分类与 i18n 键一一对应） */
+export type FetchFailureKind = keyof typeof FETCH_FAILURE_KIND_KEYS
+
+/** 单项目抓取失败明细（失败项目名 + 本次使用路径 + 分类与原始报错，供失败明细弹窗展示） */
+export interface ProjectFetchFailure {
+  /** 项目 id */
+  projectId: string
+  /** 项目名（项目删除后由加载侧按有效项目过滤剔除） */
+  projectName: string
+  /** 本次实际使用的本地路径（resolveValidPath 解析结果；路径无效时即失败路径） */
+  path: string
+  /** 失败原因分类 */
+  kind: FetchFailureKind
+  /** 原始报错文本（git stderr / 路径信息，保留完整排查细节） */
+  reason: string
+}
+
 /** 行数统计独立缓存（与提交分析缓存解耦，独立持久化到 git-push-line-stats-cache） */
 export interface LineStatsCache {
   /** 上次分析完成时间（ISO，面板展示"上次分析"文案） */
   analyzedAt: string
   /** 抓取失败的项目数 */
   failedCount: number
+  /** 抓取失败项目明细（旧缓存无此字段时按空数组兜底，仅有计数可展示） */
+  failures?: ProjectFetchFailure[]
   /** 项目代码行数排行（按总行数降序） */
   projectLineRanking: ProjectLineRankItem[]
   /** 作者代码行数排行（按净增降序） */

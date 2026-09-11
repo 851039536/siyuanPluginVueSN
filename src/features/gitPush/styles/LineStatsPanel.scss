@@ -23,8 +23,11 @@
   opacity: 0.6;
 }
 
-// 抓取失败提示（弱化展示，不打断正常结果阅读）
+// 抓取失败提示（弱化展示，不打断正常结果阅读；右侧「查看失败项目」按钮展开明细弹窗）
 .gls-fail-hint {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
   font-size: $t-2xs;
   color: var(--b3-theme-warning);
   margin-bottom: $s-2;

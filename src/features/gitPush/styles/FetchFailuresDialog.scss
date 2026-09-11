@@ -1,0 +1,89 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 失败明细弹窗内容区：说明 + 明细列表
+.gff-hint {
+  font-size: $t-2xs;
+  opacity: 0.6;
+  margin-bottom: $s-2;
+}
+
+// 明细列表：条目多时弹窗内滚动（Dialog 已有 max-height: 80vh，此处再限高避免撑满）
+.gff-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.gff-item {
+  padding: $s-1 0;
+  @include row-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.gff-item-head {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+}
+
+.gff-name {
+  min-width: 0;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  @include text-ellipsis;
+}
+
+// 原因分类短标签（警示色，与失败提示同色系）
+.gff-kind {
+  flex-shrink: 0;
+  padding: $s-px1 $s-px5;
+  border: 1px solid var(--b3-theme-warning);
+  border-radius: $r-sm;
+  font-size: $t-2xs;
+  color: var(--b3-theme-warning);
+  white-space: nowrap;
+}
+
+// 本地路径行：标签 + 等宽路径（超长省略，悬停看全路径）
+.gff-path {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  margin-top: $s-px2;
+  min-width: 0;
+}
+
+.gff-path-label {
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  opacity: 0.5;
+}
+
+.gff-path-value {
+  min-width: 0;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  opacity: 0.75;
+  @include text-ellipsis;
+}
+
+// 原始报错：等宽 + 保留换行，长文本在条目内滚动
+.gff-reason {
+  max-height: 60px;
+  margin: $s-px2 0 0;
+  overflow-y: auto;
+  padding: $s-px2 $s-px5;
+  border-radius: $r-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-error);
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

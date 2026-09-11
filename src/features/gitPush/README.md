@@ -148,13 +148,14 @@ src/features/gitPush/
 │   │   ├── LargeBlobSection.vue     # 大文件列表区块（体积 + 占比条形 + 分页）
 │   │   ├── CleanWizardDialog.vue    # BFG 清理向导弹窗（策略表单 → 前置检查 → 执行 → 结果，四段式）
 │   │   └── format.ts                # 字节人类可读化工具（formatBytes）
-│   └── LineStats/                   # 行数统计专属（6 个）
+│   └── LineStats/                   # 行数统计专属（7 个）
 │       ├── index.vue                # 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行 + 弹窗）
 │       ├── LineStatsToolbar.vue     # 顶部工具条（分析状态 + 过滤配置 + 分析按钮；无条数选择，统计范围固定全部提交）
 │       ├── LineStatsCards.vue       # 顶部汇总卡片（总新增/删除/净增/当前总行数）
 │       ├── LineRankingSection.vue   # 项目代码行数排行区块（吸顶表头 + 共享 LineRankRow 行，点击行打开详情）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
-│       └── ProjectLineDetail.vue    # 项目行数详情弹窗
+│       ├── ProjectLineDetail.vue    # 项目行数详情弹窗
+│       └── FetchFailuresDialog.vue  # 项目抓取失败明细弹窗（项目名 + 本地路径 + 原因分类 + 原始报错）
 │   └── CodeReport/                  # 代码统计报告视图专属（9 个；分区首次激活后才挂载）
 │       ├── index.vue                # 报告视图入口容器（项目/时间范围选择 + 分区 Tab 编排）
 │       ├── TeamOverviewSection.vue  # 团队总览分区（KPI 卡片：成员/总提交/总代码量/最活跃）
@@ -184,6 +185,7 @@ src/features/gitPush/
     ├── LineShareBar.scss            # 行数占比迷你条样式
     ├── ProjectLineDetail.scss       # 项目行数详情弹窗样式（弹窗尺寸 + 头部 + 文件明细表格）
     ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式
+    ├── FetchFailuresDialog.scss     # 项目抓取失败明细弹窗样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式

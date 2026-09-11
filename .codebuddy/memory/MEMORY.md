@@ -14,14 +14,15 @@
 - 独立窗体精简：`isFloating`（`getFrontend() === "desktop-window"`）+ `v-if="!isFloating"` 隐藏重复标题
 - 新功能 8 处注册；i18n 只改分片（顶层 JSON 由 merge 生成）
 
-## 共享组件库（`src/components/`，27 个）
+## 共享组件库（`src/components/`，28 个）
 - **改计数前必须 `list_dir` 实测**（并行会话频繁变动）。新增组件 = 4 类位置：`<Name>.vue` + `styles/<Name>.scss` + `previewData/<name>.ts`（**双导出**「分组对象 + 分组数组」并接入 `previewData/index.ts`）+ 文档计数（`AGENTS.md` 5 处 + 清单表行 + 复用枚举、根 `README.md`、`componentPreview/README.md` 3 处 + 能力条目 + 具名插槽表/事件契约表、`kit/README.md`、`components/docs` 迁移指南 3 处）
 - 私有子部件与纯函数放同名小写目录（`datePicker/` `select/` `speedDial/` `paginator/` `textarea/` `timeline/`），不计入清单、**禁止 feature 直接导入**；配套但需 feature 直接使用的组件也平铺（`InputGroup` + `InputGroupAddon`）
 - 尺寸四档 `xsmall/small/medium/large`（默认 small），字号阶梯 10/12/14/16，四档禁同号；**原则上只改字号，不联动 padding/min-height/gap/图标**（Slider/DatePicker 的几何联动是**已登记的既有特例**，勿再扩）
 - 分段档位/模式切换用 **`Button` 分组**（选中 `variant="primary"`、未选中 `ghost`+`text`+`size="xsmall"`+`:aria-pressed`）；`RadioButton` 用于表单式互斥选项
 - 允许自建例外：纯展示局部布局容器、无档位 26×26 `.icon-btn`
 - 改 props/行为/具名插槽/事件契约后，必须同步 `previewData/*.ts` 与 `componentPreview/README.md`（具名/作用域插槽与事件语义无法在快照呈现，必须登记 README）
-- 预览框架：`PreviewExample` 支持 `props` + `slotText` / `render`（默认插槽）+ **`slots`（具名/作用域插槽工厂，2026-09-11 新增）**；数据文件超 300 行时另建 `previewData/<name>.ts`
+- 预览框架：`PreviewExample` 支持 `props` + `slotText` / `render`（默认插槽）+ **`slots`（具名/作用域插槽工厂，2026-09-11 新增）**；数据文件超 300 行时另建 `previewData/<name>.ts`（既有的 `control.ts` 339 / `input.ts` 309 行说明该线并非硬约束）
+- **预览里需要宿主样式（如垂直分隔线的高度）时，直接给示例传 `props: { style: "height: 80px" }`**：单根组件 ⇒ `style` 作为 fallthrough attr 落到根元素，`code` 中同步写同款 `style`。**无需改预览框架，也无需新增 `.cp-card__stage--xxx` 舞台类**（舞台类是给浮层/多根组件用的）
 - **受控示例在预览中可交互**：`PreviewSection.vue` 内联 `PreviewStage` 持本地 `modelValue` 并回写。两条约束：①`isControlledComponent()` 用 `component.props` 判断是否声明 `modelValue`，**未声明则一个额外属性都不注入**（否则多根组件 `FormField` 报 extraneous attrs）；②`hasSlot` **仅表示「有默认插槽内容」，无内容时必须为 false**
 
 ### 组件特有陷阱（只列非显然项）
@@ -33,6 +34,7 @@
 - `Timeline`（2026-09-11 新增）：`value` 必填 + `layout(vertical 默认 / horizontal)` × `align`（竖向 `left/right/alternate`，横向 `top/bottom/alternate`）+ `content`/`opposite`/`marker` 作用域插槽（`{ item, index }`）。①官方有 `icon` 作用域参数（来自其内部图标解析）与 `connector` 插槽，本项目**均不提供**；②**始终渲染 `opposite` 容器**（官方 Basic 观感：两侧等宽 / 等高、线位置稳定），`alternate` 下奇数索引反向；③**反向机制两向复用**：`isReversed()` 分向判断（竖 `right`、横 `bottom`），CSS 只换方向值（竖 `row-reverse`、横 `column-reverse`）；④默认节点为**空心圆（主题色描边 + 背景色填充，填充用于遮住穿行的线）**，连接线取 `--b3-border-color` 且**末项不渲染**；⑤四档尺寸只驱动字号（`--si-timeline-font`），节点直径 10px / 线宽 2px 恒定；⑥**横向连线对齐的软肋**：列高由内容决定、两侧块各占一半列高 ⇒ 通常节点跨列对齐，但某列 `opposite` 更高时该列连线会呈阶梯状（与官方同病，示例用等长文案规避）
 - `Card`（2026-09-11 对齐官方插槽契约）：本项目能力**远超**官方（官方无功能性 props，只有 5 个无作用域插槽）。①`title`/`subtitle`/`content` 具名插槽已补：`content` **未传时回落默认插槽**（写成 `<slot name="content"><slot /></slot>`，不引入 `$slots` 判断）；`title`/`subtitle` 用「插槽默认内容承载 prop」+ `v-if="prop || $slots.x"`；②⚠️ **`header` 语义与官方不同**（本项目是带下边框的标题栏 = caption + header-extra；官方是 body 之外的通栏区）→ 官方通栏在本项目对应 `cover`；`footer` 是**独立分区带上边框**（官方在 body 内无边框）；③容器钩子 `contentClass` → `.si-card__body`、`captionClass` → `.si-card__header-content`，**不新建 `__content` 层**（会打断 3 处既有 `:deep(.si-card__body)` 定制）；④`.si-card__body` 的 padding 由 `.si-card--{tier} .si-card__body`（0,2,0）给出 ⇒ **外部单类选择器改 padding 无效**；⑤`has-cover` 类在 `cardClasses` computed 里读 `slots.cover`（`$slots` 非响应式的既有隐患，未动）
 - **`$slots` 判断不要写进 `computed`**：`useSlots()` 返回的 slots 对象非响应式，缓存会失效；判断写在模板里（每次渲染重新读取）才稳。若一定要 computed，只能包 `props`（如 `props.title`）而非 `slots.x`
+- `Divider`（2026-09-11 新增）：`type(solid/dashed/dotted)` × `layout(horizontal/vertical)` × `align`，**仅有默认插槽**、无事件。①**`align` 三条官方语义**：未传按 `center`（不是 left）、取值与方向绑定（水平 left/center/right、垂直 top/center/bottom）、**交叉组合静默回落居中**；②实现用**两段真实线段**（按对齐隐藏首段/末段），**不复刻官方「根元素画线 + 内容背景遮罩」**（遮罩底色必须等于父容器底色，本项目父容器底色有多种必露色块）；③**垂直分隔必须给高度**：`align-self: stretch` + `min-height: $s-6` 兜底，否则非 flex 父容器下塌成 0；④线色 `--b3-border-color`（相邻色陷阱）；⑤线型经 `--si-divider-style` 变量驱动 `border` 简写。**待迁移**：全库 22 个 feature 文件有自建分隔线（`diskBrowser`/`gitPush`/`statistics`/`skillsViewer`/`toolCollection`/`statusBar` 等）
 - `ConfirmDialog`：`visible` 受控；`confirm` 后**不自动关闭**；**只监听 Esc，Enter 不绑定**。三处 feature 本地实现（`s3FileManager` / `gitPush` / `shortcut`）**尚未迁移**
 - **弹层类预览必须沙箱覆盖**：`.cp-card__stage` 设 `position: relative`，舞台内遮罩类覆盖成 `absolute; z-index: 1`（覆盖必须**抬特异性**：类名写两遍 = (0,3,0)）。`SpeedDial` 同机制（+ `.cp-card__stage--speeddial` 高度类，由 `group.id` 判定）；**`.cp-card` 是 `overflow: hidden`**
 - `Checkbox`：`isGroup = !binary && Array.isArray(modelValue)`；`indeterminate` 只能写 DOM 属性（`flush:"post"` + `onMounted`）；分组模式返回新数组

@@ -25,6 +25,9 @@ import {
   displayPreviewGroups,
 } from "./display"
 import {
+  dividerPreviewGroups,
+} from "./divider"
+import {
   inputPreviewGroups,
 } from "./input"
 import {
@@ -73,5 +76,6 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...tagAvatarPreviewGroups,
   ...timelinePreviewGroups,
   ...displayPreviewGroups,
+  ...dividerPreviewGroups,
   ...confirmDialogPreviewGroups,
 ]

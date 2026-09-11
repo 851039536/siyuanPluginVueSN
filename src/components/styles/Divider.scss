@@ -1,0 +1,80 @@
+// ========== Divider.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 分隔线：一条 1px 细线（水平 / 垂直），默认插槽可在线上承载内容
+.si-divider {
+  // 线型单点驱动：档位类改写该变量，各处 border 简写统一消费
+  --si-divider-style: solid;
+
+  box-sizing: border-box;
+
+  &--dashed {
+    --si-divider-style: dashed;
+  }
+
+  &--dotted {
+    --si-divider-style: dotted;
+  }
+
+  // 水平：无内容时根元素自身即线段
+  &--horizontal {
+    width: 100%;
+    margin: $s-3 0;
+
+    &:not(.si-divider--with-content) {
+      border-top: 1px var(--si-divider-style, solid) var(--b3-border-color, $c-border);
+    }
+  }
+
+  // 垂直：无内容时根元素自身即线段；align-self 使其在 flex 行中撑满父高
+  &--vertical {
+    align-self: stretch;
+    width: 0; // 线宽由 border-left 提供，无对应 Token
+    min-height: $s-6; // 24px：父容器无确定高度时防止塌成 0（垂直分隔线的经典坑）
+    margin: 0 $s-3;
+
+    &:not(.si-divider--with-content) {
+      border-left: 1px var(--si-divider-style, solid) var(--b3-border-color, $c-border);
+    }
+  }
+
+  // 有内容：两段真实线段 + 中间内容
+  // （不复刻官方「根元素画线 + 内容背景遮罩」—— 遮罩底色必须等于父容器底色，
+  //   本项目父容器底色有 background / surface / Card 内等多种，遮罩必露色块）
+  &--with-content {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+  }
+
+  &--vertical.si-divider--with-content {
+    flex-direction: column;
+  }
+
+  &__line {
+    // 线段方向随方向档位切换（水平 border-top / 垂直 border-left）
+    .si-divider--horizontal.si-divider--with-content > & {
+      flex: 1;
+      border-top: 1px var(--si-divider-style, solid) var(--b3-border-color, $c-border);
+    }
+
+    .si-divider--vertical.si-divider--with-content > & {
+      flex: 1;
+      min-height: $s-6; // 24px：同上，内容过高时线段不至完全消失
+      border-left: 1px var(--si-divider-style, solid) var(--b3-border-color, $c-border);
+    }
+  }
+
+  &__content {
+    flex: 0 1 auto; // 允许窄容器内收缩，避免长内容撑破分隔线
+    min-width: 0;
+  }
+
+  // 内容位置：隐藏首段 / 末段线（对齐值已按方向归一，故一条规则覆盖两个方向）
+  &.si-divider--left > .si-divider__line:first-child,
+  &.si-divider--top > .si-divider__line:first-child,
+  &.si-divider--right > .si-divider__line:last-child,
+  &.si-divider--bottom > .si-divider__line:last-child {
+    display: none;
+  }
+}

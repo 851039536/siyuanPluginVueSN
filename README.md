@@ -144,7 +144,7 @@ src/
 ├── api.ts                       # 思源笔记 API 封装（60+ 函数）
 ├── index.scss                   # 全局样式入口
 ├── commands/                    # 斜杠命令
-├── components/                  # 共享 UI 组件（27 个原子组件；自包含：kit/ 内含 icons.ts 与 variables.scss 真源）
+├── components/                  # 共享 UI 组件（28 个原子组件；自包含：kit/ 内含 icons.ts 与 variables.scss 真源）
 ├── config/                      # 配置（settings.ts；icons.ts 为 kit/icons.ts 转发壳）
 ├── features/                    # 40+ 功能模块
 │   ├── config.ts                # FEATURE_CONFIG 单一数据源

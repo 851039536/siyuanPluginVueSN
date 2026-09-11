@@ -67,8 +67,13 @@ export interface PreviewExample {
   /**
    * 具名 / 作用域插槽渲染：键为插槽名，值为接收该插槽作用域参数的 VNode 工厂。
    * 工厂可能被多次调用（如列表类组件每个事件一次），因此必须在工厂内部新建 VNode，不可复用同一实例。
+   * 第二个入参是**注入全局档位后的实际渲染 props** —— 插槽里放了共享控件（Button / Input 等）时，
+   * 用它把同档 `size` 透传给这些控件，避免容器档位与内部控件脱节（Toolbar 即此用法）。
    */
-  slots?: Record<string, (slotProps: Record<string, any>) => VNode | VNode[]>
+  slots?: Record<string, (
+    slotProps: Record<string, any>,
+    exampleProps: Record<string, any>,
+  ) => VNode | VNode[]>
   /** 与该示例等价的可复制 Vue 模板代码 */
   code: string
 }

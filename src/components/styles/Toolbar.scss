@@ -1,0 +1,115 @@
+// ========== Toolbar.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 工具栏：三段式横向布局容器（start 左 / center 居中 / end 右）
+// 档位变量在根单点输出，四档只改字号与几何量，边框宽度与圆角恒定（切档不抖动）
+.si-toolbar {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-toolbar-font: #{$t-xs};
+  --si-toolbar-pad-y: #{$s-1};
+  --si-toolbar-pad-x: #{$s-2};
+  --si-toolbar-min-h: 36px; // 无对应 Token（同档 Button 最小高度 28px + 2×上下内边距 4px）
+  --si-toolbar-gap: #{$s-2};
+
+  display: flex;
+  align-items: center;
+  gap: var(--si-toolbar-gap, #{$s-2});
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--si-toolbar-min-h, 36px);
+  font-family: $ff-zh;
+  font-size: var(--si-toolbar-font, #{$t-xs});
+  color: var(--b3-theme-on-background, $c-fg);
+  border-radius: $r-base;
+  background: transparent;
+
+  // ========== 尺寸档位（字号阶梯 10/12/14/16） ==========
+  // min-height = 同档 Button 最小高度 + 2×上下内边距 ⇒ 内含共享控件不被撑破也不留空档
+  &--xsmall {
+    --si-toolbar-font: #{$t-2xs}; // 10px
+    --si-toolbar-pad-y: #{$s-px3};
+    --si-toolbar-pad-x: #{$s-1};
+    --si-toolbar-min-h: 28px; // 22 + 2×3，无对应 Token
+    --si-toolbar-gap: #{$s-px6};
+  }
+
+  &--small {
+    --si-toolbar-font: #{$t-xs}; // 12px
+    --si-toolbar-pad-y: #{$s-1};
+    --si-toolbar-pad-x: #{$s-2};
+    --si-toolbar-min-h: 36px; // 28 + 2×4，无对应 Token
+    --si-toolbar-gap: #{$s-2};
+  }
+
+  &--medium {
+    --si-toolbar-font: #{$t-sm}; // 14px
+    --si-toolbar-pad-y: #{$s-1};
+    --si-toolbar-pad-x: #{$s-3};
+    --si-toolbar-min-h: 44px; // 36 + 2×4，无对应 Token
+    --si-toolbar-gap: #{$s-2};
+  }
+
+  &--large {
+    --si-toolbar-font: #{$t-base}; // 16px
+    --si-toolbar-pad-y: #{$s-px5};
+    --si-toolbar-pad-x: #{$s-4};
+    --si-toolbar-min-h: 54px; // 44 + 2×5，无对应 Token
+    --si-toolbar-gap: #{$s-3};
+  }
+
+  // ========== 外观档位（圆角统一，borderless 也保留声明以便调用方用 class 覆盖为 0） ==========
+  &--outlined {
+    // 边框取中性边框色（相邻色陷阱：surface 与 background 灰度仅差约 3%，画不了细线）
+    background: var(--b3-theme-surface, $c-surface);
+    border: 1px solid var(--b3-border-color, $c-border);
+  }
+
+  &--filled {
+    background: var(--b3-theme-surface, $c-surface);
+  }
+
+  &--borderless {
+    background: transparent;
+  }
+
+  // 内边距开关：关闭后四向贴合，min-height 仍由档位保证
+  &--padded {
+    padding: var(--si-toolbar-pad-y, #{$s-1}) var(--si-toolbar-pad-x, #{$s-2});
+  }
+
+  // ========== 三段容器 ==========
+  // 两端各占剩余空间的等份（flex: 1 1 0）配平 ⇒ center 在「仅 start / 仅 end / start+end / 三者皆有」
+  // 四种组合下都精确居中（官方为 space-between，三方俱在时只能大致居中，此处为有意改进）。
+  // min-width: 0 允许长内容收缩，避免把 center 挤出容器。
+  &__start,
+  &__center,
+  &__end {
+    display: flex;
+    align-items: center;
+    gap: var(--si-toolbar-gap, #{$s-2});
+    min-width: 0;
+  }
+
+  &__start {
+    flex: 1 1 0;
+    justify-content: flex-start;
+  }
+
+  &__center {
+    flex: 0 0 auto;
+  }
+
+  &__end {
+    flex: 1 1 0;
+    justify-content: flex-end;
+  }
+
+  // 窄容器换行：start 独占首行，center / end 落在次行（center 贴左、end 贴右）
+  &--wrap {
+    flex-wrap: wrap;
+
+    .si-toolbar__start {
+      flex: 1 1 100%;
+    }
+  }
+}

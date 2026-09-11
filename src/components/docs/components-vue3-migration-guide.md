@@ -1,9 +1,9 @@
 # 共享组件库迁移到普通 Vue 3 项目（新手版）
 
-> 这套 UI 组件库（按钮、输入框、下拉、日历、图表等 **28 个组件**）原本跑在思源笔记里。
+> 这套 UI 组件库（按钮、输入框、下拉、日历、图表等 **29 个组件**）原本跑在思源笔记里。
 > 本文档告诉你怎么把它搬到一个**普通 Vue 3 项目**里用。
 >
-> **基线**：2026-09-11，`src/components/` 共 88 个文件（28 个公开组件 + 各组件私有子目录 + `kit/` 支撑目录与本说明文档）。
+> **基线**：2026-09-11，`src/components/` 共 90 个文件（29 个公开组件 + 各组件私有子目录 + `kit/` 支撑目录与本说明文档）。
 
 ---
 
@@ -59,9 +59,9 @@ import Input from "./components/Input.vue"
 
 ## 三、它开箱自带什么
 
-- **28 个组件**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / ConfirmDialog /
+- **29 个组件**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / ConfirmDialog /
   DatePicker / Divider / FormField / IconWrapper / Input / InputGroup / InputGroupAddon / Label / Listbox /
-  Loader / Paginator / RadioButton / Select / Slider / SpeedDial / Switch / Tag / Textarea / Timeline / ToggleButton
+  Loader / Paginator / Panel / RadioButton / Select / Slider / SpeedDial / Switch / Tag / Textarea / Timeline / ToggleButton
 - **明暗主题自动切换**：没配任何主题时给一套默认配色（跟随系统 `prefers-color-scheme`，
   也认 `[data-theme="dark"]` 和 `.dark` 两种手动挂暗色的方式）
 - **图标离线可用**：mdi 图标数据随组件包内置，不请求任何外部 CDN
@@ -143,5 +143,5 @@ applyDefaultTheme({ overrides: { "b3-theme-primary": "#7c3aed" } })
   `theme.ts`（默认主题注入）、`iconify.ts`（mdi 离线注册）、`README.md`
 - `src/_variables.scss` 与 `src/config/icons.ts`：**转发壳**（`@forward` / `export *`），
   本项目 336 处样式引用与 48 处图标引用的路径不变
-- 28 个公开组件内部只用相对路径互相引用，并各带一行 `import "./kit/theme"`
+- 29 个公开组件内部只用相对路径互相引用，并各带一行 `import "./kit/theme"`
 - 新增图标 / Token 请改 `kit/` 里的真源文件，**不要**改两个转发壳

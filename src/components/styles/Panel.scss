@@ -1,0 +1,64 @@
+// ========== Panel.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 面板：可折叠的内容容器（头部 / 内容 / 底部三段；Codex 边框优先，禁 box-shadow）
+.si-panel {
+  border: 1px solid var(--b3-border-color, $c-border);
+  border-radius: $r-base;
+  background: var(--b3-theme-background, $c-bg);
+  font-family: $ff-zh;
+  overflow: hidden; // 裁掉子块的直角背景，保证圆角干净
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $s-2;
+    padding: $s-2 $s-3;
+    background: var(--b3-theme-surface, $c-surface);
+    border-bottom: 1px solid var(--b3-border-color, $c-border);
+  }
+
+  &__title {
+    flex: 1;
+    min-width: 0;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
+    line-height: $lh-tight;
+    color: var(--b3-theme-on-surface, $c-fg);
+  }
+
+  &__header-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: $s-1;
+  }
+
+  // 切换按钮：未收起时图标朝下（点击收起），收起后整体旋转 180° 朝上
+  // （纯图标按钮为圆形，旋转按钮本身与旋转图标等价，无需 :deep 穿透 Button 内部）
+  &__toggler {
+    transition: transform 0.12s ease;
+  }
+
+  &--collapsed &__toggler {
+    transform: rotate(180deg);
+  }
+
+  // 收起时去掉头部下边框，避免边框悬在空白处
+  &--collapsed &__header {
+    border-bottom: none;
+  }
+
+  &__content {
+    padding: $s-3;
+    font-size: $t-xs;
+    color: var(--b3-theme-on-background, $c-fg);
+  }
+
+  &__footer {
+    padding: $s-2 $s-3;
+    background: var(--b3-theme-surface, $c-surface);
+    border-top: 1px solid var(--b3-border-color, $c-border);
+  }
+}

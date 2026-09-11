@@ -1,5 +1,5 @@
 // ========== ConfirmDialog.scss ==========
-// 通用确认对话框：遮罩 + 卡片（头/体/脚），面板底色 + 卡片 surface 凸出
+// 确认对话框外壳：遮罩 + 卡片；内容段（标题 / 消息 / 操作区）样式在 ConfirmBody.scss
 @use '../kit/variables.scss' as *;
 
 .si-confirm-mask {
@@ -7,10 +7,54 @@
   inset: 0;
   z-index: 10000; // 全屏遮罩统一层级
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: $s-4;
   background: rgba(0, 0, 0, 0.5);
+
+  // ========== 位置八档（模板类驱动，零 JS 定位） ==========
+  &--center {
+    align-items: center;
+    justify-content: center;
+  }
+
+  &--left {
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  &--right {
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  &--top {
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  &--bottom {
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  &--topleft {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  &--topright {
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+
+  &--bottomleft {
+    align-items: flex-end;
+    justify-content: flex-start;
+  }
+
+  &--bottomright {
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
 }
 
 .si-confirm {
@@ -20,48 +64,15 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: $t-xs; // 弹窗基准字号
+  font-size: $t-xs; // 弹层基准字号
   background: var(--b3-theme-background, $c-bg);
   color: var(--b3-theme-on-background, $c-fg);
-  border: 1px solid var(--b3-theme-outline, $c-border);
+  // 边框取中性边框色（相邻色陷阱：surface 与 background 灰度仅差约 3%）
+  border: 1px solid var(--b3-border-color, $c-border);
   border-radius: $r-base;
 
   &:focus {
     outline: none;
-  }
-
-  &__header {
-    flex-shrink: 0;
-    padding: $s-3 $s-4;
-    font-weight: $fw-semibold;
-    background: var(--b3-theme-surface, $c-surface);
-    border-bottom: 1px solid var(--b3-theme-outline, $c-border);
-  }
-
-  &__body {
-    flex: 1;
-    overflow-y: auto;
-    padding: $s-4;
-    line-height: $lh-normal;
-  }
-
-  &__message {
-    margin: 0;
-    color: var(--b3-theme-on-surface, $c-fg);
-
-    &:not(:last-child) {
-      margin-bottom: $s-1;
-    }
-  }
-
-  &__footer {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: flex-end;
-    gap: $s-2;
-    padding: $s-3 $s-4;
-    background: var(--b3-theme-surface, $c-surface);
-    border-top: 1px solid var(--b3-theme-outline, $c-border);
   }
 }
 

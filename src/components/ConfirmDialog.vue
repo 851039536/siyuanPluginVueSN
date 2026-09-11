@@ -1,9 +1,9 @@
-<!-- 通用确认对话框：标题 + 多行消息 + 危险配色，支持遮罩点关与 Esc 取消 -->
+<!-- 确认对话框：受控显示（v-model:visible）+ 八档位置 + 官方命名的插槽，内容段由 ConfirmBody 渲染 -->
 <template>
   <Transition name="si-confirm-fade">
     <div
       v-if="visible"
-      class="si-confirm-mask"
+      :class="maskClasses"
       @click.self="handleMaskClick"
     >
       <div
@@ -11,88 +11,155 @@
         class="si-confirm"
         role="dialog"
         aria-modal="true"
-        :aria-label="title"
+        :aria-labelledby="header ? titleId : undefined"
+        :aria-label="header ? undefined : ariaLabel"
         tabindex="-1"
       >
-        <!-- 标题区 -->
-        <div class="si-confirm__header">
-          <span class="si-confirm__title">{{ title }}</span>
-        </div>
-        <!-- 消息区：默认按 \n 拆行渲染，使用默认插槽可传富内容 -->
-        <div class="si-confirm__body">
-          <slot>
-            <p
-              v-for="(line, index) in messageLines"
-              :key="index"
-              class="si-confirm__message"
-            >{{ line }}</p>
-          </slot>
-        </div>
-        <!-- 操作区 -->
-        <div class="si-confirm__footer">
-          <Button
-            variant="ghost"
+        <!-- 整块内容可替换（作用域含全部字段与三个回调；官方另有 initDragCallback，本项目不做 draggable） -->
+        <slot
+          name="container"
+          v-bind="containerScope"
+        >
+          <ConfirmBody
+            :header="header"
+            :message="message"
+            :icon="icon"
+            :accept-label="acceptLabel"
+            :reject-label="rejectLabel"
+            :accept-severity="acceptSeverity"
+            :accept-icon="acceptIcon"
+            :reject-icon="rejectIcon"
+            :accept-loading="acceptLoading"
+            :closable="closable"
+            :close-label="closeLabel"
             :size="size"
-            @click="handleCancel"
+            :title-id="titleId"
+            @accept="handleConfirm"
+            @reject="handleReject"
           >
-            {{ cancelText }}
-          </Button>
-          <Button
-            :variant="danger ? 'danger' : 'primary'"
-            :size="size"
-            :loading="confirmLoading"
-            @click="handleConfirm"
-          >
-            {{ confirmText }}
-          </Button>
-        </div>
+            <!-- 五个官方插槽原样转发给内容段（未传时不建立插槽，让内容段的回退逻辑生效） -->
+            <template
+              v-if="$slots.default"
+              #default
+            >
+              <slot />
+            </template>
+            <template
+              v-if="$slots.message"
+              #message="scope"
+            >
+              <slot
+                name="message"
+                v-bind="scope"
+              />
+            </template>
+            <template
+              v-if="$slots.icon"
+              #icon="scope"
+            >
+              <slot
+                name="icon"
+                v-bind="scope"
+              />
+            </template>
+            <template
+              v-if="$slots.accepticon"
+              #accepticon
+            >
+              <slot name="accepticon" />
+            </template>
+            <template
+              v-if="$slots.rejecticon"
+              #rejecticon
+            >
+              <slot name="rejecticon" />
+            </template>
+          </ConfirmBody>
+        </slot>
       </div>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
+import type { IconKey } from "./kit/icons"
+import type {
+  ConfirmContainerScope,
+  ConfirmPosition as ConfirmPositionShape,
+  ConfirmSeverity as ConfirmSeverityShape,
+  ConfirmSize as ConfirmSizeShape,
+} from "./confirm/types"
 import {
   computed,
   nextTick,
   onBeforeUnmount,
   ref,
+  useId,
   watch,
 } from "vue"
-import Button from "./Button.vue"
+import {
+  DEFAULT_ACCEPT_LABEL,
+  DEFAULT_CLOSE_LABEL,
+  DEFAULT_REJECT_LABEL,
+} from "./confirm/types"
+import ConfirmBody from "./confirm/ConfirmBody.vue"
 import "./kit/theme"
 
-type ConfirmDialogSize = "xsmall" | "small" | "medium" | "large"
+// 公开类型转出（沿用 Paginator / Timeline 的别名转出写法：`<script setup>` 不能直接 re-export 导入名）
+export type ConfirmPosition = ConfirmPositionShape
+export type ConfirmSeverity = ConfirmSeverityShape
+export type ConfirmSize = ConfirmSizeShape
 
 interface Props {
-  /** 是否显示（受控，配合 @update:visible 使用 v-model:visible） */
+  /** 是否显示（受控，配合 `v-model:visible`） */
   visible: boolean
-  /** 标题 */
-  title: string
-  /** 消息文本，支持 \n 多行 */
+  /** 标题（官方命名：`ConfirmationOptions.header`） */
+  header?: string
+  /** 消息文本，支持 `\n` 多行（默认插槽 / `message` 插槽存在时被覆盖） */
   message?: string
+  /** 标题图标 */
+  icon?: IconKey
   /** 确认按钮文案 */
-  confirmText?: string
+  acceptLabel?: string
   /** 取消按钮文案 */
-  cancelText?: string
-  /** 确认按钮使用危险配色（删除、覆盖等不可撤销操作） */
-  danger?: boolean
-  /** 按钮尺寸档位 */
-  size?: ConfirmDialogSize
-  /** 点击遮罩是否触发取消 */
-  closeOnMask?: boolean
+  rejectLabel?: string
+  /** 确认按钮配色：`danger`（默认，不可撤销操作）/ `primary` */
+  acceptSeverity?: ConfirmSeverity
+  /** 确认按钮前置图标 */
+  acceptIcon?: IconKey
+  /** 取消按钮前置图标 */
+  rejectIcon?: IconKey
   /** 确认按钮加载态（异步确认操作时由调用方置位） */
-  confirmLoading?: boolean
+  acceptLoading?: boolean
+  /** 是否显示右上角关闭按钮（默认关闭：确认框已有「取消」，与官方 Dialog 默认 `true` 属有意差异） */
+  closable?: boolean
+  /** 关闭按钮的无障碍名称（默认中文，可覆盖为调用方 i18n） */
+  closeLabel?: string
+  /** 点击遮罩是否触发取消（官方 Dialog 命名 `dismissableMask`） */
+  dismissableMask?: boolean
+  /** 按 Esc 是否触发取消 */
+  closeOnEscape?: boolean
+  /** 位置八档：`center`（默认）/ `left` / `right` / `top` / `bottom` / 四角 */
+  position?: ConfirmPosition
+  /** 按钮尺寸档位 */
+  size?: ConfirmSize
+  /** 无标题时的无障碍名称（有标题时自动关联标题） */
+  ariaLabel?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  header: "",
   message: "",
-  confirmText: "确定",
-  cancelText: "取消",
-  danger: true,
+  acceptLabel: DEFAULT_ACCEPT_LABEL,
+  rejectLabel: DEFAULT_REJECT_LABEL,
+  closeLabel: DEFAULT_CLOSE_LABEL,
+  acceptSeverity: "danger",
+  acceptLoading: false,
+  closable: false,
+  dismissableMask: true,
+  closeOnEscape: true,
+  position: "center",
   size: "small",
-  closeOnMask: true,
-  confirmLoading: false,
 })
 
 const emit = defineEmits<{
@@ -101,28 +168,44 @@ const emit = defineEmits<{
   "update:visible": [value: boolean]
 }>()
 
+/** 标题元素 id（`aria-labelledby` 指向它；内容段负责把 id 打在标题上） */
+const titleId = `${useId()}-title`
+
 const dialogRef = ref<HTMLElement | null>(null)
 /** 打开前的焦点元素，关闭时归还，避免键盘用户丢失位置 */
 let previousActive: HTMLElement | null = null
 
-/** 多行消息按行拆分，忽略空行 */
-const messageLines = computed(() =>
-  props.message.split("\n").filter((line) => line.trim() !== ""),
-)
+const maskClasses = computed(() => [
+  "si-confirm-mask",
+  `si-confirm-mask--${props.position}`,
+])
 
+/** `container` 插槽作用域：关闭与取消同义（都派发 cancel + 关闭） */
+const containerScope = computed<ConfirmContainerScope>(() => ({
+  header: props.header,
+  message: props.message,
+  icon: props.icon,
+  acceptLabel: props.acceptLabel,
+  rejectLabel: props.rejectLabel,
+  closeCallback: handleReject,
+  rejectCallback: handleReject,
+  acceptCallback: handleConfirm,
+}))
+
+/** 确认：不自动关闭，由调用方决定关闭时机（便于异步操作） */
 function handleConfirm(): void {
   emit("confirm")
 }
 
-/** 取消：同时同步受控值，便于父组件直接 v-model:visible */
-function handleCancel(): void {
-  emit("update:visible", false)
+/** 取消 / 关闭：同时同步受控值，便于父组件直接 `v-model:visible` */
+function handleReject(): void {
   emit("cancel")
+  emit("update:visible", false)
 }
 
 function handleMaskClick(): void {
-  if (props.closeOnMask) {
-    handleCancel()
+  if (props.dismissableMask) {
+    handleReject()
   }
 }
 
@@ -132,8 +215,9 @@ function handleMaskClick(): void {
  */
 function handleKeydown(event: KeyboardEvent): void {
   if (event.key === "Escape") {
+    if (!props.closeOnEscape) return
     event.preventDefault()
-    handleCancel()
+    handleReject()
   }
 }
 

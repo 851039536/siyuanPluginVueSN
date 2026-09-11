@@ -80,6 +80,9 @@
     z-index: 1;
   }
 
+  // ConfirmPopup 也是 position: fixed，但它是「贴锚点的小气泡」而非铺满视口 ⇒ 无需覆盖定位；
+  // 卡片 overflow: hidden 同样裁不到它（fixed 元素不受祖先 overflow 裁剪），仅可能压到相邻卡片上。
+
   // SpeedDial 默认 position: fixed 悬浮于视口角落，快照中改为相对舞台定位
   // （舞台已 position: relative，故 right/bottom 档位改为相对舞台生效）
   .si-speeddial.si-speeddial {
@@ -112,6 +115,46 @@
   border: 1px dashed var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
+}
+
+// ==================== 确认类组件演示类 ====================
+// 仅用于 ConfirmDialog / ConfirmPopup 分区的插槽示例；真实项目请用你自己的类名。
+.cp-demo-block {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  padding: $s-3;
+}
+
+.cp-demo-title {
+  font-weight: $fw-semibold;
+}
+
+.cp-demo-text {
+  margin: 0;
+}
+
+.cp-demo-muted {
+  margin: 0;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.cp-demo-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s-2;
+}
+
+// ConfirmPopup 演示宿主：锚点包裹层贴合按钮尺寸，气泡贴它定位
+.cp-popup-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-popup-demo__anchor {
+  display: inline-flex;
 }
 
 // 卡片底部：示例名 + 代码切换按钮

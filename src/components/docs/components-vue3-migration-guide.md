@@ -1,9 +1,9 @@
 # 共享组件库迁移到普通 Vue 3 项目（新手版）
 
-> 这套 UI 组件库（按钮、输入框、下拉、日历、图表等 **37 个组件**）原本跑在思源笔记里。
+> 这套 UI 组件库（按钮、输入框、下拉、日历、图表等 **38 个组件**）原本跑在思源笔记里。
 > 本文档告诉你怎么把它搬到一个**普通 Vue 3 项目**里用。
 >
-> **基线**：2026-09-11，`src/components/` 共 111 个文件（37 个公开组件 + 各组件私有子目录 + `styles/` + `kit/` 支撑目录与本说明文档）。
+> **基线**：2026-09-11，`src/components/` 共 117 个文件（38 个公开组件 + 各组件私有子目录 + `styles/` + `kit/` 支撑目录与本说明文档）。
 
 ---
 
@@ -59,7 +59,7 @@ import Input from "./components/Input.vue"
 
 ## 三、它开箱自带什么
 
-- **37 个组件**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / ConfirmDialog /
+- **38 个组件**：Avatar / Badge / Button / Card / Chart / Checkbox / ColorField / ConfirmDialog / ConfirmPopup /
   DatePicker / Divider / FormField / IconWrapper / Input / InputGroup / InputGroupAddon / Label / Listbox /
   Loader / Paginator / Panel / RadioButton / Select / Slider / SpeedDial / Splitter / SplitterPanel / Switch / Tab / TabList / TabPanel / TabPanels / Tabs / Tag / Textarea / Timeline / ToggleButton / Toolbar
 - **明暗主题自动切换**：没配任何主题时给一套默认配色（跟随系统 `prefers-color-scheme`，
@@ -114,7 +114,7 @@ applyDefaultTheme({ overrides: { "b3-theme-primary": "#7c3aed" } })
 | 报错 / 现象 | 原因 | 解决 |
 |---|---|---|
 | `Can't find stylesheet '../kit/variables.scss'` | 复制时漏了 `kit/` 目录，或把组件拍平了 | 重新整体复制 `src/components/`，保持目录结构 |
-| `Failed to resolve import "./datePicker/PickerPanel.vue"` | 私有子目录（`datePicker/` `select/` `speedDial/` `paginator/` `textarea/` `timeline/` `splitter/` `tabs/`）没带全 | 同上 |
+| `Failed to resolve import "./datePicker/PickerPanel.vue"` | 私有子目录（`datePicker/` `select/` `speedDial/` `paginator/` `textarea/` `timeline/` `splitter/` `tabs/` `confirm/`）没带全 | 同上 |
 | `Cannot find module 'sass'` / `Preprocessor dependency "sass" not found` | 没装 sass | `npm i -D sass` |
 | 图标**空白但不报错** | 没装 `@iconify-json/mdi` | `npm i @iconify-json/mdi` |
 | 图标全部变成问号圆圈 | 传给 `icon` 的名字没在 `kit/icons.ts` 注册 | 用表里已有的键，或在表中补注册 |
@@ -143,5 +143,5 @@ applyDefaultTheme({ overrides: { "b3-theme-primary": "#7c3aed" } })
   `theme.ts`（默认主题注入）、`iconify.ts`（mdi 离线注册）、`README.md`
 - `src/_variables.scss` 与 `src/config/icons.ts`：**转发壳**（`@forward` / `export *`），
   本项目 336 处样式引用与 48 处图标引用的路径不变
-- 37 个公开组件内部只用相对路径互相引用，并各带一行 `import "./kit/theme"`
+- 38 个公开组件内部只用相对路径互相引用，并各带一行 `import "./kit/theme"`
 - 新增图标 / Token 请改 `kit/` 里的真源文件，**不要**改两个转发壳

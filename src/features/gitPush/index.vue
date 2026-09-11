@@ -181,10 +181,10 @@
     <!-- 通用确认弹窗（删除/丢弃/恢复/分类/拉取等需二次确认的操作） -->
     <ConfirmDialog
       :visible="genericConfirm.visible"
-      :title="genericConfirm.title"
+      :header="genericConfirm.title"
       :message="genericConfirm.message"
-      :confirm-text="genericConfirm.confirmText"
-      :cancel-text="i18n.cancel"
+      :accept-label="genericConfirm.confirmText"
+      :reject-label="i18n.cancel"
       @confirm="doGenericConfirm"
       @cancel="cancelGenericConfirm"
     />
@@ -283,7 +283,7 @@ import { getErrorMessage } from "@/utils/stringUtils"
 import { buildYearOptions, findProject } from "./utils"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import CategoryDialog from "./components/common/CategoryDialog.vue"
-import ConfirmDialog from "./components/common/ConfirmDialog.vue"
+import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import ConsistencyAuditDialog from "./components/common/ConsistencyAuditDialog.vue"
 import EditProjectDialog from "./components/common/EditProjectDialog.vue"
 import IdeManagementDialog from "./components/common/IdeManagementDialog.vue"

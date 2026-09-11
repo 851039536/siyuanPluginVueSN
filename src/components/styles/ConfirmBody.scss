@@ -1,0 +1,94 @@
+// ========== ConfirmBody.scss ==========
+// 确认类组件共用内容段（ConfirmBody.vue 的专属样式）
+// ⚠️ 必须写在这里：内容段的内部元素带的是 ConfirmBody 的 scoped 属性，
+//    写在 ConfirmDialog.scss / ConfirmPopup.scss 里不会命中（同 Splitter 分隔条的 scoped 陷阱）
+@use '../kit/variables.scss' as *;
+
+.si-confirm-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; // 允许内容区在弹层 max-height 约束下收缩并内部滚动
+  font-size: $t-xs; // 弹层基准字号
+  color: var(--b3-theme-on-background, $c-fg);
+
+  &__header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    padding: $s-3 $s-4;
+    font-weight: $fw-semibold;
+    background: var(--b3-theme-surface, $c-surface);
+    // 分隔线取中性边框色（相邻色陷阱：surface 与 background 灰度仅差约 3%）
+    border-bottom: 1px solid var(--b3-border-color, $c-border);
+  }
+
+  &__icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    color: var(--b3-theme-primary, $c-danger);
+  }
+
+  &__title {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  // 关闭按钮：纯图标，尺寸恒定（图标不随档位缩放，与全库一致）
+  &__close {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; // 无对应 Token
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: $r-sm;
+    background: transparent;
+    color: var(--b3-theme-on-surface, $c-fg);
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+
+    &:hover {
+      background: var(--b3-theme-surface-lighter, $c-surface);
+      color: var(--b3-theme-primary, $c-danger);
+    }
+
+    // 键盘焦点：底色 + 主色（非按钮类外观不再叠边框，避免与图标冲突）
+    &:focus-visible {
+      outline: none;
+      background: var(--b3-theme-surface-lighter, $c-surface);
+      color: var(--b3-theme-primary, $c-danger);
+    }
+  }
+
+  &__content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: $s-4;
+    line-height: $lh-normal;
+  }
+
+  &__message {
+    margin: 0;
+    color: var(--b3-theme-on-surface, $c-fg);
+
+    &:not(:last-child) {
+      margin-bottom: $s-1;
+    }
+  }
+
+  &__footer {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: $s-2;
+    padding: $s-3 $s-4;
+    background: var(--b3-theme-surface, $c-surface);
+    border-top: 1px solid var(--b3-border-color, $c-border);
+  }
+}

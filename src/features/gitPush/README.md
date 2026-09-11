@@ -62,9 +62,7 @@ src/features/gitPush/
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 ├── components/
-│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，18 个）
-│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换 + 批量旋转进度指示器）
-│   │   ├── ConfirmDialog.vue        # 通用确认弹窗
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，25 个；二次确认统一用共享 ConfirmDialog）
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
 │   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理；导航底部=管理分类入口）

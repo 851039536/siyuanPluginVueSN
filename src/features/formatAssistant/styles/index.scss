@@ -1,0 +1,323 @@
+// 格式助手面板样式（index.vue 专属）
+@use "@/variables.scss" as *;
+
+// ---------- 全局 Token 无对应档位的取值 ----------
+// 集中声明以保证单一来源；$spacing-* / $font-size-* / $line-height-* 均无这些档位
+$fa-space-6: 6px; // 无对应 Token（全局间距档为 4px → 8px，无 6px）
+$fa-space-10: 10px; // 无对应 Token（全局间距档为 8px → 12px，无 10px）
+$fa-font-11: 11px; // 无对应 Token（介于 $font-size-2xs 与 $font-size-xs）
+$fa-font-13: 13px; // 无对应 Token（介于 $font-size-xs 与 $font-size-sm）
+$fa-lh-16: 1.6; // 无对应 Token（$line-height-normal 为 1.5）
+$fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微信公众号阅读态
+
+.format-assistant-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $font-size-xs;
+  overflow: hidden;
+}
+
+// 工具栏
+.fa-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-2 $spacing-4;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  gap: $spacing-3;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-shrink: 0;
+}
+
+.toolbar-title {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.option-group {
+  display: flex;
+  align-items: center;
+  gap: $fa-space-6;
+}
+
+.option-label {
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface-variant);
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+}
+
+// 主题选择器
+.theme-selector {
+  display: flex;
+  gap: $spacing-1;
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+
+  &.active {
+    border-color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb, 7, 193, 96), 0.08);
+  }
+
+  &:hover:not(.active) {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.theme-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.theme-label {
+  font-size: $fa-font-11;
+  color: var(--b3-theme-on-surface);
+}
+
+// 切换按钮
+.toggle-btn {
+  padding: $spacing-1 $fa-space-10;
+  font-size: $font-size-xs;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &.active {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    border-color: var(--b3-theme-primary);
+  }
+
+  &:hover:not(.active) {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+// 选择器
+.size-select {
+  padding: $spacing-1 $spacing-2;
+  font-size: $font-size-xs;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  cursor: pointer;
+  outline: none;
+}
+
+// 复选框
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: $font-size-xs;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
+  }
+}
+
+// 操作按钮
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $fa-space-6 $spacing-3;
+  font-size: $font-size-xs;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.primary {
+    background: var(--b3-theme-primary);
+    color: var(--b3-theme-on-primary);
+    border-color: var(--b3-theme-primary);
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+.close-btn {
+  border: none;
+  padding: $fa-space-6;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+// 主内容
+.fa-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+// 面板通用
+.input-panel,
+.preview-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.input-panel {
+  border-right: 1px solid var(--b3-border-color);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-2 $spacing-3;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+.char-count {
+  font-size: $fa-font-11;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+// 输入区域
+.input-textarea {
+  flex: 1;
+  padding: $spacing-3;
+  font-size: $font-size-sm;
+  font-family: $vp-mono;
+  border: none;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  resize: none;
+  outline: none;
+  line-height: $fa-lh-16;
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.5;
+  }
+}
+
+// 预览区域
+.preview-content {
+  flex: 1;
+  overflow: auto;
+  padding: $spacing-4;
+  background: $fa-preview-bg;
+}
+
+.preview-wrapper {
+  max-width: 100%;
+  overflow-wrap: break-word;
+
+  // 确保预览中的样式正常
+  :deep(*) {
+    box-sizing: border-box;
+  }
+}
+
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: $spacing-3;
+  color: var(--b3-theme-on-surface-variant);
+  opacity: 0.6;
+
+  span {
+    font-size: $fa-font-13;
+  }
+}
+
+// 响应式
+@media (max-width: 800px) {
+  .fa-main {
+    flex-direction: column;
+  }
+
+  .input-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--b3-border-color);
+    max-height: 40vh;
+  }
+
+  .fa-toolbar {
+    padding: $spacing-2;
+  }
+}

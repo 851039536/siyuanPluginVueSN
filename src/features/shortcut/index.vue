@@ -34,11 +34,11 @@
     <!-- 删除确认对话框 -->
     <ConfirmDialog
       :visible="deleteConfirmId !== null"
-      :title="i18n.confirmDelete"
+      :header="i18n.confirmDelete"
       :message="i18n.confirmDeleteMsg"
-      :confirm-text="i18n.delete"
-      :cancel-text="i18n.cancel"
-      @close="cancelDelete"
+      :accept-label="i18n.delete"
+      :reject-label="i18n.cancel"
+      @cancel="cancelDelete"
       @confirm="confirmDelete"
     />
 
@@ -70,7 +70,7 @@ import {
 } from "vue"
 import { pushMsg } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
-import ConfirmDialog from "./components/ConfirmDialog.vue"
+import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import PanelHeader from "./components/PanelHeader.vue"
 import ShortcutDialog from "./components/ShortcutDialog.vue"
 import ShortcutGrid from "./components/ShortcutGrid.vue"

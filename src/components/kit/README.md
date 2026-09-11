@@ -19,7 +19,7 @@
    （当前为 Codex 暖色系）；两个 `*-rgb` 变量必须是**逗号分隔**（被 `rgba(var(--x), a)` 消费）。
 3. `variables.scss` 故意**不带下划线前缀**：组件 scss 以 `@use '../kit/variables.scss'`
    显式扩展名引用，避免依赖解析器的 partial 回退行为。
-4. `theme.ts` 由 37 个公开组件以 `import "./kit/theme"` 副作用导入触发；新增公开组件时
+4. `theme.ts` 由 38 个公开组件以 `import "./kit/theme"` 副作用导入触发；新增公开组件时
    记得补这一行（无 `<script>` 的组件需补一个最小 script 块）。
 
 ## 目标项目如何定制主题

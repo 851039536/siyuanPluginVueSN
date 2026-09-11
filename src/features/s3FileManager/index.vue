@@ -200,16 +200,16 @@
     />
 
     <!-- 通用确认框（删除/清空日志等危险操作） -->
-    <FmConfirmDialog
+    <ConfirmDialog
       v-if="confirmState"
       :visible="true"
-      :title="confirmState.title"
+      :header="confirmState.title"
       :message="confirmState.message"
-      :confirm-text="confirmState.confirmText"
-      :cancel-text="confirmState.cancelText"
-      :danger="confirmState.danger"
+      :accept-label="confirmState.confirmText"
+      :reject-label="confirmState.cancelText"
+      :accept-severity="confirmState.danger ? 'danger' : 'primary'"
       @confirm="handleConfirmAccept"
-      @close="handleConfirmCancel"
+      @cancel="handleConfirmCancel"
     />
   </div>
 </template>
@@ -237,7 +237,7 @@ import FmConfigDialog from "./components/FmConfigDialog.vue"
 import FmNameDialog from "./components/FmNameDialog.vue"
 import FmMoveCopyDialog from "./components/FmMoveCopyDialog.vue"
 import FmLogPanel from "./components/FmLogPanel.vue"
-import FmConfirmDialog from "./components/FmConfirmDialog.vue"
+import ConfirmDialog from "@/components/ConfirmDialog.vue"
 
 const props = defineProps<{
   storage: S3FileManagerStorage

@@ -40,7 +40,7 @@ dataSnapshot/
 |------|---------|
 | 刷新 / 创建 / 查看 / 恢复 / 下载 / 删除 / 页签 | `Button`（页签用 `text` 外观 + `variant` 表达选中态；危险操作用 `variant="danger"`；耗时操作接 `loading`） |
 | 快照备注输入 | `Input`（`size="small"`） |
-| 恢复与删除的二次确认 | `ConfirmDialog`（`v-model:visible` + 标题 / 文案 / 加载态，支持自定义消息插槽） |
+| 恢复与删除的二次确认 | `ConfirmDialog`（`v-model:visible` + `header` / `message` / `accept-loading`，默认插槽承载富内容；命名对齐官方 `ConfirmationOptions`） |
 | 图标 | `IconWrapper`（仅使用 `src/config/icons.ts` 已注册的 `IconKey`） |
 
 ## 配置项

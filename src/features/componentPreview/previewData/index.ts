@@ -19,6 +19,9 @@ import {
   confirmDialogPreviewGroups,
 } from "./confirmDialog"
 import {
+  confirmPopupPreviewGroups,
+} from "./confirmPopup"
+import {
   datePickerPreviewGroups,
 } from "./datePicker"
 import {
@@ -94,4 +97,5 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...displayPreviewGroups,
   ...dividerPreviewGroups,
   ...confirmDialogPreviewGroups,
+  ...confirmPopupPreviewGroups,
 ]

@@ -1,0 +1,89 @@
+// ========== ConfirmPopup.scss ==========
+// 气泡确认外壳：固定定位的小卡片 + 指向锚点的三角；内容段样式在 ConfirmBody.scss
+@use '../kit/variables.scss' as *;
+
+.si-confirm-popup {
+  // 视口坐标由 confirm/position.ts 计算后内联写入
+  position: fixed;
+  z-index: 10000;
+  width: 320px; // 气泡宽度，尺寸级固定值无对应 Token
+  max-width: calc(100vw - 16px); // 两侧各留 8px 视口留白，无对应 Token
+  max-height: calc(100vh - 16px);
+  display: flex;
+  flex-direction: column;
+  // 允许指向三角溢出到卡片之外
+  overflow: visible;
+  font-size: $t-xs; // 弹层基准字号
+  background: var(--b3-theme-background, $c-bg);
+  color: var(--b3-theme-on-background, $c-fg);
+  // 边框取中性边框色（相邻色陷阱：surface 与 background 灰度仅差约 3%）
+  border: 1px solid var(--b3-border-color, $c-border);
+  border-radius: $r-base;
+
+  &:focus {
+    outline: none;
+  }
+
+  // 首帧测量阶段隐藏，避免定位完成前闪跳
+  &--measuring {
+    visibility: hidden;
+  }
+
+  // ========== 指向三角 ==========
+  // 45° 旋转正方形：按方位保留指向尖角的两条边、隐藏另两条，形成带描边的三角
+  &__arrow {
+    position: absolute;
+    width: 8px; // 三角边长，无对应 Token
+    height: 8px;
+    background: var(--b3-theme-background, $c-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    transform: rotate(45deg);
+
+    // 贴卡片上边（尖角朝上）：保留上 + 右边
+    &--top {
+      top: -5px; // 旋转后视觉高度约 11px，取半值略缩以避免露出卡片描边
+      border-bottom: none;
+      border-left: none;
+    }
+
+    // 贴卡片下边（尖角朝下）：保留下 + 左边
+    &--bottom {
+      bottom: -5px;
+      border-top: none;
+      border-right: none;
+    }
+
+    // 贴卡片左边（尖角朝左）：保留上 + 左边
+    &--left {
+      left: -5px;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    // 贴卡片右边（尖角朝右）：保留下 + 右边
+    &--right {
+      right: -5px;
+      border-top: none;
+      border-left: none;
+    }
+  }
+}
+
+// 过渡：0.12s ease，淡入 + 轻微缩放
+.si-confirm-popup-fade-enter-active,
+.si-confirm-popup-fade-leave-active {
+  transition: opacity 0.12s ease;
+
+  .si-confirm-popup {
+    transition: transform 0.12s ease;
+  }
+}
+
+.si-confirm-popup-fade-enter-from,
+.si-confirm-popup-fade-leave-to {
+  opacity: 0;
+
+  .si-confirm-popup {
+    transform: scale(0.98);
+  }
+}

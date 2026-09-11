@@ -83,9 +83,9 @@
     <!-- 恢复快照 / 删除云端标签 二次确认 -->
     <ConfirmDialog
       v-model:visible="confirmVisible"
-      :title="confirmMeta.title"
-      :confirm-text="confirmMeta.confirmText"
-      :confirm-loading="confirmMeta.loading"
+      :header="confirmMeta.title"
+      :accept-label="confirmMeta.confirmText"
+      :accept-loading="confirmMeta.loading"
       @confirm="doConfirm"
     >
       <p class="ds-confirm-text">{{ confirmMeta.message }}</p>

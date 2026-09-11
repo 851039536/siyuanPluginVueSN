@@ -1,0 +1,39 @@
+// ========== src/components/styles/_overlay.scss ==========
+// 弹层类组件共享的遮罩样式（下划线部分文件，不单独编译；范式同 _mixins.scss）
+// 由 styles/Dialog.scss 与 styles/ConfirmDialog.scss 各自 @include，
+// 避免「遮罩基础样式 + 九档位置声明」在两处重复（两份 scoped 产物各自带自己的 scope 属性）
+@use '../kit/variables.scss' as *;
+
+// 位置九档：类名后缀 → (align-items, justify-content)
+$overlay-alignments:
+  ("center", center, center),
+  ("left", center, flex-start),
+  ("right", center, flex-end),
+  ("top", flex-start, center),
+  ("bottom", flex-end, center),
+  ("topleft", flex-start, flex-start),
+  ("topright", flex-start, flex-end),
+  ("bottomleft", flex-end, flex-start),
+  ("bottomright", flex-end, flex-end);
+
+// 遮罩基础：铺满视口 + 半透明黑底 + 定位基准（$prefix 为各组件的遮罩类名）
+@mixin overlay-mask($prefix) {
+  .#{$prefix} {
+    position: fixed;
+    inset: 0;
+    z-index: 10000; // 全屏遮罩统一层级
+    display: flex;
+    padding: $s-4;
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+// 位置九档修饰类（模板类驱动，零 JS 定位）
+@mixin overlay-positions($prefix) {
+  @each $name, $align, $justify in $overlay-alignments {
+    .#{$prefix}--#{$name} {
+      align-items: $align;
+      justify-content: $justify;
+    }
+  }
+}

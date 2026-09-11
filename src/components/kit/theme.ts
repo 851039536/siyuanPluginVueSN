@@ -11,7 +11,7 @@
  *    即使注入也无法覆盖宿主已定义的同名变量；
  * 3. 插入位置：style 节点 prepend 到 document.head 首位，宿主后加载的样式天然胜出。
  *
- * 由 38 个公开组件以副作用导入（import "./kit/theme"）触发，模块级幂等。
+ * 由 39 个公开组件以副作用导入（import "./kit/theme"）触发，模块级幂等。
  * SSR 安全：document 不存在时直接跳过。
  */
 

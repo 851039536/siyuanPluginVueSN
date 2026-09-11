@@ -1,0 +1,133 @@
+// ========== Dialog.scss ==========
+// 对话框外壳：遮罩（基础样式与九档位置来自共享 _overlay.scss）+ 卡片（档位变量单点输出）
+@use '../kit/variables.scss' as *;
+@use './_overlay.scss' as overlay;
+
+@include overlay.overlay-mask('si-dialog-mask');
+@include overlay.overlay-positions('si-dialog-mask');
+
+// 非模态：遮罩不加深且不遮断页面其余交互（卡片自身恢复可交互）
+.si-dialog-mask--plain {
+  background: transparent;
+  pointer-events: none;
+
+  .si-dialog {
+    pointer-events: auto;
+  }
+}
+
+.si-dialog {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-dialog-font: #{$t-xs}; // 12px
+  --si-dialog-width: 400px;
+  --si-dialog-pad: #{$s-4};
+
+  width: var(--si-dialog-width);
+  max-width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: $ff-zh;
+  font-size: var(--si-dialog-font, #{$t-xs});
+  line-height: $lh-normal;
+  background: var(--b3-theme-background, $c-bg);
+  color: var(--b3-theme-on-background, $c-fg);
+  // 层级靠遮罩对比区分，不用阴影；边框取中性边框色
+  // （相邻色陷阱：surface 与 background 灰度仅差约 3%）
+  border: 1px solid var(--b3-border-color, $c-border);
+  border-radius: $r-base;
+
+  &:focus {
+    outline: none;
+  }
+
+  // 尺寸档位：字号阶梯 10/12/14/16，宽度与内边距同步收放
+  // （卡片圆角、1px 描边与 80vh 最大高度恒定，切档时结构不抖动）
+  &--xsmall {
+    --si-dialog-font: #{$t-2xs}; // 10px
+    --si-dialog-width: 320px;
+    --si-dialog-pad: #{$s-3};
+  }
+
+  &--small {
+    --si-dialog-font: #{$t-xs}; // 12px
+    --si-dialog-width: 400px;
+    --si-dialog-pad: #{$s-4};
+  }
+
+  &--medium {
+    --si-dialog-font: #{$t-sm}; // 14px
+    --si-dialog-width: 520px;
+    --si-dialog-pad: #{$s-4};
+  }
+
+  &--large {
+    --si-dialog-font: #{$t-base}; // 16px
+    --si-dialog-width: 680px;
+    --si-dialog-pad: #{$s-5};
+  }
+
+  &__header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    padding: $s-3 var(--si-dialog-pad);
+    font-weight: $fw-semibold;
+    background: var(--b3-theme-surface, $c-surface);
+    border-bottom: 1px solid var(--b3-border-color, $c-border);
+  }
+
+  // 标题字号与正文同档、仅以字重区分（避免引入第二套字号阶梯，也不越过 16px 标题上限）
+  &__title {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  &__header-actions {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+  }
+
+  &__content {
+    flex: 1;
+    min-height: 0; // 允许内容区在 80vh 约束下收缩并内部滚动
+    overflow-y: auto;
+    padding: var(--si-dialog-pad);
+    overflow-wrap: anywhere;
+  }
+
+  &__footer {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $s-2;
+    padding: $s-3 var(--si-dialog-pad);
+    background: var(--b3-theme-surface, $c-surface);
+    border-top: 1px solid var(--b3-border-color, $c-border);
+  }
+}
+
+// 过渡：0.12s ease，淡入 + 卡片轻微缩放
+.si-dialog-fade-enter-active,
+.si-dialog-fade-leave-active {
+  transition: opacity 0.12s ease;
+
+  .si-dialog {
+    transition: transform 0.12s ease;
+  }
+}
+
+.si-dialog-fade-enter-from,
+.si-dialog-fade-leave-to {
+  opacity: 0;
+
+  .si-dialog {
+    transform: scale(0.98);
+  }
+}

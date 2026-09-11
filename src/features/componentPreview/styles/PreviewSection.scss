@@ -97,6 +97,23 @@
   height: 260px; // 轨迹展开所需高度，无对应 Token
 }
 
+// ==================== Card 容器钩子演示类 ====================
+// 仅用于 Card 分区的「容器钩子 - contentClass / captionClass」示例；真实项目请用你自己的类名。
+// ⚠️ 主体容器已有卡片档位的 padding（`.si-card--{tier} .si-card__body` 特异性更高且会取胜），
+// 故演示类只演示不会被覆盖的属性（边框 / 底色 / 圆角），避免读者误以为 padding 未生效。
+.cp-hook-caption {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  color: var(--b3-theme-primary);
+}
+
+.cp-hook-content {
+  border: 1px dashed var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+}
+
 // 卡片底部：示例名 + 代码切换按钮
 .cp-card__foot {
   display: flex;

@@ -1,17 +1,25 @@
 /**
  * 组件预览清单 — Card / Chart / Loader 分组数据
- * 清单条目：title（示例名）、props（透传给组件）、slotText（默认插槽文本）、code（对应可复制模板）
+ * 清单条目：title（示例名）、props（透传给组件）、slotText（默认插槽文本）、
+ *           slots（具名 / 作用域插槽工厂）、code（对应可复制模板）
  */
+import type { VNode } from "vue"
+import { h } from "vue"
 import type { PreviewGroup } from "../types"
+import Button from "@/components/Button.vue"
 import Card from "@/components/Card.vue"
 import Chart from "@/components/Chart.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
+
+/** 纯文本槽工厂：预览插槽工厂必须返回 VNode，故统一包一层容器 */
+const textSlot = (text: string) => (): VNode => h("div", null, text)
 
 export const cardGroup: PreviewGroup = {
   id: "card",
   component: Card,
   name: "Card",
-  summary: "卡片：标题/副标题 / 变体 / 可点击 / 加载 / 无内边距",
+  summary: "卡片：具名插槽（title / subtitle / content / footer）+ 容器钩子（contentClass / captionClass） / 变体 / 可点击 / 加载 / 无内边距",
   importCode: "import Card from \"@/components/Card.vue\"",
   sizeable: true,
   examples: [
@@ -86,6 +94,77 @@ export const cardGroup: PreviewGroup = {
       },
       slotText: "内容紧贴卡片边缘。",
       code: "<Card title=\"图片展示\" bodyNoPadding>内容紧贴卡片边缘</Card>",
+    },
+    {
+      title: "具名插槽 - title / subtitle / content",
+      slots: {
+        title: (): VNode =>
+          h("div", null, [
+            h(IconWrapper, {
+              name: "check",
+              size: 14,
+            }),
+            " 具名插槽标题",
+          ]),
+        subtitle: textSlot("副标题也可用插槽自定义"),
+        content: textSlot("content 插槽承载正文；未传时自动回落默认插槽，官方写法可直接照搬。"),
+      },
+      code: `<Card>
+  <template #title>
+    <IconWrapper name="check" :size="14" /> 具名插槽标题
+  </template>
+  <template #subtitle>副标题也可用插槽自定义</template>
+  <template #content>
+    content 插槽承载正文；未传时自动回落默认插槽。
+  </template>
+</Card>`,
+    },
+    {
+      title: "底部工具栏（footer 典型用法）",
+      slots: {
+        title: textSlot("项目文档"),
+        subtitle: textSlot("最近更新 09-11"),
+        content: textSlot("footer 内放按钮组是官方典型用法，按钮排列由调用方自行提供。"),
+        footer: (): VNode[] => [
+          h(Button, {
+            variant: "primary",
+            size: "xsmall",
+          }, "保存"),
+          h(Button, {
+            variant: "ghost",
+            text: true,
+            size: "xsmall",
+          }, "取消"),
+        ],
+      },
+      code: `<Card>
+  <template #title>项目文档</template>
+  <template #subtitle>最近更新 09-11</template>
+  <template #content>
+    footer 内放按钮组是官方典型用法。
+  </template>
+  <template #footer>
+    <Button variant="primary" size="xsmall">保存</Button>
+    <Button variant="ghost" text size="xsmall">取消</Button>
+  </template>
+</Card>`,
+    },
+    {
+      title: "容器钩子 - contentClass / captionClass",
+      props: {
+        captionClass: "cp-hook-caption",
+        contentClass: "cp-hook-content",
+      },
+      slots: {
+        title: textSlot("钩子类挂载位置"),
+        subtitle: textSlot("captionClass → 标题区容器（caption）"),
+        content: textSlot("contentClass → 主体容器，替代 :deep() 硬钻组件内部。"),
+      },
+      code: `<Card caption-class="card-caption" content-class="card-content">
+  <template #title>钩子类挂载位置</template>
+  <template #subtitle>captionClass → 标题区容器</template>
+  <template #content>contentClass → 主体容器</template>
+</Card>`,
     },
   ],
 }

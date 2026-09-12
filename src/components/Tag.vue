@@ -3,8 +3,19 @@
     :class="tagClasses"
     :style="tagStyle"
   >
+    <!--
+      头像位（对齐 PrimeVue Chip 的 image）：图片加载失败时回退到 icon，
+      避免出现破图占位 —— 与 Avatar 的 hasError 回退同一思路。
+    -->
+    <img
+      v-if="image && !imageFailed"
+      :src="image"
+      :alt="imageAlt"
+      class="si-tag__image"
+      @error="imageFailed = true"
+    >
     <IconWrapper
-      v-if="icon"
+      v-else-if="icon"
       :name="icon"
       :size="iconSize"
       class="si-tag__icon"
@@ -19,6 +30,7 @@
       v-if="closable"
       type="button"
       class="si-tag__close"
+      :aria-label="closeLabel"
       @click="handleClose"
     >
       <IconWrapper
@@ -31,7 +43,7 @@
 
 <script setup lang="ts">
 import type { IconKey } from "./kit/icons"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import IconWrapper from "./IconWrapper.vue"
 import "./kit/theme"
 
@@ -66,8 +78,17 @@ interface Props {
   icon?: IconKey
   /** 图标大小 */
   iconSize?: number
+  /**
+   * 头像图片地址（对齐 PrimeVue Chip 的 `image`）：渲染在标签最左侧的圆形头像，典型用于人员 / 主体标签。
+   * 与 `icon` 互斥 —— **同时传时 `image` 优先**；图片加载失败时自动回退到 `icon`（无 icon 则只剩文本）。
+   */
+  image?: string
+  /** 头像的替代文本（`alt`）：不传时取 `content` 的文本形式，仍为空则用空串（装饰性图片，交由读屏跳过） */
+  imageAlt?: string
   /** 是否可关闭 */
   closable?: boolean
+  /** 关闭按钮的可访问名称（可覆盖为调用方 i18n 文案） */
+  closeLabel?: string
   /** 关闭按钮图标大小 */
   closeIconSize?: number
   /** 是否禁用 */
@@ -108,9 +129,23 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   fill: false,
   max: 99,
+  closeLabel: "关闭",
 })
 
 const emit = defineEmits<Emits>()
+
+/** 头像加载失败标记：置位后回退到 icon / 文本，避免破图（同 Avatar 的 hasError 思路） */
+const imageFailed = ref(false)
+
+/** 头像是否生效（传了 image 且未加载失败）：生效时图标位让给头像，两者互斥 */
+const hasImage = computed(() => !!props.image && !imageFailed.value)
+
+/** 头像替代文本：显式传入优先，否则取 content 的文本形式（无 content 时为空串 = 装饰性图片） */
+const imageAlt = computed(() => {
+  if (props.imageAlt !== undefined) return props.imageAlt
+  const value = props.content
+  return value === undefined ? "" : String(value)
+})
 
 const tagClasses = computed(() => [
   "si-tag",
@@ -120,7 +155,9 @@ const tagClasses = computed(() => [
   {
     "si-tag--closable": props.closable,
     "si-tag--disabled": props.disabled,
-    "si-tag--has-icon": !!props.icon,
+    // 头像优先于图标（两者同时传时只渲染头像）⇒ has-icon 在头像生效时置否，避免样式按图标位调整
+    "si-tag--has-icon": !!props.icon && !hasImage.value,
+    "si-tag--has-image": hasImage.value,
     "si-tag--custom-color": !!props.color,
     "si-tag--fill": props.fill,
   },

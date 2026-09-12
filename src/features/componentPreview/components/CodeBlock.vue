@@ -2,19 +2,23 @@
 <template>
   <div class="cp-codeblock">
     <pre class="cp-codeblock__pre"><code>{{ code }}</code></pre>
-    <button
+    <!-- 复制 / 已复制：纯图标走共享 Button（icon-only 必须给 ariaLabel，成功态由 severity 表达） -->
+    <Button
       class="cp-codeblock__copy"
-      :class="{ 'cp-codeblock__copy--copied': copied }"
-      type="button"
+      size="xsmall"
+      variant="ghost"
+      text
+      :severity="copied ? 'success' : undefined"
+      :icon="copied ? 'check' : 'copy'"
+      :ariaLabel="copied ? i18n.copied : i18n.copyCode"
       :title="copied ? i18n.copied : i18n.copyCode"
       @click="handleCopy"
-    >
-      <!-- 复制 / 已复制图标反馈 -->
-      <IconWrapper
-        :name="copied ? 'check' : 'copy'"
-        :size="13"
-      />
-    </button>
+    />
+    <!-- 复制结果播报：视觉隐藏，仅供屏幕阅读器感知状态变化 -->
+    <span
+      class="cp-sr-only"
+      aria-live="polite"
+    >{{ copied ? i18n.copied : "" }}</span>
   </div>
 </template>
 
@@ -22,7 +26,7 @@
 import {
   ref,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import Button from "@/components/Button.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import type { I18n } from "../types"
 

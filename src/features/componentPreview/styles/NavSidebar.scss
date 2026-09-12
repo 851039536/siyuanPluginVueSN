@@ -6,7 +6,7 @@
   flex-direction: column;
   width: 180px; // 侧栏固定宽度，无对应 Token
   flex-shrink: 0;
-  border-right: 1px solid var(--b3-theme-surface-lighter);
+  border-right: 1px solid var(--b3-border-color);
   overflow-y: auto;
   padding: $s-2 $s-1 $s-3;
 }
@@ -16,8 +16,7 @@
   margin-bottom: $s-1;
   font-size: $t-2xs;
   font-weight: $fw-bold;
-  opacity: 0.45;
-  color: var(--b3-theme-on-surface);
+  color: $c-muted;
 }
 
 .cp-nav__list {
@@ -35,7 +34,7 @@
   justify-content: space-between;
   gap: $s-2;
   width: 100%;
-  padding: $s-1 $s-2;
+  padding: $s-px6 $s-2;
   border: none;
   border-radius: $r-base;
   background: transparent;
@@ -49,6 +48,12 @@
   &:hover {
     background: var(--b3-theme-surface-lighter);
     color: var(--b3-theme-on-background);
+  }
+
+  // 内嵌焦点环：侧栏是 overflow-y: auto，外扩环会被裁掉
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
   }
 }
 
@@ -69,7 +74,7 @@
 .cp-nav__item-count {
   font-family: $ff-mono;
   font-size: $t-2xs;
-  opacity: 0.55;
+  color: var(--b3-theme-on-surface);
 }
 
 .cp-nav__empty {

@@ -6,7 +6,11 @@
   >
     <header class="cp-section__head">
       <span class="cp-section__name">{{ group.name }}</span>
-      <span class="cp-section__summary">{{ group.summary }}</span>
+      <!-- 摘要可能很长（含机制告警），最多两行 + 悬浮看全文 -->
+      <span
+        class="cp-section__summary"
+        :title="group.summary"
+      >{{ group.summary }}</span>
     </header>
     <!-- 组件 import 示例（可复制） -->
     <div class="cp-section__import">
@@ -21,18 +25,11 @@
         v-for="example in group.examples"
         :key="example.title"
         class="cp-card"
+        :class="{ 'cp-card--wide': isWideStage(group.id) }"
       >
         <div
           class="cp-card__stage"
-          :class="{
-            'cp-card__stage--loader': group.id === 'loader',
-            'cp-card__stage--speeddial': group.id === 'speedDial',
-            'cp-card__stage--dialog': group.id === 'dialog',
-            'cp-card__stage--drawer': group.id === 'drawer',
-            'cp-card__stage--megaMenu': group.id === 'megaMenu',
-            'cp-card__stage--tieredMenu': group.id === 'tieredMenu',
-            'cp-card__stage--toast': group.id === 'toast',
-          }"
+          :class="STAGE_CLASS_BY_GROUP[group.id]"
         >
           <!-- 受控示例由 PreviewStage 持有本地值，使 v-model 在预览中真正可交互 -->
           <PreviewStage
@@ -52,19 +49,21 @@
           </PreviewStage>
         </div>
         <footer class="cp-card__foot">
-          <span class="cp-card__title">{{ example.title }}</span>
-          <button
-            class="cp-card__code-btn"
-            type="button"
+          <!-- 标题可能被省略号截断，悬浮看全文 -->
+          <span
+            class="cp-card__title"
+            :title="example.title"
+          >{{ example.title }}</span>
+          <!-- 查看 / 收起代码：纯图标走共享 Button（icon-only 必须给 ariaLabel） -->
+          <Button
+            size="xsmall"
+            variant="ghost"
+            text
+            :icon="showCode === example.title ? 'chevronUp' : 'code'"
+            :ariaLabel="showCode === example.title ? i18n.hideCode : i18n.viewCode"
             :title="showCode === example.title ? i18n.hideCode : i18n.viewCode"
             @click="toggleCode(example.title)"
-          >
-            <!-- 查看 / 收起代码图标 -->
-            <IconWrapper
-              :name="showCode === example.title ? 'chevronUp' : 'code'"
-              :size="13"
-            />
-          </button>
+          />
         </footer>
         <CodeBlock
           v-if="showCode === example.title"
@@ -88,7 +87,7 @@ import {
   ref,
   toRef,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import Button from "@/components/Button.vue"
 import type {
   ComponentSize,
   I18n,
@@ -96,6 +95,23 @@ import type {
   PreviewGroup,
 } from "../types"
 import CodeBlock from "./CodeBlock.vue"
+
+/** 需要专属舞台尺寸的分区：id → 舞台修饰类（高度值仍写在 SCSS，新增此类分区只改这一处登记） */
+const STAGE_CLASS_BY_GROUP: Record<string, string> = {
+  loader: "cp-card__stage--loader",
+  speedDial: "cp-card__stage--speeddial",
+  dialog: "cp-card__stage--dialog",
+  drawer: "cp-card__stage--drawer",
+  megaMenu: "cp-card__stage--megaMenu",
+  tieredMenu: "cp-card__stage--tieredMenu",
+  toast: "cp-card__stage--toast",
+}
+
+/** 需要横向空间的浮层类分区（展开面板 / 三段结构）：卡片跨两列 */
+const WIDE_STAGE_GROUP_IDS: readonly string[] = ["dialog", "drawer", "megaMenu", "tieredMenu"]
+
+/** 卡片是否需要跨列（宽舞台浮层给展开留出横向空间） */
+const isWideStage = (groupId: string): boolean => WIDE_STAGE_GROUP_IDS.includes(groupId)
 
 /** 复合示例插槽渲染器：把 example.render 的返回值作为插槽内容渲染（无 render 时该组件不挂载） */
 const SlotRenderer = defineComponent({

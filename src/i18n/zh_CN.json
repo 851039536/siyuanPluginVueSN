@@ -441,7 +441,8 @@
     "sizeXsmall": "超小（xsmall）",
     "sizeSmall": "小（small，默认）",
     "sizeMedium": "中（medium）",
-    "sizeLarge": "大（large）"
+    "sizeLarge": "大（large）",
+    "sizeLabel": "组件尺寸档位"
   },
   "openComponentPreview": "打开组件预览",
   "enableComponentPreview": "启用组件预览功能",

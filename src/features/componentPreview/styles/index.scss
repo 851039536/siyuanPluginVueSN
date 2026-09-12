@@ -20,7 +20,7 @@
   justify-content: space-between;
   gap: $s-3;
   padding: $s-2 $s-3;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
 
@@ -55,38 +55,19 @@
 
 // ==================== 组件尺寸档位切换器 ====================
 
+// 容器只负责分组外观：按钮本体是共享 Button（分段互斥组写法），不复刻其配色与交互
 .cp-size {
   display: flex;
   gap: $s-px3;
   padding: $s-px2;
   background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
 }
 
+// 仅保留档位短标签的等宽字形；其余外观全部交给共享 Button
 .cp-size__btn {
-  min-width: 22px; // 档位按钮最小宽度，无对应 Token
-  padding: $s-px2 $s-2;
-  border: 1px solid transparent;
-  border-radius: $r-sm;
-  background: transparent;
   font-family: $ff-mono;
-  font-size: $t-2xs;
-  font-weight: $fw-medium;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-
-  &:hover {
-    color: var(--b3-theme-on-background);
-  }
-}
-
-.cp-size__btn--active {
-  background: var(--b3-theme-background);
-  border-color: var(--b3-theme-surface-lighter);
-  color: var(--b3-theme-primary);
-  font-weight: $fw-semibold;
 }
 
 // ==================== 主体布局 ====================

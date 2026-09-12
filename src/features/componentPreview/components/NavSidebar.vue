@@ -1,6 +1,9 @@
 <!-- 组件预览 — 导航侧栏：组件锚点列表 + 当前高亮，点击滚动到对应分区 -->
 <template>
-  <aside class="cp-nav">
+  <aside
+    class="cp-nav"
+    :aria-label="i18n.title"
+  >
     <!-- 组件列表标题 -->
     <div class="cp-nav__label">{{ i18n.title }}</div>
     <ul class="cp-nav__list">
@@ -12,6 +15,7 @@
           type="button"
           class="cp-nav__item"
           :class="{ 'cp-nav__item--active': group.id === activeId }"
+          :aria-current="group.id === activeId ? 'true' : undefined"
           :title="group.summary"
           @click="emit('select', group.id)"
         >

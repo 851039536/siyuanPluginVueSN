@@ -1,0 +1,179 @@
+// ========== ToastMessage.scss ==========
+// Toast 单条消息（私有子部件）的样式。
+// ⚠️ 必须单独成文件并由 ToastMessage.vue 自己 @use：子部件渲染的元素带**子组件自己的 scope id**，
+//    父组件 Toast.vue 的 scoped 样式匹配不到它们 —— 若这些规则留在 Toast.scss（父组件加载），
+//    则全部静默失效、消息卡退化为无样式的裸文本。
+// 档位变量（--si-toast-*）由父组件 Toast.vue 的根容器输出，经 CSS 变量继承传到这里。
+@use './_mixins.scss' as m;
+@use '../kit/variables.scss' as *;
+
+// ========== 单条消息 ==========
+// 卡片恒为 surface 底 + 1px 描边 + 左侧 3px 语义色条（Codex 边框优先，**不用 shadow**）；
+// 层级的区分靠左侧色条与文字语义色，与 Message 的「同色系浅底」有意区分 ——
+// 浮层浮在任意底色之上，浅底会与页面内容糊在一起，故取实底卡片。
+.si-toast__message {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: $s-2;
+  box-sizing: border-box;
+  width: var(--si-toast-width, 320px);
+  padding: var(--si-toast-pad-y, 6px) var(--si-toast-pad-x, 10px);
+  padding-left: calc(var(--si-toast-pad-x, 10px) + #{$s-px2});
+  border: 1px solid var(--b3-border-color, $c-border);
+  border-left: 3px solid var(--b3-theme-primary, $c-primary);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface, $c-surface);
+  color: var(--b3-theme-on-surface, $c-fg);
+  font-family: $ff-zh;
+  font-size: var(--si-toast-font, #{$t-xs});
+  line-height: $lh-normal;
+  // 只有消息卡可交互（根容器 pointer-events: none，避免浮层挡住页面其余部分）
+  pointer-events: auto;
+
+  // ========== 语义类型（左侧色条） ==========
+  &--success {
+    border-left-color: var(--b3-theme-success, $c-success);
+  }
+
+  &--info {
+    border-left-color: var(--b3-theme-info, $c-info);
+  }
+
+  &--warn {
+    border-left-color: var(--b3-theme-warning, $c-warning);
+  }
+
+  // ⚠️ 错误色只有 --b3-theme-error（--b3-theme-destructive 宿主从未定义）
+  &--error {
+    border-left-color: var(--b3-theme-error, $c-danger);
+  }
+
+  // 中性面：宿主无 --b3-theme-secondary 语义色，故走 border 中性族
+  &--secondary {
+    border-left-color: var(--b3-border-color, $c-border);
+  }
+
+  // 反色：前景色作条（明暗主题自动互为反转）
+  &--contrast {
+    border-left-color: var(--b3-theme-on-background, $c-fg);
+  }
+}
+
+.si-toast__content {
+  display: flex;
+  align-items: flex-start;
+  gap: $s-2;
+  flex: 1;
+  min-width: 0;
+}
+
+.si-toast__icon {
+  flex: none;
+  // 兼作「图标插槽的容器」（插槽内容由调用方渲染、尺寸自定）⇒ inline-flex 保证其中的子元素被正确居中
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: $s-px2; // 与首行文字基线视觉对齐
+  color: var(--b3-theme-on-surface, $c-fg);
+  opacity: m.$opacity-dimmed;
+}
+
+// 图标按语义取色（仅上色，不换底色）
+.si-toast__message--success .si-toast__icon {
+  color: var(--b3-theme-success, $c-success);
+}
+
+.si-toast__message--info .si-toast__icon {
+  color: var(--b3-theme-info, $c-info);
+}
+
+.si-toast__message--warn .si-toast__icon {
+  color: var(--b3-theme-warning, $c-warning);
+}
+
+.si-toast__message--error .si-toast__icon {
+  color: var(--b3-theme-error, $c-danger);
+}
+
+.si-toast__text {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word; // 长文案换行，不横向溢出挤压关闭按钮
+}
+
+.si-toast__summary {
+  display: block;
+  font-size: var(--si-toast-summary-font, #{$t-xs});
+  font-weight: $fw-medium;
+}
+
+.si-toast__detail {
+  margin-top: $s-px1;
+  font-size: var(--si-toast-font, #{$t-xs});
+  color: var(--b3-theme-on-surface, $c-fg);
+  opacity: m.$opacity-muted;
+}
+
+// ========== 关闭按钮（复用共享 Button 的纯图标形态） ==========
+// ⚠️ 类名重复一次抬到 (0,4,0)：Button 自身的 `.si-button--icon-only.si-button--{tier}` 为 (0,3,0)，
+//    只靠源顺序取胜太脆弱（同 Message / FileUpload 的既有做法）。
+// ⚠️ 必须同时清掉档位类的 min-height（28/36/44px），否则最小高度会反过来决定按钮高度、尺寸覆写失效。
+// ⚠️ Button 是子组件，其内部/自身元素带 Button 自己的 scope id ⇒ 覆写须经 :deep() 穿透。
+.si-toast__close-wrap {
+  flex: none;
+  display: inline-flex;
+}
+
+:deep(.si-toast__close) {
+  flex: none;
+}
+
+:deep(.si-toast__close.si-toast__close.si-button--icon-only) {
+  --button-size: 18px; // 无对应 Token，四档 18/20/22/24
+  min-height: 0;
+  color: inherit;
+  opacity: m.$opacity-muted;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &.si-button--xsmall {
+    --button-size: 18px;
+  }
+
+  &.si-button--small {
+    --button-size: 20px;
+  }
+
+  &.si-button--medium {
+    --button-size: 22px;
+  }
+
+  &.si-button--large {
+    --button-size: 24px;
+  }
+}
+
+// closeicon 插槽分支（自绘按钮本体，几何量与上面的 Button 覆写对齐）
+.si-toast__close--slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px; // 无对应 Token
+  height: 20px; // 无对应 Token
+  padding: 0;
+  border: none;
+  border-radius: $r-sm;
+  background: transparent;
+  color: inherit;
+  opacity: m.$opacity-muted;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    opacity: 1;
+  }
+}

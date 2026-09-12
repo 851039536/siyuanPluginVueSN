@@ -1,0 +1,171 @@
+// ========== Toast.scss ==========
+// 消息通知浮层（根容器）的样式。
+// ⚠️ 只承载**根容器与消息列表**的规则；单条消息（`.si-toast__message` 及其内部元素）的样式在
+//    `ToastMessage.scss` —— 那些元素由私有子部件渲染、带子组件自己的 scope id，
+//    父组件 scoped 样式匹配不到，留在本文件会静默失效。
+@use './_mixins.scss' as m;
+@use '../kit/variables.scss' as *;
+
+// 消息通知浮层：八向停靠的消息堆栈。
+// 定位为 `position: fixed` + 模板类驱动（零 JS 定位，同 Dialog / Drawer 的位置档范式）；
+// 层级沿用全库约定：固定 z-index（不做官方 autoZIndex / baseZIndex 运行时层叠管理）。
+.si-toast {
+  // ========== 档位变量（根单点输出，四档只改字号与几何量） ==========
+  // ⚠️ 这些变量由单条消息的样式读取，靠 CSS 变量继承向下传递 ⇒ 必须定义在根容器上。
+  --si-toast-font: #{$t-xs};
+  --si-toast-summary-font: #{$t-xs};
+  --si-toast-pad-y: #{m.$gap-xs}; // 6px
+  --si-toast-pad-x: #{m.$spacing-2_5}; // 10px
+  --si-toast-gap: #{$s-2};
+  --si-toast-width: 320px; // 消息卡宽度，无对应 Token
+
+  position: fixed;
+  z-index: 10000; // 全库统一：全屏级浮层取 10000
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-toast-gap, #{$s-2});
+  max-width: calc(100vw - #{$s-4});
+  font-family: $ff-zh;
+  font-size: var(--si-toast-font, #{$t-xs});
+  line-height: $lh-normal;
+  // 非模态、无遮罩：浮层根不可吃掉指针（仅消息卡恢复 auto），否则会挡住页面其余部分
+  pointer-events: none;
+
+  // ========== 尺寸档位（字号阶梯 10/12/14/16） ==========
+  &--xsmall {
+    --si-toast-font: #{$t-2xs}; // 10px
+    --si-toast-summary-font: #{$t-2xs};
+    --si-toast-pad-y: #{$s-1}; // 4px
+    --si-toast-pad-x: #{$s-2}; // 8px
+    --si-toast-gap: #{$s-1};
+    --si-toast-width: 260px; // 无对应 Token
+  }
+
+  &--small {
+    --si-toast-font: #{$t-xs}; // 12px
+    --si-toast-summary-font: #{$t-xs};
+    --si-toast-pad-y: #{m.$gap-xs}; // 6px
+    --si-toast-pad-x: #{m.$spacing-2_5}; // 10px
+    --si-toast-gap: #{$s-2};
+    --si-toast-width: 320px; // 无对应 Token
+  }
+
+  &--medium {
+    --si-toast-font: #{$t-sm}; // 14px
+    --si-toast-summary-font: #{$t-sm};
+    --si-toast-pad-y: #{m.$gap-xs}; // 6px
+    --si-toast-pad-x: #{$s-3}; // 12px
+    --si-toast-gap: #{$s-2};
+    --si-toast-width: 360px; // 无对应 Token
+  }
+
+  &--large {
+    --si-toast-font: #{$t-base}; // 16px
+    --si-toast-summary-font: #{$t-base};
+    --si-toast-pad-y: #{$s-2}; // 8px
+    --si-toast-pad-x: #{$s-px14}; // 14px
+    --si-toast-gap: #{$s-3};
+    --si-toast-width: 420px; // 无对应 Token
+  }
+
+  // ========== 停靠方位（八档，模板类驱动、零 JS 定位） ==========
+  // 四角 + 上下边中点；`center` 为上下左右皆居中。
+  &--top-left {
+    top: $s-4;
+    left: $s-4;
+    align-items: flex-start;
+  }
+
+  &--top-center {
+    top: $s-4;
+    left: 50%;
+    align-items: center;
+    transform: translateX(-50%);
+  }
+
+  &--top-right {
+    top: $s-4;
+    right: $s-4;
+    align-items: flex-end;
+  }
+
+  &--bottom-left {
+    bottom: $s-4;
+    left: $s-4;
+    align-items: flex-start;
+  }
+
+  &--bottom-center {
+    bottom: $s-4;
+    left: 50%;
+    align-items: center;
+    transform: translateX(-50%);
+  }
+
+  &--bottom-right {
+    bottom: $s-4;
+    right: $s-4;
+    align-items: flex-end;
+  }
+
+  &--center {
+    top: 50%;
+    left: 50%;
+    align-items: center;
+    transform: translate(-50%, -50%);
+  }
+
+  // 消息列表容器：TransitionGroup 的落点，自身不参与定位计算
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--si-toast-gap, #{$s-2});
+    align-items: inherit;
+  }
+}
+
+// ========== 进退场过渡（全库统一 0.12s ease，fade + 横向位移；不叠加缩放） ==========
+// 位移方向随停靠边自适应：左侧停靠从左侧滑入、右侧停靠从右侧滑入 —— 由根容器的方位类决定，
+// 故这里统一用 CSS 变量承载位移量，各方位类在上方覆盖。
+//
+// ⚠️ 过渡类必须经 `:deep()` 命中：TransitionGroup 把 `si-toast-item-*` 加在**子组件 ToastMessage 的根元素**上，
+//    该元素带的是子组件自己的 scope id，父组件 scoped 选择器（`.si-toast-item-enter-from[data-v-父]`）
+//    匹配不到它 —— 不穿透则过渡静默失效（元素仍会增删，只是没有动画）。
+//    `--si-toast-enter-x` 定义在根容器上，靠 CSS 变量继承传到子元素，故穿透后仍可用。
+.si-toast--top-left,
+.si-toast--bottom-left {
+  --si-toast-enter-x: -12px;
+}
+
+.si-toast--top-right,
+.si-toast--bottom-right {
+  --si-toast-enter-x: 12px;
+}
+
+.si-toast--top-center,
+.si-toast--bottom-center,
+.si-toast--center {
+  --si-toast-enter-x: 0px;
+}
+
+.si-toast {
+  :deep(.si-toast-item-enter-active),
+  :deep(.si-toast-item-leave-active) {
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+
+  :deep(.si-toast-item-enter-from),
+  :deep(.si-toast-item-leave-to) {
+    opacity: 0;
+    transform: translateX(var(--si-toast-enter-x, 0px));
+  }
+
+  // 离场时脱离文档流，避免同组其余消息在过渡期间被推挤跳动
+  :deep(.si-toast-item-leave-active) {
+    position: absolute;
+  }
+
+  :deep(.si-toast-item-move) {
+    transition: transform 0.12s ease;
+  }
+}

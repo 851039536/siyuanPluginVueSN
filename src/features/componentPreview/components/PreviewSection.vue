@@ -31,6 +31,7 @@
             'cp-card__stage--drawer': group.id === 'drawer',
             'cp-card__stage--megaMenu': group.id === 'megaMenu',
             'cp-card__stage--tieredMenu': group.id === 'tieredMenu',
+            'cp-card__stage--toast': group.id === 'toast',
           }"
         >
           <!-- 受控示例由 PreviewStage 持有本地值，使 v-model 在预览中真正可交互 -->

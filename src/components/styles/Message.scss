@@ -1,0 +1,127 @@
+// ========== Message.scss ==========
+@use './_mixins.scss' as m;
+@use '../kit/variables.scss' as *;
+
+.si-message {
+  display: flex;
+  align-items: center;
+  gap: $s-2; // 8px — 内容区与关闭按钮之间
+  border: 1px solid transparent;
+  border-radius: $r-base; // 6px — 切档恒定
+  font-family: $ff-zh;
+  line-height: $lh-normal;
+
+  // 默认外观（未传 severity）：主题主色（官方 Basic 示例）
+  background: hsla(from var(--b3-theme-primary, $c-primary) h s l / 0.1);
+  color: var(--b3-theme-primary, $c-primary);
+  border-color: hsla(from var(--b3-theme-primary, $c-primary) h s l / 0.2);
+
+  // ========== 尺寸档位（只驱动字号 10/12/14/16 与内边距；圆角与 1px 描边恒定） ==========
+  &--xsmall {
+    padding: $s-1 $s-2; // 4px 8px
+    font-size: $t-2xs;
+  }
+
+  &--small {
+    padding: m.$gap-xs m.$spacing-2_5; // 6px 10px
+    font-size: $t-xs;
+  }
+
+  &--medium {
+    padding: m.$gap-xs $s-3; // 6px 12px
+    font-size: $t-sm;
+  }
+
+  &--large {
+    padding: $s-2 $s-px14; // 8px 14px
+    font-size: $t-base;
+  }
+
+  // ========== 语义类型 ==========
+  // 彩色档一律「同色系 10% 浅底 + 100% 文字 + 20% 描边」，相对颜色语法由主题变量取 alpha（同 Tag.scss 写法）
+  &--success {
+    background: hsla(from var(--b3-theme-success, $c-success) h s l / 0.1);
+    color: var(--b3-theme-success, $c-success);
+    border-color: hsla(from var(--b3-theme-success, $c-success) h s l / 0.2);
+  }
+
+  &--info {
+    background: hsla(from var(--b3-theme-info, $c-info) h s l / 0.1);
+    color: var(--b3-theme-info, $c-info);
+    border-color: hsla(from var(--b3-theme-info, $c-info) h s l / 0.2);
+  }
+
+  &--warn {
+    background: hsla(from var(--b3-theme-warning, $c-warning) h s l / 0.1);
+    color: var(--b3-theme-warning, $c-warning);
+    border-color: hsla(from var(--b3-theme-warning, $c-warning) h s l / 0.2);
+  }
+
+  // ⚠️ 错误色只有 --b3-theme-error（--b3-theme-destructive 宿主从未定义）
+  &--error {
+    background: hsla(from var(--b3-theme-error, $c-danger) h s l / 0.1);
+    color: var(--b3-theme-error, $c-danger);
+    border-color: hsla(from var(--b3-theme-error, $c-danger) h s l / 0.2);
+  }
+
+  // 中性面：宿主无 --b3-theme-secondary 语义色，故走 surface / on-surface / border 中性族（同 Tag 的 default）
+  &--secondary {
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    color: var(--b3-theme-on-surface, $c-fg);
+    border-color: var(--b3-border-color, $c-border);
+  }
+
+  // 反色：前景色铺底 + 背景色文字（明暗主题自动互为反转）
+  &--contrast {
+    background: var(--b3-theme-on-background, $c-fg);
+    color: var(--b3-theme-background, $c-bg);
+    border-color: var(--b3-theme-on-background, $c-fg);
+  }
+
+  // ========== 内部元素 ==========
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: $s-2; // 8px — 图标与文本之间
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__icon {
+    flex: none;
+    // 颜色不单独设置：跟随根元素 currentColor（即语义色）
+  }
+
+  &__text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-word; // 长文案换行，不横向溢出挤压关闭按钮
+  }
+
+  // ========== 关闭按钮（复用共享 Button 的纯图标形态） ==========
+  // ⚠️ 类名重复一次抬到 (0,4,0)：Button 自身的 `.si-button--icon-only.si-button--{tier}` 为 (0,3,0)，
+  //    只靠源顺序取胜太脆弱（同 FileUpload 移除按钮的既有做法）。
+  // ⚠️ 必须同时清掉档位类的 min-height（28/36/44px），否则最小高度会反过来决定按钮高度、尺寸覆写失效。
+  &__close {
+    flex: none;
+  }
+
+  &__close.si-message__close.si-button--icon-only {
+    --button-size: 18px; // 无对应 Token，四档 18/20/22/24
+    min-height: 0;
+    // 图标按钮取语义色（Button 的 ghost/text 默认取 on-surface 中性色）
+    color: inherit;
+
+    &.si-button--small {
+      --button-size: 20px;
+    }
+
+    &.si-button--medium {
+      --button-size: 22px;
+    }
+
+    &.si-button--large {
+      --button-size: 24px;
+    }
+  }
+}

@@ -13,18 +13,25 @@
       </div>
       <div class="cp-header__actions">
         <!-- 组件尺寸档位切换（XS / S / M / L，作用于所有支持 size 的组件示例） -->
-        <div class="cp-size">
-          <button
+        <!-- 分段互斥组：选中走填充主色，未选中走幽灵文本 + :aria-pressed（项目既有范式） -->
+        <div
+          class="cp-size"
+          role="group"
+          :aria-label="i18n.sizeLabel"
+        >
+          <Button
             v-for="option in COMPONENT_SIZES"
             :key="option.value"
-            type="button"
             class="cp-size__btn"
-            :class="{ 'cp-size__btn--active': size === option.value }"
+            size="xsmall"
+            :variant="size === option.value ? 'primary' : 'ghost'"
+            :text="size !== option.value"
+            :aria-pressed="size === option.value"
             :title="i18n[option.labelKey]"
             @click="setSize(option.value)"
           >
             {{ option.short }}
-          </button>
+          </Button>
         </div>
         <!-- 搜索占位文案："搜索组件…" -->
         <Input

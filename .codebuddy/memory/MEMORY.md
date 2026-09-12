@@ -16,6 +16,7 @@
 - 私有子部件/纯函数放同名小写目录（`confirm datePicker fileUpload megaMenu overlay paginator select sidebar speedDial splitter tabs textarea tieredMenu timeline tooltip`），不计入清单、禁止 feature 直接导入
 - **预览框架**：示例 = `props` + `slotText`/`render`（默认插槽）+ `slots`（具名/作用域插槽工厂，**第二参 = 注入档位后的实际渲染 props**）；受控示例由 `PreviewStage` 持本地值回写，未声明 `modelValue` 的组件**一个额外属性都不注入**（否则多根 `FormField` 报 extraneous attrs）
 - **尺寸演示唯一入口 = 面板头部 XS/S/M/L**：分区不设「尺寸」卡、插槽内子控件不固定 `size`；⚠️ 但 `size: p.size` / `exampleProps.size` 的**动态透传必须保留**（Toolbar / InputGroup / Dialog / Drawer / ConfirmDialog / ConfirmPopup / FileUpload / Sidebar），删掉会让复合示例档位失效
+- **面板自身排版约定（2026-09-12 UI 审查后）**：网格 `align-items: start`（卡片按内容高度 —— 特例舞台不再拉高同排卡片、展开代码不撑高邻居）；`STAGE_CLASS_BY_GROUP`（`PreviewSection.vue`，含 toast）是**舞台特例唯一登记点**；`WIDE_STAGE_GROUP_IDS`（dialog/drawer/megaMenu/tieredMenu）在 ≥720px 下 `.cp-card--wide` 跨两列；档位切换器 / 卡片代码按钮 / 代码块复制按钮**一律复用共享 `Button`**（icon-only 必传 `ariaLabel`；复制成功用 `:severity="'success'"` + `.cp-sr-only` 的 `aria-live` 播报），面板内唯一自建可交互元素是导航项（`aria-current` + 内嵌 `:focus-visible`）；边框统一 `--b3-border-color`，`--b3-theme-surface-lighter` 只作 hover 底色
 - 预览需宿主样式（如垂直分隔线高度）→ 直接给示例传 `props: { style: "height: 80px" }`，无需改框架
 - 弹层类预览必须沙箱覆盖：舞台 `position: relative` + 舞台内遮罩改 `absolute; z-index:1`（**类名写两遍**抬特异性）；`.cp-card` 为 `overflow:hidden`，三段结构另需卡高
 - 新增公开组件四件套：顶部文件功能注释 + `import "./kit/theme"` 副作用 + 样式外置（`<style scoped>` 只 `@use` 一份 scss）+ **内部只用相对路径**（库要能整目录外迁；`@/utils/*` 是既有例外）

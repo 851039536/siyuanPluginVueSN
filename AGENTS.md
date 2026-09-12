@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（48 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（50 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 48 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 50 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -178,7 +178,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（48 个）
+### 3. 组件清单（50 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
@@ -202,6 +202,8 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `Slider.vue` | 滑块（原生 `input[type=range]`；可显示当前值与极值，支持只读） | `v-model` / `size` / `min` / `max` / `step` / `showValue` / `showMinMax` / `formatValue` / `disabled` / `readonly` / `label` / `hint` / `error` |
 | `Tag.vue` | 标签 / 行内徽标（参考 PrimeVue Badge 的「独立行内标签」语义 + PrimeVue Chip 的「带头像标签」语义，**与 `Badge.vue` 的角标职责不重叠**）：`variant` 颜色轴**同时容纳库内既有命名与官方 Badge severity 命名**（`default` / `primary` / `success` / `warning` / `danger` / `info` + 官方 `secondary` / `warn` / `error` / `contrast`；其中 `warning`≡`warn`、`danger`≡`error`、`default`≡`secondary` 为**同义别名**，样式层合并映射，`secondary` 走 surface / on-surface / border 中性族、`contrast` 走 on-background / background 反色对）；默认外观为「同色系 10% 浅底 + 100% 文字 + 20% 描边」，**`fill` 改为实底**（色块 100% 铺底 + 反差文字 + 去描边，对齐官方 Badge 的默认实底观感 —— 官方 Badge 本无描边、直接色块铺底）；`shape` 三档（`rounded` 默认 / `square` / **`circle` 圆形徽标**：固定最小边长 20px + 居中，宜放纯数字或单字，内容过长会被裁）；**`content` 为纯文本便捷入口**（对齐官方 Badge 的 `value`，不传默认插槽时直接渲染；数字按 `max` 折叠为 `${max}+`，对齐库内 `Badge.max` 语义；`max` **默认 99**，`<= 0` 视为不折叠）；**`image` 为头像位**（对齐官方 Chip：标签最左侧的圆形头像，典型用于人员 / 主体标签；与 `icon` **互斥且 `image` 优先**，图片 `@error` 时**自动回退渲染 `icon`**，不会出现破图占位 —— 同 `Avatar` 的 `hasError` 思路；`alt` 取 `imageAlt`，未传则取 `content` 的文本形式，无 `content` 时空串 = 装饰性图片交由读屏跳过；头像边长随档位 12/14/16/18px，与图标口径一致）；另有 `icon`（受 `IconKey` 约束）/ `closable`（关闭按钮可访问名称走 `closeLabel`，中文默认值 ⇒ **零 i18n 改动**）/ `disabled` 与三色自定义（`color` / `textColor` / `borderColor`，与 `fill` 同用时以自定义色为准）；四档 `size`（`xsmall` / `small` 默认 / `medium` / `large`，字号 10/12/14/16 驱动内边距与关闭按钮 10/12/14/16px）；⚠️ **与官方的有意差异**：不做官方 Badge 的 `size` 三档取值（`small` / `large` / `xlarge`）—— 本库统一四档阶梯；不做官方 Chip 的 `removeIcon`（改由库内固定图标承担，需要自定义请用插槽思路自建）；不做 `dt` / `pt` / `ptOptions` / `unstyled`。⚠️ 语义边界：`Tag` 是**行内**的独立标签 / 徽标（自身即内容，无包裹语义），`Badge` 是**角标**（包裹内容并在四角叠加标记，props 为 `content` / `dot` / `position` / `max`）—— **按语义各取所需，勿混用** | `size` / `variant` / `shape` / `fill` / `content` / `max` / `icon` / `iconSize` / `image` / `imageAlt` / `closable` / `closeLabel` / `closeIconSize` / `disabled` / `color` / `textColor` / `borderColor` |
 | `Badge.vue` | 徽标/角标（圆点、四角定位、上限折叠） | `content` / `dot` / `size` / `variant` / `position` / `max` / `offset` / `hidden` |
+| `Inplace.vue` | 就地编辑（参考 PrimeVue Inplace）：**只读输出与编辑内容两态互换** —— 点 `display` 插槽内容即切到 `content` 插槽，收起时**焦点归还 `display`**（官方语义，避免键盘用户丢失位置）；`active` **传入即受控 / 不传即自持**（与 `Panel.collapsed` / `Tooltip.visible` 同一范式，派发 `update:active`）；`disabled` 时 `display` 既不可点击也不可聚焦（不输出 `role="button"` / `tabindex`，并置 `aria-disabled`）；⚠️ **组件自身不含任何文案**（两态内容全由插槽给出）⇒ 调用方自备文案，**零 i18n 分片改动**；`display` 为 `role="button"` + `tabindex="0"`，指针点击与 **Enter** 均可展开（键盘可达性的关键：官方只绑 `@keydown.enter`，本项目同）；⚠️ 编辑态内容需**自行接线 `closeCallback`**（作用域 `content` 给出）才能收起 —— 组件不猜内部结构（同 `FileUpload.header` / `Panel.togglebutton` 的既有约定）；三事件 = `update:active` / `open` / `close`，⚠️ `close` 载荷为 `Event \| null`（程序化关闭时无原生事件，同 `Message.close` 用 `MouseEvent \| null` 区分来源的做法）；`defineExpose` 暴露 `open()` / `close()` 供程序化开合；根容器 `aria-live="polite"`（官方同）；`display` 常态无边框，**悬停/聚焦时才显虚线框**（提示「可点击编辑」，Codex 边框优先不用阴影；以边框变色作为可见焦点指示，故不叠加 outline）；**与官方有意差异**：不做 `displayProps` 对象袋（同 `Panel` 拒绝 `toggleButtonProps` 的判据，改由调用方在 `display` 插槽内自建结构并自行打类）与 `dt` / `pt` / `ptOptions` / `unstyled` | `active` / `disabled` |
+| `FocusTrap.vue` | 焦点陷阱（参考 PrimeVue FocusTrap）：**把 Tab 焦点限制在包裹区域内** —— Tab 在末位回绕到首位、Shift+Tab 在首位跳到末位（中间位置**不干预**，交还浏览器原生 Tab 语义），另有**焦点逃逸拉回**（`focusin` 冒泡到容器，若新焦点不在容器内则拉回内部并派发 `focusEscaped`，这是「陷阱」的实质：模态弹层内点空白不该把焦点丢给背后的页面）；挂载时自动聚焦（`autoFocus` **默认 `true`**，优先 `initialFocus` 选择器 → 首个可聚焦元素 → 容器自身兜底）；`trapFocusIn`（默认 `true`）可只保留 Tab 回绕、放开外部聚焦（适合非模态浮层）；⚠️ **`disabled` 与 `autoFocus` 刻意解耦** —— `disabled` 只关「困住」，不关「自动聚焦」（对齐官方语义），`autoFocus` 独立生效；`defineExpose` 暴露 `focus()` 供「异步内容就绪后再聚焦」的场景；⚠️ 官方是指令（`v-focustrap`），本项目按仓库硬规则（`src/components/` 是唯一 UI 出口、组件须能进预览面板与清单）**做成组件** —— 与 `Tooltip` 由指令改组件的先例一致；**纯行为、零视觉**（不设内边距 / 边框 / 底色 / 尺寸，避免改变调用方布局 —— 这是它与 `Card` / `Panel` 这类容器型组件的根本区别）；可聚焦元素判定与回绕边界算法外置为私有纯函数 `focustrap/focusable.ts`（**排除 `[tabindex="-1"]`** —— 那是可编程聚焦但 Tab 到不了的节点；并逐个过滤 `disabled` / `[inert]` 子树 / `getClientRects()` 为空的不可见元素；⚠️ 按 DOM 顺序而非真实 Tab 顺序，因库内组件一律不用正 `tabindex`，两者等价，属可接受的有意简化）；⚠️ **不做**：`dt` / `pt` / `ptOptions` / `unstyled`；⚠️ 与库内 `overlay/useOverlay` 的分工：`useOverlay` 负责**弹层打开时的初始焦点与关闭归还**，本组件负责**持续困住**，两者互补不重叠（`useOverlay` 第 39 行原注「不做 FocusTrap」仍然成立 —— 那是弹层外壳的有意裁剪，本组件是独立可选的显式包装） | `disabled` / `autoFocus` / `trapFocusIn` / `initialFocus` |
 | `Avatar.vue` | 头像（图片/文字/图标，5 档尺寸含 `xlarge`） | `src` / `text` / `icon` / `size` / `shape` / `customSize` / `clickable` |
 | `Card.vue` | 卡片容器（标题/副标题/封面/主体/底部/加载/激活）；具名插槽 `title` / `subtitle` / `content`（`content` 未传时**回落默认插槽**，官方写法可直接照搬），另有 `header`（**本项目为带下边框的标题栏，非官方通栏语义**） / `header-extra` / `cover`（对应官方通栏区） / `footer` | `variant` / `size` / `title` / `subtitle` / `cover` / `clickable` / `loading` / `rounded` / `bodyNoPadding` / `contentClass`（主体容器类名钩子，对应官方 `contentClass`） / `captionClass`（标题区容器类名钩子，对应官方 PT 的 `caption`） |
 | `Dialog.vue` | 对话框（**通用模态容器**，与 `ConfirmDialog` 共用私有目录 `overlay/` 的弹层外壳）：受控 `visible`（配 `v-model:visible`）+ `header` / 内容区 / `footer` 三段结构（`showHeader` 控制标题栏、`closable` 控制右上角关闭按钮、`footer` 文本或插槽存在才渲染页脚）+ **九档 `position`**（`center` 默认 / 四边 / 四角，模板类驱动、零 JS 定位）+ 四档 `size`（驱动弹窗宽度 320/400/520/680px、内边距与基准字号 10/12/14/16；`max-height: 80vh`、1px 描边、圆角 `$r-base` **恒定**，**不用阴影**——层级靠遮罩对比）；关闭路径 = 关闭按钮 / Esc（`closeOnEscape` 默认开）/ 遮罩点关（`dismissableMask` **默认 `false`，与官方一致**，且**需在遮罩上按下并抬起**才算数，弹层内按下、遮罩上抬起不误关）/ 插槽内自建按钮；`modal` **默认 `true`**（官方默认 `false`，属**有意差异**：本项目遮罩恒定渲染，非模态时加 `--plain` 让遮罩透明且 `pointer-events: none`，页面其余部分仍可交互，点关随之失效）；**焦点**：打开时优先聚焦容器内 `[autofocus]`（footer → header → content 顺序）、否则聚焦容器，关闭时归还打开前元素；`aria-labelledby` 指向标题元素（`showHeader` 且有 `header` 文本或 `header` 插槽时），否则回退 `ariaLabel`；六个插槽 = `default`（**内容区**）/ `header`（作用域 `{ class, headerId }`）/ `footer` / `closebutton`（`{ closeCallback }`）/ `closeicon` / `container`（`{ closeCallback }`）；四个事件 = `update:visible` / `show`（过渡 enter）/ `hide`（过渡 leave）/ `after-hide`（过渡 after-leave）；私有目录 `overlay/`（types / useOverlay，禁止 feature 直接导入）；**与官方有意差异**：不做 `draggable`（官方默认开）/ `maximizable` / `breakpoints` / `appendTo`（**不 Teleport，就地 fixed**）/ `blockScroll` / ZIndex 管理 / FocusTrap 与 `dt` / `pt` / `ptOptions` / `unstyled`，`container` 插槽亦无官方 `maximizeCallback` / `initDragCallback` | `visible` / `header` / `footer` / `modal` / `closable` / `dismissableMask` / `closeOnEscape` / `showHeader` / `position` / `size` / `closeLabel` / `ariaLabel` |
@@ -473,7 +475,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 48 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/Dialog/Drawer/ConfirmDialog/ConfirmPopup/MegaMenu/TieredMenu/Message/Toast/Sidebar/SidebarMain/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Toolbar/Divider/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 50 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/Dialog/Drawer/ConfirmDialog/ConfirmPopup/MegaMenu/TieredMenu/Message/Toast/Sidebar/SidebarMain/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Toolbar/Divider/Chart/Inplace/FocusTrap 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/
@@ -511,4 +513,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（48 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（50 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

@@ -1,0 +1,54 @@
+// ========== MeterGroupLabel.scss ==========
+// MeterGroup 标签列表（私有子部件）的样式。
+// ⚠️ 必须单独成文件并由 MeterGroupLabel.vue 自己 @use：子部件元素带子组件自己的 scope id，
+//    父组件 MeterGroup.vue 的 scoped 样式匹配不到它们（同 Toast / ToastMessage 的既有教训）。
+@use './_mixins.scss' as m;
+@use '../kit/variables.scss' as *;
+
+.si-metergroup__label-list {
+  display: flex;
+  gap: $s-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  &--horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  &--vertical {
+    flex-direction: column;
+    gap: $s-1;
+    align-items: flex-start;
+  }
+}
+
+.si-metergroup__label {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px6; // 6px — 标记与文字之间
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface, $c-fg);
+}
+
+// 色块标记：items 未给 icon 时的默认标记
+.si-metergroup__label-marker {
+  flex: none;
+  width: 10px; // 无对应 Token
+  height: 10px;
+  border-radius: $r-px2;
+  background: var(--b3-theme-primary, $c-primary); // 数据未给颜色时的兜底
+}
+
+// 图标标记（受 IconKey 约束）：颜色由行内 style 给出
+.si-metergroup__label-icon {
+  flex: none;
+}
+
+.si-metergroup__label-text {
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface, $c-fg);
+  opacity: m.$opacity-subtle;
+}

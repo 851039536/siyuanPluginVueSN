@@ -128,6 +128,6 @@ const resolvedProps = computed<Record<string, any>>(() => {
 </script>
 
 <style lang="scss">
-@use '../styles/PreviewSection.scss';
-@use '../styles/index.scss';
+// 面板级样式（styles/index.scss）由根组件 index.vue 统一引入，卡片不再重复引入
+@use '../styles/PreviewCard.scss';
 </style>

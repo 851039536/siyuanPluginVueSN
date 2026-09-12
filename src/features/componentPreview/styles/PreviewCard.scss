@@ -1,0 +1,438 @@
+// 组件预览 — 示例卡样式（卡片外壳 / 组件舞台与分档 / 各类演示宿主类）
+// 由 components/PreviewCard.vue 单独引入；分区级样式（标题 / import 行 / 网格 / 占位）见 PreviewSection.scss
+@use '@/variables.scss' as *;
+
+.cp-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  overflow: hidden;
+  // 卡片整体不可点（可点的只有页脚的代码按钮）⇒ 不做 hover 高亮，避免「点了没反应」的误导
+}
+
+// 组件渲染舞台
+.cp-card__stage {
+  position: relative; // 弹层类组件的快照定位基准
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px; // 快照舞台最小高度，无对应 Token
+  padding: $s-4;
+  background: var(--b3-theme-surface);
+
+  // ⚠️ 沙箱覆盖必须抬特异性（类名写两遍 = (0,3,0)）：
+  // 组件侧经 scoped 编译后是 `.si-xxx[data-v-hash]`（同样是 (0,2,0)），
+  // 若只写 `.cp-card__stage .si-xxx` 就会退化为「比 CSS 顺序」——
+  // 实测产物里 `.si-speeddial[data-v-*]` 排在沙箱规则之后，覆盖直接失效。
+  // 抬到 (0,3,0) 后与顺序无关，新增此类覆盖请照此写法。
+
+  // 弹层组件（如 ConfirmDialog）本体以 position: fixed 铺满视口，
+  // 快照中改为相对舞台定位，避免覆盖整个预览窗口
+  .si-confirm-mask.si-confirm-mask {
+    position: absolute;
+    z-index: 1;
+  }
+
+  // Dialog 同为「fixed 遮罩 + 卡片」（卡片宽度由组件侧 max-width: 100% 自动收敛到舞台宽度）
+  .si-dialog-mask.si-dialog-mask {
+    position: absolute;
+    z-index: 1;
+  }
+
+  // Drawer 同为「fixed 遮罩 + 卡片」，只是卡片贴合舞台某一条边（同 Dialog 的收敛机制）
+  .si-drawer-mask.si-drawer-mask {
+    position: absolute;
+    z-index: 1;
+  }
+
+  // ConfirmPopup 也是 position: fixed，但它是「贴锚点的小气泡」而非铺满视口 ⇒ 无需覆盖定位；
+  // 卡片 overflow: hidden 同样裁不到它（fixed 元素不受祖先 overflow 裁剪），仅可能压到相邻卡片上。
+
+  // Tooltip 与 ConfirmPopup 同类（贴锚点的小气泡、fixed + 视口坐标）⇒ 同样无需覆盖定位；
+  // ⚠️ 切勿改成 absolute：它的 top/left 是 JS 按视口算出的坐标，改为 absolute 会相对舞台再偏移一次而飞走。
+
+  // SpeedDial 默认 position: fixed 悬浮于视口角落，快照中改为相对舞台定位
+  // （舞台已 position: relative，故 right/bottom 档位改为相对舞台生效）
+  .si-speeddial.si-speeddial {
+    position: absolute;
+  }
+
+  // Toast 同 SpeedDial：默认 position: fixed 停靠视口边缘，快照中改为相对舞台定位 ——
+  // 舞台已 position: relative，故八向停靠档位改为相对舞台生效（否则八张快照全部叠在窗口同一角落、互相遮住）。
+  // ⚠️ Toast 的方位由**模板类**驱动（top/left/bottom/right + transform），不是 JS 算出的视口坐标，
+  //    故可安全改为 absolute（对照 Tooltip 的警告：那里 top/left 是 JS 视口坐标，切勿照搬本覆盖）。
+  .si-toast.si-toast {
+    position: absolute;
+    // 沙箱内收窄边距，避免消息卡贴到卡片边缘被 overflow: hidden 裁掉
+    top: $s-3;
+    right: $s-3;
+    bottom: auto;
+    left: auto;
+    max-width: calc(100% - #{$s-6});
+  }
+
+  // 覆盖后需按方位类还原各自贴边：`top`/`bottom`/`left`/`right` 已由组件侧方位类给出，
+  // 这里只把「未涉及的那一侧」还原为 auto，避免上面的兜底值把对角方位的对齐方式带偏。
+  // ⚠️ 类名写两遍抬到 (0,2,0)：上面的 `.si-toast.si-toast` 是 (0,2,0)，方位类若只写一遍 (0,1,0)
+  //    会被它压住、`top`/`left` 兜底值直接生效（八向全挤到右上角）。同本文件开头的沙箱覆盖写法。
+  .si-toast--top-left.si-toast--top-left,
+  .si-toast--bottom-left.si-toast--bottom-left {
+    right: auto;
+    left: $s-3;
+  }
+
+  .si-toast--top-center.si-toast--top-center,
+  .si-toast--bottom-center.si-toast--bottom-center,
+  .si-toast--center.si-toast--center {
+    left: 50%;
+    right: auto;
+  }
+
+  // 顶部停靠档：清除底部约束，使其贴舞台顶部
+  .si-toast--top-left.si-toast--top-left,
+  .si-toast--top-center.si-toast--top-center,
+  .si-toast--top-right.si-toast--top-right {
+    top: $s-3;
+    bottom: auto;
+  }
+
+  // 底部停靠档：清除顶部约束，使其贴舞台底部
+  .si-toast--bottom-left.si-toast--bottom-left,
+  .si-toast--bottom-center.si-toast--bottom-center,
+  .si-toast--bottom-right.si-toast--bottom-right {
+    top: auto;
+    bottom: $s-3;
+  }
+
+  // 居中档：清除四边约束，只留 50% + 自身的居中位移
+  .si-toast--center.si-toast--center {
+    top: 50%;
+    bottom: auto;
+  }
+}
+
+// ==================== 舞台布局分档（按组件类型分层） ====================
+
+// 紧凑舞台：原子控件（Button / Tag / Badge / Avatar / Switch / Checkbox / RadioButton / Label / Divider…）
+// 内容仅 20~44px 高，沿用 96px 基线会留下大片空白并显著拉长面板滚动
+.cp-card__stage--compact {
+  min-height: 64px; // 紧凑舞台高度，无对应 Token
+}
+
+// 满宽容器类：Card / Panel / Message / Paginator 的根元素**没有 width**，
+// 而舞台是行方向 flex ⇒ 它们会被收缩成内容宽并居中，快照失真（看不出真实满宽形态）
+.cp-card__stage--fill {
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  // 仅作用于组件根元素（直接子元素），不影响组件内部布局
+  > * {
+    width: 100%;
+  }
+}
+
+// 顶对齐：Timeline / Tabs / FileUpload / Listbox / Splitter 的内容高度随示例变化，
+// 垂直居中会让上边距随内容条数随机漂移（同 MegaMenu / TieredMenu 的既有处理思路）
+.cp-card__stage--top {
+  align-items: flex-start;
+}
+
+// 图表：Chart 默认档内容为 200×150，96px 基线会溢出或贴边（宽度由 260px 列宽保证）
+.cp-card__stage--chart {
+  min-height: 190px; // 150px 图表 + 上下内边距 2×16px，无对应 Token
+}
+
+// MeterGroup：横向示例只需 ~40px（细条 4px + 标签行），但**纵向示例**的竖条有
+// `height: 8rem`（128px）下限 ⇒ 舞台须给足，否则竖条会被卡片 `overflow: hidden` 裁掉。
+// 与 `--fill` 组合使用（根元素 width: 100%）。
+.cp-card__stage--meterGroup {
+  min-height: 200px; // 竖条 128px + 标签行 + 上下内边距，无对应 Token
+}
+
+// Loader 组件高度依赖父容器显式高度，单独给足舞台空间
+.cp-card__stage--loader {
+  height: 160px; // 动画展示高度，无对应 Token
+}
+
+// SpeedDial 展开后动作会沿轨迹外扩，需给足舞台高度（卡片为 overflow: hidden 会裁掉溢出部分）
+.cp-card__stage--speeddial {
+  height: 260px; // 轨迹展开所需高度，无对应 Token
+}
+
+// Dialog：三段结构比确认框更高，给足舞台高度；并把卡片最大高度限制在舞台内
+// （真实调用处为 80vh，沙箱内收敛后「长内容」示例演示的才是内容区内部滚动，而非整块被卡片裁掉）
+// 类名写两遍抬到 (0,3,0)，同 .cp-card__stage 内弹层覆盖的写法
+.cp-card__stage--dialog {
+  height: 300px; // 弹窗三段结构展示所需高度，无对应 Token
+
+  .si-dialog.si-dialog {
+    max-height: 100%;
+  }
+}
+
+// Drawer：贴边卡片需足够纵向空间演示左右抽屉与三段结构；同时把延伸量限制在舞台内
+// （真实调用处贴死视口边缘铺满对应方向，沙箱内收敛后「长内容」示例演示的才是内容区内部滚动）
+// 类名写两遍抬到 (0,3,0)，同 .cp-card__stage 内弹层覆盖的写法
+.cp-card__stage--drawer {
+  height: 260px; // 抽屉三段结构展示所需高度，无对应 Token
+
+  .si-drawer.si-drawer {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+// MegaMenu：展开面板绝对定位于根项下方，会超出卡片高度被 overflow: hidden 裁掉
+// ⇒ 给足舞台高度，并把面板限高收到舞台内（真实调用处为 20rem / 由 scrollHeight 指定）
+.cp-card__stage--megaMenu {
+  height: 340px; // 根菜单 + 多列面板展示所需高度，无对应 Token
+  align-items: flex-start; // 菜单贴舞台顶部，避免垂直居中后把面板推到卡片外
+  overflow: visible;
+
+  .si-megamenu__panel {
+    max-height: 260px; // 舞台内收敛，超出走面板内部滚动
+  }
+}
+
+// TieredMenu：子菜单向右偏移父项的 100%，会横向溢出卡片宽度被 overflow: hidden 裁掉
+// ⇒ 给足高度并把菜单靠左放（右侧留出子菜单空间），同时允许溢出可见以便展开时不被切。
+.cp-card__stage--tieredMenu {
+  height: 300px; // 三级菜单展示所需高度，无对应 Token
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: visible;
+
+  .si-tieredmenu__submenu > .si-tieredmenu__list {
+    // 三级菜单在窄卡片里会超出舞台，允许其自身限高滚动
+    max-height: 240px;
+    overflow-y: auto;
+  }
+}
+
+// Toast：消息堆栈 + 八向停靠需要足够舞台高度（卡片为 overflow: hidden，低舞台会把堆叠的多条消息裁掉），
+// 且消息卡自身有宽度（默认 320px），窄卡片下需允许其收缩 —— 见 .cp-card__stage 内的定位覆盖。
+.cp-card__stage--toast {
+  height: 240px; // 多消息堆叠展示所需高度，无对应 Token
+  align-items: stretch; // 让绝对定位的消息堆栈相对整个舞台贴边，而非被居中内容盒收窄
+  overflow: hidden;
+
+  // ⚠️ 类名写两遍抬到 (0,2,0)+：组件侧经 scoped 编译后是 `.si-toast__message[data-v-hash]`（同为 (0,2,0)），
+  //    只靠源顺序取胜太脆弱（同本文件开头的沙箱覆盖写法）。
+  .si-toast__message.si-toast__message {
+    width: auto; // 窄卡片下由 max-width 收敛，避免固定 320px 溢出被裁
+  }
+}
+
+// ==================== Inplace / FocusTrap 演示类 ====================
+// 仅用于 Inplace 与 FocusTrap 分区；真实项目请用你自己的类名。
+// ⚠️ 两者的「框」都是**演示脚手架**而非组件本体：Inplace 自身无边框，FocusTrap 更是纯行为零视觉。
+
+// Inplace 演示宿主：只读态做成「虚线提示可点」，与真编辑态形成对照
+.cp-inplace-demo__display {
+  color: var(--b3-theme-primary);
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.cp-inplace-demo__input {
+  min-width: 140px; // 无对应 Token
+  padding: $s-px3 $s-px6;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  outline: none;
+}
+
+.cp-inplace-demo__row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+}
+
+.cp-inplace-demo__text {
+  color: var(--b3-theme-on-surface);
+}
+
+// FocusTrap 演示宿主：陷阱边界靠这层虚线框示意（组件本体零视觉）
+.cp-focustrap-demo {
+  border: 1px dashed var(--b3-border-color);
+  border-radius: $r-base;
+  padding: $s-3;
+}
+
+.cp-focustrap-demo__status {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px2;
+  margin-bottom: $s-2;
+  font-size: $t-2xs;
+  color: $c-muted;
+}
+
+.cp-focustrap-demo__caught {
+  color: var(--b3-theme-warning, $c-warning);
+}
+
+.cp-focustrap-demo__row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+}
+
+// ==================== Card 容器钩子演示类 ====================
+// 仅用于 Card 分区的「容器钩子 - contentClass / captionClass」示例；真实项目请用你自己的类名。
+// ⚠️ 主体容器已有卡片档位的 padding（`.si-card--{tier} .si-card__body` 特异性更高且会取胜），
+// 故演示类只演示不会被覆盖的属性（边框 / 底色 / 圆角），避免读者误以为 padding 未生效。
+.cp-hook-caption {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  color: var(--b3-theme-primary);
+}
+
+.cp-hook-content {
+  border: 1px dashed var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+}
+
+// ==================== 确认类组件演示类 ====================
+// 仅用于 ConfirmDialog / ConfirmPopup 分区的插槽示例；真实项目请用你自己的类名。
+.cp-demo-block {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  padding: $s-3;
+}
+
+.cp-demo-title {
+  font-weight: $fw-semibold;
+}
+
+.cp-demo-text {
+  margin: 0;
+}
+
+.cp-demo-muted {
+  margin: 0;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.cp-demo-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s-2;
+}
+
+// ConfirmPopup 演示宿主：锚点包裹层贴合按钮尺寸，气泡贴它定位
+.cp-popup-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-popup-demo__anchor {
+  display: inline-flex;
+}
+
+// Tooltip 演示宿主：同上（锚点包裹层贴合按钮，气泡贴它定位）
+.cp-tooltip-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-tooltip-demo__anchor {
+  display: inline-flex;
+}
+
+// FileUpload 演示宿主：占满卡片宽度（拖拽区需足够横向空间，居中会让虚线框显得局促）
+.cp-fileupload-demo {
+  width: 100%;
+}
+
+// MegaMenu 演示宿主：占满卡片宽度并预留底部空间。
+// ⚠️ 展开面板是 position: absolute 挂在根项下方，会溢出卡片高度；卡片为 overflow: hidden，
+//    故需给足舞台高度（同 SpeedDial 的处理思路），否则面板下半部分被裁掉。
+.cp-megamenu-demo {
+  width: 100%;
+}
+
+// Sidebar 演示宿主：必须自带高度与定位基准 ——
+// ① `overlay` 模式的侧边栏是 position: absolute，需要 positioned 祖先才落得下来；
+// ② `inset` / `floating` 需要容器边界才能看出「内缩 / 留白」的差异；
+// ③ 侧边栏与主内容区是并排关系，宿主须为 flex 行。
+.cp-sidebar-demo {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 220px; // 并排布局展示所需高度，无对应 Token
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+}
+
+// 宿主内的导航项（图标 + 文案）；折叠为图标条时文案由组件样式隐藏
+.cp-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-px6 $s-2;
+  border-radius: $r-sm;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.cp-sidebar-demo__title {
+  margin-bottom: $s-2;
+  font-weight: $fw-semibold;
+}
+
+.cp-sidebar-demo__text {
+  margin: 0;
+  color: var(--b3-theme-on-surface);
+}
+
+// TieredMenu 演示宿主：子菜单是 position: absolute 挂在「项」上、向右偏移 100%，
+// 会横向溢出卡片被 overflow: hidden 裁掉 ⇒ 给足舞台高度与**横向空间**（列数少的卡片会挤不下）。
+// 同时 align-items 改 flex-start，避免菜单被垂直居中后子菜单溢出上下边界。
+.cp-tieredmenu-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s-2;
+}
+
+// 卡片底部：示例名 + 代码切换按钮
+.cp-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+  padding: $s-2 $s-3;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+.cp-card__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+}
+
+// 代码切换按钮改用共享 Button（自带 hover / 焦点环 / icon-only 几何），此处不再自建样式

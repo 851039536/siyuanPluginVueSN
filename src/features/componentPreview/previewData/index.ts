@@ -61,6 +61,9 @@ import {
   messagePreviewGroups,
 } from "./message"
 import {
+  meterGroupPreviewGroups,
+} from "./meterGroup"
+import {
   paginatorPreviewGroups,
 } from "./paginator"
 import {
@@ -126,6 +129,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...datePickerPreviewGroups,
   ...tagAvatarPreviewGroups,
   ...messagePreviewGroups,
+  ...meterGroupPreviewGroups,
   ...toastPreviewGroups,
   ...timelinePreviewGroups,
   ...tabsPreviewGroups,

@@ -36,15 +36,11 @@ export interface I18n {
   subtitle?: string
   searchPlaceholder?: string
   noMatch?: string
-  clearSearch?: string
   copyCode?: string
   copied?: string
-  copyFailed?: string
   viewCode?: string
   hideCode?: string
   openFloatingWindow?: string
-  preview?: string
-  code?: string
   sizeXsmall?: string
   sizeSmall?: string
   sizeMedium?: string

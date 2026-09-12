@@ -27,18 +27,39 @@ const isControlledComponent = (component: Component): boolean => {
   return !!declared && Object.prototype.hasOwnProperty.call(declared, "modelValue")
 }
 
+/** 是否为普通对象字面量（`{}` / `new Object()`），用于判断能否安全做浅比较 */
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+  return Object.getPrototypeOf(value) === Object.prototype
+}
+
 /**
- * 同值判定：原始值走 `Object.is`，数组做逐项浅比较。
- * 受控组件常回写「内容相同的新数组」（如队列类、多选类），若一律写回就会形成
+ * 同值判定：原始值走 `Object.is`，日期比时间戳，数组逐项、普通对象逐键浅比较。
+ * 受控组件常回写「内容相同的新实例」（新数组 / 新日期 / 新对象），若一律写回就会形成
  * `emit → 写回 modelValue → 重渲染 → 再 emit` 的自激循环（内存持续增长），故此守卫必须保留。
+ *
+ * ⚠️ 仅对**普通对象**做浅比较：`File` / `Blob` / `Map` / `Set` 等必须回退为引用比较，
+ *    否则 `Object.keys(file)` 为空会让两个不同文件被判为同值，吞掉真实变更。
  */
 const isSameValue = (current: unknown, next: unknown): boolean => {
   if (Object.is(current, next)) {
     return true
   }
+  if (current instanceof Date && next instanceof Date) {
+    return current.getTime() === next.getTime()
+  }
   if (Array.isArray(current) && Array.isArray(next)) {
     return current.length === next.length
-      && current.every((item, index) => Object.is(item, (next as unknown[])[index]))
+      && current.every((item, index) => Object.is(item, next[index]))
+  }
+  if (isPlainObject(current) && isPlainObject(next)) {
+    const currentKeys = Object.keys(current)
+    const nextKeys = Object.keys(next)
+    return currentKeys.length === nextKeys.length
+      && currentKeys.every((key) =>
+        Object.prototype.hasOwnProperty.call(next, key) && Object.is(current[key], next[key]))
   }
   return false
 }

@@ -98,6 +98,8 @@ const STAGE_CLASS_BY_GROUP: Record<string, string[]> = {
   panel: ["cp-card__stage--fill"],
   message: ["cp-card__stage--fill"],
   paginator: ["cp-card__stage--fill"],
+  // MeterGroup：根元素 width: 100% ⇒ 满宽；且纵向示例的竖条需高舞台（同 loader 的 `--meterGroup`）
+  meterGroup: ["cp-card__stage--fill", "cp-card__stage--meterGroup"],
   // 顶对齐：内容高度多变
   timeline: ["cp-card__stage--top"],
   tabs: ["cp-card__stage--top"],
@@ -143,6 +145,6 @@ const toggleCode = (title: string) => {
 </script>
 
 <style lang="scss">
+// 面板级样式（styles/index.scss）由根组件 index.vue 统一引入，子组件不再重复引入
 @use '../styles/PreviewSection.scss';
-@use '../styles/index.scss';
 </style>

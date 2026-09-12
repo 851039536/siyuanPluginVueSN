@@ -2,6 +2,7 @@
 <template>
   <section
     :id="`cp-group-${group.id}`"
+    :data-cp-group="group.id"
     class="cp-section"
   >
     <header class="cp-section__head">
@@ -20,223 +21,118 @@
       />
     </div>
 
-    <div class="cp-section__grid">
-      <div
+    <!-- 懒挂载：active 由父级的 IntersectionObserver 控制，远区卸载时不实例化任何示例 -->
+    <div
+      v-if="active"
+      class="cp-section__grid"
+    >
+      <!-- 单张示例卡独立成组件：props 每帧只解析一次，且受控值不再随分区重渲染而重建 -->
+      <PreviewCard
         v-for="example in group.examples"
         :key="example.title"
-        class="cp-card"
-        :class="{ 'cp-card--wide': isWideStage(group.id) }"
-      >
-        <div
-          class="cp-card__stage"
-          :class="STAGE_CLASS_BY_GROUP[group.id]"
-        >
-          <!-- 受控示例由 PreviewStage 持有本地值，使 v-model 在预览中真正可交互 -->
-          <PreviewStage
-            :component="group.component"
-            :component-props="resolveProps(example)"
-            :has-slot="!!example.render || !!example.slotText"
-            :named-slots="example.slots"
-          >
-            <!-- 复合示例：默认插槽需放多个子组件，交由 render 函数组装 -->
-            <SlotRenderer
-              v-if="example.render"
-              :render="example.render"
-              :example-props="resolveProps(example)"
-            />
-            <!-- 默认插槽示例文本 -->
-            <template v-else-if="example.slotText">{{ example.slotText }}</template>
-          </PreviewStage>
-        </div>
-        <footer class="cp-card__foot">
-          <!-- 标题可能被省略号截断，悬浮看全文 -->
-          <span
-            class="cp-card__title"
-            :title="example.title"
-          >{{ example.title }}</span>
-          <!-- 查看 / 收起代码：纯图标走共享 Button（icon-only 必须给 ariaLabel） -->
-          <Button
-            size="xsmall"
-            variant="ghost"
-            text
-            :icon="showCode === example.title ? 'chevronUp' : 'code'"
-            :ariaLabel="showCode === example.title ? i18n.hideCode : i18n.viewCode"
-            :title="showCode === example.title ? i18n.hideCode : i18n.viewCode"
-            @click="toggleCode(example.title)"
-          />
-        </footer>
-        <CodeBlock
-          v-if="showCode === example.title"
-          :code="example.code"
-          :i18n="i18n"
-        />
-      </div>
+        :group="group"
+        :example="example"
+        :i18n="i18n"
+        :size="size"
+        :stage-classes="STAGE_CLASS_BY_GROUP[group.id]"
+        :wide="isWideStage(group.id)"
+        :code-open="showCode === example.title"
+        @toggle-code="toggleCode"
+      />
     </div>
+    <!-- 卸载后的高度占位：用实测高度撑住，避免滚动位置跳动（读屏忽略） -->
+    <div
+      v-else
+      class="cp-section__placeholder"
+      :style="placeholderHeight ? { height: `${placeholderHeight}px` } : undefined"
+      aria-hidden="true"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import type {
-  Component,
-  PropType,
-  VNode,
-} from "vue"
 import {
-  defineComponent,
-  h,
   ref,
-  toRef,
 } from "vue"
-import Button from "@/components/Button.vue"
 import type {
   ComponentSize,
   I18n,
-  PreviewExample,
   PreviewGroup,
 } from "../types"
 import CodeBlock from "./CodeBlock.vue"
+import PreviewCard from "./PreviewCard.vue"
 
-/** 需要专属舞台尺寸的分区：id → 舞台修饰类（高度值仍写在 SCSS，新增此类分区只改这一处登记） */
-const STAGE_CLASS_BY_GROUP: Record<string, string> = {
-  loader: "cp-card__stage--loader",
-  speedDial: "cp-card__stage--speeddial",
-  dialog: "cp-card__stage--dialog",
-  drawer: "cp-card__stage--drawer",
-  megaMenu: "cp-card__stage--megaMenu",
-  tieredMenu: "cp-card__stage--tieredMenu",
-  toast: "cp-card__stage--toast",
+/**
+ * 分区 → 舞台修饰类（**可叠加**，数组可按需组合「高度特例 + 布局分档」）。
+ * 高度值与布局规则仍写在 SCSS，这里只做登记：新增此类分区只改这一处。
+ *
+ * 分档依据（组件根元素的宽度 / 高度特性，2026-09-12 逐区核对）：
+ * - `--compact`：原子控件内容仅 20~44px 高，用 64px 舞台
+ * - `--fill`：根元素无 width（会被舞台行 flex 收缩成内容宽）⇒ 满宽 + 顶对齐
+ * - `--top`：内容高度随示例变化 ⇒ 顶对齐，避免上边距随机漂移
+ * - `--chart`：Chart 默认档 200×150 ⇒ 需要更高舞台
+ */
+const STAGE_CLASS_BY_GROUP: Record<string, string[]> = {
+  // 高度 / 沙箱特例（既有）
+  loader: ["cp-card__stage--loader"],
+  speedDial: ["cp-card__stage--speeddial"],
+  dialog: ["cp-card__stage--dialog"],
+  drawer: ["cp-card__stage--drawer"],
+  megaMenu: ["cp-card__stage--megaMenu"],
+  tieredMenu: ["cp-card__stage--tieredMenu"],
+  toast: ["cp-card__stage--toast"],
+  // 紧凑舞台：矮控件
+  button: ["cp-card__stage--compact"],
+  iconWrapper: ["cp-card__stage--compact"],
+  toggleButton: ["cp-card__stage--compact"],
+  tag: ["cp-card__stage--compact"],
+  badge: ["cp-card__stage--compact"],
+  avatar: ["cp-card__stage--compact"],
+  switch: ["cp-card__stage--compact"],
+  checkbox: ["cp-card__stage--compact"],
+  radioButton: ["cp-card__stage--compact"],
+  label: ["cp-card__stage--compact"],
+  divider: ["cp-card__stage--compact"],
+  // 满宽容器类（根元素无 width）
+  card: ["cp-card__stage--fill"],
+  panel: ["cp-card__stage--fill"],
+  message: ["cp-card__stage--fill"],
+  paginator: ["cp-card__stage--fill"],
+  // 顶对齐：内容高度多变
+  timeline: ["cp-card__stage--top"],
+  tabs: ["cp-card__stage--top"],
+  fileUpload: ["cp-card__stage--top"],
+  listbox: ["cp-card__stage--top"],
+  splitter: ["cp-card__stage--top"],
+  // 图表：需要更高的舞台
+  chart: ["cp-card__stage--chart"],
 }
 
-/** 需要横向空间的浮层类分区（展开面板 / 三段结构）：卡片跨两列 */
-const WIDE_STAGE_GROUP_IDS: readonly string[] = ["dialog", "drawer", "megaMenu", "tieredMenu"]
+/** 需要横向空间的分区：卡片跨两列（展开面板 / 三段结构 / 长分页条 / 图表） */
+const WIDE_STAGE_GROUP_IDS: readonly string[] = [
+  "dialog",
+  "drawer",
+  "megaMenu",
+  "tieredMenu",
+  "toolbar",
+  "paginator",
+]
 
 /** 卡片是否需要跨列（宽舞台浮层给展开留出横向空间） */
 const isWideStage = (groupId: string): boolean => WIDE_STAGE_GROUP_IDS.includes(groupId)
-
-/** 复合示例插槽渲染器：把 example.render 的返回值作为插槽内容渲染（无 render 时该组件不挂载） */
-const SlotRenderer = defineComponent({
-  name: "PreviewSlotRenderer",
-  props: {
-    render: {
-      type: Function as PropType<(props: Record<string, any>) => VNode | VNode[]>,
-      required: true,
-    },
-    exampleProps: {
-      type: Object as PropType<Record<string, any>>,
-      required: true,
-    },
-  },
-  setup(props): () => VNode | VNode[] {
-    return () => props.render(props.exampleProps)
-  },
-})
 
 interface Props {
   group: PreviewGroup
   i18n: I18n
   /** 全局组件尺寸档位 */
   size: ComponentSize
+  /** 是否实例化本节区的示例卡片（懒挂载，由父级 IntersectionObserver 控制） */
+  active?: boolean
+  /** 卸载后的占位高度（px，父级记录的网格实测高度） */
+  placeholderHeight?: number
 }
-
-/**
- * 组件是否声明了 modelValue：只有声明了才注入 v-model 相关 props。
- * 未声明时不注入任何额外属性 —— 否则 `modelValue` / `onUpdate:modelValue` 会落进 attrs，
- * 多根组件（如 `FormField`）会因此产生 extraneous attrs 警告。
- */
-const isControlledComponent = (component: Component): boolean => {
-  const declared = (component as unknown as { props?: Record<string, unknown> }).props
-  return !!declared && Object.prototype.hasOwnProperty.call(declared, "modelValue")
-}
-
-/**
- * 示例舞台：为受控示例持有本地值并回写 `update:modelValue`，使 v-model 在预览中真正可交互
- * （拖动 / 输入 / 点选都会反映到组件状态）。
- * 其余 props 每次渲染重新解析 —— 故切换全局尺寸档位即时生效，且不会覆盖用户已改的本地值。
- */
-const PreviewStage = defineComponent({
-  name: "PreviewStage",
-  props: {
-    component: {
-      type: [Object, Function] as PropType<Component>,
-      required: true,
-    },
-    componentProps: {
-      type: Object as PropType<Record<string, any>>,
-      required: true,
-    },
-    /** 是否把默认插槽转发给目标组件（无插槽内容时必须为 false，否则 `$slots.default` 恒真会改变组件内部分支） */
-    hasSlot: {
-      type: Boolean,
-      default: false,
-    },
-    /**
-     * 具名 / 作用域插槽：键为插槽名，值为接收该插槽作用域参数的 VNode 工厂。
-     * 工厂每次调用都必须新建 VNode —— 同一实例重复挂载会触发 Vue 告警。
-     * 工厂第二个入参为注入全局档位后的实际渲染 props（供插槽内共享控件取同档 `size`）。
-     */
-    namedSlots: {
-      type: Object as PropType<Record<string, (
-        slotProps: Record<string, any>,
-        exampleProps: Record<string, any>,
-      ) => VNode | VNode[]>>,
-    },
-  },
-  setup: (stageProps, { slots }) => {
-    const resolvedProps = toRef(stageProps, "componentProps")
-    /** 受控值：初始取示例声明的 modelValue，之后仅由 update:modelValue 更新 */
-    const modelValue = ref<unknown>(resolvedProps.value.modelValue)
-
-    return (): VNode => {
-      const componentProps: Record<string, any> = {
-        ...resolvedProps.value,
-      }
-
-      if (isControlledComponent(stageProps.component)) {
-        componentProps.modelValue = modelValue.value
-        componentProps["onUpdate:modelValue"] = (value: unknown) => {
-          modelValue.value = value
-        }
-      }
-
-      // 默认插槽与具名插槽合并为 h() 的 children；两者皆空时传 undefined（不传空对象）
-      const children: Record<string, any> = {}
-      if (stageProps.hasSlot && slots.default) {
-        children.default = slots.default
-      }
-      for (const [name, factory] of Object.entries(stageProps.namedSlots ?? {})) {
-        children[name] = (slotProps: Record<string, any>) => {
-          // 第二参传本次渲染的实际 props（含注入的全局档位），插槽内共享控件据此对齐档位
-          const rendered = factory(slotProps ?? {}, componentProps)
-          return Array.isArray(rendered) ? rendered : [rendered]
-        }
-      }
-
-      return h(
-        stageProps.component as Component,
-        componentProps,
-        Object.keys(children).length > 0 ? children : undefined,
-      )
-    }
-  },
-})
 
 const props = defineProps<Props>()
-
-/**
- * 示例实际渲染 props：组件支持 size 档位、且示例未显式指定 size 时注入全局档位。
- * 面板头部的 XS / S / M / L 切换是唯一的尺寸演示入口（各分区不再单设「尺寸」示例卡）；
- * 兜底分支保留 —— 将来若有示例显式声明 size，保持原样以免标题与实际渲染不符。
- */
-const resolveProps = (example: PreviewExample): Record<string, any> => {
-  const base = example.props ?? {}
-  if (!props.group.sizeable || base.size !== undefined) {
-    return base
-  }
-  return {
-    ...base,
-    size: props.size,
-  }
-}
 
 /** 当前展开代码的示例标题（同一分区同时只展开一个） */
 const showCode = ref<string | null>(null)

@@ -7,6 +7,22 @@ import Tag from "@/components/Tag.vue"
 import Badge from "@/components/Badge.vue"
 import Avatar from "@/components/Avatar.vue"
 
+/**
+ * 演示用头像：内联 SVG data URI（自包含，不依赖网络 —— 预览窗口可能离线，
+ * 用远程图片会导致示例静默走「加载失败回退」分支，看到的就不是头像形态了）。
+ * ⚠️ SVG 内的十六进制色值必须写**原始 `#`**：整串会再经 `encodeURIComponent` 编码，
+ *    若此处预先写成 `%23` 会被二次编码为 `%2523`，颜色失效（图片仍能渲染、但填充色错误）。
+ */
+const AVATAR_IMG
+  = "data:image/svg+xml;utf8,"
+    + encodeURIComponent(
+      "<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'>"
+      + "<rect width='64' height='64' fill='#4f46e5'/>"
+      + "<circle cx='32' cy='24' r='12' fill='#ffffff'/>"
+      + "<ellipse cx='32' cy='56' rx='20' ry='14' fill='#ffffff'/>"
+      + "</svg>",
+    )
+
 export const tagGroup: PreviewGroup = {
   id: "tag",
   component: Tag,
@@ -135,6 +151,41 @@ export const tagGroup: PreviewGroup = {
       title: "圆形计数（个位数）",
       props: { content: 5, shape: "circle", variant: "primary", fill: true },
       code: "<Tag :content=\"5\" shape=\"circle\" variant=\"primary\" fill />",
+    },
+    {
+      title: "带头像（Chip 形态）",
+      props: {
+        content: "张三",
+        image: AVATAR_IMG,
+        shape: "circle",
+      },
+      code: `<Tag content="张三" image="/assets/avatar.png" shape="circle" />
+
+<!-- 对齐 PrimeVue Chip：头像在左、文本在右；图片加载失败会自动回退到 icon -->
+<Tag content="张三" image="/assets/avatar.png" icon="accountGroup" shape="circle" />`,
+    },
+    {
+      title: "带头像 + 可关闭",
+      props: {
+        content: "李四",
+        image: AVATAR_IMG,
+        shape: "circle",
+        closable: true,
+      },
+      code: `<Tag content="李四" image="/assets/avatar.png" shape="circle" closable @close="handleClose" />`,
+    },
+    {
+      title: "头像加载失败回退",
+      props: {
+        content: "王五",
+        image: "/not-exist/avatar.png",
+        icon: "accountGroup",
+        shape: "circle",
+        variant: "secondary",
+      },
+      code: `<Tag content="王五" image="/bad.png" icon="accountGroup" shape="circle" />
+
+<!-- 图片 404 / 加载失败时自动回退渲染 icon（无 icon 则只剩文本），不会出现破图占位 -->`,
     },
   ],
 }

@@ -201,6 +201,41 @@
     flex-shrink: 0;
   }
 
+  // 头像（对齐 PrimeVue Chip 的 image）：圆形、固定边长，与档位字号同阶（字号 +2px，同 Message 图标口径）
+  &__image {
+    flex-shrink: 0;
+    width: 14px; // 无对应 Token（默认档 = S 档）
+    height: 14px;
+    border-radius: $r-full;
+    object-fit: cover;
+    display: block;
+  }
+
+  &--xsmall &__image {
+    width: 12px;
+    height: 12px;
+  }
+
+  &--small &__image {
+    width: 14px;
+    height: 14px;
+  }
+
+  &--medium &__image {
+    width: 16px;
+    height: 16px;
+  }
+
+  &--large &__image {
+    width: 18px;
+    height: 18px;
+  }
+
+  // 带头像时收紧左内边距：圆形头像紧贴左缘更接近官方 Chip 的观感（内边距减半）
+  &--has-image {
+    padding-left: $s-px3;
+  }
+
   // 内容
   &__content {
     flex: 1;

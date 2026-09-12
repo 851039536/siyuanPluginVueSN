@@ -103,6 +103,59 @@
   .si-speeddial.si-speeddial {
     position: absolute;
   }
+
+  // Toast 同 SpeedDial：默认 position: fixed 停靠视口边缘，快照中改为相对舞台定位 ——
+  // 舞台已 position: relative，故八向停靠档位改为相对舞台生效（否则八张快照全部叠在窗口同一角落、互相遮住）。
+  // ⚠️ Toast 的方位由**模板类**驱动（top/left/bottom/right + transform），不是 JS 算出的视口坐标，
+  //    故可安全改为 absolute（对照 Tooltip 的警告：那里 top/left 是 JS 视口坐标，切勿照搬本覆盖）。
+  .si-toast.si-toast {
+    position: absolute;
+    // 沙箱内收窄边距，避免消息卡贴到卡片边缘被 overflow: hidden 裁掉
+    top: $s-3;
+    right: $s-3;
+    bottom: auto;
+    left: auto;
+    max-width: calc(100% - #{$s-6});
+  }
+
+  // 覆盖后需按方位类还原各自贴边：`top`/`bottom`/`left`/`right` 已由组件侧方位类给出，
+  // 这里只把「未涉及的那一侧」还原为 auto，避免上面的兜底值把对角方位的对齐方式带偏。
+  // ⚠️ 类名写两遍抬到 (0,2,0)：上面的 `.si-toast.si-toast` 是 (0,2,0)，方位类若只写一遍 (0,1,0)
+  //    会被它压住、`top`/`left` 兜底值直接生效（八向全挤到右上角）。同本文件开头的沙箱覆盖写法。
+  .si-toast--top-left.si-toast--top-left,
+  .si-toast--bottom-left.si-toast--bottom-left {
+    right: auto;
+    left: $s-3;
+  }
+
+  .si-toast--top-center.si-toast--top-center,
+  .si-toast--bottom-center.si-toast--bottom-center,
+  .si-toast--center.si-toast--center {
+    left: 50%;
+    right: auto;
+  }
+
+  // 顶部停靠档：清除底部约束，使其贴舞台顶部
+  .si-toast--top-left.si-toast--top-left,
+  .si-toast--top-center.si-toast--top-center,
+  .si-toast--top-right.si-toast--top-right {
+    top: $s-3;
+    bottom: auto;
+  }
+
+  // 底部停靠档：清除顶部约束，使其贴舞台底部
+  .si-toast--bottom-left.si-toast--bottom-left,
+  .si-toast--bottom-center.si-toast--bottom-center,
+  .si-toast--bottom-right.si-toast--bottom-right {
+    top: auto;
+    bottom: $s-3;
+  }
+
+  // 居中档：清除四边约束，只留 50% + 自身的居中位移
+  .si-toast--center.si-toast--center {
+    top: 50%;
+    bottom: auto;
+  }
 }
 
 // Loader 组件高度依赖父容器显式高度，单独给足舞台空间
@@ -162,6 +215,20 @@
     // 三级菜单在窄卡片里会超出舞台，允许其自身限高滚动
     max-height: 240px;
     overflow-y: auto;
+  }
+}
+
+// Toast：消息堆栈 + 八向停靠需要足够舞台高度（卡片为 overflow: hidden，低舞台会把堆叠的多条消息裁掉），
+// 且消息卡自身有宽度（默认 320px），窄卡片下需允许其收缩 —— 见 .cp-card__stage 内的定位覆盖。
+.cp-card__stage--toast {
+  height: 240px; // 多消息堆叠展示所需高度，无对应 Token
+  align-items: stretch; // 让绝对定位的消息堆栈相对整个舞台贴边，而非被居中内容盒收窄
+  overflow: hidden;
+
+  // ⚠️ 类名写两遍抬到 (0,2,0)+：组件侧经 scoped 编译后是 `.si-toast__message[data-v-hash]`（同为 (0,2,0)），
+  //    只靠源顺序取胜太脆弱（同本文件开头的沙箱覆盖写法）。
+  .si-toast__message.si-toast__message {
+    width: auto; // 窄卡片下由 max-width 收敛，避免固定 320px 溢出被裁
   }
 }
 

@@ -128,6 +128,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   observer?.disconnect()
   observer = null
+  if (scrollFrame !== null) {
+    cancelAnimationFrame(scrollFrame)
+    scrollFrame = null
+  }
   for (const timer of unmountTimers.values()) {
     window.clearTimeout(timer)
   }
@@ -238,19 +242,34 @@ const setupObserver = () => {
   observeSections()
 }
 
+/**
+ * 分区相对内容区顶部的偏移（首帧挂载与滚动高亮共用）。
+ * 容器顶边只读一次、由调用方传入，避免循环里反复触发 layout。
+ */
+const resolveSectionOffset = (
+  container: HTMLElement,
+  containerTop: number,
+  id: string,
+): { top: number; bottom: number } | null => {
+  const el = container.querySelector<HTMLElement>(`#cp-group-${id}`)
+  if (!el) return null
+  const rect = el.getBoundingClientRect()
+  return {
+    top: rect.top - containerTop,
+    bottom: rect.bottom - containerTop,
+  }
+}
+
 /** 首帧同步挂载：IO 回调是异步的，先按几何位置把可视区附近的分区挂上 */
 const mountSectionsInViewport = () => {
   const container = contentRef.value
   if (!container) return
-  const containerRect = container.getBoundingClientRect()
+  const containerTop = container.getBoundingClientRect().top
   const limit = container.clientHeight + PRELOAD_MARGIN
   for (const group of filteredGroups.value) {
-    const el = container.querySelector<HTMLElement>(`#cp-group-${group.id}`)
-    if (!el) continue
-    const rect = el.getBoundingClientRect()
-    const top = rect.top - containerRect.top
-    const bottom = rect.bottom - containerRect.top
-    if (top <= limit && bottom >= -PRELOAD_MARGIN) {
+    const offset = resolveSectionOffset(container, containerTop, group.id)
+    if (!offset) continue
+    if (offset.top <= limit && offset.bottom >= -PRELOAD_MARGIN) {
       sectionActive[group.id] = true
     }
   }
@@ -259,6 +278,8 @@ const mountSectionsInViewport = () => {
 /** 点击导航时置位，避免平滑滚动过程中的 scroll 事件把高亮抢回旧分区 */
 let suppressScrollSync = false
 let suppressTimer: number | null = null
+/** 挂起中的滚动同步帧（scroll 合并用） */
+let scrollFrame: number | null = null
 
 const handleSelect = (id: string) => {
   activeId.value = id
@@ -276,23 +297,34 @@ const handleSelect = (id: string) => {
   section.scrollIntoView({ behavior: "smooth", block: "start" })
 }
 
-/** 内容区滚动时同步导航高亮：取首个越过视口顶部的分区 */
-const handleContentScroll = () => {
-  if (suppressScrollSync) return
+/** 取首个越过内容区顶部的分区并同步导航高亮（几何读取与首帧挂载共用 helper） */
+const syncActiveFromScroll = () => {
   const container = contentRef.value
   if (!container) return
   const containerTop = container.getBoundingClientRect().top
   let current = filteredGroups.value[0]?.id || ""
   for (const group of filteredGroups.value) {
-    const section = container.querySelector<HTMLElement>(`#cp-group-${group.id}`)
-    if (!section) continue
-    if (section.getBoundingClientRect().top - containerTop <= 40) {
+    const offset = resolveSectionOffset(container, containerTop, group.id)
+    if (!offset) continue
+    if (offset.top <= 40) {
       current = group.id
     } else {
       break
     }
   }
-  activeId.value = current
+  // 只在真正变化时写入，避免同一分区内的滚动反复触发导航重渲染
+  if (current !== activeId.value) {
+    activeId.value = current
+  }
+}
+
+/** 滚动事件：按动画帧合并，一帧最多计算一次（scroll 触发频率远高于渲染帧） */
+const handleContentScroll = () => {
+  if (suppressScrollSync || scrollFrame !== null) return
+  scrollFrame = requestAnimationFrame(() => {
+    scrollFrame = null
+    syncActiveFromScroll()
+  })
 }
 
 // 搜索过滤后若当前高亮分区已被过滤掉，重置为第一个可见分区

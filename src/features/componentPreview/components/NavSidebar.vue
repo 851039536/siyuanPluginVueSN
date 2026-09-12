@@ -51,6 +51,6 @@ const emit = defineEmits<{
 </script>
 
 <style lang="scss">
+// 面板级样式（styles/index.scss）由根组件 index.vue 统一引入，侧栏不再重复引入
 @use '../styles/NavSidebar.scss';
-@use '../styles/index.scss';
 </style>

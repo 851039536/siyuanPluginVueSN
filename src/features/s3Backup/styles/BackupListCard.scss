@@ -88,14 +88,3 @@
   gap: $s-1;
   flex-shrink: 0;
 }
-
-.empty-state {
-  text-align: center;
-  padding: $s-8 0;
-  color: var(--b3-theme-on-surface-light);
-
-  p {
-    margin: 0;
-    font-size: $t-sm;
-  }
-}

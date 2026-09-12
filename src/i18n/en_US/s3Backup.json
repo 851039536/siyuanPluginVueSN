@@ -176,5 +176,13 @@
   "uploadTimeoutHint": "Timeout for a single upload request; increase for large files or slow networks. Default 240 seconds",
   "s3UploadResult": "Backup upload finished: {uploaded} uploaded, {skipped} skipped",
   "s3UploadFailedPart": ", {failed} file(s) failed to read",
-  "allFilesExist": "All files already exist on S3, {skipped} skipped"
+  "allFilesExist": "All files already exist on S3, {skipped} skipped",
+  "localBackupSuccess": "Local backup succeeded: {name} ({count} files)",
+  "localBackupFailed": "Local backup failed",
+  "errDataEmpty": "Data directory is empty, backup canceled",
+  "errDirNotFound": "Directory not found",
+  "errRefuseNonArchive": "Refused to delete a non-archive file",
+  "errScanDirFailed": "Failed to read directory",
+  "errScanFileFailed": "Failed to read file info",
+  "errManagerNotInitialized": "Backup manager is not initialized"
 }

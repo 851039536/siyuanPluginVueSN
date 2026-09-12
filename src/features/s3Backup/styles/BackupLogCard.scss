@@ -36,35 +36,12 @@
   }
 }
 
+// 类型徽章：外观与配色由共享组件 Tag 承担（7 种类型均在组件内映射 variant），
+// 此处只保留密集 flex 行所需的最小布局约束
 .log-type {
   flex-shrink: 0;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  padding: $s-px1 $s-1;
-  border-radius: $r-px3;
-  letter-spacing: 0.04em;
   min-width: 28px;
   text-align: center;
-
-  &.log-type-localZip {
-    color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
-  }
-
-  &.log-type-s3Upload {
-    color: #6366f1;
-    background: rgba(99, 102, 241, 0.1);
-  }
-
-  &.log-type-s3Download {
-    color: var(--b3-theme-info);
-    background: rgba(14, 165, 233, 0.1);
-  }
-
-  &.log-type-s3Delete {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.1);
-  }
 }
 
 .log-filename {
@@ -102,17 +79,9 @@
   @include m.meta-sep;
 }
 
+// 状态徽章：配色由共享组件 Tag 的 success / danger 变体承担
 .log-status {
-  @include m.status-badge;
   flex-shrink: 0;
-
-  &.status-ok {
-    @include m.status-badge-ok;
-  }
-
-  &.status-fail {
-    @include m.status-badge-fail;
-  }
 }
 
 .log-msg {

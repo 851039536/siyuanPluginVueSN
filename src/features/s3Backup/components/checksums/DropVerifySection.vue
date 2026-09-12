@@ -45,26 +45,22 @@
         </div>
         <!-- 比对选择 + 结果徽章 -->
         <div class="drop-result-compare">
-          <select
+          <Select
             v-if="storedItems.length > 0"
-            v-model="compareSelects[index]"
             class="compare-select"
-            @change="onCompareChange(index)"
-          >
-            <!-- 选项："比对..." -->
-            <option value="">{{ i18n.compareWith }}</option>
-            <option v-for="item in storedItems" :key="item.fileName" :value="item.fileName">
-              {{ item.fileName }}
-            </option>
-          </select>
+            :model-value="compareSelects[index] ?? ''"
+            :options="compareOptions"
+            size="xsmall"
+            @update:model-value="onCompareChange(index, $event)"
+          />
           <!-- 徽章："匹配" -->
-          <span v-if="compareResults[index] === true" class="compare-badge compare-ok">
+          <Tag v-if="compareResults[index] === true" class="compare-badge" variant="success" size="xsmall">
             &#10003; {{ i18n.match }}
-          </span>
+          </Tag>
           <!-- 徽章："不匹配" -->
-          <span v-else-if="compareResults[index] === false" class="compare-badge compare-fail">
+          <Tag v-else-if="compareResults[index] === false" class="compare-badge" variant="danger" size="xsmall">
             &#10007; {{ i18n.mismatch }}
-          </span>
+          </Tag>
         </div>
         <!-- 复制哈希 -->
         <div class="drop-result-copy">
@@ -79,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import { formatFileSize } from "@/utils/format"
@@ -87,6 +83,8 @@ import { copyToClipboard } from "@/utils/domUtils"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Button from "@/components/Button.vue"
+import Select from "@/components/Select.vue"
+import Tag from "@/components/Tag.vue"
 import type { FileChecksum } from "../../types"
 
 const props = defineProps<{
@@ -113,8 +111,16 @@ function clearDropResults(): void {
   compareResults.value = {}
 }
 
-function onCompareChange(index: number): void {
-  const targetName = compareSelects.value[index]
+/** 比对目标下拉选项（首项为空值 = 未选择，与原生 select 的占位项语义一致） */
+const compareOptions = computed(() => [
+  { value: "", label: props.i18n.compareWith },
+  ...props.storedItems.map((item) => ({ value: item.fileName, label: item.fileName })),
+])
+
+/** 比对目标变更：先写回选中值再比对，不依赖 v-model 的写回时序 */
+function onCompareChange(index: number, rawValue: string | number | boolean | null): void {
+  const targetName = rawValue === null ? "" : String(rawValue)
+  compareSelects.value[index] = targetName
   if (!targetName) {
     compareResults.value[index] = undefined
     return

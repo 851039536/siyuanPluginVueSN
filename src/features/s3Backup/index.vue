@@ -12,120 +12,101 @@
       />
     </div>
 
-    <!-- Tab 栏 -->
-    <div class="s3-tab-bar">
-      <button
-        class="s3-tab-btn"
-        :class="{ active: activeTab === 'backup' }"
-        @click="activeTab = 'backup'"
-      >
-        {{ i18n.backupTab }}
-      </button>
-      <button
-        class="s3-tab-btn"
-        :class="{ active: activeTab === 'config' }"
-        @click="activeTab = 'config'"
-      >
-        {{ i18n.configTab }}
-      </button>
-      <button
-        class="s3-tab-btn"
-        :class="{ active: activeTab === 'log' }"
-        @click="activeTab = 'log'"
-      >
-        {{ i18n.logTab }}
-      </button>
-      <button
-        class="s3-tab-btn"
-        :class="{ active: activeTab === 'checksums' }"
-        @click="activeTab = 'checksums'"
-      >
-        {{ i18n.checksumsTab }}
-      </button>
-      <button
-        class="s3-tab-btn"
-        :class="{ active: activeTab === 'incremental' }"
-        @click="activeTab = 'incremental'"
-      >
-        <!-- 标签："增量" -->
-        {{ i18n.incrementalTab }}
-        <!-- 实验性徽标："实验" -->
-        <span class="s3-tab-badge">{{ i18n.experimentalBadge }}</span>
-      </button>
-    </div>
-
-    <!-- Tab: 备份（视图与操作在 BackupTab） -->
-    <BackupTab
-      v-if="activeTab === 'backup'"
-      :orch="orch"
-      :i18n="i18n"
-    />
-
-    <!-- Tab: 配置 -->
-    <div
-      v-if="activeTab === 'config'"
-      class="settings-container"
+    <!-- Tab 栏：元数据驱动渲染；lazy 保持「进入即挂载、离开即卸载」的既有语义 -->
+    <Tabs
+      v-model:value="activeTab"
+      class="s3-tabs"
+      lazy
+      size="small"
     >
-      <BackupModeSelector
-        :model-value="orch.backupModeLocal"
-        :i18n="i18n"
-        @update:model-value="orch.onBackupModeChanged"
-      />
+      <TabList :aria-label="i18n.s3Backup">
+        <Tab
+          v-for="tab in TABS"
+          :key="tab.value"
+          :value="tab.value"
+        >
+          {{ i18n[tab.labelKey] }}
+          <!-- 实验性徽标："实验"（仅增量 Tab） -->
+          <Tag v-if="tab.experimental" variant="warning" size="xsmall">
+            {{ i18n.experimentalBadge }}
+          </Tag>
+        </Tab>
+      </TabList>
 
-      <AutoBackupCard
-        v-model:auto-backup-enabled="orch.autoBackupEnabled"
-        v-model:backup-frequency="orch.backupFrequency"
-        v-model:backup-time="orch.backupTime"
-        v-model:keep-backup-count="orch.keepBackupCount"
-        :i18n="i18n"
-        @update:auto-backup-enabled="orch.saveWorkspaceSettings()"
-        @update:backup-frequency="orch.saveWorkspaceSettings()"
-        @update:backup-time="orch.saveWorkspaceSettings()"
-        @update:keep-backup-count="orch.saveWorkspaceSettings()"
-      />
+      <TabPanels>
+        <!-- Tab: 备份（视图与操作在 BackupTab） -->
+        <TabPanel value="backup">
+          <BackupTab
+            :orch="orch"
+            :i18n="i18n"
+          />
+        </TabPanel>
 
-      <section class="card-section">
-        <S3ConfigForm
-          :config="s3ConfigLocal"
-          :i18n="i18n"
-          :on-test-connection="orch.testConnection"
-          @saved="handleConfigSaved"
-        />
-      </section>
-    </div>
+        <!-- Tab: 配置 -->
+        <TabPanel value="config">
+          <div class="settings-container">
+            <BackupModeSelector
+              :model-value="orch.backupModeLocal"
+              :i18n="i18n"
+              @update:model-value="orch.onBackupModeChanged"
+            />
 
-    <!-- Tab: 日志 -->
-    <div
-      v-if="activeTab === 'log'"
-      class="settings-container"
-    >
-      <BackupLogCard
-        :logs="backupLogs"
-        :i18n="i18n"
-        @clear="clearLogs"
-      />
-    </div>
+            <AutoBackupCard
+              v-model:auto-backup-enabled="orch.autoBackupEnabled"
+              v-model:backup-frequency="orch.backupFrequency"
+              v-model:backup-time="orch.backupTime"
+              v-model:keep-backup-count="orch.keepBackupCount"
+              :i18n="i18n"
+              @update:auto-backup-enabled="orch.saveWorkspaceSettings()"
+              @update:backup-frequency="orch.saveWorkspaceSettings()"
+              @update:backup-time="orch.saveWorkspaceSettings()"
+              @update:keep-backup-count="orch.saveWorkspaceSettings()"
+            />
 
-    <!-- Tab: 校验 -->
-    <div
-      v-if="activeTab === 'checksums'"
-      class="settings-container"
-    >
-      <FileChecksumsCard
-        :stored-items="checksums"
-        :workspace-root="orch.workspaceRoot"
-        :i18n="i18n"
-        @clear="clearChecksums"
-        @remove-one="removeOneChecksum"
-      />
-    </div>
+            <section class="card-section">
+              <S3ConfigForm
+                :config="s3ConfigLocal"
+                :i18n="i18n"
+                :on-test-connection="orch.testConnection"
+                @saved="handleConfigSaved"
+              />
+            </section>
+          </div>
+        </TabPanel>
 
-    <!-- Tab: 增量（实验性，视图与操作在 IncrementalTab） -->
-    <IncrementalTab
-      v-if="activeTab === 'incremental'"
-      :orch="orch"
-      :i18n="i18n"
-    />
+        <!-- Tab: 日志 -->
+        <TabPanel value="log">
+          <div class="settings-container">
+            <BackupLogCard
+              :logs="backupLogs"
+              :i18n="i18n"
+              @clear="clearLogs"
+            />
+          </div>
+        </TabPanel>
+
+        <!-- Tab: 校验 -->
+        <TabPanel value="checksums">
+          <div class="settings-container">
+            <FileChecksumsCard
+              :stored-items="checksums"
+              :workspace-root="orch.workspaceRoot"
+              :i18n="i18n"
+              @clear="clearChecksums"
+              @remove-one="removeOneChecksum"
+            />
+          </div>
+        </TabPanel>
+
+        <!-- Tab: 增量（实验性，视图与操作在 IncrementalTab） -->
+        <TabPanel value="incremental">
+          <IncrementalTab
+            :orch="orch"
+            :i18n="i18n"
+          />
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
   </div>
 </template>
 
@@ -137,8 +118,8 @@ import { useBackupLogs } from "./composables/useBackupLogs"
 import { useChecksums } from "./composables/useChecksums"
 import { useBackupOrchestrator } from "./composables/useBackupOrchestrator"
 import type { BackupOrchestrator } from "./composables/useBackupOrchestrator"
-import { getS3BackupInstance } from "./instance"
-import type { S3Config, S3BackupStorage } from "./types"
+import { getS3BackupInstance, persistS3BackupStorage } from "./instance"
+import type { S3Config } from "./types"
 import S3ConfigForm from "./components/S3ConfigForm.vue"
 import BackupLogCard from "./components/BackupLogCard.vue"
 import FileChecksumsCard from "./components/FileChecksumsCard.vue"
@@ -147,6 +128,12 @@ import AutoBackupCard from "./components/AutoBackupCard.vue"
 import BackupTab from "./components/BackupTab.vue"
 import IncrementalTab from "./components/IncrementalTab.vue"
 import Button from "@/components/Button.vue"
+import Tabs from "@/components/Tabs.vue"
+import TabList from "@/components/TabList.vue"
+import Tab from "@/components/Tab.vue"
+import TabPanels from "@/components/TabPanels.vue"
+import TabPanel from "@/components/TabPanel.vue"
+import Tag from "@/components/Tag.vue"
 
 // ========== Props ==========
 
@@ -162,18 +149,28 @@ const props = withDefaults(defineProps<Props>(), {
 
 // ========== Tab 状态 ==========
 
-const activeTab = ref<"backup" | "config" | "log" | "checksums" | "incremental">("backup")
+/** Tab 渲染元数据：值 → i18n 标签键（experimental 决定是否附实验性徽标） */
+interface TabMeta {
+  value: string
+  labelKey: string
+  experimental?: boolean
+}
+
+const TABS: TabMeta[] = [
+  { value: "backup", labelKey: "backupTab" },
+  { value: "config", labelKey: "configTab" },
+  { value: "log", labelKey: "logTab" },
+  { value: "checksums", labelKey: "checksumsTab" },
+  { value: "incremental", labelKey: "incrementalTab", experimental: true },
+]
+
+/** 当前激活 Tab（Tabs 的 value 载荷为 string | number，保持宽类型以匹配 v-model） */
+const activeTab = ref("backup")
 
 // ========== 日志 / 校验值管理（composable，仅 log/checksums Tab 使用） ==========
 
-/** 持久化辅助：统一「获取实例 → 存储槽 save」样板 */
-async function persistStorage(save: (storage: S3BackupStorage) => Promise<unknown>): Promise<void> {
-  const instance = getS3BackupInstance()
-  if (instance) { await save(instance.getStorage()) }
-}
-
-const { backupLogs, addLog, clearLogs } = useBackupLogs({ persist: persistStorage })
-const { checksums, saveChecksum, persistChecksums, clearChecksums, removeOneChecksum } = useChecksums({ persist: persistStorage })
+const { backupLogs, addLog, clearLogs } = useBackupLogs({ persist: persistS3BackupStorage })
+const { checksums, saveChecksum, persistChecksums, clearChecksums, removeOneChecksum } = useChecksums({ persist: persistS3BackupStorage })
 
 // ========== 备份编排（聚合状态 + 四入口互斥 + 自动备份） ==========
 
@@ -274,4 +271,5 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 @use "./styles/index.scss";
+@use "./styles/TabsShell.scss";
 </style>

@@ -6,10 +6,13 @@
       <!-- 标题："备份进度" -->
       <h4>{{ i18n.backupProgress }}</h4>
     </div>
-    <!-- 进度条 -->
-    <div class="progress-bar-container">
-      <div class="progress-bar" :style="{ width: `${progress.percent}%` }" />
-    </div>
+    <!-- 进度条（共享组件，自带 role="progressbar" 语义；百分比由下方 progress-info 统一展示） -->
+    <ProgressBar
+      class="progress-bar"
+      :value="progress.percent"
+      :show-value="false"
+      size="small"
+    />
     <!-- 阶段标签与百分比 -->
     <div class="progress-info">
       <span class="progress-phase">{{ phaseLabel }}</span>
@@ -23,6 +26,7 @@
 </template>
 
 <script setup lang="ts">
+import ProgressBar from "@/components/ProgressBar.vue"
 import type { BackupProgress } from "../modules/BackupManager"
 
 defineProps<{

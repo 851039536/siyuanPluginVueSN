@@ -5,7 +5,7 @@
     <section class="card-section inc-warning-banner">
       <div class="inc-banner-head">
         <!-- 徽标："实验" -->
-        <span class="inc-banner-badge">{{ i18n.experimentalBadge }}</span>
+        <Tag class="inc-banner-badge" variant="warning" size="xsmall">{{ i18n.experimentalBadge }}</Tag>
         <!-- 标题："增量备份 / 增量还原" -->
         <span class="inc-banner-title">{{ i18n.incrementalTab }}</span>
       </div>
@@ -90,7 +90,7 @@
         <Button
           variant="ghost"
           size="xsmall"
-          :disabled="orch.isAnyTaskRunning || !orch.isConfigured || !orch.workspacePath"
+          :disabled="orch.isAnyTaskRunning || !orch.isConfigured || !orch.workspaceRoot"
           :loading="orch.isIncrementalRunning"
           @click="orch.triggerIncrementalOnly()"
         >
@@ -100,7 +100,7 @@
         <Button
           variant="ghost"
           size="xsmall"
-          :disabled="orch.isAnyTaskRunning || !orch.isConfigured || !orch.workspacePath"
+          :disabled="orch.isAnyTaskRunning || !orch.isConfigured || !orch.workspaceRoot"
           :loading="orch.isIncrementalRestoring"
           @click="orch.triggerIncrementalRestore()"
         >
@@ -143,6 +143,7 @@ import { computed, onMounted } from "vue"
 import type { BackupOrchestrator } from "../composables/useBackupOrchestrator"
 import BackupProgressSection from "./BackupProgressSection.vue"
 import Button from "@/components/Button.vue"
+import Tag from "@/components/Tag.vue"
 
 const props = defineProps<{
   /** 备份编排聚合对象（由面板持有，本组件仅做视图投影） */

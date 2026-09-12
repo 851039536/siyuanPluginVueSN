@@ -2,6 +2,15 @@
 @use '@/variables.scss' as *;
 @use './mixins' as m;
 
+// ========== 卡片标题操作区 ==========
+
+// 标题右侧按钮组（原先只有类名无样式，导致两个按钮无间距）
+.section-header-actions {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+}
+
 // ========== 校验值列表 ==========
 
 .checksum-list {
@@ -91,14 +100,4 @@
   @include m.meta-sep;
 }
 
-.verify-badge {
-  @include m.status-badge;
-
-  &.verify-ok {
-    @include m.status-badge-ok;
-  }
-
-  &.verify-fail {
-    @include m.status-badge-fail;
-  }
-}
+// 比对结果徽章改由共享组件 Tag 的 success / danger 变体承担，此处无需样式

@@ -4,20 +4,10 @@
 @use '@/variables.scss' as *;
 
 .progress-section {
-  .progress-bar-container {
-    width: 100%;
-    height: 6px;
-    background: var(--b3-theme-surface-lighter);
-    border-radius: $r-base;
-    overflow: hidden;
-    margin-bottom: $s-2;
-  }
-
+  // 进度条本体由共享组件 ProgressBar 承担（档位 small = 8px 轨道；
+  // 库内无 6px 档位，取与原子控件同阶梯的 small 而非 4px 的 xsmall，保持视觉重量相当）
   .progress-bar {
-    height: 100%;
-    background: var(--b3-theme-primary);
-    border-radius: $r-base;
-    transition: width 0.3s ease;
+    margin-bottom: $s-2;
   }
 
   .progress-info {

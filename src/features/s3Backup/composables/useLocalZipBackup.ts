@@ -10,7 +10,7 @@ import { getErrorMessage } from "@/utils/stringUtils"
 import type { TaskHandle } from "@/features/statusBar/composables/useStatusBarTask"
 import { toLocalBackupInfo } from "../modules/BackupManager"
 import type { BackupManager, BackupProgress, BackupResult } from "../modules/BackupManager"
-import { isPluginBackupFile } from "../utils"
+import { isPluginBackupFile, localizeBackupError } from "../utils"
 import type { BackupLog, LocalBackupInfo, S3BackupStorage } from "../types"
 
 /** 依赖注入：互斥守卫、入口检查与状态栏由编排层持有 */
@@ -73,7 +73,13 @@ export function useLocalZipBackup(deps: LocalZipBackupDeps) {
 
       await deps.persistStorage((s) => s.backupHistory.save({ list: deps.localBackupList.value }))
 
-      showMessage(`本地备份成功: ${result.fileName}（${result.totalFiles} 文件）`, 3000, "info")
+      showMessage(
+        i18n.localBackupSuccess
+          .replace("{name}", result.fileName)
+          .replace("{count}", String(result.totalFiles)),
+        3000,
+        "info",
+      )
       addLog({
         type: "localZip",
         action: i18n.localZipBackup,
@@ -91,14 +97,16 @@ export function useLocalZipBackup(deps: LocalZipBackupDeps) {
       }
       return result
     } catch (err: unknown) {
+      // 模块层错误码在此本地化：同一条文案同时进入日志与上层提示
+      const reason = localizeBackupError(err, i18n)
       addLog({
         type: "localZip",
         action: i18n.localZipBackup,
         fileName: "",
         success: false,
-        message: getErrorMessage(err),
+        message: reason,
       })
-      throw new Error(`本地备份: ${getErrorMessage(err)}`)
+      throw new Error(`${i18n.localBackupFailed}: ${reason}`)
     }
   }
 

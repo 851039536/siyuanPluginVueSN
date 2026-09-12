@@ -4,14 +4,52 @@
  * 不依赖 Vue 响应式的纯函数：数字补零、备份时间戳生成、
  * S3 对象 key 构建（含备份上传 key 归一化）、主机名获取（模块级缓存）、
  * 增量备份的 manifest 解析/对比与 key 生成、插件备份文件名判定、
- * 归档文件识别与惰性读取流创建。
+ * 归档文件识别与惰性读取流创建、错误本地化与重试执行器。
  */
-import { getNodeStream } from "@/utils/nodeModules"
-import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MSG_DESKTOP_ONLY } from "./types"
+import { getNodeModules, getNodeStream } from "@/utils/nodeModules"
+import { getErrorMessage } from "@/utils/stringUtils"
+import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES, BACKUP_ERROR_KEYS, BackupError } from "./types"
 import type { BackupManifest, IncrementalDiff, IncrementalFileEntry } from "./types"
 
 // 并发池与主机名已提升至共享层，再导出保持模块内既有 import 零改动
 export { getHostname, runWithConcurrency } from "@/utils/s3/concurrency"
+
+// ========== 错误本地化与重试 ==========
+
+/**
+ * 把模块层异常转为可展示文案。
+ * BackupError 按错误码取 i18n 文案并追加技术细节；其余异常沿用 getErrorMessage。
+ * 所有「错误信息会进入 showMessage / 日志」的出口都应经过本函数。
+ */
+export function localizeBackupError(err: unknown, i18n: Record<string, string>): string {
+  if (err instanceof BackupError) {
+    const text = i18n[BACKUP_ERROR_KEYS[err.code]] || err.code
+    return err.detail ? `${text}: ${err.detail}` : text
+  }
+  return getErrorMessage(err)
+}
+
+/** 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/删除/下载共用） */
+export async function withRetry(task: () => Promise<void>, failLabel: string): Promise<boolean> {
+  for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
+    try {
+      await task()
+      return true
+    } catch (err: unknown) {
+      if (attempt === TRANSFER_MAX_RETRIES) {
+        console.warn(`[S3备份] ${failLabel}（已重试 ${TRANSFER_MAX_RETRIES} 次）`, getErrorMessage(err))
+      }
+    }
+  }
+  return false
+}
+
+/** 解析本地备份目录绝对路径（云端下载与增量还原共用；非桌面环境回退字符串拼接） */
+export function resolveBackupDir(workspaceRoot: string, localBackupDir: string): string {
+  const localDir = localBackupDir || DEFAULT_BACKUP_DIR
+  const pathMod = getNodeModules()?.path
+  return pathMod ? pathMod.join(workspaceRoot, localDir) : `${workspaceRoot}/${localDir}`
+}
 
 /** 本地备份列表识别的归档扩展名白名单 */
 const ARCHIVE_EXTS = [".zip", ".7z", ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".rar"]
@@ -140,6 +178,23 @@ export function buildBackupUploadKey(
 }
 
 // ========== 增量备份纯函数 ==========
+
+/** 按存储上限截断文件清单，返回 [截断后清单, 被省略条数]（空清单返回 undefined 不占存储） */
+export function capFileList(files: string[]): [string[] | undefined, number] {
+  if (files.length === 0) { return [undefined, 0] }
+  return [files.slice(0, MAX_LOG_DETAIL_FILES), Math.max(0, files.length - MAX_LOG_DETAIL_FILES)]
+}
+
+/**
+ * 判断清单相对路径是否不安全（绝对路径/盘符/父目录穿越/空段），
+ * 还原时必须跳过，防止恶意或损坏的清单覆盖工作区外文件
+ */
+export function isUnsafeRelativePath(relativePath: string): boolean {
+  if (relativePath.startsWith("/") || relativePath.startsWith("\\")) { return true }
+  if (/^[A-Za-z]:[\/]/.test(relativePath)) { return true }
+  const parts = relativePath.split(/[\/]+/)
+  return parts.some((part) => part === ".." || part === "")
+}
 
 /**
  * 构建增量备份对象 key

@@ -14,8 +14,8 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { TaskHandle } from "@/features/statusBar/composables/useStatusBarTask"
 import { useIncrementalBackup } from "./useIncrementalBackup"
-import { buildManifestKey, makeBackupTimestamp, parseManifest } from "../utils"
-import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY } from "../types"
+import { buildManifestKey, localizeBackupError, makeBackupTimestamp, parseManifest, resolveBackupDir } from "../utils"
+import { MSG_DESKTOP_ONLY } from "../types"
 import type { BackupLog, S3Config } from "../types"
 import type { BackupManager, BackupProgress } from "../modules/BackupManager"
 
@@ -105,7 +105,7 @@ export function useIncrementalPanel(deps: IncrementalPanelDeps) {
     } catch (err: unknown) {
       // 状态栏："备份失败"
       deps.statusTask.fail(i18n.statusBackupFailed)
-      showMessage(`${i18n.incrementalBackup}: ${getErrorMessage(err)}`, 5000, "error")
+      showMessage(`${i18n.incrementalBackup}: ${localizeBackupError(err, i18n)}`, 5000, "error")
     } finally {
       isIncrementalRunning.value = false
     }
@@ -129,8 +129,7 @@ export function useIncrementalPanel(deps: IncrementalPanelDeps) {
     isIncrementalRestoring.value = true
     try {
       const targetDir = node.path.join(
-        deps.workspaceRoot.value,
-        deps.localBackupDir.value || DEFAULT_BACKUP_DIR,
+        resolveBackupDir(deps.workspaceRoot.value, deps.localBackupDir.value),
         `incremental-restore-${makeBackupTimestamp()}`,
       )
       await performIncrementalRestore(deps.s3Config.value.prefix, deps.s3SubPrefix.value, targetDir)
@@ -141,7 +140,7 @@ export function useIncrementalPanel(deps: IncrementalPanelDeps) {
     } catch (err: unknown) {
       // 状态栏："还原失败"
       deps.statusTask.fail(i18n.statusRestoreFailed)
-      showMessage(`${i18n.incrementalRestore}: ${getErrorMessage(err)}`, 5000, "error")
+      showMessage(`${i18n.incrementalRestore}: ${localizeBackupError(err, i18n)}`, 5000, "error")
     } finally {
       isIncrementalRestoring.value = false
     }

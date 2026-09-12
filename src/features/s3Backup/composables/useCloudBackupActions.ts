@@ -9,7 +9,8 @@ import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupLog, S3FileInfo } from "../types"
-import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY } from "../types"
+import { MSG_DESKTOP_ONLY } from "../types"
+import { resolveBackupDir } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface CloudBackupActionsDeps {
@@ -31,10 +32,7 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
     const fs = node.fs.promises
     const pathModule = node.path
 
-    const downloadDir = pathModule.join(
-      deps.workspaceRoot.value,
-      deps.localBackupDir.value || DEFAULT_BACKUP_DIR,
-    )
+    const downloadDir = resolveBackupDir(deps.workspaceRoot.value, deps.localBackupDir.value)
     await fs.mkdir(downloadDir, { recursive: true })
     const localPath = pathModule.join(downloadDir, backup.name)
 

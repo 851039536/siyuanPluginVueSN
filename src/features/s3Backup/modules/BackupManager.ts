@@ -10,7 +10,7 @@ import JSZip from "jszip"
 import { getNodeModules, getNodeCrypto, getNodeStream } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { makeBackupTimestamp, isArchiveFile, createLazyReadStream } from "../utils"
-import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY } from "../types"
+import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY, BackupError } from "../types"
 import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
 import { scanBackupDir as scanBackupDirImpl, scanDirectory as scanDirectoryImpl, SKIP_DIRS, DATE_DIR_RE } from "./backupScanner"
 
@@ -218,7 +218,7 @@ export class BackupManager {
     const totalFiles = allFiles.length
     // 空数据目录多为路径配置错误，拒绝产出空 ZIP 占用备份保留槽位
     if (totalFiles === 0) {
-      throw new Error(`数据目录为空，已取消备份: ${backupSourcePath}`)
+      throw new BackupError("dataEmpty", backupSourcePath)
     }
 
     // 阶段2：登记文件（流式输入：仅探测可访问性并挂载惰性读取流，内容在压缩阶段逐个消费）
@@ -386,7 +386,7 @@ export class BackupManager {
   async deleteBackupFile(backupFilePath: string): Promise<void> {
     // 防护：本方法只应删除扫描所得的备份归档，拒绝任意路径误删
     if (!isArchiveFile(backupFilePath)) {
-      throw new Error(`拒绝删除非归档文件: ${backupFilePath}`)
+      throw new BackupError("refuseNonArchive", backupFilePath)
     }
     await this.fs.unlink(backupFilePath)
 
@@ -444,7 +444,7 @@ export class BackupManager {
     try {
       await this.fs.access(p)
     } catch {
-      throw new Error(`目录不存在: ${p}`)
+      throw new BackupError("dirNotFound", p)
     }
   }
 }

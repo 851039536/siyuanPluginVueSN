@@ -1,7 +1,7 @@
 /**
  * S3 备份面板样式 (Codex 风格)
  *
- * 使用全局设计 Token ($r-base / $spacing-* / $font-size-*)
+ * 使用全局设计 Token 短名制（$s-* 间距 / $r-* 圆角 / $t-* 字号 / $fw-* 字重）
  * 禁止 box-shadow，使用 border 代替
  */
 @use '@/variables.scss' as *;
@@ -31,59 +31,8 @@
 }
 
 // ========== Tab 栏 ==========
-
-.s3-tab-bar {
-  display: flex;
-  gap: 0;
-  padding: 0 $s-4;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
-}
-
-.s3-tab-btn {
-  position: relative;
-  padding: $s-2 $s-3;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface-light);
-  font-size: $t-sm;
-  cursor: pointer;
-  transition: color 0.15s ease;
-
-  &:hover {
-    color: var(--b3-theme-on-surface);
-  }
-
-  &.active {
-    color: var(--b3-theme-primary);
-
-    &::after {
-      content: "";
-      position: absolute;
-      bottom: 0;
-      left: $s-1;
-      right: $s-1;
-      height: 2px;
-      background: var(--b3-theme-primary);
-      border-radius: 1px 1px 0 0;
-    }
-  }
-
-  // 实验性功能徽标（增量 Tab）
-  .s3-tab-badge {
-    font-family: $ff-mono;
-    font-size: $t-2xs;
-    font-weight: $fw-semibold;
-    text-transform: uppercase;
-    color: var(--b3-theme-warning);
-    background: var(--b3-theme-warning-lightest);
-    border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-    border-radius: $r-px3;
-    padding: 0 $s-px3;
-    margin-left: $s-1;
-    vertical-align: middle;
-  }
-}
+// 标签栏与实验性徽标由共享组件 Tabs 五件套 + Tag 承担，
+// 面板壳所需的 flex 链接线见 styles/TabsShell.scss
 
 // ========== 内容容器 ==========
 
@@ -112,6 +61,19 @@
     margin: 0;
     font-size: $t-base;
     font-weight: $fw-semibold;
+  }
+}
+
+// ========== 空状态（BackupListCard / BackupLogCard / StoredChecksumsSection 共用） ==========
+
+.empty-state {
+  text-align: center;
+  padding: $s-8 0;
+  color: var(--b3-theme-on-surface-light);
+
+  p {
+    margin: 0;
+    font-size: $t-sm;
   }
 }
 
@@ -215,11 +177,3 @@
   border-radius: $r-px3;
   word-break: break-all;
 }
-
-
-
-
-
-
-
-

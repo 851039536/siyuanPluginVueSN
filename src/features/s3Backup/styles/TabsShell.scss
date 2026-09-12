@@ -1,0 +1,36 @@
+/**
+ * TabsShell — 面板 Tab 壳接入共享 Tabs 五件套后的 flex 链接线与对齐
+ *
+ * index.vue 根是纵向 flex（头部 + 标签栏 + 内容区），而 Tabs / TabPanels / TabPanel
+ * 三层默认不参与 flex 伸展：不补 flex:1 + min-height:0，内容区 .settings-container 的
+ * overflow-y:auto 会失效（滚动区塌陷、内容溢出面板）。
+ * 嵌套在 .s3-tabs 下同时抬升特异性，避免与组件自身 scoped 样式（同为 (0,2,0)）靠注入顺序决胜。
+ */
+@use '@/variables.scss' as *;
+
+.s3-tabs {
+  flex: 1;
+  min-height: 0;
+
+  // 标签栏：与面板头部保持同一水平内边距，分割线仍横贯全宽
+  .si-tablist {
+    flex-shrink: 0;
+    padding: 0 $s-4;
+  }
+
+  .si-tabpanels {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .si-tabpanel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    // 面板内边距由 .settings-container 的 $s-4 统一提供，去掉组件自带的上内边距
+    padding-top: 0;
+  }
+}

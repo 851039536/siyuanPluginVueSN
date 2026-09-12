@@ -133,6 +133,9 @@ export const TRANSFER_MAX_RETRIES = 2
 /** 全量上传并发数（对象为大 ZIP，带宽易饱和，用小并发） */
 export const FULL_UPLOAD_CONCURRENCY = 2
 
+/** 增量上传/删除/下载并发数（对象为小文件，S3 客户端无内建并发管理，固定小并发防请求风暴） */
+export const INCREMENTAL_CONCURRENCY = 4
+
 export const DEFAULT_BACKUP_MODE: BackupMode = {
   localZip: true,
   s3Upload: false,
@@ -232,6 +235,45 @@ export interface FileChecksum {
   fileSize: number
   /** 计算时间（ISO 字符串） */
   time: string
+}
+
+// ========== 模块级错误（可本地化） ==========
+
+/**
+ * 备份模块错误码。
+ * 模块层（BackupManager / backupScanner）零文案依赖：只产出错误码与不含文案的技术细节，
+ * 文案由视图层经 BACKUP_ERROR_KEYS 映射 i18n 键后拼接展示（localizeBackupError）。
+ */
+export type BackupErrorCode =
+  | "dataEmpty"
+  | "dirNotFound"
+  | "refuseNonArchive"
+  | "scanDirFailed"
+  | "scanFileFailed"
+  | "managerNotInitialized"
+
+/** 错误码 → i18n 键映射（键名统一加 err 前缀，避免与合并后的全局 i18n 命名空间冲突） */
+export const BACKUP_ERROR_KEYS: Record<BackupErrorCode, string> = {
+  dataEmpty: "errDataEmpty",
+  dirNotFound: "errDirNotFound",
+  refuseNonArchive: "errRefuseNonArchive",
+  scanDirFailed: "errScanDirFailed",
+  scanFileFailed: "errScanFileFailed",
+  managerNotInitialized: "errManagerNotInitialized",
+}
+
+/** 带错误码的模块级异常；detail 仅承载不含文案的技术细节（文件路径 / 底层错误文本） */
+export class BackupError extends Error {
+  readonly code: BackupErrorCode
+  readonly detail: string
+
+  constructor(code: BackupErrorCode, detail = "") {
+    // message 为技术形式（非展示文案），展示统一走 localizeBackupError
+    super(detail ? `${code}: ${detail}` : code)
+    this.name = "BackupError"
+    this.code = code
+    this.detail = detail
+  }
 }
 
 // ========== 存储键常量 ==========

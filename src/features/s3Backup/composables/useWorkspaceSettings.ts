@@ -25,7 +25,7 @@ export interface WorkspaceSettingsDeps {
 export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   const { i18n } = deps
 
-  const workspacePath = ref("")
+  // 工作区根目录为运行时单一事实源（持久化对象的 workspacePath 字段仅作旧数据兼容保留）
   const workspaceRoot = ref("")
   const lastBackupTime = ref("")
   const useDateFolder = ref(true)
@@ -39,9 +39,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
 
   // ========== 工作区路径 ==========
 
-  function updateWorkspacePath(root: string, shouldSave = false): void {
+  function applyWorkspaceRoot(root: string, shouldSave = false): void {
     workspaceRoot.value = root
-    workspacePath.value = root
     // 通知宿主幂等创建/同步 BackupManager（启动时无工作区、之后才选择路径时在此补建）
     deps.onWorkspaceUpdated?.()
     if (shouldSave) {
@@ -64,7 +63,7 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     if (workspaceRoot.value) { return }
     const apiPath = await fetchWorkspacePath()
     if (apiPath) {
-      updateWorkspacePath(apiPath)
+      applyWorkspaceRoot(apiPath)
     }
   }
 
@@ -72,14 +71,14 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     if (!workspaceRoot.value) {
       const wsPath = await fetchWorkspacePath()
       if (wsPath) {
-        updateWorkspacePath(wsPath, true)
+        applyWorkspaceRoot(wsPath, true)
         showMessage(i18n.workspaceAutoDetected, 2000, "info")
         return
       }
     }
     const selectedPath = await pickDirectory(i18n.selectWorkspaceTitle)
     if (selectedPath) {
-      updateWorkspacePath(selectedPath, true)
+      applyWorkspaceRoot(selectedPath, true)
       showMessage(i18n.workspacePathSet, 2000, "info")
     }
   }
@@ -121,7 +120,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
         // 持久化路径兜底：API 不可用时从设置恢复（detectWorkspacePath 检测到已有路径会跳过 API）
         if (!workspaceRoot.value && data.workspaceRoot) {
           workspaceRoot.value = data.workspaceRoot
-          workspacePath.value = data.workspaceRoot
         }
       }
     } catch (err) {
@@ -133,7 +131,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   function buildWorkspaceSettings() {
     return {
       lastBackupTime: lastBackupTime.value,
-      workspacePath: workspacePath.value,
+      // 旧数据兼容字段：与 workspaceRoot 恒等，读侧新代码只认 workspaceRoot
+      workspacePath: workspaceRoot.value,
       workspaceRoot: workspaceRoot.value,
       useDateFolder: useDateFolder.value,
       autoBackupEnabled: autoBackupEnabled.value,
@@ -168,7 +167,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   }
 
   return {
-    workspacePath,
     workspaceRoot,
     lastBackupTime,
     useDateFolder,

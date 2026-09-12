@@ -10,7 +10,6 @@
 import { computed, reactive, ref, watch } from "vue"
 import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
-import { getErrorMessage } from "@/utils/stringUtils"
 import { useS3Backup } from "./useS3Backup"
 import { useIncrementalPanel } from "./useIncrementalPanel"
 import { useLocalBackupList } from "./useLocalBackupList"
@@ -22,9 +21,9 @@ import { useLocalZipBackup } from "./useLocalZipBackup"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import { BackupManager } from "../modules/BackupManager"
 import type { BackupResult } from "../modules/BackupManager"
-import { getS3BackupInstance } from "../instance"
-import { buildBackupUploadKey, makeBackupTimestamp } from "../utils"
-import type { BackupLog, BackupMode, S3BackupStorage } from "../types"
+import { getS3BackupInstance, persistS3BackupStorage } from "../instance"
+import { buildBackupUploadKey, localizeBackupError, makeBackupTimestamp } from "../utils"
+import type { BackupLog, BackupMode } from "../types"
 
 /** 依赖注入：日志与校验值状态由宿主（index.vue）持有，编排层仅回调 */
 export interface BackupOrchestratorDeps {
@@ -72,18 +71,11 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   // 状态栏后台任务：备份/还原进度显示在底部状态栏（自动备份时弹窗隐藏，状态栏是唯一可见反馈）
   const statusTask = useStatusBarTask("s3Backup", "mdi:cloud-upload")
 
-  /** 持久化辅助：统一「获取实例 → 存储槽 save」样板 */
-  async function persistStorage(save: (storage: S3BackupStorage) => Promise<unknown>): Promise<void> {
-    const instance = getS3BackupInstance()
-    if (instance) { await save(instance.getStorage()) }
-  }
-
   // ========== Manager 实例 ==========
 
   let backupManager: BackupManager | null = null
 
   const {
-    workspacePath,
     workspaceRoot,
     lastBackupTime,
     useDateFolder,
@@ -125,6 +117,20 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   const resolvedS3Path = computed(() => {
     return getListPrefix()
   })
+
+  /**
+   * 统一上传 key 构建（单一事实源）：全量上传与手动上传共用同一 key 规则，
+   * 日期段取备份文件自身日期，dateStamp 缺省取当日（手动上传场景）。
+   */
+  function buildUploadKey(relativePath: string, dateStamp?: string): string {
+    return buildBackupUploadKey(
+      s3Config.value.prefix,
+      s3SubPrefix.value,
+      relativePath,
+      useDateFolder.value,
+      dateStamp ?? makeBackupTimestamp().slice(0, 8),
+    )
+  }
 
   // ========== 增量面板（运行标志+触发入口+清单信息/还原目录，实验 Tab 专属状态） ==========
 
@@ -204,10 +210,10 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   /** 确保工作区路径就绪：未设置时提示并弹出目录选择，返回是否就绪（含用户取消） */
   async function ensureWorkspaceReady(): Promise<boolean> {
-    if (workspacePath.value) { return true }
+    if (workspaceRoot.value) { return true }
     showMessage(i18n.noWorkspace, 3000, "info")
     await selectWorkspacePath()
-    return !!workspacePath.value
+    return !!workspaceRoot.value
   }
 
   // ========== 本地备份列表管理（composable） ==========
@@ -224,21 +230,15 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     recordUploadHosts,
   } = useLocalBackupList({
     getBackupManager: () => backupManager,
-    persist: persistStorage,
+    persist: persistS3BackupStorage,
     getStorageHistory: async () => {
       const instance = getS3BackupInstance()
       return instance ? instance.getStorage().backupHistory.load() : null
     },
     isConfigured,
     backupList,
-    // 与自动上传共用 buildBackupUploadKey 统一 key 规则（日期段取备份文件自身日期），消除两套规则
-    buildUploadKey: (fileName) => buildBackupUploadKey(
-      s3Config.value.prefix,
-      s3SubPrefix.value,
-      fileName,
-      useDateFolder.value,
-      makeBackupTimestamp().slice(0, 8),
-    ),
+    // 与全量上传共用同一 buildUploadKey（日期段取备份文件自身日期），消除两套 key 规则
+    buildUploadKey,
     uploadFileSmart,
     refreshBackupList: () => refreshBackupList(),
     addLog: (entry) => addLog(entry),
@@ -255,7 +255,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     useDateFolder,
     keepBackupCount,
     localBackupList,
-    persistStorage,
+    persistStorage: persistS3BackupStorage,
     saveChecksum: deps.saveChecksum,
     isAnyTaskRunning,
     isZipBackingUp,
@@ -268,9 +268,8 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   const { performS3Backup } = useFullS3Upload({
     getBackupManager: () => backupManager,
     isConfigured,
-    s3Config,
-    s3SubPrefix,
-    useDateFolder,
+    // key 规则由编排层单点提供（与手动上传共用），composable 内不再自行拼接
+    buildUploadKey,
     listExistingKeys,
     uploadFileSmart,
     backupProgress,
@@ -326,7 +325,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     // 进入即置位：目录对话框挂起期间也纳入互斥范围，防止自动备份 tick 穿透空窗并发执行
     isBackingUp.value = true
     try {
-      if (!workspacePath.value) {
+      if (!workspaceRoot.value) {
         if (isAuto) {
           // 定时触发无人值守，不弹目录选择框，仅记日志跳过
           addLog({
@@ -364,7 +363,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
       console.error("备份失败:", err)
       // 状态栏："备份失败"
       statusTask.fail(i18n.statusBackupFailed)
-      showMessage(`${i18n.backupFailed}: ${getErrorMessage(err)}`, 5000, "error")
+      showMessage(`${i18n.backupFailed}: ${localizeBackupError(err, i18n)}`, 5000, "error")
       return false
     } finally {
       isBackingUp.value = false
@@ -415,7 +414,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     backupProgress,
     backupList,
     phaseLabel,
-    workspacePath,
     workspaceRoot,
     lastBackupTime,
     useDateFolder,

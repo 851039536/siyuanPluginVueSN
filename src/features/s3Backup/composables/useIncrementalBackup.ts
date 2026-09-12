@@ -13,17 +13,8 @@ import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress } from "../modules/BackupManager"
 import type { BackupLog, BackupLogDetail, BackupManifest, IncrementalFileEntry } from "../types"
-import { MANIFEST_VERSION, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
-import { buildIncrementalKey, buildManifestKey, diffManifest, getHostname, parseManifest, runWithConcurrency } from "../utils"
-
-/** 上传并发数（S3 客户端无内建并发管理，固定小并发防止请求风暴） */
-const UPLOAD_CONCURRENCY = 4
-
-/** 按存储上限截断文件清单，返回 [截断后清单, 被省略条数]（空清单返回 undefined 不占存储） */
-function capFileList(files: string[]): [string[] | undefined, number] {
-  if (files.length === 0) { return [undefined, 0] }
-  return [files.slice(0, MAX_LOG_DETAIL_FILES), Math.max(0, files.length - MAX_LOG_DETAIL_FILES)]
-}
+import { BackupError, INCREMENTAL_CONCURRENCY, MANIFEST_VERSION, MSG_DESKTOP_ONLY } from "../types"
+import { buildIncrementalKey, buildManifestKey, capFileList, diffManifest, getHostname, isUnsafeRelativePath, parseManifest, runWithConcurrency, withRetry } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface IncrementalBackupDeps {
@@ -55,32 +46,6 @@ export interface IncrementalRestoreResult {
   targetDir: string
 }
 
-/** 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/下载共用） */
-async function withRetry(task: () => Promise<void>, failLabel: string): Promise<boolean> {
-  for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
-    try {
-      await task()
-      return true
-    } catch (err: unknown) {
-      if (attempt === TRANSFER_MAX_RETRIES) {
-        console.warn(`[S3增量] ${failLabel}（已重试 ${TRANSFER_MAX_RETRIES} 次）`, getErrorMessage(err))
-      }
-    }
-  }
-  return false
-}
-
-/**
- * 判断清单相对路径是否不安全（绝对路径/盘符/父目录穿越/空段），
- * 还原时必须跳过，防止恶意或损坏的清单覆盖工作区外文件
- */
-function isUnsafeRelativePath(relativePath: string): boolean {
-  if (relativePath.startsWith("/") || relativePath.startsWith("\\")) { return true }
-  if (/^[A-Za-z]:[\/]/.test(relativePath)) { return true }
-  const parts = relativePath.split(/[\/]+/)
-  return parts.some((part) => part === ".." || part === "")
-}
-
 export function useIncrementalBackup(deps: IncrementalBackupDeps) {
   const { backupProgress, addLog, i18n } = deps
 
@@ -105,11 +70,10 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
 
   /** 带重试的单文件上传（磁盘路径版：大文件自动分片，小文件整读单 PUT），成功返回 true */
   async function uploadWithRetry(file: IncrementalFileEntry, key: string): Promise<boolean> {
-    const node = getNodeModules()
-    if (!node) { return false }
-    return withRetry(async () => {
-      await deps.uploadFileSmart(file.fullPath, key)
-    }, `上传失败: ${file.relativePath}`)
+    return withRetry(
+      () => deps.uploadFileSmart(file.fullPath, key),
+      `上传失败: ${file.relativePath}`,
+    )
   }
 
   /**
@@ -121,7 +85,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
   async function performIncrementalBackup(prefix: string, subPrefix: string): Promise<IncrementalResult> {
     const backupManager = deps.getBackupManager()
     if (!backupManager) {
-      throw new Error("backupManager 未初始化")
+      throw new BackupError("managerNotInitialized")
     }
 
     const manifestKey = buildManifestKey(prefix, subPrefix)
@@ -164,7 +128,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     // 新 manifest 从旧清单的未变更条目起步，仅写入本次成功上传的条目（幂等保证）
     const newFiles: BackupManifest["files"] = { ...diff.unchanged }
 
-    await runWithConcurrency(diff.toUpload, UPLOAD_CONCURRENCY, async (file) => {
+    await runWithConcurrency(diff.toUpload, INCREMENTAL_CONCURRENCY, async (file) => {
       backupProgress.value = {
         phase: "uploading",
         currentFile: file.relativePath,
@@ -187,7 +151,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     // 6. 清理本地已删除的远端文件（与上传同并发池 + 重试；失败条目回填新 manifest，下次备份重试删除）
     let deleted = 0
     let deleteFailed = 0
-    await runWithConcurrency(diff.toDelete, UPLOAD_CONCURRENCY, async (relativePath) => {
+    await runWithConcurrency(diff.toDelete, INCREMENTAL_CONCURRENCY, async (relativePath) => {
       backupProgress.value = {
         phase: "uploading",
         currentFile: relativePath,
@@ -339,7 +303,7 @@ export function useIncrementalBackup(deps: IncrementalBackupDeps) {
     // 下载失败的文件相对路径（写入日志 detail，便于用户定位而无需打开控制台）
     const failedFiles: string[] = []
 
-    await runWithConcurrency(relativePaths, UPLOAD_CONCURRENCY, async (relativePath) => {
+    await runWithConcurrency(relativePaths, INCREMENTAL_CONCURRENCY, async (relativePath) => {
       backupProgress.value = {
         phase: "downloading",
         currentFile: relativePath,

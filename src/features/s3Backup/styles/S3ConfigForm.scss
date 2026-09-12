@@ -7,25 +7,9 @@
 @use '@/variables.scss' as *;
 
 .s3-config-form {
-  // section-header 扩展：覆盖 margin-bottom + 独有的连接状态/操作区
+  // section-header 扩展：覆盖 margin-bottom + 独有的操作区（连接状态徽章由共享组件 Tag 承担）
   .section-header {
     margin-bottom: $s-4;
-
-    .connection-status {
-      font-size: $t-xs;
-      padding: $s-px2 $s-2;
-      border-radius: $r-base;
-
-      &.status-connected {
-        color: $c-success;
-        background: hsl(142, 76%, 36%, 0.1);
-      }
-
-      &.status-disconnected {
-        color: $c-danger;
-        background: hsl(0, 72%, 51%, 0.1);
-      }
-    }
 
     .header-actions {
       display: flex;
@@ -40,7 +24,7 @@
     padding: $s-3;
     border: 1px solid var(--b3-theme-surface-lighter);
     border-radius: $r-base;
-    background: hsl(45, 90%, 50%, 0.04);
+    background: rgba($c-warning, 0.04);
 
     .guide-title {
       display: flex;
@@ -131,12 +115,12 @@
 
     &.success {
       color: $c-success;
-      background: hsl(142, 76%, 36%, 0.08);
+      background: rgba($c-success, 0.08);
     }
 
     &.error {
       color: $c-danger;
-      background: hsl(0, 72%, 51%, 0.08);
+      background: rgba($c-danger, 0.08);
     }
   }
 }

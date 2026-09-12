@@ -3,7 +3,7 @@
   <div class="settings-container">
     <!-- 工作区信息 -->
     <WorkspaceInfoCard
-      :workspace-path="orch.workspacePath"
+      :workspace-path="orch.workspaceRoot"
       :workspace-root="orch.workspaceRoot"
       :last-backup-time="orch.lastBackupTime"
       :i18n="i18n"
@@ -27,7 +27,7 @@
       :is-any-task-running="orch.isAnyTaskRunning"
       :is-backing-up="orch.isBackingUp"
       :can-backup="orch.canBackup"
-      :workspace-path="orch.workspacePath"
+      :workspace-path="orch.workspaceRoot"
       :resolved-local-backup-path="orch.resolvedLocalBackupPath"
       :resolved-s3-path="orch.resolvedS3Path"
       :backup-mode-local-zip="orch.backupModeLocal.localZip"

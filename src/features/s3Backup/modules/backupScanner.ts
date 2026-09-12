@@ -6,6 +6,7 @@
  */
 import { getErrorMessage } from "@/utils/stringUtils"
 import { isArchiveFile } from "../utils"
+import { BackupError } from "../types"
 import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
 
 /**
@@ -103,7 +104,7 @@ export async function scanDirectory(
     // 目录不可读会导致整个子树被静默遗漏：
     // 全量备份会产出不完整 ZIP，增量备份则会把“本地不存在”的远端文件误判为已删除。
     // 因此这里不再吞错，由调用方决定中止还是降级。
-    throw new Error(`无法读取目录 ${dirPath}: ${getErrorMessage(err)}`)
+    throw new BackupError("scanDirFailed", `${dirPath} → ${getErrorMessage(err)}`)
   }
 
   for (const entry of entries) {
@@ -125,7 +126,7 @@ export async function scanDirectory(
       } catch (err: unknown) {
         // 单个文件 stat 失败仍继续（与 performFullBackup 的可跳过语义一致），
         // 但至少把问题暴露给上层调用方。
-        throw new Error(`无法读取文件信息 ${fullPath}: ${getErrorMessage(err)}`)
+        throw new BackupError("scanFileFailed", `${fullPath} → ${getErrorMessage(err)}`)
       }
     }
   }

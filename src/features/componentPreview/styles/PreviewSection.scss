@@ -206,6 +206,11 @@
   display: inline-flex;
 }
 
+// FileUpload 演示宿主：占满卡片宽度（拖拽区需足够横向空间，居中会让虚线框显得局促）
+.cp-fileupload-demo {
+  width: 100%;
+}
+
 // 卡片底部：示例名 + 代码切换按钮
 .cp-card__foot {
   display: flex;

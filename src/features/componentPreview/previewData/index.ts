@@ -37,6 +37,9 @@ import {
   drawerPreviewGroups,
 } from "./drawer"
 import {
+  fileUploadPreviewGroups,
+} from "./fileUpload"
+import {
   inputPreviewGroups,
 } from "./input"
 import {
@@ -109,5 +112,6 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...confirmPopupPreviewGroups,
   ...dialogPreviewGroups,
   ...drawerPreviewGroups,
+  ...fileUploadPreviewGroups,
   ...tooltipPreviewGroups,
 ]

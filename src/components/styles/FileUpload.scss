@@ -1,0 +1,294 @@
+// ========== FileUpload.scss ==========
+// 文件上传：拖拽区 + 文件列表 + 校验提示 + 进度条（Codex 边框优先，禁 box-shadow）
+@use '../kit/variables.scss' as *;
+
+.si-fileupload {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-fu-font: #{$t-xs}; // 12px
+  --si-fu-pad: #{$s-3};
+  --si-fu-gap: #{$s-2};
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--si-fu-gap);
+  font-family: $ff-zh;
+  font-size: var(--si-fu-font, #{$t-xs});
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-background, $c-fg);
+
+  // 原生 input 只作为「选择对话框」的触发源，不进视觉流
+  &__input {
+    display: none;
+  }
+
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  // ==================== 尺寸档位 ====================
+  // 字号阶梯 10/12/14/16，内边距与段间距同步收放；
+  // 列表高度上限与缩略图兜底尺寸同档缩放（缩略图实际值由组件 previewWidth 内联覆盖）
+  &--xsmall {
+    --si-fu-font: #{$t-2xs}; // 10px
+    --si-fu-pad: #{$s-2};
+    --si-fu-gap: #{$s-px6};
+    --si-fu-list-max: 132px;
+  }
+
+  &--small {
+    --si-fu-font: #{$t-xs}; // 12px
+    --si-fu-pad: #{$s-3};
+    --si-fu-gap: #{$s-2};
+    --si-fu-list-max: 168px;
+  }
+
+  &--medium {
+    --si-fu-font: #{$t-sm}; // 14px
+    --si-fu-pad: #{$s-4};
+    --si-fu-gap: #{$s-3};
+    --si-fu-list-max: 200px;
+  }
+
+  &--large {
+    --si-fu-font: #{$t-base}; // 16px
+    --si-fu-pad: #{$s-5};
+    --si-fu-gap: #{$s-3};
+    --si-fu-list-max: 240px;
+  }
+
+  // ==================== basic 模式 ====================
+  &__basic {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+  }
+
+  // ==================== 拖拽区 ====================
+  &__dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--si-fu-gap);
+    padding: var(--si-fu-pad);
+    text-align: center;
+    background: var(--b3-theme-surface, $c-surface);
+    // 虚线描边表明「可投放」，实线会与静态卡片混淆
+    border: 1px dashed var(--b3-border-color, $c-border);
+    border-radius: $r-base;
+    cursor: pointer;
+    transition: border-color 0.12s ease, background-color 0.12s ease;
+
+    &:hover:not(.si-fileupload--disabled &),
+    &:focus-visible {
+      border-color: var(--b3-theme-primary);
+      outline: none;
+    }
+
+    // 拖拽悬停：主题色实线 + 弱主题底，与 hover 拉开层次
+    &--active {
+      border-color: var(--b3-theme-primary);
+      border-style: solid;
+      background: hsla(from var(--b3-theme-primary) h s l / 0.06);
+    }
+  }
+
+  &__dropzone-icon {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+  }
+
+  &__dropzone-text {
+    font-weight: $fw-medium;
+  }
+
+  &__dropzone-hint {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.75;
+  }
+
+  // 拖拽区内的选择按钮：与整体点击区区分，避免「点了按钮又触发外层 click」的重复感
+  &__dropzone-btn {
+    margin-top: $s-1;
+  }
+
+  // ==================== 校验提示 ====================
+  &__errors {
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__error {
+    display: flex;
+    align-items: flex-start;
+    gap: $s-px6;
+    padding: $s-px6 $s-2;
+    color: var(--b3-theme-error, #{$c-danger});
+    background: hsla(from var(--b3-theme-error, #{$c-danger}) h s l / 0.08);
+    border: 1px solid hsla(from var(--b3-theme-error, #{$c-danger}) h s l / 0.3);
+    border-radius: $r-sm;
+    overflow-wrap: anywhere;
+  }
+
+  &__error-icon {
+    flex: none;
+    // 图标与首行文字视觉对齐（行高 1.5 下的经验偏移）
+    margin-top: $s-px1;
+  }
+
+  // ==================== 空态 ====================
+  &__empty {
+    padding: var(--si-fu-pad);
+    text-align: center;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.75;
+    background: var(--b3-theme-surface, $c-surface);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
+  }
+
+  // ==================== 文件列表 ====================
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $s-px2;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    // 列表过长时自身滚动，避免把底部操作栏推到视野外。
+    // ⚠️ 上限按档位给（行高随缩略图尺寸与档位字号变化），固定 px 会导致大档位只露两三行。
+    max-height: var(--si-fu-list-max, 200px);
+    overflow-y: auto;
+  }
+
+  &__file {
+    display: flex;
+    align-items: center;
+    gap: $s-px6;
+    // 纵向内边距压到 2px：缩略图已提供行高，再叠 4px 会让每行虚高
+    padding: $s-px2 $s-px6;
+    background: var(--b3-theme-surface, $c-surface);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-sm;
+  }
+
+  // 左侧图标位：**不画框、不铺底**，图标直接立在行内。
+  // ⚠️ 此前这里是带描边 + 底色的方块，但行本身已有描边 ⇒ 非图片文件会出现「框里套框」的
+  //    双层边框，视觉上左侧一大坨且整体偏重。去掉后仅保留占位宽度（保证各类文件左对齐一致）。
+  // ⚠️ 宽度取图标尺寸（非 previewWidth）：非图片文件用不到那么宽，否则图标右侧会留一段空档。
+  &__thumb {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    // 高度不设限：行高由内容与内边距决定，图标比占位宽小时不应把行撑高
+    max-height: 100%;
+
+    // 图片：占位列宽 = previewWidth（缩略图是主体，需要足够展示面积）
+    &--image {
+      width: var(--si-fu-thumb, 24px);
+    }
+
+    // 非图片：占位列宽 = 图标尺寸，图标右侧不留空档
+    &--icon {
+      width: var(--si-fu-thumb-icon, 14px);
+    }
+  }
+
+  &__thumb-img {
+    display: block;
+    width: 100%;
+    // 图片维持正方形（对象自适应裁切），尺寸即 previewWidth
+    aspect-ratio: 1;
+    object-fit: cover;
+    // 仅真实图片保留圆角与小描边（图片内容需要边界，否则与底色粘连）
+    border-radius: $r-sm;
+  }
+
+  &__thumb-icon {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+  }
+
+  // 文件名与大小**上下堆叠**（而非并排）：并排会把行撑宽、且大小挤占文件名空间；
+  // 堆叠后整行高度由缩略图决定，行内更紧凑
+  &__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: $s-px1;
+    line-height: $lh-tight;
+  }
+
+  &__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__size {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.75;
+  }
+
+  // 移除按钮：贴紧行尾。
+  // ⚠️ 复用共享 Button 的 icon-only 档位尺寸（xsmall 22 / small 28 / medium 36 / large 44），
+  //    该尺寸会成为**行高的下限**（比缩略图还高）—— 故此处按档位覆写为更小的方钮，
+  //    使整行高度真正由缩略图决定。仅覆盖尺寸相关声明，不改 Button 的外观与交互。
+  // ⚠️ 类名写两遍抬到 (0,3,0)：Button 自身的 `.si-button--icon-only.si-button--{tier}` 是同特异性
+  //    (0,2,0) 规则，只靠源顺序取胜太脆弱（同 .cp-card__stage 内弹层覆盖的既有做法）。
+  &__remove.si-fileupload__remove {
+    flex: none;
+    margin-left: auto;
+  }
+
+  &__remove.si-fileupload__remove.si-button--icon-only {
+    --button-size: 20px;
+
+    &.si-button--small {
+      --button-size: 22px;
+    }
+
+    &.si-button--medium {
+      --button-size: 24px;
+    }
+
+    &.si-button--large {
+      --button-size: 26px;
+    }
+  }
+
+  // ==================== 进度条 ====================
+  &__progress {
+    height: 4px; // 细条；无对应 Token
+    overflow: hidden;
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    border-radius: $r-full;
+  }
+
+  &__progress-bar {
+    height: 100%;
+    background: var(--b3-theme-primary, $c-primary);
+    border-radius: $r-full;
+    transition: width 0.12s ease;
+  }
+
+  // ==================== 底部操作栏 ====================
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $s-2;
+  }
+}

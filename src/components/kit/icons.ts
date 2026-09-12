@@ -486,6 +486,12 @@ export const COMMON_ICONS = {
   upload: {
     icon: "mdi:upload",
   },
+  cloudUpload: {
+    icon: "mdi:cloud-upload-outline",
+  },
+  fileUploadOutline: {
+    icon: "mdi:file-upload-outline",
+  },
   folderPlus: {
     icon: "mdi:folder-plus",
   },

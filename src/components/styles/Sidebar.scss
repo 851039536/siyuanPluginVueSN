@@ -1,0 +1,177 @@
+// ========== Sidebar.scss ==========
+// 侧边栏：三变体（sidebar / floating / inset）× 三档折叠（offcanvas / icon / none）+ 浮层模式
+// Codex 边框优先、禁 box-shadow；过渡统一 0.12s ease
+@use '../kit/variables.scss' as *;
+
+.si-sidebar {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-sb-font: #{$t-xs}; // 12px
+  --si-sb-pad: #{$s-2};
+  --si-sb-gap: #{$s-1};
+
+  position: relative;
+  flex: none;
+  // 宽度由组件下发（展开 / 折叠 / 浮层三种取值），过渡让折叠动作可感知
+  width: var(--si-sidebar-width, 16rem);
+  transition: width 0.12s ease;
+
+  // ==================== 尺寸档位 ====================
+  // 字号阶梯 10/12/14/16，内边距与项间距同步收放
+  &--xsmall {
+    --si-sb-font: #{$t-2xs}; // 10px
+    --si-sb-pad: #{$s-px6};
+    --si-sb-gap: #{$s-px2};
+  }
+
+  &--small {
+    --si-sb-font: #{$t-xs}; // 12px
+    --si-sb-pad: #{$s-2};
+    --si-sb-gap: #{$s-1};
+  }
+
+  &--medium {
+    --si-sb-font: #{$t-sm}; // 14px
+    --si-sb-pad: #{$s-3};
+    --si-sb-gap: #{$s-px6};
+  }
+
+  &--large {
+    --si-sb-font: #{$t-base}; // 16px
+    --si-sb-pad: #{$s-4};
+    --si-sb-gap: #{$s-2};
+  }
+
+  // ==================== 浮层模式 ====================
+  // 不占文档流：绝对定位于父容器的贴合边（父容器需 position: relative）
+  &--overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 100; // 高于主内容区，低于全屏遮罩（10000）
+
+    &.si-sidebar--left {
+      left: 0;
+    }
+
+    &.si-sidebar--right {
+      right: 0;
+    }
+  }
+
+  // 遮罩：只在浮层 + 展开时渲染；不加深过多，避免与 Dialog 的模态遮罩混淆
+  &__mask {
+    position: absolute;
+    inset: 0;
+    // 遮罩要盖住整个宿主容器而非仅面板宽度
+    width: 100vw;
+    z-index: -1;
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  // ==================== 面板本体 ====================
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; // 折叠为图标条时裁掉溢出的文字
+    font-family: $ff-zh;
+    font-size: var(--si-sb-font, #{$t-xs});
+    line-height: $lh-normal;
+    color: var(--b3-theme-on-background, $c-fg);
+    background: var(--b3-theme-surface, $c-surface);
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+  }
+
+  &__content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--si-sb-gap);
+    padding: var(--si-sb-pad);
+  }
+
+  &__footer {
+    flex: none;
+    padding: var(--si-sb-pad);
+    border-top: 1px solid var(--b3-border-color, $c-border);
+  }
+
+  // ==================== 变体 ====================
+  // sidebar（默认）：与主内容同平面，只在朝内容一侧画分隔线
+  &--sidebar {
+    .si-sidebar__panel {
+      border-radius: 0;
+    }
+
+    &.si-sidebar--left .si-sidebar__panel {
+      border-right: 1px solid var(--b3-border-color, $c-border);
+    }
+
+    &.si-sidebar--right .si-sidebar__panel {
+      border-left: 1px solid var(--b3-border-color, $c-border);
+    }
+  }
+
+  // floating：四周留白 + 全描边 + 四向圆角（像浮在内容上的卡片）
+  &--floating {
+    padding: $s-2;
+
+    .si-sidebar__panel {
+      border: 1px solid var(--b3-border-color, $c-border);
+      border-radius: $r-base;
+    }
+  }
+
+  // inset：贴容器边缘但整体内缩，四向圆角
+  &--inset {
+    padding: $s-2 0 $s-2 $s-2;
+
+    .si-sidebar__panel {
+      border: 1px solid var(--b3-border-color, $c-border);
+      border-radius: $r-base;
+    }
+
+    &.si-sidebar--right {
+      padding: $s-2 $s-2 $s-2 0;
+    }
+  }
+
+  // ==================== 折叠：icon（收成图标条）====================
+  // 折叠后文字隐藏、图标居中；宽高比与展开态一致，避免项跳动
+  &--icon.si-sidebar--collapsed {
+    .si-sidebar__content {
+      padding-left: 0;
+      padding-right: 0;
+      // 图标条下内容水平居中（调用方的项元素需为块级，见文档）
+      align-items: center;
+    }
+
+    // 折叠时隐藏调用方标记的文案节点
+    :deep(.si-sidebar__label),
+    :deep(.si-sidebar__hide-collapsed) {
+      display: none;
+    }
+
+    .si-sidebar__footer {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  // ==================== 折叠：offcanvas（完全移出）====================
+  // 非 overlay 时宽度已归零；overlay 时把面板整体平移出视口
+  &--offcanvas.si-sidebar--collapsed.si-sidebar--overlay {
+    .si-sidebar__panel {
+      transform: translateX(-100%);
+      transition: transform 0.12s ease;
+    }
+
+    &.si-sidebar--right .si-sidebar__panel {
+      transform: translateX(100%);
+    }
+  }
+}

@@ -67,9 +67,14 @@
 
   &--circle {
     border-radius: $r-full;
+    // 圆形徽标：内容恒为「数字 / 单字」，故用固定最小边长 + 等距内边距撑出正圆
+    justify-content: center;
+    min-width: $s-5; // 20px
+    padding: $s-px1 $s-px5; // 1px 5px（纵向压到最小，横向留出数字宽度）
   }
 
-  // 变体样式
+  // ========== 变体样式 ==========
+  // 默认外观：「同色系 10% 浅底 + 100% 文字 + 20% 描边」（`--fill` 时改写为实底，见下方）
   &--default {
     background: var(--b3-theme-surface-lighter, $c-surface);
     color: var(--b3-theme-on-surface, $c-fg);
@@ -88,13 +93,18 @@
     border-color: hsla(from var(--b3-theme-success, $c-success) h s l / 0.2);
   }
 
-  &--warning {
+  // `warning` 与 `warn` 为同义别名：库内命名 + 官方 Badge severity 命名，样式合并（下同）
+  &--warning,
+  &--warn {
     background: hsla(from var(--b3-theme-warning, $c-warning) h s l / 0.1);
     color: var(--b3-theme-warning, $c-warning);
     border-color: hsla(from var(--b3-theme-warning, $c-warning) h s l / 0.2);
   }
 
-  &--danger {
+  // ⚠️ 错误色只有 --b3-theme-error（--b3-theme-destructive 宿主从未定义）
+  // `danger` / `error` 为同义别名
+  &--danger,
+  &--error {
     background: hsla(from var(--b3-theme-error, $c-danger) h s l / 0.1);
     color: var(--b3-theme-error, $c-danger);
     border-color: hsla(from var(--b3-theme-error, $c-danger) h s l / 0.2);
@@ -104,6 +114,66 @@
     background: hsla(from var(--b3-theme-info, $c-info) h s l / 0.1);
     color: var(--b3-theme-info, $c-info);
     border-color: hsla(from var(--b3-theme-info, $c-info) h s l / 0.2);
+  }
+
+  // 中性面（官方 Badge 的 `secondary`）：宿主无 --b3-theme-secondary 语义色，故走 surface / on-surface / border 中性族
+  &--secondary {
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    color: var(--b3-theme-on-surface, $c-fg);
+    border-color: var(--b3-border-color, $c-border);
+  }
+
+  // 反色（官方 Badge 的 `contrast`）：前景色铺底 + 背景色文字（明暗主题自动互为反转）
+  &--contrast {
+    background: var(--b3-theme-on-background, $c-fg);
+    color: var(--b3-theme-background, $c-bg);
+    border-color: var(--b3-theme-on-background, $c-fg);
+  }
+
+  // ========== 实底外观（`fill`） ==========
+  // 对齐官方 Badge 默认观感：色块 100% 铺底 + 反差文字 + 去描边（外形靠底色本身，不用阴影）
+  // ⚠️ 写在 `.si-tag--fill` 下并把变体类一并带上，选择器为 (0,2,0)：
+  //    上方各变体色是 `&--xxx` 的 (0,1,0)，不抬特异性会被后者压住（仅靠源顺序取胜太脆弱）。
+  &--fill {
+    border-color: transparent;
+
+    &.si-tag--default,
+    &.si-tag--secondary {
+      background: var(--b3-theme-on-surface, $c-fg);
+      color: var(--b3-theme-background, $c-bg);
+    }
+
+    &.si-tag--primary {
+      background: var(--b3-theme-primary, $c-primary);
+      color: var(--b3-theme-on-primary, $c-bg);
+    }
+
+    &.si-tag--success {
+      background: var(--b3-theme-success, $c-success);
+      color: var(--b3-theme-on-primary, $c-bg);
+    }
+
+    &.si-tag--warning,
+    &.si-tag--warn {
+      background: var(--b3-theme-warning, $c-warning);
+      color: var(--b3-theme-on-primary, $c-bg);
+    }
+
+    &.si-tag--danger,
+    &.si-tag--error {
+      background: var(--b3-theme-error, $c-danger);
+      color: var(--b3-theme-on-primary, $c-bg);
+    }
+
+    &.si-tag--info {
+      background: var(--b3-theme-info, $c-info);
+      color: var(--b3-theme-on-primary, $c-bg);
+    }
+
+    &.si-tag--contrast {
+      background: var(--b3-theme-on-background, $c-fg);
+      color: var(--b3-theme-background, $c-bg);
+    }
   }
 
   // 自定义颜色

@@ -11,7 +11,7 @@ export const tagGroup: PreviewGroup = {
   id: "tag",
   component: Tag,
   name: "Tag",
-  summary: "标签：变体 / 形状 / 图标 / 可关闭 / 禁用",
+  summary: "标签：变体（含官方 Badge severity 取值）/ 形状（含圆形计数徽标）/ 实底外观 fill / content 便捷入口 / 图标 / 可关闭 / 禁用",
   importCode: "import Tag from \"@/components/Tag.vue\"",
   sizeable: true,
   examples: [
@@ -90,6 +90,51 @@ export const tagGroup: PreviewGroup = {
       },
       slotText: "自定义",
       code: "<Tag color=\"#eef2ff\" textColor=\"#4f46e5\" borderColor=\"#c7d2fe\">自定义</Tag>",
+    },
+    {
+      title: "实底外观（fill）",
+      props: { variant: "primary", fill: true },
+      slotText: "实底主要",
+      code: "<Tag variant=\"primary\" fill>实底主要</Tag>",
+    },
+    {
+      title: "实底 · danger",
+      props: { variant: "danger", fill: true },
+      slotText: "实底危险",
+      code: "<Tag variant=\"danger\" fill>实底危险</Tag>",
+    },
+    {
+      title: "实底 · contrast",
+      props: { variant: "contrast", fill: true },
+      slotText: "实底反色",
+      code: "<Tag variant=\"contrast\" fill>实底反色</Tag>",
+    },
+    {
+      title: "官方 severity 取值（warn）",
+      props: { variant: "warn" },
+      slotText: "警告",
+      code: "<Tag variant=\"warn\">警告</Tag>",
+    },
+    {
+      title: "官方 severity 取值（secondary）",
+      props: { variant: "secondary" },
+      slotText: "中性",
+      code: "<Tag variant=\"secondary\">中性</Tag>",
+    },
+    {
+      title: "content 纯文本便捷入口",
+      props: { content: "纯文本", variant: "info" },
+      code: "<Tag variant=\"info\" content=\"纯文本\" />",
+    },
+    {
+      title: "计数徽标（content + max 折叠）",
+      props: { content: 128, max: 99, shape: "circle", variant: "danger", fill: true },
+      code: "<Tag :content=\"128\" :max=\"99\" shape=\"circle\" variant=\"danger\" fill />",
+    },
+    {
+      title: "圆形计数（个位数）",
+      props: { content: 5, shape: "circle", variant: "primary", fill: true },
+      code: "<Tag :content=\"5\" shape=\"circle\" variant=\"primary\" fill />",
     },
   ],
 }

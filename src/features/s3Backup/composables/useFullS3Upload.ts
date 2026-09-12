@@ -12,17 +12,16 @@ import { showMessage } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { BackupManager, BackupProgress, BackupResult, WorkspaceFile } from "../modules/BackupManager"
-import type { BackupLog, S3Config } from "../types"
-import { FULL_UPLOAD_CONCURRENCY, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES } from "../types"
-import { buildBackupUploadKey, getBaseName, makeBackupTimestamp, runWithConcurrency } from "../utils"
+import type { BackupLog } from "../types"
+import { FULL_UPLOAD_CONCURRENCY, MSG_DESKTOP_ONLY } from "../types"
+import { getBaseName, makeBackupTimestamp, runWithConcurrency, withRetry } from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface FullS3UploadDeps {
   getBackupManager: () => BackupManager | null
   isConfigured: Ref<boolean>
-  s3Config: Ref<S3Config>
-  s3SubPrefix: Ref<string>
-  useDateFolder: Ref<boolean>
+  /** 上传 key 构建（由编排层单点提供，与手动上传共用同一规则） */
+  buildUploadKey: (relativePath: string, dateStamp?: string) => string
   listExistingKeys: () => Promise<Set<string>>
   /** 大文件感知上传磁盘文件（>100MB 自动分片；onProgress 按文件总字节上报，供进度条流动） */
   uploadFileSmart: (filePath: string, key: string, onProgress?: (sent: number, total: number) => void) => Promise<void>
@@ -40,21 +39,6 @@ export interface FullS3UploadDeps {
 
 export function useFullS3Upload(deps: FullS3UploadDeps) {
   const { backupProgress, addLog, i18n } = deps
-
-  /**
-   * 构建 S3 对象 key（复用 utils.buildBackupUploadKey 统一规则）
-   * 日期段取备份文件自身日期（日期子目录名或文件名内嵌日期），与本地 ZIP 目录语义对齐；
-   * 旧实现把"今日时间戳"叠在已含日期目录的 relativePath 之前，产生双日期嵌套（历史 bug）。
-   */
-  function makeS3Key(relativePath: string, timestamp: string): string {
-    return buildBackupUploadKey(
-      deps.s3Config.value.prefix,
-      deps.s3SubPrefix.value,
-      relativePath,
-      deps.useDateFolder.value,
-      timestamp.slice(0, 8),
-    )
-  }
 
   /** S3 备份
    * @param latestZip 若提供则只上传该 ZIP 文件（用于本地+S3 同时备份场景，避免重复上传历史备份）
@@ -94,7 +78,8 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
       return
     }
 
-    const timestamp = makeBackupTimestamp()
+    // 日期段取当日（作为 key 中备份文件自身日期缺失时的回退值）
+    const dateStamp = makeBackupTimestamp().slice(0, 8)
     const node = getNodeModules()
     if (!node) {
       throw new Error(MSG_DESKTOP_ONLY)
@@ -124,7 +109,7 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     // try/catch/finally 兜底：worker 意外抛错时记录失败日志，且保住已成功文件的校验值落盘
     try {
       await runWithConcurrency(files, FULL_UPLOAD_CONCURRENCY, async (file) => {
-        const s3Key = makeS3Key(file.relativePath, timestamp)
+        const s3Key = deps.buildUploadKey(file.relativePath, dateStamp)
 
         // 去重：全 key 精确匹配，或 basename 已存在（历史目录布局兜底）即跳过
         if (existingKeys.has(s3Key) || existingBaseNames.has(getBaseName(file.relativePath))) {
@@ -162,30 +147,24 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
 
         // 本 worker 已上报的最大百分比（并发 worker 间共享 processedCount 会造成读值竞态，用本地值去重）
         let lastReportedPercent = -1
-        // 上传（带重试）与哈希并行执行；上传改为磁盘路径流式/分片，不再整体 readFile 驻留内存
+        // 上传（带重试，复用 utils.withRetry）与哈希并行执行；上传为磁盘路径流式/分片，不整体 readFile 驻留内存
         const [uploadResult, hashResult] = await Promise.allSettled([
-          (async () => {
-            for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
-              try {
-                // 字节级进度：单文件内发送比例折算到总进度（否则单大 ZIP 上传全程 0% 直跳 100%）
-                await deps.uploadFileSmart(file.fullPath, s3Key, (sent, total) => {
-                  const percent = Math.round(((processedCount + sent / total) / files.length) * 100)
-                  if (percent !== lastReportedPercent) { // 整数百分比变化才更新，避免高频响应式触发
-                    lastReportedPercent = percent
-                    backupProgress.value = { ...backupProgress.value, percent }
-                  }
-                })
-                return
-              } catch (err: unknown) {
-                if (attempt === TRANSFER_MAX_RETRIES) { throw err }
+          withRetry(
+            // 字节级进度：单文件内发送比例折算到总进度（否则单大 ZIP 上传全程 0% 直跳 100%）
+            () => deps.uploadFileSmart(file.fullPath, s3Key, (sent, total) => {
+              const percent = Math.round(((processedCount + sent / total) / files.length) * 100)
+              if (percent !== lastReportedPercent) { // 整数百分比变化才更新，避免高频响应式触发
+                lastReportedPercent = percent
+                backupProgress.value = { ...backupProgress.value, percent }
               }
-            }
-          })(),
+            }),
+            `上传失败: ${file.relativePath}`,
+          ),
           backupManager.computeFileHash(file.fullPath),
         ])
 
-        if (uploadResult.status === "rejected") {
-          console.warn(`[S3备份] 上传失败（已重试 ${TRANSFER_MAX_RETRIES} 次）: ${file.relativePath}`, getErrorMessage(uploadResult.reason))
+        // withRetry 内部已吞异常并记录警告日志，此处只判返回值（rejected 分支为防御性保留）
+        if (uploadResult.status === "rejected" || uploadResult.value === false) {
           failedCount++
           processedCount++
           return

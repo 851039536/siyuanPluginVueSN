@@ -21,16 +21,8 @@
   margin-bottom: $s-2;
 }
 
+// 实验徽标：外观与配色由共享组件 Tag 的 warning 变体承担，此处只保留布局约束
 .inc-banner-badge {
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  text-transform: uppercase;
-  color: var(--b3-theme-warning);
-  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-  border-radius: $r-px3;
-  padding: 0 $s-1;
-  line-height: $lh-normal;
   flex-shrink: 0;
 }
 

@@ -25,11 +25,13 @@
         <!-- 头部行：类型徽章 / 文件名 / 元信息 / 状态徽章 / 消息预览 / 展开箭头 -->
         <div
           class="log-row"
-          :class="{ 'log-row-expandable': hasDetail(log) }"
-          @click="hasDetail(log) && toggleExpand(log.id)"
+          :class="{ 'log-row-expandable': expandableIds.has(log.id) }"
+          @click="expandableIds.has(log.id) && toggleExpand(log.id)"
         >
           <!-- 类型徽章（i18n："压缩/上传/下载/删除/增量/自动"） -->
-          <span class="log-type" :class="`log-type-${log.type}`">{{ typeLabel(log.type) }}</span>
+          <Tag class="log-type" :variant="TYPE_VARIANTS[log.type]" size="xsmall">
+            {{ typeLabel(log.type) }}
+          </Tag>
           <span class="log-filename">{{ log.fileName }}</span>
           <span class="log-meta">
             <span v-if="log.fileSize" class="log-size">{{ formatFileSize(log.fileSize) }}</span>
@@ -40,17 +42,18 @@
             <span v-if="log.hostname" class="log-sep">·</span>
             <span v-if="log.hostname" class="log-hostname">{{ log.hostname }}</span>
           </span>
-          <span
+          <Tag
             class="log-status"
-            :class="log.success ? 'status-ok' : 'status-fail'"
+            :variant="log.success ? 'success' : 'danger'"
+            size="xsmall"
           >
             <!-- 状态徽章："成功" / "失败" -->
             {{ log.success ? i18n.success : i18n.failed }}
-          </span>
+          </Tag>
           <!-- 消息预览（单行省略，悬停可见全文，展开详情区可见完整内容） -->
           <span v-if="log.message" class="log-msg" :title="log.message">{{ log.message }}</span>
           <!-- 展开/收起箭头 -->
-          <span v-if="hasDetail(log)" class="log-chevron" :class="{ 'log-chevron-open': expandedIds.has(log.id) }">
+          <span v-if="expandableIds.has(log.id)" class="log-chevron" :class="{ 'log-chevron-open': expandedIds.has(log.id) }">
             <IconWrapper name="chevronRight" :size="10" />
           </span>
         </div>
@@ -99,12 +102,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue"
+import { computed, reactive } from "vue"
 import { showMessage } from "siyuan"
 import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
 import { copyToClipboard } from "@/utils/domUtils"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Tag from "@/components/Tag.vue"
 import type { BackupLog } from "../types"
 
 const props = defineProps<{
@@ -132,6 +136,9 @@ function hasDetail(log: BackupLog): boolean {
   return Boolean(log.detail || log.message)
 }
 
+/** 可展开日志 id 集合（一次遍历产出，避免模板内每条日志重复调用 hasDetail） */
+const expandableIds = computed(() => new Set(props.logs.filter(hasDetail).map((log) => log.id)))
+
 function confirmClear(): void {
   // 清空确认："确定要清空全部日志吗？"
   const confirmed = confirm(props.i18n.confirmClearLogs)
@@ -153,6 +160,17 @@ const TYPE_LABEL_KEYS: Record<BackupLog["type"], string> = {
 function typeLabel(type: BackupLog["type"]): string {
   return props.i18n[TYPE_LABEL_KEYS[type]]
 }
+
+/** 操作类型 → 共享 Tag 配色（7 种类型全覆盖，避免出现无配色的裸徽章） */
+const TYPE_VARIANTS = {
+  localZip: "primary",
+  s3Upload: "info",
+  s3Download: "info",
+  s3Delete: "danger",
+  s3Incremental: "warning",
+  s3IncrementalRestore: "warning",
+  autoBackup: "default",
+} as const
 
 /** 详情区分组视图模型 */
 interface DetailGroup {

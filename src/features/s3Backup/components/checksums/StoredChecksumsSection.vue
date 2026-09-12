@@ -62,16 +62,21 @@
               {{ i18n.verify }}
             </Button>
             <!-- 徽章："匹配" -->
-            <span
+            <Tag
               v-if="verifyResults[item.fileName] === true"
-              class="verify-badge verify-ok"
+              variant="success"
+              size="xsmall"
             >
               {{ i18n.match }}
-            </span>
+            </Tag>
             <!-- 徽章："不匹配" -->
-            <span v-else-if="verifyResults[item.fileName] === false" class="verify-badge verify-fail">
+            <Tag
+              v-else-if="verifyResults[item.fileName] === false"
+              variant="danger"
+              size="xsmall"
+            >
               {{ i18n.mismatch }}
-            </span>
+            </Tag>
             <!-- 按钮："删除" -->
             <Button
               variant="ghost"
@@ -103,6 +108,7 @@ import { showMessage } from "siyuan"
 import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Button from "@/components/Button.vue"
+import Tag from "@/components/Tag.vue"
 import type { FileChecksum } from "../../types"
 
 const props = defineProps<{

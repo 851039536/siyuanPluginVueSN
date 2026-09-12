@@ -71,4 +71,6 @@
 - **任务互斥**：立即备份/压缩包备份/增量备份/增量还原以及自动备份触发共用运行守卫，任一任务运行中不并发启动新任务（自动备份遇忙记日志跳过）
 - **存储**：PluginStorage + TypedStorage 持久化配置；操作日志上限 200 条（单条结构化清单每类最多 200 项）、校验值上限 100 条、上传来源映射上限 200 条（均超限丢弃最旧），抑制存储单调膨胀
 - **任务编排**：四个入口（立即备份/压缩包/增量备份/增量还原）共用互斥守卫，运行标志在进入时即置位（含目录选择对话框挂起期间），避免并发空窗
-- **UI**：Vue 3 Modal，Codex 风格
+- **错误本地化**：模块层（`BackupManager` / `backupScanner`）零文案依赖，只抛 `BackupError`（错误码 + 不含文案的技术细节）；视图层经 `utils.localizeBackupError` 按 `BACKUP_ERROR_KEYS` 映射 i18n 键后拼接展示，模块层保持纯净且文案可翻译
+- **代码分层**：纯函数集中在 `utils.ts`（`withRetry` / `capFileList` / `isUnsafeRelativePath` / `resolveBackupDir` / `localizeBackupError` / key 构建等），常量与类型在 `types/index.ts`，实例辅助（`persistS3BackupStorage`）在 `instance.ts`，同一规则全模块只有一处定义
+- **UI**：Vue 3 Modal，Codex 风格；标签栏复用共享组件 `Tabs` 五件套（`lazy` 保持「进入即挂载、离开即卸载」），徽章统一用 `Tag`（日志类型 7 种配色齐全、状态/比对结果走 success/danger），下拉用 `Select`，进度条用 `ProgressBar`（自带 `role="progressbar"` 无障碍语义）

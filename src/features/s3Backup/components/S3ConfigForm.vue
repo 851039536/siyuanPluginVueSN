@@ -7,13 +7,13 @@
       <h4>{{ i18n.s3Config }}</h4>
       <div class="header-actions">
         <!-- 徽章："已连接" / "未连接" -->
-        <span
+        <Tag
           v-if="connectionStatus"
-          class="connection-status"
-          :class="connectionStatusClass"
+          :variant="isConnected ? 'success' : 'danger'"
+          size="small"
         >
           {{ connectionStatus }}
-        </span>
+        </Tag>
         <!-- 按钮提示："配置指引" -->
         <Button
           variant="ghost"
@@ -234,6 +234,7 @@ import { Icon } from "@iconify/vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Switch from "@/components/Switch.vue"
+import Tag from "@/components/Tag.vue"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3Config } from "../types"
 import { DEFAULT_S3_CONFIG, DEFAULT_UPLOAD_TIMEOUT_SEC } from "../types"
@@ -265,19 +266,15 @@ const localConfig = reactive<S3Config>({ ...DEFAULT_S3_CONFIG })
 
 // ========== 计算属性 ==========
 
+/** 最近一次连接测试是否成功（驱动状态徽章的 success / danger 配色） */
+const isConnected = computed(() => lastTestResult.value?.success === true)
+
 const connectionStatus = computed(() => {
   if (!lastTestResult.value) return ""
   // 徽章短文案："已连接" / "未连接"
   return lastTestResult.value.success
     ? props.i18n.statusConnected
     : props.i18n.statusDisconnected
-})
-
-const connectionStatusClass = computed(() => {
-  if (!lastTestResult.value) return ""
-  return lastTestResult.value.success
-    ? "status-connected"
-    : "status-disconnected"
 })
 
 // ========== 方法 ==========

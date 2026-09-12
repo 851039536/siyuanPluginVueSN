@@ -1,6 +1,5 @@
 /** 拖放文件即时校验区样式 (Codex) */
 @use '@/variables.scss' as *;
-@use './mixins' as m;
 
 // ========== 拖放区域 ==========
 
@@ -94,32 +93,13 @@
   min-width: 120px;
 }
 
+// 比对目标下拉：外观由共享组件 Select 承担，此处只控制列宽
 .compare-select {
   width: 100%;
   max-width: 160px;
-  padding: $s-px2 $s-1;
-  font-size: $t-2xs;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $r-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  outline: none;
-  cursor: pointer;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
 }
 
+// 比对结果徽章：配色由共享组件 Tag 的 success / danger 变体承担
 .compare-badge {
-  @include m.status-badge;
   white-space: nowrap;
-
-  &.compare-ok {
-    @include m.status-badge-ok;
-  }
-
-  &.compare-fail {
-    @include m.status-badge-fail;
-  }
 }

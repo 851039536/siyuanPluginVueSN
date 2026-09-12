@@ -176,5 +176,13 @@
   "uploadTimeoutHint": "单个上传请求的超时时间，大文件或慢网络可调大，默认 240 秒",
   "s3UploadResult": "备份上传完成：上传 {uploaded}、跳过 {skipped}",
   "s3UploadFailedPart": "，{failed} 个文件读取失败",
-  "allFilesExist": "文件均已存在于 S3，跳过 {skipped} 个"
+  "allFilesExist": "文件均已存在于 S3，跳过 {skipped} 个",
+  "localBackupSuccess": "本地备份成功：{name}（{count} 个文件）",
+  "localBackupFailed": "本地备份失败",
+  "errDataEmpty": "数据目录为空，已取消备份",
+  "errDirNotFound": "目录不存在",
+  "errRefuseNonArchive": "拒绝删除非归档文件",
+  "errScanDirFailed": "无法读取目录",
+  "errScanFileFailed": "无法读取文件信息",
+  "errManagerNotInitialized": "备份管理器未初始化"
 }

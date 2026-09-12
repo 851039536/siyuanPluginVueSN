@@ -1,0 +1,91 @@
+// ========== MeterGroup.scss ==========
+@use '../kit/variables.scss' as *;
+
+// 多段进度条：把一组数值并排成一条。
+// 视觉沿用 FileUpload 的进度条范式（细条 4px / $r-full / 无阴影），
+// 槽底取 surface-lighter 以便与条段（实色）形成对比。
+.si-metergroup {
+  display: flex;
+  gap: $s-2;
+  width: 100%;
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  line-height: $lh-normal;
+
+  // ========== 布局方向 ==========
+  // `horizontal`（默认）：条在左、标签在右（或依 labelPosition 互换），整体横排
+  &--horizontal {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  // `vertical`：条在上、标签在下；条自身为竖条（从下往上长）
+  &--vertical {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  // 标签在 start 侧：把标签提到条之前（DOM 顺序已保证，这里只调对齐）
+  &--label-start {
+    &.si-metergroup--horizontal {
+      align-items: center;
+    }
+  }
+
+  // ========== 条容器 ==========
+  // 水平：占满剩余宽度、固定细条高度；垂直：给足高度、宽度自适应
+  &__meters {
+    display: flex;
+    flex: 1;
+    gap: 2px; // 段间 2px 缝隙，让相邻同色段仍可区分；无对应 Token
+    min-width: 0;
+    overflow: hidden;
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    border-radius: $r-full;
+  }
+
+  &--horizontal &__meters {
+    flex-direction: row;
+    height: 4px; // 同 FileUpload 进度条细条；无对应 Token
+  }
+
+  &--vertical &__meters {
+    flex-direction: column-reverse; // 从下往上堆叠：首项在最底
+    width: 100%;
+    height: 8rem; // 竖条高度下限，无对应 Token
+    min-height: 4rem;
+    border-radius: $r-base; // 竖条较宽，用 6px 圆角（$r-full 会过度圆化端部）
+  }
+
+  // ========== 单段 ==========
+  // 交叉轴恒铺满（水平条段占满高度、垂直条段占满宽度），主轴尺寸由行内 style 给出
+  &__meter {
+    display: block;
+    flex: none;
+    transition: width 0.12s ease, height 0.12s ease;
+  }
+
+  &--horizontal &__meter {
+    height: 100%;
+  }
+
+  &--vertical &__meter {
+    width: 100%;
+  }
+
+  // ========== 标签与条的间距 ==========
+  // 水平布局下标签在左右两侧，需要有间距；垂直布局下上下堆叠同理
+  &--horizontal > .si-metergroup__label-list {
+    flex: none;
+    max-width: 50%;
+  }
+
+  &--vertical > .si-metergroup__label-list {
+    flex: none;
+  }
+
+  // 标签在 end 侧且为水平布局时，标签靠右收口（避免两端元素被拉开）
+  &--horizontal.si-metergroup--label-end > .si-metergroup__label-list {
+    margin-left: 0;
+  }
+}

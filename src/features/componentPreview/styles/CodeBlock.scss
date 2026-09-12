@@ -12,6 +12,9 @@
 .cp-codeblock__pre {
   margin: 0;
   padding: $s-2 $s-3;
+  // 右侧给右上角的复制按钮留位（按钮 22px + 右偏移 4px + 间隙 ⇒ 取最近档 Token 40px），
+  // 否则首行长代码会钻到按钮下面
+  padding-right: $s-10;
   font-family: $ff-mono;
   font-size: $t-xs;
   line-height: $lh-normal;

@@ -5,7 +5,7 @@
  *      `visible: true`，快照即为「打开态」（与 ConfirmDialog 同一口径）。
  * 注 2：`slots` 工厂第二参是注入全局档位后的实际渲染 props，页脚 / 内容里的共享控件据此对齐档位。
  * 注 3：默认插槽 = **内容区**（标题栏与页脚另有插槽），故 `slotText` / `render` 承载的是内容区内容。
- * 注 4：沙箱把遮罩改为相对舞台定位，并把卡片最大高度限制在舞台内（见 styles/PreviewSection.scss），
+ * 注 4：沙箱把遮罩改为相对舞台定位，并把卡片最大高度限制在舞台内（见 styles/PreviewCard.scss），
  *      故「长内容」示例演示的是内容区内部滚动；真实调用处卡片上限为 80vh。
  */
 import type { VNode } from "vue"

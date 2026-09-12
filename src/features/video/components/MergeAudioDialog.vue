@@ -151,9 +151,9 @@ defineProps<{
 defineEmits<{
   close: []
   start: []
-  "update:selectedVideo": [value: string]
-  "update:selectedAudio": [value: string]
-  "update:outputName": [value: string]
+  "update:selectedVideo": [value: string | number | boolean | null]
+  "update:selectedAudio": [value: string | number | boolean | null]
+  "update:outputName": [value: string | number | null]
 }>()
 
 // i18n

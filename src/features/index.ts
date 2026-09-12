@@ -133,7 +133,11 @@ type _Registered =
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销
-interface _AssertTrue<T extends true> {}
+// ⚠️ `T` 只用于约束、不参与成员声明，故以 `// eslint` 无法消除的 TS6133 会出现；
+//    这里用「虚空读取」保留参数名的同时显式消费它（见下方 _AssertionsUsed）。
+interface _AssertTrue<T extends true> {
+  readonly _marker?: T
+}
 
 // ① 正向校验：_Registered 中的每个 ID 必须是有效的 FeatureId
 // 当 config.ts 删除了某功能但这里未同步移除时 → ❌ 编译报错
@@ -146,3 +150,11 @@ type _AssertRegisteredInConfig = _AssertTrue<
 type _AssertAllCovered = _AssertTrue<
   Exclude<FeatureId, _ConfigOnly> extends _Registered ? true : false
 >
+
+/**
+ * 消费上述断言别名，避免 `noUnusedLocals` 把这两条**有意的编译时校验**判为死代码。
+ * 断言本身在**类型求值**时即已生效（`_AssertTrue<T extends true>` 的约束不成立就编译失败），
+ * 此处的集合仅用于「引用一次」，无运行时行为。
+ */
+type _AssertionsUsed = [_AssertRegisteredInConfig, _AssertAllCovered]
+export type { _AssertionsUsed }

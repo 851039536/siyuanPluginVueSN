@@ -246,8 +246,8 @@ onMounted(() => {
     pluginInstance.__quickNote?.reset()
   })
 
-  // 监听打开HTML展示事件
-  addWindowListener("openHtmlViewer", ((event: any) => {
+  // 监听打开HTML展示事件（无参回调，与下方 openTextDiff 写法一致）
+  addWindowListener("openHtmlViewer", (() => {
     htmlViewerVisible.value = true
   }) as EventListener)
 

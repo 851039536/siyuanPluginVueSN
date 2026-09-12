@@ -203,8 +203,10 @@ interface ModelRow {
 }
 
 // DeepSeek 专用密钥（无论当前 AI provider 是什么，都从 aiApiKeys.deepseek 取）
+// ⚠️ 思源 `Plugin` 基类没有 `settings` 字段（那是本插件 `PluginSample` 的扩展）⇒ 经 any 收窄，
+//    与 quickNote/index.ts 读 settings 的既有写法一致。
 const apiKey = computed(() =>
-  (props.plugin.settings as any)?.aiApiKeys?.deepseek || "",
+  (props.plugin as any)?.settings?.aiApiKeys?.deepseek || "",
 )
 
 // 掩码显示：前 6 位 + ****

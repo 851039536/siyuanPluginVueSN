@@ -8,13 +8,21 @@
  * 注 3：宿主的 `openKey` 为预览脚手架：装载时自动展开哪一项（不传则不展开）。
  * 注 4：宿主自身只是预览脚手架，转发 props 时用宽松对象（与渲染层 `PreviewStage` 同法）。
  */
-import type { Component, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
   h,
   ref,
 } from "vue"
-import type { PreviewGroup } from "../types"
+import type {
+  ComponentSize,
+  PreviewGroup,
+} from "../types"
+import type { IconKey } from "@/components/kit/icons"
 import MegaMenu from "@/components/MegaMenu.vue"
 
 /**
@@ -26,7 +34,8 @@ import MegaMenu from "@/components/MegaMenu.vue"
 interface PreviewMenuItem {
   key: string
   label: string
-  icon?: string
+  /** ⚠️ 用 `IconKey` 而非 `string`：透传给 MegaMenu 的严格项类型 `MegaMenuItem`（icon?: IconKey）时报 TS2769 */
+  icon?: IconKey
   disabled?: boolean
   header?: boolean
   description?: string
@@ -48,7 +57,7 @@ const PRODUCT_ITEMS: PreviewMenuItem[] = [
   leaf("表格", { icon: "viewGrid", description: "结构化数据与公式" }),
   leaf("闪卡", { icon: "star", description: "间隔重复记忆" }),
   { key: "h-manage", label: "管理", header: true },
-  leaf("文件树", { icon: "folderOutline", description: "笔记本与文档组织" }),
+  leaf("文件树", { icon: "folder", description: "笔记本与文档组织" }),
   leaf("标签", { icon: "magnify", description: "跨笔记本检索" }),
   { key: "h-ext", label: "扩展", header: true },
   leaf("插件市场", { icon: "folderPlus", description: "安装与更新插件" }),
@@ -69,7 +78,7 @@ const RESOURCE_ITEMS: PreviewMenuItem[] = [
 /** 基础模型：两个可展开根项 + 两个纯叶子根项（无面板，点击即回调） */
 const buildModel = (withPanel: boolean): PreviewMenuItem[] => [
   { key: "product", label: "产品", icon: "viewGrid", items: withPanel ? PRODUCT_ITEMS : [] },
-  { key: "resource", label: "资源", icon: "folderOutline", items: withPanel ? RESOURCE_ITEMS : [] },
+  { key: "resource", label: "资源", icon: "folder", items: withPanel ? RESOURCE_ITEMS : [] },
   { key: "pricing", label: "定价", icon: "star" },
   { key: "about", label: "关于", icon: "menu" },
 ]
@@ -77,8 +86,10 @@ const buildModel = (withPanel: boolean): PreviewMenuItem[] => [
 const MegaMenuDemo = defineComponent({
   name: "MegaMenuDemo",
   props: {
-    size: { type: String, default: "small" },
-    orientation: { type: String, default: "horizontal" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 MegaMenu 的严格联合（MegaMenuSize / MegaMenuOrientation）时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
+    orientation: { type: String as PropType<"horizontal" | "vertical">, default: "horizontal" },
     disabled: { type: Boolean, default: false },
     openOnHover: { type: Boolean, default: true },
     scrollHeight: { type: String, default: "20rem" },

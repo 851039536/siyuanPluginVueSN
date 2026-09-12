@@ -12,7 +12,11 @@
  * 注 5：尺寸四档（官方无 `size` prop，属本项目扩展）⇒ 标 `sizeable`；
  *      ⚠️ 尺寸演示统一由面板头部 XS/S/M/L 档位切换驱动，本分区不单设「尺寸」示例卡。
  */
-import type { Component, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
   h,
@@ -20,6 +24,10 @@ import {
 } from "vue"
 import type { PreviewGroup } from "../types"
 import Toast from "@/components/Toast.vue"
+import type {
+  ToastPosition,
+  ToastSize,
+} from "@/components/toast/types"
 
 /** 队列条目形态（与 Toast 的 ToastMessageOptions 同形；此处用宽松类型避免脚手架与组件类型耦合） */
 type QueueItem = Record<string, any>
@@ -37,8 +45,10 @@ const DEFAULT_QUEUE: QueueItem[] = [
 const ToastDemo = defineComponent({
   name: "ToastDemo",
   props: {
-    size: { type: String, default: "small" },
-    position: { type: String, default: "top-right" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    传给组件的严格联合（ToastPosition / ToastSize）时报 TS2769
+    size: { type: String as PropType<ToastSize>, default: "small" },
+    position: { type: String as PropType<ToastPosition>, default: "top-right" },
     group: { type: String, default: undefined },
     closeLabel: { type: String, default: "关闭" },
     ariaLabel: { type: String, default: "消息通知" },

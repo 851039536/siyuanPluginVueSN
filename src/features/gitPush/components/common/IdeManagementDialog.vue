@@ -158,7 +158,10 @@ defineEmits<{
   close: []
 }>()
 
+// ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
+// TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各弹窗）。
 const { rootRef } = useDialogKeyboard()
+void rootRef
 
 const presetSelectOptions = computed<SelectOption[]>(() =>
   IDE_PRESETS.map((p) => ({ value: p.name, label: p.name })),

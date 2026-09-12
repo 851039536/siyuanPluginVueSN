@@ -9,7 +9,11 @@
  * 注 3：组件纯行为、**零视觉**（不设内边距 / 边框 / 底色），故示例用虚线框标出陷阱边界，
  *      该虚线框属于**演示宿主**而非组件本体。
  */
-import type { Component, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
   h,
@@ -18,6 +22,7 @@ import {
 import type { PreviewGroup } from "../types"
 import Button from "@/components/Button.vue"
 import FocusTrap from "@/components/FocusTrap.vue"
+import type { ComponentSize } from "../types"
 
 /**
  * 演示宿主：陷阱内放三个按钮 +（可选）状态行，用于实测 Tab 回绕。
@@ -26,7 +31,9 @@ import FocusTrap from "@/components/FocusTrap.vue"
 const FocusTrapDemo = defineComponent({
   name: "FocusTrapDemo",
   props: {
-    size: { type: String, default: "small" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 Button 的严格联合 `ButtonSize` 时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
     disabled: { type: Boolean, default: false },
     autoFocus: { type: Boolean, default: true },
     trapFocusIn: { type: Boolean, default: true },

@@ -3,7 +3,7 @@
 // 单进程 fast-import 导入到临时 ref（全程只建对象、不碰工作区），成功后返回新顶端 hash
 // 供调用方 CAS 切回原分支；无论成败 finally 删除临时 ref，失败时原分支引用不被触碰。
 import type { GitExecutor } from "./GitExecutor"
-import type { RewriteEntry, RewritePlan } from "./historyRewritePlan"
+import type { RewritePlan } from "./historyRewritePlan"
 
 /** fast-import / cat-file 导入超时（长历史大仓库放宽，与 BFG 清理同量级） */
 const IMPORT_TIMEOUT_MS = 600000

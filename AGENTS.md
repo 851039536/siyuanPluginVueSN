@@ -91,9 +91,16 @@ feature/
 pnpm lint           # ESLint 代码规范（用户执行，AI 不运行）
 pnpm i18n:verify    # 中英文键对齐
 pnpm validate:icons # 图标注册有效性
-npx tsc --noEmit    # TypeScript 编译类型检查
+pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 ```
 > **重要**：AI 不执行 `pnpm vite build` 和 `pnpm lint`。验证由用户自行完成。
+
+> ⛔ **类型检查必须用 `pnpm typecheck`（`vue-tsc`），禁止用 `npx tsc --noEmit`**。
+> `tsc` 读不懂 `.vue` 文件，只会退回 `src/types/vue.d.ts` 的通配 shim（该 shim 仅声明 `default` 导出、无任何具名类型），
+> 于是**任何 `import type { X } from "*.vue"` 都会失败**，并使 `extends` 该类型的接口塌成 `{}` ——
+> 产生大量**假错误**（实测：`featureRegistry.ts` 在 `tsc` 下报 30 个错、在 `vue-tsc` 下为 0 个）。
+> 用错工具的代价是双向的：既会追查不存在的 bug，**也会漏掉真实错误**（`tsc` 无法校验传给 `.vue` 组件的 props 类型，
+> 这类 `TS2769` 只有 `vue-tsc` 报得出来）。
 
 ### 功能模块内代码分层（强制）
 

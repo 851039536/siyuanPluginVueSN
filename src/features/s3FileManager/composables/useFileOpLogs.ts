@@ -6,7 +6,6 @@
  */
 import { ref } from "vue"
 import { getHostname } from "@/utils/s3/concurrency"
-import { getErrorMessage } from "@/utils/stringUtils"
 import type { FileOpLog } from "../types"
 import { MAX_LOG_COUNT } from "../types"
 import type { S3FileManagerStorage } from "../types/storage"

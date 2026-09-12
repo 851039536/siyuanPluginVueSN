@@ -28,7 +28,7 @@
           <Select
             :model-value="selectedVideo"
             :options="videoOptions"
-            @update:model-value="$emit('update:selectedVideo', $event)"
+            @update:model-value="emit('update:selectedVideo', toStr($event))"
           />
         </div>
 
@@ -40,7 +40,7 @@
                 :checked="mode === 'crf'"
                 type="radio"
                 value="crf"
-                @change="$emit('update:mode', 'crf')"
+                @change="emit('update:mode', 'crf')"
               />
               <span>{{ t("crfMode") }}</span>
             </label>
@@ -49,7 +49,7 @@
                 :checked="mode === 'bitrate'"
                 type="radio"
                 value="bitrate"
-                @change="$emit('update:mode', 'bitrate')"
+                @change="emit('update:mode', 'bitrate')"
               />
               <span>{{ t("bitrateMode") }}</span>
             </label>
@@ -64,7 +64,7 @@
           <Input
             :model-value="crf"
             type="number"
-            @update:model-value="$emit('update:crf', $event)"
+            @update:model-value="emit('update:crf', $event)"
           />
           <div class="form-hint">
             {{ t("crfHint") }}
@@ -79,7 +79,7 @@
           <Input
             :model-value="bitrate"
             :placeholder="t('bitratePlaceholder')"
-            @update:model-value="$emit('update:bitrate', $event)"
+            @update:model-value="emit('update:bitrate', $event)"
           />
           <div class="form-hint">
             {{ t("bitrateHint") }}
@@ -91,7 +91,7 @@
           <Input
             :model-value="outputName"
             :placeholder="t('compressedVideoPlaceholder')"
-            @update:model-value="$emit('update:outputName', $event)"
+            @update:model-value="emit('update:outputName', $event)"
           />
         </div>
 
@@ -231,15 +231,24 @@ defineProps<{
   compressionRate: string
 }>()
 
-defineEmits<{
-  close: []
-  start: []
-  "update:selectedVideo": [value: string]
-  "update:mode": [value: string]
-  "update:crf": [value: string]
-  "update:bitrate": [value: string]
-  "update:outputName": [value: string]
+/**
+ * 用「调用签名重载」而非「命名元组」声明 emits：命名元组在 `$emit(name, $event)`
+ * 这类动态分派处会退化成联合实参，TS 无法为任一重载完成匹配（TS2769）。
+ */
+const emit = defineEmits<{
+  (e: "close"): void
+  (e: "start"): void
+  (e: "update:selectedVideo", value: string): void
+  (e: "update:mode", value: "crf" | "bitrate"): void
+  (e: "update:crf", value: string | number | null): void
+  (e: "update:bitrate", value: string | number | null): void
+  (e: "update:outputName", value: string | number | null): void
 }>()
+
+/** Select 的更新值可能是 number/boolean，这里统一收窄为字符串 */
+function toStr(value: string | number | boolean | null): string {
+  return value === null ? "" : String(value)
+}
 
 // i18n
 const plugin = usePlugin()

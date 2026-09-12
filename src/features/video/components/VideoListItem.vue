@@ -52,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+import type { IconKey } from "@/components/kit/icons"
 import type { VideoData } from "./VideoPlayerDialog.vue"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
@@ -103,7 +104,7 @@ const encryptionType = computed(() => {
 })
 
 // 加密图标
-const encryptionIcon = computed(() => {
+const encryptionIcon = computed<IconKey>(() => {
   return "pageLock"
 })
 

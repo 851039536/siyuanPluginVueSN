@@ -10,12 +10,18 @@
  */
 import type { VNode } from "vue"
 import { h } from "vue"
-import type { Component } from "vue"
+import type {
+  Component,
+  PropType,
+} from "vue"
 import {
   defineComponent,
   ref,
 } from "vue"
-import type { PreviewGroup } from "../types"
+import type {
+  ComponentSize,
+  PreviewGroup,
+} from "../types"
 import FileUpload from "@/components/FileUpload.vue"
 
 /** 造一个纯内存假文件（不发起请求、不落盘，仅用于让快照有内容可渲染） */
@@ -47,9 +53,11 @@ const makeImageFile = (name: string, size: number): File => {
 const FileUploadDemo = defineComponent({
   name: "FileUploadDemo",
   props: {
-    size: { type: String, default: "small" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 FileUpload 的严格联合（FileUploadSize / FileUploadMode）时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
     accept: { type: String, default: "" },
-    mode: { type: String, default: "advanced" },
+    mode: { type: String as PropType<"advanced" | "basic">, default: "advanced" },
     multiple: { type: Boolean, default: true },
     disabled: { type: Boolean, default: false },
     maxFileSize: { type: Number, default: undefined },

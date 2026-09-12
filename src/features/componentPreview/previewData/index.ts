@@ -40,11 +40,17 @@ import {
   fileUploadPreviewGroups,
 } from "./fileUpload"
 import {
+  focusTrapPreviewGroups,
+} from "./focusTrap"
+import {
   inputPreviewGroups,
 } from "./input"
 import {
   inputGroupPreviewGroups,
 } from "./inputGroup"
+import {
+  inplacePreviewGroups,
+} from "./inplace"
 import {
   listboxPreviewGroups,
 } from "./listbox"
@@ -131,6 +137,8 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...dialogPreviewGroups,
   ...drawerPreviewGroups,
   ...fileUploadPreviewGroups,
+  ...inplacePreviewGroups,
+  ...focusTrapPreviewGroups,
   ...megaMenuPreviewGroups,
   ...tieredMenuPreviewGroups,
   ...tooltipPreviewGroups,

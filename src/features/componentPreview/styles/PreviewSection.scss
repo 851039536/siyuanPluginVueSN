@@ -283,6 +283,65 @@
   }
 }
 
+// ==================== Inplace / FocusTrap 演示类 ====================
+// 仅用于 Inplace 与 FocusTrap 分区；真实项目请用你自己的类名。
+// ⚠️ 两者的「框」都是**演示脚手架**而非组件本体：Inplace 自身无边框，FocusTrap 更是纯行为零视觉。
+
+// Inplace 演示宿主：只读态做成「虚线提示可点」，与真编辑态形成对照
+.cp-inplace-demo__display {
+  color: var(--b3-theme-primary);
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.cp-inplace-demo__input {
+  min-width: 140px; // 无对应 Token
+  padding: $s-px3 $s-px6;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  outline: none;
+}
+
+.cp-inplace-demo__row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+}
+
+.cp-inplace-demo__text {
+  color: var(--b3-theme-on-surface);
+}
+
+// FocusTrap 演示宿主：陷阱边界靠这层虚线框示意（组件本体零视觉）
+.cp-focustrap-demo {
+  border: 1px dashed var(--b3-border-color);
+  border-radius: $r-base;
+  padding: $s-3;
+}
+
+.cp-focustrap-demo__status {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px2;
+  margin-bottom: $s-2;
+  font-size: $t-2xs;
+  color: $c-muted;
+}
+
+.cp-focustrap-demo__caught {
+  color: var(--b3-theme-warning, $c-warning);
+}
+
+.cp-focustrap-demo__row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+}
+
 // ==================== Card 容器钩子演示类 ====================
 // 仅用于 Card 分区的「容器钩子 - contentClass / captionClass」示例；真实项目请用你自己的类名。
 // ⚠️ 主体容器已有卡片档位的 padding（`.si-card--{tier} .si-card__body` 特异性更高且会取胜），

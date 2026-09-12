@@ -1,0 +1,50 @@
+// ========== Inplace.scss ==========
+@use './_mixins.scss' as m;
+@use '../kit/variables.scss' as *;
+
+// 就地编辑容器：两态互换（display 只读输出 / content 编辑内容）
+// 两态共用同一外层容器，切换时容器尺寸会随内容变化 —— 这是就地编辑的固有行为（官方亦然）。
+.si-inplace {
+  display: inline-block;
+  max-width: 100%;
+  font-family: $ff-zh;
+  line-height: $lh-normal;
+
+  &__display {
+    display: inline-block;
+    max-width: 100%;
+    padding: $s-px1 $s-px2; // 1px 2px — 极轻的占位内边距，避免紧贴相邻元素
+    border: 1px dashed transparent; // 占位：悬停时显形，避免出现时不抖动
+    border-radius: $r-sm;
+    cursor: pointer;
+    transition: border-color 0.12s ease, background-color 0.12s ease;
+
+    // 悬停 / 聚焦时才显出「可点击编辑」的虚线框（Codex 边框优先，不用阴影）
+    &:hover {
+      border-color: var(--b3-border-color, $c-border);
+      background: var(--b3-theme-surface-lighter, $c-surface);
+    }
+
+    // 以边框变色作为可见焦点指示（故不再叠加 outline）
+    &:focus-visible {
+      border-color: var(--b3-theme-primary, $c-primary);
+      outline: none;
+    }
+
+    &--disabled {
+      cursor: not-allowed;
+      opacity: m.$opacity-disabled;
+    }
+  }
+
+  &__content {
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  // 禁用态：display 不响应悬停反馈
+  &--disabled &__display:hover {
+    border-color: transparent;
+    background: transparent;
+  }
+}

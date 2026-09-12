@@ -49,6 +49,8 @@ export interface I18n {
   sizeSmall?: string
   sizeMedium?: string
   sizeLarge?: string
+  /** 档位切换分组的无障碍名称（role="group" 的 aria-label） */
+  sizeLabel?: string
 }
 
 /** 单个用法示例（props 组合 + 默认插槽文本 + 对应可复制代码） */

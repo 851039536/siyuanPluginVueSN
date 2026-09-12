@@ -441,7 +441,8 @@
     "sizeXsmall": "Extra small (xsmall)",
     "sizeSmall": "Small (default)",
     "sizeMedium": "Medium",
-    "sizeLarge": "Large"
+    "sizeLarge": "Large",
+    "sizeLabel": "Component size"
   },
   "openComponentPreview": "Open Component Preview",
   "enableComponentPreview": "Enable Component Preview",

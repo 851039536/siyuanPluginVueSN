@@ -13,7 +13,7 @@
   gap: $s-3;
   padding-bottom: $s-2;
   margin-bottom: $s-2;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-bottom: 1px solid var(--b3-border-color);
 }
 
 .cp-section__name {
@@ -24,7 +24,14 @@
   color: var(--b3-theme-on-background);
 }
 
+// 摘要可能很长（含机制告警），限两行内展示，悬浮看全文
 .cp-section__summary {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   font-size: $t-xs;
   color: $c-muted;
 }
@@ -40,20 +47,27 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: $s-3;
+  // 卡片按自身内容高度排列：特例舞台（MegaMenu 340px 等）不再把同排卡片一起拉高，
+  // 也不会因展开代码块而撑高同排其他卡片
+  align-items: start;
+}
+
+// 宽舞台浮层卡片（Dialog / Drawer / MegaMenu / TieredMenu）跨两列，给展开面板留横向空间；
+// ⚠️ <720px 时内容为单列，跨列会撑出横向溢出，故只在宽屏生效
+@media (min-width: 720px) {
+  .cp-card--wide {
+    grid-column: span 2;
+  }
 }
 
 .cp-card {
   display: flex;
   flex-direction: column;
   background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   overflow: hidden;
-  transition: border-color 0.12s ease;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
+  // 卡片整体不可点（可点的只有页脚的代码按钮）⇒ 不做 hover 高亮，避免「点了没反应」的误导
 }
 
 // 组件渲染舞台
@@ -369,7 +383,7 @@
   justify-content: space-between;
   gap: $s-2;
   padding: $s-2 $s-3;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
+  border-top: 1px solid var(--b3-border-color);
 }
 
 .cp-card__title {
@@ -378,26 +392,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: $t-2xs;
-  color: $c-muted;
-}
-
-.cp-card__code-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px; // 图标按钮尺寸，无对应 Token
-  height: 22px; // 图标按钮尺寸，无对应 Token
-  padding: 0;
-  border: none;
-  background: transparent;
-  border-radius: $r-sm;
+  font-size: $t-xs;
   color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-primary);
-  }
 }
+
+// 代码切换按钮改用共享 Button（自带 hover / 焦点环 / icon-only 几何），此处不再自建样式

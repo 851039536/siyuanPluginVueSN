@@ -4,7 +4,7 @@
 .cp-codeblock {
   position: relative;
   background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   overflow: hidden;
 }
@@ -13,39 +13,32 @@
   margin: 0;
   padding: $s-2 $s-3;
   font-family: $ff-mono;
-  font-size: $t-2xs;
+  font-size: $t-xs;
   line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   overflow-x: auto;
   white-space: pre-wrap;
-  word-break: break-all;
+  // 仅在必要时才断词（原 break-all 会把标识符从中间断开，核对代码时难读）
+  overflow-wrap: break-word;
 }
 
+// 复制按钮由共享 Button 承担外观、悬停与焦点环，此处只保留绝对定位（浮在代码区右上角）
 .cp-codeblock__copy {
   position: absolute;
   top: $s-1;
   right: $s-1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px; // 图标按钮尺寸，无对应 Token
-  height: 24px; // 图标按钮尺寸，无对应 Token
-  padding: 0;
-  border: none;
-  border-radius: $r-sm;
-  background: var(--b3-theme-surface-lighter);
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  opacity: 0.55;
-  transition: opacity 0.12s ease, color 0.12s ease;
-
-  &:hover {
-    opacity: 1;
-    color: var(--b3-theme-primary);
-  }
 }
 
-.cp-codeblock__copy--copied {
-  opacity: 1;
-  color: var(--b3-theme-success);
+// 视觉隐藏文本：承载 aria-live 播报（复制成功提示），不占布局
+.cp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }

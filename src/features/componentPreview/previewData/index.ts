@@ -70,6 +70,9 @@ import {
   panelPreviewGroups,
 } from "./panel"
 import {
+  progressBarPreviewGroups,
+} from "./progressBar"
+import {
   radioButtonPreviewGroups,
 } from "./radioButton"
 import {
@@ -130,6 +133,7 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...tagAvatarPreviewGroups,
   ...messagePreviewGroups,
   ...meterGroupPreviewGroups,
+  ...progressBarPreviewGroups,
   ...toastPreviewGroups,
   ...timelinePreviewGroups,
   ...tabsPreviewGroups,

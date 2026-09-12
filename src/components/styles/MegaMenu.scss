@@ -1,0 +1,256 @@
+// ========== MegaMenu.scss ==========
+// 大型菜单：根菜单（水平条）+ 展开面板（多列并排分组）；Codex 边框优先、禁 box-shadow
+@use '../kit/variables.scss' as *;
+
+.si-megamenu {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-mm-font: #{$t-xs}; // 12px
+  --si-mm-pad-y: #{$s-px6};
+  --si-mm-pad-x: #{$s-2};
+  --si-mm-gap: #{$s-2};
+
+  position: relative; // 面板定位基准（不 Teleport，同 Select / DatePicker 范式）
+  display: flex;
+  align-items: center;
+  gap: var(--si-mm-gap);
+  font-family: $ff-zh;
+  font-size: var(--si-mm-font, #{$t-xs});
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-background, $c-fg);
+
+  &--disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  // ==================== 尺寸档位 ====================
+  // 字号阶梯 10/12/14/16，内边距与段间距同步收放
+  &--xsmall {
+    --si-mm-font: #{$t-2xs}; // 10px
+    --si-mm-pad-y: #{$s-1};
+    --si-mm-pad-x: #{$s-px6};
+    --si-mm-gap: #{$s-px6};
+  }
+
+  &--small {
+    --si-mm-font: #{$t-xs}; // 12px
+    --si-mm-pad-y: #{$s-px6};
+    --si-mm-pad-x: #{$s-2};
+    --si-mm-gap: #{$s-2};
+  }
+
+  &--medium {
+    --si-mm-font: #{$t-sm}; // 14px
+    --si-mm-pad-y: #{$s-2};
+    --si-mm-pad-x: #{$s-3};
+    --si-mm-gap: #{$s-3};
+  }
+
+  &--large {
+    --si-mm-font: #{$t-base}; // 16px
+    --si-mm-pad-y: #{$s-px10};
+    --si-mm-pad-x: #{$s-4};
+    --si-mm-gap: #{$s-3};
+  }
+
+  // 首尾插槽：不缩放、不换行
+  &__start,
+  &__end {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+  }
+
+  // ==================== 根菜单 ====================
+  &__root {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: $s-px2;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+
+    // vertical：根菜单变竖排，面板改在侧方展开
+    .si-megamenu--vertical & {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  &__root-item {
+    position: relative; // 面板定位到本项下方
+  }
+
+  &__root-link {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+    width: 100%;
+    padding: var(--si-mm-pad-y) var(--si-mm-pad-x);
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: $r-base;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-surface, $c-surface);
+    }
+
+    // 展开态：主题色文字 + 弱主题底（不用阴影表达层级）
+    .si-megamenu__root-item--active > & {
+      color: var(--b3-theme-primary, $c-primary);
+      background: var(--b3-theme-surface, $c-surface);
+      border-color: var(--b3-border-color, $c-border);
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-color: var(--b3-theme-primary, $c-primary);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  &__root-icon {
+    flex: none;
+    color: var(--b3-theme-on-surface);
+  }
+
+  &__root-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // 可展开标记：展开时翻转朝上（0.12s，与全库过渡时长一致）
+  &__root-caret {
+    flex: none;
+    color: var(--b3-theme-on-surface);
+    transition: transform 0.12s ease;
+
+    .si-megamenu__root-item--active & {
+      transform: rotate(180deg);
+    }
+  }
+
+  // ==================== 展开面板 ====================
+  &__panel {
+    position: absolute;
+    // 默认贴根项下方（horizontal）；vertical 档在下方单独覆盖
+    top: calc(100% + #{$s-1});
+    left: 0;
+    z-index: 100;
+    min-width: 100%;
+    overflow-y: auto;
+    padding: var(--si-mm-pad-y) var(--si-mm-pad-x);
+    background: var(--b3-theme-background, $c-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
+
+    // vertical：面板移到根项右侧
+    .si-megamenu--vertical & {
+      top: 0;
+      left: calc(100% + #{$s-1});
+    }
+  }
+
+  // 多列并排：这是 MegaMenu 的定义性特征（与普通单列下拉的区别所在）
+  &__grid {
+    display: grid;
+    // 自动填充列，每列不低于 columnMinWidth；列数随面板可用宽度自适应
+    grid-template-columns: repeat(auto-fit, minmax(var(--si-mm-col-min, 160px), 1fr));
+    gap: var(--si-mm-gap);
+
+    // vertical 下根菜单已竖排，面板宽度有限 ⇒ 收为单列避免挤成窄条
+    .si-megamenu--vertical & {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__column {
+    min-width: 0;
+  }
+
+  // 列标题：不可点击，仅作分组标识（小字 + 次级色）
+  &__column-header {
+    padding: $s-1 var(--si-mm-pad-x);
+    font-size: $t-2xs;
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.75;
+  }
+
+  &__list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__leaf {
+    display: flex;
+    align-items: flex-start;
+    gap: $s-2;
+    width: 100%;
+    padding: $s-px6 var(--si-mm-pad-x);
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: $r-sm;
+    cursor: pointer;
+    transition: border-color 0.12s ease, background-color 0.12s ease;
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-surface, $c-surface);
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-color: var(--b3-theme-primary, $c-primary);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  &__leaf-icon {
+    flex: none;
+    // 与首行文字视觉对齐（行高 1.5 下的经验偏移）
+    margin-top: $s-px2;
+    color: var(--b3-theme-on-surface);
+  }
+
+  &__leaf-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $s-px1;
+  }
+
+  &__leaf-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  // 补充说明：小字 + 次级色，给叶子项提供「一句话解释」
+  &__leaf-desc {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.75;
+  }
+}

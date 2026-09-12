@@ -78,7 +78,7 @@
       :today="today"
       :disabled="disabled"
       :range="range"
-      :aria-label="ariaLabels.chooseDate"
+      :ariaLabel="ariaLabels.chooseDate"
       @select="emit('select', $event)"
       @navigate="handleNavigate"
     >
@@ -98,7 +98,7 @@
       :today="today"
       :disabled="disabled"
       :month-labels="monthLabels"
-      :aria-label="ariaLabels.chooseDate"
+      :ariaLabel="ariaLabels.chooseDate"
       @select="handleMatrixSelect"
     />
 
@@ -179,8 +179,8 @@ interface Props {
   clearText: string
   /** 无障碍文案 */
   ariaLabels: DatePickerAriaLabels
-  /** 月份宫格文案 */
-  monthLabels: string[]
+  /** 月份宫格文案（默认取 `MONTH_LABELS`，调用方可不传） */
+  monthLabels?: string[]
   /** 面板导航图标尺寸 */
   navIconSize: number
 }

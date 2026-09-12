@@ -16,7 +16,10 @@ import {
   ref,
 } from "vue"
 import type { IconKey } from "@/components/kit/icons"
-import type { PreviewGroup } from "../types"
+import type {
+  ComponentSize,
+  PreviewGroup,
+} from "../types"
 import Button from "@/components/Button.vue"
 import ConfirmPopup from "@/components/ConfirmPopup.vue"
 
@@ -24,15 +27,24 @@ import ConfirmPopup from "@/components/ConfirmPopup.vue"
 const ConfirmPopupDemo = defineComponent({
   name: "ConfirmPopupDemo",
   props: {
-    size: { type: String, default: "small" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 Button / ConfirmPopup 的严格联合（ButtonSize / ConfirmSeverity /
+    //    ConfirmPlacement）时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
     header: { type: String, default: "" },
     message: { type: String, default: "" },
     icon: { type: String as PropType<IconKey | undefined>, default: undefined },
     acceptLabel: { type: String, default: undefined },
     rejectLabel: { type: String, default: undefined },
-    acceptSeverity: { type: String, default: undefined },
+    acceptSeverity: { type: String as PropType<"danger" | "primary">, default: undefined },
     acceptLoading: { type: Boolean, default: false },
-    placement: { type: String, default: "auto" },
+    placement: {
+      type: String as PropType<
+        "auto" | "top" | "bottom" | "left" | "right"
+        | "top-left" | "top-right" | "bottom-left" | "bottom-right"
+      >,
+      default: "auto",
+    },
     dismissable: { type: Boolean, default: true },
   },
   setup(props) {

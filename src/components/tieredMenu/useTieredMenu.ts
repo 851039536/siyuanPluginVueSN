@@ -305,6 +305,8 @@ export function useTieredMenu(options: UseTieredMenuOptions) {
     closeFrom,
     handleItemEnter,
     scheduleClose,
+    // 供模板在指针移入子菜单面板时取消挂起的关闭定时器（否则面板会闪退）
+    cancelClose,
     handleItemClick,
     showPopup,
     hidePopup,

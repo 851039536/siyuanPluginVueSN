@@ -124,7 +124,7 @@ function initPlayer() {
   player.on("play", () => emit("play"))
   player.on("pause", () => emit("pause"))
   player.on("ended", () => emit("ended"))
-  player.on("error", (error) => emit("error", error))
+  player.on("error", (error: unknown) => emit("error", error))
 }
 
 // 监听视频源变化

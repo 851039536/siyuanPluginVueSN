@@ -148,6 +148,14 @@ interface Props {
 
 const props = defineProps<Props>()
 
+/**
+ * 取 i18n 文案；`I18n` 各字段均为可选（宿主未注入时整表为空对象），
+ * 故此处收窄为 string，缺失时回退到键名本身，避免把 undefined 传给 showMessage。
+ */
+function msg(key: keyof I18n): string {
+  return props.i18n[key] ?? String(key)
+}
+
 useBrowserState(props.plugin)
 
 const showSidebar = ref(true)
@@ -175,12 +183,12 @@ onMounted(async () => {
 
 const handleNavigate = (url: string) => {
   if (!navigate(url)) {
-    showMessage(props.i18n.invalidUrl, 3000, "error")
+    showMessage(msg("invalidUrl"), 3000, "error")
   }
 }
 
 const handleInvalidUrl = () => {
-  showMessage(props.i18n.invalidUrl, 3000, "error")
+  showMessage(msg("invalidUrl"), 3000, "error")
 }
 
 const handleFrameLoad = () => {
@@ -198,10 +206,10 @@ const handleToggleFavorite = () => {
   if (existing) {
     removeFavorite(existing.id).then((ok) => {
       if (ok) {
-        showMessage(props.i18n.favoriteRemoved, 2000, "info")
+        showMessage(msg("favoriteRemoved"), 2000, "info")
       }
     }).catch(() => {
-      showMessage(props.i18n.saveFailed, 3000, "error")
+      showMessage(msg("saveFailed"), 3000, "error")
     })
     return
   }
@@ -230,7 +238,7 @@ const handleSaveFavorite = async () => {
       const ok = await renameFavorite(editing, favoriteNameInput.value)
       if (ok) {
         closeFavoriteDialog()
-        showMessage(props.i18n.saveSuccess, 2000, "info")
+        showMessage(msg("saveSuccess"), 2000, "info")
       }
       return
     }
@@ -238,21 +246,21 @@ const handleSaveFavorite = async () => {
     if (!url) return
     await addFavorite(favoriteNameInput.value, url)
     closeFavoriteDialog()
-    showMessage(props.i18n.favoriteAdded, 2000, "info")
+    showMessage(msg("favoriteAdded"), 2000, "info")
   } catch {
-    showMessage(props.i18n.saveFailed, 3000, "error")
+    showMessage(msg("saveFailed"), 3000, "error")
   }
 }
 
 const handleDeleteEntry = (id: string) => {
   // eslint-disable-next-line no-alert
-  if (!window.confirm(props.i18n.confirmDelete)) return
+  if (!window.confirm(msg("confirmDelete"))) return
   removeFavorite(id).then((ok) => {
     if (!ok) {
-      showMessage(props.i18n.saveFailed, 3000, "error")
+      showMessage(msg("saveFailed"), 3000, "error")
     }
   }).catch(() => {
-    showMessage(props.i18n.saveFailed, 3000, "error")
+    showMessage(msg("saveFailed"), 3000, "error")
   })
 }
 
@@ -287,11 +295,11 @@ const handleToggleFloating = () => {
 
 const handleSettingsSaved = () => {
   showSettings.value = false
-  showMessage(props.i18n.saveSuccess, 2000, "info")
+  showMessage(msg("saveSuccess"), 2000, "info")
 }
 
 const handleSettingsSaveFailed = () => {
-  showMessage(props.i18n.saveFailed, 3000, "error")
+  showMessage(msg("saveFailed"), 3000, "error")
 }
 </script>
 

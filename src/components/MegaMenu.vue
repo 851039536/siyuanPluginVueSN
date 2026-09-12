@@ -42,7 +42,7 @@
           :data-mm-root="index"
           :disabled="disabled || item.disabled || undefined"
           :aria-haspopup="isExpandable(item) ? 'true' : undefined"
-          :aria-expanded="isExpandable(item) ? String(activeKey === item.key) : undefined"
+          :aria-expanded="isExpandable(item) ? (activeKey === item.key ? 'true' : 'false') : undefined"
           :aria-controls="isExpandable(item) ? `${menuId}-panel-${index}` : undefined"
           :tabindex="rovingTabindex(index)"
           @focus="markRootFocus(index)"
@@ -231,6 +231,10 @@ const setItemRef = (el: unknown, index: number) => {
   // 根项是原生 button，故 el 即 HTMLElement | null（未走共享 Button 的 expose 契约）
   itemRefs.value[index] = (el as HTMLElement | null) ?? null
 }
+
+// `rootRef` 只服务于模板 `ref="rootRef"` 绑定（点击外部判定在 composable 内部读同一 ref），
+// script 内无其他读取点 ⇒ 显式标记为已用，避免 TS6133 误报
+void rootRef
 
 /** 叶子项点击：先派发 select 事件，再交由 composable 执行 command 并收起 */
 const handleLeafSelect = (leaf: MegaMenuItem, event: MouseEvent) => {

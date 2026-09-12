@@ -400,6 +400,8 @@ const service = useCodeImageGenerator(t, codeImageSettings)
 
 const {
   state,
+  // ⚠️ `codePreview` 必须保留为本地绑定：模板 `ref="codePreview"` 依赖它把预览根节点交给 composable，
+  // 导出图片时 `generateCanvas()` 会读该节点交给 html2canvas 截图。TS 看不到模板中的使用，故以 void 显式消费。
   codePreview,
   languageOptions,
   themeOptions,
@@ -420,6 +422,9 @@ const {
   downloadImage,
   applyPersistedPrefs,
 } = service
+
+// TS 看不到模板 `ref="codePreview"` 的使用，此处显式消费避免 noUnusedLocals 误判
+void codePreview
 
 const exportFormatOptions: SelectOption[] = [
   { value: "png", label: t.formatPng },

@@ -226,11 +226,6 @@ export function useStatusBar() {
     timerRegistry.setInterval(fetchStatistics, STATISTICS_INTERVAL_MS)
   }
 
-  function stop() {
-    timerRegistry.clearAll()
-    started = false
-  }
-
   onMounted(() => {
     timerRegistry.setTimeout(() => {
       state.showMonitor = true

@@ -204,8 +204,10 @@ const textareaClasses = computed(() => [
  * 非 autoResize 时用内联样式承载 resize 档位；autoResize 时交出控制权
  * （由 --autoresize 类固定 resize:none + overflow:hidden），
  * 否则 Vue 重渲染会把手写计算的 overflow-y 覆盖回 hidden。
+ * ⚠️ 值类型须含 `undefined`：`autoResize` 分支返回 `{}`（即 `resize?: undefined`），
+ *    写成 `Record<string, string>` 会因索引签名不容 `undefined` 而报 TS2769。
  */
-const fieldStyle = computed<Record<string, string>>(() =>
+const fieldStyle = computed<Record<string, TextareaResize | undefined>>(() =>
   props.autoResize ? {} : { resize: props.resize },
 )
 

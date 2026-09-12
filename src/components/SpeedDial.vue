@@ -156,7 +156,10 @@ const itemRefs = ref<Array<FocusableHandle | undefined>>([])
 
 const handleVisibleChange = (value: boolean) => {
   emit("update:visible", value)
-  emit(value ? "show" : "hide")
+  // ⚠️ `emit(value ? "show" : "hide")` 会因 Emits 为「重载签名」而报 TS2769
+  //    （联合字面量无法匹配任一单一重载）⇒ 分支调用，使每次调用都是确定的单一字面量
+  if (value) emit("show")
+  else emit("hide")
 }
 
 const {

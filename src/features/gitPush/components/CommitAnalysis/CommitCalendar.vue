@@ -98,7 +98,7 @@ interface MonthCell {
 
 /** 逐月卡片：月初到 weekStart 的偏移空格 + 每日格子 + 月提交总数 */
 const months = computed<MonthCell[]>(() => {
-  const [sy, sm, sd] = props.start.split("-").map(Number)
+  const [sy, sm] = props.start.split("-").map(Number)
   const [ey, em, ed] = props.end.split("-").map(Number)
   const end = new Date(ey, em - 1, ed)
   // 提到循环外：原先在每日分支里重复调用，12 个月 × 31 天会多算约 370 次格式化

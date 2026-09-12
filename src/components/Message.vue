@@ -117,8 +117,11 @@ const iconSize = computed(() => TIER_ICON_SIZE[props.size])
 /**
  * life 定时器句柄：组件内原生定时器（库内 tooltip / megaMenu / sidebar / tieredMenu 同范式）。
  * 刻意不用 `@/utils/timerRegistry` —— 组件库需可整目录外迁、零业务耦合。
+ * ⚠️ 显式标注 `number`：`@types/node` 在作用域内会污染全局 `setTimeout` 的返回类型
+ *    （解析到 Node 的 `Timeout`），用 `ReturnType<typeof setTimeout>` 或
+ *    `ReturnType<typeof window.setTimeout>` 都会拿到 `Timeout`，与浏览器实现不符。
  */
-let lifeTimer: ReturnType<typeof setTimeout> | null = null
+let lifeTimer: number | null = null
 
 const clearLifeTimer = () => {
   if (lifeTimer !== null) {

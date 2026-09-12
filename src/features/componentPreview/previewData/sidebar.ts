@@ -11,13 +11,20 @@
  * 注 4：折叠为图标条时，标记了 `si-sidebar__label` 的文案会被隐藏（样式约定），
  *      故宿主内的项都是「图标 + 带该类名的文案」结构。
  */
-import type { Component, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
   h,
   ref,
 } from "vue"
-import type { PreviewGroup } from "../types"
+import type {
+  ComponentSize,
+  PreviewGroup,
+} from "../types"
 import type { IconKey } from "@/components/kit/icons"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Sidebar from "@/components/Sidebar.vue"
@@ -44,10 +51,13 @@ const NAV_ITEMS: [IconKey, string][] = [
 const SidebarDemo = defineComponent({
   name: "SidebarDemo",
   props: {
-    size: { type: String, default: "small" },
-    side: { type: String, default: "left" },
-    variant: { type: String, default: "sidebar" },
-    collapsible: { type: String, default: "icon" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 Sidebar / SidebarMain 的严格联合（SidebarSize / SidebarSide / SidebarVariant /
+    //    SidebarCollapsible）时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
+    side: { type: String as PropType<"left" | "right">, default: "left" },
+    variant: { type: String as PropType<"sidebar" | "floating" | "inset">, default: "sidebar" },
+    collapsible: { type: String as PropType<"offcanvas" | "icon" | "none">, default: "icon" },
     overlay: { type: Boolean, default: false },
     openOnHover: { type: Boolean, default: false },
     dismissable: { type: Boolean, default: true },

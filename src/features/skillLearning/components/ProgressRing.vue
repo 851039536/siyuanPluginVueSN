@@ -1,7 +1,10 @@
 <!-- 技能学习 - 环形进度图组件（练习覆盖 / 正确率） -->
 <template>
   <div class="stats-view__section stats-view__section--ring">
-    <div class="stats-view__section-title">
+    <div
+      v-if="title"
+      class="stats-view__section-title"
+    >
       {{ title }}
     </div>
     <div class="stats-view__progress-ring">
@@ -45,7 +48,12 @@
 import { computed } from "vue"
 
 const props = defineProps<{
-  title: string
+  /**
+   * 环形图标题。
+   * ⚠️ 可选：来源 `SkillI18n` 的字段全部可选（宿主 i18n 分片缺失时传入的对象可能没有该键），
+   *    缺省时不渲染标题行 —— 不在模板里写中文兜底（AGENTS.md 禁止 i18n 硬编码兜底值）。
+   */
+  title?: string
   pct: number
   current: number
   total: number

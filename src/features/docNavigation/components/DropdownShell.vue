@@ -70,7 +70,10 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = ref(false)
+// ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 判定「点击外部关闭」。
+// TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各下拉/弹窗）。
 const rootRef = useClickOutside(isOpen)
+void rootRef
 
 function handleTriggerClick(): void {
   isOpen.value = !isOpen.value

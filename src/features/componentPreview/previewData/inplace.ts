@@ -8,13 +8,20 @@
  * 注 3：组件自身不带任何文案（display / content 都是插槽），故示例文案由宿主提供；
  *      ⚠️ 这也是它**零 i18n 分片改动**的原因 —— 全部文案来自调用方。
  */
-import type { Component, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
   h,
   ref,
 } from "vue"
-import type { PreviewGroup } from "../types"
+import type {
+  ComponentSize,
+  PreviewGroup,
+} from "../types"
 import Button from "@/components/Button.vue"
 import Inplace from "@/components/Inplace.vue"
 
@@ -26,7 +33,9 @@ import Inplace from "@/components/Inplace.vue"
 const InplaceDemo = defineComponent({
   name: "InplaceDemo",
   props: {
-    size: { type: String, default: "small" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 Button 的严格联合 `ButtonSize` 时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
     disabled: { type: Boolean, default: false },
     /** 预览脚手架：首帧是否直接处于编辑态 */
     defaultActive: { type: Boolean, default: false },

@@ -80,6 +80,7 @@ defineProps<{
 const emit = defineEmits<{
   (e: "close"): void
   (e: "saved"): void
+  (e: "saveFailed"): void
 }>()
 
 const homeUrl = ref("")
@@ -94,7 +95,12 @@ const handleSave = async () => {
   try {
     // 只传 homeUrl，保存函数内部与当前设置合并
     const ok = await saveBrowserSettings({ homeUrl: homeUrl.value.trim() })
-    emit(ok ? "saved" : "saveFailed")
+    // 分支调用：三元表达式会让实参退化成 "saved" | "saveFailed" 联合，无法匹配任一重载
+    if (ok) {
+      emit("saved")
+    } else {
+      emit("saveFailed")
+    }
   } finally {
     saving.value = false
   }

@@ -40,7 +40,7 @@
           <Input
             :model-value="customPath"
             :placeholder="t('customFFmpegPathPlaceholder')"
-            @update:model-value="$emit('update:customPath', $event)"
+            @update:model-value="$emit('update:customPath', String($event ?? ''))"
           />
           <div class="form-hint">
             {{ t("customFFmpegPathHint") }}

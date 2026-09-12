@@ -92,14 +92,14 @@ export default class PluginSample extends Plugin {
   public settings!: PluginSettings
   /** 浮动工具栏实例（由 floatingToolbar 功能模块注入） */
   public __floatingToolbar?: import("@/features/floatingToolbar/core/FloatingToolbar").FloatingToolbar
-  /** 全局关系列表实例（由 globalRelations 功能模块 register 内部自挂载，onunload 经 DESTROYABLE_KEYS 销毁） */
-  private __globalRelations?: { toggle: () => void; destroy: () => void }
   /** Git 推送实例（由 gitPush 功能模块注入，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __gitPush?: { destroy: () => void }
   /** 主题色实例（rebuildThemeColor 维护，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __themeColor?: { destroy: () => void }
-  /** 数据统计实例（由 statistics 功能模块 register 内部自挂载，onunload 经 DESTROYABLE_KEYS 销毁） */
-  private __statistics?: { destroy: () => void }
+  // ⚠️ `__globalRelations` / `__statistics` **不在此声明字段**：它们由各自功能模块的 register
+  //    经 `(plugin as any).__xxx` 自挂载，本文件只读不写，声明了反而会触发 `noUnusedLocals`
+  //    （TS 看不见字符串键的赋值）。二者的实例形状见其在 DESTROYABLE_KEYS 中的注释。
+  //    —— 与 `__pageLock` / `__s3Backup` 等绝大多数条目保持一致的做法。
 
   /** 持有持久资源（定时器/监听器/Modal）、需在 onunload 统一 destroy 的实例字段清单 */
   private static readonly DESTROYABLE_KEYS = [

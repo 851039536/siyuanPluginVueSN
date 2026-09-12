@@ -27,6 +27,7 @@
     "release:minor": "node ./release.js --mode=minor",
     "release:major": "node ./release.js --mode=major",
     "build": "vite build",
+    "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "validate:icons": "node scripts/validate-icons.mjs",

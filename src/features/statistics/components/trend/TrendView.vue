@@ -281,8 +281,10 @@ const ALL_METRIC_TABS = [
 ]
 
 // K 线模式下指标仅剩累计型（总字数/总笔记）
+// ⚠️ `t.key` 是「全部指标」的宽联合，而 `KLINE_METRICS` 是 `KLineMetric[]`（仅两个累计型）
+//    ⇒ 需按 switchChartMode 的既有写法收窄后再 includes（数组元素的窄类型不接受宽联合）
 const metricTabs = computed(() => chartMode.value === "kline"
-  ? ALL_METRIC_TABS.filter((t) => KLINE_METRICS.includes(t.key))
+  ? ALL_METRIC_TABS.filter((t) => KLINE_METRICS.includes(t.key as KLineMetric))
   : ALL_METRIC_TABS)
 
 const activeMetricObj = computed(() => metricTabs.value.find((t) => t.key === activeMetric.value) || metricTabs.value[0])

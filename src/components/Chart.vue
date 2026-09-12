@@ -1,30 +1,25 @@
 <template>
   <div
-    ref="containerRef"
     :class="chartClasses"
     :style="chartStyle"
   >
     <Bar
       v-if="type === 'bar'"
-      ref="chartRef"
       :data="barData"
       :options="mergedOptions as ChartJsOptions<'bar'>"
     />
     <Line
       v-else-if="type === 'line' || type === 'area'"
-      ref="chartRef"
       :data="lineData"
       :options="mergedOptions as ChartJsOptions<'line'>"
     />
     <Pie
       v-else-if="type === 'pie'"
-      ref="chartRef"
       :data="pieData as ChartJsData<'pie'>"
       :options="mergedOptions as ChartJsOptions<'pie'>"
     />
     <Doughnut
       v-else-if="type === 'doughnut'"
-      ref="chartRef"
       :data="pieData as ChartJsData<'doughnut'>"
       :options="mergedOptions as ChartJsOptions<'doughnut'>"
     />
@@ -125,9 +120,6 @@ ChartJS.register(
   Legend,
   Filler,
 )
-
-const containerRef = ref<HTMLDivElement>()
-const chartRef = ref()
 
 const hasData = computed(() => props.data && props.data.length > 0)
 

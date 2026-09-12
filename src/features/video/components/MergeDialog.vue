@@ -179,7 +179,7 @@ defineEmits<{
   remove: [index: number]
   toggle: [video: { name: string; path: string; size: number }]
   start: []
-  "update:outputName": [value: string]
+  "update:outputName": [value: string | number | null]
 }>()
 
 // i18n

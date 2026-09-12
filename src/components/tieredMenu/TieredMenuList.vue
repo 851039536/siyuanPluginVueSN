@@ -33,7 +33,7 @@
           :data-tm-has-submenu="hasSubmenu(item) || undefined"
           :disabled="disabled || item.disabled || undefined"
           :aria-haspopup="hasSubmenu(item) ? 'true' : undefined"
-          :aria-expanded="hasSubmenu(item) ? String(isOpen(index)) : undefined"
+          :aria-expanded="hasSubmenu(item) ? (isOpen(index) ? 'true' : 'false') : undefined"
           :tabindex="tabindex"
           @click="emit('item-click', item, level, index, $event)"
         >

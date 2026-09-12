@@ -681,7 +681,7 @@ async function handleAutoMerge(fileName: string) {
         }
         return
       } else {
-        showMessage(t("audioVideoMergeFailed", { msg: mergeResult.error }), 5000, "error")
+        showMessage(t("audioVideoMergeFailed", { msg: getErrorMessage(mergeResult.error) }), 5000, "error")
         return
       }
     }
@@ -712,7 +712,7 @@ async function handleAutoMerge(fileName: string) {
         )
       }
     } else {
-      showMessage(t("audioVideoMergeFailed", { msg: mergeResult.error }), 5000, "error")
+      showMessage(t("audioVideoMergeFailed", { msg: getErrorMessage(mergeResult.error) }), 5000, "error")
     }
   } catch (error: unknown) {
     showMessage(t("autoMergeFailed", { msg: getErrorMessage(error) }), 5000, "error")

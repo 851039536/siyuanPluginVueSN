@@ -8,13 +8,21 @@
  * 注 3：宿主内的项一律 `pointer-events: none` 之外的普通元素，模拟真实调用方的导航项。
  * 注 4：宿主自身只是预览脚手架，转发 props 时用宽松对象（与渲染层 PreviewStage 同法）。
  */
-import type { Component, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
   h,
   ref,
 } from "vue"
-import type { PreviewGroup } from "../types"
+import type {
+  ComponentSize,
+  PreviewGroup,
+} from "../types"
+import type { IconKey } from "@/components/kit/icons"
 import Button from "@/components/Button.vue"
 import TieredMenu from "@/components/TieredMenu.vue"
 
@@ -22,7 +30,8 @@ import TieredMenu from "@/components/TieredMenu.vue"
 interface PreviewMenuItem {
   key: string
   label?: string
-  icon?: string
+  /** ⚠️ 用 `IconKey` 而非 `string`：透传给 TieredMenu 的严格项类型 `TieredMenuItem`（icon?: IconKey）时报 TS2769 */
+  icon?: IconKey
   disabled?: boolean
   separator?: boolean
   items?: PreviewMenuItem[]
@@ -97,8 +106,10 @@ const SHALLOW_MENU: PreviewMenuItem[] = [
 const TieredMenuDemo = defineComponent({
   name: "TieredMenuDemo",
   props: {
-    size: { type: String, default: "small" },
-    submenuSide: { type: String, default: "right" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 Button / TieredMenu 的严格联合（ButtonSize / TieredMenuSize / TieredSubmenuSide）时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
+    submenuSide: { type: String as PropType<"left" | "right">, default: "right" },
     disabled: { type: Boolean, default: false },
     tabindex: { type: Number, default: 0 },
     ariaLabel: { type: String, default: "文件操作" },

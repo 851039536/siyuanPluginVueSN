@@ -57,7 +57,11 @@ export interface VideoManagerOptions {
  */
 export class VideoManager {
   private plugin: Plugin
-  private options: VideoManagerOptions
+  /**
+   * 构造时传入的配置（如自定义存储目录）。
+   * 对外只读暴露：调用方/调试代码可读取当前生效配置，同时避免出现只写不读的私有字段。
+   */
+  public readonly options: VideoManagerOptions
 
   constructor(plugin: Plugin, options: VideoManagerOptions = {}) {
     this.plugin = plugin

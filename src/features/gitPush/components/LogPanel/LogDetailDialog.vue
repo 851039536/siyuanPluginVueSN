@@ -174,7 +174,10 @@ const copied = ref(false)
 let copiedTimer: ReturnType<typeof setTimeout> | undefined
 
 /** 键盘聚焦辅助：entry 变为非空时自动聚焦根节点，使 Esc 关闭可被捕获 */
+// ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
+// TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各弹窗）。
 const { rootRef } = useDialogKeyboard(computed(() => !!props.entry))
+void rootRef
 
 /** 复制条目（commit 含完整提交信息，其余为 "[时间] 项目名 — 摘要"） */
 async function handleCopy() {

@@ -363,10 +363,13 @@ const {
   currentPage,
   pageSize,
   minFileSize,
+  // ⚠️ `imageListRef` 必须保留为本地绑定：模板 `ref="imageListRef"` 依赖它把列表根节点交给 composable，
+  // 翻页时 composable 才能 `scrollTo({ top: 0 })` 回到顶部。TS 看不到模板中的使用，故以 void 显式消费。
   imageListRef,
   filteredImages,
   paginatedImages,
 } = useImagePagination(images)
+void imageListRef
 
 const {
   selectedImages,

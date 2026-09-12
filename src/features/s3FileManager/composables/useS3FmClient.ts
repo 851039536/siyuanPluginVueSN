@@ -9,7 +9,6 @@ import type { S3Config } from "@/utils/s3/types"
 import { DEFAULT_S3_CONFIG } from "@/utils/s3/types"
 import { S3Client } from "@/utils/s3/s3Client"
 import { decryptSetting } from "@/utils/settingsCrypto"
-import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3FileManagerI18n } from "../types"
 import type { S3FileManagerStorage } from "../types/storage"
 

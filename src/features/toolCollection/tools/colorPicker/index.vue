@@ -93,7 +93,6 @@ import {
   formatHsl,
   formatRgb,
   hexToRgb,
-  rgbToHex,
   rgbToHsl,
 } from "./utils/color"
 

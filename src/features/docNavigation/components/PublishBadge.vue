@@ -70,7 +70,10 @@ const isPublished = computed(() => props.publishedPlatforms.length > 0)
 const isOpen = ref(false)
 /** 点击锁定状态：锁定后悬停离开不关闭面板，直到点击图标或点击外部 */
 const locked = ref(false)
+// ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 判定「点击外部关闭」。
+// TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各下拉/弹窗）。
 const rootRef = useClickOutside(isOpen)
+void rootRef
 
 /** 外部点击关闭（isOpen 变 false）时同步解除锁定，恢复悬停开合 */
 watch(isOpen, (v) => {

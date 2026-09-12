@@ -74,6 +74,8 @@
           :group="group"
           :i18n="i18n"
           :size="size"
+          :active="sectionActive[group.id] ?? false"
+          :placeholder-height="sectionHeights[group.id] ?? 0"
         />
         <div
           v-if="filteredGroups.length === 0"
@@ -91,7 +93,10 @@ import type { Plugin } from "siyuan"
 import { getFrontend } from "siyuan"
 import {
   computed,
+  nextTick,
+  onBeforeUnmount,
   onMounted,
+  reactive,
   ref,
   watch,
 } from "vue"
@@ -115,6 +120,18 @@ const props = defineProps<Props>()
 const { size, loadSize, setSize } = usePreviewSize(props.plugin)
 onMounted(() => {
   void loadSize()
+  // 首帧先按几何位置挂载可视区附近的分区（IO 首次回调是异步的，否则打开面板会先白屏）
+  mountSectionsInViewport()
+  setupObserver()
+})
+
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  observer = null
+  for (const timer of unmountTimers.values()) {
+    window.clearTimeout(timer)
+  }
+  unmountTimers.clear()
 })
 
 /** 当前是否运行在独立浮动窗口中（getFrontend()：desktop=主窗口 / desktop-window=新窗口） */
@@ -141,12 +158,112 @@ const filteredGroups = computed(() => {
 // 锚点导航
 const contentRef = ref<HTMLElement | null>(null)
 const activeId = ref(PREVIEW_GROUPS[0]?.id || "")
+
+// ==================== 分区懒挂载 + 远区卸载 ====================
+// 全部分区一次性实例化会产生 ~290 个真实组件实例（含 Chart / Sidebar / Splitter 等重组件），
+// 内存与首帧开销都很大。这里只把「预挂载区」内的分区实例化，滚远后卸载（保留分区外壳与高度占位）。
+
+/** 预挂载余量（px）：可视区上下各提前 800px 实例化，滚动到位时已就绪 */
+const PRELOAD_MARGIN = 800
+/** 离开预挂载区后的延迟卸载时间（ms）：快速滚动时避免反复挂载 / 卸载抖动 */
+const UNMOUNT_DELAY = 400
+
+/** 分区是否已实例化示例卡片 */
+const sectionActive = reactive<Record<string, boolean>>({})
+/** 分区网格实测高度（卸载时记录，用于撑住占位、避免滚动跳动） */
+const sectionHeights = reactive<Record<string, number>>({})
+/** 延迟卸载定时器（按分区 id） */
+const unmountTimers = new Map<string, number>()
+let observer: IntersectionObserver | null = null
+
+const clearUnmountTimer = (id: string) => {
+  const timer = unmountTimers.get(id)
+  if (timer !== undefined) {
+    window.clearTimeout(timer)
+    unmountTimers.delete(id)
+  }
+}
+
+const getSectionGrid = (id: string): HTMLElement | null =>
+  contentRef.value?.querySelector<HTMLElement>(`#cp-group-${id} .cp-section__grid`) ?? null
+
+/** 立即挂载（导航跳转 / 搜索命中 / IO 进入预挂载区时调用） */
+const forceMount = (id: string) => {
+  clearUnmountTimer(id)
+  sectionActive[id] = true
+}
+
+/** 延迟卸载：先记下网格实测高度，再收起示例（避免滚动位置跳动） */
+const scheduleUnmount = (id: string) => {
+  clearUnmountTimer(id)
+  unmountTimers.set(id, window.setTimeout(() => {
+    unmountTimers.delete(id)
+    const grid = getSectionGrid(id)
+    if (grid) {
+      sectionHeights[id] = grid.offsetHeight
+    }
+    sectionActive[id] = false
+  }, UNMOUNT_DELAY))
+}
+
+/** 按当前过滤结果重建观察目标（过滤后 DOM 变化，旧的观察目标已不存在） */
+const observeSections = () => {
+  if (!observer) return
+  observer.disconnect()
+  for (const group of filteredGroups.value) {
+    const el = contentRef.value?.querySelector<HTMLElement>(`#cp-group-${group.id}`)
+    if (el) {
+      observer.observe(el)
+    }
+  }
+}
+
+const setupObserver = () => {
+  const container = contentRef.value
+  if (!container || typeof IntersectionObserver === "undefined") return
+  observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      const id = (entry.target as HTMLElement).dataset.cpGroup
+      if (!id) continue
+      if (entry.isIntersecting) {
+        forceMount(id)
+      } else {
+        scheduleUnmount(id)
+      }
+    }
+  }, {
+    root: container,
+    rootMargin: `${PRELOAD_MARGIN}px 0px`,
+  })
+  observeSections()
+}
+
+/** 首帧同步挂载：IO 回调是异步的，先按几何位置把可视区附近的分区挂上 */
+const mountSectionsInViewport = () => {
+  const container = contentRef.value
+  if (!container) return
+  const containerRect = container.getBoundingClientRect()
+  const limit = container.clientHeight + PRELOAD_MARGIN
+  for (const group of filteredGroups.value) {
+    const el = container.querySelector<HTMLElement>(`#cp-group-${group.id}`)
+    if (!el) continue
+    const rect = el.getBoundingClientRect()
+    const top = rect.top - containerRect.top
+    const bottom = rect.bottom - containerRect.top
+    if (top <= limit && bottom >= -PRELOAD_MARGIN) {
+      sectionActive[group.id] = true
+    }
+  }
+}
+
 /** 点击导航时置位，避免平滑滚动过程中的 scroll 事件把高亮抢回旧分区 */
 let suppressScrollSync = false
 let suppressTimer: number | null = null
 
 const handleSelect = (id: string) => {
   activeId.value = id
+  // 目标分区可能是卸载状态（占位高度已撑住位置）⇒ 先挂载再滚动
+  forceMount(id)
   const section = contentRef.value?.querySelector<HTMLElement>(`#cp-group-${id}`)
   if (!section) return
   suppressScrollSync = true
@@ -179,10 +296,16 @@ const handleContentScroll = () => {
 }
 
 // 搜索过滤后若当前高亮分区已被过滤掉，重置为第一个可见分区
-watch(filteredGroups, (groups) => {
+watch(filteredGroups, async (groups) => {
   if (!groups.some((group) => group.id === activeId.value)) {
     activeId.value = groups[0]?.id || ""
   }
+  // 搜索命中的分区需立即可见（命中数量少，直接全部挂载）
+  if (query.value.trim()) {
+    groups.forEach((group) => forceMount(group.id))
+  }
+  await nextTick()
+  observeSections()
 })
 
 // 浮动窗口切换（经 plugin 上自挂载的 PreviewManager 调度）

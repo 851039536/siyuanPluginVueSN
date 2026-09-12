@@ -99,30 +99,6 @@ export const buttonGroup: PreviewGroup = {
       code: "<Button severity=\"danger\" text>文本危险</Button>",
     },
     {
-      title: "尺寸 xsmall",
-      props: { size: "xsmall" },
-      slotText: "xsmall",
-      code: "<Button size=\"xsmall\">xsmall</Button>",
-    },
-    {
-      title: "尺寸 small",
-      props: { size: "small" },
-      slotText: "small",
-      code: "<Button size=\"small\">small</Button>",
-    },
-    {
-      title: "尺寸 medium",
-      props: { size: "medium" },
-      slotText: "medium",
-      code: "<Button size=\"medium\">medium</Button>",
-    },
-    {
-      title: "尺寸 large",
-      props: { size: "large" },
-      slotText: "large",
-      code: "<Button size=\"large\">large</Button>",
-    },
-    {
       title: "图标按钮（左图标）",
       props: { icon: "save" },
       slotText: "保存",

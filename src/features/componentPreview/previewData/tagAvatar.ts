@@ -200,26 +200,6 @@ export const avatarGroup: PreviewGroup = {
       code: "<Avatar text=\"Vue\" shape=\"square\" color=\"#10b981\" textColor=\"#ffffff\" />",
     },
     {
-      title: "尺寸",
-      props: {
-        text: "A",
-        size: "large",
-        color: "#3b82f6",
-        textColor: "#ffffff",
-      },
-      code: "<Avatar text=\"A\" size=\"large\" color=\"#3b82f6\" textColor=\"#ffffff\" />",
-    },
-    {
-      title: "尺寸 xlarge",
-      props: {
-        text: "X",
-        size: "xlarge",
-        color: "#8b5cf6",
-        textColor: "#ffffff",
-      },
-      code: "<Avatar text=\"X\" size=\"xlarge\" color=\"#8b5cf6\" textColor=\"#ffffff\" />",
-    },
-    {
       title: "自定义像素尺寸",
       props: {
         text: "C",

@@ -58,15 +58,6 @@ export const checkboxGroup: PreviewGroup = {
       code: "<Checkbox v-model=\"checked\" indeterminate label=\"部分选中\" />",
     },
     {
-      title: "尺寸",
-      props: {
-        modelValue: true,
-        size: "large",
-        label: "large",
-      },
-      code: "<Checkbox v-model=\"checked\" size=\"large\" label=\"large\" />",
-    },
-    {
       title: "实底变体",
       props: {
         modelValue: false,

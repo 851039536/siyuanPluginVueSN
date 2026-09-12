@@ -191,15 +191,6 @@ export const switchGroup: PreviewGroup = {
       code: "<Switch v-model=\"checked\" label=\"启用\" labelBefore />",
     },
     {
-      title: "尺寸",
-      props: {
-        modelValue: true,
-        size: "large",
-        label: "large",
-      },
-      code: "<Switch v-model=\"checked\" size=\"large\" label=\"large\" />",
-    },
-    {
       title: "自定义激活色",
       props: {
         modelValue: true,

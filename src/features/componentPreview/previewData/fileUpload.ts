@@ -271,14 +271,6 @@ const files = ref([])
       code: `<!-- previewWidth 默认 24（比官方 50 紧凑，图标行保持单行）；按需放大即可 -->
 <FileUpload accept="image/*" multiple :preview-width="40" />`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        seed: "mixed",
-        size: "large",
-      },
-      code: `<FileUpload multiple size="large" />`,
-    },
   ],
 }
 

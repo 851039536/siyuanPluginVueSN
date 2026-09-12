@@ -122,15 +122,6 @@ export const datePickerGroup: PreviewGroup = {
       code: "<DatePicker v-model=\"dateText\" value-format label=\"valueFormat\" />",
     },
     {
-      title: "尺寸",
-      props: {
-        modelValue: new Date(2026, 8, 10),
-        size: "large",
-        label: "large",
-      },
-      code: "<DatePicker v-model=\"date\" size=\"large\" label=\"large\" />",
-    },
-    {
       title: "错误状态",
       props: {
         modelValue: null,

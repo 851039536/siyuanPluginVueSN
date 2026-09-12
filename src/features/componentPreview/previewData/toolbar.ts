@@ -4,6 +4,7 @@
  * 注 1：三个插槽均**无作用域参数**且容器恒渲染，示例统一用 `slots` 字段组装（工厂首参忽略即可）。
  * 注 2：工厂第二参是「注入全局档位后的实际渲染 props」⇒ 插槽内的共享控件取 `p.size`，
  *      使容器与内部控件同档（Toolbar 的 size 传不进插槽，这是 Vue 的固有限制，也是文档要求调用方自行对齐的点）。
+ *      ⚠️ 尺寸演示统一由面板头部的 XS/S/M/L 档位切换驱动，本分区不再单独设「尺寸」示例卡。
  * 注 3：内部控制一律复用共享 Button / Input，不为示例新增 SCSS。
  */
 import type { VNode } from "vue"
@@ -34,7 +35,7 @@ export const toolbarGroup: PreviewGroup = {
   id: "toolbar",
   component: Toolbar,
   name: "Toolbar",
-  summary: "工具栏：三段式容器（start 左 / center 居中 / end 右），三种外观 × 四档尺寸，内边距与换行可开关；纯布局无事件",
+  summary: "工具栏：三段式容器（start 左 / center 居中 / end 右），三种外观 × 四档尺寸，内边距与换行可开关；纯布局无事件（⚠️ 容器档位不注入插槽，内部共享控件需自行传同档 size）",
   importCode: "import Toolbar from \"@/components/Toolbar.vue\"",
   sizeable: true,
   examples: [
@@ -197,25 +198,6 @@ export const toolbarGroup: PreviewGroup = {
     <Button variant="secondary" outlined icon="download" aria-label="导出" />
     <Button variant="secondary" outlined>刷新</Button>
     <Button variant="primary">提交</Button>
-  </template>
-</Toolbar>`,
-    },
-    {
-      title: "尺寸 - large（内部控件同档）",
-      props: { size: "large" },
-      slots: {
-        start: () => h("span", null, "构建产物"),
-        end: (_slotProps, p) => [
-          h(Button, { size: p.size, variant: "secondary", outlined: true }, "查看日志"),
-          h(Button, { size: p.size, variant: "primary" }, "重新构建"),
-        ],
-      },
-      code: `<!-- ⚠️ 容器档位不会注入插槽：内部共享控件需显式传同档 size，否则高度会脱节 -->
-<Toolbar size="large">
-  <template #start>构建产物</template>
-  <template #end>
-    <Button size="large" variant="secondary" outlined>查看日志</Button>
-    <Button size="large" variant="primary">重新构建</Button>
   </template>
 </Toolbar>`,
     },

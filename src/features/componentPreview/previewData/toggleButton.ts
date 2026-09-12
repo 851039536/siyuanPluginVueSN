@@ -57,17 +57,6 @@ export const toggleButtonGroup: PreviewGroup = {
       code: "<ToggleButton v-model=\"starred\" on-icon=\"star\" off-icon=\"starOutline\" aria-label=\"收藏\" />",
     },
     {
-      title: "尺寸 - large",
-      props: {
-        size: "large",
-        modelValue: true,
-        onLabel: "开",
-        offLabel: "关",
-        ariaLabel: "开关状态",
-      },
-      code: "<ToggleButton v-model=\"enabled\" size=\"large\" on-label=\"开\" off-label=\"关\" aria-label=\"开关状态\" />",
-    },
-    {
       title: "占满宽度（fluid）",
       props: {
         fluid: true,

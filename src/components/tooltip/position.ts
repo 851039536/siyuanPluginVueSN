@@ -9,6 +9,7 @@ import type { ConfirmPlacement } from "../confirm/types"
 import type { TooltipPlacement } from "./types"
 import type { PopupGeometry } from "../confirm/position"
 import {
+  POPUP_ARROW_SIZE,
   POPUP_GAP,
   POPUP_PADDING,
   resolvePopupPosition,
@@ -16,6 +17,7 @@ import {
 
 /** 复用 ConfirmPopup 的尺寸契约（矩形 / 入参形状），避免两套几何输入类型 */
 export type { PopupGeometry, PopupPositionInput, Rect } from "../confirm/position"
+export { POPUP_ARROW_SIZE }
 
 /** 解析后的具体方位（四向，不含 auto） */
 export type ResolvedTooltipPlacement = Exclude<TooltipPlacement, "auto">

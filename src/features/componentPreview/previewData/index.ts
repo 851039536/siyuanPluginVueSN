@@ -52,6 +52,9 @@ import {
   megaMenuPreviewGroups,
 } from "./megaMenu"
 import {
+  messagePreviewGroups,
+} from "./message"
+import {
   paginatorPreviewGroups,
 } from "./paginator"
 import {
@@ -85,6 +88,9 @@ import {
   tieredMenuPreviewGroups,
 } from "./tieredMenu"
 import {
+  toastPreviewGroups,
+} from "./toast"
+import {
   toolbarPreviewGroups,
 } from "./toolbar"
 import {
@@ -113,6 +119,8 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...radioButtonPreviewGroups,
   ...datePickerPreviewGroups,
   ...tagAvatarPreviewGroups,
+  ...messagePreviewGroups,
+  ...toastPreviewGroups,
   ...timelinePreviewGroups,
   ...tabsPreviewGroups,
   ...toolbarPreviewGroups,

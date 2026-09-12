@@ -40,7 +40,9 @@
         </slot>
       </span>
 
-      <!-- 移除 -->
+      <!-- 移除：⚠️ 插槽必须用 v-if **条件转发**（编译为 createSlots 的条件条目）——
+           恒传插槽出口会让 Button 的 `$slots.default` 恒真、`isIconOnly` 退化为假，
+           既不再输出 `si-button--icon-only` 类（尺寸覆写失效），还会多渲染一个空的文本层 -->
       <Button
         variant="ghost"
         :size="size"
@@ -51,11 +53,16 @@
         :disabled="disabled"
         @click="emit('remove', index)"
       >
-        <slot
-          name="fileremoveicon"
-          :file="file"
-          :index="index"
-        />
+        <template
+          v-if="$slots.fileremoveicon"
+          #default
+        >
+          <slot
+            name="fileremoveicon"
+            :file="file"
+            :index="index"
+          />
+        </template>
       </Button>
     </li>
   </ul>

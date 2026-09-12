@@ -78,6 +78,9 @@ import {
 import {
   toggleButtonPreviewGroups,
 } from "./toggleButton"
+import {
+  tooltipPreviewGroups,
+} from "./tooltip"
 
 /** 全部组件预览分组（按分类数据文件合并，保持稳定顺序） */
 export const PREVIEW_GROUPS: PreviewGroup[] = [
@@ -106,4 +109,5 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...confirmPopupPreviewGroups,
   ...dialogPreviewGroups,
   ...drawerPreviewGroups,
+  ...tooltipPreviewGroups,
 ]

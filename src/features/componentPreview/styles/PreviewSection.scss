@@ -95,6 +95,9 @@
   // ConfirmPopup 也是 position: fixed，但它是「贴锚点的小气泡」而非铺满视口 ⇒ 无需覆盖定位；
   // 卡片 overflow: hidden 同样裁不到它（fixed 元素不受祖先 overflow 裁剪），仅可能压到相邻卡片上。
 
+  // Tooltip 与 ConfirmPopup 同类（贴锚点的小气泡、fixed + 视口坐标）⇒ 同样无需覆盖定位；
+  // ⚠️ 切勿改成 absolute：它的 top/left 是 JS 按视口算出的坐标，改为 absolute 会相对舞台再偏移一次而飞走。
+
   // SpeedDial 默认 position: fixed 悬浮于视口角落，快照中改为相对舞台定位
   // （舞台已 position: relative，故 right/bottom 档位改为相对舞台生效）
   .si-speeddial.si-speeddial {
@@ -189,6 +192,17 @@
 }
 
 .cp-popup-demo__anchor {
+  display: inline-flex;
+}
+
+// Tooltip 演示宿主：同上（锚点包裹层贴合按钮，气泡贴它定位）
+.cp-tooltip-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-tooltip-demo__anchor {
   display: inline-flex;
 }
 

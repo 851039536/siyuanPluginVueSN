@@ -1,0 +1,96 @@
+// ========== Tooltip.scss ==========
+// 文字提示气泡：视口定位（position: fixed）+ 指向三角 + 四档尺寸
+// 与 ConfirmPopup 同一套定位范式（fixed + 视口坐标、不 Teleport），但**无遮罩、非模态、不可交互**
+@use '../kit/variables.scss' as *;
+
+.si-tooltip {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-tooltip-font: #{$t-xs}; // 12px
+  --si-tooltip-pad: #{$s-px6} #{$s-2};
+
+  position: fixed;
+  z-index: 10001; // 高于全屏遮罩（10000），使气泡在弹窗内也能显示
+  display: block;
+  font-family: $ff-zh;
+  font-size: var(--si-tooltip-font, #{$t-xs});
+  line-height: $lh-tight;
+  padding: var(--si-tooltip-pad);
+  background: var(--b3-theme-on-background, $c-fg);
+  color: var(--b3-theme-background, $c-bg);
+  border-radius: $r-sm;
+  overflow-wrap: anywhere;
+  // 提示气泡悬浮于内容之上，用细描边而非阴影做边界（Codex 边框优先，禁 box-shadow）
+  border: 1px solid var(--b3-border-color, $c-border);
+  // 纯提示：不接收指针事件（否则气泡盖住锚点会触发 pointerleave 抖动）
+  pointer-events: none;
+
+  // 首帧未测量完成时先隐藏，避免在 (0,0) 处闪跳
+  &--measuring {
+    visibility: hidden;
+  }
+
+  // 尺寸档位：只驱动字号 10/12/14/16 与内边距；气泡宽度随内容自适应
+  &--xsmall {
+    --si-tooltip-font: #{$t-2xs}; // 10px
+    --si-tooltip-pad: #{$s-1} #{$s-px6};
+  }
+
+  &--small {
+    --si-tooltip-font: #{$t-xs}; // 12px
+    --si-tooltip-pad: #{$s-px6} #{$s-2};
+  }
+
+  &--medium {
+    --si-tooltip-font: #{$t-sm}; // 14px
+    --si-tooltip-pad: #{$s-2} #{$s-px10};
+  }
+
+  &--large {
+    --si-tooltip-font: #{$t-base}; // 16px
+    --si-tooltip-pad: #{$s-px10} #{$s-3};
+  }
+
+  // ==================== 指向三角 ====================
+  // 用 CSS 三角形边框法绘制，颜色与气泡底一致，贴在与方位相反的那条边上
+  &__arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border: 4px solid transparent; // 边长 8px（= POPUP_ARROW_SIZE），与定位常量保持一致
+  }
+
+  &__arrow--top {
+    bottom: 100%;
+    border-bottom-color: var(--b3-theme-on-background, $c-fg);
+    border-top-width: 0;
+  }
+
+  &__arrow--bottom {
+    top: 100%;
+    border-top-color: var(--b3-theme-on-background, $c-fg);
+    border-bottom-width: 0;
+  }
+
+  &__arrow--left {
+    right: 100%;
+    border-right-color: var(--b3-theme-on-background, $c-fg);
+    border-left-width: 0;
+  }
+
+  &__arrow--right {
+    left: 100%;
+    border-left-color: var(--b3-theme-on-background, $c-fg);
+    border-right-width: 0;
+  }
+}
+
+// 过渡：0.12s ease（全库统一时长），仅淡入淡出（气泡不宜位移，避免与定位计算打架）
+.si-tooltip-fade-enter-active,
+.si-tooltip-fade-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.si-tooltip-fade-enter-from,
+.si-tooltip-fade-leave-to {
+  opacity: 0;
+}

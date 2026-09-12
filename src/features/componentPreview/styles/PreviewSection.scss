@@ -138,6 +138,18 @@
   }
 }
 
+// MegaMenu：展开面板绝对定位于根项下方，会超出卡片高度被 overflow: hidden 裁掉
+// ⇒ 给足舞台高度，并把面板限高收到舞台内（真实调用处为 20rem / 由 scrollHeight 指定）
+.cp-card__stage--megaMenu {
+  height: 340px; // 根菜单 + 多列面板展示所需高度，无对应 Token
+  align-items: flex-start; // 菜单贴舞台顶部，避免垂直居中后把面板推到卡片外
+  overflow: visible;
+
+  .si-megamenu__panel {
+    max-height: 260px; // 舞台内收敛，超出走面板内部滚动
+  }
+}
+
 // ==================== Card 容器钩子演示类 ====================
 // 仅用于 Card 分区的「容器钩子 - contentClass / captionClass」示例；真实项目请用你自己的类名。
 // ⚠️ 主体容器已有卡片档位的 padding（`.si-card--{tier} .si-card__body` 特异性更高且会取胜），
@@ -208,6 +220,13 @@
 
 // FileUpload 演示宿主：占满卡片宽度（拖拽区需足够横向空间，居中会让虚线框显得局促）
 .cp-fileupload-demo {
+  width: 100%;
+}
+
+// MegaMenu 演示宿主：占满卡片宽度并预留底部空间。
+// ⚠️ 展开面板是 position: absolute 挂在根项下方，会溢出卡片高度；卡片为 overflow: hidden，
+//    故需给足舞台高度（同 SpeedDial 的处理思路），否则面板下半部分被裁掉。
+.cp-megamenu-demo {
   width: 100%;
 }
 

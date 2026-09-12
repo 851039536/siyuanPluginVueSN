@@ -1,0 +1,54 @@
+// ========== SidebarMain.scss ==========
+// 主内容区：按侧边栏实际占用宽度让位（浮层模式下占用为 0px，故不让位）
+@use '../kit/variables.scss' as *;
+
+.si-sidebar-main {
+  --si-main-font: #{$t-xs}; // 12px
+  --si-main-pad: #{$s-4};
+
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  font-family: $ff-zh;
+  font-size: var(--si-main-font, #{$t-xs});
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-background, $c-fg);
+  background: var(--b3-theme-background, $c-bg);
+  padding: var(--si-main-pad);
+
+  // 让位：仅在与 Sidebar 配对时生效，且按贴合边决定加在哪一侧
+  // ⚠️ 用 padding 而非 margin —— margin 在 flex 布局下会参与伸缩计算，
+  //    让位量会被 flex 压缩，导致主内容与侧边栏重叠。
+  &--offset {
+    transition: padding 0.12s ease;
+  }
+
+  &--offset-left {
+    padding-left: calc(var(--si-main-pad) + var(--si-main-offset, 0px));
+  }
+
+  &--offset-right {
+    padding-right: calc(var(--si-main-pad) + var(--si-main-offset, 0px));
+  }
+
+  // 尺寸档位：与 Sidebar 同阶，保证并排时文字大小一致
+  &--xsmall {
+    --si-main-font: #{$t-2xs}; // 10px
+    --si-main-pad: #{$s-3};
+  }
+
+  &--small {
+    --si-main-font: #{$t-xs}; // 12px
+    --si-main-pad: #{$s-4};
+  }
+
+  &--medium {
+    --si-main-font: #{$t-sm}; // 14px
+    --si-main-pad: #{$s-5};
+  }
+
+  &--large {
+    --si-main-font: #{$t-base}; // 16px
+    --si-main-pad: #{$s-6};
+  }
+}

@@ -230,6 +230,46 @@
   width: 100%;
 }
 
+// Sidebar 演示宿主：必须自带高度与定位基准 ——
+// ① `overlay` 模式的侧边栏是 position: absolute，需要 positioned 祖先才落得下来；
+// ② `inset` / `floating` 需要容器边界才能看出「内缩 / 留白」的差异；
+// ③ 侧边栏与主内容区是并排关系，宿主须为 flex 行。
+.cp-sidebar-demo {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 220px; // 并排布局展示所需高度，无对应 Token
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+}
+
+// 宿主内的导航项（图标 + 文案）；折叠为图标条时文案由组件样式隐藏
+.cp-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-px6 $s-2;
+  border-radius: $r-sm;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+}
+
+.cp-sidebar-demo__title {
+  margin-bottom: $s-2;
+  font-weight: $fw-semibold;
+}
+
+.cp-sidebar-demo__text {
+  margin: 0;
+  color: var(--b3-theme-on-surface);
+}
+
 // 卡片底部：示例名 + 代码切换按钮
 .cp-card__foot {
   display: flex;

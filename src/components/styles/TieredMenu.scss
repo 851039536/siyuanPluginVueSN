@@ -1,0 +1,186 @@
+// ========== TieredMenu.scss ==========
+// 级联菜单：面板 + 逐层嵌套的子菜单（就地 absolute 定位，不 Teleport）
+// Codex 边框优先、禁 box-shadow；过渡统一 0.12s ease
+@use '../kit/variables.scss' as *;
+
+.si-tieredmenu {
+  // 档位变量默认值（未命中任何档位类时的兜底 = small 档）
+  --si-tm-font: #{$t-xs}; // 12px
+  --si-tm-pad-y: #{$s-px6};
+  --si-tm-pad-x: #{$s-2};
+  --si-tm-min-width: 180px;
+
+  position: relative;
+  font-family: $ff-zh;
+  font-size: var(--si-tm-font, #{$t-xs});
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-background, $c-fg);
+
+  &--disabled {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  // ==================== 尺寸档位 ====================
+  // 字号阶梯 10/12/14/16，内边距与最小宽度同步收放
+  &--xsmall {
+    --si-tm-font: #{$t-2xs}; // 10px
+    --si-tm-pad-y: #{$s-1};
+    --si-tm-pad-x: #{$s-px6};
+    --si-tm-min-width: 150px;
+  }
+
+  &--small {
+    --si-tm-font: #{$t-xs}; // 12px
+    --si-tm-pad-y: #{$s-px6};
+    --si-tm-pad-x: #{$s-2};
+    --si-tm-min-width: 180px;
+  }
+
+  &--medium {
+    --si-tm-font: #{$t-sm}; // 14px
+    --si-tm-pad-y: #{$s-2};
+    --si-tm-pad-x: #{$s-3};
+    --si-tm-min-width: 210px;
+  }
+
+  &--large {
+    --si-tm-font: #{$t-base}; // 16px
+    --si-tm-pad-y: #{$s-px10};
+    --si-tm-pad-x: #{$s-4};
+    --si-tm-min-width: 240px;
+  }
+
+  // ==================== 面板 ====================
+  &__panel {
+    // 内联模式：正常文档流，宽度自适应内容但不下于档位最小宽度
+    display: inline-flex;
+    flex-direction: column;
+    min-width: var(--si-tm-min-width, 180px);
+    padding: var(--si-tm-pad-y) 0;
+    background: var(--b3-theme-background, $c-bg);
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-base;
+
+    // popup 模式：视口坐标定位（就地 fixed，不 Teleport）
+    &--popup {
+      position: fixed;
+      z-index: 10001; // 高于全屏遮罩（10000），使菜单在弹窗内也能显示
+      overflow-y: auto;
+      // popup 面板是浮层，宽度固定以避免随内容抖动
+      width: var(--si-tm-min-width, 180px);
+    }
+  }
+
+  // ==================== 列表 ====================
+  &__list {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &__item {
+    position: relative; // 子菜单的定位基准（关键：子菜单挂在「项」上而非列表上）
+  }
+
+  // 项本体
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    width: 100%;
+    padding: var(--si-tm-pad-y) var(--si-tm-pad-x);
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.12s ease, color 0.12s ease;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: var(--b3-theme-surface, $c-surface);
+      outline: none;
+    }
+
+    // 展开态：主题色文字（与 hover 底色叠加，表达「该项的子菜单正打开」）
+    .si-tieredmenu__item--open > & {
+      color: var(--b3-theme-primary, $c-primary);
+      background: var(--b3-theme-surface, $c-surface);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  &__icon {
+    flex: none;
+    color: var(--b3-theme-on-surface);
+
+    .si-tieredmenu__item--open > .si-tieredmenu__link & {
+      color: inherit;
+    }
+  }
+
+  &__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // 子菜单指向箭头
+  &__caret {
+    flex: none;
+    opacity: 0.6;
+  }
+
+  // 分隔线：不参与键盘漫游，故无 hover / focus 样式
+  &__separator {
+    height: 1px;
+    margin: var(--si-tm-pad-y) 0;
+    background: var(--b3-border-color, $c-border);
+  }
+
+  // ==================== 子菜单 ====================
+  // 挂在「项」上（父项 position: relative），向右或向左偏移 100%
+  &__submenu {
+    position: absolute;
+    top: calc(-1 * var(--si-tm-pad-y)); // 与父项首行对齐（抵消面板上内边距）
+    z-index: 1; // 高于同级项，保证不被后续项遮挡
+
+    &--right {
+      left: calc(100% + 2px); // 2px = SUBMENU_GAP
+    }
+
+    &--left {
+      right: calc(100% + 2px);
+    }
+
+    // 子菜单面板与被挂载项同底色 / 描边（再次声明以免继承父项 hover 底色）
+    > .si-tieredmenu__list {
+      min-width: var(--si-tm-min-width, 180px);
+      padding: var(--si-tm-pad-y) 0;
+      background: var(--b3-theme-background, $c-bg);
+      border: 1px solid var(--b3-border-color, $c-border);
+      border-radius: $r-base;
+    }
+  }
+}
+
+// 过渡：0.12s ease（全库统一时长），仅淡入淡出
+.si-tieredmenu-fade-enter-active,
+.si-tieredmenu-fade-leave-active {
+  transition: opacity 0.12s ease;
+}
+
+.si-tieredmenu-fade-enter-from,
+.si-tieredmenu-fade-leave-to {
+  opacity: 0;
+}

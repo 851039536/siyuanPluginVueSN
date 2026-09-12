@@ -82,6 +82,9 @@ import {
   timelinePreviewGroups,
 } from "./timeline"
 import {
+  tieredMenuPreviewGroups,
+} from "./tieredMenu"
+import {
   toolbarPreviewGroups,
 } from "./toolbar"
 import {
@@ -121,5 +124,6 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...drawerPreviewGroups,
   ...fileUploadPreviewGroups,
   ...megaMenuPreviewGroups,
+  ...tieredMenuPreviewGroups,
   ...tooltipPreviewGroups,
 ]

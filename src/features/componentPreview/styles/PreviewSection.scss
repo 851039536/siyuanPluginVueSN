@@ -150,6 +150,21 @@
   }
 }
 
+// TieredMenu：子菜单向右偏移父项的 100%，会横向溢出卡片宽度被 overflow: hidden 裁掉
+// ⇒ 给足高度并把菜单靠左放（右侧留出子菜单空间），同时允许溢出可见以便展开时不被切。
+.cp-card__stage--tieredMenu {
+  height: 300px; // 三级菜单展示所需高度，无对应 Token
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: visible;
+
+  .si-tieredmenu__submenu > .si-tieredmenu__list {
+    // 三级菜单在窄卡片里会超出舞台，允许其自身限高滚动
+    max-height: 240px;
+    overflow-y: auto;
+  }
+}
+
 // ==================== Card 容器钩子演示类 ====================
 // 仅用于 Card 分区的「容器钩子 - contentClass / captionClass」示例；真实项目请用你自己的类名。
 // ⚠️ 主体容器已有卡片档位的 padding（`.si-card--{tier} .si-card__body` 特异性更高且会取胜），
@@ -268,6 +283,16 @@
 .cp-sidebar-demo__text {
   margin: 0;
   color: var(--b3-theme-on-surface);
+}
+
+// TieredMenu 演示宿主：子菜单是 position: absolute 挂在「项」上、向右偏移 100%，
+// 会横向溢出卡片被 overflow: hidden 裁掉 ⇒ 给足舞台高度与**横向空间**（列数少的卡片会挤不下）。
+// 同时 align-items 改 flex-start，避免菜单被垂直居中后子菜单溢出上下边界。
+.cp-tieredmenu-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s-2;
 }
 
 // 卡片底部：示例名 + 代码切换按钮

@@ -128,12 +128,10 @@ export const cardGroup: PreviewGroup = {
         footer: (): VNode[] => [
           h(Button, {
             variant: "primary",
-            size: "xsmall",
           }, "保存"),
           h(Button, {
             variant: "ghost",
             text: true,
-            size: "xsmall",
           }, "取消"),
         ],
       },
@@ -144,8 +142,8 @@ export const cardGroup: PreviewGroup = {
     footer 内放按钮组是官方典型用法。
   </template>
   <template #footer>
-    <Button variant="primary" size="xsmall">保存</Button>
-    <Button variant="ghost" text size="xsmall">取消</Button>
+    <Button variant="primary">保存</Button>
+    <Button variant="ghost" text>取消</Button>
   </template>
 </Card>`,
     },

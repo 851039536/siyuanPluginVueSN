@@ -80,7 +80,6 @@ export const panelGroup: PreviewGroup = {
           h(Button, {
             variant: "ghost",
             text: true,
-            size: "xsmall",
             icon: "magnify",
             ariaLabel: "搜索",
           }),
@@ -88,7 +87,7 @@ export const panelGroup: PreviewGroup = {
       slotText: TEXT,
       code: `<Panel header="带操作区" toggleable>
   <template #icons>
-    <Button variant="ghost" text size="xsmall" icon="magnify" aria-label="搜索" />
+    <Button variant="ghost" text icon="magnify" aria-label="搜索" />
   </template>
   ${TEXT}
 </Panel>`,
@@ -124,14 +123,13 @@ export const panelGroup: PreviewGroup = {
         togglebutton: (p): VNode =>
           h(Button, {
             variant: "secondary",
-            size: "xsmall",
             onClick: p.toggleCallback as (event: Event) => void,
           }, () => (p.collapsed ? "展开" : "收起")),
       },
       slotText: TEXT,
       code: `<Panel header="自定义切换按钮" toggleable>
   <template #togglebutton="{ collapsed, toggleCallback }">
-    <Button variant="secondary" size="xsmall" @click="toggleCallback">
+    <Button variant="secondary" @click="toggleCallback">
       {{ collapsed ? "展开" : "收起" }}
     </Button>
   </template>
@@ -145,12 +143,10 @@ export const panelGroup: PreviewGroup = {
         footer: (): VNode[] => [
           h(Button, {
             variant: "primary",
-            size: "xsmall",
           }, "保存"),
           h(Button, {
             variant: "ghost",
             text: true,
-            size: "xsmall",
           }, "取消"),
         ],
       },
@@ -158,8 +154,8 @@ export const panelGroup: PreviewGroup = {
       code: `<Panel header="带底部操作">
   ${TEXT}
   <template #footer>
-    <Button variant="primary" size="xsmall">保存</Button>
-    <Button variant="ghost" text size="xsmall">取消</Button>
+    <Button variant="primary">保存</Button>
+    <Button variant="ghost" text>取消</Button>
   </template>
 </Panel>`,
     },

@@ -226,21 +226,6 @@ const items = [
       },
       code: `<Sidebar width="12rem" icon-width="3.5rem" aria-label="主导航" />`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        size: "large",
-      },
-      code: `<Sidebar size="large" aria-label="主导航" />
-<SidebarMain size="large">…</SidebarMain>`,
-    },
-    {
-      title: "尺寸 - xsmall",
-      props: {
-        size: "xsmall",
-      },
-      code: `<Sidebar size="xsmall" aria-label="主导航" />`,
-    },
   ],
 }
 

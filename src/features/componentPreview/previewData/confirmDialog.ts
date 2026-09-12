@@ -220,23 +220,6 @@ export const confirmDialogGroup: PreviewGroup = {
   </template>
 </ConfirmDialog>`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        visible: true,
-        header: "尺寸档位",
-        message: "按钮尺寸随容器档位变化。",
-        acceptSeverity: "primary",
-        size: "large",
-      },
-      code: `<ConfirmDialog
-  v-model:visible="visible"
-  header="尺寸档位"
-  message="按钮尺寸随容器档位变化。"
-  accept-severity="primary"
-  size="large"
-/>`,
-    },
   ],
 }
 

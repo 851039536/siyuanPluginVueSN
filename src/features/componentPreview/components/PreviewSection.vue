@@ -205,8 +205,9 @@ const PreviewStage = defineComponent({
 const props = defineProps<Props>()
 
 /**
- * 示例实际渲染 props：组件支持 size 档位、且示例未显式指定 size 时注入全局档位；
- * 显式指定 size 的示例（尺寸对比用例）保持原样，避免标题与实际渲染不符。
+ * 示例实际渲染 props：组件支持 size 档位、且示例未显式指定 size 时注入全局档位。
+ * 面板头部的 XS / S / M / L 切换是唯一的尺寸演示入口（各分区不再单设「尺寸」示例卡）；
+ * 兜底分支保留 —— 将来若有示例显式声明 size，保持原样以免标题与实际渲染不符。
  */
 const resolveProps = (example: PreviewExample): Record<string, any> => {
   const base = example.props ?? {}

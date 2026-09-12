@@ -205,22 +205,6 @@ export const confirmPopupGroup: PreviewGroup = {
   accept-severity="primary"
 />`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        header: "尺寸档位",
-        message: "按钮尺寸随档位变化。",
-        acceptSeverity: "primary",
-        size: "large",
-      },
-      code: `<ConfirmPopup
-  v-model:visible="visible"
-  :target="() => anchorRef.$el"
-  header="尺寸档位"
-  accept-severity="primary"
-  size="large"
-/>`,
-    },
   ],
 }
 

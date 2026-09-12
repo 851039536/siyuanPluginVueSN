@@ -51,11 +51,33 @@
 - 命令入口：`addCommand` 的 langKey 为 `openComponentPreview`，**不绑定默认快捷键**（`⌃⌥V` 已由视频管理器占用），仅作为命令面板入口存在；超级面板 action 经 `ACTION_EVENT_MAP` 派发 `openComponentPreview` 全局事件打开。
 - 状态栏集成：已登记到 `statusBar/featureRegistry.ts` 功能列表——抽屉中可 pin 到状态栏快捷区、带功能开关角标（`enableComponentPreview`）、可分配自定义分类；点击派发 `openComponentPreview` 事件打开窗口。快捷项图标色 `--status-color-component-preview`。
 
+## 分区懒挂载与远区卸载
+
+面板共 41 个分组、约 290 个示例实例（含 Chart / Sidebar / Splitter / Toast 宿主等重组件），一次性实例化会让内存与首帧开销都很大。`index.vue` 用**单个 `IntersectionObserver`**（`root` = 内容滚动容器、`rootMargin: 800px 0px`）同时承担两件事：进入预挂载区即实例化示例卡片，离开预挂载区后**延迟 400ms 卸载**（快速滚动时不反复挂载 / 卸载）。配套约定：
+
+- 分区外壳（标题 + import 行）**常驻**，只有卡片网格 `.cp-section__grid` 随 `active` 挂载；卸载后用父级记录的**网格实测高度**撑住 `.cp-section__placeholder`，因此滚动位置不跳动。
+- 首帧由 `mountSectionsInViewport()` 按几何位置同步挂载可视区附近的分区 —— IO 首次回调是异步的，不做这一步打开面板会先白屏。
+- **锚点跳转**（点击左侧导航）与**搜索命中**都会先 `forceMount(id)`，避免目标分区仍停在占位态；搜索过滤后观察目标会随 DOM 变化重建。
+- 卡片本体拆到 `components/PreviewCard.vue`：`resolvedProps` 用 computed **只解析一次**，组件本体与复合示例的 `render` 共用同一对象（此前模板里两次调用会每帧多分配一轮）；受控值由 `components/PreviewStage.ts` 持有并回写，**同值写回会被守卫拦下**（原始值走 `Object.is`，数组按内容浅比较）—— 这是防止 `emit → 写回 → 重渲染 → 再 emit` 自激循环的关键。
+- 排查内存异常时的采样脚本与二分定位步骤见 [docs/component-preview-memory-diagnosis.md](../../../docs/component-preview-memory-diagnosis.md)。
+
 ## 弹层类组件的预览沙箱
 
 `ConfirmDialog` 这类弹层组件的遮罩是 `position: fixed; inset: 0`，直接放进快照会铺满整个预览窗口。`styles/PreviewSection.scss` 的 `.cp-card__stage` 因此设置 `position: relative`，并把舞台内的 `.si-confirm-mask` 覆盖为 `position: absolute; z-index: 1` —— **仅作用于预览沙箱，不改组件本体**（组件在真实调用处仍是全屏固定弹层）。后续新增其它弹层类共享组件时，在同一处追加对应遮罩类名即可。
 
-舞台高度与卡片宽度的**分区特例统一登记在 `PreviewSection.vue` 的 `STAGE_CLASS_BY_GROUP`**（id → 舞台修饰类，下文各处「按 `group.id` 判定」即由该表驱动）：新增需要专属舞台的分区只改这一处，高度值仍写在 `styles/PreviewSection.scss`。网格另设 `align-items: start`，让卡片保持**自身内容高度** —— 特例舞台（MegaMenu 340px 等）不再把同排卡片一起拉高，展开代码块也不会撑高相邻卡片；`WIDE_STAGE_GROUP_IDS`（`dialog` / `drawer` / `megaMenu` / `tieredMenu`）的卡片在 ≥720px 下跨两列（`.cp-card--wide`），给展开面板与三段结构留出横向空间，<720px 为单列且跨列会撑出横向溢出，故不生效。
+舞台高度、布局分档与卡片宽度**统一登记在 `PreviewSection.vue` 的 `STAGE_CLASS_BY_GROUP`**（id → 修饰类**数组**，可叠加；下文各处「按 `group.id` 判定」即由该表驱动）：新增此类分区只改这一处，高度值与布局规则仍写在 `styles/PreviewSection.scss`。分档依据是**组件根元素的宽度 / 高度特性**（逐区核对）：
+
+| 修饰类 | 适用分区 | 解决的问题 |
+| --- | --- | --- |
+| `--compact`（64px） | Button / IconWrapper / ToggleButton / Tag / Badge / Avatar / Switch / Checkbox / RadioButton / Label / Divider | 原子控件仅 20~44px 高，96px 基线留白过多、拉长滚动 |
+| `--fill` | Card / Panel / Message / Paginator | 这些组件根元素**没有 `width`**，作为舞台（行方向 flex）的子项会被收缩成内容宽并居中 ⇒ 快照失真（改为满宽 + 顶对齐） |
+| `--top` | Timeline / Tabs / FileUpload / Listbox / Splitter | 内容高度随示例变化，垂直居中会让上边距随机漂移 |
+| `--chart`（≥190px） | Chart | 默认档内容 200×150，96px 基线会溢出 / 贴边 |
+| `--loader` / `--speeddial` / `--dialog` / `--drawer` / `--megaMenu` / `--tieredMenu` / `--toast` | 对应浮层 / 动画类分区 | 专属舞台高度与沙箱覆盖（沿用既有值） |
+
+网格 `grid-template-columns` 的下限为 **260px**（Paginator 长分页条、Toolbar 三段式、Chart 的 200px 宽都需要横向余量），并设 `align-items: start` 让卡片保持**自身内容高度** —— 特例舞台（MegaMenu 340px 等）不再把同排卡片一起拉高，展开代码块也不会撑高相邻卡片；`WIDE_STAGE_GROUP_IDS`（`dialog` / `drawer` / `megaMenu` / `tieredMenu` / `toolbar` / `paginator`）的卡片在 ≥720px 下跨两列（`.cp-card--wide`），<720px 为单列且跨列会撑出横向溢出，故不生效。
+
+⚠️ `--fill` 的满宽只作用于**组件根元素**（写的是 `> *`），不影响组件内部布局。
 
 `Dialog` 同为 `position: fixed` 遮罩 + 卡片，按同一机制覆盖为 `position: absolute`（`.si-dialog-mask.si-dialog-mask`）；又因为它是三段结构、比确认框更高，新增 `.cp-card__stage--dialog` 给足舞台高度（`PreviewSection.vue` 按 `group.id === 'dialog'` 判定），并在该高度类内把卡片 `max-height` 收敛为 `100%` —— 真实调用处的上限是 `80vh`，沙箱内收敛后「长内容」示例演示的才是**内容区内部滚动**，而不是整块被 `.cp-card` 的 `overflow: hidden` 裁掉。卡片宽度无需覆盖：组件侧 `max-width: 100%` 已把四档宽度收敛到舞台宽度（因此沙箱内的档位差异主要体现在字号与内边距）。
 

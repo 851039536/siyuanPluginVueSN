@@ -45,7 +45,8 @@
 
 .cp-section__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  // 列宽下限 260px：Paginator 长分页条 / Toolbar 三段式 / Chart 默认 200px 宽都需要横向余量
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: $s-3;
   // 卡片按自身内容高度排列：特例舞台（MegaMenu 340px 等）不再把同排卡片一起拉高，
   // 也不会因展开代码块而撑高同排其他卡片
@@ -58,6 +59,11 @@
   .cp-card--wide {
     grid-column: span 2;
   }
+}
+
+// 分区卸载后的高度占位（高度由父级实测值经内联 style 给出，这里只兜底最小高度）
+.cp-section__placeholder {
+  min-height: 96px;
 }
 
 .cp-card {
@@ -170,6 +176,37 @@
     top: 50%;
     bottom: auto;
   }
+}
+
+// ==================== 舞台布局分档（按组件类型分层） ====================
+
+// 紧凑舞台：原子控件（Button / Tag / Badge / Avatar / Switch / Checkbox / RadioButton / Label / Divider…）
+// 内容仅 20~44px 高，沿用 96px 基线会留下大片空白并显著拉长面板滚动
+.cp-card__stage--compact {
+  min-height: 64px; // 紧凑舞台高度，无对应 Token
+}
+
+// 满宽容器类：Card / Panel / Message / Paginator 的根元素**没有 width**，
+// 而舞台是行方向 flex ⇒ 它们会被收缩成内容宽并居中，快照失真（看不出真实满宽形态）
+.cp-card__stage--fill {
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  // 仅作用于组件根元素（直接子元素），不影响组件内部布局
+  > * {
+    width: 100%;
+  }
+}
+
+// 顶对齐：Timeline / Tabs / FileUpload / Listbox / Splitter 的内容高度随示例变化，
+// 垂直居中会让上边距随内容条数随机漂移（同 MegaMenu / TieredMenu 的既有处理思路）
+.cp-card__stage--top {
+  align-items: flex-start;
+}
+
+// 图表：Chart 默认档内容为 200×150，96px 基线会溢出或贴边（宽度由 260px 列宽保证）
+.cp-card__stage--chart {
+  min-height: 190px; // 150px 图表 + 上下内边距 2×16px，无对应 Token
 }
 
 // Loader 组件高度依赖父容器显式高度，单独给足舞台空间

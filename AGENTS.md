@@ -157,7 +157,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ## 共享组件库使用规则（强制）
 
-`src/components/` 是**全项目唯一的 UI 控件来源**（40 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
+`src/components/` 是**全项目唯一的 UI 控件来源**（41 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
 
 ### 1. 先查用法，禁止猜 props
 
@@ -165,7 +165,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 | 查询方式 | 位置 | 说明 |
 |---------|------|------|
-| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 40 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
+| **组件预览面板（推荐）** | 命令面板搜「组件预览」/ 状态栏功能列表 | 41 个组件的**真实渲染**快照 + 可复制代码；改完组件样式可直接目视回归 |
 | 用法清单（源码） | `src/features/componentPreview/previewData/*.ts` | `props` 与 `code` 同源，是 props 的权威示例 |
 | 组件源码 | `src/components/<Name>.vue` 的 `interface Props` | 最终事实来源（含 JSDoc 注释） |
 
@@ -174,11 +174,11 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
-- 需要按钮 / 按钮式开关 / 浮动动作按钮 / 输入框 / 多行文本域 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框 / **分页** / **时间线** / **分隔线** / **可折叠面板** / **可调整的分割面板** / **标签页切换** / **工具栏** / **气泡确认** / **对话框（模态弹层）** / **抽屉（侧边浮层）**时，**必须**使用共享组件（多行输入用 `Textarea`，不用 `Input` 的 `type="textarea"` 旧入口；**单按钮布尔开关用 `ToggleButton`，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`**；**多动作浮钮用 `SpeedDial`**）
+- 需要按钮 / 按钮式开关 / 浮动动作按钮 / 输入框 / 多行文本域 / 下拉 / 列表选择 / 开关 / 复选框 / 单选框 / 日期选择 / 滑块 / 标签 / 徽标 / 头像 / 卡片 / 图表 / 图标 / 加载态 / 颜色字段 / 输入框组合器 / 确认对话框 / **分页** / **时间线** / **分隔线** / **可折叠面板** / **可调整的分割面板** / **标签页切换** / **工具栏** / **气泡确认** / **对话框（模态弹层）** / **抽屉（侧边浮层）** / **文字提示（气泡）**时，**必须**使用共享组件（多行输入用 `Textarea`，不用 `Input` 的 `type="textarea"` 旧入口；**单按钮布尔开关用 `ToggleButton`，一组互斥选项的分段切换仍用 `Button` 分组 + `:aria-pressed`**；**多动作浮钮用 `SpeedDial`**）
 - 共享组件缺能力时：**先扩展共享组件**（在 `interface Props` 加可选参数，保持向后兼容），再在 feature 中消费；禁止在 feature 内复制一份改改
 - 允许自建的例外：纯展示的局部布局容器，以及 `.icon-btn` 这类无档位的 26×26 固定尺寸图标按钮（见 [AGENTS_STYLE.md § 核心规范速查表](./AGENTS_STYLE.md#核心规范速查表)）
 
-### 3. 组件清单（40 个）
+### 3. 组件清单（41 个）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
@@ -221,6 +221,7 @@ npx tsc --noEmit    # TypeScript 编译类型检查
 | `SplitterPanel.vue` | 分割面板（`Splitter` 的**配套组件**，与 `Splitter` 共用「Splitter」一个预览分区）：`size`（初始百分比，未指定者与其它未指定者均分剩余）+ `minSize` / `maxSize`（夹取范围）+ `collapsible` / `collapsedSize`（拖到 `minSize` 以下**吸附折叠**）；**自渲染 `flex-basis` 与左（上）侧分隔条**（首个面板无分隔条）；未注入 Splitter 时退化为普通容器 | `size` / `minSize` / `maxSize` / `collapsible` / `collapsedSize` |
 | `Chart.vue` | 图表（chart.js：line/bar/pie/doughnut/area） | `type` / `data`（必填）/ `size` / `title` / `loading` / `theme` / `emptyText` |
 | `IconWrapper.vue` | 图标（按 `IconKey` 渲染 Iconify） | `name`（必填）/ `size` / `color` / `title` |
+| `Tooltip.vue` | 文字提示（锚点旁气泡，参考 PrimeVue Tooltip；⚠️ 官方是**指令** `v-tooltip`，本项目按仓库约定做成**组件**）：`text`（或默认插槽）+ **`target` 锚点**（`HTMLElement \| (() => HTMLElement \| null)`，通常传触发元素的 ref；取不到时退化为视口居中）+ **`visible` 传入即受控 / 不传即自持**（非受控，与 `Panel.collapsed` 同一范式）+ 四向 `placement`（`top` 默认 / `bottom` / `left` / `right`）+ **`auto`**（**优先上方**、空间不足下翻；⚠️ 偏好与 `ConfirmPopup` 的「优先下方」相反，因官方 Tooltip 默认方位是 top）+ `trigger`（`both` 默认 / `hover` / `focus`，**focus 默认开启**：键盘用户的信息可达路径）+ `showDelay` / `hideDelay`（默认 0）+ 四档 `size`（只驱动字号 10/12/14/16 与内边距，气泡宽度随内容自适应）+ `maxWidth`（默认 240，超长文案在气泡内换行）+ `disabled`；**非模态、无遮罩、不可交互**（`pointer-events: none`，避免气泡盖住锚点导致 pointerleave 抖动）；定位为 `position: fixed` + 视口坐标（**不 Teleport**，与 `ConfirmPopup` 同一范式），**复用 `confirm/position.ts` 的几何计算与视口 8px 钳制**（零复制粘贴，只补 auto 的上方偏好），带 8px 指向三角；`window` 的 `scroll`（`capture: true`，覆盖任意滚动容器）与 `resize` 触发 **rAF 节流**重算，气泡跟随锚点；锚点晚于组件挂载出现时用**有界轮询**（每 200ms、上限 15 次，对齐仓库既有的 DOM 就绪轮询约定）补挂监听；三事件 = `update:visible` / `show` / `hide`；私有目录 `tooltip/`（types / position，禁止 feature 直接导入）；**与官方有意差异**：不做 `escape` / `fitContent` / `autoHide`（气泡不可交互，二者无意义）/ `id` / `class`（走默认 attrs 透传）/ `dt` / `pt` / `ptOptions` / `unstyled`；**官方靠修饰符表达的方位**（`v-tooltip.top` 等）在本项目改为 `placement` prop | `text` / `target` / `visible` / `placement` / `trigger` / `showDelay` / `hideDelay` / `size` / `disabled` / `maxWidth` |
 | `Loader.vue` | 加载动画（无 props，父容器需给显式高度） | — |
 
 **结构约定**：公开组件平铺于 `src/components/`（保持 `import X from "@/components/X.vue"` 单一导入约定，上表只登记这些条目）；单个组件的**私有子部件与纯函数**放同名小写子目录（如 `src/components/datePicker/` 承载 `PickerPanel.vue` / `CalendarPanel.vue` / `utils.ts`），子部件**不计入**本清单，且**禁止 feature 直接导入**。配套但需被 feature 直接使用的组件同样平铺为独立公开条目（如 `InputGroup.vue` / `InputGroupAddon.vue`，两者共用「InputGroup」一个预览分区）。子部件样式同样外置到 `src/components/styles/<Name>.scss`（每个 `.vue` 的 `<style scoped>` 只 `@use` 自己那一份，避免父组件样式对子部件内部元素失效）。
@@ -465,7 +466,7 @@ src/
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
 │   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
-├── components/             # 共享组件库 40 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/Dialog/Drawer/ConfirmDialog/ConfirmPopup/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Toolbar/Divider/Chart 等）— 使用规则见「共享组件库使用规则」
+├── components/             # 共享组件库 41 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/Dialog/Drawer/ConfirmDialog/ConfirmPopup/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Toolbar/Divider/Chart 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
 │   │   └── composables/
@@ -503,4 +504,4 @@ src/
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
-| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（40 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+| [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（41 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

@@ -49,6 +49,9 @@ import {
   listboxPreviewGroups,
 } from "./listbox"
 import {
+  megaMenuPreviewGroups,
+} from "./megaMenu"
+import {
   paginatorPreviewGroups,
 } from "./paginator"
 import {
@@ -113,5 +116,6 @@ export const PREVIEW_GROUPS: PreviewGroup[] = [
   ...dialogPreviewGroups,
   ...drawerPreviewGroups,
   ...fileUploadPreviewGroups,
+  ...megaMenuPreviewGroups,
   ...tooltipPreviewGroups,
 ]

@@ -100,6 +100,8 @@ const STAGE_CLASS_BY_GROUP: Record<string, string[]> = {
   paginator: ["cp-card__stage--fill"],
   // MeterGroup：根元素 width: 100% ⇒ 满宽；且纵向示例的竖条需高舞台（同 loader 的 `--meterGroup`）
   meterGroup: ["cp-card__stage--fill", "cp-card__stage--meterGroup"],
+  // ProgressBar：根元素 width: 100% ⇒ 满宽（否则会被舞台行 flex 收缩成内容宽，看不出真实形态）
+  progressBar: ["cp-card__stage--fill"],
   // 顶对齐：内容高度多变
   timeline: ["cp-card__stage--top"],
   tabs: ["cp-card__stage--top"],

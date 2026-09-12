@@ -1,0 +1,105 @@
+// ========== ProgressBar.scss ==========
+@use './_mixins.scss' as m;
+@use '../kit/variables.scss' as *;
+
+// 单值进度条。视觉对齐库内既有进度条范式
+// （FileUpload 的 4px 细条 / $r-full / 无阴影），并按档位缩放高度。
+.si-progressbar {
+  // 档位变量：根单点输出，四档只改几何量（圆角与轨道底色恒定）
+  --si-progressbar-height: 8px; // 无对应 Token（默认档）
+  --si-progressbar-font: #{$t-2xs};
+
+  display: flex;
+  align-items: center;
+  gap: $s-2; // 轨道与标签之间
+  width: 100%;
+  font-family: $ff-zh;
+  font-size: var(--si-progressbar-font, #{$t-2xs});
+
+  // ========== 尺寸档位 ==========
+  &--xsmall {
+    --si-progressbar-height: 4px; // 同 FileUpload 的细条
+    --si-progressbar-font: #{$t-2xs}; // 10px
+  }
+
+  &--small {
+    --si-progressbar-height: 8px;
+    --si-progressbar-font: #{$t-2xs}; // 10px
+  }
+
+  &--medium {
+    --si-progressbar-height: 12px;
+    --si-progressbar-font: #{$t-xs}; // 12px
+  }
+
+  &--large {
+    --si-progressbar-height: 18px;
+    --si-progressbar-font: #{$t-xs}; // 12px
+  }
+
+  // ========== 轨道 ==========
+  &__track {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: var(--si-progressbar-height, 8px);
+    overflow: hidden;
+    background: var(--b3-theme-surface-lighter, $c-surface);
+    border-radius: $r-full;
+  }
+
+  // ========== 填充条 ==========
+  &__value {
+    height: 100%;
+    background: var(--b3-theme-primary, $c-primary);
+    border-radius: $r-full;
+    // 值变化时平滑过渡（不定态由动画接管，不冲突）
+    transition: width 0.12s ease;
+  }
+
+  // ========== 数值标签 ==========
+  // 作为轨道的**兄弟节点**（官方嵌在条内，条短时会溢出）⇒ 无论条多短都稳定可读
+  &__label {
+    flex: none;
+    min-width: 2.5em; // 预留「100%」宽度，避免数值位数变化时轨道宽度抖动
+    text-align: right;
+    font-variant-numeric: tabular-nums; // 等宽数字，数值跳动时标签不左右抖
+    color: var(--b3-theme-on-surface, $c-fg);
+    line-height: 1;
+  }
+
+  // ========== 不定态 ==========
+  // 宽度固定的色块在轨道内往复扫过
+  &--indeterminate &__value--indeterminate {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40%;
+    animation: si-progressbar-sweep 1.4s ease-in-out infinite;
+  }
+}
+
+// 往复扫过：从左出右、再从右回左，避免「跳回起点」的突兀感。
+// ⚠️ 用 `transform` 而非 `left` —— 前者由合成器处理，不触发布局重排（同 Loader 的既有做法）。
+@keyframes si-progressbar-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(250%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+// 尊重「减少动态效果」偏好：不定态退化为静态半透明块（状态语义仍由 aria-valuetext 传达）
+@media (prefers-reduced-motion: reduce) {
+  .si-progressbar--indeterminate .si-progressbar__value--indeterminate {
+    animation: none;
+    left: 30%;
+    opacity: m.$opacity-muted;
+  }
+}

@@ -208,15 +208,6 @@ const anchor = ref(null)
       },
       code: `<Tooltip text="不会显示" disabled :target="() => anchor" />`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        text: "四档字号 10 / 12 / 14 / 16px",
-        size: "large",
-        pinned: true,
-      },
-      code: `<Tooltip text="四档字号 10 / 12 / 14 / 16px" size="large" :target="() => anchor" />`,
-    },
   ],
 }
 

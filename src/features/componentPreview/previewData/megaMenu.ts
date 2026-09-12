@@ -221,22 +221,6 @@ const model = [
       code: `<!-- 列宽低于该值时自动少排几列（列数随面板可用宽度自适应） -->
 <MegaMenu :model="model" :column-min-width="200" aria-label="主导航" />`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        size: "large",
-        openKey: "product",
-      },
-      code: `<MegaMenu :model="model" size="large" aria-label="主导航" />`,
-    },
-    {
-      title: "尺寸 - xsmall",
-      props: {
-        size: "xsmall",
-        openKey: "product",
-      },
-      code: `<MegaMenu :model="model" size="xsmall" aria-label="主导航" />`,
-    },
   ],
 }
 

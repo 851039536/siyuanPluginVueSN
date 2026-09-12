@@ -50,15 +50,6 @@ export const textareaGroup: PreviewGroup = {
       code: "<Textarea v-model=\"content\" label=\"变更原因\" error=\"变更原因不能为空\" />",
     },
     {
-      title: "尺寸 - large",
-      props: {
-        size: "large",
-        label: "large 档",
-        modelValue: "字号与内边距随之放大",
-      },
-      code: "<Textarea v-model=\"content\" size=\"large\" label=\"large 档\" />",
-    },
-    {
       title: "实底变体",
       props: {
         variant: "filled",

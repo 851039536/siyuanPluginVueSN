@@ -80,10 +80,7 @@ const renderDate = (slotProps: Record<string, any>): VNode =>
 
 /** 节点：序号（复用 Avatar 的圆形文字头像） */
 const renderIndexMarker = (slotProps: Record<string, any>): VNode =>
-  h(Avatar, {
-    text: String(slotProps.index + 1),
-    size: "xsmall",
-  })
+  h(Avatar, { text: String(slotProps.index + 1) })
 
 /** 节点：已注册图标（复用 IconWrapper，图标名必须来自 kit/icons.ts 的 IconKey） */
 const renderIconMarker = (): VNode =>
@@ -182,7 +179,7 @@ export const timelineGroup: PreviewGroup = {
       },
       code: `<Timeline :value="events">
   <template #marker="{ index }">
-    <Avatar :text="String(index + 1)" size="xsmall" />
+    <Avatar :text="String(index + 1)" />
   </template>
   <template #content="{ item }">
     {{ item.status }}
@@ -214,25 +211,6 @@ export const timelineGroup: PreviewGroup = {
     <Card :title="item.status" :subtitle="item.date">
       {{ item.note }}
     </Card>
-  </template>
-</Timeline>`,
-    },
-    {
-      title: "尺寸 - large",
-      props: {
-        value: ORDER_EVENTS,
-        size: "large",
-      },
-      slots: {
-        content: renderStatus,
-        opposite: renderDate,
-      },
-      code: `<Timeline :value="events" size="large">
-  <template #opposite="{ item }">
-    {{ item.date }}
-  </template>
-  <template #content="{ item }">
-    {{ item.status }}
   </template>
 </Timeline>`,
     },
@@ -324,7 +302,7 @@ export const timelineGroup: PreviewGroup = {
       },
       code: `<Timeline :value="events" layout="horizontal">
   <template #marker="{ index }">
-    <Avatar :text="String(index + 1)" size="xsmall" />
+    <Avatar :text="String(index + 1)" />
   </template>
   <template #content="{ item }">
     {{ item.status }}

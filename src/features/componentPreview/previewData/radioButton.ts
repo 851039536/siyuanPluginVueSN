@@ -54,16 +54,6 @@ export const radioButtonGroup: PreviewGroup = {
       code: "<RadioButton v-model=\"preserveDate\" binary label=\"保留原提交日期\" />",
     },
     {
-      title: "尺寸",
-      props: {
-        modelValue: "large",
-        value: "large",
-        size: "large",
-        label: "large",
-      },
-      code: "<RadioButton v-model=\"branchMode\" value=\"large\" size=\"large\" label=\"large\" />",
-    },
-    {
       title: "实底变体",
       props: {
         modelValue: "head",

@@ -206,24 +206,6 @@ export const dialogGroup: PreviewGroup = {
   <p v-for="index in 14" :key="index">第 {{ index }} 行…</p>
 </Dialog>`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        visible: true,
-        header: "尺寸档位",
-        footer: "标题与内容字号、内边距、弹窗宽度同步变化。",
-        size: "large",
-      },
-      slotText: "四档：xsmall / small（默认）/ medium / large。",
-      code: `<Dialog
-  v-model:visible="visible"
-  header="尺寸档位"
-  footer="标题与内容字号、内边距、弹窗宽度同步变化。"
-  size="large"
->
-  四档：xsmall / small（默认）/ medium / large。
-</Dialog>`,
-    },
   ],
 }
 

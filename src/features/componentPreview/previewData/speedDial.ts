@@ -155,16 +155,6 @@ export const speedDialGroup: PreviewGroup = {
       code: "<SpeedDial v-model:visible=\"open\" :model=\"actions\" :rotate-animation=\"false\" aria-label=\"更多操作\" />",
     },
     {
-      title: "尺寸 - large",
-      props: {
-        model: actionsBasic,
-        size: "large",
-        visible: true,
-        ariaLabel: "常用操作",
-      },
-      code: "<SpeedDial v-model:visible=\"open\" :model=\"actions\" size=\"large\" aria-label=\"常用操作\" />",
-    },
-    {
       title: "关闭点击外部收起（hideOnClickOutside）",
       props: {
         model: actionsPair,

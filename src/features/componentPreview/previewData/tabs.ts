@@ -278,24 +278,6 @@ export const tabsGroup: PreviewGroup = {
   </TabPanels>
 </Tabs>`,
     },
-    {
-      title: "尺寸 - large",
-      props: {
-        value: "overview",
-        size: "large",
-      },
-      render: () => buildTabs(BASIC_TABS),
-      code: `<Tabs v-model:value="active" size="large">
-  <TabList>
-    <Tab value="overview">概览</Tab>
-    <Tab value="usage">用量</Tab>
-  </TabList>
-  <TabPanels>
-    <TabPanel value="overview">档位驱动字号与内边距。</TabPanel>
-    <TabPanel value="usage">…</TabPanel>
-  </TabPanels>
-</Tabs>`,
-    },
   ],
 }
 

@@ -144,16 +144,6 @@ export const paginatorGroup: PreviewGroup = {
       code: "<Paginator v-model:page=\"page\" :rows=\"10\" :total=\"5\" :show-page-links=\"false\" :always-show=\"false\" />",
     },
     {
-      title: "尺寸 - large",
-      props: {
-        page: 3,
-        rows: 10,
-        total: 80,
-        size: "large",
-      },
-      code: "<Paginator v-model:page=\"page\" :rows=\"10\" :total=\"80\" size=\"large\" />",
-    },
-    {
       title: "禁用",
       props: {
         page: 3,

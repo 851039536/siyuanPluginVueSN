@@ -328,7 +328,10 @@ const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBo
 const localDiffContextBudget = ref(clampDiffContextBudget(props.ruleConfig.diffContextBudget))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
 const activeSection = ref<SettingsSection>("general")
+// ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
+// TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各弹窗）。
 const { rootRef } = useDialogKeyboard()
+void rootRef
 
 // 分支模式即时保存（radio 切换立即持久化，无需保存按钮）
 watch(localBranchMode, (mode) => emit("saveBranchMode", mode))

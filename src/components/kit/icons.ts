@@ -468,6 +468,10 @@ export const COMMON_ICONS = {
   eraser: {
     icon: "mdi:eraser",
   },
+  /** 合并（视频/音频合并等场景） */
+  merge: {
+    icon: "mdi:merge",
+  },
   checkboxMultipleOutline: {
     icon: "mdi:checkbox-multiple-outline",
   },

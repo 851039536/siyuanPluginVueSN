@@ -139,9 +139,9 @@ const {
   popupVisible,
   popupPosition,
   rootRef,
-  cancelClose,
   handleItemEnter,
   scheduleClose,
+  cancelClose,
   handleItemClick,
   showPopup,
   hidePopup,
@@ -189,6 +189,10 @@ watch(popupVisible, async (visible) => {
 
 /** 叶子项点击后额外派发 select（command 由 composable 执行） */
 const handleSelect = (item: TieredMenuItem) => emit("select", item)
+
+// 指针移入子菜单面板时取消「延迟收起」（模板经 @submenu-enter 绑定 cancelClose）。
+// 该函数由 useTieredMenu 正式导出：早期版本未导出，模板曾退化为复用 openSubmenu([...path])
+// 间接触发，语义绕且依赖实现细节，现已直连。
 
 /** 包一层：把 composable 的点击处理与 select 事件串起来 */
 const onItemClick = (

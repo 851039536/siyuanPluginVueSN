@@ -349,7 +349,7 @@ function parseAiAutoResult(raw: string): { title: string, keywords: string[], st
     const keywords = Array.isArray(obj.keywords)
       ? obj.keywords
         .filter((k: unknown): k is string => typeof k === "string")
-        .map((k) => k.trim())
+        .map((k: string) => k.trim())
         .filter(Boolean)
       : []
     const styleId = typeof obj.styleId === "string" ? obj.styleId.trim() : ""

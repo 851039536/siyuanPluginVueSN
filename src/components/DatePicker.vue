@@ -84,7 +84,7 @@
           :show-button-bar="showButtonBar"
           :today-text="todayText"
           :clear-text="clearText"
-          :aria-labels="mergedAriaLabels"
+          :ariaLabels="mergedAriaLabels"
           :nav-icon-size="iconSize"
           @select="handleDateSelect"
           @select-today="handleSelectToday"

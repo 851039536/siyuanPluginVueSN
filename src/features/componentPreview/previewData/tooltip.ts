@@ -10,13 +10,20 @@
  *      （hover 触发在截图中不可见，故方位对比示例需要常显）。
  * 注 4：宿主自身只是预览脚手架，转发 props 时用宽松对象（与渲染层 `PreviewStage` 同法）。
  */
-import type { Component, VNode } from "vue"
+import type {
+  Component,
+  PropType,
+  VNode,
+} from "vue"
 import {
   defineComponent,
   h,
   ref,
 } from "vue"
-import type { PreviewGroup } from "../types"
+import type {
+  ComponentSize,
+  PreviewGroup,
+} from "../types"
 import Button from "@/components/Button.vue"
 import Tooltip from "@/components/Tooltip.vue"
 
@@ -24,7 +31,9 @@ import Tooltip from "@/components/Tooltip.vue"
 const TooltipDemo = defineComponent({
   name: "TooltipDemo",
   props: {
-    size: { type: String, default: "small" },
+    // ⚠️ 联合类型必须用 `PropType` 收窄：只写 `type: String` 会让 props 退化为 `string`，
+    //    透传给 Button 的严格联合 `ButtonSize` 时报 TS2769
+    size: { type: String as PropType<ComponentSize>, default: "small" },
     text: { type: String, default: "" },
     placement: { type: String, default: "top" },
     trigger: { type: String, default: "both" },

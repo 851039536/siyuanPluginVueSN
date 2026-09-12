@@ -116,7 +116,6 @@ import {
   ref,
 } from "vue"
 import { featureIdToSettingKey } from "@/config/settings"
-import { emitCustomEvent } from "@/utils/eventBus"
 import { PluginStorage } from "@/utils/pluginStorage"
 import CategoryAssignMenu from "./components/CategoryAssignMenu.vue"
 import FeatureDrawer from "./components/FeatureDrawer.vue"

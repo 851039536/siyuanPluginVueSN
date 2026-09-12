@@ -46,12 +46,18 @@ export const SYSTEM_PROMPT_DIVERGE = `你是一名资深的软件开发创意顾
 4. 标题不超过 20 字，描述不超过 60 字；
 5. 禁止输出任何解释性文字、代码块、序号或多余标题。`
 
-/** 构建批量生成灵感的 user prompt */
+/**
+ * 构建批量生成灵感的 user prompt。
+ * ⚠️ `category` 目前**不参与 prompt 正文**（正文用的是已本地化的 `categoryLabel`），
+ *    但保留在签名中：调用方按位置传参，且分类信息后续可能用于正文（如注入分类专属约束）。
+ *    用 `void` 显式标记「有意接收但不使用」，避免 noUnusedParameters 误判为遗漏。
+ */
 export function buildIdeasPrompt(
   category: IdeaCategory,
   categoryLabel: string,
   keyword: string,
 ): string {
+  void category
   return [
     `开发方向分类：${categoryLabel}`,
     `额外关键词：${keyword || "无（自由发挥）"}`,

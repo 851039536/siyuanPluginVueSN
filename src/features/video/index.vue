@@ -145,7 +145,7 @@
     @remove="removeMergeVideo"
     @toggle="toggleMergeVideo"
     @start="handleMergeVideos"
-    @update:output-name="mergeOutputName = $event"
+    @update:output-name="mergeOutputName = String($event ?? '')"
   />
 
   <!-- 视频音频合并对话框 -->
@@ -161,9 +161,9 @@
     :result="mergeAudioResult"
     @close="closeMergeAudioDialog"
     @start="handleMergeVideoAudio"
-    @update:selected-video="selectedVideoForMerge = $event"
-    @update:selected-audio="selectedAudioForMerge = $event"
-    @update:output-name="mergeAudioOutputName = $event"
+    @update:selected-video="selectedVideoForMerge = String($event ?? '')"
+    @update:selected-audio="selectedAudioForMerge = String($event ?? '')"
+    @update:output-name="mergeAudioOutputName = String($event ?? '')"
   />
 
   <!-- 视频压缩对话框 -->
@@ -185,10 +185,10 @@
     @close="closeCompressDialog"
     @start="handleCompressVideo"
     @update:selected-video="selectedVideoForCompress = $event"
-    @update:mode="compressMode = $event"
+    @update:mode="compressMode = $event ?? 'crf'"
     @update:crf="compressCRF = Number($event)"
-    @update:bitrate="compressBitrate = $event"
-    @update:output-name="compressOutputName = $event"
+    @update:bitrate="compressBitrate = String($event ?? '')"
+    @update:output-name="compressOutputName = String($event ?? '')"
   />
 
   <!-- FFmpeg 路径设置对话框 -->
@@ -734,7 +734,7 @@ async function handleMergeVideos() {
       await loadVideos()
       await loadCategories()
     } else {
-      showMessage(t("mergeFailedMsg", { msg: result.error }), 5000, "error")
+      showMessage(t("mergeFailedMsg", { msg: getErrorMessage(result.error) }), 5000, "error")
       mergeResult.value = {
         success: false,
         error: result.error,
@@ -847,7 +847,7 @@ async function handleMergeVideoAudio() {
       await loadVideos()
       await loadCategories()
     } else {
-      showMessage(t("audioMergeFailedMsg", { msg: result.error }), 5000, "error")
+      showMessage(t("audioMergeFailedMsg", { msg: getErrorMessage(result.error) }), 5000, "error")
       mergeAudioResult.value = {
         success: false,
         error: result.error,
@@ -948,7 +948,7 @@ async function handleCompressVideo() {
       await loadVideos()
       await loadCategories()
     } else {
-      showMessage(t("compressFailedMsg", { msg: result.error }), 5000, "error")
+      showMessage(t("compressFailedMsg", { msg: getErrorMessage(result.error) }), 5000, "error")
       compressResult.value = {
         success: false,
         error: result.error,

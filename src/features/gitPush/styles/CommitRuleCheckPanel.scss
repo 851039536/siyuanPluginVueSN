@@ -122,17 +122,10 @@
   opacity: 1;
 }
 
-.grc-select-all {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-1;
-  font-size: $t-2xs;
-  cursor: pointer;
+// 全选复选框：布局/字号/间距由共享 Checkbox（xsmall 档：10px 标签 + 6px 间距）承担，
+// 此处只保留原有的次要视觉权重；选择器 4 类 = (0,4,0)，稳定压过共享组件 scoped 根样式
+.grc-panel .grc-title-actions .grc-select-all.si-checkbox {
   opacity: 0.75;
-
-  input[type="checkbox"] {
-    accent-color: var(--b3-theme-primary);
-  }
 }
 
 // 批量选中计数（等宽 + tabular-nums，对齐数值文本规范）
@@ -141,20 +134,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-// 列表行复选框
-.grc-item-check {
-  margin: 0;
-  accent-color: var(--b3-theme-primary);
-  cursor: pointer;
-}
-
-.grc-section-count {
-  font-size: $t-2xs;
+// 标题计数徽章：底色/文字/几何由共享 Tag（primary + xsmall + square）承担，等宽数字沿用原徽章观感
+// （选择器 4 类 = (0,4,0)，覆盖 Tag 的 xsmall/square 档位声明）
+.grc-panel .grc-section-title .grc-section-count.si-tag {
   font-family: $ff-mono;
-  padding: 0 $s-px6;
-  border-radius: $r-sm;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
+  font-variant-numeric: tabular-nums;
   font-weight: $fw-semibold;
   letter-spacing: 0;
 }
@@ -234,13 +218,12 @@
   opacity: 0.45;
 }
 
-.grc-item-reason {
+// 违规原因徽章：配色由共享 Tag（warning + xsmall + circle）承担，胶囊几何与字重沿用原徽章观感
+// （选择器 4 类 = (0,4,0)，覆盖 Tag 的 xsmall/circle 档位声明）
+.grc-panel .grc-item-head .grc-item-reason.si-tag {
   padding: 0 $s-px6;
   border-radius: $r-full;
   font-weight: $fw-semibold;
-  color: var(--b3-theme-warning);
-  background: var(--b3-theme-warning-lightest);
-  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
 }
 
 .grc-item-date {
@@ -262,9 +245,10 @@
   opacity: 0.6;
 }
 
-// 违规列表中的修正/删除按钮（共用样式）
-.grc-item-fix,
-.grc-item-drop {
+// 违规列表中的修正/删除按钮：交互与尺寸由共享 Button（ghost + xsmall + dense）承担，
+// 此处只保留行内次要权重与紧凑几何；选择器 4 类 = (0,4,0)，覆盖 dense 档位的 padding/圆角
+.grc-panel .grc-item-head .grc-item-fix.si-button,
+.grc-panel .grc-item-head .grc-item-drop.si-button {
   padding: 0 $s-1;
   border-radius: $r-sm;
   opacity: 0.6;

@@ -21,19 +21,18 @@
         :commit-count="commitCount"
         @update-count="emit('updateCount', $event)"
       />
-      <!-- 按钮文案："开始分析"/"重新分析"（分析中切换为环形 loading 图标并旋转，业务图标不参与旋转） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <!-- 按钮文案："开始分析"/"重新分析"（共享 Button：分析中由 loading 转圈、自动禁用并保持按钮宽度） -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="clipboardCheckOutline"
+        :loading="analyzing"
         :disabled="analyzing"
         @click="emit('runAnalysis')"
       >
-        <Icon
-          :icon="analyzing ? 'mdi:loading' : 'mdi:clipboard-check-outline'"
-          height="12"
-          :class="{ 'gp-spin': analyzing }"
-        />
         {{ analyzed ? i18n.auditRerun : i18n.auditRun }}
-      </button>
+      </Button>
     </div>
     <!-- 分析状态："分析中…/上次分析 xx/未分析" -->
     <span class="grc-status">{{ statusText }}</span>
@@ -44,8 +43,8 @@
 // gitPush 提交规则检查顶部工具条（项目过滤 + 分析状态 + 条数选择 + 分析按钮）
 import type { GitProject } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
-import { Icon } from "@iconify/vue"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
 import CommitCountSelect from "../common/CommitCountSelect.vue"
 import { analysisStatusText } from "../../utils"

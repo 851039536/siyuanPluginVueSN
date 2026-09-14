@@ -77,6 +77,9 @@ interface Props {
   outlined?: boolean
   /** 纯文本外观（透明底无边框，文字取颜色轴色值） */
   text?: boolean
+  /** 紧凑几何修饰：仅与 size="xsmall" 协同时生效（去 min-height、收紧 padding/gap/圆角）。
+   *  用于对齐既有紧凑按钮观感，不改四档字号阶梯。 */
+  dense?: boolean
   /** 圆形外观（主要配合纯图标按钮） */
   rounded?: boolean
   /** 原生 type（表单内提交需传 submit） */
@@ -98,6 +101,7 @@ const props = withDefaults(defineProps<Props>(), {
   block: false,
   outlined: false,
   text: false,
+  dense: false,
   rounded: false,
   type: "button",
 })
@@ -136,6 +140,7 @@ const buttonClasses = computed(() => {
       "si-button--rounded": props.rounded,
       "si-button--outlined": props.outlined,
       "si-button--text": props.text,
+      "si-button--dense": props.dense,
       "si-button--icon-right": props.iconPosition === "right",
       "si-button--icon-top": props.iconPosition === "top",
       "si-button--icon-bottom": props.iconPosition === "bottom",

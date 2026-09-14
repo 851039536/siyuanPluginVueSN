@@ -1,168 +1,185 @@
 <!-- Git 差异查看弹窗：着色 diff + 词级高亮、文件切换导航、差异范围切换、弹窗内暂存/丢弃 -->
 <template>
-  <Teleport to="body">
-    <div
-      class="wt-diff-overlay"
-      @click.self="$emit('close')"
-    >
-      <div
-        class="wt-diff-dialog"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="file.path"
-      >
-        <div class="wt-diff-header">
-          <div class="wt-diff-title-row">
-            <Icon
-              icon="mdi:file-compare"
-              height="12"
-            />
-            <span
-              class="wt-diff-title"
-              :title="file.path"
-            >{{ file.path }}</span>
-            <!-- 重命名/复制的原路径（弱化展示） -->
-            <span
-              v-if="file.oldPath"
-              class="wt-diff-old"
-              :title="file.oldPath"
-            >← {{ file.oldPath }}</span>
-            <!-- 文件状态徽章（文案与列表状态 tooltip 同源） -->
-            <span class="wt-diff-status">{{ statusLabel }}</span>
-            <!-- 暂存状态徽章："已暂存"/"未暂存" -->
-            <span class="wt-diff-badge">{{ file.staged ? i18n.staged : i18n.unstaged }}</span>
-            <!-- 增/删行数统计 -->
-            <span
-              v-if="diffStats.add || diffStats.del"
-              class="wt-diff-stats"
-            >
-              <span class="wt-stat-add">+{{ diffStats.add }}</span>
-              <span class="wt-stat-del">−{{ diffStats.del }}</span>
-            </span>
-          </div>
-          <!-- 头部操作区：差异范围 / 文件导航 / 暂存切换 / 丢弃 / 复制 / 关闭 -->
-          <div class="wt-diff-header-actions">
-            <!-- 差异范围切换：仅「已暂存 + 工作区又改动」的文件存在两份差异 -->
-            <template v-if="canSwitchScope">
-              <Button
-                v-for="opt in SCOPE_OPTIONS"
-                :key="opt.value"
-                :variant="scope === opt.value ? 'primary' : 'ghost'"
-                text
-                size="xsmall"
-                :aria-pressed="scope === opt.value"
-                :title="i18n.diffScope"
-                @click="setScope(opt.value)"
-              >
-                {{ i18n[opt.labelKey] }}
-              </Button>
-              <span class="wt-diff-header-sep" />
-            </template>
-            <!-- 上一个文件 -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              :disabled="fileIndex <= 0"
-              :title="i18n.prevFile"
-              @click="navigate(-1)"
-            >
-              <Icon
-                icon="mdi:chevron-left"
-                height="12"
-              />
-            </button>
-            <!-- 文件位置指示（如 3 / 12） -->
-            <span class="wt-diff-pos">{{ fileIndex + 1 }} / {{ files.length }}</span>
-            <!-- 下一个文件 -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              :disabled="fileIndex >= files.length - 1"
-              :title="i18n.nextFile"
-              @click="navigate(1)"
-            >
-              <Icon
-                icon="mdi:chevron-right"
-                height="12"
-              />
-            </button>
-            <span class="wt-diff-header-sep" />
-            <!-- 暂存/取消暂存当前文件 -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              :disabled="gitOpLoading"
-              :title="file.staged ? i18n.unstageFile : i18n.stageFile"
-              @click="$emit('stageToggle')"
-            >
-              <Icon
-                :icon="gitOpLoading ? 'mdi:loading' : file.staged ? 'mdi:minus-box-outline' : 'mdi:plus-box-outline'"
-                :class="{ 'gp-spin': gitOpLoading }"
-                height="12"
-              />
-            </button>
-            <!-- 丢弃当前文件更改（提示文案按暂存/未跟踪状态区分） -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm wt-diff-discard"
-              :disabled="gitOpLoading"
-              :title="discardTitle"
-              @click="$emit('discard')"
-            >
-              <Icon
-                icon="mdi:undo-variant"
-                height="12"
-              />
-            </button>
-            <span class="wt-diff-header-sep" />
-            <!-- 复制当前范围的差异全文（无内容时禁用） -->
-            <Button
-              variant="ghost"
-              size="xsmall"
-              :icon="copiedWhat === 'diff' ? 'check' : 'contentCopy'"
-              :disabled="!diffText"
-              :title="copiedWhat === 'diff' ? i18n.copied : i18n.copyDiff"
-              @click="handleCopyDiff"
-            />
-            <!-- 复制文件路径 -->
-            <Button
-              variant="ghost"
-              size="xsmall"
-              :icon="copiedWhat === 'path' ? 'check' : 'linkVariant'"
-              :title="copiedWhat === 'path' ? i18n.copied : i18n.copyPath"
-              @click="handleCopyPath"
-            />
-            <span class="wt-diff-header-sep" />
-            <!-- 关闭弹窗 -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              :title="i18n.close"
-              @click="$emit('close')"
-            >
-              <Icon
-                icon="mdi:close"
-                height="12"
-              />
-            </button>
-          </div>
-        </div>
-        <!-- 加载中（异步 git diff 期间不展示图例，避免与「无差异」空态混淆） -->
-        <div
-          v-if="loading"
-          class="wt-diff-content wt-diff-loading"
-        >
+  <!-- 外壳（遮罩 / 定位 / 层级 / Esc / 焦点归还 / 过渡）全部由共享 Dialog 承担 -->
+  <Dialog
+    class="wt-diff-dialog"
+    :visible="true"
+    size="large"
+    :dismissable-mask="true"
+    :closable="false"
+    :aria-label="file.path"
+    @update:visible="$emit('close')"
+  >
+    <!-- 标题行 + 操作区（header 插槽整体替换标题；headerId 打到标题元素上以建立 aria-labelledby） -->
+    <template #header="{ headerId }">
+      <div class="wt-diff-header">
+        <div class="wt-diff-title-row">
           <Icon
-            icon="mdi:loading"
+            icon="mdi:file-compare"
             height="12"
-            class="gp-spin"
           />
-          <span>{{ i18n.loading }}</span>
+          <span
+            :id="headerId"
+            class="wt-diff-title"
+            :title="file.path"
+          >{{ file.path }}</span>
+          <!-- 重命名/复制的原路径（弱化展示） -->
+          <span
+            v-if="file.oldPath"
+            class="wt-diff-old"
+            :title="file.oldPath"
+          >← {{ file.oldPath }}</span>
+          <!-- 文件状态徽章（文案与列表状态 tooltip 同源） -->
+          <Tag
+            class="wt-diff-status"
+            variant="secondary"
+            size="xsmall"
+            :content="statusLabel"
+          />
+          <!-- 暂存状态徽章："已暂存"/"未暂存" -->
+          <Tag
+            class="wt-diff-badge"
+            variant="secondary"
+            size="xsmall"
+            :content="file.staged ? i18n.staged : i18n.unstaged"
+          />
+          <!-- 增/删行数统计 -->
+          <span
+            v-if="diffStats.add || diffStats.del"
+            class="wt-diff-stats"
+          >
+            <span class="wt-stat-add">+{{ diffStats.add }}</span>
+            <span class="wt-stat-del">−{{ diffStats.del }}</span>
+          </span>
         </div>
-        <!-- 图例 + 着色行（复用共享 DiffLines 片段） -->
-        <DiffLines
-          v-else
-          :i18n="i18n"
-          :lines="coloredDiffLines"
-        />
+        <!-- 头部操作区：差异范围 / 文件导航 / 暂存切换 / 丢弃 / 复制 / 关闭 -->
+        <div class="wt-diff-header-actions">
+          <!-- 差异范围切换：仅「已暂存 + 工作区又改动」的文件存在两份差异 -->
+          <template v-if="canSwitchScope">
+            <Button
+              v-for="opt in SCOPE_OPTIONS"
+              :key="opt.value"
+              :variant="scope === opt.value ? 'primary' : 'ghost'"
+              text
+              size="xsmall"
+              :aria-pressed="scope === opt.value"
+              :title="i18n.diffScope"
+              @click="setScope(opt.value)"
+            >
+              {{ i18n[opt.labelKey] }}
+            </Button>
+            <Divider
+              class="wt-diff-header-sep"
+              layout="vertical"
+            />
+          </template>
+          <!-- 上一个文件 -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="chevronLeft"
+            :disabled="fileIndex <= 0"
+            :title="i18n.prevFile"
+            @click="navigate(-1)"
+          />
+          <!-- 文件位置指示（如 3 / 12） -->
+          <span class="wt-diff-pos">{{ fileIndex + 1 }} / {{ files.length }}</span>
+          <!-- 下一个文件 -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="chevronRight"
+            :disabled="fileIndex >= files.length - 1"
+            :title="i18n.nextFile"
+            @click="navigate(1)"
+          />
+          <Divider
+            class="wt-diff-header-sep"
+            layout="vertical"
+          />
+          <!-- 暂存/取消暂存当前文件 -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            :icon="file.staged ? 'minusBoxOutline' : 'plusBoxOutline'"
+            :loading="gitOpLoading"
+            :disabled="gitOpLoading"
+            :title="file.staged ? i18n.unstageFile : i18n.stageFile"
+            @click="$emit('stageToggle')"
+          />
+          <!-- 丢弃当前文件更改（提示文案按暂存/未跟踪状态区分，危险语义走 severity=danger） -->
+          <Button
+            class="wt-diff-discard"
+            variant="ghost"
+            size="xsmall"
+            dense
+            severity="danger"
+            icon="undoVariant"
+            :disabled="gitOpLoading"
+            :title="discardTitle"
+            @click="$emit('discard')"
+          />
+          <Divider
+            class="wt-diff-header-sep"
+            layout="vertical"
+          />
+          <!-- 复制当前范围的差异全文（无内容时禁用） -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            :icon="copiedWhat === 'diff' ? 'check' : 'contentCopy'"
+            :disabled="!diffText"
+            :title="copiedWhat === 'diff' ? i18n.copied : i18n.copyDiff"
+            @click="handleCopyDiff"
+          />
+          <!-- 复制文件路径 -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            :icon="copiedWhat === 'path' ? 'check' : 'linkVariant'"
+            :title="copiedWhat === 'path' ? i18n.copied : i18n.copyPath"
+            @click="handleCopyPath"
+          />
+          <Divider
+            class="wt-diff-header-sep"
+            layout="vertical"
+          />
+          <!-- 关闭弹窗 -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="close"
+            :title="i18n.close"
+            @click="$emit('close')"
+          />
+        </div>
       </div>
+    </template>
+    <!-- 加载中（异步 git diff 期间不展示图例，避免与「无差异」空态混淆） -->
+    <div
+      v-if="loading"
+      class="wt-diff-content wt-diff-loading"
+    >
+      <Icon
+        icon="mdi:loading"
+        height="12"
+        class="gp-spin"
+      />
+      <span>{{ i18n.loading }}</span>
     </div>
-  </Teleport>
+    <!-- 图例 + 着色行（复用共享 DiffLines 片段） -->
+    <DiffLines
+      v-else
+      :i18n="i18n"
+      :lines="coloredDiffLines"
+    />
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -170,6 +187,7 @@
 import type { FileChange } from "../../types"
 import { countDiffStats, diffCacheKey, fileStatusText, parseDiffLines } from "../../utils"
 import { copyToClipboard } from "@/utils/domUtils"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -179,6 +197,9 @@ import {
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Dialog from "@/components/Dialog.vue"
+import Divider from "@/components/Divider.vue"
+import Tag from "@/components/Tag.vue"
 import DiffLines from "../common/DiffLines.vue"
 
 const props = defineProps<{
@@ -265,15 +286,16 @@ function setScope(next: DiffScope) {
 
 // ── 复制（差异全文 / 文件路径）：统一走 copyToClipboard，成功后有 2 秒对勾反馈 ──
 const copiedWhat = ref<"diff" | "path" | null>(null)
-let copiedTimer: ReturnType<typeof setTimeout> | undefined
+/** 复制反馈定时器（统一入口 TimerRegistry，随组件卸载清理） */
+const feedbackTimers = new TimerRegistry()
 
 async function copyText(text: string, what: "diff" | "path") {
   const ok = await copyToClipboard(text)
   if (!ok) return
   // 先清旧定时器，避免连续点击时旧定时器提前掐灭新反馈
-  if (copiedTimer) clearTimeout(copiedTimer)
+  feedbackTimers.clearAll()
   copiedWhat.value = what
-  copiedTimer = setTimeout(() => { copiedWhat.value = null }, COPY_FEEDBACK_MS)
+  feedbackTimers.setTimeout(() => { copiedWhat.value = null }, COPY_FEEDBACK_MS)
 }
 
 function handleCopyDiff() {
@@ -291,21 +313,19 @@ watch(
   () => { scope.value = props.file.staged ? "staged" : "unstaged" },
 )
 
-// Esc 关闭 / ← → 切换文件（组件仅在弹窗打开时挂载，onMounted/onUnmounted 即等价于开关监听）
-// 捕获阶段拦截并阻止继续派发，避免按键穿透触发下层弹窗的 Esc 监听（对齐 CommitFileDiffDialog）
+// ← → 切换文件（组件仅在弹窗打开时挂载，onMounted/onUnmounted 即等价于开关监听）
+// 捕获阶段拦截并阻止继续派发，避免按键穿透触发下层弹窗的监听（对齐 CommitFileDiffDialog）；
+// Esc 关闭与焦点归还由共享 Dialog 内建处理
 function handleKeydown(e: KeyboardEvent) {
-  const handled = e.key === "Escape" || e.key === "ArrowLeft" || e.key === "ArrowRight"
-  if (!handled) return
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
   e.stopImmediatePropagation()
-  if (e.key === "Escape") emit("close")
-  else if (e.key === "ArrowLeft") navigate(-1)
-  else navigate(1)
+  navigate(e.key === "ArrowLeft" ? -1 : 1)
 }
 
 onMounted(() => window.addEventListener("keydown", handleKeydown, true))
 onUnmounted(() => {
   window.removeEventListener("keydown", handleKeydown, true)
-  if (copiedTimer) clearTimeout(copiedTimer)
+  feedbackTimers.clearAll()
 })
 </script>
 

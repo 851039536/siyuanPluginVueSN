@@ -3,18 +3,18 @@
   <div class="gp-card-top">
     <div class="gp-card-info">
       <div class="gp-card-name-row">
-        <!-- 收藏星标（悬停提示："取消收藏"/"收藏置顶"） -->
-        <button
+        <!-- 收藏星标（悬停提示："取消收藏"/"收藏置顶"；text 外观保留原有的无边框弱化形态） -->
+        <Button
           class="gp-star-btn"
-          :class="{ active: project.starred }"
+          :class="{ 'gp-star-btn--active': project.starred }"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
+          :icon="project.starred ? 'star' : 'starOutline'"
           :title="project.starred ? i18n.unstar : i18n.starPin"
           @click.stop="ops.toggleStar(project.id)"
-        >
-          <Icon
-            :icon="project.starred ? 'mdi:star' : 'mdi:star-outline'"
-            height="12"
-          />
-        </button>
+        />
         <!-- 项目名（含搜索命中高亮分段） -->
         <span class="gp-card-name"><template
           v-for="(seg, i) in nameSegments"
@@ -23,17 +23,17 @@
           v-if="seg.hit"
           class="gp-hl"
         >{{ seg.text }}</span><template v-else>{{ seg.text }}</template></template></span>
-        <!-- 归档角标："归档"（悬停："已归档"） -->
-        <span
+        <!-- 归档角标："归档"（悬停："已归档"；反色实底由共享 Tag 的 contrast + fill 承担） -->
+        <Tag
           v-if="project.archived"
           class="gp-archived-tag"
+          variant="contrast"
+          fill
+          size="xsmall"
+          icon="archiveOutline"
+          :content="i18n.archivedShort"
           :title="i18n.archivedTitle"
-        >
-          <Icon
-            icon="mdi:archive-outline"
-            height="12"
-          />{{ i18n.archivedShort }}
-        </span>
+        />
       </div>
       <!-- 项目路径行：路径 + 多设备路径角标（"已配置 {0} 个设备路径"）+ 活跃度（悬停："长时间未活动，建议归档"） -->
       <div
@@ -71,28 +71,35 @@
         class="gp-md-files"
       >
         <!-- 文件徽章（点击预览，tooltip："预览 <文件名>"） -->
-        <button
+        <Button
           v-for="f in visibleMdFiles"
           :key="f.name"
           class="gp-md-badge"
           :class="`gp-md-badge--${f.variant}`"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
           :title="i18n.previewFileTitle.replace('{0}', f.name)"
           @click.stop="ops.openMarkdownPreview(project, f.name)"
         >
           {{ getMdLabel(f.name, f.variant) }}
-        </button>
+        </Button>
         <!-- 折叠按钮（tooltip：展开/收起其余 Markdown 文件） -->
-        <button
+        <Button
           v-if="hiddenMdCount > 0"
           class="gp-md-more"
-          :class="{ expanded: mdExpanded }"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
           :title="mdExpanded
             ? i18n.mdFilesCollapse
             : i18n.mdFilesExpand.replace('{0}', String(hiddenMdCount))"
           @click.stop="mdExpanded = !mdExpanded"
         >
           {{ mdExpanded ? `-${hiddenMdCount}` : `+${hiddenMdCount}` }}
-        </button>
+        </Button>
       </div>
       <!-- 分支标签（悬停："当前分支"/"切换到 {0}"） -->
       <div
@@ -103,21 +110,21 @@
           icon="mdi:source-branch"
           height="12"
         />
-        <button
+        <Button
           v-for="b in branches"
           :key="b.name"
           class="gp-branch-tag"
-          :class="{ current: b.current }"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
+          :icon="b.current ? 'check' : undefined"
+          icon-position="right"
           :title="b.current ? i18n.currentBranch : i18n.switchToBranch.replace('{0}', b.name)"
           @click="ops.switchBranch(project.id, b.name)"
         >
           {{ b.name }}
-          <Icon
-            v-if="b.current"
-            icon="mdi:check"
-            height="12"
-          />
-        </button>
+        </Button>
       </div>
       <!-- 备注 -->
       <div
@@ -149,6 +156,8 @@ import { Icon } from "@iconify/vue"
 import { computed, ref } from "vue"
 import { activityLevel, highlightSegments, relativeTime } from "../../utils"
 import { useCardServices } from "../../composables/useCardServices"
+import Button from "@/components/Button.vue"
+import Tag from "@/components/Tag.vue"
 import CardHeaderActions from "./CardHeaderActions.vue"
 
 const props = defineProps<{

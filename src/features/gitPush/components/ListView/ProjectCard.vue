@@ -13,87 +13,92 @@
     <!-- 远程仓库状态 + 冲突警告 -->
     <CardRemotes :project="project" />
 
-    <!-- 多面板 Tab 切换（工作区 / 提交日志 / Stash / Tag） -->
+    <!-- 多面板 Tab 切换（工作区 / 提交日志 / Stash / Tag）；面板经具名插槽下发，未激活面板不挂载 -->
     <CardTabs
       v-model="stashTagTab"
+      :i18n="i18n"
       :changes-count="(workingTree?.stagedCount || 0) + (workingTree?.unstagedCount || 0) + (workingTree?.untrackedCount || 0)"
       :log-count="logEntries.length"
       :stash-count="stashList.length"
       :tag-count="tags.length"
-    />
+    >
+      <!-- 工作区变更 -->
+      <template #worktree>
+        <WorkingTreePanel
+          :i18n="i18n"
+          :tree="workingTree"
+          :committing="committing || false"
+          :generating="generatingMsg?.generating || false"
+          :commit-output="commitOutput || ''"
+          :generated-msg="generatingMsg?.text || ''"
+          :file-diffs="fileDiffs"
+          :diff-loading="diffLoading"
+          :git-op-loading="gitOpLoading || false"
+          :refreshing-working-tree="refreshingWorkingTree || false"
+          :commit-templates="commitTemplates"
+          @stage-file="(file: string) => ops.stageItem(project.id, file)"
+          @unstage-file="(file: string) => ops.unstageItem(project.id, file)"
+          @stage-all="ops.stageAllItems(project.id)"
+          @unstage-all="ops.unstageAllItems(project.id)"
+          @commit="(msg: string) => ops.handleCommit(project.id, msg)"
+          @generate-msg="ops.handleGenerateMsg(project.id)"
+          @load-diff="loadDiff"
+          @clear-output="ops.clearOutput(project.id)"
+          @discard-file="(file: string, staged: boolean, status: string) => ops.handleDiscard(project.id, file, staged, status)"
+          @refresh-working-tree="ops.handleRefreshWorkingTree(project.id)"
+        />
+      </template>
 
-    <!-- 工作区变更 -->
-    <WorkingTreePanel
-      v-if="stashTagTab === 'worktree'"
-      :i18n="i18n"
-      :tree="workingTree"
-      :committing="committing || false"
-      :generating="generatingMsg?.generating || false"
-      :commit-output="commitOutput || ''"
-      :generated-msg="generatingMsg?.text || ''"
-      :file-diffs="fileDiffs"
-      :diff-loading="diffLoading"
-      :git-op-loading="gitOpLoading || false"
-      :refreshing-working-tree="refreshingWorkingTree || false"
-      :commit-templates="commitTemplates"
-      @stage-file="(file: string) => ops.stageItem(project.id, file)"
-      @unstage-file="(file: string) => ops.unstageItem(project.id, file)"
-      @stage-all="ops.stageAllItems(project.id)"
-      @unstage-all="ops.unstageAllItems(project.id)"
-      @commit="(msg: string) => ops.handleCommit(project.id, msg)"
-      @generate-msg="ops.handleGenerateMsg(project.id)"
-      @load-diff="loadDiff"
-      @clear-output="ops.clearOutput(project.id)"
-      @discard-file="(file: string, staged: boolean, status: string) => ops.handleDiscard(project.id, file, staged, status)"
-      @refresh-working-tree="ops.handleRefreshWorkingTree(project.id)"
-    />
+      <!-- 提交日志（数据卡内自持，刷新/换条数直调卡内重载） -->
+      <template #log>
+        <BranchCommitList
+          :i18n="i18n"
+          :entries="logEntries"
+          :loading="logLoading"
+          :tag-commit-map="tagCommitMap"
+          :remote-tags="remoteTags"
+          :initial-count="logLimit"
+          @reload-commit-log="handleLogCountReload"
+          @refresh-commit-log="() => reloadLog()"
+          @fix-commit="openCommitFix"
+          @add-tag="openTagCreate"
+          @drop-commit="openCommitDrop"
+          @view-files="openCommitFiles"
+        />
+      </template>
 
-    <!-- 提交日志（数据卡内自持，刷新/换条数直调卡内重载） -->
-    <BranchCommitList
-      v-if="stashTagTab === 'log'"
-      :i18n="i18n"
-      :entries="logEntries"
-      :loading="logLoading"
-      :tag-commit-map="tagCommitMap"
-      :remote-tags="remoteTags"
-      :initial-count="logLimit"
-      @reload-commit-log="handleLogCountReload"
-      @refresh-commit-log="() => reloadLog()"
-      @fix-commit="openCommitFix"
-      @add-tag="openTagCreate"
-      @drop-commit="openCommitDrop"
-      @view-files="openCommitFiles"
-    />
+      <!-- Stash -->
+      <template #stash>
+        <StashSection
+          :entries="stashList"
+          :loading="stashLoading || false"
+          :tree="workingTree"
+          :gen-desc-loading="genStashDescLoading || false"
+          :generated-msg="generatedStashMsg"
+          :i18n="i18n"
+          @stash-confirm="(msg: string) => ops.handleStashConfirmMsg(project.id, msg)"
+          @gen-stash-desc="ops.handleGenStashDesc(project.id)"
+          @stash-pop="(idx: number) => ops.handleStashPop(project.id, idx)"
+          @stash-apply="(idx: number) => ops.handleStashApply(project.id, idx)"
+          @stash-drop="(idx: number) => ops.handleStashDrop(project.id, idx)"
+        />
+      </template>
 
-    <!-- Stash -->
-    <StashSection
-      v-if="stashTagTab === 'stash'"
-      :entries="stashList"
-      :loading="stashLoading || false"
-      :tree="workingTree"
-      :gen-desc-loading="genStashDescLoading || false"
-      :generated-msg="generatedStashMsg"
-      :i18n="i18n"
-      @stash-confirm="(msg: string) => ops.handleStashConfirmMsg(project.id, msg)"
-      @gen-stash-desc="ops.handleGenStashDesc(project.id)"
-      @stash-pop="(idx: number) => ops.handleStashPop(project.id, idx)"
-      @stash-apply="(idx: number) => ops.handleStashApply(project.id, idx)"
-      @stash-drop="(idx: number) => ops.handleStashDrop(project.id, idx)"
-    />
-
-    <!-- Tag（列表数据卡内自持，刷新直调卡内重载） -->
-    <TagPanel
-      v-if="stashTagTab === 'tag'"
-      :tags="tags"
-      :loading="tagsLoading"
-      :push-loaded="tagPushLoading"
-      :remotes="remoteNames"
-      :i18n="i18n"
-      @create="(name: string, message?: string) => ops.handleCreateTag(project.id, name, message)"
-      @push="(tag: string, remote?: string) => ops.handlePushTag(project.id, tag, remote)"
-      @delete="(tag: string) => ops.handleDeleteTag(project.id, tag)"
-      @refresh="refreshTags"
-    />
+      <!-- Tag（列表数据卡内自持，刷新直调卡内重载） -->
+      <template #tag>
+        <TagPanel
+          :tags="tags"
+          :loading="tagsLoading"
+          :push-loaded="tagPushLoading"
+          :remotes="remoteNames"
+          :i18n="i18n"
+          @create="(name: string, message?: string) => ops.handleCreateTag(project.id, name, message)"
+          @push="(tag: string, remote?: string) => ops.handlePushTag(project.id, tag, remote)"
+          @delete="(tag: string) => ops.handleDeleteTag(project.id, tag)"
+          @refresh="refreshTags"
+        />
+      </template>
+    </CardTabs>
 
     <!-- 冲突区（合并冲突的列表 + 解决操作） -->
     <ConflictSection

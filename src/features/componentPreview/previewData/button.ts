@@ -174,6 +174,27 @@ export const buttonGroup: PreviewGroup = {
       slotText: "块级按钮",
       code: "<Button block>块级按钮</Button>",
     },
+    {
+      title: "紧凑按钮（dense，仅与 xsmall 协同）",
+      props: {
+        variant: "ghost",
+        size: "xsmall",
+        dense: true,
+      },
+      slotText: "刷新",
+      code: "<Button variant=\"ghost\" size=\"xsmall\" dense>刷新</Button>",
+    },
+    {
+      title: "紧凑纯图标按钮（dense + 20px）",
+      props: {
+        variant: "ghost",
+        size: "xsmall",
+        dense: true,
+        icon: "refresh",
+        title: "刷新",
+      },
+      code: "<Button variant=\"ghost\" size=\"xsmall\" dense icon=\"refresh\" title=\"刷新\" />",
+    },
   ],
 }
 

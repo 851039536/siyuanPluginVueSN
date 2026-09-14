@@ -1,44 +1,15 @@
-// gitPush 项目卡片多面板 Tab 切换条样式（自 index.scss 迁出）
+// gitPush 项目卡片多面板 Tab 切换条样式（Tab 本体、标签栏与下划线由共享 Tabs 五件套承担）
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── Stash + Tag Tab 切换容器 ──
+// ── Stash + Tag Tab 切换容器（仅保留与上方区块的分隔）──
 .gp-stash-tag-tabs {
   border-top: 1px solid var(--b3-border-color);
   margin-top: $s-px6;
   padding-top: $s-px6;
 }
 
-.gp-stash-tag-tab-bar {
-  display: flex;
-  gap: $s-px2;
-  margin-bottom: $s-1;
-}
-
-.gp-stash-tag-tab {
-  @include gp-label-base;
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px3;
-  padding: $s-px2 $s-2;
-  border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
-  cursor: pointer;
-  opacity: 0.4;
-  transition: opacity 0.12s, border-color 0.12s;
-
-  &:hover {
-    opacity: 0.7;
-  }
-
-  &.active {
-    opacity: 1;
-    border-bottom-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
-}
-
+// ── Tab 内的计数徽标（共享 Tab 的 scoped 样式不覆盖子元素，此处无需抬特异性）──
 .gp-stash-tag-tab-count {
   font-size: $t-2xs;
   font-family: $ff-mono;

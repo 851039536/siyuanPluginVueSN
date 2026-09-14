@@ -1,152 +1,138 @@
 <!-- gitPush AI 错误日志分析弹窗：流式调用 AI 分析 Git 失败日志并展示原因与解决方案 -->
 <template>
-  <Teleport to="body">
-    <div
-      class="gp-ai-overlay"
-      @click.self="$emit('close')"
-    >
-      <div class="gp-ai-dialog">
-        <!-- 头部：标题 + 操作徽标（左） / 重新分析、复制、关闭（右） -->
-        <div class="gp-ai-header">
-          <div class="gp-ai-title">
-            <Icon
-              icon="mdi:auto-fix"
-              height="14"
-            />
-            <!-- 弹窗标题："AI 错误分析" -->
-            <span>{{ i18n.aiAnalyzeTitle }}</span>
-            <!-- 操作类型 + 项目名徽标（如 推送 · my-repo） -->
-            <span class="gp-ai-badge">{{ actionLabel }} · {{ projectName }}</span>
-          </div>
-          <div class="gp-ai-header-actions">
-            <!-- 重新分析（tooltip："重新分析"） -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              :disabled="streaming"
-              :title="i18n.aiAnalyzeRetry"
-              @click="runAnalysis"
-            >
-              <Icon
-                :icon="streaming ? 'mdi:loading' : 'mdi:refresh'"
-                height="12"
-                :class="{ 'gp-spin': streaming }"
-              />
-            </button>
-            <!-- 复制分析结果（tooltip："复制分析结果"） -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              :disabled="!result"
-              :title="i18n.aiAnalyzeCopy"
-              @click="handleCopy"
-            >
-              <Icon
-                :icon="copied ? 'mdi:check' : 'mdi:content-copy'"
-                height="12"
-              />
-            </button>
-            <!-- 关闭弹窗（tooltip："关闭"） -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              :title="i18n.close"
-              @click="$emit('close')"
-            >
-              <Icon
-                icon="mdi:close"
-                height="12"
-              />
-            </button>
-          </div>
+  <!-- 外壳（遮罩 / 定位 / 层级 / Esc / 焦点归还 / 过渡）全部由共享 Dialog 承担 -->
+  <Dialog
+    class="gp-ai-dialog"
+    :visible="true"
+    size="large"
+    :dismissable-mask="true"
+    :closable="false"
+    :aria-label="i18n.aiAnalyzeTitle"
+    @update:visible="$emit('close')"
+  >
+    <!-- 头部：标题 + 操作徽标（左） / 重新分析、复制、关闭（右）；headerId 打到标题元素以建立 aria-labelledby -->
+    <template #header="{ headerId }">
+      <div class="gp-ai-header">
+        <div class="gp-ai-title">
+          <Icon
+            icon="mdi:auto-fix"
+            height="14"
+          />
+          <!-- 弹窗标题："AI 错误分析" -->
+          <span :id="headerId">{{ i18n.aiAnalyzeTitle }}</span>
+          <!-- 操作类型 + 项目名徽标（如 推送 · my-repo） -->
+          <span class="gp-ai-badge">{{ actionLabel }} · {{ projectName }}</span>
         </div>
-
-        <!-- 失败日志折叠摘要（默认展开） -->
-        <div class="gp-ai-errors">
-          <button
-            class="gp-ai-errors-toggle"
-            @click="errorsExpanded = !errorsExpanded"
-          >
-            <Icon
-              icon="mdi:alert-circle-outline"
-              height="12"
-            />
-            <!-- "失败日志" -->
-            <span>{{ i18n.aiAnalyzeErrorLog }}</span>
-            <Icon
-              :icon="errorsExpanded ? 'mdi:chevron-up' : 'mdi:chevron-down'"
-              height="12"
-            />
-          </button>
-          <pre
-            v-if="errorsExpanded"
-            class="gp-ai-errors-text"
-          >{{ errorText }}</pre>
-        </div>
-
-        <!-- 内容区 -->
-        <div class="gp-ai-body">
-          <!-- 分析中："AI 分析中..." -->
-          <div
-            v-if="streaming"
-            class="gp-ai-state"
-          >
-            <Icon
-              icon="mdi:loading"
-              height="14"
-              class="gp-spin"
-            />
-            <span>{{ i18n.aiAnalyzing }}</span>
-          </div>
-          <!-- 调用失败："AI 分析失败，请重试" -->
-          <div
-            v-else-if="error"
-            class="gp-ai-state gp-ai-state--error"
-          >
-            <Icon
-              icon="mdi:alert-circle-outline"
-              height="16"
-            />
-            <span>{{ error }}</span>
-            <!-- 重试按钮："重新分析" -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
-              @click="runAnalysis"
-            >
-              <Icon
-                icon="mdi:refresh"
-                height="12"
-              />
-              <span>{{ i18n.aiAnalyzeRetry }}</span>
-            </button>
-          </div>
-          <!-- 分析结果（Markdown 渲染，复用 gp-md-content 排版） -->
-          <article
-            v-else-if="result"
-            v-html="renderedHtml"
-            class="gp-md-content gp-ai-content"
+        <div class="gp-ai-header-actions">
+          <!-- 重新分析（tooltip："重新分析"） -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="refresh"
+            :loading="streaming"
+            :disabled="streaming"
+            :title="i18n.aiAnalyzeRetry"
+            @click="runAnalysis"
+          />
+          <!-- 复制分析结果（tooltip："复制分析结果"） -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            :icon="copied ? 'check' : 'contentCopy'"
+            :disabled="!result"
+            :title="i18n.aiAnalyzeCopy"
+            @click="handleCopy"
+          />
+          <!-- 关闭弹窗（tooltip："关闭"） -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="close"
+            :title="i18n.close"
+            @click="$emit('close')"
           />
         </div>
-
-        <!-- 底部操作栏 -->
-        <div class="gp-ai-footer">
-          <!-- "分析结果由 AI 生成，仅供参考" -->
-          <span class="gp-ai-footer-hint">{{ i18n.aiAnalyzeFooterHint }}</span>
-          <div class="gp-grow" />
-          <!-- 重新分析主按钮 -->
-          <button
-            class="vp-btn vp-btn--primary vp-btn--sm"
-            :disabled="streaming"
-            @click="runAnalysis"
-          >
-            <Icon
-              icon="mdi:auto-fix"
-              height="12"
-              :class="{ 'gp-spin': streaming }"
-            />
-            <span>{{ streaming ? i18n.aiAnalyzing : i18n.aiAnalyzeRetry }}</span>
-          </button>
-        </div>
       </div>
+    </template>
+
+    <!-- 失败日志折叠摘要（默认展开；折叠交互与 aria-expanded 由共享 Panel 承担） -->
+    <Panel
+      class="gp-ai-errors"
+      :header="i18n.aiAnalyzeErrorLog"
+      toggleable
+      :collapsed="!errorsExpanded"
+      :toggle-label="i18n.aiAnalyzeErrorLog"
+      @update:collapsed="errorsExpanded = !$event"
+    >
+      <pre class="gp-ai-errors-text">{{ errorText }}</pre>
+    </Panel>
+
+    <!-- 内容区 -->
+    <div class="gp-ai-body">
+      <!-- 分析中："AI 分析中..." -->
+      <div
+        v-if="streaming"
+        class="gp-ai-state"
+      >
+        <Icon
+          icon="mdi:loading"
+          height="14"
+          class="gp-spin"
+        />
+        <span>{{ i18n.aiAnalyzing }}</span>
+      </div>
+      <!-- 调用失败："AI 分析失败，请重试" -->
+      <div
+        v-else-if="error"
+        class="gp-ai-state gp-ai-state--error"
+      >
+        <Icon
+          icon="mdi:alert-circle-outline"
+          height="16"
+        />
+        <span>{{ error }}</span>
+        <!-- 重试按钮："重新分析" -->
+        <Button
+          class="gp-ai-retry-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="refresh"
+          @click="runAnalysis"
+        >
+          {{ i18n.aiAnalyzeRetry }}
+        </Button>
+      </div>
+      <!-- 分析结果（Markdown 渲染，复用 gp-md-content 排版） -->
+      <article
+        v-else-if="result"
+        v-html="renderedHtml"
+        class="gp-md-content gp-ai-content"
+      />
     </div>
-  </Teleport>
+
+    <!-- 底部操作栏 -->
+    <template #footer>
+      <!-- "分析结果由 AI 生成，仅供参考" -->
+      <span class="gp-ai-footer-hint">{{ i18n.aiAnalyzeFooterHint }}</span>
+      <!-- 重新分析主按钮 -->
+      <Button
+        class="gp-ai-footer-btn"
+        variant="primary"
+        size="xsmall"
+        dense
+        icon="sparkles"
+        :loading="streaming"
+        :disabled="streaming"
+        @click="runAnalysis"
+      >
+        {{ streaming ? i18n.aiAnalyzing : i18n.aiAnalyzeRetry }}
+      </Button>
+    </template>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -162,7 +148,11 @@ import {
 import { callAISmart } from "@/utils/aiApi"
 import { copyToClipboard } from "@/utils/domUtils"
 import { parseMarkdown } from "@/utils/mdRenderer"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import { CARD_SERVICES_KEY } from "../../types"
+import Button from "@/components/Button.vue"
+import Dialog from "@/components/Dialog.vue"
+import Panel from "@/components/Panel.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -174,7 +164,7 @@ const props = defineProps<{
   entries: PushOutputEntry[]
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   close: []
 }>()
 
@@ -280,31 +270,28 @@ const renderedHtml = computed(() => {
   }
 })
 
+/** 复制反馈定时器（统一入口 TimerRegistry，随组件卸载清理） */
+const feedbackTimers = new TimerRegistry()
+
 /** 复制分析结果（成功 2 秒反馈） */
-let copiedTimer: ReturnType<typeof setTimeout> | undefined
 async function handleCopy() {
   if (!result.value) return
   const ok = await copyToClipboard(result.value)
   if (ok) {
-    if (copiedTimer) clearTimeout(copiedTimer)
+    feedbackTimers.clearAll()
     copied.value = true
-    copiedTimer = setTimeout(() => { copied.value = false }, 2000)
+    feedbackTimers.setTimeout(() => { copied.value = false }, 2000)
   }
 }
 
-// Esc 关闭 + 打开即自动分析（组件仅在弹窗打开时挂载）
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape") emit("close")
-}
+// 打开即自动分析（组件仅在弹窗打开时挂载）；Esc 关闭由共享 Dialog 内建处理
 onMounted(() => {
-  window.addEventListener("keydown", handleKeydown)
   void runAnalysis()
 })
 onUnmounted(() => {
   disposed = true
   abortController?.abort()
-  window.removeEventListener("keydown", handleKeydown)
-  if (copiedTimer) clearTimeout(copiedTimer)
+  feedbackTimers.clearAll()
 })
 </script>
 

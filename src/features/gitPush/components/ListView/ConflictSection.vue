@@ -20,41 +20,37 @@
       >
         {{ f.path }}
         <!-- 悬停提示："保留本地版本" -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="fileDocumentCheckOutline"
           :title="i18n.keepOurs"
           @click="$emit('resolveConflict', f.path, 'ours')"
-        >
-          <Icon
-            icon="mdi:file-document-check-outline"
-            height="12"
-          />
-        </button>
+        />
         <!-- 悬停提示："保留远程版本" -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="fileDownloadOutline"
           :title="i18n.keepTheirs"
           @click="$emit('resolveConflict', f.path, 'theirs')"
-        >
-          <Icon
-            icon="mdi:file-download-outline"
-            height="12"
-          />
-        </button>
+        />
       </span>
     </div>
     <div class="gp-conflict-actions">
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+      <!-- "中止合并"（危险操作：悬停变红由 .gp-btn-danger 提供） -->
+      <Button
+        class="gp-btn-danger"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="refreshLeft"
         @click="$emit('abortMerge')"
       >
-        <Icon
-          icon="mdi:undo"
-          height="12"
-        />
-        <!-- "中止合并" -->
         {{ i18n.abortMerge }}
-      </button>
+      </Button>
     </div>
   </div>
 </template>
@@ -62,6 +58,7 @@
 <script setup lang="ts">
 import type { ConflictFile } from "../../types"
 import { Icon } from "@iconify/vue"
+import Button from "@/components/Button.vue"
 
 defineProps<{
   conflicts: ConflictFile[] | undefined
@@ -75,5 +72,6 @@ defineEmits<{
 </script>
 
 <style lang="scss">
+@use "@/index.scss" as *;
 @use "../../styles/index.scss";
 </style>

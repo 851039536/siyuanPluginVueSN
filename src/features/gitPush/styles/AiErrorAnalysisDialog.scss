@@ -1,43 +1,31 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── AI 错误分析弹窗（Teleport 到 body，样式全局生效） ──
+// ── AI 错误分析弹窗 ──
+// 外壳（遮罩 / 定位 / z-index / 过渡 / Esc / 焦点归还）与页脚容器由共享 Dialog 承担；
+// 弹窗不再 Teleport，位于 .git-push-panel 内，字号与着色变量直接继承面板定义
 
-.gp-ai-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  // 基准字号：弹窗内未显式声明字号的文字继承内容级 12px
-  font-size: $t-xs;
-}
-
-.gp-ai-dialog {
-  width: 680px;
-  max-width: 90vw;
-  max-height: 80vh;
+// 内容区改为纵向 flex 并去掉 Dialog 内边距：折叠区固定、正文自行滚动
+.git-push-panel .gp-ai-dialog .si-dialog__content {
   display: flex;
   flex-direction: column;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-md;
+  padding: 0;
   overflow: hidden;
+}
+
+// 头部改用 Dialog 的 header 插槽，压回紧凑内边距（Dialog large 档默认 12px 20px）
+.git-push-panel .gp-ai-dialog .si-dialog__header {
+  padding: $s-2 $s-3;
 }
 
 // ── 头部 ──
 .gp-ai-header {
   display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: $s-2;
-  padding: $s-2 $s-3;
-  background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
 }
 
 .gp-ai-title {
@@ -73,30 +61,18 @@
   flex-shrink: 0;
 }
 
-// ── 失败日志折叠摘要 ──
-.gp-ai-errors {
+// ── 失败日志折叠摘要（外壳由共享 Panel 承担，压成贴顶贴底的通栏）──
+.git-push-panel .gp-ai-dialog .gp-ai-errors.si-panel {
+  border: none;
   border-bottom: 1px solid var(--b3-border-color);
+  border-radius: 0;
   background: var(--b3-theme-surface);
   flex-shrink: 0;
 }
 
-.gp-ai-errors-toggle {
-  @include btn-reset;
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  width: 100%;
-  padding: $s-2 $s-3;
-  font-size: $t-2xs;
-  font-weight: $fw-medium;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface);
-  transition: color 0.12s;
-
-  &:hover {
-    color: var(--b3-theme-on-background);
-  }
+// Panel 内容区去掉默认内边距，由 .gp-ai-errors-text 自身的 margin 控制留白
+.git-push-panel .gp-ai-dialog .gp-ai-errors .si-panel__content {
+  padding: 0;
 }
 
 .gp-ai-errors-text {
@@ -146,10 +122,10 @@
 
 .gp-ai-state--error {
   color: var(--b3-theme-error);
+}
 
-  button {
-    margin-top: $s-2;
-  }
+.gp-ai-state--error .gp-ai-retry-btn {
+  margin-top: $s-2;
 }
 
 // 分析结果（复用 gp-md-content 的 Markdown 排版；body 后代选择器提升优先级，
@@ -161,19 +137,14 @@
   line-height: $lh-normal;
 }
 
-// ── 底部操作栏 ──
-.gp-ai-footer {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  padding: $s-2 $s-3;
-  background: var(--b3-theme-surface);
-  border-top: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
-}
-
+// ── 底部操作栏（容器由 Dialog 的 footer 提供）──
 .gp-ai-footer-hint {
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.55;
+}
+
+// 主按钮推到最右（footer 容器为右对齐 flex，提示文字留在左侧）
+.gp-ai-footer-btn {
+  margin-left: auto;
 }

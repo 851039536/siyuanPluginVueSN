@@ -2,27 +2,23 @@
 <template>
   <!-- 操作按钮区：分类选择/平台链接/IDE/刷新/编辑/Git配置/删除 -->
   <div class="gp-card-actions">
-    <!-- 分类下拉（悬停提示："移动分类"） -->
-    <select
+    <!-- 分类下拉（悬停提示："移动分类"；Select 为纯受控，变更经 handleCategoryChange 派发） -->
+    <Select
       class="gp-cat-select"
-      :value="project.categoryId"
+      size="xsmall"
+      :model-value="project.categoryId"
+      :options="categoryOptions"
+      :aria-label="i18n.moveCategory"
       :title="i18n.moveCategory"
-      @change.stop="ops.moveProject(project.id, ($event.target as HTMLSelectElement).value)"
-    >
-      <option
-        v-for="cat in categories"
-        :key="cat.id"
-        :value="cat.id"
-        :selected="cat.id === project.categoryId"
-      >
-        {{ cat.name }}
-      </option>
-    </select>
+      @update:model-value="handleCategoryChange"
+    />
     <!-- 平台链接下拉菜单（本地开关，与 IDE/刷新菜单同模式） -->
     <div class="gp-platform-wrap gp-menu-wrap">
-      <!-- 悬停提示："平台链接" -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <!-- 悬停提示："平台链接"（图标 + 展开箭头，双图标走默认插槽以保留原有形态） -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
         :title="i18n.platformLinks"
         @click.stop="toggleMenu('platform')"
       >
@@ -35,7 +31,7 @@
           height="12"
           class="gp-caret-icon"
         />
-      </button>
+      </Button>
       <div
         v-if="openMenu === 'platform'"
         class="gp-platform-popover"
@@ -72,9 +68,11 @@
     </div>
     <!-- IDE 打开菜单（本地开关，与拉取/推送菜单同模式） -->
     <div class="gp-ide-wrap gp-menu-wrap">
-      <!-- 悬停提示："打开项目" -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <!-- 悬停提示："打开项目"（图标 + 展开箭头，双图标走默认插槽以保留原有形态） -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
         :title="i18n.openProject"
         @click.stop="toggleMenu('ide')"
       >
@@ -87,7 +85,7 @@
           height="12"
           class="gp-caret-icon"
         />
-      </button>
+      </Button>
       <div
         v-if="openMenu === 'ide'"
         class="gp-ide-popover"
@@ -186,17 +184,15 @@
     <!-- 刷新选项菜单（本地开关，与拉取/推送菜单同模式） -->
     <div class="gp-refresh-wrap gp-menu-wrap">
       <!-- 悬停提示："刷新选项" -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="refresh"
+        :loading="isRefreshing"
         :title="i18n.refreshOptions"
         @click.stop="toggleMenu('refresh')"
-      >
-        <Icon
-          :icon="isRefreshing ? 'mdi:loading' : 'mdi:refresh'"
-          height="12"
-          :class="{ 'gp-spin': isRefreshing }"
-        />
-      </button>
+      />
       <div
         v-if="openMenu === 'refresh'"
         class="gp-refresh-popover"
@@ -231,40 +227,35 @@
       </div>
     </div>
     <!-- 悬停提示："编辑项目（标签/备注）" -->
-    <button
-      class="vp-btn vp-btn--ghost vp-btn--sm"
+    <Button
+      variant="ghost"
+      size="xsmall"
+      dense
+      icon="pencilOutline"
       :title="i18n.editProjectBtn"
       @click="ops.openEditDialog(project)"
-    >
-      <Icon
-        icon="mdi:pencil-outline"
-        height="12"
-      />
-    </button>
+    />
     <!-- 悬停提示："查看项目 Git 配置" -->
-    <button
-      class="vp-btn vp-btn--ghost vp-btn--sm"
+    <Button
+      variant="ghost"
+      size="xsmall"
+      dense
+      icon="fileOutline"
       :title="i18n.viewProjectGitConfig"
       @click="ops.openProjectGitConfig(project.id)"
-    >
-      <Icon
-        icon="mdi:file-document-outline"
-        height="12"
-      />
-    </button>
+    />
     <!-- 危险操作分隔线：删除与常规操作分组 -->
     <span class="gp-actions-divider" />
-    <!-- 悬停提示："删除"（移除项目） -->
-    <button
-      class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+    <!-- 悬停提示："删除"（移除项目；悬停变红由 .gp-btn-danger 提供） -->
+    <Button
+      class="gp-btn-danger"
+      variant="ghost"
+      size="xsmall"
+      dense
+      icon="deleteOutline"
       :title="i18n.delete"
       @click="ops.handleRemove(project)"
-    >
-      <Icon
-        icon="mdi:delete-outline"
-        height="12"
-      />
-    </button>
+    />
   </div>
 </template>
 
@@ -278,6 +269,8 @@ import { openLocalPath, openRepoWebUrl, resolveValidPath } from "../../utils"
 import { useCardActions } from "../../composables/useCardActions"
 import { useCardServices } from "../../composables/useCardServices"
 import { useCardMenu } from "../../composables/useCardMenu"
+import Button from "@/components/Button.vue"
+import Select from "@/components/Select.vue"
 
 const props = defineProps<{
   project: GitProject
@@ -306,6 +299,17 @@ const {
 /** 当前项目有效路径（多设备路径解析，点击时实时检测磁盘存在性，不用 computed 缓存） */
 function projectPath(): string {
   return resolveValidPath(props.project)
+}
+
+/** 分类下拉选项（Select 需 { value, label } 结构） */
+const categoryOptions = computed(() =>
+  categories.value.map((cat) => ({ value: cat.id, label: cat.name })),
+)
+
+/** 分类下拉变更：Select 为纯受控组件（内部只 emit），取到新分类 id 后派发移动指令 */
+function handleCategoryChange(value: string | number | boolean | null) {
+  if (typeof value !== "string" || value === props.project.categoryId) return
+  ops.moveProject(props.project.id, value)
 }
 
 /** 已配置 URL 的平台链接列表（平台下拉菜单数据源） */

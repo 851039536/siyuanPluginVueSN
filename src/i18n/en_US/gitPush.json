@@ -823,6 +823,12 @@
     "bfgForcePush": "Force Push",
     "bfgForcePushDone": "Force push executed; see result above",
     "bfgForcePushFailedCount": "platform(s) failed",
-    "bfgDone": "Done"
+    "bfgDone": "Done",
+
+    "cardTabChanges": "CHANGES",
+    "cardTabLog": "LOG",
+    "cardTabStash": "STASH",
+    "cardTabTag": "TAG",
+    "commitLogCountLabel": "Rows"
   }
 }

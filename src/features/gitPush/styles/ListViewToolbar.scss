@@ -10,6 +10,7 @@
   margin-bottom: $s-px6;
 }
 
+// 智能视图分段容器（外框由容器提供，段内按钮去边框去圆角 ⇒ 视觉上仍是一整条分段控件）
 .gp-view-modes {
   display: flex;
   gap: $s-px2;
@@ -18,22 +19,19 @@
   overflow: hidden;
 }
 
-.gp-vm-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px3;
-  padding: $s-px3 $s-px7;
+// 段内按钮：共享 Button（variant=ghost + size=xsmall + dense）承担交互、尺寸与无障碍，
+// 此处只覆盖「段内」外观（选择器 4 类 = (0,4,0)，稳定压过共享组件 scoped 样式与 dense 几何）
+.gp-filter-bar .gp-view-modes .gp-vm-btn.si-button {
   border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-2xs;
+  border-radius: 0;
   opacity: 0.45;
-  cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity 0.12s, background 0.12s;
 
-  &:hover { opacity: 0.75; }
+  &:hover {
+    opacity: 0.75;
+  }
 
-  &.active {
+  &[aria-pressed="true"] {
     opacity: 1;
     background: var(--b3-theme-primary-lightest);
     color: var(--b3-theme-primary);
@@ -47,28 +45,9 @@
   padding-right: $s-3;
 }
 
-.gp-ft-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px3;
-  padding: $s-px3 $s-px6;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-2xs;
-  opacity: 0.45;
-  cursor: pointer;
-  transition: opacity 0.15s, border-color 0.15s, background 0.15s;
-
-  &:hover { opacity: 0.75; }
-
-  &.active {
-    opacity: 1;
-    background: var(--b3-theme-primary-lightest);
-    color: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-  }
+// 归档 / 暂停开关：外观与按下态由共享 ToggleButton 承担，此处只保留不收缩
+.gp-filter-toggles .gp-ft-btn {
+  flex-shrink: 0;
 }
 
 // ========== 分类 TAB 导航栏 ==========
@@ -81,28 +60,22 @@
   @include hide-h-scrollbar;
 }
 
-.gp-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-1;
+// 分类导航项：共享 Button 承担交互与 aria-pressed，此处仅保留分类色点与下划线选中态
+// （选择器 4 类 = (0,4,0)，确保 border-radius / border-bottom 覆盖 dense 几何）
+.git-push-panel .gp-tabs .gp-tab.si-button {
   flex-shrink: 0;
-  padding: $s-1 $s-px10;
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: $r-sm $r-sm 0 0;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-2xs;
   opacity: 0.5;
-  cursor: pointer;
-  transition: opacity 0.15s, border-color 0.15s;
+  transition: opacity 0.12s, border-color 0.12s;
   white-space: nowrap;
 
   &:hover {
     opacity: 0.8;
   }
 
-  &.active {
+  &[aria-pressed="true"] {
     opacity: 1;
     font-weight: $fw-semibold;
     border-bottom-color: var(--b3-theme-primary);

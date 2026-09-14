@@ -3,14 +3,16 @@
   <div class="gp-tag-panel">
     <div class="gp-tag-header">
       <!-- 刷新按钮提示：“刷新标签” -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-refresh-btn"
-        :disabled="loading"
+      <Button
+        class="gp-tag-refresh-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="refresh"
+        :loading="loading"
         :title="i18n.refreshTags"
         @click="$emit('refresh')"
-      >
-        <Icon :icon="loading ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': loading }" />
-      </button>
+      />
       <template v-if="addingTag">
         <!-- Tag 名称输入：占位符“Tag 名称（如 v1.2.0）” -->
         <Input
@@ -27,38 +29,33 @@
           :placeholder="i18n.tagMsgPlaceholder"
           @keydown.enter="handleCreate()"
         />
-        <button
-          class="vp-btn vp-btn--primary vp-btn--sm"
+        <Button
+          variant="primary"
+          size="xsmall"
+          dense
+          icon="check"
           :disabled="!newTagName.trim() || loading"
           @click="handleCreate"
-        >
-          <Icon
-            icon="mdi:check"
-            height="12"
-          />
-        </button>
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+        />
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="close"
           @click="addingTag = false"
-        >
-          <Icon
-            icon="mdi:close"
-            height="12"
-          />
-        </button>
+        />
       </template>
-      <button
+      <Button
         v-else
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="tagPlusOutline"
         :disabled="loading"
         @click="startAdd"
       >
-        <Icon
-          icon="mdi:tag-plus-outline"
-          height="12"
-        />
-        <span>{{ i18n.createTag }}</span>
-      </button>
+        {{ i18n.createTag }}
+      </Button>
     </div>
     <div
       v-if="tags.length"
@@ -84,64 +81,63 @@
         <!-- 推送按钮：文案/提示"推送"，推送中显示旋转图标；多远程时展开远程选择 -->
         <template v-if="pushingTag === t.name">
           <!-- 指定远程：只推该远程 -->
-          <button
+          <Button
             v-for="r in remotes"
             :key="r"
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
+            class="gp-tag-push-btn"
+            variant="ghost"
+            size="xsmall"
+            dense
             :title="`${i18n.push}: ${r}`"
             @click="handlePushRemote(t.name, r)"
           >
             {{ r }}
-          </button>
+          </Button>
           <!-- 全部远程：推所有已配置远程 -->
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
+          <Button
+            class="gp-tag-push-btn"
+            variant="ghost"
+            size="xsmall"
+            dense
             :title="i18n.pushAllRemotes"
             @click="handlePushRemote(t.name)"
           >
             {{ i18n.pushAllRemotes }}
-          </button>
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm"
+          </Button>
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="close"
             :title="i18n.cancel"
             @click="pushingTag = null"
-          >
-            <Icon
-              icon="mdi:close"
-              height="12"
-            />
-          </button>
+          />
         </template>
-        <button
+        <Button
           v-else
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-tag-push-btn"
+          class="gp-tag-push-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="loading"
+          :loading="pushLoaded === t.name"
           :title="i18n.push"
-          :disabled="pushLoaded === t.name"
           @click="handlePushClick(t.name)"
         >
-          <Icon
-            v-if="pushLoaded === t.name"
-            icon="mdi:loading"
-            class="gp-spin"
-            height="12"
-          />
-          <template v-else>
-            {{ i18n.push }}
-          </template>
-        </button>
-        <!-- 删除按钮提示：“删除”（展开远程选择时隐藏，避免行内拥挤） -->
-        <button
+          {{ i18n.push }}
+        </Button>
+        <!-- 删除按钮提示：“删除”（展开远程选择时隐藏，避免行内拥挤；悬停变红由 .gp-btn-danger 提供） -->
+        <Button
           v-if="pushingTag !== t.name"
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-btn-danger"
+          class="gp-btn-danger"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="deleteOutline"
           :title="i18n.delete"
           :disabled="loading"
           @click="emit('delete', t.name)"
-        >
-          <Icon
-            icon="mdi:delete-outline"
-            height="12"
-          />
-        </button>
+        />
       </div>
     </div>
     <div
@@ -161,6 +157,7 @@
 import type { TagInfo } from "../../types"
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
+import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 
 const props = defineProps<{

@@ -184,6 +184,7 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 
 - 图标只能传 `src/components/kit/icons.ts`（真源）已注册的 `IconKey`，不能传任意 Iconify 名
 - 尺寸档位统一 `xsmall` / `small` / `medium` / `large`（默认 `small`）；字号阶梯与按钮交互/无障碍约定见 [AGENTS_STYLE.md § 强制规则：按钮交互与无障碍](./AGENTS_STYLE.md#强制规则按钮交互与无障碍2026-09-10)
+- 需要比 `xsmall` 更紧凑的几何（迁移既有紧凑按钮）时，给 `Button` 叠加 `dense` 修饰：`<Button variant="ghost" size="xsmall" dense icon="refresh" title="刷新" />`。**`dense` 仅与 `size="xsmall"` 协同生效**（去 `min-height`、padding `2px 5px`、gap `3px`、圆角 `4px`，纯图标 20px），单独使用不产生效果；它不改变字号阶梯，10px 正文仍由档位承担
 
 ### 2. 优先复用，禁止在 feature 内自建同类控件
 
@@ -195,7 +196,7 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 
 | 组件 | 职责 | 关键 props |
 |------|------|-----------|
-| `Button.vue` | 按钮：颜色轴 × 外观轴、四档尺寸、图标四向、加载 | `variant` / `severity` / `outlined` / `text` / `size` / `icon` / `iconPosition` / `rounded` / `block` / `loading` / `type` / `title` / `ariaLabel` |
+| `Button.vue` | 按钮：颜色轴 × 外观轴、四档尺寸、`dense` 紧凑修饰（仅与 `xsmall` 协同）、图标四向、加载 | `variant` / `severity` / `outlined` / `text` / `size` / `dense` / `icon` / `iconPosition` / `rounded` / `block` / `loading` / `type` / `title` / `ariaLabel` |
 | `ToggleButton.vue` | 按钮式布尔开关（`v-model` 为 boolean）；**内部复用 `Button`（零样式复制）**，按下态切换文案/图标，四档尺寸、占满宽、禁用与校验态。**无内置文案**（不传 on/off 文案则退化为方形纯图标按钮）；`fluid` 默认 `false`（与 `Textarea.fluid` 相反，按钮天然内容宽） | `v-model` / `size` / `onLabel` / `offLabel` / `onIcon` / `offIcon` / `disabled` / `fluid` / `hint` / `error` / `name` / `type` / `tabindex` / `title` / `ariaLabel` / `ariaLabelledby` |
 | `SpeedDial.vue` | 浮动动作按钮：8 向 × 四档轨迹（linear/circle/semi-circle/quarter-circle + radius）展开动作，**默认 `position: fixed` 悬浮于视口角落**（四档 `position` + `offset`）；**内部复用 `Button`（零样式复制）**；动作气泡走思源内置 `b3-tooltips`；`hideOnClickOutside` 默认 `true`；**不做 `mask`**；私有目录 `speedDial/`（types/geometry/useSpeedDial，禁止 feature 直接导入） | `model`（`SpeedDialAction[]`，必填） / `visible`（`v-model:visible`） / `direction` / `type` / `radius` / `transitionDelay` / `disabled` / `hideOnClickOutside` / `showIcon` / `hideIcon` / `rotateAnimation` / `position` / `offset` / `size` / `tooltipPosition` / `buttonProps` / `actionButtonProps` / `ariaLabel` / `ariaLabelledby` |
 | `Paginator.vue` | 分页器：`page`（**1 基**）/ `rows` / `total` 三要素驱动，可开关首末页、页码链接（窗口滑动 + 两端省略号折叠）、数字报告（`{page}`/`{totalPages}`/`{rows}`/`{total}`/`{first}`/`{last}` 占位符）、每页条数下拉、跳页输入；**内部复用 `Button`/`Select`/`Input`（零样式复制）**；**越界页码自动收敛**、`rows` 变更自动回第 1 页；私有目录 `paginator/`（types/pageLinks/state，禁止 feature 直接导入） | `v-model:page` / `v-model:rows` / `total` / `size` / `showFirstLast` / `showPageLinks` / `pageLinkSize` / `showReport` / `reportTemplate` / `rowsPerPageOptions`（支持 `Array<number \| SelectOption>`） / `showJumpInput` / `alwaysShow` / `disabled` / `labels` |

@@ -89,6 +89,11 @@
     opacity: 0.5;
   }
 
+  // 仍有未暂存改动（porcelain MM/AM）：文件尚未「处理完」，整行弱化会掩盖待办信号
+  &.staged.partially-staged {
+    opacity: 1;
+  }
+
   // 当前查看差异的文件行：主色左边条 + 淡背景标记
   &.diff-active {
     background: var(--b3-theme-primary-lightest);
@@ -134,6 +139,16 @@
   }
 }
 
+// 已暂存后又改动（porcelain MM/AM）的行级标记：警告色实心 + 主色描边 = 暂存区与工作区各有一份
+.wt-partial-mark {
+  width: $s-px6;
+  height: $s-px6;
+  flex-shrink: 0;
+  border-radius: $r-full;
+  background: var(--b3-theme-warning);
+  box-shadow: 0 0 0 $s-px1 var(--b3-theme-primary);
+}
+
 // 丢弃更改按钮：危险色由 Button 的 severity=danger 承担，此处仅保留弱化与悬停增强
 .wt-discard-btn {
   flex-shrink: 0;
@@ -157,26 +172,12 @@
   gap: $s-px6;
 }
 
+// 提交类型按钮行（按钮文案为中文，写入信息的前缀是标准单词）
 .wt-commit-types {
   display: flex;
+  align-items: center;
   gap: $s-px3;
   flex-wrap: wrap;
-}
-
-.wt-template-row {
-  display: flex;
-  align-items: center;
-  gap: $s-px6;
-  padding: $s-1 0;
-  color: var(--b3-theme-on-surface-light);
-  font-size: $t-xs;
-}
-
-// 模板下拉：外观由共享 Select 承担，此处仅保留占满剩余宽度与等宽字体
-.wt-template-row .wt-template-select.si-select {
-  flex: 1;
-  min-width: 0;
-  font-family: $ff-mono;
 }
 
 // commit type 分段按钮：交互与 aria-pressed 由共享 Button 承担，此处仅保留等宽字体与选中态配色

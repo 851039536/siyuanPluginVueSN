@@ -35,7 +35,6 @@
           :diff-loading="diffLoading"
           :git-op-loading="gitOpLoading || false"
           :refreshing-working-tree="refreshingWorkingTree || false"
-          :commit-templates="commitTemplates"
           @stage-file="(file: string) => ops.stageItem(project.id, file)"
           @unstage-file="(file: string) => ops.unstageItem(project.id, file)"
           @stage-all="ops.stageAllItems(project.id)"
@@ -201,7 +200,6 @@ const props = defineProps<{
 const { services, workingTree, committing, stashLoading, commitOutput, generatingMsg, gitOpLoading, tagPushLoading, genStashDescLoading, generatedStashMsg, refreshingWorkingTree, pullOutputs, pushOutputs } = useCardServices(() => props.project)
 const { shared, ops } = services
 const i18n = shared.i18n
-const commitTemplates = shared.commitTemplates
 
 // 卡片内联下拉菜单（顶栏与操作栏共享互斥状态，行为与拆分前一致）
 provideCardMenu()

@@ -33,6 +33,7 @@
     "viewDiff": "View Diff",
     "staged": "Staged",
     "unstaged": "Unstaged",
+    "stagedAndUnstagedTip": "Staged, but modified again in the working tree: the commit only includes the staged content, re-stage to include the latest changes",
     "commitMessagePlaceholder": "Enter commit message...",
     "category": "Category",
     "manageCategories": "Manage Categories",

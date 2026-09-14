@@ -24,7 +24,6 @@ export interface PluginSettings {
   enableTableOfContents: boolean // 是否启用目录插件功能
   enableImageCompressor: boolean // 是否启用图片压缩功能
   enableDocNavigation: boolean // 是否启用文档层级导航功能
-  enableShortcuts: boolean // 是否启用快捷键面板功能
   enableGeneralSettings: boolean // 是否启用通用设置功能
   enableQRCode: boolean // 是否启用二维码生成功能
   enableDiskBrowser: boolean // 是否启用本地磁盘浏览器功能
@@ -97,7 +96,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableTableOfContents: true,
   enableImageCompressor: true,
   enableDocNavigation: true,
-  enableShortcuts: true,
   enableGeneralSettings: true,
   enableQRCode: true,
   enableDiskBrowser: true,

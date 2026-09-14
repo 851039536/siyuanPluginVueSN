@@ -43,7 +43,6 @@
       "@s3Backup/*": ["./src/features/s3Backup/*"],
       "@s3FileManager/*": ["./src/features/s3FileManager/*"],
       "@scriptLauncher/*": ["./src/features/scriptLauncher/*"],
-      "@shortcut/*": ["./src/features/shortcut/*"],
       "@skillLearning/*": ["./src/features/skillLearning/*"],
       "@skillsViewer/*": ["./src/features/skillsViewer/*"],
       "@statistics/*": ["./src/features/statistics/*"],

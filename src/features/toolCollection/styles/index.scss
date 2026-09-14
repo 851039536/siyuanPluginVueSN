@@ -17,10 +17,16 @@ $tc-dur-slide: 0.25s;
 
 // ==================== 底部面板 ====================
 // 独立 fixed 定位，避让底部状态栏与留白
+// ⚠️ 居中**不能**用 transform，也不能给本面板加 contain：二者任一都会让面板成为
+//    fixed 后代的包含块，而共享弹层（Dialog / ConfirmDialog）不用 Teleport、遮罩是
+//    `position: fixed; inset: 0`（`components/styles/_overlay.scss`）⇒ 遮罩与弹层会被
+//    关进面板并被面板的 overflow 裁掉/错位。改用 left/right 0 + margin auto 居中。
 .tool-collection-panel {
   position: fixed;
   bottom: 32px;
-  left: 50%;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
   width: 100%;
   // max-width / height 由内联 panelStyle 动态控制（默认值定义于 JS）
   // maxHeight 与 types/index.ts 的 PANEL_MAX_HEIGHT 保持一致
@@ -32,9 +38,8 @@ $tc-dur-slide: 0.25s;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  contain: layout paint;
+  // 常驻 transform 已在下方过渡类中按需施加（scaleY 展开动画），基础态必须保持 none
   transform-origin: bottom center;
-  transform: translateX(-50%) scaleY(1);
   z-index: 9998;
 }
 
@@ -291,7 +296,7 @@ $tc-dur-slide: 0.25s;
   opacity: 0;
 
   .tool-collection-panel {
-    transform: translateX(-50%) scaleY(0);
+    transform: scaleY(0);
   }
 }
 
@@ -299,7 +304,7 @@ $tc-dur-slide: 0.25s;
   opacity: 0;
 
   .tool-collection-panel {
-    transform: translateX(-50%) scaleY(0);
+    transform: scaleY(0);
   }
 }
 
@@ -333,6 +338,8 @@ $tc-dur-slide: 0.25s;
   position: static;
   bottom: auto;
   left: auto;
+  right: auto;
+  margin-inline: 0;
   transform: none;
   width: 100%;
   height: 100%;

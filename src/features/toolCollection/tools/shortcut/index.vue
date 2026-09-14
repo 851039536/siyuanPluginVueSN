@@ -62,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+import type { Plugin } from "siyuan"
 import type { ShortcutInfo } from "./types"
 import {
   computed,
@@ -70,6 +71,7 @@ import {
 } from "vue"
 import { pushMsg } from "@/api"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
+import { ensureShortcutData } from "./bootstrap"
 import PanelHeader from "./components/PanelHeader.vue"
 import ShortcutDialog from "./components/ShortcutDialog.vue"
 import ShortcutList from "./components/ShortcutList.vue"
@@ -78,12 +80,10 @@ import { useShortcutFilter } from "./composables/useShortcutFilter"
 import { listGroups } from "./utils"
 
 interface Props {
+  /** 全局 i18n 对象（工具合集容器注入，扁平键命名空间） */
   i18n: Record<string, string>
-  /**
-   * Dock 辅助函数注入的插件实例。当前模块不再直接使用（存储读写已下沉到
-   * `ShortcutStorage`），但必须保留声明：否则它会作为 attr 落到根元素上。
-   */
-  plugin?: any
+  /** 插件实例：`ensureShortcutData` 构造存储适配器时必需（工具合集容器恒注入） */
+  plugin: Plugin
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -127,7 +127,9 @@ const editingShortcut = ref<ShortcutInfo | null>(null)
 const deleteConfirmId = ref<string | null>(null)
 const showResetConfirm = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
+  // 数据初始化是幂等的（切走再切回不会重复读盘）：先确保预置与自定义段就绪，再取一次响应式镜像
+  await ensureShortcutData(props.plugin)
   init()
 })
 

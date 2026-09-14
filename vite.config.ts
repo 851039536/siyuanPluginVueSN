@@ -96,7 +96,6 @@ export default defineConfig(({
         "@s3Backup": resolve(import.meta.dirname, "src/features/s3Backup"),
         "@s3FileManager": resolve(import.meta.dirname, "src/features/s3FileManager"),
         "@scriptLauncher": resolve(import.meta.dirname, "src/features/scriptLauncher"),
-        "@shortcut": resolve(import.meta.dirname, "src/features/shortcut"),
         "@skillLearning": resolve(import.meta.dirname, "src/features/skillLearning"),
         "@skillsViewer": resolve(import.meta.dirname, "src/features/skillsViewer"),
         "@statistics": resolve(import.meta.dirname, "src/features/statistics"),

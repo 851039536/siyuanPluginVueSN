@@ -14,7 +14,7 @@
 
 **功能模块别名清单**（共 40 个，按 `src/features/` 目录一一生成）：
 
-`@aiContentGenerator`、`@apiDebugger`、`@bookmarkMarker`、`@compactMode`、`@dataSnapshot`、`@diskBrowser`、`@docAnalysis`、`@docNavigation`、`@encryption`、`@everythingSearch`、`@flashcardReading`、`@floatingBox`、`@floatingToolbar`、`@formatAssistant`、`@generalSettings`、`@gitPush`、`@htmlViewer`、`@imageCompressor`、`@imageCreation`、`@pageLock`、`@passwordVault`、`@prompts`、`@quickNote`、`@resourceManager`、`@rssReader`、`@s3Backup`、`@s3FileManager`、`@scriptLauncher`、`@shortcut`、`@skillLearning`、`@skillsViewer`、`@statistics`、`@statusBar`、`@superPanel`、`@tableOfContents`、`@textDiff`、`@themeColor`、`@toolCollection`、`@video`、`@websiteNavigation`
+`@aiContentGenerator`、`@apiDebugger`、`@bookmarkMarker`、`@compactMode`、`@dataSnapshot`、`@diskBrowser`、`@docAnalysis`、`@docNavigation`、`@encryption`、`@everythingSearch`、`@flashcardReading`、`@floatingBox`、`@floatingToolbar`、`@formatAssistant`、`@generalSettings`、`@gitPush`、`@htmlViewer`、`@imageCompressor`、`@imageCreation`、`@pageLock`、`@passwordVault`、`@prompts`、`@quickNote`、`@resourceManager`、`@rssReader`、`@s3Backup`、`@s3FileManager`、`@scriptLauncher`、`@skillLearning`、`@skillsViewer`、`@statistics`、`@statusBar`、`@superPanel`、`@tableOfContents`、`@textDiff`、`@themeColor`、`@toolCollection`、`@video`、`@websiteNavigation`
 
 ```typescript
 // 使用示例：以 gitPush 模块为例
@@ -599,7 +599,7 @@ toolCollection/
 3. **响应**：`toolCollection/index.ts` 导出模块级 `ref(visible)` + `toggleToolCollection()` / `closeToolCollection()`
 4. **清理**：`onunload()` 中 `app.unmount()` + `container.remove()` + 重置 `ref`
 
-**注册新工具到面板**：在 `toolCollection/index.vue` 的 `tools` computed 中添加条目 + 在 `<div class="tool-collection-content">` 中添加 `v-if` 组件引用。无需修改注册清单。
+**注册新工具到面板**：在 `toolCollection/tools/registry.ts` 的 `TOOL_REGISTRY` 中添加一条（`id` / `label` / `component`）并在 `TOOL_LABEL_KEYS` 登记标签解析，i18n 文案放 `src/i18n/{zh_CN,en_US}/<toolName>.json`。无需修改容器的 `index.vue`。
 
 ## 独立窗口承载（addTab + openTab + openWindow）
 

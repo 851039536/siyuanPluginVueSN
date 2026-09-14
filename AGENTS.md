@@ -348,7 +348,7 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 
 ## 底部面板模式（Tab 切换）
 
-部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。注册新工具只需在 `toolCollection/index.vue` 的 `tools` computed 添加条目 + 内容区添加 `v-if` 组件引用，无需修改注册清单。
+部分工具类功能不需要独立 Dock 面板，适合整合到统一的"底部面板 + Tab 切换"容器中。参考实现：`src/features/toolCollection/`。注册新工具只需在 `toolCollection/tools/registry.ts` 的 `TOOL_REGISTRY` 添加一条（`id` / `label` / `component`）并在 `TOOL_LABEL_KEYS` 登记标签解析，i18n 文案放 `src/i18n/{zh_CN,en_US}/<toolName>.json`；无需修改容器的 `index.vue`。
 
 > 完整目录结构与通信流程见 [AGENTS_API.md § 底部面板模式（Tab 切换）](./AGENTS_API.md#底部面板模式tab-切换)
 

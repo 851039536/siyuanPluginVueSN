@@ -14,8 +14,6 @@
   "saveSettingsSuccess": "配置保存成功,请重启插件生效",
   "saveSettingsFailed": "配置保存失败",
   "settingsNotice": "注意:修改配置后需要重新加载插件或重启思源才能生效",
-  "enableShortcuts": "启用快捷键面板",
-  "enableShortcutsDesc": "在右侧边栏显示思源笔记和插件快捷键",
   "enterName": "输入快捷键名称",
   "description": "描述",
   "enterDescription": "输入功能描述",

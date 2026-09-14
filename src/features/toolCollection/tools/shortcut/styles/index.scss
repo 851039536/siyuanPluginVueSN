@@ -1,0 +1,16 @@
+@use "@/variables.scss" as *;
+
+// 面板根容器：基准字号对齐全局 $t-xs(12px)。
+// 承载于工具合集内容区（`.tool-collection-content`：flex:1 + min-height:0 + overflow-y:auto）：
+// 这里用 height: 100% 填满其内容盒，滚动交给内部的 `.shortcut-list` 独占 ⇒ 不会出现第二条滚动条。
+// 注意：overflow: hidden 不会裁剪弹层——共享 Dialog / ConfirmDialog 的遮罩是 position: fixed，
+// 且工具合集面板已移除 contain / 常驻 transform（否则本容器祖先会成为包含块），故掩膜仍以视口为基准铺满。
+.shortcut-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-size: $t-xs;
+  overflow: hidden;
+}

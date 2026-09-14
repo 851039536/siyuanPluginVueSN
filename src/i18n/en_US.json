@@ -15,8 +15,6 @@
   "saveSettingsSuccess": "Settings saved successfully, please reload plugin to take effect",
   "saveSettingsFailed": "Failed to save settings",
   "settingsNotice": "Note: After modifying settings, you need to reload the plugin or restart SiYuan for changes to take effect",
-  "enableShortcuts": "Enable Shortcut Panel",
-  "enableShortcutsDesc": "Display SiYuan and plugin shortcuts in the right sidebar",
   "enterName": "Enter shortcut name",
   "description": "Description",
   "enterDescription": "Enter function description",

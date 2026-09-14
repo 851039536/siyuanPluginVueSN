@@ -110,10 +110,11 @@ $group-accent-width: 3px; // 组头左侧状态竖条宽度（与行内竖条一
   white-space: nowrap;
 }
 
-// 2 列卡片网格：同一行的卡片等高（align-items 默认 stretch），窄面板下每列约 200px
+// 卡片网格：列数随容器宽度自适应 —— 窄容器（约 480px）仍 2 列，
+// 工具合集底部面板（默认约 1060px）约 4 列，独立窗口更宽时 5~6 列；同一行卡片等高
 .shortcut-group__body {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: $s-1;
   align-items: stretch;
 }

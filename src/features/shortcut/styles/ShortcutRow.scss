@@ -1,11 +1,10 @@
 @use "@/variables.scss" as *;
 
 // 无对应 Token 的几何常量
-$card-accent-width: 3px; // 卡片左侧状态竖条宽度
-$card-min-height: 46px; // 上行 22px + 间距 2px + 下行 16px + 上下内边距 8px 的兜底高度
-$recent-dot-size: 5px; // 最近使用标记圆点边长
+$card-min-height: 46px; // 上行 22px + 间距 2px + 下行 15px + 上下内边距 8px 的兜底高度
+$desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否则折到第二行
 
-// 卡片：2 列网格中的一格，纵向两行（上行按键与操作，下行名称与描述）
+// 卡片：2 列网格中的一格。两行结构 —— 上行「按键徽章 + 操作」，下行「名称 + 标签 + 描述」
 .shortcut-row {
   display: flex;
   flex-direction: column;
@@ -15,20 +14,16 @@ $recent-dot-size: 5px; // 最近使用标记圆点边长
   padding: $s-1 $s-2;
   // 卡片间需要可辨的边界：surface 与 background 灰度仅差约 3%，必须用中性边框色
   border: 1px solid var(--b3-border-color);
-  border-left: $card-accent-width solid transparent;
-  border-radius: $r-sm;
+  border-radius: $r-base;
   background: var(--b3-theme-background);
   transition: background-color 0.12s ease, border-color 0.12s ease;
 }
 
-.shortcut-row:hover {
+// 悬停 / 键盘聚焦：底色浮起 + 主色描边（卡片唯一的交互反馈）
+.shortcut-row:hover,
+.shortcut-row:focus-within {
   background: var(--b3-theme-surface);
-}
-
-// 冲突态：警告色淡底 + 左侧警告竖条
-.shortcut-row.is-conflict {
-  background: rgba($c-warning, 0.12);
-  border-left-color: $c-warning;
+  border-color: var(--b3-theme-primary-light);
 }
 
 // ==================== 上行：按键 + 操作 ====================
@@ -65,7 +60,7 @@ $recent-dot-size: 5px; // 最近使用标记圆点边长
   color: var(--b3-theme-primary);
   background: var(--b3-theme-primary-lightest);
   border: 1px solid var(--b3-theme-primary-light);
-  border-radius: $r-px2;
+  border-radius: $r-sm;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -91,17 +86,19 @@ $recent-dot-size: 5px; // 最近使用标记圆点边长
   opacity: 1;
 }
 
-// ==================== 下行：名称 / 标签 / 描述 ====================
-.shortcut-row__meta {
+// ==================== 下行：名称 + 标签 + 描述 ====================
+// flex-wrap + 描述的 flex-basis：空间够就与名称同行，不够则自动折到第二行
+.shortcut-row__title {
   display: flex;
-  align-items: center;
-  gap: $s-px3;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $s-px2 $s-px3;
   min-width: 0;
 }
 
 .shortcut-row__name {
   flex: 0 1 auto;
-  max-width: 68%;
+  max-width: 100%;
   overflow: hidden;
   font-size: $t-xs;
   font-weight: $fw-semibold;
@@ -111,21 +108,13 @@ $recent-dot-size: 5px; // 最近使用标记圆点边长
   white-space: nowrap;
 }
 
-// 标签与警示图标不参与压缩（窄卡片下优先保住名称与描述）
-.shortcut-row__meta .si-tag,
-.shortcut-row__warning {
+// 标签不参与压缩（窄卡片下优先保住名称与描述的可读宽度）
+.shortcut-row__title .si-tag {
   flex-shrink: 0;
 }
 
-.shortcut-row__warning {
-  display: inline-flex;
-  align-items: center;
-  color: $c-warning;
-  cursor: help;
-}
-
 .shortcut-row__desc {
-  flex: 1;
+  flex: 1 1 $desc-min-width;
   min-width: 0;
   overflow: hidden;
   font-size: $t-2xs;
@@ -133,13 +122,4 @@ $recent-dot-size: 5px; // 最近使用标记圆点边长
   color: var(--b3-theme-on-surface-variant);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-// 最近使用标记：名称前的主色小圆点
-.shortcut-row__recent {
-  flex-shrink: 0;
-  width: $recent-dot-size;
-  height: $recent-dot-size;
-  background: var(--b3-theme-primary);
-  border-radius: $r-full;
 }

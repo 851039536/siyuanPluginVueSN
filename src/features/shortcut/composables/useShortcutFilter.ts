@@ -1,13 +1,8 @@
 /**
- * 快捷键筛选管道：搜索 / 分类 / 最近 / 冲突，供工具栏与列表消费
+ * 快捷键筛选管道：搜索 / 分类，供工具栏与列表消费
  */
-import type {
-  Ref,
-} from "vue"
-import type {
-  ShortcutFilterMode,
-  ShortcutInfo,
-} from "../types"
+import type { Ref } from "vue"
+import type { ShortcutInfo } from "../types"
 import {
   computed,
   ref,
@@ -20,22 +15,17 @@ import { CATEGORY_LABEL_I18N_KEYS } from "../types"
 
 interface UseShortcutFilterOptions {
   shortcuts: Ref<ShortcutInfo[]>
-  recentIds: Ref<string[]>
-  conflictIds: Ref<Set<string>>
   i18n: Record<string, string>
 }
 
 export function useShortcutFilter(options: UseShortcutFilterOptions) {
   const {
     shortcuts,
-    recentIds,
-    conflictIds,
     i18n,
   } = options
 
   const searchKeyword = ref("")
   const activeCategory = ref("all")
-  const activeFilter = ref<ShortcutFilterMode>("all")
 
   /** 各分类条目数（含 "all"） */
   const categoryCounts = computed(() => countByCategory(shortcuts.value))
@@ -46,16 +36,10 @@ export function useShortcutFilter(options: UseShortcutFilterOptions) {
     ...Array.from(categoryCounts.value.keys()).sort(),
   ])
 
-  /** 镜像为 Set，供纯函数 filterShortcuts 做 O(1) 判定 */
-  const recentIdSet = computed(() => new Set(recentIds.value))
-
   const filteredShortcuts = computed(() =>
     filterShortcuts(shortcuts.value, {
       keyword: searchKeyword.value,
       category: activeCategory.value,
-      filter: activeFilter.value,
-      recentIds: recentIdSet.value,
-      conflictIds: conflictIds.value,
     }),
   )
 
@@ -75,21 +59,14 @@ export function useShortcutFilter(options: UseShortcutFilterOptions) {
     return category === "all" ? totalCount.value : categoryCounts.value.get(category) || 0
   }
 
-  /** 筛选按钮互斥切换：再次点击当前项则回到「全部」 */
-  function toggleFilter(target: ShortcutFilterMode) {
-    activeFilter.value = activeFilter.value === target ? "all" : target
-  }
-
   return {
     searchKeyword,
     activeCategory,
-    activeFilter,
     categories,
     filteredShortcuts,
     totalCount,
     visibleCount,
     getCategoryLabel,
     getCategoryCount,
-    toggleFilter,
   }
 }

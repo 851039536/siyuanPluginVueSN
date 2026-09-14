@@ -188,3 +188,28 @@
 - **分类标识与文案保留**：`ShortcutCategory` / `CATEGORY_LABEL_I18N_KEYS` / `TOOL_CATEGORIES` / i18n 分片均不动 —— 与「`openspec` 有标识无数据」的既有状态一致；面板分类由数据驱动，无数据即不显示。需要恢复时补回 `data/<分类>.ts` 并在 `presets.ts` 引入即可
 - 覆盖前文：CR-001 边界中「不改动 `data/` 下 89 条预置数据」一条按本次要求失效，其余边界不变
 - 无迁移影响：预置不落盘（CR-001 之后），用户自定义快捷键不受影响；若「最近使用」中残留被移除分类的 id，由启动时的 `pruneRecent` 自动剪枝
+
+### CR-005: 表单「分组」改为下拉选择 (2026-09-14)
+
+**变更类型**：微调
+**变更原因**：用户要求「分组应该是可以选的下拉分类」。
+**变更内容**：
+
+- `ShortcutDialog` 的「分组」字段由自由文本 `Input` 改为共享 `Select`（`filterable`）。选项 = 默认分组（`customShortcuts` 文案）+ 当前数据中的现有分组 + 当前值，去重升序；显式带上默认分组与当前值，避免「尚无自定义项」与「编辑一个用旧分组名的条目」两种情况下下拉空白
+- 末尾追加「新建分组…」哨兵项（`__new_group__`，仅在下拉内部流转，不写入表单数据）：选中后切换为输入框，并提供「从列表选择」按钮切回下拉（切回时分组回落为默认分组）
+- 新增纯函数 `utils.listGroups(shortcuts)`（去重 / 忽略空值 / 升序）并从模块入口导出；`index.vue` 以 `computed(() => listGroups(allShortcuts.value))` 传给对话框
+- i18n 新增 `scNewGroup` / `scPickFromList`（中英双侧，`pnpm i18n:verify` 通过）
+- 分组仍非必填：留空时 `buildCustomShortcut` 回落为默认分组；`ShortcutInfo.group` 数据模型不变
+
+### CR-006: 移除「最近使用」与「冲突检测」，优化卡片显示 (2026-09-14)
+
+**变更类型**：微调（功能删减 + UI 优化）
+**变更原因**：用户要求「移除最近使用，和冲突，优化卡片显示」。
+**变更内容**：
+
+- **移除最近使用**：删除筛选按钮、卡片圆点标记、「复制即计入最近使用」的逻辑，以及存储读写；`ShortcutStorage` 不再使用 `plugin-shortcuts-recent`（旧数据留在用户数据目录不参与业务）
+- **移除冲突检测**：删除 `normalizeShortcutKeys` / `buildConflictMap` / `isConflicting`、卡片冲突高亮与警示气泡、工具栏「冲突」筛选；`ShortcutFilterMode` / `ShortcutQuery.filter` / `ShortcutConflictMap` 一并删除 —— 筛选管道收敛为「关键词 + 分类」，工具栏第二行仅剩计数与导入 / 导出 / 重置
+- **存储与类型瘦身**：`ShortcutStorage` 只剩「自定义 + 旧键迁移」；`useShortcutData` 不再需要 `plugin`（无用户态读取）与 `RECENT_LIMIT`；`pruneIds` / `sanitizeStringArray` / `clearUserData` 等随之删除
+- **卡片显示优化**：下行改为 `flex-wrap` + 描述 `flex-basis: 120px` 的**自适应折行**（名称短则与描述同行，名称长则描述自动落第二行）；统一卡片外观为中性边框 + `$r-base` 圆角 + 按键徽章 `$r-sm` 圆角；悬停 / 焦点反馈统一为「surface 底 + 主色描边」（取代原收藏态、冲突态的两套着色）；按键徽章 hover 加深描边
+- 保留：i18n 键 `filterRecent` / `scFilterConflict` 等**不清除**（合并后命名空间全局扁平，删键有跨模块风险，与 CR-003 的处理一致）
+- 数据兼容：无迁移需求（`ShortcutInfo` 结构不变，自定义数据完整保留）

@@ -6,3 +6,15 @@
   flex-direction: column;
   gap: $s-3;
 }
+
+// 分组「新建」态：输入框占满剩余宽度，切换按钮与输入框底部对齐（输入框带 label，顶部不齐）
+.shortcut-dialog__group-custom {
+  display: flex;
+  align-items: flex-end;
+  gap: $s-1;
+}
+
+.shortcut-dialog__group-input {
+  flex: 1;
+  min-width: 0;
+}

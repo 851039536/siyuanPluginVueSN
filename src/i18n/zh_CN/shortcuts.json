@@ -49,5 +49,7 @@
   "scImportInvalidJson": "文件不是合法的 JSON 格式",
   "scImportInvalidStructure": "文件中未找到快捷键数组",
   "scSaveFailed": "保存失败，请重试",
-  "scConflictWith": "与以下快捷键冲突"
+  "scConflictWith": "与以下快捷键冲突",
+  "scNewGroup": "新建分组…",
+  "scPickFromList": "从列表选择"
 }

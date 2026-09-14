@@ -26,8 +26,12 @@ export interface ShortcutInfo {
   name: string
   /** 快捷键描述 */
   description: string
-  /** 快捷键组合 (例如: 'Ctrl+K', 'Cmd+Shift+P') */
-  keys: string
+  /**
+   * 快捷键组合 (例如: 'Ctrl+K', 'Cmd+Shift+P')
+   * 可选：命令行类条目（如 npm / nvm）本身没有原生快捷键，只承载「要复制的内容」(`copyContent`)，
+   * 此时留空不写；卡片显示与复制统一走 `resolveShortcutDisplay`（`content = copyContent || keys`）。
+   */
+  keys?: string
   /** 快捷键分类 */
   category: ShortcutCategory
   /** 功能分组 (用于组织UI显示) */
@@ -47,12 +51,32 @@ export interface ShortcutGroup {
 }
 
 /**
- * 表单数据类型
+ * 内容显示形态：按键组合 → 按键徽章组；命令行 / 路径 / 文本 → 等宽代码芯片
+ */
+export type ShortcutDisplayKind = "keys" | "code"
+
+/**
+ * 条目的显示模型（视图渲染与复制逻辑共用的唯一契约）
+ */
+export interface ShortcutDisplay {
+  /** 主内容：要复制的内容（`copyContent` 优先，回退 `keys`） */
+  content: string
+  /** 呈现形态（由 `isKeyCombo` 自动判定，无显式字段） */
+  kind: ShortcutDisplayKind
+  /** 次显快捷键：仅当「有独立 copyContent 且与 keys 不同、且 keys 本身是按键组合」时给出 */
+  hotkey?: string
+}
+
+/**
+ * 表单数据类型（内容必填、快捷键可选）
  */
 export interface ShortcutFormData {
   id: string
   name: string
   description: string
+  /** 内容：要复制的内容（写入 `copyContent`，与快捷键相同时不冗余写入） */
+  content: string
+  /** 快捷键：可选；留空时写入内容副本，保证 `keys` 非空 */
   keys: string
   group: string
 }

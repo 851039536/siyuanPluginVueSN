@@ -9,6 +9,7 @@ import {
   triggerBlobDownload,
 } from "@/utils/domUtils"
 import { getShortcutManager } from "../manager"
+import { resolveShortcutDisplay } from "../utils"
 import {
   buildExportFileName,
   buildExportPayload,
@@ -45,9 +46,9 @@ export function useShortcutData(options: UseShortcutDataOptions) {
     refresh()
   }
 
-  /** 复制快捷键内容（优先复制 copyContent） */
+  /** 复制条目的主内容（与卡片显示同源：走 resolveShortcutDisplay，避免显示与复制规则分叉） */
   async function copyShortcut(shortcut: ShortcutInfo) {
-    const ok = await copyToClipboard(shortcut.copyContent || shortcut.keys)
+    const ok = await copyToClipboard(resolveShortcutDisplay(shortcut).content)
     if (ok) {
       pushMsg(i18n.copiedSuccess)
     }

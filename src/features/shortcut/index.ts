@@ -93,6 +93,8 @@ export {
 
 export type {
   ShortcutCategory,
+  ShortcutDisplay,
+  ShortcutDisplayKind,
   ShortcutExportPayload,
   ShortcutFormData,
   ShortcutGroup,
@@ -112,7 +114,9 @@ export {
 export {
   filterShortcuts,
   groupShortcuts,
+  isKeyCombo,
   listGroups,
+  resolveShortcutDisplay,
   sanitizeShortcutArray,
   searchShortcuts,
   splitKeySequences,

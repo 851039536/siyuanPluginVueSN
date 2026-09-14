@@ -162,3 +162,29 @@
 - 卡片外观：中性边框 + 8px 内边距 + 左侧 3px 状态竖条；冲突卡警告色淡底、收藏卡极浅主色底
 - 卡片内不再重复显示与组头同名的分类标签（`showToolBadge` 增加组名比对）
 - AC-12（窄面板下省略与不换行）继续适用：按键徽章单行省略、名称最大 68% 宽、标签与警示图标不压缩
+
+### CR-003: 移除「收藏」功能 (2026-09-14)
+
+**变更类型**：微调（功能删减）
+**变更原因**：用户要求「移除收藏」。
+**变更内容**：
+
+- UI：卡片上的星标按钮、工具栏「收藏」筛选按钮、收藏态卡片样式全部移除；筛选区仅保留「最近 / 冲突」
+- 类型与纯函数：`ShortcutFilterMode` 去掉 `"favorite"`；`ShortcutQuery` 去掉 `favoriteIds`；`filterShortcuts` 去掉收藏分支
+- 存储：`ShortcutStorage` 去掉 `favorites` 槽位与 `loadFavorites` / `saveFavorites`；`pruneUserState` 收窄为 `pruneRecent`；`clearUserData` 只清自定义与最近使用
+- composable：`useShortcutData` 去掉 `favorites` 状态与 `toggleFavorite`（`persistUserState` 收窄为 `persistRecent`）；`useShortcutFilter` 去掉 `favoriteIds` 依赖
+- **i18n 键 `favorite` / `unFavorite` / `filterFavorite` 保留不清除**：合并后的命名空间是全局扁平的，其他模块可能读取同名顶层键（如 `minimalBrowser` 用了 `i18n.favorite`），删除存在跨模块风险
+- 数据兼容：`plugin-shortcuts-favorites` 键不再读写，旧数据留在用户数据目录但不参与业务，不影响运行
+- 验收影响：AC-01 / AC-05 / AC-11 中涉及「收藏」的表述失效，验收点收敛为「自定义 + 最近使用」
+
+### CR-004: 移除 4 类预设快捷键 (2026-09-14)
+
+**变更类型**：微调（数据删减）
+**变更原因**：用户要求「移除预设的：插件快捷键、思源笔记、vscode、windows cmd」。
+**变更内容**：
+
+- 删除 `data/siyuan.ts`（9 条）、`data/plugin.ts`（3 条）、`data/vscode.ts`（16 条）、`data/cmd.ts`（19 条），共移除 47 条预置
+- `data/presets.ts` 聚合收窄为 NPM(10) / NVM(9) / Visual Studio(23)，**预置总数 89 → 42**；文件头注释补记被移除的分类与恢复方式
+- **分类标识与文案保留**：`ShortcutCategory` / `CATEGORY_LABEL_I18N_KEYS` / `TOOL_CATEGORIES` / i18n 分片均不动 —— 与「`openspec` 有标识无数据」的既有状态一致；面板分类由数据驱动，无数据即不显示。需要恢复时补回 `data/<分类>.ts` 并在 `presets.ts` 引入即可
+- 覆盖前文：CR-001 边界中「不改动 `data/` 下 89 条预置数据」一条按本次要求失效，其余边界不变
+- 无迁移影响：预置不落盘（CR-001 之后），用户自定义快捷键不受影响；若「最近使用」中残留被移除分类的 id，由启动时的 `pruneRecent` 自动剪枝

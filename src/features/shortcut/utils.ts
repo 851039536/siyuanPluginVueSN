@@ -160,7 +160,7 @@ export function isConflicting(list: ShortcutInfo[]): boolean {
 }
 
 /**
- * 过滤管道：关键词 → 分类 → 快捷筛选（收藏 / 最近 / 冲突）
+ * 过滤管道：关键词 → 分类 → 快捷筛选（最近 / 冲突）
  */
 export function filterShortcuts(list: ShortcutInfo[], query: ShortcutQuery): ShortcutInfo[] {
   let result = query.keyword
@@ -171,9 +171,7 @@ export function filterShortcuts(list: ShortcutInfo[], query: ShortcutQuery): Sho
     result = result.filter((item) => item.category === query.category)
   }
 
-  if (query.filter === "favorite") {
-    result = result.filter((item) => query.favoriteIds.has(item.id))
-  } else if (query.filter === "recent") {
+  if (query.filter === "recent") {
     result = result.filter((item) => query.recentIds.has(item.id))
   } else if (query.filter === "conflict") {
     result = result.filter((item) => query.conflictIds.has(item.id))

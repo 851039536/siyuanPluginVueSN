@@ -95,6 +95,12 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 ```
 > **重要**：AI 不执行 `pnpm vite build` 和 `pnpm lint`。验证由用户自行完成。
 
+> ⛔ **禁止新建临时校验脚本**（`.tmp-*.mjs` / `.tmp-*.js` 等一次性脚本，包括「离线编译 SCSS 校验 Token」这类做法）。
+> 验证只走既有入口：`read_lints`（IDE 诊断）+ `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons`；
+> `pnpm lint` / `pnpm vite build` / SCSS 编译由用户执行。
+> 需要**可复用**的检查能力时，在 `scripts/` 下以正式名称落地并在文档登记（如 `audit-hardcode.mjs`），不要写成临时文件。
+> 详见 [AGENTS_BUILD.md § 构建与验证](./AGENTS_BUILD.md#构建与验证)。
+
 > ⛔ **类型检查必须用 `pnpm typecheck`（`vue-tsc`），禁止用 `npx tsc --noEmit`**。
 > `tsc` 读不懂 `.vue` 文件，只会退回 `src/types/vue.d.ts` 的通配 shim（该 shim 仅声明 `default` 导出、无任何具名类型），
 > 于是**任何 `import type { X } from "*.vue"` 都会失败**，并使 `extends` 该类型的接口塌成 `{}` ——

@@ -2,7 +2,7 @@
 import type { Plugin } from "siyuan"
 import type { CommitTemplate, FileChange, GitPushStorage } from "../types/storage"
 import type { CommitRuleConfig } from "../types/meta"
-import { FILE_STATUS_META, readCommitRuleConfig } from "../types/meta"
+import { readCommitRuleConfig } from "../types/meta"
 import { buildCommitRulePrompt, fixCommitMessageHeuristically, normalizeCommitMessageFormat } from "../commitRuleChecker"
 import { buildDiffContext } from "../utils"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
@@ -97,9 +97,9 @@ ${diffContext}`,
   private buildCommitFileListSection(files: FileChange[]): string {
     if (files.length === 0) { return "" }
     const lines = files.map((f) => {
-      const label = FILE_STATUS_META[f.status]?.title ?? f.status
       const path = f.oldPath ? `${f.oldPath} → ${f.path}` : f.path
-      return `- ${path}（${label}）`
+      // 状态写机器可读 id（提示词不参与 i18n，避免依赖展示层元数据）
+      return `- ${path}（${f.status}）`
     })
     return `变更文件清单：\n${lines.join("\n")}\n\n`
   }

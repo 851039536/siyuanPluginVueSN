@@ -57,12 +57,33 @@
   text-overflow: ellipsis;
 }
 
+// 重命名/复制的原路径（弱化展示，超长省略）
+.wt-diff-old {
+  flex-shrink: 1;
+  max-width: 30%;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  @include text-ellipsis;
+  opacity: 0.45;
+}
+
 .wt-diff-badge {
   font-size: $t-2xs;
   padding: $s-px1 $s-px2;
   border-radius: $r-sm;
   border: 1px solid var(--b3-border-color);
   opacity: 0.5;
+  flex-shrink: 0;
+}
+
+// 文件状态徽章（新增 / 已修改 / 未跟踪 …）：与暂存徽章同基座，略加深以区分主次
+.wt-diff-status {
+  font-size: $t-2xs;
+  padding: $s-px1 $s-px2;
+  border-radius: $r-sm;
+  border: 1px solid var(--b3-border-color);
+  opacity: 0.75;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
@@ -140,12 +161,22 @@
   tab-size: 2;
 }
 
-// 空态：差异加载中或无内容
+// 空态：无差异内容
 .wt-diff-empty {
   padding: $s-5 0;
   text-align: center;
   font-size: $t-xs;
   opacity: 0.4;
+}
+
+// 加载态：取差异期间居中显示旋转图标 + 文案（不展示图例，避免与空态混淆）
+.wt-diff-content.wt-diff-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s-1;
+  padding: $s-6 0;
+  opacity: 0.5;
 }
 
 .wt-diff-line {

@@ -163,9 +163,20 @@ export class GitExecutor {
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
    * @param timeoutMs 显式超时（不传时自动路由：网络命令默认按设置项（240s），本地命令默认 30s；clone 等长耗时操作可传更大值）
    * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块（clone --progress 等长任务日志展示）
-   * @param options 可选额外参数（如 rebase 编辑器所需环境变量）
+   * @param options 可选额外参数（如 rebase 编辑器所需环境变量、视为成功的退出码白名单）
    */
-  async execGit(cwd: string, args: string[], signal?: AbortSignal, timeoutMs?: number, onOutput?: (chunk: string) => void, options?: { env?: Record<string, string> }): Promise<string> {
+  async execGit(
+    cwd: string,
+    args: string[],
+    signal?: AbortSignal,
+    timeoutMs?: number,
+    onOutput?: (chunk: string) => void,
+    options?: {
+      env?: Record<string, string>
+      /** 视为成功的退出码白名单（如 git diff --no-index 有差异时退出码为 1）；仅匹配数字型 code，spawn/超时/缓冲区错误不受影响 */
+      allowExitCodes?: number[]
+    },
+  ): Promise<string> {
     const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
     const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : GitExecutor.DEFAULT_TIMEOUT_MS)
 
@@ -216,7 +227,11 @@ export class GitExecutor {
             }
 
             if (killed) { reject(new Error("操作已取消")); return }
-            if (error) {
+            // 白名单退出码视为正常结束：git diff --no-index 发现差异时退出码为 1（等同 --exit-code 语义），属预期而非失败。
+            // 只认数字型 code，ENOENT / maxBuffer 等字符串码错误仍走下方 reject 分支。
+            const exitCode = error?.code
+            const allowedExit = typeof exitCode === "number" && (options?.allowExitCodes?.includes(exitCode) ?? false)
+            if (error && !allowedExit) {
               // 错误信息自带超时/退出码标识：execFile 超时以 SIGTERM 终止（killed=true）时 stderr 可能为空，
               // 否则用户只能看到通用 "Command failed" 文案，无从得知是超时
               // "timed out" 字样同时供用户识别超时（超时不参与 RemoteOps 网络错误重试）

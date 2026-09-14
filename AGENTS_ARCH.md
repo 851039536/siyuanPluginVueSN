@@ -142,6 +142,14 @@ export function useXxx(deps: {
 - 最佳实践：≤ 30 行（Rule of 30）
 - 超过 50 行 → 应考虑提取子函数
 
+### 常用拆分模式（触达 500 行时的首选解法）
+
+| 原文件 | 拆分方式 | 说明 |
+|------|---------|------|
+| `utils.ts`（纯函数堆积） | 拆为 `utils/` 目录 + 汇聚 `utils/index.ts` | 按域分模块（`project` / `platform` / `diffText` / `gitOutput` …），`index.ts` **显式重导出与拆分前一致的导出面** ⇒ 消费方 import 路径零改动，`vue-tsc` 会捕获漏掉的导出（TS2305）。参考 `src/features/gitPush/utils/` |
+| 巨型 Manager / Service | 抽纯函数（文本解析、格式化）到 `utils/`，类只留 IO 与编排 | 参考 `gitPush/managers/WorktreeOps.ts`：git 输出解析（porcelain / log / name-status / stash / branch）→ `utils/gitOutput.ts` |
+| 巨型 `.vue` 组件 | 抽子组件 + 样式外置 `styles/` + 逻辑入 `composables/` | 见下方「模块提取判定」 |
+
 ### 关键考量：不只看行数
 
 行数只是表象，真正需要优化的判断标准包括：

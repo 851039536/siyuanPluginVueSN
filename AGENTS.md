@@ -115,10 +115,10 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 | 层级 | 文件 | 内容 | 示例 |
 |------|------|------|------|
 | 类型 + 共享常量 | `types/index.ts` | 类型定义 + 被多文件共用的元数据映射、枚举列表、配置表 | `STATUS_META`（状态徽章元数据）、`REMOTES`（PLATFORM_META 精简投影） |
-| 纯工具函数 | `utils.ts` | 不依赖 Vue 响应式的纯函数，可被任何文件导入 | `hasAnyRemote(project)`、`resolveValidPath(project)` |
+| 纯工具函数 | `utils.ts` | 不依赖 Vue 响应式的纯函数，可被任何文件导入；**超过 500 行硬阈值时拆为 `utils/` 目录 + 汇聚 `index.ts`（导出面保持不变，消费方 import 路径零改动）** | `hasAnyRemote(project)`、`resolveValidPath(project)` |
 | 视图逻辑 | `.vue` 组件 / `composables/` | 模板相关状态、事件处理、composable 封装 | 组件本地 ref、watch、handleXxx 函数 |
 
-**强制规则**：同一常量/工具函数被 2 个以上文件使用时，必须提取到对应的 `types/` 或 `utils.ts`，禁止复制粘贴。参考实现：`src/features/gitPush/`。
+**强制规则**：同一常量/工具函数被 2 个以上文件使用时，必须提取到对应的 `types/` 或 `utils.ts`，禁止复制粘贴。参考实现：`src/features/gitPush/`（`utils/` 已按域拆分为 11 个模块 + `index.ts` 汇聚）。
 
 ### 编译时注册完整性校验
 

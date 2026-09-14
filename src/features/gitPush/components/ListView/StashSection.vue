@@ -138,7 +138,7 @@
           <span
             class="wt-file-status"
             :class="`wt-s-${f.status}`"
-            :title="fileStatusTitle(f)"
+            :title="fileStatusTitle(f, i18n)"
           >
             <IconWrapper
               v-if="isIconFileStatus(f)"

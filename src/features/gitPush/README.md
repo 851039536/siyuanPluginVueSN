@@ -9,6 +9,7 @@
 - **多平台推送/拉取**：一键推送到/拉取自 GitHub / Gitee / Gitea，或全部操作，并发信号量限流
 - **路径检查**：添加时检查路径是否为合法 Git 仓库
 - **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改
+- **差异查看弹窗**：着色 diff + 词级高亮 + 行号双列；新增/未跟踪文件同样展示完整内容（`git diff` 对未跟踪文件恒为空，数据层回退 `git diff --no-index`）；「已暂存且工作区又改动」的文件可切换查看暂存区/工作区两份差异（另一份后台预取）；取差异期间显示加载态（不再与空态混淆）；标题含全路径 tooltip、文件状态与重命名原路径；支持复制差异全文/文件路径；Esc 关闭、←/→ 切换文件
 - **提交功能**：Conventional Commit 快捷类型选择、AI 生成提交信息（支持思考模式控制）
 - **AI 错误分析**：推送/拉取失败时日志面板提供「AI 分析」按钮，弹窗内流式分析失败日志，输出错误原因、解决方案与预防建议
 - **提交历史**：查看当前分支最近 N 条提交记录，支持关键词/作者搜索过滤；行内支持删除任意历史提交（记录级删除、内容不变语义——被删提交的变更并入下一提交，最终文件内容不变；merge/HEAD 提交阻止；弹窗内「删除前自动备份」开关默认开启，执行前自动 bundle 备份、可经 reflog 恢复，关闭后跳过备份直接删除且选择持久化跨会话恢复；后代 hash 必然重写，已推送需手动强推）；修正提交信息弹窗提供两档 AI 生成：AI 生成修正（基于变更统计摘要，输出单行提交信息）与 AI 深度分析（读取该提交完整 diff 理解实际改动，输出「标题行 + 改动要点列表」的多行提交信息）
@@ -35,6 +36,19 @@ src/features/gitPush/
 ├── reportMetrics.ts                 # 代码统计报告纯函数层：numstat 解析 + 作者/文件聚合 + 债务/热点评分 + K 线分桶压缩
 ├── reportChart.ts                   # 提交 K 线图绘制配置：chart.js 数据集/坐标轴/影线插件（自 CandlestickSection 迁出）
 ├── debtInsights.ts                  # 技术债务洞察纯函数：趋势推断 + 共变索引 + 严重度汇总（自 composables 迁出）
+├── utils/                           # 纯函数层（按域拆分 + index.ts 汇聚，导出面与拆分前一致）
+│   ├── index.ts                     # 汇聚导出（消费方统一从 "../utils" 导入，路径零改动）
+│   ├── project.ts                   # 项目查找/排序/多设备路径解析/打开本地与网页
+│   ├── platform.ts                  # 平台标志与远程识别、URL 归一化、推送需求判定
+│   ├── fileStatus.ts                # 文件状态标记与 i18n 文案（图标/字符 + titleKey 解析）
+│   ├── diffText.ts                  # diff 着色行解析、词级高亮、AI 上下文预算采样
+│   ├── gitOutput.ts                 # git 输出解析：porcelain / 提交日志 / 提交文件 / stash / 分支
+│   ├── analysis.ts                  # 提交分析：类型前缀、日期聚合、热力等级、计数排行
+│   ├── format.ts                    # 展示格式化：相对与绝对时间、年份选项、分析状态、日志标签
+│   ├── metrics.ts                   # 百分比与条形宽度、净增语义 class、行数排行预计算
+│   ├── search.ts                    # 搜索高亮片段切分
+│   ├── runtime.ts                   # 缓存裁剪、连续并发池、并发标志计数
+│   └── errors.ts                    # 抓取失败分类与专用错误类型
 ├── managers/
 │   ├── GitExecutor.ts               # git 子进程执行器（双池信号量限流 + abort 生命周期 + stdin 流式长驻进程）
 │   ├── ProjectStore.ts              # 项目/分类/标签 CRUD 与内存缓存
@@ -106,7 +120,7 @@ src/features/gitPush/
 │   │   ├── StashSection.vue         # Stash 管理区
 │   │   ├── TagPanel.vue             # 标签面板
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
-│   │   └── WorkingTreeDiffDialog.vue# 差异查看弹窗
+│   │   └── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
 │   ├── StatsView/                   # 统计视图专属（5 个区块 + common/ 共享组件）
 │   │   ├── index.vue               # 统计视图入口容器（空态 + 自适应网格组合各区块；窄卡并排 + 表格区块全宽）
 │   │   ├── OverviewCards.vue       # 总览卡片区（总项目数/已配远程/待推送/未提交/收藏/已归档）
@@ -229,7 +243,7 @@ GitPushManager (facade)
 | `pullSingle(id, target)` | 从指定远程拉取 |
 | `checkPushStatus(id, opts?)` | 检查 ahead/behind/noUpstream |
 | `getWorkingTreeStatus(path, opts?)` | 解析 `git status --porcelain` |
-| `getFileDiff(path, file, staged)` | 获取文件 diff |
+| `getFileDiff(path, file, staged)` | 获取文件 diff（未跟踪/新增文件常规 diff 为空时回退 `--no-index` 展示完整内容；失败返回空串，文案由视图层 i18n 呈现） |
 | `stageFile / stageAll / unstageFile / unstageAll` | 暂存操作 |
 | `discardFile(path, file, staged, status)` | 丢弃更改 |
 | `commit(path, message)` | 提交暂存内容 |
@@ -252,6 +266,7 @@ GitPushManager (facade)
 
 - `PLATFORM_META`：远程平台元数据（GitHub/Gitee/Gitea 单个数据源），供 index.vue / StatsPanel / useGitPush 共用
 - `COMMIT_TYPE_VALUES`：Conventional Commit 类型数组，单一数据源
+- `FILE_STATUS_META`：文件变更状态元数据（`icon` + `titleKey`，**模块层零文案**）——文案统一经 `utils/fileStatus.ts` 的 `fileStatusText(file, i18n)` / `fileStatusTitle(file, i18n)` 在视图层解析（列表 tooltip、差异弹窗徽章同源）
 
 ## 使用
 

@@ -921,6 +921,12 @@ export const COMMON_ICONS = {
   sourceCommit: {
     icon: "mdi:source-commit",
   },
+  cogOutline: {
+    icon: "mdi:cog-outline",
+  },
+  chartTimelineVariant: {
+    icon: "mdi:chart-timeline-variant",
+  },
 } as const
 
 /**

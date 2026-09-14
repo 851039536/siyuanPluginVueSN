@@ -1,21 +1,27 @@
-<!-- gitPush 提交分析显示设置表单（共享组件：分析视图 popover 与设置汇总弹窗复用，改动即时派发持久化） -->
+<!-- gitPush 提交分析显示设置表单（控件走共享库：视图分段/范围/周起始/格子颜色，popover 与设置汇总弹窗复用） -->
 <template>
   <div class="gpa-settings-form">
-    <!-- 设置项：视图（热力图 / 日历 两段式切换） -->
+    <!-- 设置项：视图（热力图 / 日历 两段式切换；互斥选项用 Button 分组 + aria-pressed） -->
     <div class="gpa-settings-row">
       <!-- 设置项标签："视图" -->
       <span class="gpa-settings-label">{{ i18n.analysisViewLabel }}</span>
       <div class="gpa-settings-seg">
-        <button
+        <Button
           class="gpa-settings-seg-btn"
-          :class="{ active: viewSettings.view === 'heatmap' }"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="viewSettings.view === 'heatmap'"
           @click="update({ view: 'heatmap' })"
-        >{{ i18n.analysisViewHeatmap }}</button>
-        <button
+        >{{ i18n.analysisViewHeatmap }}</Button>
+        <Button
           class="gpa-settings-seg-btn"
-          :class="{ active: viewSettings.view === 'calendar' }"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="viewSettings.view === 'calendar'"
           @click="update({ view: 'calendar' })"
-        >{{ i18n.analysisViewCalendar }}</button>
+        >{{ i18n.analysisViewCalendar }}</Button>
       </div>
     </div>
 
@@ -23,48 +29,40 @@
     <div class="gpa-settings-row">
       <!-- 设置项标签："显示范围" -->
       <span class="gpa-settings-label">{{ i18n.analysisRangeLabel }}</span>
-      <select
+      <Select
         class="gpa-settings-select"
-        :value="String(viewSettings.range)"
+        :model-value="String(viewSettings.range)"
+        size="xsmall"
+        :options="rangeOptions"
+        :aria-label="i18n.analysisRangeLabel"
         @change="onRangeChange"
-      >
-        <!-- 下拉选项："最近一年" -->
-        <option value="lastYear">{{ i18n.analysisRangeLastYear }}</option>
-        <option
-          v-for="y in years"
-          :key="y"
-          :value="String(y)"
-        >{{ i18n.analysisRangeYear.replace("{0}", String(y)) }}</option>
-      </select>
+      />
     </div>
 
     <!-- 设置项：每周第一天（周一 / 周日） -->
     <div class="gpa-settings-row">
       <!-- 设置项标签："每周第一天" -->
       <span class="gpa-settings-label">{{ i18n.analysisWeekStart }}</span>
-      <select
+      <Select
         class="gpa-settings-select"
-        :value="String(viewSettings.weekStart)"
+        :model-value="String(viewSettings.weekStart)"
+        size="xsmall"
+        :options="weekStartOptions"
+        :aria-label="i18n.analysisWeekStart"
         @change="onWeekStartChange"
-      >
-        <!-- 下拉选项："周一" -->
-        <option value="1">{{ i18n.analysisWdMon }}</option>
-        <!-- 下拉选项："周日" -->
-        <option value="0">{{ i18n.analysisWdSun }}</option>
-      </select>
+      />
     </div>
 
-    <!-- 设置项：格子颜色（热力主色） -->
+    <!-- 设置项：格子颜色（热力主色；共享 ColorField 自绘调色板，思源下原生取色器不弹窗） -->
     <div class="gpa-settings-row">
       <!-- 设置项标签："格子颜色" -->
       <span class="gpa-settings-label">{{ i18n.analysisHeatColor }}</span>
-      <input
-        type="color"
-        class="gp-color-input"
-        :value="viewSettings.color"
-        :title="viewSettings.color"
-        @input="onColorChange"
-      >
+      <ColorField
+        :model-value="colorDraft"
+        placeholder="#4a90d9"
+        @update:model-value="colorDraft = $event"
+        @change="commitColor"
+      />
     </div>
   </div>
 </template>
@@ -72,8 +70,12 @@
 <script setup lang="ts">
 // gitPush 提交分析显示设置表单（从 CommitAnalysisSettings 提取，供 popover 与设置汇总弹窗复用）
 import type { CommitAnalysisViewSettings } from "../../types"
+import { computed, ref, watch } from "vue"
+import Button from "@/components/Button.vue"
+import ColorField from "@/components/ColorField.vue"
+import Select from "@/components/Select.vue"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   /** 当前显示设置（父级持有，本组件只读展示 + 派发更新） */
   viewSettings: CommitAnalysisViewSettings
@@ -89,17 +91,45 @@ function update(patch: Partial<CommitAnalysisViewSettings>) {
   emit("update", patch)
 }
 
-function onRangeChange(e: Event) {
-  const v = (e.target as HTMLSelectElement).value
+/** 显示范围选项（"最近一年" + 各年份）：值统一为字符串，与 viewSettings.range 的字符串分支一致 */
+const rangeOptions = computed(() => [
+  { value: "lastYear", label: props.i18n.analysisRangeLastYear },
+  ...props.years.map((y) => ({
+    value: String(y),
+    label: String(props.i18n.analysisRangeYear).replace("{0}", String(y)),
+  })),
+])
+
+/** 每周第一天选项（周一 = 1 / 周日 = 0，与 CommitAnalysisViewSettings.weekStart 的取值同源） */
+const weekStartOptions = computed(() => [
+  { value: "1", label: props.i18n.analysisWdMon },
+  { value: "0", label: props.i18n.analysisWdSun },
+])
+
+function onRangeChange(v: string | number | boolean | null) {
+  if (typeof v !== "string") return
   update({ range: v === "lastYear" ? "lastYear" : Number(v) })
 }
 
-function onWeekStartChange(e: Event) {
-  update({ weekStart: Number((e.target as HTMLSelectElement).value) as 0 | 1 })
+function onWeekStartChange(v: string | number | boolean | null) {
+  if (typeof v !== "string") return
+  update({ weekStart: Number(v) as 0 | 1 })
 }
 
-function onColorChange(e: Event) {
-  update({ color: (e.target as HTMLInputElement).value })
+/**
+ * 颜色草稿：ColorField 的 update:modelValue 逐字触发（仅改本地草稿），
+ * change（文本 blur/回车、调色板选色）才向上派发。
+ * 不直接写 viewSettings：父级 updateViewSettings 每次调用都会写一次存储，逐字派发等于逐字写盘。
+ */
+const colorDraft = ref(props.viewSettings.color)
+
+watch(() => props.viewSettings.color, (v) => {
+  colorDraft.value = v
+})
+
+function commitColor() {
+  if (colorDraft.value === props.viewSettings.color) return
+  update({ color: colorDraft.value })
 }
 </script>
 

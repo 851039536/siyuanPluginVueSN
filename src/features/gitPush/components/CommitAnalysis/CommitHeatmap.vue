@@ -29,7 +29,7 @@
         <div class="gpa-heat-grid">
           <div
             v-for="(cell, idx) in cells"
-            :key="idx"
+            :key="cell.date || `pad-${idx}`"
             class="gpa-heat-cell"
             :class="{ 'is-empty': !cell.date }"
             :style="cell.style"

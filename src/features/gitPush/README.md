@@ -189,6 +189,9 @@ src/features/gitPush/
     ├── CardActionBar.scss           # 操作栏样式（从 index.scss 提取）
     ├── StatsPanel.scss              # 统计视图样式
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
+    ├── CommitAnalysisSettings.scss  # 提交分析显示设置样式（齿轮浮层 + 设置表单）
+    ├── CommitHeatmap.scss           # 提交热力图样式（周列网格 + 分级着色 + 图例）
+    ├── CommitCalendar.scss          # 提交日历网格样式（月卡 + 日格 + 今天/未来态）
     ├── CommitRuleCheckPanel.scss    # 提交规则检查面板样式
     ├── CommitFixDialog.scss         # 提交信息修正弹窗样式
     ├── DropCommitDialog.scss        # 删除历史提交弹窗样式

@@ -4,7 +4,12 @@
     <div class="gpa-section-title">
       <!-- 区块标题："最近提交记录" + 条数徽章 -->
       {{ i18n.analysisRecentCommits }}
-      <span class="gpa-section-count">{{ stats.entries.length }}</span>
+      <Tag
+        class="gpa-section-count"
+        variant="primary"
+        size="xsmall"
+        shape="square"
+      >{{ stats.entries.length }}</Tag>
     </div>
     <div class="gpa-commit-list">
       <div
@@ -21,12 +26,16 @@
           :title="c.message"
         >{{ c.message }}</span>
         <span class="gpa-commit-meta">
-          <!-- 项目名（可点击跳转列表视图） -->
-          <span
+          <!-- 项目名（可点击跳转列表视图；共享 Button 的 text 变体承担键盘可达性） -->
+          <Button
             class="gpa-commit-project"
+            variant="ghost"
+            text
+            size="xsmall"
+            dense
             :title="c.projectName"
             @click.stop="emit('viewProject', c.projectId)"
-          >{{ c.projectName }}</span>
+          >{{ c.projectName }}</Button>
           <span class="gpa-commit-author">{{ c.author }}</span>
           <!-- 提交时间（相对时间预计算，完整 ISO 悬停可见） -->
           <span
@@ -51,6 +60,8 @@
 // gitPush 提交分析最近提交记录区块（跨项目合并条目 + 本地分页 + 加载更多）
 import type { CommitAnalysisStats } from "../../types"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
+import Tag from "@/components/Tag.vue"
 import { relativeTime } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
 import LoadMoreButton from "../common/LoadMoreButton.vue"

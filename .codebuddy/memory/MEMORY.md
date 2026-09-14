@@ -45,6 +45,11 @@
 - 2026-09-12 实测：48 公开组件 / 56 `styles/*.scss` / 19 小写起始目录 / 33 `previewData/*.ts` / 递归 160 文件
 - ⚠️ `Checkbox` 纯受控（显示全取 `modelValue`，`nextTick` 拉回 DOM），`modelValue: boolean | any[]`（**分组只认数组、不收 `Set`**）；**无 `title` prop**（靠单根透传到根 div，只能当 hover 提示）⇒ 无障碍名必须 `ariaLabel`；有 4 个事件（`update:modelValue`/`change`/`focus`/`blur`）。`Tag.content` 超 `max`(99) 折叠为 `99+` ⇒ **计数徽标走默认插槽**。`Button.icon` 只收 `IconKey`，纯图标按钮**禁**把 `<Icon>` 塞默认插槽（毁 `isIconOnly`）
 - ⚠️ 每组件各自 `@use "../../styles/<Panel>.scss"` 是**模块范式**：`styles/index.scss` 只聚合 `Buttons/Shared/Dialog/Form`，不 @use 则不加载；gitPush 内 `Paginator` 用量 0（`usePagedList` + `LoadMoreButton` 才是统一做法）
+- ⚠️ 共享库**无 Popover/OverlayPanel**（`ConfirmPopup` 是气泡确认、`TieredMenu`/`MegaMenu` 是导航菜单）⇒ 自建浮层登记例外；`tooltip/ overlay/ select/` 等小写目录是私有支撑层（禁 feature 导入，契约在 `kit/README.md:3-4`）。**例外边界**：只含「浮层**内部**项按钮」，**浮层锚点按钮仍是违规**
+- ⚠️ `ColorField`：props 仅 `modelValue:string` + `placeholder?`（**无 disabled**），**双事件** `update:modelValue`（实时逐字、只改内存）/ `change`（blur・回车・选色后，供落盘）⇒ 从原生 `@input` 迁移必须改挂 `@change`；根 `width:100%`。`Chart.vue` 仅 `line|bar|pie|doughnut|area` ⇒ heatmap/日历矩阵属能力缺口（自绘登记为例外的判据）
+- ⚠️ 父级「收 patch 即写存储」时（如 `updateViewSettings` 每次 `storage.save`），`update:modelValue` 直连 patch = **逐字写盘** ⇒ 必须本地草稿 `ref`（update 只改草稿、`change` 才 emit）
+- ⚠️ `Button` 默认插槽被包进 `.si-button__text { flex:1; gap:4px }` ⇒ 整行/多列内容塞进 Button 时**布局要下沉到 `__text`**（否则行 `display:flex/gap` 失效）；Button 根自带 `justify-content:center`/`position:relative`/`white-space:nowrap`。覆写档位：行式覆写 5 类 (0,5,0) 压 dense；**悬停须 6 类 (0,6,0)**（组件 hover 为 5 类）；选中态规则排在 hover 之后
+- ⚠️ 预扫描只能当线索：`search_content` 的 `glob` 不带 `**/` 匹配不到子目录（曾误判「SCSS 无硬编码 px」实为 12 处）；图标名/键名一律回读 `icons.ts`（曾把 `mdi:chart-timeline-variant` 记成 `mdi:clipboard-check-outline`）
 - 私有子部件放同名小写目录（`confirm`/`overlay`/`select`/`tabs`/`tooltip`…），不计清单、禁 feature 直接导入
 - 新增公开组件四件套：文件功能注释 + `import "./kit/theme"` 副作用 + 样式外置 + 内部只用相对路径；组件内定时器用原生 + 卸载清理（不用 `timerRegistry`）
 - 文档同步面：`AGENTS.md`（总数 + 清单表 + 复用清单 + 目录树）、`componentPreview/README.md`、`kit/README.md`、`kit/theme.ts` 头注释、根 `README.md`、迁移指南；陈旧数字常埋在表格单元格 ⇒ 收尾用 `\d+ 个` 复扫

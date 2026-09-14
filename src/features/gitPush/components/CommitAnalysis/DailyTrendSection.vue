@@ -11,7 +11,7 @@
         v-for="d in rows"
         :key="d.label"
         class="gpa-daily-col"
-        :title="`${d.label}: ${d.count}`"
+        :title="d.tooltip"
       >
         <div
           class="gpa-daily-bar"
@@ -34,8 +34,15 @@ const props = defineProps<{
   stats: CommitAnalysisStats
 }>()
 
-/** 每日趋势行视图：高度百分比预计算（0 次日留空柱） */
-const rows = computed(() => withBarPct(props.stats.dailyCommits, { zeroAsEmpty: true }))
+/** 每日趋势行视图：高度百分比与 tooltip 文案预计算（0 次日留空柱；文案与热力图同走 i18n 键） */
+const rows = computed(() =>
+  withBarPct(props.stats.dailyCommits, { zeroAsEmpty: true }).map((d) => ({
+    ...d,
+    tooltip: String(props.i18n.analysisDailyTooltip || "")
+      .replace("{0}", d.label)
+      .replace("{1}", String(d.count)),
+  })),
+)
 </script>
 
 <style lang="scss">

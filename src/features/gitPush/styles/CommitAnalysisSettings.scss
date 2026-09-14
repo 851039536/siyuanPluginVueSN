@@ -13,7 +13,7 @@
   top: 100%;
   right: 0;
   margin-top: $s-px6;
-  min-width: 200px;
+  min-width: 200px; // 无对应 Token（浮层最小宽度）
   gap: $s-1;
 }
 
@@ -39,24 +39,20 @@
   flex-shrink: 0;
 }
 
-// 范围 / 周起始选择框（与共享 Select 的 xsmall 档下拉同视觉）
-.gpa-settings-select {
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  padding: $s-px2 $s-1;
-  cursor: pointer;
+// 范围 / 周起始选择框：外观、尺寸档位与焦点环由共享 Select（size="xsmall"）承担，
+// 此处只限触发框宽度（3 类 = (0,3,0)，压过组件 scoped 根样式）
+.gpa-settings-row .gpa-settings-select.si-select {
   max-width: 120px;
-
-  &:focus {
-    @include focus-ring;
-  }
 }
 
-// 视图两段式切换（热力图 / 日历）
+// 触发框被限宽后，下拉面板若沿用 width:100% 会截断「2026 年至今」这类长文案 ⇒ 反向放宽
+// （4 类 = (0,4,0)，覆盖组件对 dropdown 的宽度声明）
+.gpa-settings-row .gpa-settings-select.si-select .si-select__dropdown {
+  width: auto;
+  min-width: 140px;
+}
+
+// 视图两段式切换（热力图 / 日历）：外框由容器提供，段内按钮去边框去圆角 ⇒ 视觉上仍是一整条分段控件
 .gpa-settings-seg {
   display: flex;
   gap: $s-px2;
@@ -64,26 +60,28 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;
   padding: $s-px2;
+}
 
-  .gpa-settings-seg-btn {
-    padding: $s-px2 $s-2;
-    border: none;
-    border-radius: $r-sm;
-    background: transparent;
-    color: var(--b3-theme-on-surface-light);
-    font-size: $t-2xs;
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s;
+// 段内按钮：共享 Button（ghost + xsmall + dense）承担交互、尺寸与 aria-pressed，
+// 此处只覆盖「段内」外观；4 类 = (0,4,0) 压过 dense 几何，6 类 = (0,6,0) 压过 ghost 的 hover 取色
+.gpa-settings-form .gpa-settings-seg .gpa-settings-seg-btn.si-button {
+  padding: $s-px2 $s-2;
+  border: none;
+  border-radius: $r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $t-2xs;
+  transition: background 0.12s, color 0.12s;
+}
 
-    &:hover {
-      background: var(--b3-list-hover);
-      color: var(--b3-theme-on-surface);
-    }
+.gpa-settings-form .gpa-settings-row .gpa-settings-seg .gpa-settings-seg-btn.si-button:hover {
+  background: var(--b3-list-hover);
+  color: var(--b3-theme-on-surface);
+}
 
-    &.active {
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      font-weight: $fw-semibold;
-    }
-  }
+// 选中态排在 hover 之后：同特异性时后者生效，避免悬停已选中项被 hover 底色覆盖
+.gpa-settings-form .gpa-settings-row .gpa-settings-seg .gpa-settings-seg-btn.si-button[aria-pressed="true"] {
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  font-weight: $fw-semibold;
 }

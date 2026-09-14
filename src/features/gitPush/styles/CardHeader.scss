@@ -160,21 +160,13 @@
   flex-wrap: wrap;
 }
 
-.gp-branch-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px2;
-  padding: $s-px1 $s-px6;
-  font-size: $t-2xs;
+// 分支标签：交互与几何由共享 Button 承担，此处仅保留等宽字体与「当前分支」选中态
+.git-push-panel .gp-branch-row .gp-branch-tag.si-button {
   font-family: $ff-mono;
   font-weight: $fw-semibold;
   border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  cursor: pointer;
-  transition: opacity 0.15s, border-color 0.15s;
+  transition: opacity 0.12s, border-color 0.12s;
 
   &:hover {
     opacity: 0.8;
@@ -197,36 +189,23 @@
   margin-bottom: $s-px2;
 }
 
-.gp-star-btn {
-  display: inline-flex;
-  align-items: center;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
+// 收藏星标：text 外观由共享 Button 承担，此处仅保留弱化与按压反馈
+.git-push-panel .gp-card-name-row .gp-star-btn.si-button {
   opacity: 0.3;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity 0.12s, transform 0.12s;
 
   &:hover { opacity: 0.7; }
   &:active { transform: scale(0.9); }
-
-  &.active {
-    opacity: 1;
-    color: var(--b3-theme-warning);
-  }
 }
 
-.gp-archived-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px2;
-  padding: $s-px1 $s-px5;
-  border-radius: $r-sm;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  background: var(--b3-theme-on-surface);
-  color: var(--b3-theme-background);
+// 已收藏星标：主色强调（(0,4,0) 覆盖共享 Button 的 text 取色）
+.git-push-panel .gp-card-name-row .gp-star-btn--active.si-button {
+  opacity: 1;
+  color: var(--b3-theme-warning);
+}
+
+// 归档角标：配色与内边距由共享 Tag 的 contrast + fill 承担，此处仅保留弱化
+.git-push-panel .gp-card-name-row .gp-archived-tag.si-tag {
   opacity: 0.5;
 }
 

@@ -823,6 +823,12 @@
     "bfgForcePush": "强推远端",
     "bfgForcePushDone": "强推指令已执行，结果见上方提示",
     "bfgForcePushFailedCount": "个平台失败",
-    "bfgDone": "完成"
+    "bfgDone": "完成",
+
+    "cardTabChanges": "变更",
+    "cardTabLog": "日志",
+    "cardTabStash": "储藏",
+    "cardTabTag": "标签",
+    "commitLogCountLabel": "显示条数"
   }
 }

@@ -57,6 +57,8 @@ interface Props {
   disabled?: boolean
   /** 是否占满容器宽度 */
   fluid?: boolean
+  /** 紧凑几何修饰：透传给内部 Button，仅与 size="xsmall" 协同时生效（保持既有紧凑按钮观感） */
+  dense?: boolean
   /** 提示文本 */
   hint?: string
   /** 错误文本（同时切换 danger 配色与 aria-invalid） */
@@ -128,6 +130,7 @@ const buttonProps = computed(() => ({
   severity: severity.value,
   outlined: !pressed.value,
   size: props.size,
+  dense: props.dense,
   icon: currentIcon.value,
   disabled: props.disabled,
   block: props.fluid,

@@ -44,8 +44,6 @@
   display: flex;
   gap: $s-px2;
   margin-left: auto;
-
-  .vp-btn { font-size: $t-2xs; padding: $s-px1 $s-px6; }
 }
 
 .wt-clean {
@@ -76,7 +74,7 @@
   font-size: $t-xs;
   @include row-divider;
   cursor: pointer; // 整行可点击查看差异
-  transition: background 0.1s;
+  transition: background 0.12s;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -94,31 +92,11 @@
   }
 }
 
+// 勾选框容器：只负责定位与拦截冒泡（复选框外观、勾选态与禁用态由共享 Checkbox 承担）
 .wt-checkbox {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.4;
   flex-shrink: 0;
-
-  &.checked {
-    color: var(--b3-theme-primary);
-    opacity: 1;
-  }
-
-  &:hover {
-    opacity: 0.8;
-  }
-
-  &[disabled] {
-    cursor: not-allowed;
-    pointer-events: none;
-    opacity: 0.3;
-  }
 }
 
 .wt-file-status {
@@ -151,13 +129,11 @@
   }
 }
 
+// 丢弃更改按钮：危险色由 Button 的 severity=danger 承担，此处仅保留弱化与悬停增强
 .wt-discard-btn {
   flex-shrink: 0;
   opacity: 0.3;
-  font-size: $t-2xs;
-  padding: $s-px1 $s-px6;
-  transition: opacity 0.15s;
-  color: var(--b3-theme-error, #cf222e);
+  transition: opacity 0.12s;
 
   .wt-file-row:hover & {
     opacity: 0.7;
@@ -165,7 +141,6 @@
 
   &:hover {
     opacity: 1;
-    border-color: var(--b3-theme-error, #cf222e);
   }
 }
 
@@ -192,37 +167,25 @@
   font-size: $t-xs;
 }
 
-.wt-template-select {
+// 模板下拉：外观由共享 Select 承担，此处仅保留占满剩余宽度与等宽字体
+.wt-template-row .wt-template-select.si-select {
   flex: 1;
-  height: 26px;
-  padding: 0 $s-px6;
-  font-size: $t-xs;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  &:focus { @include focus-ring; outline: none; }
+  min-width: 0;
+  font-family: $ff-mono;
 }
 
-.wt-type-btn {
-  padding: $s-px1 $s-px6;
-  font-size: $t-2xs;
+// commit type 分段按钮：交互与 aria-pressed 由共享 Button 承担，此处仅保留等宽字体与选中态配色
+.wt-commit-types .wt-type-btn.si-button {
   font-family: $ff-mono;
-  font-weight: $fw-semibold;
   border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
   opacity: 0.5;
-  cursor: pointer;
-  transition: opacity 0.15s, border-color 0.15s, background 0.15s;
+  transition: opacity 0.12s, border-color 0.12s, background 0.12s;
 
   &:hover {
     opacity: 0.8;
   }
 
-  &.active {
+  &[aria-pressed="true"] {
     opacity: 1;
     border-color: var(--b3-theme-primary);
     color: var(--b3-theme-primary);
@@ -230,22 +193,9 @@
   }
 }
 
-.wt-commit-msg {
-  width: 100%;
-  box-sizing: border-box;
-  padding: $s-px6 $s-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  font-size: $t-xs;
+// 提交信息多行输入：外观由共享 Textarea 承担，此处仅保留等宽字体
+.wt-commit-form .wt-commit-msg.si-textarea {
   font-family: $ff-mono;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  resize: vertical;
-  outline: none;
-
-  &:focus {
-    @include focus-ring;
-  }
 }
 
 .wt-commit-actions {
@@ -268,18 +218,12 @@
   @include output-base;
 }
 
+// 输出区关闭按钮：外观由共享 Button 承担，此处仅保留绝对定位与弱化
 .wt-output-close {
   position: absolute;
   top: 2px;
   right: 4px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
   opacity: 0.4;
-  font-size: $t-sm;
-  line-height: 1;
-  padding: 0 $s-1;
 
   &:hover {
     opacity: 1;

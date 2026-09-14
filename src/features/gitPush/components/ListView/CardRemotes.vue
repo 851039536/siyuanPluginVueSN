@@ -3,14 +3,16 @@
   <!-- 远程仓库状态 -->
   <div class="gp-remotes">
     <span class="gp-remotes-label">REMOTES</span>
-    <button
-      class="vp-btn vp-btn--ghost vp-btn--sm gp-section-refresh"
-      :disabled="remoteStatusLoading"
+    <Button
+      class="gp-section-refresh"
+      variant="ghost"
+      size="xsmall"
+      dense
+      icon="refresh"
+      :loading="remoteStatusLoading"
       :title="i18n.refreshRemoteStatus"
       @click.stop="ops.handleRefreshRemoteStatus(project.id)"
-    >
-      <Icon :icon="remoteStatusLoading ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': remoteStatusLoading }" />
-    </button>
+    />
     <!-- 当前分支名（原操作栏分支检查按钮的信息价值合并至此） -->
     <span
       v-if="pushStatus?.branch"
@@ -32,13 +34,14 @@
         height="12"
       />
       <span>{{ project[r.remoteProp] }}</span>
-      <span
+      <!-- 推送状态徽章（配色由共享 Tag 的 variant 承担，与原 .gp-status-badge--* 一一对应） -->
+      <Tag
         v-if="pushStatus?.remotes[r.key] && derived.statusLabel(project.id, r.key)"
         class="gp-status-badge"
-        :class="derived.statusBadgeClass(project.id, r.key)"
-      >
-        {{ derived.statusLabel(project.id, r.key) }}
-      </span>
+        :variant="statusVariant(derived.statusBadgeClass(project.id, r.key))"
+        size="xsmall"
+        :content="derived.statusLabel(project.id, r.key)"
+      />
     </div>
   </div>
 
@@ -62,6 +65,22 @@ import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { REMOTES } from "../../types"
 import { useCardServices } from "../../composables/useCardServices"
+import Button from "@/components/Button.vue"
+import Tag from "@/components/Tag.vue"
+
+/** 远程状态 class → 共享 Tag 的 variant（配色与原 .gp-status-badge--* 一一对应） */
+function statusVariant(badgeClass: string): "primary" | "warning" | "danger" | "success" {
+  switch (badgeClass) {
+    case "gp-ahead":
+      return "primary"
+    case "gp-behind":
+      return "warning"
+    case "gp-diverged":
+      return "danger"
+    default:
+      return "success"
+  }
+}
 
 const props = defineProps<{
   project: GitProject

@@ -53,30 +53,19 @@
   flex: 1;
 }
 
-.gp-action-btn {
-  gap: $s-px1;
-  padding: $s-px1 $s-px1;
-  font-size: $t-2xs;
-  line-height: 1;
-  white-space: nowrap;
+// 操作栏按钮的几何（padding / gap / 字号 / 不换行）由共享 Button 的 size=xsmall + dense 承担；
+// 下方状态色同时作用于操作栏按钮与下拉菜单项，抬到 (0,3,0) 以覆盖共享 Button 的 ghost 取色（替代原 !important）
+.git-push-panel .gp-actions-bar .gp-action-btn--active {
+  border-color: var(--b3-theme-primary);
+  color: var(--b3-theme-primary);
+}
 
-  &:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
+.git-push-panel .gp-actions-bar .gp-action-btn--ok {
+  border-color: var(--b3-theme-success);
+  color: var(--b3-theme-success);
+}
 
-  &--active {
-    border-color: var(--b3-theme-primary) !important;
-    color: var(--b3-theme-primary);
-  }
-
-  &--ok {
-    border-color: var(--b3-theme-success) !important;
-    color: var(--b3-theme-success);
-  }
-
-  &--fail {
-    border-color: var(--b3-theme-error) !important;
-    color: var(--b3-theme-error);
-  }
+.git-push-panel .gp-actions-bar .gp-action-btn--fail {
+  border-color: var(--b3-theme-error);
+  color: var(--b3-theme-error);
 }

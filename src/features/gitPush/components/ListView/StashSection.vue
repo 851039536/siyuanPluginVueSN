@@ -24,64 +24,45 @@
           @keydown.enter="confirm"
         />
         <!-- 悬停提示："AI 生成描述" -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
-          :title="i18n.stashGenDesc"
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="sparkles"
+          :loading="genDescLoading"
           :disabled="genDescLoading"
+          :title="i18n.stashGenDesc"
           @click="$emit('genStashDesc')"
-        >
-          <Icon
-            v-if="genDescLoading"
-            icon="mdi:loading"
-            class="gp-spin"
-            height="12"
-          />
-          <Icon
-            v-else
-            icon="mdi:auto-fix"
-            height="12"
-          />
-        </button>
-        <button
-          class="vp-btn vp-btn--primary vp-btn--sm"
+        />
+        <Button
+          variant="primary"
+          size="xsmall"
+          dense
+          icon="check"
           :disabled="loading"
           @click="confirm"
-        >
-          <Icon
-            icon="mdi:check"
-            height="12"
-          />
-        </button>
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+        />
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="close"
           @click="cancel"
-        >
-          <Icon
-            icon="mdi:close"
-            height="12"
-          />
-        </button>
+        />
       </template>
-      <button
+      <Button
         v-else
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="archiveOutline"
+        :loading="loading"
         :disabled="!hasChanges || loading"
         @click="showInput"
       >
-        <Icon
-          v-if="loading"
-          icon="mdi:loading"
-          class="gp-spin"
-          height="12"
-        />
-        <Icon
-          v-else
-          icon="mdi:archive-outline"
-          height="12"
-        />
         <!-- 按钮文案："暂存变更" -->
         {{ i18n.stashSave }}
-      </button>
+      </Button>
     </div>
     <!-- 储藏条目列表 -->
     <div
@@ -99,26 +80,32 @@
           :title="e.message"
         >{{ e.message }}</span>
         <!-- 悬停提示："恢复并删除 (pop)"，按钮文案："恢复" -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
           :title="i18n.stashPopHint"
           :disabled="loading"
           @click="$emit('stashPop', e.index)"
-        >{{ i18n.stashRestore }}</button>
+        >{{ i18n.stashRestore }}</Button>
         <!-- 悬停提示："应用但不删除 (apply)"，按钮文案："应用" -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
           :title="i18n.stashApplyHint"
           :disabled="loading"
           @click="$emit('stashApply', e.index)"
-        >{{ i18n.stashApply }}</button>
+        >{{ i18n.stashApply }}</Button>
         <!-- 悬停提示："删除 (drop)"，按钮文案："删除" -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm"
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
           :title="i18n.stashDropHint"
           :disabled="loading"
           @click="$emit('stashDrop', e.index)"
-        >{{ i18n.stashDrop }}</button>
+        >{{ i18n.stashDrop }}</Button>
       </div>
     </div>
     <!-- 待暂存的变更预览（stash 含未跟踪文件，故展示工作区全部变更） -->
@@ -163,6 +150,7 @@
 import type { StashEntry, WorkingTreeInfo } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, nextTick, ref, toRef } from "vue"
+import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../../utils"

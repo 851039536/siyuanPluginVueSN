@@ -8,43 +8,35 @@
         height="12"
         class="bcl-search-icon"
       />
-      <!-- 搜索输入框（placeholder："搜索提交信息..."） -->
-      <input
+      <!-- 搜索输入框（placeholder："搜索提交信息..."；清空入口由 Input 内建，Escape 亦可清空） -->
+      <Input
         v-model="searchKeyword"
         class="bcl-search-input"
+        size="xsmall"
+        clearable
         :placeholder="i18n.commitSearchPlaceholder"
-        @keyup.escape="searchKeyword = ''"
+        @keydown.esc="searchKeyword = ''"
       />
-      <button
-        v-if="searchKeyword"
-        class="vp-btn vp-btn--ghost vp-btn--sm"
-        @click.stop="searchKeyword = ''"
-      >
-        <Icon
-          icon="mdi:close"
-          height="12"
-        />
-      </button>
-      <!-- 显示条数下拉（"全部" / 数字） -->
-      <select
-        v-model="displayCount"
+      <!-- 显示条数下拉（"全部" / 数字；Select 为纯受控，回写由 handleCountChange 负责） -->
+      <Select
         class="bcl-count-select"
-        @change="onCountChange"
-      >
-        <option
-          v-for="n in countOptions"
-          :key="n"
-          :value="n"
-        >{{ n === "all" ? i18n.logFilterAll : n }}</option>
-      </select>
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm bcl-refresh-btn"
-        :disabled="loading"
-        title="刷新提交日志"
+        size="xsmall"
+        :model-value="displayCount"
+        :options="countSelectOptions"
+        :aria-label="i18n.commitLogCountLabel"
+        @update:model-value="handleCountChange"
+      />
+      <!-- 刷新提交日志 -->
+      <Button
+        class="bcl-refresh-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        :icon="loading ? 'loading' : 'refresh'"
+        :loading="loading"
+        :title="i18n.refreshCommitLog"
         @click.stop="$emit('refreshCommitLog')"
-      >
-        <Icon :icon="loading ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': loading }" />
-      </button>
+      />
     </div>
 
     <!-- 加载中提示 -->
@@ -89,16 +81,15 @@
           class="bcl-tags"
           :title="entryTags(entry.hash).join(', ')"
         >
-          <span
+          <Tag
             v-for="tagName in entryTags(entry.hash).slice(0, 2)"
             :key="tagName"
             class="bcl-tag-chip"
+            variant="primary"
+            size="xsmall"
+            icon="tagOutline"
             :title="tagPushTitle(tagName)"
           >
-            <Icon
-              icon="mdi:tag-outline"
-              height="10"
-            />
             {{ tagName }}
             <!-- 已推送的远程名（远程数据缺失时不显示，避免误标） -->
             <span
@@ -109,11 +100,13 @@
               v-else-if="hasRemoteData"
               class="bcl-tag-chip-unpushed"
             >{{ i18n.tagNotPushed }}</span>
-          </span>
-          <span
+          </Tag>
+          <Tag
             v-if="entryTags(entry.hash).length > 2"
             class="bcl-tag-more"
-          >+{{ entryTags(entry.hash).length - 2 }}</span>
+            variant="secondary"
+            size="xsmall"
+          >+{{ entryTags(entry.hash).length - 2 }}</Tag>
         </span>
         <span
           class="bcl-msg bcl-msg--clickable"
@@ -121,32 +114,35 @@
           @click.stop="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
         <!-- 查看提交文件按钮（常显；点击弹出该提交修改的文件清单） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm bcl-files-btn"
+        <Button
+          class="bcl-files-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="fileOutline"
           :title="i18n.commitFilesOpen"
           @click.stop="$emit('viewFiles', entry)"
-        >
-          <Icon icon="mdi:file-document-outline" height="12" />
-        </button>
+        />
         <!-- 打 Tag 按钮（常显） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm bcl-tag-btn"
+        <Button
+          class="bcl-tag-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="tagPlusOutline"
           :title="i18n.createTag"
           @click.stop="$emit('addTag', entry)"
-        >
-          <Icon
-            icon="mdi:tag-plus-outline"
-            height="12"
-          />
-        </button>
+        />
         <!-- 删除提交按钮（常显；点击弹出删除确认弹窗） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm bcl-drop-btn"
+        <Button
+          class="bcl-drop-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="deleteOutline"
           :title="i18n.dropCommitOpen"
           @click.stop="$emit('dropCommit', entry)"
-        >
-          <Icon icon="mdi:delete-outline" height="12" />
-        </button>
+        />
         <span class="bcl-meta">
           <span class="bcl-author">{{ entry.author }}</span>
           <span
@@ -170,6 +166,10 @@ import {
   ref,
 } from "vue"
 import { DEFAULT_LOG_LIMIT, formatDateTime, relativeTime } from "../../utils"
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
+import Select from "@/components/Select.vue"
+import Tag from "@/components/Tag.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -193,6 +193,10 @@ const emit = defineEmits<{
 }>()
 
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const
+/** 条数下拉选项（末尾「全部」取 i18n 文案；值为 number | "all"，与 displayCount 同值域） */
+const countSelectOptions = computed(() =>
+  countOptions.map((n) => ({ value: n, label: n === "all" ? props.i18n.logFilterAll : String(n) })),
+)
 const searchKeyword = ref("")
 /** 选择框当前值：以卡片级 logLimit（initialCount prop）为初始值，切换 Tab 重建后仍沿用用户上次选择 */
 const displayCount = ref<number | "all">(props.initialCount ?? DEFAULT_LOG_LIMIT)
@@ -250,7 +254,10 @@ function tagPushTitle(tag: string): string {
   return remotes.length ? `${tag} → ${remotes.join(", ")}` : `${tag} · ${props.i18n.tagNotPushed}`
 }
 
-function onCountChange() {
+/** 条数变更：Select 为纯受控组件（内部只 emit），必须先回写 ref 再按新值重载 */
+function handleCountChange(value: string | number | boolean | null) {
+  if (value !== "all" && typeof value !== "number") return
+  displayCount.value = value
   emit("reloadCommitLog", displayCount.value)
 }
 </script>

@@ -39,17 +39,17 @@
       class="gp-output-ai"
     >
       <!-- "AI 分析"（tooltip：分析失败原因与解决方案） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm gp-output-ai-btn"
+      <Button
+        class="gp-output-ai-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="sparkles"
         :title="i18n.aiAnalyze"
         @click="showAiDialog = true"
       >
-        <Icon
-          icon="mdi:auto-fix"
-          height="12"
-        />
-        <span>{{ i18n.aiAnalyze }}</span>
-      </button>
+        {{ i18n.aiAnalyze }}
+      </Button>
     </div>
     <!-- AI 错误分析弹窗（自包含，父只管开关） -->
     <AiErrorAnalysisDialog
@@ -68,6 +68,7 @@ import type { PushOutputEntry } from "../../composables/useGitOps"
 import { Icon } from "@iconify/vue"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { TimerRegistry } from "@/utils/timerRegistry"
+import Button from "@/components/Button.vue"
 import AiErrorAnalysisDialog from "./AiErrorAnalysisDialog.vue"
 
 /** stdout 预览截断上限（字符数） */

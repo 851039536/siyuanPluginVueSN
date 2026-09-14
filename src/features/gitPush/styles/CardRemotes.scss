@@ -18,7 +18,7 @@
 .gp-section-refresh {
   flex-shrink: 0;
   opacity: 0.5;
-  transition: opacity 0.15s;
+  transition: opacity 0.12s;
 
   &:hover {
     opacity: 1;
@@ -67,31 +67,7 @@
   border-radius: $r-sm;
 }
 
-.gp-status-badge {
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  padding: $s-px1 $s-px5;
-  border-radius: $r-sm;
+// 推送状态徽章：配色与内边距由共享 Tag 的 variant 承担，此处仅保留与远程名的间距
+.git-push-panel .gp-remote-item .gp-status-badge.si-tag {
   margin-left: $s-1;
-  letter-spacing: 0;
-
-  &.gp-ahead {
-    background: var(--b3-theme-primary-lightest);
-    color: var(--b3-theme-primary);
-  }
-
-  &.gp-behind {
-    background: var(--b3-theme-warning-lightest);
-    color: var(--b3-theme-warning);
-  }
-
-  &.gp-diverged {
-    background: var(--b3-theme-error-lightest);
-    color: var(--b3-theme-error);
-  }
-
-  &.gp-synced {
-    background: var(--b3-theme-success-lightest);
-    color: var(--b3-theme-success);
-  }
 }

@@ -847,6 +847,77 @@ export const COMMON_ICONS = {
   columns: {
     icon: "mdi:view-column",
   },
+
+  // 通用动作补充：列表 / 编辑 / 状态 / 归档场景（供共享 Button 的 icon prop 使用）
+  unfoldMoreHorizontal: {
+    icon: "mdi:unfold-more-horizontal",
+  },
+  archiveOutline: {
+    icon: "mdi:archive-outline",
+  },
+  clockOutline: {
+    icon: "mdi:clock-outline",
+  },
+  cloudRefreshOutline: {
+    icon: "mdi:cloud-refresh-outline",
+  },
+  deleteOutline: {
+    icon: "mdi:delete-outline",
+  },
+  pencilOutline: {
+    icon: "mdi:pencil-outline",
+  },
+  folderOutline: {
+    icon: "mdi:folder-outline",
+  },
+  helpCircleOutline: {
+    icon: "mdi:help-circle-outline",
+  },
+  history: {
+    icon: "mdi:history",
+  },
+  noteTextOutline: {
+    icon: "mdi:note-text-outline",
+  },
+  refreshCircle: {
+    icon: "mdi:refresh-circle",
+  },
+  undoVariant: {
+    icon: "mdi:undo-variant",
+  },
+  applicationBrackets: {
+    icon: "mdi:application-brackets",
+  },
+  minusBoxOutline: {
+    icon: "mdi:minus-box-outline",
+  },
+  plusBoxOutline: {
+    icon: "mdi:plus-box-outline",
+  },
+  pauseCircle: {
+    icon: "mdi:pause-circle",
+  },
+  pauseCircleOutline: {
+    icon: "mdi:pause-circle-outline",
+  },
+  fileDocumentCheckOutline: {
+    icon: "mdi:file-document-check-outline",
+  },
+  fileDownloadOutline: {
+    icon: "mdi:file-download-outline",
+  },
+  tagOffOutline: {
+    icon: "mdi:tag-off-outline",
+  },
+  tagPlusOutline: {
+    icon: "mdi:tag-plus-outline",
+  },
+  sourceBranch: {
+    icon: "mdi:source-branch",
+  },
+  sourceCommit: {
+    icon: "mdi:source-commit",
+  },
 } as const
 
 /**

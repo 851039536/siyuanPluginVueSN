@@ -2037,7 +2037,12 @@
     "bfgForcePush": "强推远端",
     "bfgForcePushDone": "强推指令已执行，结果见上方提示",
     "bfgForcePushFailedCount": "个平台失败",
-    "bfgDone": "完成"
+    "bfgDone": "完成",
+    "cardTabChanges": "变更",
+    "cardTabLog": "日志",
+    "cardTabStash": "储藏",
+    "cardTabTag": "标签",
+    "commitLogCountLabel": "显示条数"
   },
   "enableGlobalRelations": "启用全局关系列表功能",
   "enableGlobalRelationsDesc": "基于思源 refs 表与 getBacklink2 API，查询全库文档间的双向链接关系",

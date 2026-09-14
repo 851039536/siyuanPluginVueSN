@@ -280,6 +280,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 ### 尺寸与图标
 
 - 纯图标按钮尺寸随 `size` 档位：22 / 28 / 36 / 44px（与文字按钮 `min-height` 对齐）；自建 `.icon-btn` 的 26px 固定值**不适用于**共享 `<Button>`
+- **`dense` 紧凑修饰（2026-09-14）**：仅与 `size="xsmall"` 叠加生效，用于迁移既有紧凑按钮（原 `.vp-btn--sm` 观感）：去 `min-height` 约束、`padding: 2px 5px`、`gap: 3px`、`border-radius: 4px`，纯图标按钮 20px。它**不改字号阶梯**（10px 仍由 `xsmall` 档位承担），**不影响**其他档位；覆写既有档位尺寸时牢记档位类自带 `min-height: 28/36/44px`，必须同时写 `min-height: 0` 才能压下来
 - 图标默认边长随档位 12 / 14 / 16 / 18px（`Button.vue` 的 `TIER_ICON_SIZE`，与 SCSS 中 spinner 尺寸表一一对应，改动须同步两处）；显式传 `iconSize` 时以显式值为准
 - `iconPosition` 支持 `left` / `right` / `top` / `bottom`，纵向堆叠时 `&__text` 自动改为 `flex: none`
 - `block` 块级按钮的文案在剩余空间内居中（`.si-button--block .si-button__text { justify-content: center }`），兼容 `iconPosition: right` 时图标贴右

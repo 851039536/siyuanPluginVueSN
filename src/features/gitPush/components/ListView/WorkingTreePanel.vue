@@ -25,29 +25,36 @@
         </span>
         <span class="wt-summary-actions">
           <!-- 无可暂存内容时隐藏按钮，避免 disabled 常驻占位 -->
-          <button
+          <Button
             v-if="hasUnstaged"
-            class="vp-btn vp-btn--ghost vp-btn--sm"
+            variant="ghost"
+            size="xsmall"
+            dense
             :disabled="gitOpLoading"
             @click.stop="$emit('stageAll')"
           >
             {{ i18n.stageAll }}
-          </button>
-          <button
+          </Button>
+          <Button
             v-if="hasStaged"
-            class="vp-btn vp-btn--ghost vp-btn--sm"
+            variant="ghost"
+            size="xsmall"
+            dense
             :disabled="gitOpLoading"
             @click.stop="$emit('unstageAll')"
           >
             {{ i18n.unstageAll }}
-          </button>
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm"
-            :disabled="refreshingWorkingTree"
+          </Button>
+          <!-- 单独刷新工作区 -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="refresh"
+            :loading="refreshingWorkingTree"
+            :title="i18n.refreshWorkingTree"
             @click.stop="$emit('refreshWorkingTree')"
-          >
-            <Icon :icon="refreshingWorkingTree ? 'mdi:loading' : 'mdi:refresh'" height="12" :class="{ 'gp-spin': refreshingWorkingTree }" />
-          </button>
+          />
         </span>
       </template>
     </div>
@@ -68,21 +75,20 @@
           :title="i18n.clickViewDiff + ' — ' + file.path"
           @click="toggleDiff(file)"
         >
-          <!-- 勾选框 -->
-          <button
+          <!-- 勾选框（共享 Checkbox 提供原生复选语义与 aria-checked；外层包一层拦截冒泡，避免触发整行查看差异） -->
+          <span
             class="wt-checkbox"
-            :class="{ checked: file.staged }"
-            :disabled="gitOpLoading"
-            :title="gitOpLoading ? i18n.processing : file.staged ? i18n.unstageFile : i18n.stageFile"
-            @click.stop="toggleStage(file)"
+            @click.stop
           >
-            <!-- 加载中显示旋转图标，否则按暂存状态显示勾选框 -->
-            <Icon
-              :icon="gitOpLoading ? 'mdi:loading' : file.staged ? 'mdi:checkbox-marked' : 'mdi:checkbox-blank-outline'"
-              :class="{ 'gp-spin': gitOpLoading }"
-              height="12"
+            <Checkbox
+              :model-value="file.staged"
+              size="xsmall"
+              :disabled="gitOpLoading"
+              :aria-label="gitOpLoading ? i18n.processing : file.staged ? i18n.unstageFile : i18n.stageFile"
+              :title="gitOpLoading ? i18n.processing : file.staged ? i18n.unstageFile : i18n.stageFile"
+              @update:model-value="toggleStage(file)"
             />
-          </button>
+          </span>
 
           <!-- 状态图标 -->
           <span
@@ -104,17 +110,17 @@
           <!-- 文件名（整行可点击查看差异） -->
           <span class="wt-file-path">{{ file.path }}</span>
 
-          <!-- 丢弃更改 -->
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm wt-discard-btn"
+          <!-- 丢弃更改（危险语义 ⇒ severity=danger 的红色文字） -->
+          <Button
+            class="wt-discard-btn"
+            variant="ghost"
+            size="xsmall"
+            dense
+            severity="danger"
+            icon="undoVariant"
             :title="file.staged ? i18n.unstageDiscard : file.status === 'untracked' ? i18n.discardUntracked : i18n.discardChanges"
             @click.stop="$emit('discardFile', file.path, file.staged, file.status)"
-          >
-            <Icon
-              icon="mdi:undo-variant"
-              height="12"
-            />
-          </button>
+          />
         </div>
       </div>
 
@@ -141,15 +147,18 @@
       >
         <!-- 常规提交类型快速选择 -->
         <div class="wt-commit-types">
-          <button
+          <Button
             v-for="ct in COMMIT_TYPE_VALUES"
             :key="ct"
             class="wt-type-btn"
-            :class="{ active: commitType === ct }"
+            variant="ghost"
+            size="xsmall"
+            dense
+            :aria-pressed="commitType === ct"
             @click.stop="commitType = ct; updateCommitMessage()"
           >
             {{ ct }}
-          </button>
+          </Button>
         </div>
         <!-- 提交信息模板 -->
         <div
@@ -160,26 +169,20 @@
             icon="mdi:file-document-outline"
             height="12"
           />
-          <select
+          <Select
             class="wt-template-select"
-            @change="handleSelectTemplate(($event.target as HTMLSelectElement).value)"
-          >
-            <option value="">
-              {{ i18n.selectTemplate }}
-            </option>
-            <option
-              v-for="tpl in commitTemplates"
-              :key="tpl.id"
-              :value="tpl.id"
-            >
-              {{ tpl.name }}
-            </option>
-          </select>
+            size="xsmall"
+            :model-value="selectedTemplateId"
+            :options="templateOptions"
+            :aria-label="i18n.selectTemplate"
+            @update:model-value="handleTemplateChange"
+          />
         </div>
-        <textarea
+        <Textarea
           v-model="commitMessage"
           class="wt-commit-msg"
-          rows="4"
+          size="xsmall"
+          :rows="4"
           :placeholder="i18n.commitMessagePlaceholder"
         />
         <!-- 提交信息违规提示（实时校验，硬阻止提交） -->
@@ -188,30 +191,28 @@
           class="wt-commit-invalid"
         >{{ i18n[COMMIT_RULE_REASON_META[validationReason].labelKey] }}</span>
         <div class="wt-commit-actions">
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm"
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="sparkles"
+            :loading="generating"
             :disabled="generating"
             @click.stop="$emit('generateMsg')"
           >
-            <Icon
-              :icon="generating ? 'mdi:loading' : 'mdi:auto-fix'"
-              :class="{ 'gp-spin': generating }"
-              height="12"
-            />
-            <span>{{ generating ? i18n.generating : i18n.generateMsg }}</span>
-          </button>
-          <button
-            class="vp-btn vp-btn--primary vp-btn--sm"
+            {{ generating ? i18n.generating : i18n.generateMsg }}
+          </Button>
+          <Button
+            variant="primary"
+            size="xsmall"
+            dense
+            icon="sourceCommit"
+            :loading="committing"
             :disabled="!commitMessage.trim() || committing || !!validationReason"
             @click.stop="handleCommit"
           >
-            <Icon
-              :icon="committing ? 'mdi:loading' : 'mdi:source-commit'"
-              :class="{ 'gp-spin': committing }"
-              height="12"
-            />
-            <span>{{ committing ? i18n.committing : i18n.commit }}</span>
-          </button>
+            {{ committing ? i18n.committing : i18n.commit }}
+          </Button>
         </div>
       </div>
       <!-- 操作反馈（不限提交表单可见，暂存失败等信息在此显示） -->
@@ -219,13 +220,15 @@
         v-if="commitOutput"
         class="wt-commit-output"
       >
-        <button
+        <Button
           class="wt-output-close"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="close"
           :title="i18n.close"
           @click.stop="$emit('clearOutput')"
-        >
-          ×
-        </button>
+        />
         <pre>{{ commitOutput }}</pre>
       </div>
     </div>
@@ -250,7 +253,11 @@ import {
   toRef,
   watch,
 } from "vue"
+import Button from "@/components/Button.vue"
+import Checkbox from "@/components/Checkbox.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
+import Textarea from "@/components/Textarea.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -286,6 +293,14 @@ const emit = defineEmits<{
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
+/** 提交信息模板下拉当前值（"" = 未选择模板） */
+const selectedTemplateId = ref("")
+
+/** 模板下拉选项（首项为「选择模板」占位项，选中首项即回到未选择态） */
+const templateOptions = computed(() => [
+  { value: "", label: props.i18n.selectTemplate },
+  ...(props.commitTemplates ?? []).map((tpl) => ({ value: tpl.id, label: tpl.name })),
+])
 
 /** 当前提交信息命中规则问题（合规时为 null；硬阻止提交按钮并显示原因） */
 const validationReason = computed(() => checkCommitRule(commitMessage.value))
@@ -391,6 +406,12 @@ function updateCommitMessage() {
   // 如果为空，不自动填充（等用户点生成）
 }
 
+/** 模板下拉变更：Select 为纯受控组件（内部只 emit），必须先回写 ref 再填充模板内容 */
+function handleTemplateChange(value: string | number | boolean | null) {
+  selectedTemplateId.value = typeof value === "string" ? value : ""
+  handleSelectTemplate(selectedTemplateId.value)
+}
+
 function handleSelectTemplate(tplId: string) {
   if (!tplId) return
   const tpl = props.commitTemplates?.find((t) => t.id === tplId)
@@ -407,7 +428,7 @@ function handleCommit() {
   emit("commit", commitMessage.value.trim())
 }
 
-defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chore" } })
+defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chore"; selectedTemplateId.value = "" } })
 </script>
 
 <style lang="scss">

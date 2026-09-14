@@ -74,6 +74,21 @@
     }
   }
 
+  // ========== 紧凑修饰（dense） ==========
+  // 仅与 size="xsmall" 协同生效：几何对齐既有紧凑按钮观感（去 min-height 约束、收紧 padding/gap/圆角），
+  // 不改四档字号阶梯（字号仍取档位的 10px）。独立使用（非 xsmall）时不产生任何效果。
+  &--dense.si-button--xsmall {
+    min-height: 0; // 必须显式抵消档位自带的 min-height(22px)，否则高度压不下来
+    padding: $s-px2 $s-px5;
+    gap: $s-px3;
+    border-radius: $r-sm;
+
+    // 纯图标按钮随修饰收紧一档（22px → 20px）
+    &.si-button--icon-only {
+      --button-size: 20px;
+    }
+  }
+
   // ========== 颜色变体 ==========
   // 既有 5 个变体的渲染结果保持不变；额外通过 btn-color-family 挂上颜色族变量，
   // 供后面的 --outlined / --text 外观修饰与 --severity-* 覆盖复用

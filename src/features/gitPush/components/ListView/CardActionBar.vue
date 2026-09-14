@@ -3,20 +3,20 @@
   <div class="gp-actions-bar">
     <!-- 拉取下拉：按钮即菜单（hint 合并进 tooltip，替代原区标签 + 信息图标组合） -->
     <div class="gp-inline-menu-wrap gp-menu-wrap">
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
+      <Button
+        class="gp-action-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="unfoldMoreHorizontal"
+        icon-position="right"
         :class="{ 'gp-action-btn--active': derived.isPulling(project.id) || fetching }"
         :disabled="!hasAnyRemote(project) || derived.isPulling(project.id) || derived.isPushing(project.id)"
         :title="`${i18n.pull} — ${i18n.pullVsFetchHint}`"
         @click.stop="toggleMenu('pull')"
       >
-        <span>{{ i18n.pull }}</span>
-        <Icon
-          icon="mdi:unfold-more-horizontal"
-          height="12"
-          class="gp-caret-icon"
-        />
-      </button>
+        {{ i18n.pull }}
+      </Button>
       <div
         v-if="openMenu === 'pull'"
         class="gp-inline-menu-popover"
@@ -53,20 +53,20 @@
 
     <!-- 推送下拉：单远程推送菜单 -->
     <div class="gp-inline-menu-wrap gp-menu-wrap">
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm gp-action-btn"
+      <Button
+        class="gp-action-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="unfoldMoreHorizontal"
+        icon-position="right"
         :class="{ 'gp-action-btn--active': derived.isPushing(project.id) }"
         :disabled="!hasAnyRemote(project) || derived.isPushing(project.id) || derived.isPulling(project.id)"
         :title="i18n.push"
         @click.stop="toggleMenu('push')"
       >
-        <span>{{ i18n.push }}</span>
-        <Icon
-          icon="mdi:unfold-more-horizontal"
-          height="12"
-          class="gp-caret-icon"
-        />
-      </button>
+        {{ i18n.push }}
+      </Button>
       <div
         v-if="openMenu === 'push'"
         class="gp-inline-menu-popover"
@@ -87,35 +87,44 @@
     </div>
 
     <!-- 强制推送（--force-with-lease，二次确认）：仅在有待推送变更时出现，避免危险操作常驻 -->
-    <button
+    <Button
       v-if="pushStatus?.needsPush"
-      class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
+      class="gp-action-btn"
+      variant="danger"
+      size="xsmall"
+      dense
       :disabled="!hasAnyRemote(project) || derived.isPushing(project.id) || derived.isPulling(project.id)"
       :title="i18n.forcePushHint"
       @click="ops.handleForcePushToAll(project.id)"
     >
-      <span>{{ i18n.forcePush }}</span>
-    </button>
+      {{ i18n.forcePush }}
+    </Button>
 
     <!-- 弹性间隔：主操作靠右 -->
     <div class="gp-actions-spacer" />
 
     <!-- 推送全部（主操作）："推送全部" / 推送中切换为"取消" -->
-    <button
+    <Button
       v-if="!derived.isPushing(project.id)"
-      class="vp-btn vp-btn--primary vp-btn--sm gp-action-btn"
+      class="gp-action-btn"
+      variant="primary"
+      size="xsmall"
+      dense
       :disabled="!hasAnyRemote(project) || derived.isPulling(project.id) || !pushStatus?.needsPush"
       @click="ops.pushToAll(project.id)"
     >
-      <span>{{ i18n.pushAll }}</span>
-    </button>
-    <button
+      {{ i18n.pushAll }}
+    </Button>
+    <Button
       v-else
-      class="vp-btn vp-btn--danger vp-btn--sm gp-action-btn"
+      class="gp-action-btn"
+      variant="danger"
+      size="xsmall"
+      dense
       @click="ops.cancelPush(project.id)"
     >
-      <span>{{ i18n.cancel }}</span>
-    </button>
+      {{ i18n.cancel }}
+    </Button>
   </div>
 </template>
 
@@ -127,6 +136,7 @@ import { REMOTES } from "../../types"
 import { hasAnyRemote } from "../../utils"
 import { useCardServices } from "../../composables/useCardServices"
 import { useCardMenu } from "../../composables/useCardMenu"
+import Button from "@/components/Button.vue"
 
 const props = defineProps<{
   project: GitProject

@@ -2037,7 +2037,12 @@
     "bfgForcePush": "Force Push",
     "bfgForcePushDone": "Force push executed; see result above",
     "bfgForcePushFailedCount": "platform(s) failed",
-    "bfgDone": "Done"
+    "bfgDone": "Done",
+    "cardTabChanges": "CHANGES",
+    "cardTabLog": "LOG",
+    "cardTabStash": "STASH",
+    "cardTabTag": "TAG",
+    "commitLogCountLabel": "Rows"
   },
   "enableGlobalRelations": "Enable Global Relations",
   "enableGlobalRelationsDesc": "Query bidirectional link relations across the whole library via refs table and getBacklink2 API",

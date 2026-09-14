@@ -42,19 +42,26 @@ export function useOverlay(options: OverlayOptions): OverlayShell {
   /** 打开前的焦点元素，关闭时归还，避免键盘用户丢失位置 */
   let previousActive: HTMLElement | null = null
   /**
-   * 遮罩按下的目标：抬起时需与按下目标一致才算「点了遮罩」。
+   * 遮罩按下的目标：仅在「按下点就是遮罩本体（不在弹层卡片内）」时记录，
+   * 抬起时还需与按下目标一致才算「点了遮罩」。
    * 官方语义 —— 在弹层内按下、拖到遮罩上抬起不会误关。
+   *
+   * ⚠️ 必须比对 `event.target === event.currentTarget`（currentTarget 即挂载监听器的遮罩元素）：
+   * 只比较「按下 === 抬起」会把弹层内部任意一次点击（点输入框、点文案）也判成点遮罩，
+   * 导致开启 `dismissableMask` 的 Dialog 在点进表单的第一下就自行关闭。
    */
   let maskMouseDownTarget: EventTarget | null = null
 
   const handleMaskMouseDown = (event: MouseEvent): void => {
-    maskMouseDownTarget = event.target
+    maskMouseDownTarget = event.target === event.currentTarget ? event.target : null
   }
 
   const handleMaskMouseUp = (event: MouseEvent): void => {
     const pressedTarget = maskMouseDownTarget
     maskMouseDownTarget = null
-    if (!options.dismissableMask() || !pressedTarget || pressedTarget !== event.target) return
+    if (!options.dismissableMask() || !pressedTarget) return
+    // 抬起点同样必须在遮罩本体上（按下在遮罩、拖进卡片内抬起 ⇒ 不关闭）
+    if (event.target !== event.currentTarget) return
     options.onDismiss()
   }
 

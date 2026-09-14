@@ -4,6 +4,7 @@
 
 ## 1. 环境与边界
 - AI **禁止** `pnpm vite build` / `pnpm lint`（C# 项目禁 `dotnet build`）；可执行 `read_lints`、`pnpm typecheck`（= vue-tsc，**禁 `npx tsc --noEmit`**）、`pnpm i18n:merge|verify`、`pnpm validate:icons`
+- ⛔ **禁止新建临时校验脚本**（`.tmp-*.mjs` 等一次性脚本，含「离线编译 SCSS 校验 Token」）——会产生未跟踪文件且常残留、口径与用户实际执行不一致。验证只走 `read_lints` + 上述既有命令；SCSS 编译 / `lint` / `build` 由用户执行。需要可复用检查就在 `scripts/` 正式命名落地并登记（规则已写入 `AGENTS.md` 验证链条 + `AGENTS_BUILD.md § 构建与验证`）
 - **四道验证各查不同问题**：`read_lints` 只查规范（偶有陈旧诊断须回读代码核对）；`vue-tsc` 查 TS 与 `.vue` props 类型（`tsc` 不解析 `.vue`，既报假错又漏真错）；`vite build` 才查 MISSING_EXPORT。2026-09-14 实测 `pnpm typecheck` 全仓库 **0 error**
 - pnpm 12：`pnpm-workspace.yaml` 的 `allowBuilds` 必须保留，否则 install 报错；依赖损坏先扫 `.pnpm/*/node_modules/<pkg>` 是否缺 `package.json`，修复一律 `pnpm install --force`（手删会跟随 junction 删掉真包）
 - IDE **拦截**未带 `-Encoding` 的 PowerShell `Get-Content` ⇒ 读内容/统计行数用工具或 `node -e "…fs.readFileSync…"`（可用 `node -e` 完成：统计 ts/vue 行数核对 500 行阈值、查行尾符、量体积、**离线编译带 `@/` 别名的 SCSS**〔项目内置 dart-sass + 自定义 importer，`@/variables.scss` 需 `_` 前缀回退〕）
@@ -20,6 +21,7 @@
 - ⚠️ 覆写共享 `Button` 尺寸有**两颗雷**：①档位类自带的 `min-height: 28/36/44px` 会反过来决定高度 ⇒ 必须同时写 `min-height: 0`；②`--button-size` 只在 Button **无默认插槽**（`isIconOnly` 为真）时生效 ⇒ 尺寸锁在自有类上最稳
 - ⚠️ **恒传插槽出口 = 给子组件造出「恒真的默认插槽」**：`<Button><slot name="x"/></Button>` 使 `$slots.default` 恒真、`isIconOnly` 退化为假 ⇒ 必须 `<template v-if="$slots.x" #default>` **条件转发**（`FileList.vue` 的 `fileremoveicon` 曾因此回归）
 - `FileUpload.scss` 的 `.si-fileupload__remove` 尺寸锁自有类（不依赖 `si-button--icon-only`）+ 清 `min-height`，属已修，勿回退
+- ⚠️ **弹层遮罩点关的判定（`overlay/useOverlay.ts`，已修，勿回退）**：必须比对 `event.target === event.currentTarget`（currentTarget 即挂监听器的遮罩本体）。只比「按下目标 === 抬起目标」会把**弹层内部任意一次点击**（点输入框、点文案）也判成点遮罩 ⇒ ① 开了 `dismissableMask` 的 `Dialog` 点进表单第一下就自行关闭（shortcut 新增窗体曾如此）；② `ConfirmDialog` 的确认按钮会**先**触发一次 cancel（先清掉调用方状态）再触发 confirm ⇒ 确认回调读到 null 而静默不执行（shortcut 删除曾因此完全失效）。该 bug 长期潜伏是因为 Dialog 默认 `dismissableMask: false`、而 ConfirmDialog 的取消了也无副作用
 
 ## 3. 库外通用陷阱
 - **受控/非受控标准写法**：可选 prop **不给默认值**，用 `props.x === undefined` 判定（`SpeedDial.visible` / `Panel.collapsed` 先例），两种模式都照常 emit
@@ -60,7 +62,7 @@
 - `git diff --shortstat` 会被 1.1 MB 的 `docs/hardcode-audit.data.json` 虚报数万行 ⇒ 核对用 `--numstat`。**样式分离标准动作**：读 `<style>` 查 `@use` → 新建 `styles/<C>.scss`（首行 `@use "@/variables.scss" as *;`）→ 无 Token 的值集中为文件顶部局部变量 + `// 无对应 Token` → `.vue` 的 `<style>` 只留 `@use` → 编译 + `read_lints` + 扫描器复跑
 
 ## 9. 功能模块速查
-- **shortcut**（2026-09-14 完全重构，规格 `docs/shortcut-refactor-spec.md`，含 CR-002 改 2 列）：**2 列卡片网格**（卡片纵向两行：上行按键徽章 + 悬停浮出的操作按钮〔`visibility` 恒定预留空间 ⇒ 零抖动〕，下行名称/平台标签/描述；分组吸顶可折叠）+ **三键分离持久化**（`plugin-shortcuts-custom` 唯一可写；`favorites`/`recent` 独立；旧键 `plugin-shortcuts-all` 仅迁移源，**守卫用新键 `exists()` 含空数组**、写成功才删旧键）+ 导入导出/重置/冲突检测。分层：`utils.ts`/`dataTransfer.ts` 纯函数 → `manager.ts` 双段（预置只读 + 自定义可写，`isPreset` 双层设防）→ `composables/useShortcutData|useShortcutFilter` → `index.vue` 编排（217 行）。
+- **shortcut**（2026-09-14 完全重构，规格 `docs/shortcut-refactor-spec.md`，含 CR-002 改 2 列）：**2 列卡片网格**（卡片纵向两行：上行按键徽章 + 悬停浮出的操作按钮〔`visibility` 恒定预留空间 ⇒ 零抖动〕，下行名称/平台标签/描述；分组吸顶可折叠）+ **两份用户数据持久化**（`plugin-shortcuts-custom` 唯一可写 + `plugin-shortcuts-recent`；旧键 `plugin-shortcuts-all` 仅迁移源，**守卫用新键 `exists()` 含空数组**、写成功才删旧键）+ 导入导出/重置/冲突检测。**收藏功能已按 CR-003 移除**（筛选只剩 最近/冲突；i18n 键 `favorite`/`unFavorite`/`filterFavorite` 因扁平命名空间的跨模块读取风险保留未删）。**预置仅保留 NPM/NVM/Visual Studio 共 42 条**（CR-004 移除 siyuan/plugin/vscode/cmd 四类数据文件；分类标识、`CATEGORY_LABEL_I18N_KEYS`、`TOOL_CATEGORIES`、i18n 文案全部保留 ⇒ 恢复只需补回 `data/<分类>.ts` 并在 `presets.ts` 引入，分类下拉由数据驱动不会出现空项）。分层：`utils.ts`/`dataTransfer.ts` 纯函数 → `manager.ts` 双段（预置只读 + 自定义可写，`isPreset` 双层设防）→ `composables/useShortcutData|useShortcutFilter` → `index.vue` 编排（217 行）。
   ⚠️ 两个坑：① 单例 Manager 的 `getPresetIds()`/数组会被 `loadFrom()` 整体替换 ⇒ 视图层必须 `ref` 镜像 + 变更后 `refresh()`，**computed 直接读 Manager 会永久缓存**；② 覆写共享 `Button` 选中态做不到（ghost hover 特异性 (0,5,0)）⇒ 用 `variant="primary" + :outlined`；面板根**不能**写 `container-type`（会毁掉弹层的 fixed 定位）
 - **gitPush**：行数口径 = 工作区存量（`git ls-files` + 逐文件 readFileSync）；失败明细 `fetchFailures` → `lineStatsCache.failures`；多本地路径 `resolveValidPath`；提交规则 14 条经 `readCommitRuleConfig(prefs)` 单一入口；⚠️ `styles/` 目录树计数与 `common/` 清单属历史欠账，改该文件时计数一律实测
 - **gitPush 失败真因**：①路径不存在（多设备未配 `localPaths`）②`not a git repository` ③**空仓库 `git log` 退出码非 0** ④超时（本地命令走 60s 本地池，“调大网络超时”无效）⑤`spawn git ENOENT` ⑥dubious ownership（`safe.directory`）⑦`index.lock` 残留 ⑧大仓库全量 `git log --numstat` 逼近 10MB `maxBuffer`

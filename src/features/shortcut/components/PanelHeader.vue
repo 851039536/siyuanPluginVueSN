@@ -1,113 +1,202 @@
-<!-- 快捷键面板头部工具栏：搜索框、分类下拉、添加按钮、收藏/最近筛选、总数统计 -->
+<!-- 快捷键面板工具栏：搜索/分类/新增 + 筛选/计数/导入导出重置 -->
 <template>
   <div class="shortcut-header">
-    <!-- 行1：搜索 + 分类 + 添加 -->
-    <div class="toolbar-row">
-      <Input
-        :model-value="searchKeyword"
-        :placeholder="placeholder"
-        prefix-icon="search"
-        size="xsmall"
-        class="toolbar-search"
-        @update:model-value="onSearchChange"
-      />
-      <Select
-        :model-value="activeTab"
-        :options="selectOptions"
-        size="xsmall"
-        class="toolbar-category"
-        @update:model-value="onTabChange"
-      />
-      <Button
-        variant="primary"
-        size="xsmall"
-        icon="add"
-        :title="addTitle"
-        class="toolbar-add"
-        @click="$emit('add')"
-      />
-    </div>
-    <!-- 行2：筛选 + 总数 -->
-    <div class="toolbar-row-secondary">
-      <div class="filter-group">
-        <Button
-          variant="ghost"
-          :class="{ active: activeFilter === 'favorite' }"
+    <!-- 行1：搜索 + 分类 + 新增 -->
+    <Toolbar
+      variant="borderless"
+      size="xsmall"
+      :padded="false"
+      class="shortcut-header__row"
+    >
+      <template #start>
+        <Input
+          :model-value="searchKeyword"
+          :placeholder="i18n.searchPlaceholder"
+          prefix-icon="search"
           size="xsmall"
-          icon="star"
-          @click="$emit('update:activeFilter', toggleFilter('favorite'))"
-        >
-          {{ filterFavoriteLabel }}
-        </Button>
-        <Button
-          variant="ghost"
-          :class="{ active: activeFilter === 'recent' }"
+          class="shortcut-header__search"
+          @update:model-value="onSearchChange"
+        />
+      </template>
+      <template #center>
+        <Select
+          :model-value="activeCategory"
+          :options="selectOptions"
           size="xsmall"
-          icon="timerOutline"
-          @click="$emit('update:activeFilter', toggleFilter('recent'))"
-        >
-          {{ filterRecentLabel }}
-        </Button>
-      </div>
-      <!-- 快捷键总数 -->
-      <span class="total-count">{{ totalCount }}</span>
-    </div>
+          class="shortcut-header__category"
+          @update:model-value="onCategoryChange"
+        />
+      </template>
+      <template #end>
+        <Button
+          variant="primary"
+          size="xsmall"
+          icon="add"
+          :title="i18n.addCustomShortcut"
+          @click="$emit('add')"
+        />
+      </template>
+    </Toolbar>
+
+    <!-- 行2：筛选 + 计数 + 数据操作 -->
+    <Toolbar
+      variant="borderless"
+      size="xsmall"
+      :padded="false"
+      class="shortcut-header__row"
+    >
+      <template #start>
+        <div class="shortcut-header__filters">
+          <Button
+            :variant="activeFilter === 'favorite' ? 'primary' : 'ghost'"
+            :outlined="activeFilter === 'favorite'"
+            size="xsmall"
+            icon="star"
+            :aria-pressed="activeFilter === 'favorite'"
+            @click="$emit('toggleFilter', 'favorite')"
+          >
+            {{ i18n.filterFavorite }}
+          </Button>
+          <Button
+            :variant="activeFilter === 'recent' ? 'primary' : 'ghost'"
+            :outlined="activeFilter === 'recent'"
+            size="xsmall"
+            icon="timerOutline"
+            :aria-pressed="activeFilter === 'recent'"
+            @click="$emit('toggleFilter', 'recent')"
+          >
+            {{ i18n.filterRecent }}
+          </Button>
+          <Button
+            :variant="activeFilter === 'conflict' ? 'primary' : 'ghost'"
+            :outlined="activeFilter === 'conflict'"
+            size="xsmall"
+            icon="warning"
+            :aria-pressed="activeFilter === 'conflict'"
+            @click="$emit('toggleFilter', 'conflict')"
+          >
+            {{ i18n.scFilterConflict }}
+            <Tag
+              v-if="conflictCount > 0"
+              variant="warning"
+              size="xsmall"
+              shape="circle"
+            >
+              {{ conflictCount }}
+            </Tag>
+          </Button>
+        </div>
+      </template>
+      <template #center>
+        <span class="shortcut-header__count">{{ visibleCount }} / {{ totalCount }}</span>
+      </template>
+      <template #end>
+        <div class="shortcut-header__actions">
+          <!-- 导入：复用共享文件选择（自建图标按钮，隐藏其文件列表区） -->
+          <FileUpload
+            ref="importRef"
+            mode="basic"
+            size="xsmall"
+            accept=".json,application/json"
+            :file-limit="1"
+            class="shortcut-header__import"
+            @select="handleImportSelect"
+          >
+            <template #header="{ chooseCallback }">
+              <Button
+                variant="ghost"
+                size="xsmall"
+                icon="upload"
+                :title="i18n.scImport"
+                @click="chooseCallback"
+              />
+            </template>
+            <template #content><!-- 导入不使用文件列表区 --></template>
+          </FileUpload>
+          <Button
+            variant="ghost"
+            size="xsmall"
+            icon="download"
+            :title="i18n.scExport"
+            @click="$emit('export')"
+          />
+          <Button
+            variant="danger"
+            size="xsmall"
+            icon="refreshLeft"
+            :title="i18n.scReset"
+            @click="$emit('reset')"
+          />
+        </div>
+      </template>
+    </Toolbar>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { SelectOption } from "@/components/Select.vue"
-import { computed } from "vue"
+import type { ShortcutFilterMode } from "../types"
+import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
+import FileUpload from "@/components/FileUpload.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import Tag from "@/components/Tag.vue"
+import Toolbar from "@/components/Toolbar.vue"
 
 interface Props {
   searchKeyword: string
-  placeholder: string
-  addTitle: string
-  activeTab: string
-  activeFilter: string
-  filterFavoriteLabel: string
-  filterRecentLabel: string
-  tabs: string[]
+  activeCategory: string
+  activeFilter: ShortcutFilterMode
+  /** 分类标识列表（首项为 "all"） */
+  categories: string[]
   getCategoryLabel: (category: string) => string
-  getTabCount: (category: string) => number
+  getCategoryCount: (category: string) => number
   totalCount: number
+  visibleCount: number
+  conflictCount: number
+  i18n: Record<string, string>
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
   "update:searchKeyword": [value: string]
-  "update:activeTab": [value: string]
-  "update:activeFilter": [value: string]
-  "add": []
+  "update:activeCategory": [value: string]
+  add: []
+  toggleFilter: [target: ShortcutFilterMode]
+  import: [file: File]
+  export: []
+  reset: []
 }>()
+
+/** 导入用文件选择器的实例引用（选完即清空队列，允许重复选同一个文件） */
+const importRef = ref<InstanceType<typeof FileUpload> | null>(null)
 
 const onSearchChange = (value: string | number | null) => {
   emit("update:searchKeyword", String(value ?? ""))
 }
 
-const onTabChange = (value: string | number | boolean | null) => {
-  emit("update:activeTab", String(value ?? "all"))
+const onCategoryChange = (value: string | number | boolean | null) => {
+  emit("update:activeCategory", String(value ?? "all"))
 }
 
-/**
- * 筛选按钮切换：已选中则回到"全部"，否则选中目标筛选
- */
-const toggleFilter = (target: string) => {
-  return props.activeFilter === target ? "all" : target
-}
+const selectOptions = computed((): SelectOption[] =>
+  props.categories.map((category) => ({
+    value: category,
+    label: `${props.getCategoryLabel(category)} (${props.getCategoryCount(category)})`,
+  })),
+)
 
-const selectOptions = computed((): SelectOption[] => {
-  return props.tabs.map((tab) => ({
-    value: tab,
-    label: `${props.getCategoryLabel(tab)} (${props.getTabCount(tab)})`,
-  }))
-})
+function handleImportSelect(files: File[]): void {
+  const file = files[0]
+  if (file) {
+    emit("import", file)
+  }
+  importRef.value?.clear()
+}
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @use "../styles/PanelHeader.scss";
 </style>

@@ -1,120 +1,141 @@
 /**
  * 快捷键模块 - 管理器
- * 负责快捷键数据的存储、查询和管理
+ * 双段模型：预置（代码真源，只读）+ 自定义（可写并持久化）
  */
 import type { ShortcutInfo } from "./types"
+import { searchShortcuts } from "./utils"
 
 /**
  * 快捷键管理器
  */
 export class ShortcutManager {
-  private shortcuts: ShortcutInfo[] = []
-  private onSave?: (shortcuts: ShortcutInfo[]) => Promise<void>
+  /** 预置快捷键（代码真源，运行时只读） */
+  private presets: ShortcutInfo[] = []
+  /** 自定义快捷键（唯一可写段） */
+  private custom: ShortcutInfo[] = []
+  /** 预置 id 集合：判定「是否预置」的唯一依据 */
+  private presetIds = new Set<string>()
+  private onSave?: (custom: ShortcutInfo[]) => Promise<boolean>
 
   /**
-   * 内部 upsert 方法：按 id 查找并替换，不存在则追加
+   * 载入数据（预置 + 自定义），替换整个数据源
    */
-  private _upsertOne(shortcut: ShortcutInfo): void {
-    const index = this.shortcuts.findIndex((s) => s.id === shortcut.id)
-    if (index !== -1) {
-      this.shortcuts[index] = shortcut
-    } else {
-      this.shortcuts.push(shortcut)
-    }
+  loadFrom(input: { presets: ShortcutInfo[]; custom: ShortcutInfo[] }): void {
+    this.presets = [...input.presets]
+    this.custom = [...input.custom]
+    this.presetIds = new Set(this.presets.map((item) => item.id))
   }
 
   /**
-   * 从数组批量加载快捷键（替换整个数据源）
-   * 用于从持久化存储恢复数据，不触发保存回调
+   * 设置保存回调：任何自定义段变更后调用，载荷为自定义列表
    */
-  loadFromArray(shortcuts: ShortcutInfo[]): void {
-    this.shortcuts = [...shortcuts]
-  }
-
-  /**
-   * 设置保存回调函数
-   * 当快捷键数据发生变化时调用
-   */
-  setSaveCallback(
-    callback: (shortcuts: ShortcutInfo[]) => Promise<void>,
-  ): void {
+  setSaveCallback(callback: (custom: ShortcutInfo[]) => Promise<boolean>): void {
     this.onSave = callback
   }
 
   /**
-   * 触发保存
+   * 触发保存，返回是否落盘成功
    */
-  private async triggerSave(): Promise<void> {
-    if (this.onSave) {
-      try {
-        await this.onSave(this.shortcuts)
-      } catch (error) {
-        console.error("保存快捷键失败:", error)
-      }
+  private async triggerSave(): Promise<boolean> {
+    if (!this.onSave) return true
+    try {
+      return await this.onSave([...this.custom])
+    } catch (error) {
+      console.error("保存自定义快捷键失败:", error)
+      return false
     }
   }
 
   /**
-   * 添加快捷键
-   */
-  async addShortcut(shortcut: ShortcutInfo): Promise<void> {
-    if (this.shortcuts.find((s) => s.id === shortcut.id)) {
-      console.warn(`快捷键 ${shortcut.id} 已存在，将被覆盖`)
-    }
-    this._upsertOne(shortcut)
-    await this.triggerSave()
-  }
-
-  /**
-   * 批量添加快捷键
-   */
-  async addShortcuts(shortcuts: ShortcutInfo[]): Promise<void> {
-    for (const s of shortcuts) {
-      this._upsertOne(s)
-    }
-    await this.triggerSave()
-  }
-
-  /**
-   * 获取所有快捷键
+   * 获取全部快捷键（预置在前，自定义在后）
    */
   getAllShortcuts(): ShortcutInfo[] {
-    return [...this.shortcuts]
+    return [...this.presets, ...this.custom]
+  }
+
+  /**
+   * 获取自定义快捷键
+   */
+  getCustomShortcuts(): ShortcutInfo[] {
+    return [...this.custom]
+  }
+
+  /**
+   * 获取预置 id 集合（只读）
+   */
+  getPresetIds(): ReadonlySet<string> {
+    return this.presetIds
+  }
+
+  /**
+   * 是否为预置快捷键（预置不可编辑、不可删除）
+   */
+  isPreset(id: string): boolean {
+    return this.presetIds.has(id)
   }
 
   /**
    * 获取指定分类的快捷键
    */
   getByCategory(category: string): ShortcutInfo[] {
-    return this.shortcuts.filter((s) => s.category === category)
+    return this.getAllShortcuts().filter((item) => item.category === category)
   }
 
   /**
-   * 删除快捷键
-   */
-  async removeShortcut(id: string): Promise<boolean> {
-    const index = this.shortcuts.findIndex((s) => s.id === id)
-    if (index !== -1) {
-      this.shortcuts.splice(index, 1)
-      // 触发保存
-      await this.triggerSave()
-      return true
-    }
-    return false
-  }
-
-  /**
-   * 搜索快捷键
+   * 搜索快捷键（筛选逻辑与视图层共用 utils.searchShortcuts）
    */
   search(keyword: string): ShortcutInfo[] {
-    if (!keyword) return []
-    const lowerKeyword = keyword.toLowerCase()
-    return this.shortcuts.filter(
-      (s) =>
-        s.name.toLowerCase().includes(lowerKeyword)
-        || s.description.toLowerCase().includes(lowerKeyword)
-        || s.keys.toLowerCase().includes(lowerKeyword),
-    )
+    return searchShortcuts(this.getAllShortcuts(), keyword)
+  }
+
+  /**
+   * 新增或更新自定义快捷键（预置 id 一律拒绝）
+   * @returns 是否落盘成功
+   */
+  async addOrUpdateCustom(shortcut: ShortcutInfo): Promise<boolean> {
+    if (this.isPreset(shortcut.id)) {
+      console.warn(`[shortcut] ${shortcut.id} 是预置快捷键，不可覆盖`)
+      return false
+    }
+
+    const index = this.custom.findIndex((item) => item.id === shortcut.id)
+    if (index === -1) {
+      this.custom.push(shortcut)
+    } else {
+      this.custom[index] = shortcut
+    }
+    return this.triggerSave()
+  }
+
+  /**
+   * 删除自定义快捷键（预置 id 拒绝）
+   * @returns 是否找到并落盘成功
+   */
+  async removeCustom(id: string): Promise<boolean> {
+    const index = this.custom.findIndex((item) => item.id === id)
+    if (index === -1 || this.isPreset(id)) {
+      return false
+    }
+    this.custom.splice(index, 1)
+    return this.triggerSave()
+  }
+
+  /**
+   * 整体替换自定义段（导入合并后写入）
+   * @returns 是否落盘成功
+   */
+  async replaceCustom(list: ShortcutInfo[]): Promise<boolean> {
+    this.custom = list.filter((item) => !this.isPreset(item.id))
+    return this.triggerSave()
+  }
+
+  /**
+   * 清空自定义段（重置）
+   * @returns 是否落盘成功
+   */
+  async clearCustom(): Promise<boolean> {
+    this.custom = []
+    return this.triggerSave()
   }
 }
 

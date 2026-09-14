@@ -36,5 +36,18 @@
   "cancel": "Cancel",
   "confirm": "Confirm",
   "filterFavorite": "Favorites",
-  "filterRecent": "Recently Used"
+  "filterRecent": "Recently Used",
+  "scFilterConflict": "Conflicts",
+  "scImport": "Import",
+  "scExport": "Export",
+  "scReset": "Reset",
+  "scResetConfirmMsg": "This clears all custom shortcuts, favorites and recently used records (preset shortcuts are not affected).",
+  "scResetDone": "Reset to defaults",
+  "scImportAdded": "Added",
+  "scImportUpdated": "Updated",
+  "scImportIgnored": "Ignored",
+  "scImportInvalidJson": "The file is not valid JSON",
+  "scImportInvalidStructure": "No shortcut array found in the file",
+  "scSaveFailed": "Save failed, please retry",
+  "scConflictWith": "Conflicts with"
 }

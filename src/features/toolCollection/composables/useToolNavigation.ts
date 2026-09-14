@@ -49,6 +49,10 @@ export function useToolNavigation(
     const tagName = target.tagName
     if (tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || target.isContentEditable) return
 
+    // 模态弹层打开时让路：Esc / 方向键归弹层所有，否则在工具自身的对话框里按 Esc 会连带把整个工具合集面板关掉。
+    // 判定依据 `aria-modal="true"`：共享 Dialog 仅在 `modal` 为真时置 true（非模态弹层为 "false"），ConfirmDialog 恒为 true。
+    if (document.querySelector('[aria-modal="true"]')) return
+
     if (e.key === "Escape") {
       e.preventDefault()
       close()

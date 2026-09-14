@@ -41,7 +41,7 @@ export function useShortcutData(options: UseShortcutDataOptions) {
     presetIds.value = new Set(manager.getPresetIds())
   }
 
-  /** 初始化：取一次数据快照（预置由 registerShortcut 异步载入，挂载后再对齐一次） */
+  /** 初始化：取一次数据快照（预置与自定义段由 bootstrap.ensureShortcutData 载入，挂载后再对齐一次） */
   function init() {
     refresh()
   }

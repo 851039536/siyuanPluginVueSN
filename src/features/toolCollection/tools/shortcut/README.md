@@ -1,7 +1,8 @@
-# 快捷键面板
+# 快捷键（工具合集工具）
 
-在右侧边栏以 **2 列卡片** 展示与管理快捷键：内置 NPM / NVM / Visual Studio 共 42 条预置快捷键，并支持用户自定义增删改与数据导入导出。
+作为**工具合集**（底部面板 / 独立窗口）中的一项工具，以卡片网格展示与管理快捷键：内置 NPM / NVM / Visual Studio 共 42 条预置快捷键，并支持用户自定义增删改与数据导入导出。
 
+> 注册方式：在 `../registry.ts` 登记 `{ id: "shortcut", component: ShortcutTool }` 与 `TOOL_LABEL_KEYS.shortcut`，无需改动容器 `index.vue`；数据初始化由 `bootstrap.ts` 在工具首次挂载时幂等完成。
 > 预置分类可在 `data/` 下按需增删（当前仅保留上述三类）；面板的分类下拉由数据驱动，无数据的分类不会出现。
 
 ## UI 结构
@@ -57,15 +58,17 @@
 
 | 存储键 | 内容 | 说明 |
 |--------|------|------|
-| `plugin-shortcuts-custom` | `ShortcutInfo[]` | 唯一可写数据（自定义快捷键段） |
-| `plugin-shortcuts-all` | `ShortcutInfo[]` | **旧版遗留键**，仅作一次性迁移源，迁移成功后删除 |
+| `plugin-toolCollection-shortcut-custom` | `ShortcutInfo[]` | 唯一可写数据（自定义快捷键段） |
+| `plugin-shortcuts-custom` | `ShortcutInfo[]` | 迁移源 1（迁入工具合集前的现役键），读取成功后删除 |
+| `plugin-shortcuts-all` | `ShortcutInfo[]` | 迁移源 2（最早的「预置 + 自定义」混存键），需过滤预置条目 |
 
-### 迁移算法（幂等）
+### 迁移算法（幂等，兼容两代旧键）
 
-1. 新键 `plugin-shortcuts-custom` **已存在**（含空数组）⇒ 迁移已完成，直接返回其内容 —— 因此用户删光自定义项后不会被旧数据复活；
-2. 旧键不存在 ⇒ 首次安装，返回空数组且不写盘；
+1. 新键 `plugin-toolCollection-shortcut-custom` **已存在**（含空数组）⇒ 迁移已完成，直接返回其内容 —— 因此用户删光自定义项后不会被旧数据复活；
+2. 按代次读取迁移源：`plugin-shortcuts-custom` 优先，不存在再读 `plugin-shortcuts-all`；两者皆不存在 ⇒ 首次安装，返回空数组且不写盘；
 3. 旧数据过滤：仅保留 id 不属于预置集合的条目，并强制清洗为 `category: "custom"`；
-4. **写入成功才删除旧键**；写入失败保留旧键，下次启动重试，不丢数据。
+4. 旧键存在但为空数组 ⇒ 视为用户已清空，不再回落到更早的键；
+5. **写入成功才删除已消费的旧键**；写入失败保留旧键，下次重试，不丢数据。
 
 ### 预置判定与双层设防
 
@@ -84,7 +87,8 @@
 
 ```
 shortcut/
-├── index.ts                     # 注册入口：迁移旧键 → 注入预置与自定义 → 绑定保存回调
+├── index.ts                     # 模块出口：公共 API 与纯函数再导出（无注册副作用）
+├── bootstrap.ts                 # 幂等初始化：迁移旧键 → 注入预置与自定义 → 绑定保存回调
 ├── index.vue                    # 编排层：组合两个 composable、分发事件、挂载对话框
 ├── manager.ts                   # 双段模型（预置只读 + 自定义可写），单例 getShortcutManager()
 ├── utils.ts                     # 纯函数：搜索 / 清洗 / 过滤 / 内容形态判定与显示模型 / 分组与分组名列表 / 分类计数 / 表单构建
@@ -100,7 +104,7 @@ shortcut/
 └── styles/                      # 与组件一一对应的 SCSS
 ```
 
-分层约定：纯函数进 `utils.ts` / `dataTransfer.ts`，可写数据与单例进 `manager.ts`，响应式状态与副作用进 `composables/`，视图组件只做渲染与事件上抛。
+分层约定：纯函数进 `utils.ts` / `dataTransfer.ts`，可写数据与单例进 `manager.ts`，响应式状态与副作用进 `composables/`，视图组件只做渲染与事件上抛；一次性初始化副作用集中在 `bootstrap.ts`（模块级 Promise 缓存 ⇒ 工具合集切换工具销毁重建组件时不会重复读盘）。
 
 > ⚠️ `ShortcutManager` 存在模块级单例中，其内部数组**不是响应式的**：视图层必须使用 `useShortcutData` 暴露的 `ref` 镜像，任何增删改后调用 `refresh()`，不要写 `computed(() => manager.getAllShortcuts())`（无响应式依赖会导致永久缓存）。
 
@@ -110,7 +114,9 @@ shortcut/
 - **新增分类**：在 `types/index.ts` 的 `ShortcutCategory` 加标识 + `CATEGORY_LABEL_I18N_KEYS` 加映射，并在 `src/i18n/{zh_CN,en_US}/shortcuts.json` 补文案（`pnpm i18n:verify` 校验对齐）。
 - **工具类分类**（需要显示分类标签）：加入 `TOOL_CATEGORIES`。
 
-## 公共 API（`@/features/shortcut`）
+## 公共 API（`@/features/toolCollection/tools/shortcut`）
+
+> 仅供本工具内部与「插件外部脚本」使用：其他功能模块**不要**直接 import（项目规范：跨功能联动走 `emitCustomEvent` + App.vue 调度）。
 
 ```ts
 addCustomShortcut(shortcut)      // 新增 / 覆盖自定义快捷键（预置 id 会被拒绝）

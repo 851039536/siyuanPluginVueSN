@@ -70,7 +70,7 @@ export { registerRssReader } from "./rssReader"
 export { registerScriptLauncher } from "./scriptLauncher"
 export { registerS3Backup } from "./s3Backup"
 export { registerS3FileManager } from "./s3FileManager"
-export { registerShortcut } from "./shortcut"
+// shortcut 已迁移至 toolCollection/tools/shortcut/
 export { registerSkillLearning } from "./skillLearning"
 export {
   hideSkillsViewer,

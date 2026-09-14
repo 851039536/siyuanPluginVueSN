@@ -6,10 +6,13 @@
       {{ i18n.analysisProjectRanking }}
     </div>
     <div class="gpa-bar-list">
-      <div
+      <Button
         v-for="row in rows"
         :key="row.id"
         class="gpa-bar-row gpa-bar-row--clickable"
+        variant="ghost"
+        size="xsmall"
+        dense
         @click="emit('viewProject', row.id)"
       >
         <span
@@ -27,7 +30,7 @@
           class="gpa-bar-num"
           :title="row.title"
         >{{ row.shareText }}</span>
-      </div>
+      </Button>
     </div>
   </div>
 </template>
@@ -36,6 +39,7 @@
 // gitPush 提交分析项目提交排行区块（条形 + 百分比，点击跳转列表视图）
 import type { CommitAnalysisStats } from "../../types"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import { withBarPct } from "../../utils"
 
 const props = defineProps<{

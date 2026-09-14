@@ -73,7 +73,7 @@
 // 而条形行固定占掉 72px 标签 + 24px 计数 + 16px 间距，轨道只剩不到 30px，项目名几乎全是省略号。
 .gpa-pair {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); // 无对应 Token（栅格断点）
   gap: $s-3;
   margin-bottom: $s-3;
 
@@ -86,7 +86,7 @@
 // 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白；
 // 网格 align 默认为 stretch，两栏仍以较高一侧为准，等高观感不变。
 .gpa-section--scroll {
-  max-height: 320px; // 上限约 8 行，超出内部滚动
+  max-height: 320px; // 上限约 8 行，超出内部滚动；无对应 Token（区块限高）
   display: flex;
   flex-direction: column;
 
@@ -102,7 +102,7 @@
 
     // 细滚动条（窄列下减少宽度侵占）
     &::-webkit-scrollbar {
-      width: 4px;
+      width: $s-1;
     }
 
     &::-webkit-scrollbar-thumb {
@@ -114,7 +114,7 @@
 
 // 固定高度窄列内收敛条形标签列（轨道可读），不影响 Pair 2 全宽布局
 .gpa-section--scroll .gpa-bar-label {
-  flex-basis: 72px;
+  flex-basis: 72px; // 无对应 Token（窄列标签宽度）
 }
 
 .gpa-section-title {
@@ -126,13 +126,11 @@
   gap: $s-1;
 }
 
-.gpa-section-count {
-  font-size: $t-2xs;
+// 标题计数徽章：底色/文字/几何由共享 Tag（primary + xsmall + square）承担，
+// 等宽数字沿用原徽章观感（4 类 = (0,4,0)，压过 Tag 的 xsmall/square 档位声明）
+.gpa-panel .gpa-section-title .gpa-section-count.si-tag {
   font-family: $ff-mono;
-  padding: 0 $s-px6;
-  border-radius: $r-sm;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
+  font-variant-numeric: tabular-nums;
   font-weight: $fw-semibold;
   letter-spacing: 0;
 }
@@ -151,16 +149,31 @@
   font-size: $t-xs;
 }
 
-.gpa-bar-row--clickable {
-  cursor: pointer;
+// 排行行（整行可点击）：共享 Button（ghost + xsmall + dense）承担交互、尺寸与键盘可达性；
+// Button 会把默认插槽包进 .si-button__text，故行内三列布局下沉到该容器。
+// 5 类 = (0,5,0)，压过 dense 档位的 padding/圆角/字号与根类 justify-content: center
+.gpa-panel .gpa-bar-list .gpa-bar-row.si-button {
+  width: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: $t-xs;
+  justify-content: flex-start;
+}
 
-  &:hover .gpa-bar-label {
-    color: var(--b3-theme-primary);
-  }
+.gpa-panel .gpa-bar-list .gpa-bar-row.si-button .si-button__text {
+  flex: 1;
+  gap: $s-2;
+}
+
+// 行悬停：标签列转主色（行本身的软底反馈由共享 Button 的 ghost 悬停提供）
+.gpa-panel .gpa-bar-list .gpa-bar-row--clickable:hover .gpa-bar-label {
+  color: var(--b3-theme-primary);
 }
 
 .gpa-bar-label {
-  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐
+  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐；无对应 Token
   @include text-ellipsis;
   opacity: 0.75;
   transition: color 0.12s;
@@ -168,7 +181,7 @@
 
 .gpa-bar-track {
   flex: 1;
-  height: 4px;
+  height: $s-1;
   background: var(--b3-theme-surface);
   border-radius: $r-px2;
   overflow: hidden;
@@ -183,7 +196,7 @@
 
 .gpa-bar-num {
   flex: 0 0 auto;
-  min-width: 24px;
+  min-width: $s-6;
   text-align: right;
   font-family: $ff-mono;
   font-size: $t-2xs;
@@ -195,7 +208,7 @@
   display: flex;
   align-items: flex-end;
   gap: $s-px2;
-  height: 64px; // 条形图固定高度，视觉稳定
+  height: $s-16; // 条形图固定高度，视觉稳定
   padding: $s-1 0 0;
   border-bottom: 1px solid var(--b3-border-color);
 }
@@ -211,9 +224,9 @@
 
 .gpa-daily-bar {
   width: 60%;
-  min-height: 2px; // 零值日保留 2px 底线，图表可读
+  min-height: $s-px2; // 零值日保留 2px 底线，图表可读
   background: var(--b3-theme-primary);
-  border-radius: 1px 1px 0 0;
+  border-radius: $r-px1 $r-px1 0 0;
   transition: background 0.12s;
 
   .gpa-daily-col:hover & {
@@ -256,13 +269,19 @@
   opacity: 0.6;
 }
 
-.gpa-commit-project {
-  color: var(--b3-theme-primary);
-  cursor: pointer;
-  @include text-ellipsis;
+// 项目名快捷跳转：共享 Button（ghost + text 变体）承担交互与键盘可达性，
+// 此处还原「行内链接式」观感：4 类 = (0,4,0) 压 dense 几何，悬停 6 类 = (0,6,0) 压 text 变体底色
+.gpa-panel .gpa-commit-meta .gpa-commit-project.si-button {
+  padding: 0;
+  min-width: 0;
   max-width: 40%;
+  font-size: $t-2xs;
+  color: var(--b3-theme-primary);
+  @include text-ellipsis;
 
-  &:hover {
+  &:hover:not(:disabled) {
+    background: transparent;
+    color: var(--b3-theme-primary);
     text-decoration: underline;
   }
 }

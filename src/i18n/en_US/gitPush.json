@@ -461,6 +461,7 @@
     "analysisLess": "Less",
     "analysisMore": "More",
     "analysisHeatTooltip": "{0} ({1}): {2} commits",
+    "analysisDailyTooltip": "{0}: {1} commits",
     "analysisShareTooltip": "{0} commits ({1})",
     "lineStatsRun": "Start Line Stats",
     "lineStatsNotRun": "Click \"Start Line Stats\" to count added/deleted lines per project and generate rankings",

@@ -34,6 +34,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  // 窄窗口（独立浮动窗口 90vw < ~420px）放不下时操作区换行到第二行，
+  // 防止 flex-shrink: 0 的按钮被弹窗 overflow: hidden 裁剪；宽窗口无视觉变化
+  flex-wrap: wrap;
   gap: $s-2;
   padding: $s-2 $s-3;
   background: var(--b3-theme-surface);
@@ -101,12 +104,14 @@
 .wt-stat-add { color: var(--gp-diff-add-color); }
 .wt-stat-del { color: var(--gp-diff-del-color); }
 
-// 头部操作区：导航 / 暂存切换 / 丢弃 / 关闭
+// 头部操作区：差异范围 / 导航 / 暂存切换 / 丢弃 / 复制 / 关闭
 .wt-diff-header-actions {
   display: flex;
   align-items: center;
   gap: $s-px2;
   flex-shrink: 0;
+  // 换行到第二行时仍靠右对齐（单行时与容器的 space-between 无视觉冲突）
+  margin-left: auto;
 }
 
 // 文件位置指示（如 3 / 12）

@@ -82,8 +82,12 @@ export class WorktreeOps {
       args.push("--", file)
       const text = await this.executor.execGit(projectPath, args)
       if (text) return text
-      // 空差异仅在「文件不在 HEAD 中」时兜底：否则会把「真的没有差异」误报成整文件新增
-      if (await this.isFileInHead(projectPath, file)) return ""
+      // 空差异按比较基线判定是否兜底：工作区范围比 index、暂存范围比 HEAD——
+      // 文件在基线中而 diff 为空 = 真无差异；不在基线中（未跟踪 / git rm --cached / 新增未提交）则回退 --no-index
+      const inBaseline = staged
+        ? await this.isFileInHead(projectPath, file)
+        : await this.isFileInIndex(projectPath, file)
+      if (inBaseline) return ""
       return await this.executor.execGit(
         projectPath,
         ["-c", "core.quotepath=false", "diff", "--no-index", "--text", "--", "/dev/null", file],
@@ -107,6 +111,17 @@ export class WorktreeOps {
     }
   }
 
+  /** 文件是否已存在于 index（`git rm --cached` 后移出 index 但仍在 HEAD，命令失败按 false 处理） */
+  private async isFileInIndex(projectPath: string, file: string): Promise<boolean> {
+    try {
+      // --error-unmatch：路径不命中 index 时退出码非 0，由 execGit reject 后按 false 处理
+      await this.executor.execGit(projectPath, ["ls-files", "--error-unmatch", "--", file])
+      return true
+    } catch {
+      return false
+    }
+  }
+
   async stageFile(projectPath: string, file: string): Promise<void> {
     await this.executor.execGit(projectPath, ["add", "--", file])
   }
@@ -125,9 +140,15 @@ export class WorktreeOps {
 
   async discardFile(projectPath: string, file: string, staged: boolean, status: string): Promise<void> {
     if (staged) {
-      // 破坏性操作失败必须向上抛（由调用方呈现），不得静默吞错——否则用户以为已丢弃实际未丢弃
-      await this.executor.execGit(projectPath, ["reset", "HEAD", "--", file])
-      await this.executor.execGit(projectPath, ["checkout", "--", file])
+      // 破坏性操作失败必须向上抛（由调用方呈现），不得静默吞错——否则用户以为已丢弃实际未丢弃。
+      // 新增类（A/AM/AD）不在 HEAD 中：reset 退出 index 后文件变未跟踪，checkout 会报 pathspec 错误 ⇒ 走 clean 删工作区文件
+      if (await this.isFileInHead(projectPath, file)) {
+        await this.executor.execGit(projectPath, ["reset", "HEAD", "--", file])
+        await this.executor.execGit(projectPath, ["checkout", "--", file])
+      } else {
+        await this.executor.execGit(projectPath, ["reset", "HEAD", "--", file])
+        await this.executor.execGit(projectPath, ["clean", "-f", "--", file])
+      }
     } else if (status === "untracked") {
       await this.executor.execGit(projectPath, ["clean", "-f", "--", file])
     } else {

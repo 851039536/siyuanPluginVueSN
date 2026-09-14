@@ -30,16 +30,6 @@
   flex-shrink: 0;
 }
 
-// ==================== 筛选组 ====================
-// 按下态由 Button 自带的 variant="primary" + outlined 表达（主色描边与文字），
-// 不在 feature 内覆写共享按钮样式，避免与组件的 hover 规则打特异性官司
-.shortcut-header__filters {
-  display: flex;
-  align-items: center;
-  gap: $s-px2;
-  min-width: 0;
-}
-
 // ==================== 计数 ====================
 .shortcut-header__count {
   padding: 0 $s-1;

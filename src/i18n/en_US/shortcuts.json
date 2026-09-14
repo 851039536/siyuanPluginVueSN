@@ -49,5 +49,7 @@
   "scImportInvalidJson": "The file is not valid JSON",
   "scImportInvalidStructure": "No shortcut array found in the file",
   "scSaveFailed": "Save failed, please retry",
-  "scConflictWith": "Conflicts with"
+  "scConflictWith": "Conflicts with",
+  "scNewGroup": "New group…",
+  "scPickFromList": "Pick from list"
 }

@@ -1,4 +1,4 @@
-<!-- 快捷键列表：分组渲染 + 吸顶组头（可折叠）+ 紧凑行 + 空态 -->
+<!-- 快捷键列表：分组渲染 + 吸顶组头（可折叠）+ 卡片网格 + 空态 -->
 <template>
   <div class="shortcut-list">
     <!-- 空态 -->
@@ -54,9 +54,7 @@
           v-for="shortcut in group.shortcuts"
           :key="shortcut.id"
           :shortcut="shortcut"
-          :is-recent="recentIds.has(shortcut.id)"
           :is-preset="presetIds.has(shortcut.id)"
-          :conflict-names="conflictMap.get(shortcut.id) || []"
           :category-label="getCategoryLabel(shortcut.category)"
           :show-tool-badge="showToolBadge(shortcut, group.name)"
           :i18n="i18n"
@@ -70,10 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  ShortcutConflictMap,
-  ShortcutInfo,
-} from "../types"
+import type { ShortcutInfo } from "../types"
 import {
   computed,
   ref,
@@ -86,8 +81,6 @@ import ShortcutRow from "./ShortcutRow.vue"
 
 interface Props {
   shortcuts: ShortcutInfo[]
-  recentIds: Set<string>
-  conflictMap: ShortcutConflictMap
   presetIds: ReadonlySet<string>
   getCategoryLabel: (category: string) => string
   i18n: Record<string, string>

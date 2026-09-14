@@ -3407,6 +3407,8 @@
   "scImportInvalidStructure": "No shortcut array found in the file",
   "scSaveFailed": "Save failed, please retry",
   "scConflictWith": "Conflicts with",
+  "scNewGroup": "New group…",
+  "scPickFromList": "Pick from list",
   "panelTitle": "Skill Learning",
   "listView": "List",
   "flashcardView": "Flashcard",

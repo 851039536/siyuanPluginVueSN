@@ -1,18 +1,15 @@
-<!-- 快捷键面板主组件：工具栏 + 紧凑列表 + 增改 / 删除 / 重置对话框编排 -->
+<!-- 快捷键面板主组件：工具栏 + 分组卡片网格 + 增改 / 删除 / 重置对话框编排 -->
 <template>
   <div class="shortcut-panel">
     <PanelHeader
       v-model:search-keyword="searchKeyword"
       v-model:active-category="activeCategory"
-      :active-filter="activeFilter"
       :categories="categories"
       :get-category-label="getCategoryLabel"
       :get-category-count="getCategoryCount"
       :total-count="totalCount"
       :visible-count="visibleCount"
-      :conflict-count="conflictCount"
       :i18n="i18n"
-      @toggle-filter="toggleFilter"
       @add="showAddDialog"
       @import="handleImport"
       @export="exportCustomShortcuts"
@@ -21,8 +18,6 @@
 
     <ShortcutList
       :shortcuts="filteredShortcuts"
-      :recent-ids="recentIdSet"
-      :conflict-map="conflictMap"
       :preset-ids="presetIds"
       :get-category-label="getCategoryLabel"
       :i18n="i18n"
@@ -42,7 +37,7 @@
       @confirm="confirmDelete"
     />
 
-    <!-- 重置确认：清空自定义 + 最近使用 -->
+    <!-- 重置确认：清空自定义快捷键 -->
     <ConfirmDialog
       :visible="showResetConfirm"
       :header="i18n.scReset"
@@ -57,6 +52,7 @@
     <ShortcutDialog
       :visible="showDialog"
       :initial="editingShortcut"
+      :groups="groupOptions"
       :i18n="i18n"
       @close="closeDialog"
       @confirm="handleDialogConfirm"
@@ -79,9 +75,14 @@ import ShortcutDialog from "./components/ShortcutDialog.vue"
 import ShortcutList from "./components/ShortcutList.vue"
 import { useShortcutData } from "./composables/useShortcutData"
 import { useShortcutFilter } from "./composables/useShortcutFilter"
+import { listGroups } from "./utils"
 
 interface Props {
   i18n: Record<string, string>
+  /**
+   * Dock 辅助函数注入的插件实例。当前模块不再直接使用（存储读写已下沉到
+   * `ShortcutStorage`），但必须保留声明：否则它会作为 attr 落到根元素上。
+   */
   plugin?: any
 }
 
@@ -92,10 +93,7 @@ const props = withDefaults(defineProps<Props>(), {
 // ==================== 数据层（响应式镜像 + 增删改 + 导入导出） ====================
 const {
   allShortcuts,
-  recentIds,
   presetIds,
-  conflictMap,
-  conflictIds,
   init,
   copyShortcut,
   saveCustomShortcut,
@@ -103,31 +101,25 @@ const {
   exportCustomShortcuts,
   importCustomShortcuts,
   resetAll,
-} = useShortcutData({ plugin: props.plugin, i18n: props.i18n })
+} = useShortcutData({ i18n: props.i18n })
 
 // ==================== 筛选管道 ====================
 const {
   searchKeyword,
   activeCategory,
-  activeFilter,
   categories,
   filteredShortcuts,
   totalCount,
   visibleCount,
   getCategoryLabel,
   getCategoryCount,
-  toggleFilter,
 } = useShortcutFilter({
   shortcuts: allShortcuts,
-  recentIds,
-  conflictIds,
   i18n: props.i18n,
 })
 
-/** 最近使用镜像为 Set，供列表 O(1) 判定 */
-const recentIdSet = computed(() => new Set(recentIds.value))
-/** 存在冲突的条目数（筛选按钮角标） */
-const conflictCount = computed(() => conflictIds.value.size)
+/** 现有分组名（新增 / 编辑对话框的「分组」下拉选项来源） */
+const groupOptions = computed(() => listGroups(allShortcuts.value))
 
 // ==================== 视图状态 ====================
 const showDialog = ref(false)
@@ -136,7 +128,7 @@ const deleteConfirmId = ref<string | null>(null)
 const showResetConfirm = ref(false)
 
 onMounted(() => {
-  void init()
+  init()
 })
 
 // ==================== 增改 ====================

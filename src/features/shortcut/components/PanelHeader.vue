@@ -1,4 +1,4 @@
-<!-- 快捷键面板工具栏：搜索/分类/新增 + 筛选/计数/导入导出重置 -->
+<!-- 快捷键面板工具栏：搜索 / 分类 / 新增 + 计数 / 导入 / 导出 / 重置 -->
 <template>
   <div class="shortcut-header">
     <!-- 行1：搜索 + 分类 + 新增 -->
@@ -38,7 +38,7 @@
       </template>
     </Toolbar>
 
-    <!-- 行2：筛选 + 计数 + 数据操作 -->
+    <!-- 行2：计数 + 数据操作 -->
     <Toolbar
       variant="borderless"
       size="xsmall"
@@ -46,38 +46,6 @@
       class="shortcut-header__row"
     >
       <template #start>
-        <div class="shortcut-header__filters">
-          <Button
-            :variant="activeFilter === 'recent' ? 'primary' : 'ghost'"
-            :outlined="activeFilter === 'recent'"
-            size="xsmall"
-            icon="timerOutline"
-            :aria-pressed="activeFilter === 'recent'"
-            @click="$emit('toggleFilter', 'recent')"
-          >
-            {{ i18n.filterRecent }}
-          </Button>
-          <Button
-            :variant="activeFilter === 'conflict' ? 'primary' : 'ghost'"
-            :outlined="activeFilter === 'conflict'"
-            size="xsmall"
-            icon="warning"
-            :aria-pressed="activeFilter === 'conflict'"
-            @click="$emit('toggleFilter', 'conflict')"
-          >
-            {{ i18n.scFilterConflict }}
-            <Tag
-              v-if="conflictCount > 0"
-              variant="warning"
-              size="xsmall"
-              shape="circle"
-            >
-              {{ conflictCount }}
-            </Tag>
-          </Button>
-        </div>
-      </template>
-      <template #center>
         <span class="shortcut-header__count">{{ visibleCount }} / {{ totalCount }}</span>
       </template>
       <template #end>
@@ -125,26 +93,22 @@
 
 <script setup lang="ts">
 import type { SelectOption } from "@/components/Select.vue"
-import type { ShortcutFilterMode } from "../types"
 import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
 import FileUpload from "@/components/FileUpload.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import Tag from "@/components/Tag.vue"
 import Toolbar from "@/components/Toolbar.vue"
 
 interface Props {
   searchKeyword: string
   activeCategory: string
-  activeFilter: ShortcutFilterMode
   /** 分类标识列表（首项为 "all"） */
   categories: string[]
   getCategoryLabel: (category: string) => string
   getCategoryCount: (category: string) => number
   totalCount: number
   visibleCount: number
-  conflictCount: number
   i18n: Record<string, string>
 }
 
@@ -154,7 +118,6 @@ const emit = defineEmits<{
   "update:searchKeyword": [value: string]
   "update:activeCategory": [value: string]
   add: []
-  toggleFilter: [target: ShortcutFilterMode]
   import: [file: File]
   export: []
   reset: []

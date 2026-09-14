@@ -58,26 +58,13 @@ export interface ShortcutFormData {
 }
 
 /**
- * 视图筛选模式（一组互斥选项）
- */
-export type ShortcutFilterMode = "all" | "recent" | "conflict"
-
-/**
  * 过滤查询参数：交给纯函数 `filterShortcuts` 消费，避免筛选逻辑散落在视图中
  */
 export interface ShortcutQuery {
   keyword: string
   /** 分类标识，`"all"` 表示不过滤分类 */
   category: string
-  filter: ShortcutFilterMode
-  recentIds: ReadonlySet<string>
-  conflictIds: ReadonlySet<string>
 }
-
-/**
- * 冲突表：冲突项 id → 与之冲突的条目名称列表（不含自身）
- */
-export type ShortcutConflictMap = Map<string, string[]>
 
 /**
  * 导入解析结果
@@ -142,8 +129,3 @@ export const CATEGORY_LABEL_I18N_KEYS: Record<ShortcutCategory | "all", string> 
  */
 export const EXPORT_PAYLOAD_TYPE = "siyuan-plugin-shortcuts"
 export const EXPORT_PAYLOAD_VERSION = 1
-
-/**
- * 最近使用记录上限
- */
-export const RECENT_LIMIT = 10

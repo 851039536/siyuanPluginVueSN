@@ -1,6 +1,6 @@
 /**
  * 快捷键模块
- * 功能：在右侧边栏以紧凑列表展示与管理快捷键
+ * 功能：在右侧边栏以紧凑卡片展示与管理快捷键
  * 侧边栏图标：iconKeymap（快捷键图标）
  */
 import { Plugin } from "siyuan"
@@ -26,7 +26,7 @@ export function registerShortcut(plugin: Plugin) {
 
 /**
  * 异步初始化快捷键数据：
- * 迁移历史遗留数据 → 注入「预置 + 自定义」→ 绑定保存回调（只写自定义段）→ 剪枝失效的最近使用 id
+ * 迁移历史遗留数据 → 注入「预置 + 自定义」→ 绑定保存回调（只写自定义段）
  */
 async function initShortcutData(plugin: Plugin) {
   try {
@@ -39,10 +39,6 @@ async function initShortcutData(plugin: Plugin) {
 
     manager.loadFrom({ presets: PRESET_SHORTCUTS, custom })
     manager.setSaveCallback((list) => storage.saveCustom(list))
-
-    // 最近使用中已不存在的 id（预置调整或自定义删除后的残留）一律剪掉
-    const validIds = new Set<string>([...presetIds, ...custom.map((item) => item.id)])
-    await storage.pruneRecent(validIds)
   } catch (error) {
     console.error("初始化快捷键数据失败:", error)
   }
@@ -59,7 +55,6 @@ function addShortcutDock(plugin: Plugin) {
     title: plugin.i18n.shortcuts,
     type: "shortcut-panel-dock",
     i18n: plugin.i18n,
-    extraProps: { plugin },
   })
 }
 
@@ -98,9 +93,7 @@ export {
 
 export type {
   ShortcutCategory,
-  ShortcutConflictMap,
   ShortcutExportPayload,
-  ShortcutFilterMode,
   ShortcutFormData,
   ShortcutGroup,
   ShortcutImportResult,
@@ -113,15 +106,13 @@ export {
   CATEGORY_LABEL_I18N_KEYS,
   EXPORT_PAYLOAD_TYPE,
   EXPORT_PAYLOAD_VERSION,
-  RECENT_LIMIT,
   TOOL_CATEGORIES,
 } from "./types"
 
 export {
-  buildConflictMap,
   filterShortcuts,
   groupShortcuts,
-  normalizeShortcutKeys,
+  listGroups,
   sanitizeShortcutArray,
   searchShortcuts,
   splitKeySequences,

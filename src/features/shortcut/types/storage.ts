@@ -1,12 +1,12 @@
 /**
  * 快捷键模块 - 持久化存储
- * 预置不落盘（代码即真源），仅「自定义」与「最近使用」两份用户数据写盘
+ * 预置不落盘（代码即真源），仅「自定义」一份用户数据写盘
  */
 import type { ShortcutInfo } from "./index"
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
-import { pruneIds, sanitizeShortcutArray } from "../utils"
+import { sanitizeShortcutArray } from "../utils"
 
 /**
  * 自定义快捷键键：唯一可写数据（预置不落盘，插件升级即可获得新预置）
@@ -14,39 +14,21 @@ import { pruneIds, sanitizeShortcutArray } from "../utils"
 const SHORTCUTS_CUSTOM_KEY = "plugin-shortcuts-custom"
 
 /**
- * 最近使用存储键（沿用历史键名，无需迁移）
- */
-const SHORTCUTS_RECENT_KEY = "plugin-shortcuts-recent"
-
-/**
  * 历史遗留键（预置 + 自定义混存）：仅作一次性迁移源
  */
 const SHORTCUTS_LEGACY_ALL_KEY = "plugin-shortcuts-all"
-
-/**
- * 清洗字符串数组，过滤掉非字符串元素
- * 模块级纯函数，不依赖实例状态
- */
-function sanitizeStringArray(data: unknown): string[] {
-  if (!data || !Array.isArray(data)) {
-    return []
-  }
-  return data.filter((item): item is string => typeof item === "string")
-}
 
 /**
  * 快捷键存储管理类
  */
 export class ShortcutStorage {
   readonly custom: TypedStorage<ShortcutInfo[]>
-  readonly recent: TypedStorage<string[]>
   /** 旧键只读槽位：仅用于迁移，不参与常规读写 */
   private readonly legacyAll: TypedStorage<ShortcutInfo[]>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.custom = new TypedStorage(storage, SHORTCUTS_CUSTOM_KEY)
-    this.recent = new TypedStorage(storage, SHORTCUTS_RECENT_KEY)
     this.legacyAll = new TypedStorage(storage, SHORTCUTS_LEGACY_ALL_KEY)
   }
 
@@ -96,41 +78,5 @@ export class ShortcutStorage {
 
     await this.legacyAll.remove()
     return custom
-  }
-
-  /**
-   * 加载最近使用 id 列表
-   */
-  async loadRecent(): Promise<string[]> {
-    return sanitizeStringArray(await this.recent.load())
-  }
-
-  /**
-   * 保存最近使用 id 列表
-   */
-  async saveRecent(ids: string[]): Promise<boolean> {
-    return this.recent.save(sanitizeStringArray(ids))
-  }
-
-  /**
-   * 剪枝最近使用中的失效 id（预置调整或自定义删除后的残留），有变化才回写
-   */
-  async pruneRecent(validIds: ReadonlySet<string>): Promise<void> {
-    const recent = pruneIds(await this.loadRecent(), validIds)
-    if (recent.changed) {
-      await this.saveRecent(recent.ids)
-    }
-  }
-
-  /**
-   * 重置用户数据：清空自定义 + 最近使用（预置来自代码，不受影响）
-   * 写空数组而非删键：保留「迁移已完成」标记，避免旧数据被再次迁入
-   */
-  async clearUserData(): Promise<boolean> {
-    const results = await Promise.all([
-      this.saveCustom([]),
-      this.saveRecent([]),
-    ])
-    return results.every(Boolean)
   }
 }

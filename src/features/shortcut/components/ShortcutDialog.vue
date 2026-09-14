@@ -24,13 +24,23 @@
         :placeholder="i18n.enterDescription"
         size="small"
       />
+      <!-- 内容：要复制的东西（快捷键 / 命令行 / 任意文本），形态由纯函数自动判定 -->
+      <Input
+        v-model="form.content"
+        :label="i18n.scContent"
+        :placeholder="i18n.scContentPlaceholder"
+        :error="errors.content"
+        required
+        size="small"
+        @update:model-value="errors.content = ''"
+      />
+      <!-- 快捷键：可选，留空即与内容相同 -->
       <Input
         v-model="form.keys"
-        :label="i18n.shortcutKeys"
-        :placeholder="i18n.keysPlaceholder"
-        :error="errors.keys"
+        :label="i18n.scHotkey"
+        :placeholder="i18n.scHotkeyPlaceholder"
+        :hint="i18n.scHotkeyTip"
         size="small"
-        @update:model-value="errors.keys = ''"
       />
 
       <!-- 分组：下拉选择现有分组；选「新建分组…」后切换为输入框 -->
@@ -134,11 +144,12 @@ const form = ref<ShortcutFormData>({
   id: "",
   name: "",
   description: "",
+  content: "",
   keys: "",
   group: "",
 })
 
-const errors = ref({ name: "", keys: "", group: "" })
+const errors = ref({ name: "", content: "", group: "" })
 
 /** 分组是否处于「新建」态（下拉 ⇄ 输入框） */
 const customGroupMode = ref(false)
@@ -183,17 +194,21 @@ watch(
           id: value.id,
           name: value.name,
           description: value.description,
-          keys: value.keys,
+          // 回填「要复制的内容」：与卡片显示同源（copyContent 优先，回退 keys）
+          // keys 可选（命令行类条目没有键位）⇒ 统一兜底为空串，表单侧恒为字符串
+          content: value.copyContent || value.keys || "",
+          keys: value.keys ?? "",
           group: value.group || props.i18n.customShortcuts,
         }
       : {
           id: "",
           name: "",
           description: "",
+          content: "",
           keys: "",
           group: props.i18n.customShortcuts,
         }
-    errors.value = { name: "", keys: "", group: "" }
+    errors.value = { name: "", content: "", group: "" }
     customGroupMode.value = false
     groupSelectValue.value = form.value.group
   },
@@ -240,18 +255,19 @@ function handleVisibleChange(value: boolean): void {
 
 function handleConfirm(): void {
   const name = form.value.name.trim()
-  const keys = form.value.keys.trim()
+  // 内容必填（快捷键可选）：留空静默回落会让「填了内容却没生效」看起来像 bug
+  const content = form.value.content.trim()
   const group = form.value.group.trim()
   // 新建分组态下分组名必填：留空静默回落默认分组会让「新建分组」看起来没生效
   const groupRequired = customGroupMode.value && !group
 
   errors.value = {
     name: name ? "" : props.i18n.fillRequired,
-    keys: keys ? "" : props.i18n.fillRequired,
+    content: content ? "" : props.i18n.fillRequired,
     group: groupRequired ? props.i18n.fillRequired : "",
   }
 
-  if (!name || !keys || groupRequired) {
+  if (!name || !content || groupRequired) {
     emit("error", props.i18n.fillRequired)
     return
   }

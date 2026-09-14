@@ -16,6 +16,8 @@
 }
 
 // 搜索框吃满剩余宽度（工具栏 end 段改为内容宽，避免与搜索抢空间）
+// ⚠️ 依赖共享 Toolbar 的根段类名 `si-toolbar__end`（默认 `flex: 1 1 0`），
+//    共享组件改名会导致本覆写静默失效、end 段重新与搜索抢空间
 .shortcut-header__row :deep(.si-toolbar__end) {
   flex: 0 0 auto;
 }

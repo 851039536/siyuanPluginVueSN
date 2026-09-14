@@ -1,56 +1,63 @@
 @use "@/variables.scss" as *;
 
 .shortcut-header {
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
   background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
 }
 
-.toolbar-row {
-  display: flex;
-  gap: $s-2;
-  padding: $s-2 $s-3;
-  align-items: center;
+// 两行工具栏：行间用细分隔线分区，行内左右贴合
+.shortcut-header__row {
+  padding: $s-1 $s-2;
 }
 
-.toolbar-row-secondary {
-  display: flex;
-  gap: $s-2;
-  padding: 0 $s-3 $s-2;
-  align-items: center;
-  justify-content: space-between;
+.shortcut-header__row + .shortcut-header__row {
+  border-top: 1px solid var(--b3-border-color);
 }
 
-.toolbar-search {
+// 搜索框吃满剩余宽度（工具栏 end 段改为内容宽，避免与搜索抢空间）
+.shortcut-header__row :deep(.si-toolbar__end) {
+  flex: 0 0 auto;
+}
+
+.shortcut-header__search {
   flex: 1;
   min-width: 0;
 }
 
-.toolbar-category {
-  width: 160px;
+.shortcut-header__category {
+  width: 150px;
   flex-shrink: 0;
 }
 
-.toolbar-add {
-  flex-shrink: 0;
-}
-
-.filter-group {
+// ==================== 筛选组 ====================
+// 按下态由 Button 自带的 variant="primary" + outlined 表达（主色描边与文字），
+// 不在 feature 内覆写共享按钮样式，避免与组件的 hover 规则打特异性官司
+.shortcut-header__filters {
   display: flex;
-  gap: $s-1;
-
-  // 筛选按钮选中态：Codex 边框强调，不用背景色硬切换
-  .si-button.active {
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
-  }
+  align-items: center;
+  gap: $s-px2;
+  min-width: 0;
 }
 
-// 快捷键总数（数据突出展示，字号允许使用 $t-xs）
-.total-count {
-  font-size: $t-xs;
+// ==================== 计数 ====================
+.shortcut-header__count {
+  padding: 0 $s-1;
+  font-size: $t-2xs;
   font-weight: $fw-semibold;
   line-height: $lh-tight;
   color: var(--b3-theme-on-surface-variant);
-  padding: 0 $s-1;
+  white-space: nowrap;
+}
+
+// ==================== 数据操作 ====================
+.shortcut-header__actions {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+}
+
+// 导入选用共享 FileUpload：容器改为内容宽，仅保留其中的图标按钮
+.shortcut-header__import {
+  flex-shrink: 0;
 }

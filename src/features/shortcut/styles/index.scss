@@ -1,6 +1,8 @@
 @use "@/variables.scss" as *;
 
-// 面板根容器：基准字号对齐全局 $t-xs(12px)
+// 面板根容器：基准字号对齐全局 $t-xs(12px)。
+// 注意：这里的 overflow: hidden 不会裁剪弹层——共享 Dialog / ConfirmDialog 的遮罩是
+// position: fixed（本容器未创建 transform 等包含块），故掩膜仍以视口为基准铺满。
 .shortcut-panel {
   display: flex;
   flex-direction: column;

@@ -32,6 +32,7 @@
       :commit-output="commitOutput || ''"
       :generated-msg="generatingMsg?.text || ''"
       :file-diffs="fileDiffs"
+      :diff-loading="diffLoading"
       :git-op-loading="gitOpLoading || false"
       :refreshing-working-tree="refreshingWorkingTree || false"
       :commit-templates="commitTemplates"
@@ -212,6 +213,7 @@ const {
   remoteTags,
   conflicts,
   fileDiffs,
+  diffLoading,
   mdFiles,
   ensureDetailsLoaded,
   reloadLog,

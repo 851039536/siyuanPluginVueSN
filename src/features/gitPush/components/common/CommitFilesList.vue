@@ -65,7 +65,7 @@
         <span
           class="wt-file-status"
           :class="`wt-s-${file.status}`"
-          :title="fileStatusTitle(file)"
+          :title="fileStatusTitle(file, i18n)"
         >
           <IconWrapper
             v-if="isIconFileStatus(file)"

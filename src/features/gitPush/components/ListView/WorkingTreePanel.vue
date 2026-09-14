@@ -1,6 +1,10 @@
 <!-- Git 工作区文件变更面板 -->
 <template>
-  <div class="wt-panel">
+  <!-- pointerdown 触发状态同步：双窗口并列（不切换窗口焦点）时点回面板同样能拿到最新状态 -->
+  <div
+    class="wt-panel"
+    @pointerdown="handleAutoRefreshTrigger"
+  >
     <!-- 工作区摘要条 -->
     <div
       class="wt-summary"
@@ -71,7 +75,11 @@
           v-for="file in sortedFiles"
           :key="file.path"
           class="wt-file-row"
-          :class="{ staged: file.staged, 'diff-active': activeDiffFile?.path === file.path }"
+          :class="{
+            staged: file.staged,
+            'partially-staged': file.staged && file.unstaged,
+            'diff-active': activeDiffFile?.path === file.path,
+          }"
           :title="i18n.clickViewDiff + ' — ' + file.path"
           @click="toggleDiff(file)"
         >
@@ -110,6 +118,13 @@
           <!-- 文件名（整行可点击查看差异） -->
           <span class="wt-file-path">{{ file.path }}</span>
 
+          <!-- 已暂存后又改动（porcelain MM/AM）：提示暂存区与工作区各有一份，提交只含暂存的那份 -->
+          <span
+            v-if="file.staged && file.unstaged"
+            class="wt-partial-mark"
+            :title="i18n.stagedAndUnstagedTip"
+          ></span>
+
           <!-- 丢弃更改（危险语义 ⇒ severity=danger 的红色文字） -->
           <Button
             class="wt-discard-btn"
@@ -145,7 +160,7 @@
         v-if="hasStaged"
         class="wt-commit-form"
       >
-        <!-- 常规提交类型快速选择 -->
+        <!-- 常规提交类型快速选择：按钮显示中文（title 提示标准单词），写入提交信息的前缀仍是 Conventional Commit 标准单词 -->
         <div class="wt-commit-types">
           <Button
             v-for="ct in COMMIT_TYPE_VALUES"
@@ -155,30 +170,14 @@
             size="xsmall"
             dense
             :aria-pressed="commitType === ct"
+            :title="ct"
             @click.stop="commitType = ct; updateCommitMessage()"
           >
-            {{ ct }}
+            {{ commitTypeLabel(ct) }}
           </Button>
         </div>
-        <!-- 提交信息模板 -->
-        <div
-          v-if="commitTemplates?.length"
-          class="wt-template-row"
-        >
-          <Icon
-            icon="mdi:file-document-outline"
-            height="12"
-          />
-          <Select
-            class="wt-template-select"
-            size="xsmall"
-            :model-value="selectedTemplateId"
-            :options="templateOptions"
-            :aria-label="i18n.selectTemplate"
-            @update:model-value="handleTemplateChange"
-          />
-        </div>
         <Textarea
+          ref="textareaEl"
           v-model="commitMessage"
           class="wt-commit-msg"
           size="xsmall"
@@ -208,7 +207,7 @@
             dense
             icon="sourceCommit"
             :loading="committing"
-            :disabled="!commitMessage.trim() || committing || !!validationReason"
+            :disabled="isCommitIncomplete || committing || !!validationReason"
             @click.stop="handleCommit"
           >
             {{ committing ? i18n.committing : i18n.commit }}
@@ -237,18 +236,21 @@
 
 <script setup lang="ts">
 import type {
-  CommitTemplate,
+  CommitType,
   FileChange,
   WorkingTreeInfo,
 } from "../../types"
-import { COMMIT_RULE_REASON_META, COMMIT_TYPE_VALUES } from "../../types"
+import { COMMIT_ANALYSIS_TYPE_META, COMMIT_RULE_REASON_META, COMMIT_TYPE_VALUES } from "../../types"
 import { checkCommitRule } from "../../commitRuleChecker"
 import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus } from "../../utils"
 import { useGeneratedMsgSync } from "../../composables/useGeneratedMsgSync"
 import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
-import { Icon } from "@iconify/vue"
+import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import {
   computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
   ref,
   toRef,
   watch,
@@ -256,7 +258,6 @@ import {
 import Button from "@/components/Button.vue"
 import Checkbox from "@/components/Checkbox.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Select from "@/components/Select.vue"
 import Textarea from "@/components/Textarea.vue"
 
 const props = defineProps<{
@@ -272,8 +273,6 @@ const props = defineProps<{
   gitOpLoading: boolean
   /** 工作区刷新加载中 */
   refreshingWorkingTree?: boolean
-  /** 提交信息模板 */
-  commitTemplates?: CommitTemplate[]
 }>()
 
 const emit = defineEmits<{
@@ -290,23 +289,81 @@ const emit = defineEmits<{
   refreshWorkingTree: []
 }>()
 
+/** 已写入的 Conventional Commit 前缀：type + 可选 scope + 可选 `!` 破坏性标记 */
+const TYPE_PREFIX_RE = /^([A-Za-z]+)((?:\([^)]*\))?!?):\s*/
+
+/** 「尚未填写完成」：空串 / 纯空白 / 只有 type 前缀而没有描述 */
+const INCOMPLETE_COMMIT_RE = /^(?:[A-Za-z]+(?:\([^)]*\))?!?:\s*)?$/
+
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
-/** 提交信息模板下拉当前值（"" = 未选择模板） */
-const selectedTemplateId = ref("")
+/** 提交信息输入框（类型按钮赋值后把焦点交回此处） */
+const textareaEl = ref<InstanceType<typeof Textarea>>()
 
-/** 模板下拉选项（首项为「选择模板」占位项，选中首项即回到未选择态） */
-const templateOptions = computed(() => [
-  { value: "", label: props.i18n.selectTemplate },
-  ...(props.commitTemplates ?? []).map((tpl) => ({ value: tpl.id, label: tpl.name })),
-])
+/**
+ * 提交类型按钮的中文标签：直接复用提交分析分类的标签键（同名同源，避免文案二次维护）。
+ * 只影响按钮显示，`commitType` 与写入提交信息的前缀始终是 Conventional Commit 标准单词。
+ */
+function commitTypeLabel(ct: CommitType): string {
+  return props.i18n[COMMIT_ANALYSIS_TYPE_META[ct].labelKey] ?? ct
+}
 
-/** 当前提交信息命中规则问题（合规时为 null；硬阻止提交按钮并显示原因） */
-const validationReason = computed(() => checkCommitRule(commitMessage.value))
+/** 提交信息是否尚未填写完成（空串 / 只有类型前缀）—— 未完成不报违规，也不允许提交 */
+const isCommitIncomplete = computed(() => INCOMPLETE_COMMIT_RE.test(commitMessage.value.trim()))
+
+/**
+ * 当前提交信息命中规则问题（合规或尚未填写完成时为 null；硬阻止提交按钮并显示原因）。
+ * 校验取 trim 后的文本：提交时本就 trim，避免「刚敲一个空格就闪违规」的噪音。
+ */
+const validationReason = computed(() =>
+  isCommitIncomplete.value ? null : checkCommitRule(commitMessage.value.trim()),
+)
 
 // 监听外部生成的消息，自动填充
 useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
+
+// ── 状态自动同步（避免停留在外部修改前的旧快照）──
+
+/** 自动刷新防抖时长：合并「窗口获焦 + 指针按下」的连续触发 */
+const AUTO_REFRESH_DEBOUNCE_MS = 800
+/** 自动刷新最小间隔：距上次刷新过近时跳过——面板内操作本身已刷新，无需重复起 git 子进程 */
+const AUTO_REFRESH_MIN_INTERVAL_MS = 2000
+
+/** 自动刷新定时器（统一入口 TimerRegistry，随组件卸载清理） */
+const autoRefreshTimers = new TimerRegistry()
+let autoRefreshTimer: TimerHandle | null = null
+/** 最近一次工作区刷新开始时间戳（含面板内操作触发的刷新，用于最小间隔去重） */
+let lastRefreshStartedAt = 0
+
+// 面板内操作（暂存 / 提交 / 丢弃 / 手动刷新）都会经过刷新标记，记录下来供自动刷新去重
+watch(() => props.refreshingWorkingTree, (refreshing) => {
+  if (refreshing) lastRefreshStartedAt = Date.now()
+})
+
+/**
+ * 自动同步工作区状态：外部编辑器改完文件后，面板不再停留在修改前的快照。
+ * 两个触发源共用本处理器——① 窗口重新获得焦点（从编辑器/其他应用切回）；
+ * ② 面板内按下指针（双窗口并列时不会切换窗口焦点）。git 操作在途或距上次刷新不足
+ * 最小间隔时直接跳过，避免与面板内操作竞争子进程。
+ */
+function handleAutoRefreshTrigger() {
+  if (props.gitOpLoading || props.refreshingWorkingTree) return
+  if (Date.now() - lastRefreshStartedAt < AUTO_REFRESH_MIN_INTERVAL_MS) return
+  autoRefreshTimers.clear(autoRefreshTimer)
+  autoRefreshTimer = autoRefreshTimers.setTimeout(() => {
+    autoRefreshTimer = null
+    // 防抖期间可能已有操作触发过刷新，真正发出前再判一次
+    if (props.gitOpLoading || props.refreshingWorkingTree) return
+    emit("refreshWorkingTree")
+  }, AUTO_REFRESH_DEBOUNCE_MS)
+}
+
+onMounted(() => window.addEventListener("focus", handleAutoRefreshTrigger))
+onUnmounted(() => {
+  window.removeEventListener("focus", handleAutoRefreshTrigger)
+  autoRefreshTimers.clearAll()
+})
 
 // 摘要按钮与提交表单共用的暂存状态判断（消除模板中多处 ?? 0 空值守卫）
 const hasStaged = computed(() => (props.tree?.stagedCount ?? 0) > 0)
@@ -395,40 +452,31 @@ watch(() => props.tree, (tree) => {
   }
 })
 
-function updateCommitMessage() {
-  if (commitMessage.value) {
-    // 替换已有的 type 前缀
-    const colonIdx = commitMessage.value.indexOf(": ")
-    if (colonIdx > 0) {
-      commitMessage.value = `${commitType.value}: ${commitMessage.value.substring(colonIdx + 2)}`
-    }
-  }
-  // 如果为空，不自动填充（等用户点生成）
-}
-
-/** 模板下拉变更：Select 为纯受控组件（内部只 emit），必须先回写 ref 再填充模板内容 */
-function handleTemplateChange(value: string | number | boolean | null) {
-  selectedTemplateId.value = typeof value === "string" ? value : ""
-  handleSelectTemplate(selectedTemplateId.value)
-}
-
-function handleSelectTemplate(tplId: string) {
-  if (!tplId) return
-  const tpl = props.commitTemplates?.find((t) => t.id === tplId)
-  if (!tpl) return
-  // 填充模板，支持 {branch}/{files} 占位符
-  commitMessage.value = tpl.pattern
-    .replace(/\{branch\}/g, props.tree?.branch || "")
-    .replace(/\{files\}/g, String(props.tree?.files.length ?? 0))
+/**
+ * 按当前选中的类型写入/替换提交信息前缀（模板下拉移除后，这是唯一的快捷赋值入口）：
+ * - 空输入 → 直接写入 `type: `，接着写描述即可
+ * - 已有前缀 → 只换类型单词，保留 scope 与 `!` 破坏性标记
+ * - 有正文无前缀 → 补上前缀
+ */
+async function updateCommitMessage() {
+  const prefix = `${commitType.value}: `
+  const current = commitMessage.value
+  const matched = current.match(TYPE_PREFIX_RE)
+  commitMessage.value = matched
+    ? `${commitType.value}${matched[2]}: ${current.slice(matched[0].length)}`
+    : prefix + current
+  // 赋值后把焦点交给输入框，用户可以接着写描述
+  await nextTick()
+  textareaEl.value?.focus()
 }
 
 function handleCommit() {
-  if (!commitMessage.value.trim()) return
+  if (isCommitIncomplete.value) return
   if (validationReason.value) return
   emit("commit", commitMessage.value.trim())
 }
 
-defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chore"; selectedTemplateId.value = "" } })
+defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chore" } })
 </script>
 
 <style lang="scss">

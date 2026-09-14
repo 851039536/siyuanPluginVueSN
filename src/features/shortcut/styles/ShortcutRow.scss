@@ -1,10 +1,12 @@
 @use "@/variables.scss" as *;
 
-// 无对应 Token 的几何常量
-$card-min-height: 46px; // 上行 22px + 间距 2px + 下行 15px + 上下内边距 8px 的兜底高度
+// 无对应 Token 的几何 / 时长常量（集中在文件顶部，避免同类值在多处漂移）
+$card-min-height: 46px; // 内容行 22px + 间距 2px + 名称行 15px + 上下内边距 8px 的兜底高度
 $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否则折到第二行
+$motion-fast: 0.12s; // 悬停 / 聚焦过渡时长
 
-// 卡片：2 列网格中的一格。两行结构 —— 上行「按键徽章 + 操作」，下行「名称 + 标签 + 描述」
+// ==================== 卡片 ====================
+// 2 列网格中的一格：内容行（主内容 + 次显快捷键 + 操作）+ 名称行（名称 + 标签 + 描述）
 .shortcut-row {
   display: flex;
   flex-direction: column;
@@ -16,7 +18,7 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-background);
-  transition: background-color 0.12s ease, border-color 0.12s ease;
+  transition: background-color $motion-fast ease, border-color $motion-fast ease;
 }
 
 // 悬停 / 键盘聚焦：底色浮起 + 主色描边（卡片唯一的交互反馈）
@@ -26,7 +28,7 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
   border-color: var(--b3-theme-primary-light);
 }
 
-// ==================== 上行：按键 + 操作 ====================
+// ==================== 内容行 ====================
 .shortcut-row__top {
   display: flex;
   align-items: center;
@@ -34,11 +36,11 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
   min-width: 0;
 }
 
-.shortcut-row__keys {
-  display: flex;
+// ⚠️ 声明顺序有约束：`.shortcut-row__content` 的重置与 `--code / --keys` 修饰类**特异性相同**（均为单类），
+//    同特异性靠源码顺序覆盖 ⇒ 重置必须排在芯片族与形态修饰类之前，
+//    否则其 `padding: 0 / border: none` 会把代码芯片的内边距与描边压掉。
+.shortcut-row__content {
   flex: 1;
-  align-items: center;
-  gap: $s-px3;
   min-width: 0;
   padding: 0;
   border: none;
@@ -48,25 +50,72 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
   text-align: left;
 }
 
-.shortcut-row__key {
-  display: inline-block;
-  max-width: 100%;
+.shortcut-row__content:focus-visible {
+  outline: 2px solid var(--b3-theme-primary, $c-danger);
+  outline-offset: 1px;
+}
+
+// 内容芯片族（代码芯片 / 按键徽章 / 次显快捷键）的公共几何与排印
+.shortcut-row__content--code,
+.shortcut-row__key,
+.shortcut-row__hotkey {
   padding: $s-px2 $s-px6;
-  overflow: hidden;
   font-family: $ff-mono;
   font-size: $t-2xs;
-  font-weight: $fw-semibold;
   line-height: $lh-tight;
-  color: var(--b3-theme-primary);
-  background: var(--b3-theme-primary-lightest);
-  border: 1px solid var(--b3-theme-primary-light);
   border-radius: $r-sm;
+}
+
+// 单行省略：命令芯片与名称 / 描述。次显快捷键刻意不截断（它是短文本，且截断会丢信息）
+.shortcut-row__content--code,
+.shortcut-row__key,
+.shortcut-row__name,
+.shortcut-row__desc {
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.shortcut-row__keys:hover .shortcut-row__key {
+// 形态一：按键组合 —— 徽章组（主色文字 + 浅主色底 + 主色描边）
+.shortcut-row__content--keys {
+  display: flex;
+  align-items: center;
+  gap: $s-px3;
+}
+
+// 形态二：命令 / 路径 / 文本 —— 等宽代码芯片（中性描边 + surface-lighter 底）
+// 刻意不用 surface：它与卡底仅差约 3% 灰度，卡片悬停时会融为一体
+.shortcut-row__content--code {
+  display: block;
+  color: var(--b3-theme-on-background);
+  background: var(--b3-theme-surface-lighter);
+  border: 1px solid var(--b3-border-color);
+}
+
+.shortcut-row__content--code:hover {
   border-color: var(--b3-theme-primary);
+}
+
+// 按键徽章：主色系配色 + 半粗体，与代码芯片的中性外观形成区分
+.shortcut-row__key {
+  display: inline-block;
+  max-width: 100%;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+  border: 1px solid var(--b3-theme-primary-light);
+}
+
+.shortcut-row__content--keys:hover .shortcut-row__key {
+  border-color: var(--b3-theme-primary);
+}
+
+// 次显快捷键：次级色、透明底、中性描边；不参与压缩（空间不足时整体折行而非被压扁）
+.shortcut-row__hotkey {
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-variant);
+  border: 1px solid var(--b3-border-color);
+  white-space: nowrap;
 }
 
 // 操作按钮：visibility 不参与布局 ⇒ 空间恒定预留，悬停只做淡入，卡片不会因此抖动
@@ -77,7 +126,7 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
   gap: $s-px1;
   visibility: hidden;
   opacity: 0;
-  transition: opacity 0.12s ease, visibility 0.12s ease;
+  transition: opacity $motion-fast ease, visibility $motion-fast ease;
 }
 
 .shortcut-row:hover .shortcut-row__actions,
@@ -86,7 +135,7 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
   opacity: 1;
 }
 
-// ==================== 下行：名称 + 标签 + 描述 ====================
+// ==================== 名称行 + 描述行 ====================
 // flex-wrap + 描述的 flex-basis：空间够就与名称同行，不够则自动折到第二行
 .shortcut-row__title {
   display: flex;
@@ -99,16 +148,14 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
 .shortcut-row__name {
   flex: 0 1 auto;
   max-width: 100%;
-  overflow: hidden;
   font-size: $t-xs;
   font-weight: $fw-semibold;
   line-height: $lh-tight;
   color: var(--b3-theme-on-background);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 // 标签不参与压缩（窄卡片下优先保住名称与描述的可读宽度）
+// ⚠️ 依赖共享 Tag 的根类名 `si-tag`，共享组件改名会导致本规则静默失效
 .shortcut-row__title .si-tag {
   flex-shrink: 0;
 }
@@ -116,10 +163,7 @@ $desc-min-width: 120px; // 描述至少要有这么宽才与名称同行，否�
 .shortcut-row__desc {
   flex: 1 1 $desc-min-width;
   min-width: 0;
-  overflow: hidden;
   font-size: $t-2xs;
   line-height: $lh-tight;
   color: var(--b3-theme-on-surface-variant);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }

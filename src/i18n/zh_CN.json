@@ -1675,6 +1675,7 @@
     "analysisLess": "少",
     "analysisMore": "多",
     "analysisHeatTooltip": "{0}（{1}）：{2} 次提交",
+    "analysisDailyTooltip": "{0}：{1} 次提交",
     "analysisShareTooltip": "{0} 次提交（{1}）",
     "lineStatsRun": "开始行数分析",
     "lineStatsNotRun": "点击「开始行数分析」统计各项目代码新增/删除行数并生成排行榜",

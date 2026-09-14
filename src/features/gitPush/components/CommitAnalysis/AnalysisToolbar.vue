@@ -11,19 +11,18 @@
         :commit-count="commitCount"
         @update-count="emit('updateCount', $event)"
       />
-      <!-- 按钮文案："开始分析"/"重新分析"（分析中切换为环形 loading 图标并旋转，业务图标不参与旋转） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <!-- 按钮文案："开始分析"/"重新分析"（共享 Button：分析中由 loading 转圈、自动禁用并保持按钮宽度） -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="chartTimelineVariant"
+        :loading="analyzing"
         :disabled="analyzing"
         @click="emit('runAnalysis')"
       >
-        <Icon
-          :icon="analyzing ? 'mdi:loading' : 'mdi:chart-timeline-variant'"
-          height="12"
-          :class="{ 'gp-spin': analyzing }"
-        />
         {{ analyzed ? i18n.auditRerun : i18n.auditRun }}
-      </button>
+      </Button>
       <!-- 显示设置菜单 -->
       <CommitAnalysisSettings
         :i18n="i18n"
@@ -39,8 +38,8 @@
 // gitPush 提交分析顶部工具条（分析状态 + 条数选择 + 分析按钮 + 显示设置）
 import type { CommitAnalysisViewSettings } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
-import { Icon } from "@iconify/vue"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import CommitCountSelect from "../common/CommitCountSelect.vue"
 import { analysisStatusText } from "../../utils"

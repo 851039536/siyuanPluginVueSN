@@ -185,6 +185,7 @@
   margin-top: $s-1;
   max-height: 120px;
   overflow-y: auto;
+  scrollbar-gutter: stable; // 滚动条槽位常驻，避免条目增减时卡片宽度抖动
 }
 
 // 待暂存变更预览：标题 + 只读文件列表（状态标记复用 WorkingTreePanel 的 .wt-file-status 着色）
@@ -781,6 +782,7 @@
 .gp-tag-list {
   max-height: 120px;
   overflow-y: auto;
+  scrollbar-gutter: stable; // 同上：Tag 增删（推送/删除/新建）时不抖动卡片宽度
 }
 
 .gp-tag-row {

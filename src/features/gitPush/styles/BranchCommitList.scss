@@ -66,6 +66,8 @@
   gap: $s-px2;
   max-height: 160px;
   overflow-y: auto;
+  // 滚动条槽位常驻：换条数/刷新日志导致行数变化时不再引起卡片宽度抖动
+  scrollbar-gutter: stable;
 }
 
 .bcl-entry {

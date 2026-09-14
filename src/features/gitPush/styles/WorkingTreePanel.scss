@@ -44,6 +44,7 @@
   display: flex;
   gap: $s-px2;
   margin-left: auto;
+  flex-shrink: 0; // 摘要文字过长时不允许压缩操作按钮
 }
 
 .wt-clean {
@@ -56,11 +57,15 @@
 .wt-body {
   max-height: 420px;
   overflow-y: auto;
+  // 滚动条槽位常驻：提交表单/输出框随操作增删时不再「有滚动条 ↔ 无滚动条」来回切，
+  // 否则内容宽度会反复变化，卡片右侧控件（分类下拉、按钮组）跟着被挤压/回弹产生抖动
+  scrollbar-gutter: stable;
 }
 
 .wt-files {
   max-height: 200px;
   overflow-y: auto;
+  scrollbar-gutter: stable; // 同上：暂存/取消暂存导致列表高度变化时不抖动卡片宽度
   border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;
   margin-bottom: $s-px3;
@@ -219,7 +224,9 @@
 }
 
 // 输出区关闭按钮：外观由共享 Button 承担，此处仅保留绝对定位与弱化
-.wt-output-close {
+// ⚠️ 必须抬到 (0,4,0)：共享 Button 根类自带 position: relative（scoped (0,2,0)），
+// 单类选择器压不过它 ⇒ 按钮会退回正常流并撑高输出框
+.git-push-panel .wt-commit-output .wt-output-close.si-button {
   position: absolute;
   top: 2px;
   right: 4px;

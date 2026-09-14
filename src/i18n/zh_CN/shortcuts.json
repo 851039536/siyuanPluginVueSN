@@ -36,5 +36,18 @@
   "cancel": "取消",
   "confirm": "确认",
   "filterFavorite": "收藏",
-  "filterRecent": "最近使用"
+  "filterRecent": "最近使用",
+  "scFilterConflict": "冲突",
+  "scImport": "导入",
+  "scExport": "导出",
+  "scReset": "重置",
+  "scResetConfirmMsg": "将清空所有自定义快捷键、收藏与最近使用记录（预置快捷键不受影响）。",
+  "scResetDone": "已恢复默认",
+  "scImportAdded": "新增",
+  "scImportUpdated": "覆盖",
+  "scImportIgnored": "忽略",
+  "scImportInvalidJson": "文件不是合法的 JSON 格式",
+  "scImportInvalidStructure": "文件中未找到快捷键数组",
+  "scSaveFailed": "保存失败，请重试",
+  "scConflictWith": "与以下快捷键冲突"
 }

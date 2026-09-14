@@ -1,0 +1,119 @@
+@use "@/variables.scss" as *;
+
+// 无对应 Token 的几何常量
+$scrollbar-width: 5px; // 细滚动条宽度（与面板内其他滚动区一致）
+$empty-state-height: 240px; // 空态占位高度
+$group-title-spacing: 1px; // 组名字符间距（小字号全大写时提升可读性）
+$group-accent-width: 3px; // 组头左侧状态竖条宽度（与行内竖条一致）
+
+// 列表主体：独立滚动区，分组依次排列
+.shortcut-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: $s-2 $s-2 $s-4;
+}
+
+.shortcut-list::-webkit-scrollbar {
+  width: $scrollbar-width;
+}
+
+.shortcut-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shortcut-list::-webkit-scrollbar-thumb {
+  background: var(--b3-theme-surface-lighter);
+  border-radius: $r-px2;
+}
+
+.shortcut-list::-webkit-scrollbar-thumb:hover {
+  background: var(--b3-theme-on-surface-variant);
+}
+
+// ==================== 空态 ====================
+.shortcut-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $s-3;
+  height: $empty-state-height;
+  color: var(--b3-theme-on-surface-variant);
+}
+
+.shortcut-list__empty-icon {
+  opacity: 0.3;
+}
+
+.shortcut-list__empty-text {
+  margin: 0;
+  font-size: $t-xs;
+  line-height: $lh-normal;
+}
+
+// ==================== 分组 ====================
+.shortcut-group {
+  margin-bottom: $s-3;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// 组头吸顶：不透明底色保证滚动行不会透出，左侧主色竖条承担分组指示
+.shortcut-group__header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+  padding: $s-px6 $s-2;
+  background: var(--b3-theme-background);
+  border-bottom: 1px solid var(--b3-border-color);
+  border-left: $group-accent-width solid var(--b3-theme-primary);
+}
+
+.shortcut-group__toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: $s-px3;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.shortcut-group__toggle:hover .shortcut-group__name {
+  text-decoration: underline;
+}
+
+.shortcut-group__chevron {
+  flex-shrink: 0;
+}
+
+.shortcut-group__name {
+  overflow: hidden;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  line-height: $lh-tight;
+  letter-spacing: $group-title-spacing;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+// 2 列卡片网格：同一行的卡片等高（align-items 默认 stretch），窄面板下每列约 200px
+.shortcut-group__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s-1;
+  align-items: stretch;
+}

@@ -1,6 +1,6 @@
 /**
  * 快捷键模块
- * 功能：在右侧边栏显示思源笔记和插件的快捷键信息
+ * 功能：在右侧边栏以紧凑列表展示与管理快捷键
  * 侧边栏图标：iconKeymap（快捷键图标）
  */
 import { Plugin } from "siyuan"
@@ -25,21 +25,24 @@ export function registerShortcut(plugin: Plugin) {
 }
 
 /**
- * 异步初始化快捷键数据：seed 预置数据 + 绑定保存回调
+ * 异步初始化快捷键数据：
+ * 迁移历史遗留数据 → 注入「预置 + 自定义」→ 绑定保存回调（只写自定义段）→ 剪枝失效 id
  */
 async function initShortcutData(plugin: Plugin) {
   try {
     const manager = getShortcutManager()
     const storage = new ShortcutStorage(plugin)
+    const presetIds = new Set(PRESET_SHORTCUTS.map((item) => item.id))
 
-    // 首次运行：seed 预置数据到持久化存储；后续运行：从存储恢复
-    const allShortcuts = await storage.seedIfEmpty(PRESET_SHORTCUTS)
-    manager.loadFromArray(allShortcuts)
+    // 旧版「预置 + 自定义」混存键 → 自定义段（幂等，失败保留旧键待下次重试）
+    const custom = await storage.migrateLegacy(presetIds)
 
-    // 设置保存回调（任何快捷键变更 → 自动同步到持久化存储）
-    manager.setSaveCallback(async (shortcuts: ShortcutInfo[]) => {
-      await storage.saveAll(shortcuts)
-    })
+    manager.loadFrom({ presets: PRESET_SHORTCUTS, custom })
+    manager.setSaveCallback((list) => storage.saveCustom(list))
+
+    // 收藏 / 最近使用中已不存在的 id（预置调整或自定义删除后的残留）一律剪掉
+    const validIds = new Set<string>([...presetIds, ...custom.map((item) => item.id)])
+    await storage.pruneUserState(validIds)
   } catch (error) {
     console.error("初始化快捷键数据失败:", error)
   }
@@ -65,7 +68,7 @@ function addShortcutDock(plugin: Plugin) {
  */
 export async function addCustomShortcut(shortcut: ShortcutInfo) {
   const manager = getShortcutManager()
-  await manager.addShortcut(shortcut)
+  return manager.addOrUpdateCustom(shortcut)
 }
 
 /**
@@ -73,7 +76,16 @@ export async function addCustomShortcut(shortcut: ShortcutInfo) {
  */
 export async function addCustomShortcuts(shortcuts: ShortcutInfo[]) {
   const manager = getShortcutManager()
-  await manager.addShortcuts(shortcuts)
+  const merged = [...manager.getCustomShortcuts()]
+  for (const shortcut of shortcuts) {
+    const index = merged.findIndex((item) => item.id === shortcut.id)
+    if (index === -1) {
+      merged.push(shortcut)
+    } else {
+      merged[index] = shortcut
+    }
+  }
+  return manager.replaceCustom(merged)
 }
 
 /**
@@ -85,12 +97,40 @@ export {
 }
 
 export type {
+  ShortcutCategory,
+  ShortcutConflictMap,
+  ShortcutExportPayload,
+  ShortcutFilterMode,
   ShortcutFormData,
   ShortcutGroup,
+  ShortcutImportResult,
   ShortcutInfo,
+  ShortcutMergeResult,
+  ShortcutQuery,
 } from "./types"
 
 export {
   CATEGORY_LABEL_I18N_KEYS,
+  EXPORT_PAYLOAD_TYPE,
+  EXPORT_PAYLOAD_VERSION,
+  RECENT_LIMIT,
   TOOL_CATEGORIES,
 } from "./types"
+
+export {
+  buildConflictMap,
+  filterShortcuts,
+  groupShortcuts,
+  normalizeShortcutKeys,
+  sanitizeShortcutArray,
+  searchShortcuts,
+  splitKeySequences,
+} from "./utils"
+
+export {
+  buildExportFileName,
+  buildExportPayload,
+  mergeImport,
+  parseImportPayload,
+  serializeExport,
+} from "./dataTransfer"

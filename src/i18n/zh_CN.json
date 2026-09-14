@@ -3407,6 +3407,8 @@
   "scImportInvalidStructure": "文件中未找到快捷键数组",
   "scSaveFailed": "保存失败，请重试",
   "scConflictWith": "与以下快捷键冲突",
+  "scNewGroup": "新建分组…",
+  "scPickFromList": "从列表选择",
   "panelTitle": "技能学习",
   "listView": "列表",
   "flashcardView": "闪卡",

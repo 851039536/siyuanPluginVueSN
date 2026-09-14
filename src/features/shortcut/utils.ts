@@ -4,7 +4,6 @@
  */
 import type {
   ShortcutCategory,
-  ShortcutConflictMap,
   ShortcutFormData,
   ShortcutGroup,
   ShortcutInfo,
@@ -85,26 +84,6 @@ export function sanitizeShortcutArray(data: unknown, forceCustom = false): Short
 }
 
 /**
- * 按键组合归一化：去空白、转小写、段内与序列间均排序
- * 例：`Ctrl + K, Alt+Z` 与 `k+ctrl, z+alt` 归一化后相同
- */
-export function normalizeShortcutKeys(keys: string): string {
-  return keys
-    .split(",")
-    .map((sequence) =>
-      sequence
-        .split("+")
-        .map((part) => part.trim().toLowerCase())
-        .filter((part) => part !== "")
-        .sort()
-        .join("+"),
-    )
-    .filter((sequence) => sequence !== "")
-    .sort()
-    .join(",")
-}
-
-/**
  * 拆分按键组合为「序列」数组（保留原始大小写，供徽章渲染）
  * 例：`Ctrl+K, Alt+Z` → `["Ctrl+K", "Alt+Z"]`
  */
@@ -116,68 +95,17 @@ export function splitKeySequences(keys: string): string[] {
 }
 
 /**
- * 构建冲突表：归一化后相同的按键组合互为冲突，值中不含自身名称
- */
-export function buildConflictMap(list: ShortcutInfo[]): ShortcutConflictMap {
-  const grouped = new Map<string, ShortcutInfo[]>()
-
-  for (const item of list) {
-    const normalized = normalizeShortcutKeys(item.keys)
-    if (!normalized) continue
-    const bucket = grouped.get(normalized)
-    if (bucket) {
-      bucket.push(item)
-    } else {
-      grouped.set(normalized, [item])
-    }
-  }
-
-  const conflicts: ShortcutConflictMap = new Map()
-  for (const bucket of grouped.values()) {
-    if (bucket.length < 2) continue
-    for (const item of bucket) {
-      conflicts.set(
-        item.id,
-        bucket.filter((other) => other.id !== item.id).map((other) => other.name),
-      )
-    }
-  }
-  return conflicts
-}
-
-/**
- * 按键组合是否互相冲突（含跨分类判定）
- */
-export function isConflicting(list: ShortcutInfo[]): boolean {
-  const seen = new Set<string>()
-  for (const item of list) {
-    const normalized = normalizeShortcutKeys(item.keys)
-    if (!normalized) continue
-    if (seen.has(normalized)) return true
-    seen.add(normalized)
-  }
-  return false
-}
-
-/**
- * 过滤管道：关键词 → 分类 → 快捷筛选（最近 / 冲突）
+ * 过滤管道：关键词 → 分类
  */
 export function filterShortcuts(list: ShortcutInfo[], query: ShortcutQuery): ShortcutInfo[] {
-  let result = query.keyword
+  const result = query.keyword
     ? searchShortcuts(list, query.keyword)
     : list
 
-  if (query.category !== "all") {
-    result = result.filter((item) => item.category === query.category)
+  if (query.category === "all") {
+    return result
   }
-
-  if (query.filter === "recent") {
-    result = result.filter((item) => query.recentIds.has(item.id))
-  } else if (query.filter === "conflict") {
-    result = result.filter((item) => query.conflictIds.has(item.id))
-  }
-
-  return result
+  return result.filter((item) => item.category === query.category)
 }
 
 /**
@@ -198,6 +126,17 @@ export function groupShortcuts(list: ShortcutInfo[], fallbackGroup: string): Sho
 }
 
 /**
+ * 列出现有分组名（去重、忽略空值、按名称升序）——供「分组」下拉作为选项来源
+ */
+export function listGroups(shortcuts: readonly ShortcutInfo[]): string[] {
+  const groups = new Set<string>()
+  for (const item of shortcuts) {
+    if (item.group) groups.add(item.group)
+  }
+  return Array.from(groups).sort()
+}
+
+/**
  * 统计各分类条目数（供分类下拉标注数量）
  */
 export function countByCategory(list: ShortcutInfo[]): Map<string, number> {
@@ -206,20 +145,6 @@ export function countByCategory(list: ShortcutInfo[]): Map<string, number> {
     counts.set(item.category, (counts.get(item.category) || 0) + 1)
   }
   return counts
-}
-
-/**
- * 剪枝 id 列表：去除不在有效集合中的项（保序去重）
- */
-export function pruneIds(
-  ids: string[],
-  validIds: ReadonlySet<string>,
-): { ids: string[]; changed: boolean } {
-  const next: string[] = []
-  for (const id of ids) {
-    if (validIds.has(id) && !next.includes(id)) next.push(id)
-  }
-  return { ids: next, changed: next.length !== ids.length }
 }
 
 /**

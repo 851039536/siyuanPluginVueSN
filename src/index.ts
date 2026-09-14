@@ -51,7 +51,6 @@ import {
   registerS3Backup,
   registerS3FileManager,
   registerScriptLauncher,
-  registerShortcut,
   registerSkillLearning,
   registerSkillsViewer,
   registerStatistics,
@@ -220,7 +219,7 @@ export default class PluginSample extends Plugin {
     if (s.enableTableOfContents) registerTableOfContents(this)
     if (s.enableImageCompressor) registerImageCompressor(this)
     if (s.enableDocNavigation) registerDocNavigation(this)
-    if (s.enableShortcuts) registerShortcut(this)
+    // shortcut 已迁移至 toolCollection/tools/shortcut/
     // wordQuery 已迁移至 toolCollection/tools/wordQuery/
     if (s.enableGeneralSettings) registerGeneralSettings(this)
     // unitConverter 已迁移至 toolCollection/tools/unitConverter/

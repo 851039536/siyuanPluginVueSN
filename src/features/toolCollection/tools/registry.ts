@@ -8,6 +8,7 @@ import ColorPickerTool from "./colorPicker/index.vue"
 import DeepSeekCostTool from "./deepSeekCost/index.vue"
 import JsonFormatterTool from "./jsonFormatter/index.vue"
 import RegexTesterTool from "./regexTester/index.vue"
+import ShortcutTool from "./shortcut/index.vue"
 import UnitConverterTool from "./unitConverter/index.vue"
 import TimeConverterTool from "./timeConverter/index.vue"
 import WordQueryTool from "./wordQuery/index.vue"
@@ -65,6 +66,11 @@ export const TOOL_REGISTRY: ToolMeta[] = [
     label: "",
     component: PdfViewerTool,
   },
+  {
+    id: "shortcut",
+    label: "",
+    component: ShortcutTool,
+  },
 ]
 
 /** 工具 ID → i18n label 解析映射 */
@@ -78,4 +84,5 @@ export const TOOL_LABEL_KEYS: Record<string, (i18n: any) => string> = {
   unitConverter: (i18n) => i18n.unitConverter ?? "Unit Converter",
   timeConverter: (i18n) => i18n.timeConverter?.title ?? "Time Converter",
   pdfViewer: (i18n) => i18n.pdfViewer?.title ?? "PDF Viewer",
+  shortcut: (i18n) => i18n.shortcuts ?? "Shortcuts",
 }

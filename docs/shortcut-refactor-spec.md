@@ -1,7 +1,8 @@
 # 快捷键模块重构变更规格（shortcut）
 
-> 状态：执行中 · 日期：2026-09-14 · 变更类型：重构（UI 排版 + 数据持久化）
-> 变更来源：用户请求「完全重构功能：UI 显示排版，和数据持久化」，经需求确认后锁定范围。
+> 状态：执行中 · 日期：2026-09-14 · 变更类型：重构（UI 排版 + 数据持久化）+ 迁入工具合集
+> 变更来源：用户请求「完全重构功能：UI 显示排版，和数据持久化」，经需求确认后锁定范围；后续迭代见文末变更日志。
+> **模块现路径**：`src/features/toolCollection/tools/shortcut/`（CR-009 起由 `src/features/shortcut/` 整体迁入，独立 Dock 入口已摘除）
 
 ---
 
@@ -11,8 +12,8 @@
 
 | 编号 | 变更项 | 说明 |
 |------|--------|------|
-| A | UI 排版 | 2 列卡片网格（分组吸顶 + 会话级折叠）；卡片为「内容行 / 名称行 / 描述」三段结构 |
-| B | 持久化单键 | 预置不落盘（代码即真源）+ 自定义单独存 `plugin-shortcuts-custom`；启动时幂等迁移旧键 |
+| A | UI 排版 | 卡片网格列数随容器宽度自适应（分组吸顶 + 会话级折叠）；卡片为「内容行 / 名称行 / 描述」三段结构；**承载于工具合集**（CR-009） |
+| B | 持久化单键 | 预置不落盘（代码即真源）+ 自定义单独存 `plugin-toolCollection-shortcut-custom`；首次打开工具时幂等迁移两代旧键（CR-009） |
 | C | 导入 / 导出 JSON | 只覆盖自定义项；导入结果按「新增 / 覆盖 / 忽略」计数反馈 |
 | D | 重置为默认 | 二次确认后清空全部自定义项，预置不受影响 |
 | E | 内容显示自适应（CR-007） | 主内容取「要复制的内容」（`copyContent \|\| keys`）：自动判定按键组合 → 按键徽章组，命令 / 路径 / 文本 → 等宽代码芯片；快捷键与主内容不同且本身是按键组合时，在内容行右侧弱化次显 |
@@ -25,7 +26,7 @@
 - 折叠状态不持久化（会话级）
 - 不新增分类（分类标识与 i18n 文案保留；当前数据仅 npm / nvm / visual-studio 三类共 42 条）
 - 不新增「显示类型」字段或表单选项：内容形态由纯函数自动判定（CR-007）
-- 不影响注册链（`config.ts` / `features/index.ts` / `settings.ts` / `icons.ts` 均不改）
+- 注册链：CR-001 期间未改动；**CR-009 迁入工具合集时按要求摘除独立入口** —— `src/index.ts` 调用、`features/index.ts` 导出、`enableShortcuts` 设置项与文案，以及 `@shortcut` 路径别名（`config.ts` / `icons.ts` 不涉及）
 
 ---
 
@@ -35,10 +36,10 @@
 
 | 键 | 类型 | 状态 | 说明 |
 |----|------|------|------|
-| `plugin-shortcuts-custom` | `ShortcutInfo[]` | 新增 | 仅用户自定义项，唯一可写数据 |
-| `plugin-shortcuts-favorites` | `string[]` | 沿用 | 收藏 id 列表 |
-| `plugin-shortcuts-recent` | `string[]` | 沿用 | 最近使用 id 列表（上限 10） |
-| `plugin-shortcuts-all` | `ShortcutInfo[]` | 旧键 | **只读迁移源**，迁移成功后删除 |
+| `plugin-toolCollection-shortcut-custom` | `ShortcutInfo[]` | 当前键（CR-009 改名） | 仅用户自定义项，唯一可写数据 |
+| `plugin-shortcuts-custom` | `ShortcutInfo[]` | 迁移源 1 | 迁入工具合集前的现役键；读取成功后删除 |
+| `plugin-shortcuts-all` | `ShortcutInfo[]` | 迁移源 2 | CR-001 之前的「预置 + 自定义」混存键，需过滤预置 id |
+| `plugin-shortcuts-favorites` / `plugin-shortcuts-recent` | `string[]` | 已停用 | 随收藏（CR-003）/ 最近使用（CR-006）移除，旧数据留在用户目录不参与业务，**不迁移** |
 
 ### 2. 预置 / 自定义判定
 
@@ -54,10 +55,10 @@
 | 步骤 | 行为 |
 |------|------|
 | 1 | 读新键 `custom`：已存在（含空数组）⇒ 迁移已完成，直接返回 |
-| 2 | 读旧键 `all`：不存在 ⇒ 首次安装，返回空数组且**不写盘** |
+| 2 | 按代次读迁移源：`plugin-shortcuts-custom` 优先；不存在再读 `plugin-shortcuts-all`；两者皆不存在 ⇒ 首次安装，返回空数组且**不写盘** |
 | 3 | 过滤旧数据：仅保留 id ∉ 预置集合的条目，并清洗字段（强制 `category: "custom"`、必填字段缺失即丢弃） |
-| 4 | 写新键：**写入成功才删除旧键**；写入失败保留旧键，下次启动重试（不丢数据） |
-| 5 | 收藏 / 最近记录按「实际存在的 id」剪枝，有变化才回写 |
+| 4 | 写新键：**写入成功才删除已消费的旧键**；写入失败保留旧键，下次重试（不丢数据） |
+| 5 | 旧键存在但为空数组时视为「用户已清空」，不再回落到更早的键（CR-009） |
 
 ### 4. 导入 / 导出载荷
 
@@ -142,7 +143,17 @@
 | AC-21 | **Given** 表单「内容」留空，**When** 点击确认，**Then** 就地报错并阻止提交，不写入任何数据 |
 | AC-22 | **Given** 模块 5 个 SCSS，**When** 完成冗余审查，**Then** 不存在未使用类 / 未被引用的局部变量 / 已删功能残留选择器，且字号、字重、行高、圆角全部走设计 Token |
 
-> AC-07（冲突检测）、AC-11（重置含收藏 / 最近）、AC-13（筛选按钮 `aria-pressed`）已分别随 CR-006（移除最近使用与冲突）、CR-003（移除收藏）废止；CR-007 新增 AC-15 ~ AC-22。
+| AC-23 | **Given** 打开工具合集，**When** 查看左侧工具列表，**Then** 出现「快捷键」项，点击后右侧渲染快捷键面板（42 条预置 + 用户自定义） |
+| AC-24 | **Given** 在迁入前版本使用过自定义快捷键的用户（数据在 `plugin-shortcuts-custom`），**When** 首次打开快捷键工具，**Then** 自定义项全部保留且旧键被清理 |
+| AC-25 | **Given** 仅存最早混存键 `plugin-shortcuts-all` 的早期用户，**When** 首次打开快捷键工具，**Then** 其自定义项被迁移到新键，预置条目被过滤丢弃 |
+| AC-26 | **Given** 用户删光全部自定义项（新键为 `[]`）后重载插件，**When** 再次打开工具，**Then** 列表不出现任何自定义项（两代旧键数据均不被复活） |
+| AC-27 | **Given** 工具合集面板宽度分别约为 480px / 1060px / 更宽的独立窗口，**When** 渲染快捷键列表，**Then** 卡片列数依次约为 2 / 4 / 5~6 列且同行卡片等高 |
+| AC-28 | **Given** 在快捷键工具内打开新增/编辑对话框或删除确认框，**When** 观察弹层与按键，**Then** 弹层相对视口居中且不被面板裁剪；按 Esc 只关闭弹层、不关闭工具合集面板 |
+| AC-29 | **Given** 插件设置面板与左侧边栏，**When** 查看功能开关与图标，**Then** 不再出现「启用快捷键面板」开关，也不再出现快捷键 Dock 图标 |
+| AC-30 | **Given** 迁移后的工程，**When** 运行 `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons`，**Then** 全部通过，且全仓库无 `@shortcut` 别名与 `registerShortcut` 残留引用 |
+
+> AC-07（冲突检测）、AC-11（重置含收藏 / 最近）、AC-13（筛选按钮 `aria-pressed`）已分别随 CR-006（移除最近使用与冲突）、CR-003（移除收藏）废止；CR-007 新增 AC-15 ~ AC-22，CR-009 新增 AC-23 ~ AC-30。
+> AC-01 ~ AC-22 中凡涉及「右侧边栏 Dock / 面板」的验收场景，自 CR-009 起统一由「工具合集 → 快捷键」承载，判定标准不变。
 
 ---
 
@@ -265,3 +276,20 @@
 - **文件头注释修正**：两个 CLI 数据文件原注释「用于首次使用时 seed 到本地持久化存储」已过期（CR-001 起预置不落盘）⇒ 改为「预置不落盘（代码即真源）」并写明为何不写 `keys`
 - 运行时无迁移：预置不落盘；显示侧 `resolveShortcutDisplay` 对空 `keys` 本就兜底（`kind` 判为 `code`、`hotkey` 为空）；`sanitizeShortcutArray` 的 `readString(keys) ?? copyContent` 保证自定义与导入数据不失真
 - 验收影响：AC-16 中「右侧出现弱化快捷键徽章」只适用于真键位条目（如 Visual Studio）；npm / nvm 条目按预期**只显示命令芯片**
+
+### CR-009: 整体迁入工具合集（承载形态 + 存储键 + 栅格 + 容器集成）(2026-09-14)
+
+**变更类型**：重构（承载形态迁移 + 存储键改名 + 容器集成修复）
+**变更原因**：用户要求「把 shortcut 完整迁移到 `toolCollection/index.vue`」。按项目既有先例（`unitConverter`、`wordQuery` 迁为工具合集工具）办理：不再作为右侧边栏独立 Dock，改为工具合集左侧工具列表中的一项。
+**变更内容**：
+
+- **目录迁移**：`src/features/shortcut/**`（23 文件）用 `git mv` 整体迁入 `src/features/toolCollection/tools/shortcut/**`（保留文件历史），分层与命名不变；新增 `bootstrap.ts` 承载幂等数据初始化
+- **注册与入口**：`tools/registry.ts` 新增 `{ id: "shortcut", component: ShortcutTool }` 与 `TOOL_LABEL_KEYS.shortcut`（取已有 i18n 键 `shortcuts`）；**摘除**独立 Dock（`registerShortcut` / `addShortcutDock` / `iconKeymap` / `shortcut-panel-dock`）、`src/index.ts` 的调用、`features/index.ts` 的导出、`enableShortcuts` 设置项与 `enableShortcuts(Desc)` 中英文案（均按先例留「已迁移至 toolCollection/tools/shortcut/」注释占位）；一并移除 `vite.config.ts` / `tsconfig.json` 的 `@shortcut` 路径别名（与已迁移的 `@unitConverter` / `@wordQuery` 同处理）及 `AGENTS_API.md` 别名清单条目
+- **数据初始化时机**：由「`registerShortcut` 时异步初始化」改为「工具首次挂载时 `ensureShortcutData(plugin)`」——模块级 Promise 缓存保证幂等（工具合集切工具会销毁重建组件），失败不缓存失败态以便下次重试
+- **存储键改名 + 两代迁移**：唯一可写键 → `plugin-toolCollection-shortcut-custom`；迁移源按代次为 `plugin-shortcuts-custom`（现役旧键，优先）与 `plugin-shortcuts-all`（最早混存键，过滤预置 id）。守卫仍是「新键 `exists()`（含空数组）」；旧键存在但为空数组 ⇒ 视为用户已清空，不回落更早的键；写新键成功才删除已消费的旧键
+- **栅格适配**：`styles/ShortcutList.scss` 由固定 2 列改为 `repeat(auto-fill, minmax(220px, 1fr))`（窄容器 2 列、底部面板约 4 列、独立窗口 5~6 列）
+- **容器集成修复（影响全部工具，非仅本工具）**：
+  - `.tool-collection-panel` 移除 `contain: layout paint` 与常驻 `transform`，居中改 `left/right: 0` + `margin-inline: auto`，过渡改 `scaleY(0)` —— 否则面板会成为 fixed 后代的包含块，而共享弹层不用 Teleport（遮罩 `position: fixed; inset: 0`）⇒ 弹层会被关进面板并被 `overflow` 裁剪
+  - `useToolNavigation.handleKeydown` 增加「模态弹层打开时让路」：命中 `[aria-modal="true"]` 即返回，避免在工具自身的对话框里按 Esc 连带关闭整个工具合集面板（非模态 Dialog 的 `aria-modal` 为 `"false"`，不受影响）
+- **保持**：预置数据（NPM 10 / NVM 9 / Visual Studio 23）、内容显示模型、导入导出载荷、i18n 分片 `shortcuts.json`（不合并）、`keys` 可选现状均不变；功能语义零变更
+- **验收**：新增 AC-23 ~ AC-30；AC-01 ~ AC-22 的验收场景改由「工具合集 → 快捷键」承载

@@ -10,7 +10,7 @@
 - IDE 拦未带 `-Encoding` 的 `Get-Content` ⇒ 读文件/统计行数用工具或 `node -e`
 - `types/index.ts` 是显式导出清单（值 / type 两块）⇒ 新增须两处登记，否则消费方 TS2305
 - 快捷键查重须递归搜 `src/features/**`；已知未修冲突：`tableOfContents` 与 `ideaGenerator` 同为 ⌃⌥I
-- ⚠️ `replace_in_file` 在 CRLF 文件上改「尾部空行」静默失效（报 success 但 0 行）⇒ 用 node `s.replace(/[\r\n]+$/,'\r\n')`；怀疑未生效先 `JSON.stringify(s.slice(-30))` 看行尾符
+- ⚠️ `replace_in_file` 在 CRLF 文件上改「尾部空行」静默失效（报 success 但 0 行）⇒ 用 node `s.replace(/[\r\n]+$/,'\r\n')`；怀疑未生效先 `JSON.stringify(s.slice(-30))` 看行尾符。**该工具还会把 CRLF 文件整篇写成 LF-only**（同目录其他文件均 CRLF 即露馅）：用 `git ls-files --eol <file>` 核对（期望 `w/crlf`），必要时 node 重写行尾；索引侧恒 `i/lf`，不影响 diff 体量。另：new_str 里别顺手多带闭合标签（模板结构错 lint/typecheck 都不报）
 
 ## 2. 反回归（勿重提 / 勿顺手修）
 - `Button.isIconOnly` 陈旧 computed、`Slider` 焦点环 `rgba(hsl(...),0.2)`（全项目 60+ 处同写法）、`Input` 的 `type="textarea"` ⇒ **均有意保留，勿改**
@@ -43,6 +43,8 @@
 
 ## 5. 共享组件库（计数用前重数）
 - 2026-09-12 实测：48 公开组件 / 56 `styles/*.scss` / 19 小写起始目录 / 33 `previewData/*.ts` / 递归 160 文件
+- ⚠️ `Checkbox` 纯受控（显示全取 `modelValue`，`nextTick` 拉回 DOM），`modelValue: boolean | any[]`（**分组只认数组、不收 `Set`**）；**无 `title` prop**（靠单根透传到根 div，只能当 hover 提示）⇒ 无障碍名必须 `ariaLabel`；有 4 个事件（`update:modelValue`/`change`/`focus`/`blur`）。`Tag.content` 超 `max`(99) 折叠为 `99+` ⇒ **计数徽标走默认插槽**。`Button.icon` 只收 `IconKey`，纯图标按钮**禁**把 `<Icon>` 塞默认插槽（毁 `isIconOnly`）
+- ⚠️ 每组件各自 `@use "../../styles/<Panel>.scss"` 是**模块范式**：`styles/index.scss` 只聚合 `Buttons/Shared/Dialog/Form`，不 @use 则不加载；gitPush 内 `Paginator` 用量 0（`usePagedList` + `LoadMoreButton` 才是统一做法）
 - 私有子部件放同名小写目录（`confirm`/`overlay`/`select`/`tabs`/`tooltip`…），不计清单、禁 feature 直接导入
 - 新增公开组件四件套：文件功能注释 + `import "./kit/theme"` 副作用 + 样式外置 + 内部只用相对路径；组件内定时器用原生 + 卸载清理（不用 `timerRegistry`）
 - 文档同步面：`AGENTS.md`（总数 + 清单表 + 复用清单 + 目录树）、`componentPreview/README.md`、`kit/README.md`、`kit/theme.ts` 头注释、根 `README.md`、迁移指南；陈旧数字常埋在表格单元格 ⇒ 收尾用 `\d+ 个` 复扫

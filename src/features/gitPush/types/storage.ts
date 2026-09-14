@@ -190,6 +190,8 @@ export interface FileChange {
   staged: boolean
   /** 重命名前的路径（仅 status=renamed 时） */
   oldPath?: string
+  /** 工作区侧是否也存在改动（porcelain Y 位）；与 staged 同时为 true 表示暂存区与工作区各有一份差异 */
+  unstaged?: boolean
 }
 
 /** 工作区状态汇总 */

@@ -11,7 +11,7 @@ import type {
 import type { MdFileEntry } from "./useMarkdownFiles"
 import { inject, onMounted, ref, watch } from "vue"
 import { CARD_SERVICES_KEY } from "../types"
-import { DEFAULT_LOG_LIMIT, getProjectRemoteNames, pruneRecordCache, resolveValidPath } from "../utils"
+import { DEFAULT_LOG_LIMIT, diffCacheKey, getProjectRemoteNames, pruneRecordCache, resolveValidPath } from "../utils"
 import { scanMarkdownFiles } from "./useMarkdownFiles"
 
 /** Tag→commit 映射拉取上限（防异常大仓库失控） */
@@ -35,6 +35,8 @@ export function useCardData(project: () => GitProject) {
   const conflicts = ref<ConflictFile[]>([])
   /** 文件差异缓存（键 = staged 标记 + 文件名，如 "u::src/a.ts"） */
   const fileDiffs = ref<Record<string, string>>({})
+  /** 在途差异请求的键集合（与 fileDiffs 同键同构，请求结束即删除） */
+  const diffLoading = ref<Record<string, boolean>>({})
   const mdFiles = ref<MdFileEntry[]>([])
 
   /** 当前项目有效路径（多设备路径解析，实时求值不缓存） */
@@ -143,11 +145,19 @@ export function useCardData(project: () => GitProject) {
     }
   }
 
-  /** 查看文件差异（原父层 fileDiffs Record 的卡内版） */
+  /** 查看文件差异（原父层 fileDiffs Record 的卡内版；在途期间置加载标记，供弹窗区分「加载中」与「无差异」） */
   async function loadDiff(file: string, staged: boolean) {
-    const key = `${staged ? "s" : "u"}::${file}`
-    fileDiffs.value[key] = await manager.getFileDiff(path(), file, staged)
-    pruneRecordCache(fileDiffs.value, 30)
+    const key = diffCacheKey(file, staged)
+    diffLoading.value[key] = true
+    try {
+      fileDiffs.value[key] = await manager.getFileDiff(path(), file, staged)
+      pruneRecordCache(fileDiffs.value, 30)
+    } catch {
+      // 取差异失败按空差异呈现（弹窗显示空态），不向上抛以免调用方产生未处理的 Promise 拒绝
+      fileDiffs.value[key] = ""
+    } finally {
+      delete diffLoading.value[key]
+    }
   }
 
   // ── 父层刷新信号响应（提交/stash/tag/冲突/批量刷新完成后按域重载）──
@@ -185,6 +195,7 @@ export function useCardData(project: () => GitProject) {
     remoteTags,
     conflicts,
     fileDiffs,
+    diffLoading,
     mdFiles,
     ensureDetailsLoaded,
     reloadLog,

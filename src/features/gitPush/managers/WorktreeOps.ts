@@ -3,12 +3,18 @@ import type {
   BranchInfo,
   CommitLogEntry,
   FileChange,
-  FileChangeStatus,
   StashEntry,
   WorkingTreeInfo,
 } from "../types/storage"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { buildDiffContext } from "../utils"
+import {
+  buildDiffContext,
+  parseBranches,
+  parseCommitFiles,
+  parseCommitLog,
+  parseStashList,
+  parseWorktreeStatus,
+} from "../utils"
 import type { GitExecutor } from "./GitExecutor"
 import { HistoryRewriter } from "./HistoryRewriter"
 
@@ -36,11 +42,6 @@ export class WorktreeOps {
     }
 
     let branch = ""
-    let stagedCount = 0
-    let unstagedCount = 0
-    let untrackedCount = 0
-    const files: FileChange[] = []
-
     try {
       branch = opts?.branch ?? await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
     } catch {
@@ -53,73 +54,56 @@ export class WorktreeOps {
       const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "status", "--porcelain"])
       if (!raw) { return { ...empty, branch } }
 
-      // 基于 core.quotepath=false + 文本解析 porcelain v1；路径含换行等极端字符仍有局限，未用 -z 是权衡
-      // git porcelain 仅对含特殊字符的路径加引号（core.quotepath=false 下非 ASCII 不加），去引号需按 -> 拆分后分别处理
-      const unquote = (s: string): string => {
-        const t = s.trim()
-        return t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1) : t
-      }
-      const lines = raw.split("\n").filter(Boolean)
-      for (const line of lines) {
-        const statusCode = line.substring(0, 2)
-        const rawPath = line.substring(2).trim()
-        if (!rawPath) continue
-
-        const xy = statusCode.trim()
-        const staged = statusCode[0] !== " " && statusCode[0] !== "?"
-        const unstaged = statusCode[1] !== " "
-
-        let status: FileChange["status"] = "modified"
-
-        if (xy === "??") { status = "untracked"; untrackedCount++ }
-        else if (xy.includes("M")) { status = "modified" }
-        else if (xy.includes("A")) { status = "added" }
-        else if (xy.includes("D")) { status = "deleted" }
-        else if (xy.includes("R")) { status = "renamed" }
-        else if (xy.includes("C")) { status = "copied" }
-        else if (xy.includes("U")) { status = "unmerged" }
-
-        // unmerged（如 UU）状态码两位都非空格，避免同一冲突文件重复计入两个计数（冲突由 ConflictSection 单独呈现）
-        if (staged && status !== "untracked" && status !== "unmerged") stagedCount++
-        if (unstaged && status !== "untracked" && status !== "unmerged") unstagedCount++
-
-        let actualPath: string
-        let oldPath: string | undefined
-        if (status === "renamed" && rawPath.includes(" -> ")) {
-          const arrowIdx = rawPath.indexOf(" -> ")
-          oldPath = unquote(rawPath.substring(0, arrowIdx))
-          actualPath = unquote(rawPath.substring(arrowIdx + 4))
-        } else {
-          actualPath = unquote(rawPath)
-        }
-
-        files.push({ path: actualPath, status, staged, oldPath })
+      // porcelain v1 文本解析（状态归属 / 未跟踪计数 / 重命名路径拆分）见 utils/gitOutput.parseWorktreeStatus
+      const { files, stagedCount, unstagedCount, untrackedCount } = parseWorktreeStatus(raw)
+      return {
+        branch,
+        files,
+        stagedCount,
+        unstagedCount,
+        untrackedCount,
+        hasChanges: files.length > 0,
       }
     } catch {
-      // 忽略
-    }
-
-    return {
-      branch,
-      files,
-      stagedCount,
-      unstagedCount,
-      untrackedCount,
-      hasChanges: files.length > 0,
+      // 解析失败按「无变更」呈现（分支名已取到则保留）
+      return { ...empty, branch }
     }
   }
 
   /**
-   * 获取文件差异
+   * 获取文件差异（失败返回空串，不产出面向用户的文案——空态/加载态由视图层经 i18n 呈现）。
+   * 常规 `git diff` 对未跟踪文件恒为空（该文件不在 index 中），此时若文件也不在 HEAD 中，
+   * 回退 `git diff --no-index -- /dev/null <file>` 展示完整的新增内容（有差异时退出码为 1，需白名单容忍）。
    */
   async getFileDiff(projectPath: string, file: string, staged = false): Promise<string> {
     try {
       const args = ["-c", "core.quotepath=false", "diff", "--text"]
       if (staged) args.push("--cached")
       args.push("--", file)
-      return await this.executor.execGit(projectPath, args) || "（无差异）"
+      const text = await this.executor.execGit(projectPath, args)
+      if (text) return text
+      // 空差异仅在「文件不在 HEAD 中」时兜底：否则会把「真的没有差异」误报成整文件新增
+      if (await this.isFileInHead(projectPath, file)) return ""
+      return await this.executor.execGit(
+        projectPath,
+        ["-c", "core.quotepath=false", "diff", "--no-index", "--text", "--", "/dev/null", file],
+        undefined,
+        undefined,
+        undefined,
+        { allowExitCodes: [1] },
+      )
     } catch {
-      return "（无法获取差异）"
+      return ""
+    }
+  }
+
+  /** 文件是否已存在于 HEAD（无提交 / 命令失败按 false 处理，使新仓库提交前的新增文件同样可见内容） */
+  private async isFileInHead(projectPath: string, file: string): Promise<boolean> {
+    try {
+      const raw = await this.executor.execGit(projectPath, ["ls-tree", "HEAD", "--", file])
+      return !!raw.trim()
+    } catch {
+      return false
     }
   }
 
@@ -180,15 +164,7 @@ export class WorktreeOps {
     try {
       const raw = await this.executor.execGit(projectPath, ["stash", "list"])
       if (!raw) return []
-      const entries: StashEntry[] = []
-      const lines = raw.split("\n").filter(Boolean)
-      for (const line of lines) {
-        const match = line.match(/^stash@\{(\d+)\}:\s*(.+)$/)
-        if (match) {
-          entries.push({ index: Number.parseInt(match[1], 10), message: match[2] })
-        }
-      }
-      return entries
+      return parseStashList(raw)
     } catch {
       return []
     }
@@ -214,8 +190,7 @@ export class WorktreeOps {
    */
   async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
     try {
-      // 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则固定切分错位
-      // %p（父 hash 列表）用于识别 merge 提交（父数 > 1）
+      // 每行一条的格式串（含 %p 父 hash 列表以识别 merge）；解析见 utils/gitOutput.parseCommitLog
       const format = "%h%n%s%n%an%n%ar%n%aI%n%p"
       // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
       const args = count === "all"
@@ -223,20 +198,7 @@ export class WorktreeOps {
         : ["log", `-${count}`, `--format=${format}`]
       const raw = await this.executor.execGit(projectPath, args)
       if (!raw) return []
-
-      const allLines = raw.split("\n")
-      const entries: CommitLogEntry[] = []
-      for (let i = 0; i + 5 < allLines.length; i += 6) {
-        entries.push({
-          hash: allLines[i],
-          message: allLines[i + 1],
-          author: allLines[i + 2],
-          relativeDate: allLines[i + 3],
-          date: allLines[i + 4],
-          isMerge: allLines[i + 5].trim().split(/\s+/).filter(Boolean).length > 1,
-        })
-      }
-      return entries
+      return parseCommitLog(raw)
     } catch {
       return []
     }
@@ -249,10 +211,7 @@ export class WorktreeOps {
     try {
       const raw = await this.executor.execGit(projectPath, ["branch", "--format=%(refname:short)%00%(HEAD)"])
       if (!raw) return []
-      return raw.split("\n").filter(Boolean).map((line) => {
-        const [name, head] = line.split("\0")
-        return { name, current: head === "*" }
-      })
+      return parseBranches(raw)
     } catch {
       return []
     }
@@ -350,29 +309,7 @@ export class WorktreeOps {
         "-c", "core.quotepath=false", "show", "--name-status", "--format=", hash,
       ])
       if (!raw) return []
-      const files: FileChange[] = []
-      for (const line of raw.split("\n")) {
-        const parts = line.split("\t")
-        if (parts.length < 2) continue
-        // 状态首字母映射；R/C 行带相似度数字（如 "R100"），路径按 tab 切分（rename 为 旧名\t新名）
-        let status: FileChangeStatus
-        switch ((parts[0] || "").charAt(0).toUpperCase()) {
-          case "A": status = "added"; break
-          case "D": status = "deleted"; break
-          case "R": status = "renamed"; break
-          case "C": status = "copied"; break
-          case "U": status = "unmerged"; break
-          default: status = "modified"; break
-        }
-        const oldPath = (status === "renamed" || status === "copied") && parts.length > 2 ? parts[1] : undefined
-        files.push({
-          path: parts[parts.length - 1],
-          status,
-          staged: false,
-          oldPath,
-        })
-      }
-      return files
+      return parseCommitFiles(raw)
     } catch {
       return []
     }

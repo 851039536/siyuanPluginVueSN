@@ -88,7 +88,7 @@
           <span
             class="wt-file-status"
             :class="`wt-s-${file.status}`"
-            :title="fileStatusTitle(file)"
+            :title="fileStatusTitle(file, i18n)"
           >
             <!-- renamed/unmerged 用 IconWrapper 图标渲染，其余状态用字符标记（图标名与字符均来自 FILE_STATUS_META） -->
             <IconWrapper
@@ -125,11 +125,13 @@
         :file="activeDiffFile"
         :files="sortedFiles"
         :file-diffs="fileDiffs"
+        :diff-loading="diffLoading"
         :git-op-loading="gitOpLoading"
         @close="activeDiffFile = null"
         @navigate="handleDiffNavigate"
         @stage-toggle="handleDiffStageToggle"
         @discard="handleDiffDiscard"
+        @request-diff="handleDiffRequest"
       />
 
       <!-- 提交表单 -->
@@ -257,6 +259,8 @@ const props = defineProps<{
   generating: boolean
   commitOutput: string
   fileDiffs: Record<string, string>
+  /** 差异加载中标记（与 fileDiffs 同键同构，供弹窗区分「加载中」与「无差异」） */
+  diffLoading: Record<string, boolean>
   generatedMsg: string
   gitOpLoading: boolean
   /** 工作区刷新加载中 */
@@ -317,6 +321,7 @@ function toggleDiff(file: FileChange) {
   } else {
     activeDiffFile.value = file
     emit("loadDiff", file.path, file.staged)
+    prefetchOtherScope(file)
   }
 }
 
@@ -324,6 +329,21 @@ function toggleDiff(file: FileChange) {
 function handleDiffNavigate(file: FileChange) {
   activeDiffFile.value = file
   emit("loadDiff", file.path, file.staged)
+}
+
+/**
+ * 预取另一份差异：仅「已暂存 + 工作区又改动」的文件有两份差异，
+ * 提前拉取后弹窗内切范围命中缓存即刻渲染（不做则首次切换要等一次 git 子进程）
+ */
+function prefetchOtherScope(file: FileChange) {
+  if (file.staged && file.unstaged) emit("loadDiff", file.path, !file.staged)
+}
+
+/** 弹窗内切换差异范围：仅切换查看对象，不改变文件的暂存状态 */
+function handleDiffRequest(staged: boolean) {
+  const file = activeDiffFile.value
+  if (!file) return
+  emit("loadDiff", file.path, staged)
 }
 
 /** 弹窗内暂存切换：翻转 staged 后重新加载 diff（缓存键含 staged 前缀） */

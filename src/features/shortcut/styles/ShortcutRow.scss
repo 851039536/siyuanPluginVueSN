@@ -25,25 +25,10 @@ $recent-dot-size: 5px; // 最近使用标记圆点边长
   background: var(--b3-theme-surface);
 }
 
-// 收藏态：主色浅底 + 主色描边
-.shortcut-row.is-favorite {
-  background: var(--b3-theme-primary-lightest);
-  border-color: var(--b3-theme-primary-light);
-}
-
-// 冲突态：警告色淡底 + 左侧警告竖条（与收藏态叠加时以冲突为准）
+// 冲突态：警告色淡底 + 左侧警告竖条
 .shortcut-row.is-conflict {
   background: rgba($c-warning, 0.12);
   border-left-color: $c-warning;
-}
-
-.shortcut-row.is-conflict.is-favorite {
-  background: rgba($c-warning, 0.16);
-}
-
-// 收藏卡片的底色与徽章同色，改用页面底色以保持徽章可见
-.shortcut-row.is-favorite .shortcut-row__key {
-  background: var(--b3-theme-background);
 }
 
 // ==================== 上行：按键 + 操作 ====================
@@ -101,8 +86,7 @@ $recent-dot-size: 5px; // 最近使用标记圆点边长
 }
 
 .shortcut-row:hover .shortcut-row__actions,
-.shortcut-row:focus-within .shortcut-row__actions,
-.shortcut-row.is-favorite .shortcut-row__actions {
+.shortcut-row:focus-within .shortcut-row__actions {
   visibility: visible;
   opacity: 1;
 }

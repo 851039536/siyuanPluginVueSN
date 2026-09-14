@@ -1,6 +1,6 @@
 /**
  * 快捷键模块 - 持久化存储
- * 三键分离：预置不落盘（代码即真源），仅自定义 / 收藏 / 最近使用写盘
+ * 预置不落盘（代码即真源），仅「自定义」与「最近使用」两份用户数据写盘
  */
 import type { ShortcutInfo } from "./index"
 import { Plugin } from "siyuan"
@@ -12,11 +12,6 @@ import { pruneIds, sanitizeShortcutArray } from "../utils"
  * 自定义快捷键键：唯一可写数据（预置不落盘，插件升级即可获得新预置）
  */
 const SHORTCUTS_CUSTOM_KEY = "plugin-shortcuts-custom"
-
-/**
- * 收藏存储键（沿用历史键名，无需迁移）
- */
-const SHORTCUTS_FAVORITES_KEY = "plugin-shortcuts-favorites"
 
 /**
  * 最近使用存储键（沿用历史键名，无需迁移）
@@ -44,7 +39,6 @@ function sanitizeStringArray(data: unknown): string[] {
  */
 export class ShortcutStorage {
   readonly custom: TypedStorage<ShortcutInfo[]>
-  readonly favorites: TypedStorage<string[]>
   readonly recent: TypedStorage<string[]>
   /** 旧键只读槽位：仅用于迁移，不参与常规读写 */
   private readonly legacyAll: TypedStorage<ShortcutInfo[]>
@@ -52,7 +46,6 @@ export class ShortcutStorage {
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
     this.custom = new TypedStorage(storage, SHORTCUTS_CUSTOM_KEY)
-    this.favorites = new TypedStorage(storage, SHORTCUTS_FAVORITES_KEY)
     this.recent = new TypedStorage(storage, SHORTCUTS_RECENT_KEY)
     this.legacyAll = new TypedStorage(storage, SHORTCUTS_LEGACY_ALL_KEY)
   }
@@ -106,20 +99,6 @@ export class ShortcutStorage {
   }
 
   /**
-   * 加载收藏 id 列表
-   */
-  async loadFavorites(): Promise<string[]> {
-    return sanitizeStringArray(await this.favorites.load())
-  }
-
-  /**
-   * 保存收藏 id 列表
-   */
-  async saveFavorites(ids: string[]): Promise<boolean> {
-    return this.favorites.save(sanitizeStringArray(ids))
-  }
-
-  /**
    * 加载最近使用 id 列表
    */
   async loadRecent(): Promise<string[]> {
@@ -134,13 +113,9 @@ export class ShortcutStorage {
   }
 
   /**
-   * 剪枝收藏 / 最近使用中的失效 id（预置调整或自定义删除后的残留），有变化才回写
+   * 剪枝最近使用中的失效 id（预置调整或自定义删除后的残留），有变化才回写
    */
-  async pruneUserState(validIds: ReadonlySet<string>): Promise<void> {
-    const favorites = pruneIds(await this.loadFavorites(), validIds)
-    if (favorites.changed) {
-      await this.saveFavorites(favorites.ids)
-    }
+  async pruneRecent(validIds: ReadonlySet<string>): Promise<void> {
     const recent = pruneIds(await this.loadRecent(), validIds)
     if (recent.changed) {
       await this.saveRecent(recent.ids)
@@ -148,13 +123,12 @@ export class ShortcutStorage {
   }
 
   /**
-   * 重置用户数据：清空自定义 + 收藏 + 最近（预置来自代码，不受影响）
+   * 重置用户数据：清空自定义 + 最近使用（预置来自代码，不受影响）
    * 写空数组而非删键：保留「迁移已完成」标记，避免旧数据被再次迁入
    */
   async clearUserData(): Promise<boolean> {
     const results = await Promise.all([
       this.saveCustom([]),
-      this.saveFavorites([]),
       this.saveRecent([]),
     ])
     return results.every(Boolean)

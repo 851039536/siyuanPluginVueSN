@@ -1,9 +1,8 @@
-<!-- 快捷键卡片：上行按键徽章 + 悬停浮出的操作按钮，下行名称 / 标签 / 描述 -->
+<!-- 快捷键卡片：上行按键徽章 + 悬停浮出的复制/编辑/删除按钮，下行名称 / 标签 / 描述 -->
 <template>
   <div
     class="shortcut-row"
     :class="{
-      'is-favorite': isFavorite,
       'is-recent': isRecent,
       'is-conflict': hasConflict,
     }"
@@ -24,13 +23,6 @@
       </button>
 
       <div class="shortcut-row__actions">
-        <Button
-          variant="ghost"
-          size="xsmall"
-          :icon="isFavorite ? 'star' : 'starOutline'"
-          :title="isFavorite ? i18n.unFavorite : i18n.favorite"
-          @click="$emit('toggleFavorite', shortcut.id)"
-        />
         <Button
           variant="ghost"
           size="xsmall"
@@ -107,7 +99,6 @@ import { splitKeySequences } from "../utils"
 
 interface Props {
   shortcut: ShortcutInfo
-  isFavorite: boolean
   isRecent: boolean
   isPreset: boolean
   /** 冲突条目名称列表（空数组表示无冲突） */
@@ -121,7 +112,6 @@ interface Props {
 const props = defineProps<Props>()
 
 defineEmits<{
-  toggleFavorite: [id: string]
   copy: [shortcut: ShortcutInfo]
   edit: [shortcut: ShortcutInfo]
   delete: [id: string]

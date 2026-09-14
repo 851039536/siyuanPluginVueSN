@@ -60,7 +60,7 @@ export interface ShortcutFormData {
 /**
  * 视图筛选模式（一组互斥选项）
  */
-export type ShortcutFilterMode = "all" | "favorite" | "recent" | "conflict"
+export type ShortcutFilterMode = "all" | "recent" | "conflict"
 
 /**
  * 过滤查询参数：交给纯函数 `filterShortcuts` 消费，避免筛选逻辑散落在视图中
@@ -70,7 +70,6 @@ export interface ShortcutQuery {
   /** 分类标识，`"all"` 表示不过滤分类 */
   category: string
   filter: ShortcutFilterMode
-  favoriteIds: ReadonlySet<string>
   recentIds: ReadonlySet<string>
   conflictIds: ReadonlySet<string>
 }

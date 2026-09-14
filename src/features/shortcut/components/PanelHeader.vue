@@ -48,16 +48,6 @@
       <template #start>
         <div class="shortcut-header__filters">
           <Button
-            :variant="activeFilter === 'favorite' ? 'primary' : 'ghost'"
-            :outlined="activeFilter === 'favorite'"
-            size="xsmall"
-            icon="star"
-            :aria-pressed="activeFilter === 'favorite'"
-            @click="$emit('toggleFilter', 'favorite')"
-          >
-            {{ i18n.filterFavorite }}
-          </Button>
-          <Button
             :variant="activeFilter === 'recent' ? 'primary' : 'ghost'"
             :outlined="activeFilter === 'recent'"
             size="xsmall"

@@ -26,7 +26,7 @@ export function registerShortcut(plugin: Plugin) {
 
 /**
  * 异步初始化快捷键数据：
- * 迁移历史遗留数据 → 注入「预置 + 自定义」→ 绑定保存回调（只写自定义段）→ 剪枝失效 id
+ * 迁移历史遗留数据 → 注入「预置 + 自定义」→ 绑定保存回调（只写自定义段）→ 剪枝失效的最近使用 id
  */
 async function initShortcutData(plugin: Plugin) {
   try {
@@ -40,9 +40,9 @@ async function initShortcutData(plugin: Plugin) {
     manager.loadFrom({ presets: PRESET_SHORTCUTS, custom })
     manager.setSaveCallback((list) => storage.saveCustom(list))
 
-    // 收藏 / 最近使用中已不存在的 id（预置调整或自定义删除后的残留）一律剪掉
+    // 最近使用中已不存在的 id（预置调整或自定义删除后的残留）一律剪掉
     const validIds = new Set<string>([...presetIds, ...custom.map((item) => item.id)])
-    await storage.pruneUserState(validIds)
+    await storage.pruneRecent(validIds)
   } catch (error) {
     console.error("初始化快捷键数据失败:", error)
   }

@@ -54,14 +54,12 @@
           v-for="shortcut in group.shortcuts"
           :key="shortcut.id"
           :shortcut="shortcut"
-          :is-favorite="favorites.has(shortcut.id)"
           :is-recent="recentIds.has(shortcut.id)"
           :is-preset="presetIds.has(shortcut.id)"
           :conflict-names="conflictMap.get(shortcut.id) || []"
           :category-label="getCategoryLabel(shortcut.category)"
           :show-tool-badge="showToolBadge(shortcut, group.name)"
           :i18n="i18n"
-          @toggle-favorite="$emit('toggleFavorite', $event)"
           @copy="$emit('copy', $event)"
           @edit="$emit('edit', $event)"
           @delete="$emit('delete', $event)"
@@ -88,7 +86,6 @@ import ShortcutRow from "./ShortcutRow.vue"
 
 interface Props {
   shortcuts: ShortcutInfo[]
-  favorites: Set<string>
   recentIds: Set<string>
   conflictMap: ShortcutConflictMap
   presetIds: ReadonlySet<string>
@@ -99,7 +96,6 @@ interface Props {
 const props = defineProps<Props>()
 
 defineEmits<{
-  toggleFavorite: [id: string]
   copy: [shortcut: ShortcutInfo]
   edit: [shortcut: ShortcutInfo]
   delete: [id: string]

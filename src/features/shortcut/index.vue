@@ -21,13 +21,11 @@
 
     <ShortcutList
       :shortcuts="filteredShortcuts"
-      :favorites="favorites"
       :recent-ids="recentIdSet"
       :conflict-map="conflictMap"
       :preset-ids="presetIds"
       :get-category-label="getCategoryLabel"
       :i18n="i18n"
-      @toggle-favorite="toggleFavorite"
       @copy="copyShortcut"
       @edit="editShortcut"
       @delete="requestDelete"
@@ -44,7 +42,7 @@
       @confirm="confirmDelete"
     />
 
-    <!-- 重置确认：清空自定义 + 收藏 + 最近使用 -->
+    <!-- 重置确认：清空自定义 + 最近使用 -->
     <ConfirmDialog
       :visible="showResetConfirm"
       :header="i18n.scReset"
@@ -94,13 +92,11 @@ const props = withDefaults(defineProps<Props>(), {
 // ==================== 数据层（响应式镜像 + 增删改 + 导入导出） ====================
 const {
   allShortcuts,
-  favorites,
   recentIds,
   presetIds,
   conflictMap,
   conflictIds,
   init,
-  toggleFavorite,
   copyShortcut,
   saveCustomShortcut,
   deleteCustomShortcut,
@@ -123,7 +119,6 @@ const {
   toggleFilter,
 } = useShortcutFilter({
   shortcuts: allShortcuts,
-  favoriteIds: favorites,
   recentIds,
   conflictIds,
   i18n: props.i18n,

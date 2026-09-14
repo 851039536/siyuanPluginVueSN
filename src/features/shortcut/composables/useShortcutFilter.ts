@@ -1,5 +1,5 @@
 /**
- * 快捷键筛选管道：搜索 / 分类 / 收藏 / 最近 / 冲突，供工具栏与列表消费
+ * 快捷键筛选管道：搜索 / 分类 / 最近 / 冲突，供工具栏与列表消费
  */
 import type {
   Ref,
@@ -20,7 +20,6 @@ import { CATEGORY_LABEL_I18N_KEYS } from "../types"
 
 interface UseShortcutFilterOptions {
   shortcuts: Ref<ShortcutInfo[]>
-  favoriteIds: Ref<Set<string>>
   recentIds: Ref<string[]>
   conflictIds: Ref<Set<string>>
   i18n: Record<string, string>
@@ -29,7 +28,6 @@ interface UseShortcutFilterOptions {
 export function useShortcutFilter(options: UseShortcutFilterOptions) {
   const {
     shortcuts,
-    favoriteIds,
     recentIds,
     conflictIds,
     i18n,
@@ -56,7 +54,6 @@ export function useShortcutFilter(options: UseShortcutFilterOptions) {
       keyword: searchKeyword.value,
       category: activeCategory.value,
       filter: activeFilter.value,
-      favoriteIds: favoriteIds.value,
       recentIds: recentIdSet.value,
       conflictIds: conflictIds.value,
     }),

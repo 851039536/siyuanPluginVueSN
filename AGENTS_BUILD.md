@@ -6,6 +6,12 @@
 
 > **重要**：AI 不得执行 `pnpm vite build` 和 `pnpm lint`。这些验证由用户自行完成。AI 仅负责编写代码，用户自行验证构建和 lint。
 
+> ⛔ **禁止新建临时校验脚本**：不要创建 `.tmp-*.mjs` / `.tmp-*.js` / `scripts/tmp-*.mjs` 这类一次性脚本（典型反例：为校验 SCSS 能否编译而临时写一个 `findFileUrl` importer 脚本），也不要用「用完即删」的方式绕过。原因：会产生未跟踪文件且常残留、验证口径与用户实际执行的命令不一致、脚本本身无复用价值。
+>
+> - 验证只走既有入口：`read_lints`（IDE 诊断，覆盖 ESLint 类问题）+ `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons`；`pnpm lint` / `pnpm vite build` / SCSS 编译由用户执行。
+> - 样式改动的自查手段：`read_lints` + 只使用 `src/components/kit/variables.scss` 中已存在的 Token 名（写完对照该文件核对），不另起脚本编译。
+> - 确实需要**可复用**的检查能力时，在 `scripts/` 下以正式名称落地并在本文档登记（参考 `audit-hardcode.mjs` / `verify-i18n.mjs`），而不是写成临时文件。
+
 常见 Vite 警告：
 
 | 警告 | 原因 | 处理 |

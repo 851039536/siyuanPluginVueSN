@@ -1,5 +1,5 @@
 /**
- * 快捷键数据接线：响应式镜像、增删改、收藏/最近、导入导出与重置
+ * 快捷键数据接线：响应式镜像、增删改、最近使用、导入导出与重置
  */
 import type { Plugin } from "siyuan"
 import type { ShortcutInfo } from "../types"
@@ -45,7 +45,6 @@ export function useShortcutData(options: UseShortcutDataOptions) {
    * 若在此处直接持有旧引用，面板早于数据初始化挂载时会误判「全部都是自定义项」
    */
   const presetIds = ref<Set<string>>(new Set(manager.getPresetIds()))
-  const favorites = ref<Set<string>>(new Set())
   /** 最近使用 id（最新在前，上限 RECENT_LIMIT） */
   const recentIds = ref<string[]>([])
 
@@ -61,50 +60,31 @@ export function useShortcutData(options: UseShortcutDataOptions) {
   }
 
   /**
-   * 初始化：加载收藏与最近使用；结束时再取一次数据快照
+   * 初始化：加载最近使用记录；结束时再取一次数据快照
    * （预置数据由 registerShortcut 异步载入，此处 await 之后才能取到完整列表）
    */
   async function init() {
     if (storage) {
       try {
-        const [loadedFavorites, loadedRecent] = await Promise.all([
-          storage.loadFavorites(),
-          storage.loadRecent(),
-        ])
-        favorites.value = new Set(loadedFavorites)
-        recentIds.value = loadedRecent
+        recentIds.value = await storage.loadRecent()
       } catch (error) {
-        console.error("初始化收藏与最近使用失败:", error)
+        console.error("初始化最近使用记录失败:", error)
       }
     }
     refresh()
   }
 
-  /** 落盘收藏与最近使用（两者不经过 Manager 的保存回调） */
-  async function persistUserState(): Promise<boolean> {
+  /** 落盘最近使用记录（不经过 Manager 的保存回调） */
+  async function persistRecent(): Promise<boolean> {
     if (!storage) return true
-    const results = await Promise.all([
-      storage.saveFavorites(Array.from(favorites.value)),
-      storage.saveRecent(recentIds.value),
-    ])
-    return results.every(Boolean)
-  }
-
-  /** 切换收藏 */
-  async function toggleFavorite(id: string) {
-    if (favorites.value.has(id)) {
-      favorites.value.delete(id)
-    } else {
-      favorites.value.add(id)
-    }
-    await persistUserState()
+    return storage.saveRecent(recentIds.value)
   }
 
   /** 记入最近使用（最新在前，超出上限时丢弃最旧） */
   async function markRecent(id: string) {
     recentIds.value = [id, ...recentIds.value.filter((item) => item !== id)]
       .slice(0, RECENT_LIMIT)
-    await persistUserState()
+    await persistRecent()
   }
 
   /** 复制快捷键内容并记入最近使用 */
@@ -125,16 +105,15 @@ export function useShortcutData(options: UseShortcutDataOptions) {
     return saved
   }
 
-  /** 删除自定义快捷键，并同步清理收藏与最近使用中的残留 */
+  /** 删除自定义快捷键，并同步清理最近使用中的残留 */
   async function deleteCustomShortcut(id: string) {
     const removed = await manager.removeCustom(id)
     if (!removed) {
       return false
     }
-    favorites.value.delete(id)
     recentIds.value = recentIds.value.filter((item) => item !== id)
     refresh()
-    await persistUserState()
+    await persistRecent()
     return true
   }
 
@@ -166,23 +145,20 @@ export function useShortcutData(options: UseShortcutDataOptions) {
     await manager.replaceCustom(merged.next)
     refresh()
 
-    // 导入可能覆盖了正在被收藏/最近引用的条目，重新剪枝一次
+    // 导入可能覆盖了正在被最近使用引用的条目，重新剪枝一次
     const validIds = new Set(allShortcuts.value.map((item) => item.id))
-    const prunedFavorites = pruneIds(Array.from(favorites.value), validIds)
     const prunedRecent = pruneIds(recentIds.value, validIds)
-    favorites.value = new Set(prunedFavorites.ids)
     recentIds.value = prunedRecent.ids
-    if (prunedFavorites.changed || prunedRecent.changed) {
-      await persistUserState()
+    if (prunedRecent.changed) {
+      await persistRecent()
     }
 
     return { added: merged.added, updated: merged.updated, ignored: result.ignored }
   }
 
-  /** 重置：清空自定义 + 收藏 + 最近（预置来自代码，不受影响） */
+  /** 重置：清空自定义 + 最近使用（预置来自代码，不受影响） */
   async function resetAll() {
     await manager.clearCustom()
-    favorites.value = new Set()
     recentIds.value = []
     refresh()
     if (storage) {
@@ -192,7 +168,6 @@ export function useShortcutData(options: UseShortcutDataOptions) {
 
   return {
     allShortcuts,
-    favorites,
     recentIds,
     /** 预置 id 集合（预置只读，视图据此决定是否渲染编辑 / 删除按钮） */
     presetIds,
@@ -200,7 +175,6 @@ export function useShortcutData(options: UseShortcutDataOptions) {
     conflictIds,
     refresh,
     init,
-    toggleFavorite,
     markRecent,
     copyShortcut,
     saveCustomShortcut,

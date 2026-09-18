@@ -8,12 +8,13 @@ import { computed, ref, shallowRef } from "vue"
 import type { S3Client } from "@/utils/s3/s3Client"
 import { listDir } from "@/utils/s3/s3ObjectOps"
 import type { S3DirListing } from "@/utils/s3/s3ObjectOps"
+import type { S3FileInfo } from "@/utils/s3/types"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3Entry, SortField } from "../types"
 import { RENDER_BATCH_SIZE } from "../types"
 import {
-  aggregateEntries, buildEntries, compareEntries,
-  parentPrefix, prefixFromSegments, splitPrefixSegments,
+  buildEntries, compareEntries, normalizeListing,
+  parentPrefix, prefixFromSegments, relativeSegments,
 } from "../utils"
 
 export function useS3Entries(deps: {
@@ -48,13 +49,7 @@ export function useS3Entries(deps: {
   const hasMore = computed(() => sortedEntries.value.length > renderLimit.value)
 
   /** 面包屑段（相对浏览根前缀） */
-  const pathSegments = computed(() => {
-    const root = deps.getRootPrefix()
-    const relative = currentPrefix.value.startsWith(root)
-      ? currentPrefix.value.slice(root.length)
-      : currentPrefix.value
-    return splitPrefixSegments(relative)
-  })
+  const pathSegments = computed(() => relativeSegments(currentPrefix.value, deps.getRootPrefix()))
 
   const isAtRoot = computed(() => currentPrefix.value === deps.getRootPrefix())
 
@@ -81,35 +76,25 @@ export function useS3Entries(deps: {
           listing = await listDir(client, prefix)
         } catch (err) {
           // 代理不支持 delimiter 时降级为全量列举 + 客户端按 / 聚合（能力探测结果缓存）
-          // console.warn("[S3文件管理] delimiter 列举失败，降级为全量聚合:", getErrorMessage(err))
+          console.warn("[S3文件管理] delimiter 列举失败，降级为全量聚合:", getErrorMessage(err))
           delimiterUnsupported = true
         }
       }
 
-      let files: S3DirListing["files"]
+      let files: S3FileInfo[]
       let folders: string[]
       if (listing) {
-        // 防御性客户端聚合：服务端静默忽略 delimiter（返回扁平递归列举且无 CommonPrefixes）时，
-        // 把嵌套对象按 / 折叠回当前层文件夹，避免子目录文件冒到上层、当前文件夹自嵌套。
-        // delimiter 正常时 listing.files 本就是直接子项，聚合为幂等无副作用。
-        const agg = aggregateEntries(listing.files, prefix)
-        files = agg.files
-        folders = [...new Set([...listing.folders, ...agg.folders])]
-        if (agg.conflicts.length > 0) {
-          // console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
-        }
+        const normalized = normalizeListing(listing, prefix)
+        files = normalized.files
+        folders = normalized.folders
         // 探测到 delimiter 被忽略（无 CommonPrefixes 却聚合出子目录）→ 后续直接走全量列举，省一次无效 delimiter 请求
-        if (listing.folders.length === 0 && agg.folders.length > 0) {
+        if (listing.folders.length === 0 && normalized.folders.length > 0) {
           delimiterUnsupported = true
         }
       } else {
-        const all = await client.list(prefix)
-        const agg = aggregateEntries(all, prefix)
-        files = agg.files
-        folders = agg.folders
-        if (agg.conflicts.length > 0) {
-          // console.warn("[S3文件管理] 发现同名文件夹/文件冲突:", agg.conflicts.join(", "))
-        }
+        const normalized = normalizeListing({ files: await client.list(prefix), folders: [] }, prefix)
+        files = normalized.files
+        folders = normalized.folders
       }
 
       const built = buildEntries(files, folders)

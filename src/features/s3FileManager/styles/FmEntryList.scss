@@ -53,7 +53,13 @@
   z-index: 1;
 }
 
-.fm-col {
+// 列头触发按钮：透明无边框，仅承担点击与悬停反馈；铺满单元格以扩大点击热区
+.fm-col-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: $s-1;
+  width: 100%;
   border: none;
   background: transparent;
   color: var(--b3-theme-on-surface-light);
@@ -68,8 +74,6 @@
 }
 
 .fm-sort-arrow {
-  margin-left: $s-1;
-  font-size: $t-2xs;
   color: var(--b3-theme-primary);
 }
 

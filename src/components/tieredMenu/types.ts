@@ -29,6 +29,11 @@ export interface TieredMenuItem {
    * 分隔线不参与键盘漫游（方向键跳过），也不需要 `label`。
    */
   separator?: boolean
+  /**
+   * 危险项（如「删除」）：文字与图标取语义错误色，作为不可撤销操作的视觉提示。
+   * 不影响交互与键盘漫游，仅改配色。
+   */
+  danger?: boolean
   /** 点击回调（叶子项） */
   command?: (item: TieredMenuItem, event: MouseEvent | KeyboardEvent) => void
 }

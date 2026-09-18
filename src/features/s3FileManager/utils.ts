@@ -5,9 +5,10 @@
  * 全量列举结果的目录聚合、日志失败清单构造、扩展名图标映射与排序比较器。
  */
 import type { IconKey } from "@/config/icons"
+import type { S3DirListing } from "@/utils/s3/s3ObjectOps"
 import type { S3FileInfo } from "@/utils/s3/types"
+import { MAX_LOG_DETAIL_FILES } from "@/utils/s3/types"
 import type { FileOpLogDetail, S3Entry, SortField } from "./types"
-import { MAX_LOG_DETAIL_FILES } from "./types"
 
 // ========== 前缀/名称路径运算 ==========
 
@@ -39,6 +40,15 @@ export function splitPrefixSegments(prefix: string): string[] {
 /** 由面包屑段索引重组目录前缀，如 (["a","b"], 0) → "a/" */
 export function prefixFromSegments(segments: string[], index: number): string {
   return `${segments.slice(0, index + 1).join("/")}/`
+}
+
+/**
+ * 取前缀相对浏览根的段列表（面包屑渲染用）。
+ * 主列表与「移动/复制目标选择」弹窗共用同一口径 —— 二者此前各写一份逐字相同的实现。
+ */
+export function relativeSegments(prefix: string, root: string): string[] {
+  const relative = prefix.startsWith(root) ? prefix.slice(root.length) : prefix
+  return splitPrefixSegments(relative)
 }
 
 // ========== 名称校验 ==========
@@ -99,6 +109,27 @@ export function buildEntries(files: S3FileInfo[], folders: string[]): S3Entry[] 
     timestamp: f.timestamp,
   }))
   return [...folderEntries, ...fileEntries]
+}
+
+/**
+ * 归一化 listDir 结果为当前层文件 + 子目录前缀。
+ *
+ * 防御性客户端聚合：服务端静默忽略 delimiter（返回扁平递归列举且无 CommonPrefixes）时，
+ * 把嵌套对象按 / 折叠回当前层文件夹，避免子目录文件冒到上层、当前文件夹自嵌套。
+ * delimiter 正常时 listing.files 本就是直接子项，聚合为幂等无副作用。
+ *
+ * 主列表 loadDir 与「移动/复制目标选择」弹窗共用同一口径 —— 二者此前各写一份等价实现。
+ */
+export function normalizeListing(
+  listing: S3DirListing,
+  prefix: string,
+): { files: S3FileInfo[]; folders: string[]; conflicts: string[] } {
+  const agg = aggregateEntries(listing.files, prefix)
+  return {
+    files: agg.files,
+    folders: [...new Set([...listing.folders, ...agg.folders])],
+    conflicts: agg.conflicts,
+  }
 }
 
 // ========== 日志失败清单 ==========

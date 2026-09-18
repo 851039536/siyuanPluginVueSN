@@ -86,20 +86,11 @@ export interface FileOpLogDetail {
 
 // ========== 常量 ==========
 
-/** 日志最大保留条数 */
-export const MAX_LOG_COUNT = 200
-
-/** 日志 detail 失败清单的存储上限（超出记入 omitted 计数） */
-export const MAX_LOG_DETAIL_FILES = 200
-
 /** 批量对象操作（复制/删除）并发数 */
 export const FILE_OP_CONCURRENCY = 4
 
 /** 上传/下载传输并发数（带宽易饱和，用小并发） */
 export const TRANSFER_CONCURRENCY = 2
-
-/** 单文件传输最大重试次数（不含首次尝试） */
-export const TRANSFER_MAX_RETRIES = 2
 
 /** 大目录增量渲染批大小（超出后显示"加载更多"） */
 export const RENDER_BATCH_SIZE = 200
@@ -108,3 +99,26 @@ export const RENDER_BATCH_SIZE = 200
 
 /** i18n 文案对象（键定义见 src/i18n/zh_CN/s3FileManager.json，值均为字符串） */
 export type S3FileManagerI18n = Record<string, string>
+
+/** 确认框可选参数（危险操作取 danger 配色） */
+export interface ConfirmOptions {
+  confirmText?: string
+  cancelText?: string
+  danger?: boolean
+}
+
+/** 待确认动作的状态（null 表示无待确认项），由 useFmConfirm 维护、ConfirmDialog 渲染 */
+export interface FmConfirmState extends ConfirmOptions {
+  title: string
+  message: string
+}
+
+/**
+ * 统一确认入口签名（由 useFmConfirm 提供，注入给需要确认的 composable）。
+ * 单一 Promise 出口 —— 全模块不再并存回调式 / 原生 confirm 两套实现。
+ */
+export type ConfirmRequest = (
+  title: string,
+  message: string,
+  options?: ConfirmOptions,
+) => Promise<boolean>

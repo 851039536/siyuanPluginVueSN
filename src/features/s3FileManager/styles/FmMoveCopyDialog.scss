@@ -1,11 +1,10 @@
 /**
- * 移动/复制目标选择弹窗样式 — 面包屑 + 子目录列表
+ * 移动/复制目标选择弹窗样式 — 面包屑 + 子目录列表（外壳/底部按钮由共享 Dialog 承担）
  */
 @use '@/variables.scss' as *;
 
-.fm-movecopy-dialog {
-  width: 440px;
-  max-width: 90vw;
+.fm-mc-body {
+  min-width: 300px;
 }
 
 .fm-mc-path {
@@ -18,26 +17,10 @@
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
 }
 
-.fm-mc-crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-1;
-  padding: $s-1;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  cursor: pointer;
-  border-radius: $r-sm;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-  }
-}
-
+// 分隔符：共享 IconWrapper（原先为 &#9656; 字符，不符「禁止字符代图标」）
 .fm-mc-sep {
   color: var(--b3-theme-on-surface-light);
-  font-size: $t-2xs;
+  flex: none;
 }
 
 .fm-mc-list {
@@ -61,22 +44,15 @@
   word-break: break-all;
 }
 
+// 子目录项：共享 Button block 承担宽度与图标位；`block` 的文案居中在此覆写为左对齐
+// （列表行需左对齐，与文件列表观感一致 —— 这是调用方的排版诉求，非控件外观复制）
 .fm-mc-folder {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  width: 100%;
-  padding: $s-1 $s-2;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
+  justify-content: flex-start;
   font-size: $t-xs;
-  text-align: left;
-  cursor: pointer;
-  border-radius: $r-sm;
 
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
+  // `block` 修饰把 __text 设为居中，此处仅在列表场景下改回左对齐
+  :deep(.si-button__text) {
+    justify-content: flex-start;
   }
 }
 

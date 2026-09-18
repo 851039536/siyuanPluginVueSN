@@ -32,38 +32,66 @@
 
     <!-- 详细信息视图 -->
     <template v-else-if="viewMode === 'details'">
-      <!-- 列标题：名称 / 大小 / 修改日期 -->
-      <div class="fm-column-headers">
-        <button
+      <!-- 列标题：名称 / 大小 / 修改日期（点列头排序）
+           aria-sort 必须挂在 role="columnheader" 上，故由外层 div 承担该角色，内层 button 只负责触发 -->
+      <div
+        class="fm-column-headers"
+        role="row"
+      >
+        <div
           class="fm-col fm-col-name"
-          @click="$emit('sort', 'name')"
+          role="columnheader"
+          :aria-sort="ariaSort('name')"
         >
-          {{ i18n.colName }}
-          <span
-            v-if="sortField === 'name'"
-            class="fm-sort-arrow"
-          >{{ sortAsc ? "▲" : "▼" }}</span>
-        </button>
-        <button
+          <button
+            class="fm-col-btn"
+            @click="$emit('sort', 'name')"
+          >
+            {{ i18n.colName }}
+            <IconWrapper
+              v-if="sortField === 'name'"
+              class="fm-sort-arrow"
+              :name="sortAsc ? 'chevronUp' : 'chevronDown'"
+              :size="10"
+            />
+          </button>
+        </div>
+        <div
           class="fm-col fm-col-size"
-          @click="$emit('sort', 'size')"
+          role="columnheader"
+          :aria-sort="ariaSort('size')"
         >
-          {{ i18n.colSize }}
-          <span
-            v-if="sortField === 'size'"
-            class="fm-sort-arrow"
-          >{{ sortAsc ? "▲" : "▼" }}</span>
-        </button>
-        <button
+          <button
+            class="fm-col-btn"
+            @click="$emit('sort', 'size')"
+          >
+            {{ i18n.colSize }}
+            <IconWrapper
+              v-if="sortField === 'size'"
+              class="fm-sort-arrow"
+              :name="sortAsc ? 'chevronUp' : 'chevronDown'"
+              :size="10"
+            />
+          </button>
+        </div>
+        <div
           class="fm-col fm-col-date"
-          @click="$emit('sort', 'time')"
+          role="columnheader"
+          :aria-sort="ariaSort('time')"
         >
-          {{ i18n.colDate }}
-          <span
-            v-if="sortField === 'time'"
-            class="fm-sort-arrow"
-          >{{ sortAsc ? "▲" : "▼" }}</span>
-        </button>
+          <button
+            class="fm-col-btn"
+            @click="$emit('sort', 'time')"
+          >
+            {{ i18n.colDate }}
+            <IconWrapper
+              v-if="sortField === 'time'"
+              class="fm-sort-arrow"
+              :name="sortAsc ? 'chevronUp' : 'chevronDown'"
+              :size="10"
+            />
+          </button>
+        </div>
       </div>
 
       <div class="fm-detail-rows">
@@ -164,7 +192,7 @@ interface Props {
   i18n: S3FileManagerI18n
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<{
   itemClick: [entry: S3Entry, ev: MouseEvent]
   itemDblclick: [entry: S3Entry]
@@ -174,6 +202,12 @@ const emit = defineEmits<{
   entryDragStart: [entry: S3Entry]
   entryDropToFolder: [entry: S3Entry]
 }>()
+
+/** 列头排序态：仅当前排序列报方向，其余为 none（读屏可感知排序依据） */
+function ariaSort(field: SortField): "ascending" | "descending" | "none" {
+  if (props.sortField !== field) { return "none" }
+  return props.sortAsc ? "ascending" : "descending"
+}
 
 // ========== 内部拖动（条目拖到文件夹=移动） ==========
 
@@ -226,5 +260,4 @@ function onFolderDrop(entry: S3Entry, e: DragEvent): void {
 
 <style scoped lang="scss">
 @use "../styles/FmEntryList.scss";
-@use "../styles/index.scss";
 </style>

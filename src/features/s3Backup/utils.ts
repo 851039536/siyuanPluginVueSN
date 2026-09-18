@@ -8,6 +8,7 @@
  */
 import { getNodeModules, getNodeStream } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { runWithRetries } from "@/utils/s3/concurrency"
 import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES, BACKUP_ERROR_KEYS, BackupError } from "./types"
 import type { BackupManifest, IncrementalDiff, IncrementalFileEntry } from "./types"
 
@@ -29,19 +30,14 @@ export function localizeBackupError(err: unknown, i18n: Record<string, string>):
   return getErrorMessage(err)
 }
 
-/** 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/删除/下载共用） */
+/** 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/删除/下载共用）
+ *  重试循环本身由共享层 runWithRetries 承担，此处只保留 s3Backup 的「警告 + 布尔出口」语义 */
 export async function withRetry(task: () => Promise<void>, failLabel: string): Promise<boolean> {
-  for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
-    try {
-      await task()
-      return true
-    } catch (err: unknown) {
-      if (attempt === TRANSFER_MAX_RETRIES) {
-        console.warn(`[S3备份] ${failLabel}（已重试 ${TRANSFER_MAX_RETRIES} 次）`, getErrorMessage(err))
-      }
-    }
+  const { ok, error } = await runWithRetries(task)
+  if (!ok) {
+    console.warn(`[S3备份] ${failLabel}（已重试 ${TRANSFER_MAX_RETRIES} 次）`, getErrorMessage(error))
   }
-  return false
+  return ok
 }
 
 /** 解析本地备份目录绝对路径（云端下载与增量还原共用；非桌面环境回退字符串拼接） */

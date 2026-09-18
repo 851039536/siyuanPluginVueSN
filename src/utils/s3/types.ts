@@ -67,6 +67,24 @@ export const MULTIPART_MIN_SIZE = LARGE_FILE_WARN_SIZE
 /** Multipart 单分片大小（16MB）：分片路径内存峰值 ≈ 单片大小 + 常数开销，逐片独立签名上传 */
 export const MULTIPART_PART_SIZE = 16 * 1024 * 1024
 
+// ========== 跨模块共享常量（s3Backup / s3FileManager 共用，功能模块间禁止直接互导） ==========
+
+/** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
+export const TRANSFER_MAX_RETRIES = 2
+
+/** 操作日志最大保留条数 */
+export const MAX_LOG_COUNT = 200
+
+/** 操作日志 detail 中每类文件清单的存储上限（超出记入 omitted 计数） */
+export const MAX_LOG_DETAIL_FILES = 200
+
+/**
+ * s3Backup 的 S3 连接配置存储键。
+ * 提升为共享常量：s3FileManager 的「从 S3 备份导入」为只读消费方，
+ * 键名靠字符串字面量维系会在 s3Backup 改名时静默失效（load 返回默认值，不报错）。
+ */
+export const S3_BACKUP_CONFIG_KEY = "s3-backup-config"
+
 // ========== S3 配置默认值 ==========
 
 export const DEFAULT_S3_CONFIG: S3Config = {

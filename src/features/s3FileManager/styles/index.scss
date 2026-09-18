@@ -3,6 +3,7 @@
  *
  * 使用全局设计 Token（$r-base / $spacing-* / $font-size-*），
  * 禁止 box-shadow（用 border 代替）；根容器显式基准字号防继承思源默认字号。
+ * 弹窗外壳/遮罩已迁移至共享 Dialog，此处不再保留任何模态基座样式。
  */
 @use '@/variables.scss' as *;
 
@@ -48,9 +49,12 @@
   }
 }
 
-// ========== 传输/批量进度条 ==========
+// ========== 传输/批量进度条（进度条本体为共享 ProgressBar，此处只做容器与文字行） ==========
 
 .fm-progress {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
   padding: $s-2 $s-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
@@ -60,7 +64,6 @@
   display: flex;
   align-items: center;
   gap: $s-2;
-  margin-bottom: $s-1;
   font-size: $t-2xs; // 辅助元信息
   color: var(--b3-theme-on-surface-light);
 }
@@ -79,17 +82,21 @@
   font-family: $ff-mono;
 }
 
-.fm-progress-bar {
-  height: 4px;
-  border-radius: $r-full;
-  background: var(--b3-theme-surface-lighter);
-  overflow: hidden;
+.fm-progress-count {
+  flex: none;
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
 }
 
-.fm-progress-fill {
-  height: 100%;
-  background: var(--b3-theme-primary);
-  transition: width 0.12s ease;
+// ========== 弹窗共享基座 ==========
+// 弹窗外壳/遮罩已由共享 Dialog 承担，此处只保留「页脚右侧按钮组」这类跨弹窗复用的排版
+
+// Dialog 页脚为 flex-end；左侧另有元素时用它把右侧按钮组推到末端（FmConfigDialog / FmMoveCopyDialog 共用）
+.fm-dialog-footer-right {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  margin-left: auto;
 }
 
 // ========== 浏览区 + 外部拖入提示浮层 ==========
@@ -116,65 +123,4 @@
   background: var(--b3-theme-primary-lightest, $c-info);
   border: 2px dashed var(--b3-theme-primary);
   border-radius: $r-base;
-}
-
-// ========== 弹窗共享基座（各 Dialog 复用） ==========
-
-.fm-dialog-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: $t-xs; // 遮罩层基准字号
-  background: var(--b3-mask-background, $c-fg);
-}
-
-.fm-dialog {
-  display: flex;
-  flex-direction: column;
-  max-height: 80vh;
-  min-width: 320px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $r-base;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-}
-
-.fm-dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $s-3 $s-4;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
-}
-
-.fm-dialog-title {
-  font-size: $t-xs;
-  font-weight: $fw-semibold;
-}
-
-.fm-dialog-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: $s-4;
-}
-
-.fm-dialog-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $s-2;
-  padding: $s-3 $s-4;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-  flex-shrink: 0;
-}
-
-.fm-dialog-footer-right {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  margin-left: auto;
 }

@@ -27,6 +27,7 @@
         <button
           type="button"
           class="si-tieredmenu__link"
+          :class="{ 'si-tieredmenu__link--danger': item.danger }"
           role="menuitem"
           :data-tm-level="level"
           :data-tm-index="index"

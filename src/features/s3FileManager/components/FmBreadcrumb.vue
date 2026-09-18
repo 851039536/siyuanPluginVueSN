@@ -14,29 +14,35 @@
       />
       <div class="fm-breadcrumb">
         <!-- 根节点：bucket 名（悬停提示"返回根目录"） -->
-        <button
-          class="fm-crumb"
+        <Button
+          variant="ghost"
+          text
+          size="xsmall"
+          icon="s3FileManager"
+          :icon-size="11"
           :title="i18n.backToRoot"
           @click="$emit('navigateSegment', -1)"
         >
-          <IconWrapper
-            name="s3FileManager"
-            :size="11"
-          />
           {{ bucketLabel }}
-        </button>
+        </Button>
         <template
           v-for="(segment, index) in pathSegments"
           :key="index"
         >
-          <span class="fm-crumb-sep">&#9656;</span>
-          <button
-            class="fm-crumb"
+          <IconWrapper
+            class="fm-crumb-sep"
+            name="chevronRight"
+            :size="10"
+          />
+          <Button
+            variant="ghost"
+            text
+            size="xsmall"
             :title="segment"
             @click="$emit('navigateSegment', index)"
           >
             {{ segment }}
-          </button>
+          </Button>
         </template>
       </div>
     </div>
@@ -85,5 +91,4 @@ defineEmits<{
 
 <style scoped lang="scss">
 @use "../styles/FmBreadcrumb.scss";
-@use "../styles/index.scss";
 </style>

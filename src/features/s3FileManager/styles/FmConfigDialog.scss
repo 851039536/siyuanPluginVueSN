@@ -1,12 +1,7 @@
 /**
- * S3 配置弹窗样式 — 字段网格 + 开关组 + 测试结果
+ * S3 配置弹窗样式 — 字段网格 + 开关组 + 测试结果（外壳/底部按钮由共享 Dialog 承担）
  */
 @use '@/variables.scss' as *;
-
-.fm-config-dialog {
-  width: 520px;
-  max-width: 92vw;
-}
 
 .fm-config-grid {
   display: grid;

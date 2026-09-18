@@ -1,26 +1,15 @@
 /**
- * 工具栏样式 — 分组按钮 + 视图切换 + 选中计数
+ * 工具栏样式 — 面板内定位（分栏线/内边距）+ 选中计数
+ * 布局（三段式容器）由共享 Toolbar 承担；此处只负责「作为面板表头」的排版
  */
 @use '@/variables.scss' as *;
 
+// 作为面板表头：与面包屑/浏览区之间补分栏线，并让出面板左右内边距（Toolbar 的 padded 已关闭）
 .fm-toolbar {
-  display: flex;
-  align-items: center;
-  gap: $s-3;
   padding: $s-2 $s-4;
   border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: 0;
   flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.fm-toolbar-group {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-}
-
-.fm-toolbar-spacer {
-  flex: 1;
 }
 
 .fm-selected-count {

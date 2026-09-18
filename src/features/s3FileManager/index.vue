@@ -10,6 +10,7 @@
         size="xsmall"
         icon="close"
         :icon-size="14"
+        :aria-label="i18n.close"
         @click="handleClose"
       />
     </div>
@@ -38,7 +39,6 @@
     <!-- 已配置：主体 -->
     <template v-else>
       <FmToolbar
-        :is-configured="isConfigured"
         :busy="busy"
         :selected-count="selectedCount"
         :view-mode="prefs.viewMode"
@@ -75,38 +75,23 @@
         @dragleave="externalDrop.onDragLeave"
         @drop="externalDrop.onDrop"
       >
-        <!-- 传输进度条 -->
+        <!-- 进度条：传输与批量操作共用一段（共享 ProgressBar） -->
         <div
-          v-if="transferProgress"
+          v-if="progressInfo"
           class="fm-progress"
         >
+          <ProgressBar
+            :value="progressInfo.percent"
+            size="xsmall"
+            :show-value="false"
+          />
           <div class="fm-progress-info">
-            <span class="fm-progress-label">{{ transferProgress.label }}</span>
-            <span class="fm-progress-file">{{ transferProgress.currentFile }}</span>
-            <span class="fm-progress-count">{{ transferProgress.done }} / {{ transferProgress.total }}</span>
-          </div>
-          <div class="fm-progress-bar">
-            <div
-              class="fm-progress-fill"
-              :style="{ width: `${transferProgress.percent}%` }"
-            />
-          </div>
-        </div>
-
-        <!-- 批量操作进度条 -->
-        <div
-          v-if="opProgress"
-          class="fm-progress"
-        >
-          <div class="fm-progress-info">
-            <span class="fm-progress-label">{{ opProgress.label }}</span>
-            <span class="fm-progress-count">{{ opProgress.done }} / {{ opProgress.total }}</span>
-          </div>
-          <div class="fm-progress-bar">
-            <div
-              class="fm-progress-fill"
-              :style="{ width: `${opPercent}%` }"
-            />
+            <span class="fm-progress-label">{{ progressInfo.label }}</span>
+            <span
+              v-if="progressInfo.currentFile"
+              class="fm-progress-file"
+            >{{ progressInfo.currentFile }}</span>
+            <span class="fm-progress-count">{{ progressInfo.done }} / {{ progressInfo.total }}</span>
           </div>
         </div>
 
@@ -139,12 +124,13 @@
       </div>
     </template>
 
-    <!-- 右键菜单 -->
+    <!-- 右键菜单（共享 TieredMenu popup） -->
     <FmContextMenu
       :visible="contextMenu.visible"
       :x="contextMenu.x"
       :y="contextMenu.y"
       :items="contextMenuItems"
+      :aria-label="i18n.contextMenuLabel"
       @select="handleMenuSelect"
       @close="contextMenu.visible = false"
     />
@@ -195,11 +181,10 @@
       :logs="logs"
       :i18n="i18n"
       :request-clear-confirm="requestClearLogsConfirm"
-      @clear="clearLogs"
       @close="showLog = false"
     />
 
-    <!-- 通用确认框（删除/清空日志等危险操作） -->
+    <!-- 通用确认框（删除/清空日志/上传覆盖等危险操作） -->
     <ConfirmDialog
       v-if="confirmState"
       :visible="true"
@@ -217,10 +202,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue"
 import Button from "@/components/Button.vue"
+import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import ProgressBar from "@/components/ProgressBar.vue"
+import type { TieredMenuItem } from "@/components/TieredMenu.vue"
 import type { S3FileManagerStorage } from "./types/storage"
-import type { FmPrefs, S3Entry, S3FileManagerI18n, ViewMode } from "./types"
-import { DEFAULT_FM_PREFS } from "./types"
+import type { S3Entry, S3FileManagerI18n } from "./types"
 import { useS3FmClient } from "./composables/useS3FmClient"
 import { useS3Entries } from "./composables/useS3Entries"
 import { useS3Selection } from "./composables/useS3Selection"
@@ -228,16 +215,16 @@ import { useS3FileOps } from "./composables/useS3FileOps"
 import { useS3Transfer } from "./composables/useS3Transfer"
 import { useFileOpLogs } from "./composables/useFileOpLogs"
 import { useExternalDrop } from "./composables/useExternalDrop"
+import { useFmConfirm } from "./composables/useFmConfirm"
+import { useFmPrefs } from "./composables/useFmPrefs"
 import FmToolbar from "./components/FmToolbar.vue"
 import FmBreadcrumb from "./components/FmBreadcrumb.vue"
 import FmEntryList from "./components/FmEntryList.vue"
 import FmContextMenu from "./components/FmContextMenu.vue"
-import type { FmMenuItem } from "./components/FmContextMenu.vue"
 import FmConfigDialog from "./components/FmConfigDialog.vue"
 import FmNameDialog from "./components/FmNameDialog.vue"
 import FmMoveCopyDialog from "./components/FmMoveCopyDialog.vue"
 import FmLogPanel from "./components/FmLogPanel.vue"
-import ConfirmDialog from "@/components/ConfirmDialog.vue"
 
 const props = defineProps<{
   storage: S3FileManagerStorage
@@ -261,14 +248,19 @@ const { selectedEntries, selectedCount, isSelected, handleItemClick: selectItemC
 
 const { logs, loadLogs, addLog, clearLogs } = useFileOpLogs({ storage })
 
+const { confirmState, requestConfirm, handleConfirmAccept, handleConfirmCancel } = useFmConfirm()
+
+const { prefs, setViewMode, loadPrefs } = useFmPrefs({ storage, sortField, sortAsc })
+
 /** 清空日志确认（与删除共用统一确认框） */
 function requestClearLogsConfirm(): void {
-  requestConfirm(
+  void requestConfirm(
     i18n.clearLogs,
     i18n.confirmClearLogs,
-    () => { void clearLogs() },
-    i18n.clearLogs,
-  )
+    { confirmText: i18n.clearLogs, danger: true },
+  ).then((ok) => {
+    if (ok) { void clearLogs() }
+  })
 }
 
 /** 写操作后：失效缓存 + 刷新 + 清空选中 */
@@ -288,62 +280,13 @@ const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntr
   currentPrefix,
   getEntries: () => entries.value,
   addLog, afterMutation,
-  confirmAction: requestConfirmAsync,
+  confirmAction: requestConfirm,
 })
 
 // 外部文件/文件夹拖入浏览区 → 上传到当前目录
 const externalDrop = useExternalDrop((files) => { void uploadDropped(files) })
 
 // ========== 本地 UI 状态 ==========
-
-const prefs = ref<FmPrefs>({ ...DEFAULT_FM_PREFS })
-
-/** 待确认动作：由统一确认框承载，确认后执行 onConfirm 回调 */
-const confirmState = ref<{
-  title: string
-  message: string
-  confirmText?: string
-  cancelText?: string
-  danger?: boolean
-  onConfirm: () => void
-  onCancel?: () => void
-} | null>(null)
-
-function requestConfirm(
-  title: string,
-  message: string,
-  onConfirm: () => void,
-  confirmText?: string,
-): void {
-  confirmState.value = { title, message, onConfirm, confirmText }
-}
-
-/** 供传输层等待确认结果的 Promise 版本 */
-function requestConfirmAsync(title: string, message: string, confirmText?: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    confirmState.value = {
-      title,
-      message,
-      confirmText,
-      onConfirm: () => resolve(true),
-      onCancel: () => resolve(false),
-    }
-  })
-}
-
-function handleConfirmAccept(): void {
-  const state = confirmState.value
-  if (!state) { return }
-  confirmState.value = null
-  state.onConfirm()
-}
-
-function handleConfirmCancel(): void {
-  const state = confirmState.value
-  if (!state) { return }
-  confirmState.value = null
-  state.onCancel?.()
-}
 
 const showConfig = ref(false)
 const showNewFolder = ref(false)
@@ -356,32 +299,48 @@ const contextMenu = ref<{ visible: boolean; x: number; y: number; entry: S3Entry
 })
 
 const busy = computed(() => opBusy.value || transferring.value)
-const opPercent = computed(() => opProgress.value ? Math.round((opProgress.value.done / Math.max(opProgress.value.total, 1)) * 100) : 0)
+
+/** 统一进度视图模型：传输优先（含当前文件名），否则为批量操作进度 */
+const progressInfo = computed(() => {
+  const transfer = transferProgress.value
+  if (transfer) {
+    return {
+      label: transfer.label,
+      currentFile: transfer.currentFile,
+      done: transfer.done,
+      total: transfer.total,
+      percent: transfer.percent,
+    }
+  }
+  const op = opProgress.value
+  if (!op) { return null }
+  return {
+    label: op.label,
+    currentFile: "",
+    done: op.done,
+    total: op.total,
+    percent: Math.round((op.done / Math.max(op.total, 1)) * 100),
+  }
+})
 
 // 跨目录导航后清空选中，避免残留 key/锚点干扰新目录的选择与计数
 watch(currentPrefix, () => clearSelection())
 
-// 排序变更即时持久化（列头 toggleSort 不经过 setViewMode）；与已存偏好一致时跳过，避免启动恢复时冗余落盘
-watch([sortField, sortAsc], () => {
-  if (prefs.value.sortField === sortField.value && prefs.value.sortAsc === sortAsc.value) { return }
-  void savePrefs()
-})
-
 // ========== 右键菜单项（按选中态动态生成） ==========
 
-const contextMenuItems = computed<FmMenuItem[]>(() => {
+const contextMenuItems = computed<TieredMenuItem[]>(() => {
   const entry = contextMenu.value.entry
-  const items: FmMenuItem[] = []
+  const items: TieredMenuItem[] = []
   if (entry?.isFolder) {
-    items.push({ action: "open", label: i18n.menuOpen, icon: "folder" })
+    items.push({ key: "open", label: i18n.menuOpen, icon: "folder" })
   }
-  items.push({ action: "download", label: i18n.download, icon: "download" })
-  items.push({ action: "copy", label: i18n.copy, icon: "copy" })
-  items.push({ action: "move", label: i18n.move, icon: "folderMove" })
+  items.push({ key: "download", label: i18n.download, icon: "download" })
+  items.push({ key: "copy", label: i18n.copy, icon: "copy" })
+  items.push({ key: "move", label: i18n.move, icon: "folderMove" })
   if (selectedCount.value <= 1) {
-    items.push({ action: "rename", label: i18n.rename, icon: "edit" })
+    items.push({ key: "rename", label: i18n.rename, icon: "edit" })
   }
-  items.push({ action: "delete", label: i18n.delete, icon: "delete", danger: true })
+  items.push({ key: "delete", label: i18n.delete, icon: "delete", danger: true })
   return items
 })
 
@@ -480,25 +439,13 @@ function handleNewFolderConfirm(name: string): void {
 function handleDelete(): void {
   if (selectedEntries.value.length === 0) { return }
   // 删除确认："确定删除选中的 N 项？文件夹将递归删除，此操作不可撤销"
-  requestConfirm(
+  void requestConfirm(
     i18n.delete,
     `${i18n.confirmDelete} (${selectedEntries.value.length})`,
-    () => { void deleteEntries(selectedEntries.value) },
-    i18n.delete,
-  )
-}
-
-// ========== 视图偏好 ==========
-
-async function setViewMode(mode: ViewMode): Promise<void> {
-  prefs.value.viewMode = mode
-  await savePrefs()
-}
-
-async function savePrefs(): Promise<void> {
-  prefs.value.sortField = sortField.value
-  prefs.value.sortAsc = sortAsc.value
-  await storage.prefs.save({ ...prefs.value })
+    { confirmText: i18n.delete, danger: true },
+  ).then((ok) => {
+    if (ok) { void deleteEntries(selectedEntries.value) }
+  })
 }
 
 // ========== 配置保存回调 ==========
@@ -521,13 +468,7 @@ function handleClose(): void {
 
 onMounted(async () => {
   await Promise.all([loadConfig(), loadLogs()])
-  try {
-    prefs.value = await storage.prefs.loadOrDefault()
-    sortField.value = prefs.value.sortField
-    sortAsc.value = prefs.value.sortAsc
-  } catch {
-    // 偏好加载失败用默认值
-  }
+  await loadPrefs()
   if (isConfigured.value) {
     await loadDir(getRootPrefix())
   }

@@ -7,6 +7,7 @@
  */
 import type { Plugin } from "siyuan"
 import type { S3Config } from "@/utils/s3/types"
+import { S3_BACKUP_CONFIG_KEY } from "@/utils/s3/types"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -16,6 +17,8 @@ export type { S3Config, S3FileInfo } from "@/utils/s3/types"
 export {
   MSG_DESKTOP_ONLY, DEFAULT_UPLOAD_TIMEOUT_SEC, DEFAULT_S3_PREFIX,
   DEFAULT_S3_CONFIG,
+  // 跨模块共享常量（与 s3FileManager 同名同值，提升后避免各自维护一份）
+  TRANSFER_MAX_RETRIES, MAX_LOG_COUNT, MAX_LOG_DETAIL_FILES,
 } from "@/utils/s3/types"
 
 // ========== 备份模式接口 ==========
@@ -127,9 +130,6 @@ export interface BackupLogDetail {
 
 // ========== 默认值常量 ==========
 
-/** 单文件传输（上传/下载）最大重试次数（不含首次尝试） */
-export const TRANSFER_MAX_RETRIES = 2
-
 /** 全量上传并发数（对象为大 ZIP，带宽易饱和，用小并发） */
 export const FULL_UPLOAD_CONCURRENCY = 2
 
@@ -141,12 +141,6 @@ export const DEFAULT_BACKUP_MODE: BackupMode = {
   s3Upload: false,
   s3Incremental: false,
 }
-
-/** 日志最大保留条数 */
-export const MAX_LOG_COUNT = 200
-
-/** 日志 detail 中每类文件清单的存储上限（超出记入 omitted 计数，防止首次全量备份撑爆 storage） */
-export const MAX_LOG_DETAIL_FILES = 200
 
 /** 本地备份列表最大显示条数 */
 export const MAX_LOCAL_BACKUP_COUNT = 50
@@ -279,7 +273,8 @@ export class BackupError extends Error {
 // ========== 存储键常量 ==========
 
 const STORAGE_KEYS = {
-  S3_CONFIG: "s3-backup-config",
+  // S3 配置键提升为共享常量：s3FileManager 的「从 S3 备份导入」只读消费同一键
+  S3_CONFIG: S3_BACKUP_CONFIG_KEY,
   BACKUP_SETTINGS: "s3-backup-settings",
   BACKUP_HISTORY: "s3-backup-history",
   BACKUP_LOG: "s3-backup-log",

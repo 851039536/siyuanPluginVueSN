@@ -34,6 +34,8 @@ interface PreviewMenuItem {
   icon?: IconKey
   disabled?: boolean
   separator?: boolean
+  /** 危险项：文字与图标取语义错误色（不可撤销操作的视觉提示） */
+  danger?: boolean
   items?: PreviewMenuItem[]
   command?: (item: PreviewMenuItem, event: MouseEvent | KeyboardEvent) => void
 }
@@ -83,7 +85,8 @@ const FILE_MENU: PreviewMenuItem[] = [
   },
   { key: "sep-2", separator: true },
   { key: "rename", label: "重命名", icon: "pencilMultiple" },
-  { key: "delete", label: "删除", icon: "delete" },
+  // danger：不可撤销操作（删除）取语义错误色，与常规项一眼区分
+  { key: "delete", label: "删除", icon: "delete", danger: true },
 ]
 
 /** 只到二级的浅模型（演示「不必都做深」） */
@@ -244,6 +247,19 @@ const model = [
   { key: "copy", label: "复制" },
   { key: "paste", label: "粘贴", disabled: true },
   { key: "sep", separator: true },
+]`,
+    },
+    {
+      title: "危险项（danger）",
+      props: {
+        expand: true,
+      },
+      code: `<!-- danger 项：文字与图标取语义错误色，用于「删除」这类不可撤销操作；
+     不影响交互与键盘漫游，仅改配色 -->
+const model = [
+  { key: "rename", label: "重命名", icon: "pencilMultiple" },
+  { key: "sep", separator: true },
+  { key: "delete", label: "删除", icon: "delete", danger: true },
 ]`,
     },
     {

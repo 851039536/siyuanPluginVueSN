@@ -9,14 +9,14 @@ import { ref } from "vue"
 import type { Ref } from "vue"
 import { showMessage } from "siyuan"
 import type { S3Client } from "@/utils/s3/s3Client"
-import { runWithConcurrency } from "@/utils/s3/concurrency"
+import { runWithConcurrency, runWithRetries } from "@/utils/s3/concurrency"
 import { LARGE_FILE_WARN_SIZE } from "@/utils/s3/types"
 import { getNodeModules } from "@/utils/nodeModules"
 import { pickDirectory, pickFiles, getPathsFromFiles } from "@/utils/electronDialog"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
-import type { FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
-import { TRANSFER_CONCURRENCY, TRANSFER_MAX_RETRIES } from "../types"
+import type { ConfirmRequest, FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
+import { TRANSFER_CONCURRENCY } from "../types"
 import { buildFailDetail, nameFromKey } from "../utils"
 
 /** 并发上传时允许驻留内存的 Buffer 总预算（多文件/大文件场景防 OOM） */
@@ -39,16 +39,10 @@ export function useS3Transfer(deps: {
   addLog: (entry: Omit<FileOpLog, "id" | "time" | "hostname">) => void
   /** 传输完成后回调：失效缓存 + 刷新当前目录（下载不改远端可不刷新，由实现决定） */
   afterMutation: () => Promise<void>
-  /** 确认回调（由宿主统一确认框承载，返回 Promise<boolean>；缺省回退原生 confirm） */
-  confirmAction?: (title: string, message: string, confirmText?: string) => Promise<boolean>
+  /** 确认回调（由宿主的共享确认框承载，返回 Promise<boolean>） */
+  confirmAction: ConfirmRequest
 }) {
   const { i18n } = deps
-
-  /** 统一确认入口：优先宿主确认框，未注入时回退原生 confirm */
-  async function confirmWithHost(title: string, message: string, confirmText?: string): Promise<boolean> {
-    if (deps.confirmAction) { return deps.confirmAction(title, message, confirmText) }
-    return confirm(message)
-  }
 
   const transferring = ref(false)
   const transferProgress = ref<TransferProgress | null>(null)
@@ -64,16 +58,10 @@ export function useS3Transfer(deps: {
     statusTask.progress({ label, percent })
   }
 
-  /** 带重试执行单个传输任务 */
+  /** 带重试执行单个传输任务（重试循环走共享层 runWithRetries，耗尽后抛最后一次异常） */
   async function withRetries(task: () => Promise<void>): Promise<void> {
-    for (let attempt = 0; attempt <= TRANSFER_MAX_RETRIES; attempt++) {
-      try {
-        await task()
-        return
-      } catch (err) {
-        if (attempt === TRANSFER_MAX_RETRIES) { throw err }
-      }
-    }
+    const { ok, error } = await runWithRetries(task)
+    if (!ok) { throw error }
   }
 
   // ========== 上传 ==========
@@ -173,7 +161,7 @@ export function useS3Transfer(deps: {
           }))
           uploadedBytes += sizeMap.get(task.key) ?? buffer.length
         } catch (err) {
-          // console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
+          console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
           failed.push(task.name)
         } finally {
           if (buffer) { releaseMemory(buffer.length) }
@@ -246,7 +234,7 @@ export function useS3Transfer(deps: {
     const conflicts = [...new Set(paths.map((p) => path.basename(p)))].filter((name) => existingNames.has(name))
     if (conflicts.length > 0) {
       // 覆盖确认："以下文件已存在，继续上传将覆盖："
-      if (!await confirmWithHost(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), i18n.upload)) { return }
+      if (!await deps.confirmAction(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), { confirmText: i18n.upload })) { return }
     }
 
     const tasks: UploadTask[] = paths.map((p) => {
@@ -304,7 +292,7 @@ export function useS3Transfer(deps: {
     const conflicts = [...new Set(topLevelNames)].filter((name) => existingNames.has(name))
     if (conflicts.length > 0) {
       // 覆盖确认："以下文件已存在，继续上传将覆盖："
-      if (!await confirmWithHost(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), i18n.upload)) { return }
+      if (!await deps.confirmAction(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), { confirmText: i18n.upload })) { return }
     }
 
     await runUpload(tasks, `${tasks.length} ${i18n.itemsUnit}`)
@@ -367,7 +355,7 @@ export function useS3Transfer(deps: {
           reportProgress(i18n.statusDownloading, displayName, done, tasks.length, 0)
           await withRetries(() => client.download(task.key, task.dest))
         } catch (err) {
-          // console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
+          console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
           failed.push(task.key)
         }
         done++

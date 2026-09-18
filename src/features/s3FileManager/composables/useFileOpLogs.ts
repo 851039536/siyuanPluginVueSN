@@ -6,8 +6,8 @@
  */
 import { ref } from "vue"
 import { getHostname } from "@/utils/s3/concurrency"
+import { MAX_LOG_COUNT } from "@/utils/s3/types"
 import type { FileOpLog } from "../types"
-import { MAX_LOG_COUNT } from "../types"
 import type { S3FileManagerStorage } from "../types/storage"
 
 export function useFileOpLogs(deps: { storage: S3FileManagerStorage }) {
@@ -17,8 +17,8 @@ export function useFileOpLogs(deps: { storage: S3FileManagerStorage }) {
   async function loadLogs(): Promise<void> {
     try {
       logs.value = (await deps.storage.logs.loadOrDefault()).logs
-    } catch (err) {
-      // console.error("[S3文件管理] 加载日志失败:", getErrorMessage(err))
+    } catch {
+      // 读取失败保持空列表（存储层异常不应阻断面板打开）
     }
   }
 
@@ -40,8 +40,8 @@ export function useFileOpLogs(deps: { storage: S3FileManagerStorage }) {
   async function saveLogs(): Promise<void> {
     try {
       await deps.storage.logs.save({ logs: logs.value })
-    } catch (err) {
-      // console.warn("[S3文件管理] 日志落盘失败:", getErrorMessage(err))
+    } catch {
+      // 落盘失败不阻断当前操作（内存态仍然可用）
     }
   }
 

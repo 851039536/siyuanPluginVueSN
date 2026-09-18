@@ -1,5 +1,6 @@
 /**
  * 面包屑地址栏样式 — 根节点 + 分段导航 + 计数/刷新
+ * 面包屑按钮复用共享 Button（ghost + text），此处只负责容器排版
  */
 @use '@/variables.scss' as *;
 
@@ -29,27 +30,10 @@
   white-space: nowrap;
 }
 
-.fm-crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-1;
-  padding: $s-1 $s-1;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  cursor: pointer;
-  border-radius: $r-sm;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-primary);
-  }
-}
-
+// 分隔符：共享 IconWrapper（原先为 &#9656; 字符，不符「禁止字符代图标」）
 .fm-crumb-sep {
   color: var(--b3-theme-on-surface-light);
-  font-size: $t-2xs;
+  flex: none;
 }
 
 .fm-breadcrumb-actions {

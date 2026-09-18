@@ -1,8 +1,6 @@
 @use '@/variables.scss' as *;
 
 // ==================== 本地变量 & 基础设施 ====================
-$_pad-tab-x: 10px;
-$_grid-title-size: 0.625rem; // 10px — 网格模式下标题字号
 $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
 // 占位选择器：编译后不产生额外 CSS 选择器，仅消除源码重复
@@ -35,6 +33,12 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     gap: 0;
     height: 100%;
     padding: 0 $s-px3;
+
+    // 可点击项渲染为真实 <button>（键盘可达），此处抹掉 UA 默认外观
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: inherit;
 
     .monitor-icon {
       font-size: $t-sm; // 图标尺寸
@@ -95,10 +99,15 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     align-self: center;
   }
 
-  // 可点击项目通用样式
+  // 可点击项目通用样式（配色由调用方经 `color` prop 内联，取自 FEATURE_ICONS 真源，
+  // 故此处不再为每个功能维护一个 *-item 配色类 —— 原先 17 个类中有 8 个与注册表对不上）
   .action-item {
     cursor: pointer;
     padding: 0 $s-1;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: inherit;
 
     &:hover {
       background: var(--b3-theme-surface-lighter);
@@ -106,52 +115,18 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
       .monitor-icon { opacity: 1; }
     }
+
+    // 键盘可达：聚焦给出可见焦点环（原先为 <div>，无法聚焦）
+    &:focus-visible {
+      outline: 2px solid var(--b3-theme-primary);
+      outline-offset: -2px;
+    }
   }
 
+  // 密码箱：与前一入口之间的分隔线（唯一带结构性装饰的快捷项，保留为独立类）
   .password-vault-item {
-    color: var(--b3-theme-success);
     border-left: 1px solid var(--b3-theme-border);
     padding-left: $s-px6;
-  }
-
-  // 功能快捷入口颜色（硬编码色值提取为 CSS 自定义属性，便于主题化）
-  --status-color-html: #e67e22;
-  --status-color-image-compressor: #ef4444;
-  --status-color-format: #07c160;
-  --status-color-website: #8b5cf6;
-  --status-color-tool: #6366f1;
-  --status-color-component-preview: #0ea5e9;
-
-  .video-manager-item {
-    color: var(--b3-theme-primary);
-  }
-
-  .html-viewer-item {
-    color: var(--status-color-html);
-  }
-
-  .image-compressor-item {
-    color: var(--status-color-image-compressor);
-  }
-
-  .skills-viewer-item {
-    color: var(--b3-theme-warning);
-  }
-
-  .format-assistant-item {
-    color: var(--status-color-format);
-  }
-
-  .website-navigation-item {
-    color: var(--status-color-website);
-  }
-
-  .tool-collection-item {
-    color: var(--status-color-tool);
-  }
-
-  .component-preview-item {
-    color: var(--status-color-component-preview);
   }
 
   .status-bar-task-item {
@@ -230,71 +205,14 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   gap: $s-1;
 }
 
-.feature-drawer-view-btn,
-.feature-drawer-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  opacity: 0.6;
-  transition: border-color 0.12s, color 0.12s; // 移除多余 opacity transition（hover 时 opacity 恒定）
+// 头部按钮（管理分类 / 视图切换 / 关闭）改用共享 Button，其外观与焦点环由组件承担，
+// 故原先 24×24 自建按钮样式已移除。
 
-  &:hover {
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-    opacity: 1;
-  }
-}
-
-// 搜索栏
+// 搜索栏（输入框为共享 Input，自带前后缀图标与清除按钮，此处只负责容器留白）
 .feature-drawer-search {
-  @extend %flex-center, %flex-shrink-0;
-  gap: $s-1;
+  @extend %flex-shrink-0;
   padding: $s-1 $s-2;
   border-bottom: 1px solid var(--b3-border-color);
-
-  .search-icon {
-    @extend %flex-shrink-0;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.4;
-  }
-
-  .search-input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    color: var(--b3-theme-on-background);
-    font-size: $t-xs;
-    outline: none;
-    padding: $s-1 0;
-
-    &::placeholder {
-      color: var(--b3-theme-on-surface);
-      opacity: 0.4;
-    }
-  }
-
-  .search-clear {
-    @extend %flex-shrink-0;
-    @include hover-lift(0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border: none;
-    border-radius: 50%;
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-on-surface);
-    cursor: pointer;
-    transition: opacity 0.12s;
-  }
 }
 
 .feature-drawer-empty {
@@ -315,27 +233,9 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   overflow-x: auto;
 }
 
-.feature-drawer-tab {
-  @extend %flex-shrink-0;
-  padding: $s-px3 $_pad-tab-x;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-lg;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.12s, color 0.12s; // 移除多余 border-color transition（active 是瞬间切换）
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  &.active {
-    background: var(--b3-theme-primary-lightest);
-    border-color: var(--b3-theme-primary);
-    color: var(--b3-theme-primary);
-  }
+// 分类 Tab：互斥分段切换，外观与 aria-pressed 由共享 Button 承担，此处仅去除按钮间隙
+.feature-drawer-tabs > .si-button {
+  flex-shrink: 0;
 }
 
 .feature-drawer-list {
@@ -377,16 +277,26 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     flex: 1;
   }
 
-  // 角标（无边框，hover 显示）
+  // 角标（真实 <button>，无边框，hover 显示）
   .feature-drawer-item-badge {
     @extend %flex-center, %flex-shrink-0;
     justify-content: center;
     width: 16px;
     height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.12s, color 0.12s;
     color: var(--b3-theme-on-surface);
+
+    // 键盘可达：聚焦时给出可见焦点环（原 <span> 实现无法聚焦）
+    &:focus-visible {
+      outline: 2px solid var(--b3-theme-primary);
+      outline-offset: 1px;
+      opacity: 1;
+    }
 
     .feature-drawer-item:hover & {
       opacity: 0.35;
@@ -404,15 +314,8 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
 
-    &.badge-pin.active {
-      color: var(--b3-theme-primary);
-    }
-
-    &.badge-category.active {
-      color: var(--b3-theme-primary);
-    }
-
-    &.badge-toggle.active {
+    // 三个角标激活态同一主题色，合并为一条（原先拆成三条同值规则）
+    &.active {
       color: var(--b3-theme-primary);
     }
   }
@@ -434,7 +337,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .feature-drawer-item-title {
-      font-size: $_grid-title-size;
+      font-size: $t-2xs; // 10px — 网格模式下标题字号（原为局部硬编码 0.625rem，与 Token 同值）
       text-align: center;
       flex: none;
     }
@@ -478,24 +381,10 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     padding-top: $s-2;
   }
 
+  // 分类名输入框：共享 Input 承担外观与错误态（error prop），此处只保证占满可用宽度
   .manage-input {
     flex: 1;
     min-width: 0;
-    padding: $s-px3 $s-2;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-base;
-    background: transparent;
-    color: var(--b3-theme-on-background);
-    font-size: $t-xs;
-    outline: none;
-
-    &:focus {
-      border-color: var(--b3-theme-primary);
-    }
-
-    &.invalid {
-      border-color: var(--b3-theme-error);
-    }
   }
 
   .manage-count {
@@ -504,91 +393,10 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
   }
-
-  .manage-btn {
-    @extend %flex-shrink-0;
-    @extend %flex-center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-sm;
-    background: transparent;
-    color: var(--b3-theme-on-surface);
-    cursor: pointer;
-    opacity: 0.6;
-    transition: border-color 0.12s, color 0.12s;
-
-    &:hover {
-      border-color: var(--b3-theme-primary);
-      color: var(--b3-theme-primary);
-      opacity: 1;
-    }
-  }
-
-  .manage-error {
-    padding: $s-px3 0;
-    font-size: $t-2xs;
-    color: var(--b3-theme-error);
-  }
 }
 
-// 分类分配弹出菜单
-.category-assign-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-}
-
-.category-assign-menu {
-  position: fixed;
-  z-index: 10000;
-  min-width: 160px;
-  max-width: 240px; // 防止长分类名撑宽菜单溢出视口（与 openAssignMenu 的 MENU_WIDTH 钳制对齐）
-  max-height: 220px;
-  overflow-y: auto;
-  padding: $s-1;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-lg;
-
-  .category-assign-item {
-    @extend %flex-center;
-    width: 100%;
-    padding: $s-1 $s-2;
-    border: none;
-    border-radius: $r-base;
-    background: transparent;
-    color: var(--b3-theme-on-background);
-    font-size: $t-xs;
-    cursor: pointer;
-    text-align: left;
-
-    &:hover {
-      background: var(--b3-theme-surface-lighter);
-    }
-
-    &.active {
-      background: var(--b3-theme-primary-lightest);
-      color: var(--b3-theme-primary);
-    }
-  }
-
-  // 长分类名截断显示（nowrap + ellipsis 由 label 层承担）
-  .category-assign-label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .category-assign-empty {
-    padding: $s-2;
-    font-size: $t-2xs;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-  }
-}
+// 分类分配弹出菜单：整体复用共享 TieredMenu（popup 模式）的定位/层级/键盘/无障碍，
+// 故原先 55 行自建 .category-assign-* 样式已全部移除。
 
 // 抽屉滑入动画
 .drawer-slide-enter-active {

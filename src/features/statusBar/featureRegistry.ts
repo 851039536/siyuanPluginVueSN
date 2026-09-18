@@ -1,336 +1,212 @@
 /**
  * 状态栏功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源
- * 添加新功能只需在 FEATURES 数组新增一条；title / 处理逻辑不再分散于多处
+ *
+ * 元数据（title / icon / color）**不再本地维护**，而是从项目单一数据源派生：
+ * - title ← `FEATURE_CONFIG[].defaultTitle`（i18n 经 `titleI18nKey` 解析）
+ * - icon / color ← `FEATURE_ICONS[id]`（真源）
+ * 本文件只声明「状态栏独有的增量信息」：收录白名单、状态栏快捷图标与类名、监控项。
+ *
+ * 新增可 pin 功能 = 在 DRAWER_FEATURE_IDS 加一个 id（其余自动继承）。
  */
 import type { Plugin } from "siyuan"
-import type { FeatureDrawerItem } from "./components/FeatureDrawer.vue"
+import type { IconKey } from "@/components/kit/icons"
+import { FEATURE_ICONS } from "@/config/icons"
+import type { FeatureMeta } from "@/features/config"
+import { FEATURE_CONFIG } from "@/features/config"
 import { emitCustomEvent } from "@/utils/eventBus"
-
-// ============================================================
-// 类型
-// ============================================================
-
-export interface FeatureRegistryEntry extends FeatureDrawerItem {
-  // 状态栏快捷项，缺省则不在状态栏显示
-  shortcut?: { icon: string, itemClass: string }
-  // 点击（抽屉选中或快捷点击）触发的动作（监控项无动作）
-  action?: () => void
-}
+import type { FeatureRegistryEntry } from "./types"
 
 // ============================================================
 // i18n 辅助
 // ============================================================
 
-// 思源类型将 i18n 声明为扁平 IObject，嵌套命名空间需显式收窄
-type I18nShard = Record<string, string>
+/**
+ * 读取插件的 i18n 分片（嵌套命名空间），缺失时返回空对象。
+ * 仅用于 profile/statusBar 等「分片自身」作用域下的取值。
+ */
+function getI18nShard(plugin: Plugin | undefined, name: string): Record<string, string> {
+  return ((plugin?.i18n as unknown as Record<string, Record<string, string>>)?.[name]) ?? {}
+}
 
-/** 读取插件的 i18n 分片（嵌套命名空间），缺失时返回空对象 */
-function getI18nShard(plugin: Plugin | undefined, name: string): I18nShard {
-  return ((plugin?.i18n as unknown as Record<string, I18nShard>)?.[name]) ?? {}
+/**
+ * 按点号路径解析 i18n 文案（值必须是字符串；对象/缺失一律视为不可用）。
+ * `FEATURE_CONFIG.titleI18nKey` 存在三种形态：点号路径（`s3FileManager.s3FileManager`）、
+ * 顶层分片名（`s3Backup`）、以及缺省（此时回退 `defaultTitle`）。
+ */
+function resolveI18nText(i18n: Record<string, unknown>, key: string): string | undefined {
+  const value = key.includes(".")
+    ? key.split(".").reduce<unknown>((acc, k) => (acc as Record<string, unknown>)?.[k], i18n)
+    : i18n[key]
+  return typeof value === "string" && value ? value : undefined
 }
 
 // ============================================================
-// 功能注册表
+// 状态栏独有的增量声明
 // ============================================================
 
-function buildFeatures(plugin: Plugin): FeatureRegistryEntry[] {
-  const quickNoteI18n = getI18nShard(plugin, "quickNote")
-  const quickNoteResetI18n = getI18nShard(plugin, "quickNoteReset")
-  const imageCreationI18n = getI18nShard(plugin, "imageCreation")
-  const globalRelationsI18n = getI18nShard(plugin, "globalRelations")
-  const minimalBrowserI18n = getI18nShard(plugin, "minimalBrowser")
-  const ideaGeneratorI18n = getI18nShard(plugin, "ideaGenerator")
-  const s3FileManagerI18n = getI18nShard(plugin, "s3FileManager")
-  const imageCompressorI18n = getI18nShard(plugin, "imageCompressor")
-  const bookmarkMarkerI18n = getI18nShard(plugin, "bookmarkMarker")
-  const componentPreviewI18n = getI18nShard(plugin, "componentPreview")
-  const statusBarI18n = getI18nShard(plugin, "statusBar")
+/** 抽屉收录的功能 id（顺序即抽屉内展示顺序；未列出的功能不进抽屉） */
+const DRAWER_FEATURE_IDS = [
+  "superPanel",
+  "video",
+  "passwordVault",
+  "skillsViewer",
+  "htmlViewer",
+  "formatAssistant",
+  "websiteNavigation",
+  "minimalBrowser",
+  "ideaGenerator",
+  "imageCreation",
+  "s3Backup",
+  "s3FileManager",
+  "globalRelations",
+  "everythingSearch",
+  "imageCompressor",
+  "toolCollection",
+  "componentPreview",
+  "bookmarkMarker",
+  "quickNote",
+] as const
 
-  return [
-    {
-      id: "superPanel",
-      icon: "mdi:view-dashboard",
-      color: "#3b82f6",
-      title: "超级面板",
-      pinnable: false,
-      action: () => emitCustomEvent("toggleSuperPanel"),
-    },
-    {
-      id: "video",
-      icon: "mdi:video",
-      color: "#6366f1",
-      title: "视频管理器",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:video",
-        itemClass: "action-item video-manager-item",
-      },
-      action: () => emitCustomEvent("openVideoManager"),
-    },
-    {
-      id: "passwordVault",
-      icon: "mdi:lock",
-      color: "#22c55e",
-      title: "密码箱",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:lock-key",
-        itemClass: "action-item password-vault-item",
-      },
-      action: () => emitCustomEvent("openPasswordVault"),
-    },
-    {
-      id: "skillsViewer",
-      icon: "mdi:puzzle",
-      color: "#f59e0b",
-      title: "Skills 查看器",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:puzzle-piece",
-        itemClass: "action-item skills-viewer-item",
-      },
-      action: () => emitCustomEvent("openSkillsViewer"),
-    },
-    {
-      id: "htmlViewer",
-      icon: "mdi:language-html5",
-      color: "#e67e22",
-      title: "HTML 展示",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:code",
-        itemClass: "action-item html-viewer-item",
-      },
-      action: () => emitCustomEvent("openHtmlViewer"),
-    },
-    {
-      id: "formatAssistant",
-      icon: "mdi:format-align-left",
-      color: "#07c160",
-      title: "排版助手",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:text-align-left",
-        itemClass: "action-item format-assistant-item",
-      },
-      action: () => emitCustomEvent("openFormatAssistant"),
-    },
-    {
-      id: "websiteNavigation",
-      icon: "mdi:link-variant",
-      color: "#8b5cf6",
-      title: "网站导航",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:link",
-        itemClass: "action-item website-navigation-item",
-      },
-      action: () => emitCustomEvent("toggleWebsiteNavigation"),
-    },
-    {
-      id: "minimalBrowser",
-      icon: "mdi:earth",
-      color: "#0ea5e9",
-      title: minimalBrowserI18n.title || "极简浏览器",
-      pinnable: true,
-      shortcut: {
-        icon: "mdi:earth",
-        itemClass: "action-item minimal-browser-item",
-      },
-      action: () => emitCustomEvent("openMinimalBrowser"),
-    },
-    {
-      id: "ideaGenerator",
-      icon: "mdi:lightbulb-on-outline",
-      color: "#9333ea",
-      title: ideaGeneratorI18n.title,
-      pinnable: true,
-      action: () => emitCustomEvent("openIdeaGenerator"),
-    },
-    {
-      id: "imageCreation",
-      icon: "mdi:image-text",
-      color: "#f59e0b",
-      title: imageCreationI18n.title,
-      pinnable: false,
-      shortcut: {
-        icon: "ph:image-square",
-        itemClass: "action-item image-creation-item",
-      },
-      action: () => emitCustomEvent("openImageCreation"),
-    },
-    {
-      id: "s3Backup",
-      icon: "mdi:cloud-upload",
-      color: "#f59e0b",
-      title: plugin?.i18n?.s3Backup || "S3 备份",
-      pinnable: true,
-      shortcut: {
-        icon: "mdi:cloud-upload",
-        itemClass: "action-item s3-backup-item",
-      },
-      action: () => emitCustomEvent("openS3Backup"),
-    },
-    {
-      id: "s3FileManager",
-      icon: "mdi:folder-network",
-      color: "#0ea5e9",
-      title: s3FileManagerI18n.s3FileManager || "S3 文件管理",
-      pinnable: true,
-      shortcut: {
-        icon: "mdi:folder-network",
-        itemClass: "action-item s3-file-manager-item",
-      },
-      action: () => emitCustomEvent("openS3FileManager"),
-    },
-    {
-      id: "globalRelations",
-      icon: "mdi:relation-many-to-many",
-      color: "#06b6d4",
-      title: globalRelationsI18n.panelTitle || "全局关系列表",
-      pinnable: true,
-      shortcut: {
-        icon: "mdi:relation-many-to-many",
-        itemClass: "action-item global-relations-item",
-      },
-      action: () => emitCustomEvent("toggleGlobalRelations"),
-    },
-    {
-      id: "everythingSearch",
-      icon: "ph:binoculars",
-      color: "#d97706",
-      title: "Everything 搜索",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:binoculars",
-        itemClass: "action-item everything-search-item",
-      },
-      action: () => emitCustomEvent("openEverythingSearch"),
-    },
-    {
-      id: "imageCompressor",
-      icon: "mdi:image",
-      color: "#ef4444",
-      title: imageCompressorI18n.title || "图片压缩",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:image",
-        itemClass: "action-item image-compressor-item",
-      },
-      action: () => emitCustomEvent("openImageCompressor"),
-    },
-    {
-      id: "toolCollection",
-      icon: "mdi:toolbox-outline",
-      color: "#6366f1",
-      title: plugin?.i18n?.toolCollection || "工具合集",
-      pinnable: true,
-      shortcut: {
-        icon: "mdi:toolbox-outline",
-        itemClass: "action-item tool-collection-item",
-      },
-      action: () => emitCustomEvent("toggleToolCollection"),
-    },
-    {
-      id: "componentPreview",
-      icon: "mdi:view-grid-outline",
-      color: "#0ea5e9",
-      title: componentPreviewI18n.title || "组件预览",
-      pinnable: true,
-      shortcut: {
-        icon: "mdi:view-grid-outline",
-        itemClass: "action-item component-preview-item",
-      },
-      action: () => emitCustomEvent("openComponentPreview"),
-    },
-    {
-      id: "bookmarkMarker",
-      icon: "mdi:bookmark-multiple",
-      color: "#10b981",
-      title: bookmarkMarkerI18n.title || "书签标记",
-      pinnable: true,
-      shortcut: {
-        icon: "ph:bookmark-simple",
-        itemClass: "action-item bookmark-marker-item",
-      },
-      action: () => emitCustomEvent("openBookmarkMarker"),
-    },
-    {
-      id: "quickNote",
-      icon: "mdi:note-edit-outline",
-      color: "#f59e0b",
-      title: quickNoteI18n.title,
-      pinnable: true,
-      shortcut: {
-        icon: "ph:note-pencil",
-        itemClass: "action-item quick-note-item",
-      },
-      action: () => emitCustomEvent("toggleQuickNote"),
-    },
-    // 速记恢复：弹窗卡死/位置异常时的应急兜底，点击即复位为居中展开态
-    {
-      id: "quickNoteReset",
-      icon: "ph:arrow-counter-clockwise",
-      color: "#f59e0b",
-      title: quickNoteResetI18n.title,
-      pinnable: false,
-      action: () => emitCustomEvent("resetQuickNote"),
-    },
-    // ========== 状态栏监控项（可固定控制显隐） ==========
-    {
-      id: "monitor-notes",
-      icon: "ph:file-text",
-      color: "#3b82f6",
-      title: statusBarI18n.monitorNotes || "文档数",
-      pinnable: true,
-      monitor: true,
-    },
-    {
-      id: "monitor-words",
-      icon: "ph:text-aa",
-      color: "#8b5cf6",
-      title: statusBarI18n.monitorWords || "总字数",
-      pinnable: true,
-      monitor: true,
-    },
-    {
-      id: "monitor-today",
-      icon: "ph:chart-line-up",
-      color: "#22c55e",
-      title: statusBarI18n.monitorToday || "今日活动",
-      pinnable: true,
-      monitor: true,
-    },
-    {
-      id: "monitor-cpu",
-      icon: "ph:cpu",
-      color: "#ef4444",
-      title: statusBarI18n.monitorCpu || "CPU 使用率",
-      pinnable: true,
-      monitor: true,
-    },
-    {
-      id: "monitor-memory",
-      icon: "ph:memory",
-      color: "#f59e0b",
-      title: statusBarI18n.monitorMemory || "内存使用",
-      pinnable: true,
-      monitor: true,
-    },
-    {
-      id: "monitor-uptime",
-      icon: "ph:timer",
-      color: "#6b7280",
-      title: statusBarI18n.monitorUptime || "运行时间",
-      pinnable: true,
-      monitor: true,
-    },
+/**
+ * 状态栏快捷项图标覆盖：默认取功能自身图标，需与抽屉内的功能图标区分时在此覆盖。
+ * 值为 `IconKey`（图标键名，非 iconify 字符串）—— 由 `IconWrapper` 经 `getIconConfig` 解析。
+ */
+const SHORTCUT_ICONS: Partial<Record<string, IconKey>> = {
+  video: "videoOutline",
+  passwordVault: "lockKey",
+  skillsViewer: "puzzlePiece",
+  htmlViewer: "codeOutline",
+  formatAssistant: "textAlignLeft",
+  websiteNavigation: "linkOutline",
+  imageCreation: "imageSquare",
+  everythingSearch: "binoculars",
+  imageCompressor: "imageOutline",
+  bookmarkMarker: "bookmarkOutline",
+  quickNote: "notePencil",
+}
+
+/**
+ * 点击动作事件名（**不能**取自 `FEATURE_CONFIG.actions[].key`）。
+ *
+ * 原因：`actions[].key` 是「面板动作标识」，与本模块需要派发的 window 事件名**并非同一套**——
+ * - `imageCompressor`：action `openCompressor` vs 事件 `openImageCompressor`
+ * - `globalRelations`：action `openGlobalRelations` vs 事件 `toggleGlobalRelations`
+ * - 另有 9 个功能（superPanel/passwordVault/skillsViewer/htmlViewer/websiteNavigation/
+ *   s3Backup/toolCollection/quickNote/imageCreation）在 FEATURE_CONFIG 中**无 actions[]**，
+ *   但其事件名客观存在且被 App.vue / 各功能监听。
+ *
+ * 故此处显式登记事件名（等价于原实现的 20 个 emitCustomEvent，但集中为一张表）。
+ */
+const FEATURE_EVENTS: Record<string, string> = {
+  superPanel: "toggleSuperPanel",
+  video: "openVideoManager",
+  passwordVault: "openPasswordVault",
+  skillsViewer: "openSkillsViewer",
+  htmlViewer: "openHtmlViewer",
+  formatAssistant: "openFormatAssistant",
+  websiteNavigation: "toggleWebsiteNavigation",
+  minimalBrowser: "openMinimalBrowser",
+  ideaGenerator: "openIdeaGenerator",
+  imageCreation: "openImageCreation",
+  s3Backup: "openS3Backup",
+  s3FileManager: "openS3FileManager",
+  globalRelations: "toggleGlobalRelations",
+  everythingSearch: "openEverythingSearch",
+  imageCompressor: "openImageCompressor",
+  toolCollection: "toggleToolCollection",
+  componentPreview: "openComponentPreview",
+  bookmarkMarker: "openBookmarkMarker",
+  quickNote: "toggleQuickNote",
+}
+
+/** 不可 pin 的功能（抽屉可点开，但不提供固定到状态栏） */
+const NOT_PINNABLE = new Set(["superPanel", "imageCreation"])
+
+/** goodsId → goods-id（快捷项配色类名由 SCSS 按同规则定义） */
+function toKebab(id: string): string {
+  return id.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase()
+}
+
+function buildFeatureEntry(
+  meta: FeatureMeta,
+  i18n: Record<string, unknown>,
+): FeatureRegistryEntry {
+  // FEATURE_ICONS 的键名与功能 id 一致，故图标键名即 id（与 superPanel 的 `iconKey: id` 同法）
+  const iconKey = meta.id as IconKey
+  const iconConfig = (FEATURE_ICONS as Record<string, { color?: string }>)[meta.id]
+  const title = (meta.titleI18nKey ? resolveI18nText(i18n, meta.titleI18nKey) : undefined)
+    ?? meta.defaultTitle
+  const event = FEATURE_EVENTS[meta.id]
+  const pinnable = !NOT_PINNABLE.has(meta.id)
+
+  return {
+    id: meta.id,
+    icon: iconKey,
+    // 配色取自 FEATURE_ICONS 真源；缺省回退主题主色（不再依赖「itemClass 是否有对应 SCSS 规则」）
+    color: iconConfig?.color ?? "var(--b3-theme-primary)",
+    title,
+    pinnable,
+    ...(pinnable
+      ? {
+          shortcut: {
+            icon: SHORTCUT_ICONS[meta.id] ?? iconKey,
+            itemClass: `action-item ${toKebab(meta.id)}-item`,
+          },
+        }
+      : {}),
+    ...(event ? { action: () => emitCustomEvent(event) } : {}),
+  }
+}
+
+/** 状态栏监控项（本模块自有，不来自 FEATURE_CONFIG） */
+function buildMonitorEntries(statusBarI18n: Record<string, string>): FeatureRegistryEntry[] {
+  const defs: { id: string, icon: IconKey, color: string, labelKey: string }[] = [
+    { id: "monitor-notes", icon: "fileText", color: "#3b82f6", labelKey: "monitorNotes" },
+    { id: "monitor-words", icon: "textAa", color: "#8b5cf6", labelKey: "monitorWords" },
+    { id: "monitor-today", icon: "chartLineUp", color: "#22c55e", labelKey: "monitorToday" },
+    { id: "monitor-cpu", icon: "cpuChip", color: "#ef4444", labelKey: "monitorCpu" },
+    { id: "monitor-memory", icon: "memoryChip", color: "#f59e0b", labelKey: "monitorMemory" },
+    { id: "monitor-uptime", icon: "timerOutline", color: "#6b7280", labelKey: "monitorUptime" },
   ]
+  return defs.map((d) => ({
+    id: d.id,
+    icon: d.icon,
+    color: d.color,
+    title: statusBarI18n[d.labelKey] ?? d.id,
+    pinnable: true,
+    monitor: true,
+  }))
 }
 
 // ============================================================
 // 注册表构建入口
 // ============================================================
+
+function buildFeatures(plugin: Plugin): FeatureRegistryEntry[] {
+  const i18n = (plugin?.i18n ?? {}) as Record<string, unknown>
+  const metaById = new Map((FEATURE_CONFIG as readonly FeatureMeta[]).map((m) => [m.id, m]))
+
+  const drawerEntries = DRAWER_FEATURE_IDS
+    .map((id) => metaById.get(id))
+    .filter((m): m is FeatureMeta => !!m)
+    .map((meta) => buildFeatureEntry(meta, i18n))
+
+  // 速记恢复：弹窗卡死/位置异常时的应急兜底，点击即复位为居中展开态
+  // （statusBar 独有动作，FEATURE_CONFIG 未收录，故在此外挂）
+  const quickNoteResetI18n = getI18nShard(plugin, "quickNoteReset")
+  drawerEntries.push({
+    id: "quickNoteReset",
+    icon: "counterClockwise",
+    color: "#f59e0b",
+    // 不做 `|| "速记恢复"` 兜底：quickNoteReset.title 在 zh_CN/en_US 均已存在，
+    // 兜底只会在 i18n 未加载时掩盖问题（AGENTS_I18N.md 禁止硬编码兜底）
+    title: quickNoteResetI18n.title,
+    pinnable: false,
+    action: () => emitCustomEvent("resetQuickNote"),
+  })
+
+  return [...drawerEntries, ...buildMonitorEntries(getI18nShard(plugin, "statusBar"))]
+}
 
 export function createFeatureRegistry(plugin: Plugin) {
   const features = buildFeatures(plugin)

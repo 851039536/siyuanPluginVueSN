@@ -84,10 +84,7 @@ export {
   showPromptsModal,
 } from "./prompts"
 export { registerStatistics } from "./statistics"
-export {
-  registerStatusBar,
-  unregisterStatusBar,
-} from "./statusBar"
+export { registerStatusBar } from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"
 export {

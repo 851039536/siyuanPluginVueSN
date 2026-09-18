@@ -823,6 +823,76 @@ export const COMMON_ICONS = {
     icon: "mdi:tag-outline",
   },
 
+  // 状态栏 / 功能抽屉（statusBar 专用）
+  pinOutline: {
+    icon: "mdi:pin-outline",
+  },
+  pinFilled: {
+    icon: "mdi:pin",
+  },
+  toggleOn: {
+    icon: "mdi:toggle-switch",
+  },
+  toggleOff: {
+    icon: "mdi:toggle-switch-off-outline",
+  },
+  cpuChip: {
+    icon: "mdi:chip",
+  },
+  memoryChip: {
+    icon: "mdi:memory",
+  },
+  fileText: {
+    icon: "mdi:file-document-outline",
+  },
+  textAa: {
+    icon: "mdi:format-text",
+  },
+  chartLineUp: {
+    icon: "mdi:chart-line",
+  },
+  counterClockwise: {
+    icon: "mdi:restore",
+  },
+  gridFour: {
+    icon: "mdi:view-grid",
+  },
+
+  // 状态栏快捷入口（Phosphor 线性风格，与抽屉内的功能图标有意区分）
+  videoOutline: {
+    icon: "ph:video",
+  },
+  lockKey: {
+    icon: "ph:lock-key",
+  },
+  puzzlePiece: {
+    icon: "ph:puzzle-piece",
+  },
+  codeOutline: {
+    icon: "ph:code",
+  },
+  textAlignLeft: {
+    icon: "ph:text-align-left",
+  },
+  linkOutline: {
+    icon: "ph:link",
+  },
+  imageSquare: {
+    icon: "ph:image-square",
+  },
+  binoculars: {
+    icon: "ph:binoculars",
+  },
+  imageOutline: {
+    icon: "ph:image",
+  },
+  bookmarkOutline: {
+    icon: "ph:bookmark-simple",
+  },
+  notePencil: {
+    icon: "ph:note-pencil",
+  },
+
   // Skills 查看器 — AI 工具徽标图标
   claudeTool: {
     icon: "mdi:chat-processing-outline",

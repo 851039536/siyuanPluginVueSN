@@ -12,55 +12,37 @@
         class="feature-drawer"
       >
         <div class="feature-drawer-header">
-          <span class="feature-drawer-title">功能列表</span>
+          <!-- 抽屉标题："功能列表" -->
+          <span class="feature-drawer-title">{{ i18n.featureDrawer }}</span>
           <div class="feature-drawer-header-actions">
-            <button
-              class="feature-drawer-view-btn"
-              title="管理分类"
+            <!-- 按钮提示："管理分类" -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="tagOutline"
+              :icon-size="14"
+              :title="i18n.manageCategories"
+              :aria-pressed="manageMode"
               @click="manageMode = !manageMode"
-            >
-              <Icon
-                icon="ph:tag"
-                :width="14"
-              />
-            </button>
-            <button
-              class="feature-drawer-view-btn"
-              :title="gridMode ? '切换为列表' : '切换为网格'"
+            />
+            <!-- 视图切换：网格 / 列表 -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              :icon="gridMode ? 'list' : 'viewGrid'"
+              :icon-size="14"
+              :title="gridMode ? i18n.switchToList : i18n.switchToGrid"
               @click="gridMode = !gridMode"
-            >
-              <svg
-                v-if="gridMode"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="currentColor"
-                  d="M3 4h4v4H3V4zm6 0h4v4H9V4zm6 0h4v4h-4V4zM3 10h4v4H3v-4zm6 0h4v4H9v-4zm6 0h4v4h-4v-4zM3 16h4v4H3v-4zm6 0h4v4H9v-4zm6 0h4v4h-4v-4z"
-                />
-              </svg>
-              <svg
-                v-else
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="currentColor"
-                  d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"
-                />
-              </svg>
-            </button>
-            <button
-              class="feature-drawer-close"
+            />
+            <!-- 按钮提示："关闭" -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="close"
+              :icon-size="14"
+              :title="i18n.panelCloseLabel"
               @click="emit('close')"
-            >
-              <Icon
-                icon="ph:x"
-                :width="14"
-              />
-            </button>
+            />
           </div>
         </div>
         <!-- 搜索栏（管理模式下隐藏） -->
@@ -68,43 +50,35 @@
           v-if="!manageMode"
           class="feature-drawer-search"
         >
-          <Icon
-            icon="ph:magnifying-glass"
-            :width="14"
-            class="search-icon"
-          />
-          <input
+          <Input
             v-model="searchQuery"
-            type="text"
-            class="search-input"
-            placeholder="搜索功能..."
+            size="xsmall"
+            borderless
+            prefix-icon="magnify"
+            :placeholder="i18n.searchFeaturePlaceholder"
+            clearable
+            :aria-label="i18n.searchFeaturePlaceholder"
             @keydown.escape="searchQuery = ''"
           />
-          <button
-            v-if="searchQuery"
-            class="search-clear"
-            @click="searchQuery = ''"
-          >
-            <Icon
-              icon="ph:x"
-              :width="12"
-            />
-          </button>
         </div>
         <!-- 分类标签栏（全部 / 监控 / 自定义分类） -->
         <div
           v-if="!searchQuery && !manageMode"
           class="feature-drawer-tabs"
+          role="group"
+          :aria-label="i18n.featureDrawer"
         >
-          <button
+          <Button
             v-for="tab in tabs"
             :key="tab.key"
-            class="feature-drawer-tab"
-            :class="{ active: activeGroup === tab.key }"
+            :variant="activeGroup === tab.key ? 'primary' : 'ghost'"
+            :text="activeGroup !== tab.key"
+            size="xsmall"
+            :aria-pressed="activeGroup === tab.key"
             @click="activeGroup = tab.key"
           >
             {{ tab.label }}
-          </button>
+          </Button>
         </div>
         <!-- 功能列表 -->
         <div
@@ -117,16 +91,18 @@
             :key="item.id"
             :item="item"
             :status-bar-visible="statusBarVisible"
+            :i18n="i18n"
             @select="handleClick"
             @toggle-status-bar="emit('toggleStatusBar', $event)"
             @assign-category="(id, e) => emit('assignCategory', id, e)"
             @toggle-enabled="emit('toggleEnabled', $event)"
           />
+          <!-- 空态："未找到匹配功能" / "暂无功能" -->
           <div
             v-if="displayItems.length === 0"
             class="feature-drawer-empty"
           >
-            {{ searchQuery ? '未找到匹配功能' : '暂无功能' }}
+            {{ searchQuery ? i18n.noMatchingFeature : i18n.noFeature }}
           </div>
         </div>
         <!-- 分类管理面板 -->
@@ -140,67 +116,54 @@
             :key="cat.id"
             class="feature-drawer-manage-row"
           >
-            <input
-              :value="cat.name"
-              type="text"
+            <Input
               class="manage-input"
-              :class="{ invalid: renameErrors[cat.id] }"
-              @change="onRename(cat.id, $event)"
+              :model-value="cat.name"
+              size="xsmall"
+              :error="renameErrors[cat.id]"
+              :aria-label="i18n.manageCategories"
+              @change="onRename(cat.id, String($event))"
               @keydown.enter="($event.target as HTMLInputElement).blur()"
             />
-            <span class="manage-count">{{ memberCount(cat.id) }} 项</span>
-            <button
-              class="manage-btn"
-              title="删除分类"
+            <!-- 成员计数："N 项" -->
+            <span class="manage-count">{{ memberCount(cat.id) }} {{ i18n.itemsCount }}</span>
+            <!-- 按钮提示："删除分类" -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="delete"
+              :icon-size="14"
+              :title="i18n.deleteCategory"
               @click="onDelete(cat.id)"
-            >
-              <Icon
-                icon="ph:trash"
-                :width="14"
-              />
-            </button>
+            />
           </div>
-          <!-- 行内错误提示 -->
-          <div
-            v-for="(msg, id) in renameErrors"
-            :key="id"
-            class="manage-error"
-          >
-            {{ msg }}
-          </div>
+          <!-- 无分类时的提示文案 -->
           <div
             v-if="categories.length === 0"
             class="feature-drawer-empty"
           >
-            <!-- 无分类时的提示文案 -->
-            暂无分类，在下方输入名称新建
+            {{ i18n.noCategoryHint }}
           </div>
           <!-- 底部添加行 -->
           <div class="feature-drawer-manage-add">
-            <input
-              v-model="newCategoryName"
-              type="text"
+            <Input
               class="manage-input"
-              :class="{ invalid: addError }"
-              placeholder="新分类名称..."
+              v-model="newCategoryName"
+              size="xsmall"
+              :error="addError"
+              :placeholder="i18n.newCategoryPlaceholder"
+              :aria-label="i18n.addCategory"
               @keydown.enter="onAdd"
             />
-            <button
-              class="manage-btn"
-              title="新建分类"
+            <!-- 按钮提示："新建分类" -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="plus"
+              :icon-size="14"
+              :title="i18n.addCategory"
               @click="onAdd"
-            >
-              <Icon
-                icon="ph:plus"
-                :width="14"
-              />
-            </button>
-          </div>
-          <div
-            v-if="addError"
-            class="manage-error"
-          >
-            {{ addError }}
+            />
           </div>
         </div>
       </div>
@@ -210,30 +173,13 @@
 
 <script setup lang="ts">
 import type { Ref } from "vue"
-import type { StatusBarCategory } from "../types/index"
-import { Icon } from "@iconify/vue"
-import {
-  computed,
-  ref,
-  watch,
-} from "vue"
+import type { FeatureDrawerItem, StatusBarCategory } from "../types/index"
+import { computed, ref, watch } from "vue"
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
 import DrawerFeatureItem from "./DrawerFeatureItem.vue"
 
-export interface FeatureDrawerItem {
-  id: string
-  icon: string
-  color: string
-  title: string
-  pinnable: boolean
-  // 监控项标志：进入「监控」Tab，不参与自定义分类
-  monitor?: boolean
-  // 当前归属分类 id（未分类为空），供分类角标高亮
-  categoryId?: string | null
-  enabled?: boolean
-  toggleable?: boolean
-}
-
-/** 分类管理器（useFeatureCategories 返回值的最小接口） */
+/** 分类管理器（useFeatureCategories 返回值的最小接口；返回值是 i18n 键，由本组件翻译） */
 export interface CategoryManager {
   categories: Ref<StatusBarCategory[]>
   assignment: Ref<Record<string, string>>
@@ -247,20 +193,19 @@ interface Props {
   items: FeatureDrawerItem[]
   statusBarVisible?: string[]
   categoryManager: CategoryManager
-}
-
-interface Emits {
-  (e: "close"): void
-  (e: "select", id: string): void
-  (e: "toggleStatusBar", id: string): void
-  (e: "assignCategory", id: string, event: MouseEvent): void
-  (e: "toggleEnabled", id: string): void
+  i18n: Record<string, string>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   statusBarVisible: () => [],
 })
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  close: []
+  select: [id: string]
+  toggleStatusBar: [id: string]
+  assignCategory: [id: string, event: MouseEvent]
+  toggleEnabled: [id: string]
+}>()
 
 const gridMode = ref(true)
 const searchQuery = ref("")
@@ -276,17 +221,20 @@ const renameErrors = ref<Record<string, string>>({})
 const categories = computed(() => props.categoryManager.categories.value)
 const assignment = computed(() => props.categoryManager.assignment.value)
 
+/** 把校验返回的 i18n 键翻译为文案（键缺失时回退原键，便于定位缺失翻译） */
+const translateError = (key: string): string =>
+  key ? (props.i18n[key] ?? key) : ""
+
 const onAdd = () => {
   const error = props.categoryManager.addCategory(newCategoryName.value)
-  addError.value = error
+  addError.value = translateError(error)
   if (!error) newCategoryName.value = ""
 }
 
-const onRename = (id: string, event: Event) => {
-  const name = (event.target as HTMLInputElement).value
+const onRename = (id: string, name: string) => {
   const error = props.categoryManager.renameCategory(id, name)
   if (error) {
-    renameErrors.value = { ...renameErrors.value, [id]: error }
+    renameErrors.value = { ...renameErrors.value, [id]: translateError(error) }
   } else {
     const { [id]: _removed, ...rest } = renameErrors.value
     renameErrors.value = rest
@@ -346,8 +294,8 @@ const isMonitor = (item: FeatureDrawerItem) => item.monitor === true
 
 // Tab 栏：系统 Tab（全部/监控）+ 动态自定义分类
 const tabs = computed(() => [
-  { key: "__all__", label: "全部" },
-  { key: "__monitor__", label: "监控" },
+  { key: "__all__", label: props.i18n.tabAll },
+  { key: "__monitor__", label: props.i18n.tabMonitor },
   ...categories.value.map((c) => ({ key: c.id, label: c.name })),
 ])
 

@@ -65,7 +65,6 @@ import {
   registerVideo,
   registerWebsiteNavigation,
   scanSkills as scanSkillsFromViewer,
-  unregisterStatusBar,
 } from "@/features"
 import { applyCompactMode } from "@/features/compactMode"
 
@@ -128,6 +127,7 @@ export default class PluginSample extends Plugin {
     "__globalRelations", // 全局关系列表（Modal，register 内部自挂载）
     "__statistics", // 数据统计（自动刷新定时器 + 事件监听器，register 内部自挂载）
     "__componentPreview", // 组件预览（addTab 模型 + 独立窗口 + 全局事件监听）
+    "__statusBar", // 状态栏（Vue app + 状态栏 DOM）
   ] as const
 
   onload() {
@@ -197,9 +197,6 @@ export default class PluginSample extends Plugin {
 
     // 清理 Dock 预加载注册表
     clearDockPreloads()
-
-    // 清理状态栏资源
-    unregisterStatusBar()
 
     destroyCommands()
     destroy()

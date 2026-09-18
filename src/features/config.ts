@@ -240,6 +240,8 @@ export const FEATURE_CONFIG = [
     id: "bookmarkMarker",
     defaultTitle: "书签标记",
     defaultDesc: "根据文档书签内容在文件树中显示颜色标记",
+    // bookmarkMarker 分片为扁平结构，标题键是顶层 bookmarkMarkerTitle（非嵌套 .title）
+    titleI18nKey: "bookmarkMarkerTitle",
     actions: [{
       key: "openBookmarkMarker",
       label: "设置",
@@ -254,7 +256,7 @@ export const FEATURE_CONFIG = [
     id: "websiteNavigation",
     defaultTitle: "网站导航",
     defaultDesc: "管理常用网站链接，支持分类筛选和快捷访问",
-    titleI18nKey: "websiteNavigation.title",
+    titleI18nKey: "websiteNavigation.panelTitle",
     descI18nKey: "enableWebsiteNavigationDesc",
   },
   {

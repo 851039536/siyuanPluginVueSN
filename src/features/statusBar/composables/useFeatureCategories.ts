@@ -1,48 +1,42 @@
 /**
  * 功能抽屉自定义分类：分类增删改、功能归属分配与持久化
- * 存储槽位：statusBar-categories（分类列表）/ statusBar-feature-category（单一归属映射）
+ * 存储槽位见 types/storage.ts（StatusBarStorage.categories / featureCategory）
  */
 import type { Ref } from "vue"
-import type { StatusBarCategory } from "../types/index"
 import { ref } from "vue"
-import type { PluginStorage } from "@/utils/pluginStorage"
+import type { FeatureCategoryMap, StatusBarStorage } from "../types/storage"
+import type { StatusBarCategory } from "../types/index"
 
-const CATEGORIES_KEY = "statusBar-categories"
-const ASSIGNMENT_KEY = "statusBar-feature-category"
+/** 校验结果：空串表示合法；否则为 i18n 键（由调用方翻译，避免此处硬编码文案） */
+type ValidationKey = "" | "categoryNameEmpty" | "categoryNameExists"
 
-type AssignmentMap = Record<string, string>
-
-/** 重名/空名校验：返回错误提示，合法返回空串 */
-function validateName(name: string, categories: StatusBarCategory[], excludeId?: string): string {
+/** 重名/空名校验：返回错误 i18n 键，合法返回空串 */
+function validateName(name: string, categories: StatusBarCategory[], excludeId?: string): ValidationKey {
   const trimmed = name.trim()
-  if (!trimmed) return "分类名称不能为空"
-  if (categories.some((c) => c.id !== excludeId && c.name === trimmed)) return "分类名称已存在"
+  if (!trimmed) return "categoryNameEmpty"
+  if (categories.some((c) => c.id !== excludeId && c.name === trimmed)) return "categoryNameExists"
   return ""
 }
 
-export function useFeatureCategories(storage: PluginStorage) {
+export function useFeatureCategories(storage: StatusBarStorage) {
   const categories = ref<StatusBarCategory[]>([])
-  const assignment = ref<AssignmentMap>({})
+  const assignment = ref<FeatureCategoryMap>({})
 
-  // 启动时异步加载（与 shortcuts/monitors 加载模式一致）
-  // 先加载分类列表，再加载归属映射并按有效分类过滤悬挂引用
+  // 启动时异步加载：先加载分类列表，再加载归属映射并按有效分类过滤悬挂引用
   // （存储损坏/外部篡改可能残留指向已不存在分类的 id，导致 badge 常亮但无对应 Tab）
-  storage.load<StatusBarCategory[]>(CATEGORIES_KEY).then((data) => {
-    categories.value = Array.isArray(data) ? data : []
-    return storage.load<AssignmentMap>(ASSIGNMENT_KEY)
-  }).then((data) => {
-    if (!data || typeof data !== "object") return
+  void (async () => {
+    const cats = await storage.categories.loadOrDefault()
+    categories.value = Array.isArray(cats) ? cats : []
+    const map = await storage.featureCategory.loadOrDefault()
+    if (!map || typeof map !== "object") return
     assignment.value = Object.fromEntries(
-      Object.entries(data).filter(([, cid]) =>
+      Object.entries(map).filter(([, cid]) =>
         categories.value.some((c) => c.id === cid)),
     )
-  })
+  })()
 
   const categoryOf = (featureId: string): string | null =>
     assignment.value[featureId] ?? null
-
-  const saveCategories = () => storage.save(CATEGORIES_KEY, categories.value)
-  const saveAssignment = () => storage.save(ASSIGNMENT_KEY, assignment.value)
 
   /** 新建分类，返回错误提示（成功返回空串） */
   const addCategory = (name: string): string => {
@@ -52,7 +46,7 @@ export function useFeatureCategories(storage: PluginStorage) {
       ...categories.value,
       { id: crypto.randomUUID(), name: name.trim() },
     ]
-    saveCategories()
+    void storage.categories.save(categories.value)
     return ""
   }
 
@@ -63,7 +57,7 @@ export function useFeatureCategories(storage: PluginStorage) {
     categories.value = categories.value.map((c) =>
       c.id === id ? { ...c, name: name.trim() } : c,
     )
-    saveCategories()
+    void storage.categories.save(categories.value)
     return ""
   }
 
@@ -73,8 +67,8 @@ export function useFeatureCategories(storage: PluginStorage) {
     assignment.value = Object.fromEntries(
       Object.entries(assignment.value).filter(([, cid]) => cid !== id),
     )
-    saveCategories()
-    saveAssignment()
+    void storage.categories.save(categories.value)
+    void storage.featureCategory.save(assignment.value)
   }
 
   /** 分配功能归属，categoryId 为 null 表示移出分类 */
@@ -86,7 +80,7 @@ export function useFeatureCategories(storage: PluginStorage) {
       delete next[featureId]
     }
     assignment.value = next
-    saveAssignment()
+    void storage.featureCategory.save(next)
   }
 
   return {

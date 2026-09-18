@@ -25,6 +25,11 @@ import { TimerRegistry } from "@/utils/timerRegistry"
 
 export interface StatusBarTaskInfo {
   id: string
+  /**
+   * 图标名（Iconify 字符串）。
+   * ⚠️ 跨功能入口，调用方传入的是任意 iconify 名（如 `"mdi:camera-marker"`），
+   * 故此处不收窄为 `IconKey`；渲染侧 `MonitorItem` 亦接收宽松字符串。
+   */
   icon: string
   display: string
   tooltip: string
@@ -35,6 +40,8 @@ export interface TaskProgressOpts {
   label: string
   percent?: number
   phase?: string
+  /** 阶段文案前缀（i18n，如「阶段: 」）；缺省用「 / 」中性分隔，避免硬编码中文 */
+  phasePrefix?: string
 }
 
 export interface TaskHandle {
@@ -114,7 +121,8 @@ export function useStatusBarTask(taskId: string, icon: string): TaskHandle {
       const info = ensureTask()
       const pct = opts.percent != null ? ` ${Math.round(opts.percent)}%` : ""
       info.display = `${opts.label}${pct}`
-      info.tooltip = opts.phase ? `${opts.label}\n阶段: ${opts.phase}` : opts.label
+      // 阶段前缀由调用方给 i18n（缺省用中性的「 / 」分隔，不再硬编码中文「阶段: 」）
+      info.tooltip = opts.phase ? `${opts.label}${opts.phasePrefix ?? " / "}${opts.phase}` : opts.label
       info.level = opts.percent != null ? "medium" : "normal"
     },
 

@@ -13,39 +13,39 @@
       {{ totalNotesDisplay }}
     </MonitorItem><!--
     --><MonitorItem
-v-if="visibleMonitors.has('monitor-words')"
-item-class="statistics-item words-item"
-:title="statisticsTooltip"
->
-{{ totalWordsDisplay }}
+      v-if="visibleMonitors.has('monitor-words')"
+      item-class="statistics-item words-item"
+      :title="statisticsTooltip"
+    >
+      {{ totalWordsDisplay }}
     </MonitorItem><!--
     --><MonitorItem
-v-if="visibleMonitors.has('monitor-today')"
-item-class="statistics-item today-activity-item"
-:title="todayTooltip"
->
-{{ todayActivityDisplay }}
+      v-if="visibleMonitors.has('monitor-today')"
+      item-class="statistics-item today-activity-item"
+      :title="todayTooltip"
+    >
+      {{ todayActivityDisplay }}
     </MonitorItem><!--
     --><MonitorItem
-v-if="visibleMonitors.has('monitor-cpu')"
-item-class="cpu-item"
-:level="cpuLevel"
->
-{{ cpuUsageDisplay }}
+      v-if="visibleMonitors.has('monitor-cpu')"
+      item-class="cpu-item"
+      :level="cpuLevel"
+    >
+      {{ cpuUsageDisplay }}
     </MonitorItem><!--
     --><MonitorItem
-v-if="visibleMonitors.has('monitor-memory')"
-item-class="mem-item"
-:level="memLevel"
->
-{{ memoryUsageDisplay }}
+      v-if="visibleMonitors.has('monitor-memory')"
+      item-class="mem-item"
+      :level="memLevel"
+    >
+      {{ memoryUsageDisplay }}
     </MonitorItem><!--
     --><MonitorItem
-v-if="visibleMonitors.has('monitor-uptime')"
-item-class="uptime-item"
->
-{{ uptimeDisplay }}
-</MonitorItem>
+      v-if="visibleMonitors.has('monitor-uptime')"
+      item-class="uptime-item"
+    >
+      {{ uptimeDisplay }}
+    </MonitorItem>
 
     <span
       v-if="showSeparator"
@@ -69,14 +69,15 @@ item-class="uptime-item"
       :icon="shortcut.icon"
       :item-class="shortcut.itemClass"
       :title="shortcut.title"
+      :color="shortcut.color"
       @click="shortcut.handler"
     />
 
     <!-- 功能抽屉开关 -->
     <MonitorItem
-      icon="ph:grid-four"
+      icon="gridFour"
       item-class="action-item feature-drawer-item"
-      title="功能列表"
+      :title="i18n.drawerOpenLabel"
       @click="toggleFeatureDrawer"
     />
 
@@ -85,6 +86,7 @@ item-class="uptime-item"
       :items="drawerItems"
       :status-bar-visible="statusBarVisible"
       :category-manager="categoryManager"
+      :i18n="i18n"
       @close="showFeatureDrawer = false"
       @select="handleSelectFeature"
       @toggle-status-bar="handleToggleStatusBar"
@@ -99,6 +101,7 @@ item-class="uptime-item"
       :current-id="assignMenu.featureId ? categoryManager.categoryOf(assignMenu.featureId) : null"
       :x="assignMenu.x"
       :y="assignMenu.y"
+      :i18n="i18n"
       @close="assignMenu.visible = false"
       @select="handleAssignSelect"
     />
@@ -107,16 +110,8 @@ item-class="uptime-item"
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { Ref } from "vue"
-import {
-  computed,
-  onBeforeUnmount,
-  onMounted,
-  reactive,
-  ref,
-} from "vue"
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue"
 import { featureIdToSettingKey } from "@/config/settings"
-import { PluginStorage } from "@/utils/pluginStorage"
 import CategoryAssignMenu from "./components/CategoryAssignMenu.vue"
 import FeatureDrawer from "./components/FeatureDrawer.vue"
 import MonitorItem from "./components/MonitorItem.vue"
@@ -124,12 +119,16 @@ import { useFeatureCategories } from "./composables/useFeatureCategories"
 import { useStatusBar } from "./composables/useStatusBar"
 import { activeTasks } from "./composables/useStatusBarTask"
 import { createFeatureRegistry } from "./featureRegistry"
+import { StatusBarStorage } from "./types/storage"
 
 const props = defineProps<{
   plugin: Plugin
 }>()
 
-const storage = new PluginStorage(props.plugin)
+const storage = new StatusBarStorage(props.plugin)
+
+/** statusBar 分片文案（供子组件消费；避免各组件自行从 plugin 取） */
+const i18n = ((props.plugin.i18n as unknown as Record<string, Record<string, string>>)?.statusBar ?? {})
 
 // 单一功能注册表：抽屉展示 + 状态栏快捷 + 点击动作的统一数据源（详见 featureRegistry.ts）
 const { features, MONITOR_IDS, featureMap } = createFeatureRegistry(props.plugin)
@@ -150,13 +149,19 @@ const {
   statisticsTooltip,
   todayActivityDisplay,
   todayTooltip,
-} = useStatusBar()
+} = useStatusBar(i18n)
 
-const statusBarShortcuts = ref<string[]>([])
+/**
+ * 状态栏固定项（监控项 + 功能快捷项**共用同一份有序列表**）。
+ * 监控项的显隐与功能的 pin 本质是同一件事，故合并存储与切换逻辑，不再分两套。
+ */
+const pinnedIds = ref<string[]>([])
 const visibleMonitors = reactive(new Set<string>())
 
 // 功能开关快照：superPanel 关闭某功能后，抽屉与快捷入口应同步隐藏
-const enabledSettings = ref<Record<string, any>>({ ...(props.plugin as any).settings })
+const enabledSettings = ref<Record<string, unknown>>(
+  { ...((props.plugin as unknown as { settings?: Record<string, unknown> }).settings ?? {}) },
+)
 
 // superPanel 恒启用；监控项无功能开关恒显示；其余按 enableXxx 判定（缺省视为启用）
 const isFeatureEnabled = (id: string): boolean => {
@@ -170,24 +175,30 @@ const hasToggle = (id: string): boolean =>
 
 // 抽屉条目：注册表剥离快捷/动作字段，附加开关状态与分类归属
 const drawerItems = computed(() =>
-  features.map(({ shortcut: _, action: __, ...item }) => ({
-    ...item,
-    enabled: isFeatureEnabled(item.id),
-    toggleable: hasToggle(item.id),
-    categoryId: categoryManager.categoryOf(item.id),
-  })),
+  features.map((entry) => {
+    const { shortcut: _shortcut, action: _action, ...item } = entry
+    return {
+      ...item,
+      enabled: isFeatureEnabled(item.id),
+      toggleable: hasToggle(item.id),
+      categoryId: categoryManager.categoryOf(item.id),
+    }
+  }),
 )
 
-// 状态栏快捷：按 statusBarShortcuts 顺序映射出可渲染项（含 title / handler）
+/** 功能快捷项（按 pinnedIds 顺序映射出可渲染项；监控项由 visibleMonitors 单独驱动） */
 const visibleShortcuts = computed(() => {
-  const result: { id: string, icon: string, title: string, itemClass: string, handler: (() => void) | undefined }[] = []
-  for (const id of statusBarShortcuts.value) {
+  const result: { id: string, icon: string, color: string, title: string, itemClass: string, handler: (() => void) | undefined }[] = []
+  for (const id of pinnedIds.value) {
+    if (MONITOR_IDS.has(id)) continue
     if (!isFeatureEnabled(id)) continue
     const f = featureMap.get(id)
     if (f?.shortcut) {
       result.push({
         id: f.id,
         icon: f.shortcut.icon,
+        // 品牌色来自 FEATURE_ICONS 真源（不再依赖「itemClass 是否恰好有 SCSS 规则」）
+        color: f.color,
         title: f.title,
         itemClass: f.shortcut.itemClass,
         handler: f.action,
@@ -205,50 +216,40 @@ const showSeparator = computed(() =>
 
 // 合并快捷方式 + 监控项可见性，供 FeatureDrawer 显示 pin 状态
 const statusBarVisible = computed(() => [
-  ...statusBarShortcuts.value,
+  ...pinnedIds.value,
   ...visibleMonitors,
 ])
 
-// 切换数组归属（存在则移除，不存在则追加）
-const toggleMembership = (target: Ref<string[]>, id: string) =>
-  target.value.includes(id)
-    ? target.value.filter((s) => s !== id)
-    : [...target.value, id]
-
-// 按分类（监控/功能）保存状态，消除 handleToggleStatusBar 中的重复 save 模式
-const saveCategory = async (id: string) => {
-  if (MONITOR_IDS.has(id)) {
-    await storage.save("statusBar-monitors", [...visibleMonitors])
-  } else {
-    await storage.save("statusBar-shortcuts", statusBarShortcuts.value)
-  }
+/** 反转某 id 的固定状态（监控项与功能项统一走同一份列表） */
+const togglePinned = (id: string) => {
+  pinnedIds.value = pinnedIds.value.includes(id)
+    ? pinnedIds.value.filter((s) => s !== id)
+    : [...pinnedIds.value, id]
+  void storage.shortcuts.save(pinnedIds.value)
 }
 
-// 切换功能在状态栏的显隐（监控项 toggle Set，功能项 toggle 数组）
-const toggleStatusBarMembership = (id: string) => {
+/** 切换功能在状态栏的显隐（监控项另存 monitors 槽，语义上区分「监控区」与「快捷区」） */
+const handleToggleStatusBar = (id: string) => {
   if (MONITOR_IDS.has(id)) {
     if (visibleMonitors.has(id)) {
       visibleMonitors.delete(id)
     } else {
       visibleMonitors.add(id)
     }
-  } else {
-    statusBarShortcuts.value = toggleMembership(statusBarShortcuts, id)
+    void storage.monitors.save([...visibleMonitors])
+    return
   }
+  togglePinned(id)
 }
 
-const handleToggleStatusBar = async (id: string) => {
-  toggleStatusBarMembership(id)
-  await saveCategory(id)
-}
-
-storage.load<string[]>("statusBar-shortcuts").then((data) => {
-  if (data) statusBarShortcuts.value = data
+// 加载固定项与监控项偏好
+void storage.shortcuts.loadOrDefault().then((data) => {
+  if (Array.isArray(data)) pinnedIds.value = data
 })
 
-// 加载监控项可见性偏好：有存储数据则按存储，否则默认全显
-storage.load<string[]>("statusBar-monitors").then((data) => {
-  if (data && data.length > 0) {
+// 监控项可见性：有存储数据则按存储，否则默认全显
+void storage.monitors.loadOrDefault().then((data) => {
+  if (Array.isArray(data) && data.length > 0) {
     for (const id of data) visibleMonitors.add(id)
   } else {
     for (const id of MONITOR_IDS) visibleMonitors.add(id)
@@ -270,10 +271,6 @@ const handleSelectFeature = (id: string) => {
 // 分类分配弹出菜单
 // ============================================================
 
-// 菜单尺寸上限（与 .category-assign-menu 的 max-width 对齐，用于视口边界钳制）
-const MENU_WIDTH = 240
-const MENU_ESTIMATED_HEIGHT = 180
-
 const assignMenu = reactive({
   visible: false,
   x: 0,
@@ -281,18 +278,17 @@ const assignMenu = reactive({
   featureId: "",
 })
 
-// 打开分配菜单：定位到分类角标旁，超出视口时向上/向左钳制
+/**
+ * 打开分配菜单：定位到分类角标旁。
+ * 锚点由触发按钮自身提供（`currentTarget`），不再依赖 `.badge-category` 类名穿透子组件 DOM
+ * —— 后者在子组件改类名时会静默退化为鼠标坐标。
+ */
 const openAssignMenu = (id: string, event: MouseEvent) => {
-  const badge = (event.target as HTMLElement).closest?.(".badge-category") as HTMLElement | null
-  const rect = badge?.getBoundingClientRect()
-  const right = rect?.right ?? event.clientX
-  const top = rect?.top ?? event.clientY
-  const bottom = rect?.bottom ?? event.clientY
+  const trigger = event.currentTarget as HTMLElement | null
+  const rect = trigger?.getBoundingClientRect()
   assignMenu.featureId = id
-  assignMenu.x = Math.max(8, Math.min(right, window.innerWidth - MENU_WIDTH - 8))
-  assignMenu.y = bottom + 4 + MENU_ESTIMATED_HEIGHT > window.innerHeight
-    ? Math.max(8, top - MENU_ESTIMATED_HEIGHT - 4)
-    : bottom + 4
+  assignMenu.x = rect?.right ?? event.clientX
+  assignMenu.y = rect?.bottom ?? event.clientY
   assignMenu.visible = true
 }
 
@@ -306,7 +302,10 @@ const handleAssignSelect = (categoryId: string | null) => {
 // enabledSettings 快照由 syncEnabled 监听更新，开关角标随之同步
 const handleToggleEnabled = async (id: string) => {
   const settingKey = featureIdToSettingKey(id)
-  const pluginSample = props.plugin as any
+  const pluginSample = props.plugin as unknown as {
+    settings?: Record<string, unknown>
+    updateSettings: (s: Record<string, unknown>) => Promise<unknown>
+  }
   const current = pluginSample.settings?.[settingKey] !== false
   await pluginSample.updateSettings({
     ...pluginSample.settings,
@@ -316,7 +315,9 @@ const handleToggleEnabled = async (id: string) => {
 
 // 监听设置变更事件，同步功能开关快照（statusBar 为独立挂载 app，需自行清理监听）
 const syncEnabled = () => {
-  enabledSettings.value = { ...(props.plugin as any).settings }
+  enabledSettings.value = {
+    ...((props.plugin as unknown as { settings?: Record<string, unknown> }).settings ?? {}),
+  }
 }
 onMounted(() => window.addEventListener("settingsUpdated", syncEnabled))
 onBeforeUnmount(() => window.removeEventListener("settingsUpdated", syncEnabled))

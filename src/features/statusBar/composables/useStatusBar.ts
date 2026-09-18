@@ -26,18 +26,32 @@ import {
 const TOTAL_MEMORY_BYTES = DEFAULT_TOTAL_MEMORY_GB * 1024 * 1024 * 1024
 const TOTAL_MEMORY_MB = DEFAULT_TOTAL_MEMORY_GB * 1024
 
-// 字数格式化阈值（按从大到小排列），避免 computed 中重复创建
-const WORD_COUNT_THRESHOLDS: [number, string][] = [
-  [100000000, "亿"],
-  [10000, "万"],
-  [1000, "k"],
-]
+/** i18n 文案（statusBar 分片），由调用方注入；缺省回退空对象（仅影响 tooltip 文案） */
+export type StatusBarI18n = Record<string, string>
+
+/** 极简模板替换：把 `{name}` 占位符替换为对应值 */
+function interpolate(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (whole, key: string) =>
+    (key in vars ? String(vars[key]) : whole))
+}
 
 function formatUptime(seconds: number): { hours: number, minutes: number } {
   return {
     hours: Math.floor(seconds / 3600),
     minutes: Math.floor((seconds % 3600) / 60),
   }
+}
+
+/**
+ * 构造 blocks.created/updated 的日期边界串（`YYYYMMDDHHmmss` 形式）。
+ * 用于范围谓词（`created >= 'X000000' AND created <= 'X235959'`），
+ * 相较 `substr(created,1,8) = 'YYYYMMDD'` 可命中索引。
+ */
+function toDateBound(date: Date, timeSuffix: string): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}${m}${d}${timeSuffix}`
 }
 
 function formatCount(
@@ -50,7 +64,10 @@ function formatCount(
   return String(count)
 }
 
-export function useStatusBar() {
+export function useStatusBar(i18n: StatusBarI18n = {}) {
+  /** 取文案，缺失时回退到给定默认（仅 tooltip 用，避免空串） */
+  const t = (key: string, fallback: string): string => i18n[key] || fallback
+
   const state = reactive<StatusBarState>({
     cpuPercent: 0,
     memPercent: 0,
@@ -72,6 +89,16 @@ export function useStatusBar() {
   let lastMemPercent = -1
   let lastUptimeDisplayMinutes = -1 // 缓存 uptime 显示值，仅分钟级变化时更新
 
+  /**
+   * 字数缩写阈值（按从大到小）。后缀走 i18n —— 中文「亿/万」与英文「B/k」量级不同，
+   * 原先硬编码中文后缀导致英文界面显示「1.2万」。
+   */
+  const wordCountThresholds = computed<[number, string][]>(() => [
+    [100000000, t("countSuffixHundredMillion", "B")],
+    [10000, t("countSuffixTenThousand", "0k")],
+    [1000, t("countSuffixThousand", "k")],
+  ])
+
   const cpuUsageDisplay = computed(() => `${Math.round(state.cpuPercent)}%`)
 
   const memoryUsageDisplay = computed(() => {
@@ -84,18 +111,21 @@ export function useStatusBar() {
       hours,
       minutes,
     } = formatUptime(state.uptimeSeconds)
-    return hours > 0 ? `${hours}h${minutes}m` : `${minutes}m`
+    return hours > 0
+      ? interpolate(t("uptimeHoursMinutes", "{hours}h{minutes}m"), { hours, minutes })
+      : interpolate(t("uptimeMinutes", "{minutes}m"), { minutes })
   })
 
   const totalNotesDisplay = computed(() => String(state.totalNotes))
 
-  const totalWordsDisplay = computed(() =>
-    formatCount(state.totalWords, WORD_COUNT_THRESHOLDS),
-  )
+  const totalWordsDisplay = computed(() => formatCount(state.totalWords, wordCountThresholds.value))
 
-  const statisticsTooltip = computed(() => {
-    return `文档数: ${state.totalNotes} 篇\n总字数: ${state.totalWords.toLocaleString()} 字`
-  })
+  const statisticsTooltip = computed(() =>
+    interpolate(t("tipNotesWords", "Documents: {notes}\nWords: {words}"), {
+      notes: state.totalNotes,
+      words: state.totalWords.toLocaleString(),
+    }),
+  )
 
   function calcChange(today: number, yesterday: number): string {
     if (yesterday === 0) return today > 0 ? "+∞" : "0"
@@ -113,19 +143,32 @@ export function useStatusBar() {
   const todayTooltip = computed(() => {
     const cChg = calcChange(state.todayCreated, state.yesterdayCreated)
     const mChg = calcChange(state.todayModified, state.yesterdayModified)
-    return `今日新增: ${state.todayCreated} (较昨日 ${cChg})\n今日修改: ${state.todayModified} (较昨日 ${mChg})`
+    return interpolate(
+      t("tipTodayActivity", "Created today: {created} (vs yesterday {createdChange})\nModified today: {modified} (vs yesterday {modifiedChange})"),
+      {
+        created: state.todayCreated,
+        createdChange: cChg,
+        modified: state.todayModified,
+        modifiedChange: mChg,
+      },
+    )
   })
 
   const systemInfoTooltip = computed(() => {
     const platform =
       typeof process !== "undefined"
         ? `${process.platform} ${process.arch}`
-        : "Unknown"
+        : t("tipUnknownPlatform", "Unknown")
     const {
       hours,
       minutes,
     } = formatUptime(state.uptimeSeconds)
-    return `系统: ${platform}\n运行时间: ${hours}小时 ${minutes}分\n内存限制: ${DEFAULT_TOTAL_MEMORY_GB}GB`
+    return interpolate(t("tipSystemInfo", "System: {platform}\nUptime: {hours}h {minutes}m\nMemory limit: {memory}GB"), {
+      platform,
+      hours,
+      minutes,
+      memory: DEFAULT_TOTAL_MEMORY_GB,
+    })
   })
 
   const getLevel = (
@@ -146,20 +189,24 @@ export function useStatusBar() {
   async function fetchStatistics() {
     try {
       // 优化：使用预存的 length 字段代替 LENGTH(content)，避免对每行数据计算长度
+      // 日期谓词用「范围比较」而非 substr(created,1,8)=X —— 后者对列做函数运算无法命中索引，
+      // 与 statistics/queries/baseStats.ts 保持同一写法（两个模块的同类统计查询口径一致）
       const today = new Date()
-      const todayStr = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`
+      const todayStr = toDateBound(today, "000000")
+      const todayEnd = toDateBound(today, "235959")
       const yesterday = new Date(today)
       yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = `${yesterday.getFullYear()}${String(yesterday.getMonth() + 1).padStart(2, "0")}${String(yesterday.getDate()).padStart(2, "0")}`
+      const yesterdayStr = toDateBound(yesterday, "000000")
+      const yesterdayEnd = toDateBound(yesterday, "235959")
 
       const queryStmt = `
         SELECT
           (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
           (SELECT SUM(length) FROM blocks WHERE type = 'p' AND length > 0) as totalWords,
-          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${todayStr}') as todayCreated,
-          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${todayStr}') as todayModified,
-          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(created, 1, 8) = '${yesterdayStr}') as yesterdayCreated,
-          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND substr(updated, 1, 8) = '${yesterdayStr}') as yesterdayModified
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND created >= '${todayStr}' AND created <= '${todayEnd}') as todayCreated,
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND updated >= '${todayStr}' AND updated <= '${todayEnd}') as todayModified,
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND created >= '${yesterdayStr}' AND created <= '${yesterdayEnd}') as yesterdayCreated,
+          (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND updated >= '${yesterdayStr}' AND updated <= '${yesterdayEnd}') as yesterdayModified
       `
       const data = await sql(queryStmt)
       if (data?.[0]) {

@@ -1,22 +1,30 @@
-@use "./index.scss" as *;
+// 列表项样式 — 三列布局（名称 / 大小 / 日期），hover 或聚焦时显示操作
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
 
+// 网格模板与 FolderList.scss 的列头共用（$db-columns 定义于 _mixins.scss）
 .db-item-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 68px 78px auto;
+  grid-template-columns: $db-columns;
   align-items: center;
   gap: 0;
   padding: $s-px5 $s-2;
-  border-bottom: 1px solid var(--b3-border-color);
+  border-bottom: 1px solid $border;
   cursor: pointer;
   transition: background-color 0.12s;
 
-  &:hover {
+  &:hover,
+  &:focus-within {
     background: var(--b3-theme-surface-lighter);
 
     .db-item-actions {
       opacity: 1;
     }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
   }
 
   &.is-file {
@@ -68,6 +76,11 @@
   opacity: 0;
   transition: opacity 0.12s;
   margin-left: $s-1;
+
+  // 键盘导航进入本行时同样暴露操作按钮
+  .db-item-row:focus-within & {
+    opacity: 1;
+  }
 }
 
 .db-action-btn {

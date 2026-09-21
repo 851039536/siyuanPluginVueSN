@@ -190,26 +190,37 @@ export function getPathsFromFiles(files: File[]): string[] {
   return paths
 }
 
-/** 在文件管理器中打开指定文件夹（Electron shell.openPath 或降级到 fs 验证） */
-export async function openFolderInExplorer(folderPath: string): Promise<boolean> {
-  // 先验证路径存在
+/**
+ * 用系统默认程序打开路径（文件用默认应用、目录用文件管理器）。
+ *
+ * `shell.openPath` **成功返回空串、失败返回错误描述字符串**，故必须 await 并判返回值 ——
+ * 不 await 会让调用方无法得知真实结果（会把失败当成功提示）。
+ *
+ * @returns 是否成功打开（无 Electron shell 时恒为 false）
+ */
+export async function openPathInShell(targetPath: string): Promise<boolean> {
+  // 先验证路径存在，避免把「路径不存在」误报为「打开失败」以外的原因
   const node = getNodeModules()
   if (node) {
     try {
-      await node.fs.promises.access(folderPath)
+      await node.fs.promises.access(targetPath)
     } catch {
       return false
     }
   }
-  // 尝试 Electron shell.openPath（成功返回空串，失败返回错误描述字符串）
   const shell = getElectronModules()?.shell
   if (shell?.openPath) {
     try {
-      const result = await shell.openPath(folderPath)
+      const result = await shell.openPath(targetPath)
       return !result
     } catch {
       // shell 调用异常
     }
   }
   return false
+}
+
+/** 在文件管理器中打开指定文件夹（`openPathInShell` 的目录语义别名） */
+export function openFolderInExplorer(folderPath: string): Promise<boolean> {
+  return openPathInShell(folderPath)
 }

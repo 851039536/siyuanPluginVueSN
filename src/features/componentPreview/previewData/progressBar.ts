@@ -16,7 +16,7 @@ export const progressBarPreviewGroup: PreviewGroup = {
   id: "progressBar",
   component: ProgressBar,
   name: "ProgressBar",
-  summary: "进度条：单值进度（determinate 定长 + indeterminate 往复扫过）、数值标签、超限钳制；四档尺寸",
+  summary: "进度条：单值进度（determinate 定长 + indeterminate 往复扫过）、数值标签、超限钳制、三档颜色语义；四档尺寸",
   importCode: "import ProgressBar from \"@/components/ProgressBar.vue\"",
   sizeable: true,
   examples: [
@@ -68,6 +68,15 @@ export const progressBarPreviewGroup: PreviewGroup = {
       code: `<ProgressBar :value="72">
   <template #default>已完成 72%</template>
 </ProgressBar>`,
+    },
+    {
+      title: "颜色语义（severity：占用率按阈值变色）",
+      props: { value: 92, severity: "danger" },
+      code: `<!-- 官方无 severity，属本项目按库规范扩展；用于「同一进度按阈值变色」，
+     典型如磁盘用量 绿(primary) → 琥珀(warning) → 红(danger) -->
+<ProgressBar :value="30" :show-value="false" severity="primary" />
+<ProgressBar :value="70" :show-value="false" severity="warning" />
+<ProgressBar :value="92" :show-value="false" severity="danger" />`,
     },
   ],
 }

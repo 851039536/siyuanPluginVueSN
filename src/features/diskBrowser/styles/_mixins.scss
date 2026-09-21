@@ -1,0 +1,85 @@
+// 磁盘浏览器共享 mixins — 纯 mixin 载体，无顶层选择器
+// （`_` 前缀仅用于纯 mixins/变量，见 AGENTS_STYLE.md § SCSS 必须分离到 styles/ 目录 规则 3）
+// ⚠️ 各组件引入本文件而非 index.scss —— index.scss 含真实选择器且只服务 index.vue，
+//    子组件引入它会把整套面板样式重复发射 5 份。
+@use "@/variables.scss" as *;
+
+// ==================== Local Convenience ====================
+$border: var(--b3-border-color);
+
+/// 列表网格模板：名称 / 大小 / 日期 / 操作。
+/// 列头（FolderList.scss）与列表行（FolderListItem.scss）共用，保证列对齐 —— 唯一来源。
+$db-columns: minmax(0, 1fr) 68px 78px auto;
+
+// ==================== Mixins ====================
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-align-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin scrollbar($width: 6px, $height: 6px) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $height;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-lighter);
+    border-radius: calc($width / 2);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@mixin icon-container($size: 24px, $bg: var(--b3-theme-primary-lightest), $color: var(--b3-theme-primary)) {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $size;
+  height: $size;
+  border-radius: $r-sm;
+  background: $bg;
+  color: $color;
+}
+
+/// Codex 大写元信息标签
+@mixin meta-label {
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.45;
+}
+
+/// Codex 边框卡片
+@mixin border-card {
+  border: 1px solid $border;
+  border-radius: $r-base;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+@mixin small-mono-dimmed {
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.6;
+}

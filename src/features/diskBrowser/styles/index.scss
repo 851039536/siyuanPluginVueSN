@@ -1,80 +1,7 @@
+// 磁盘浏览器主入口样式 — 面板外壳 + 单一双栏布局 + 内容区空/加载态
+// 共享 mixins 见 _mixins.scss；导航栏样式见 NavPane.scss
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
-
-// ==================== Local Convenience ====================
-$border: var(--b3-border-color);
-
-// ==================== Mixins ====================
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@mixin flex-align-center {
-  display: flex;
-  align-items: center;
-}
-
-@mixin text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@mixin scrollbar($width: 6px, $height: 6px) {
-  &::-webkit-scrollbar {
-    width: $width;
-    height: $height;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: calc($width / 2);
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-}
-
-@mixin icon-container($size: 24px, $bg: var(--b3-theme-primary-lightest), $color: var(--b3-theme-primary)) {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: $size;
-  height: $size;
-  border-radius: $r-sm;
-  background: $bg;
-  color: $color;
-}
-
-/// Codex 大写元信息标签
-@mixin meta-label {
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-}
-
-/// Codex 边框卡片
-@mixin border-card {
-  border: 1px solid $border;
-  border-radius: $r-base;
-  transition: border-color 0.15s;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-}
-
-@mixin small-mono-dimmed {
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.6;
-}
 
 // ==================== Panel Root ====================
 .disk-browser-panel {
@@ -89,291 +16,41 @@ $border: var(--b3-border-color);
 }
 
 // ==================== Two-Pane Layout ====================
+// 侧栏宽度由 NavPane.scss 显式声明（flex: 0 0 132px），此处只负责让内容区占据剩余空间
 .db-layout {
   display: flex;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
-// ==================== All Drives View (no disk selected) ====================
-.db-all-drives {
+// ==================== Main Pane ====================
+.db-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
   overflow: hidden;
-}
-
-.db-all-drives-header {
-  @include flex-align-center;
-  gap: $s-2;
-  padding: $s-px10 $s-px14;
-  border-bottom: 1px solid $border;
-  flex-shrink: 0;
-}
-
-.db-all-drives-heading {
-  @include flex-align-center;
-  gap: $s-2;
-  flex: 1;
   min-width: 0;
-
-  span {
-    font-size: $t-sm;
-    font-weight: $fw-semibold;
-    color: var(--b3-theme-on-background);
-  }
 }
 
-.db-all-overview {
-  @include flex-align-center;
+// ==================== 未选磁盘时的引导空态 ====================
+.db-welcome {
+  @include flex-center;
+  flex: 1;
+  flex-direction: column;
   gap: $s-3;
-  padding: $s-3 $s-px14;
-  border-bottom: 1px solid $border;
-  flex-shrink: 0;
-}
-
-.db-all-overview-icon {
-  @include icon-container(40px, var(--b3-theme-primary-lightest), var(--b3-theme-primary));
-  border-radius: $r-md;
-}
-
-.db-all-overview-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: $s-px2;
-}
-
-.db-all-overview-meta {
-  @include meta-label;
-  color: var(--b3-theme-on-surface);
-}
-
-.db-all-overview-capacity {
-  @include flex-align-center;
-  gap: $s-px6;
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface);
-}
-
-.db-all-overview-used {
-  color: var(--b3-theme-on-background);
-  font-weight: $fw-semibold;
-}
-
-.db-all-overview-divider {
-  opacity: 0.4;
-}
-
-.db-all-overview-hint {
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.6;
-}
-
-.db-all-drives-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: $s-2;
-  padding: $s-px10;
-  overflow-y: auto;
-  flex-shrink: 0;
-  max-height: 240px;
-}
-
-.db-all-drive-card {
-  display: flex;
-  flex-direction: column;
-  gap: $s-px6;
-  padding: $s-px10;
-  background: var(--b3-theme-surface);
-  cursor: pointer;
-  @include border-card;
-  transition:
-    border-color 0.15s,
-    background-color 0.15s,
-    transform 0.15s;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-.db-all-drive-card-head {
-  @include flex-align-center;
-  gap: $s-2;
-}
-
-.db-all-drive-icon {
-  flex-shrink: 0;
-  color: var(--b3-theme-primary);
-}
-
-.db-all-drive-ident {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.db-all-drive-label {
-  font-family: $ff-mono;
-  font-size: $t-sm;
-  font-weight: $fw-semibold;
-  color: var(--b3-theme-on-background);
-  line-height: $lh-tight;
-}
-
-.db-all-drive-name {
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.7;
-  @include text-ellipsis;
-  max-width: 100%;
-}
-
-.db-all-drive-percent {
-  flex-shrink: 0;
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-
-  &.tone-normal {
-    color: var(--b3-theme-primary);
-  }
-
-  &.tone-warning {
-    color: var(--b3-theme-warning);
-  }
-
-  &.tone-danger {
-    color: var(--b3-theme-error);
-  }
-}
-
-.db-all-drive-bar {
-  width: 100%;
-  height: 4px;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: $r-px2;
-  overflow: hidden;
-}
-
-.db-all-drive-fill {
-  height: 100%;
-  background: var(--b3-theme-primary);
-  transition: width 0.3s ease;
-
-  &.tone-warning {
-    background: var(--b3-theme-warning);
-  }
-
-  &.tone-danger {
-    background: var(--b3-theme-error);
-  }
-}
-
-.db-all-drive-space {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $s-1;
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.7;
-}
-
-.db-all-drive-free {
-  color: var(--b3-theme-on-surface-light);
-  text-align: right;
-}
-
-.db-all-empty {
-  @include flex-center;
-  flex-direction: column;
-  gap: $s-2;
-  padding: $s-6 $s-5;
-  color: var(--b3-theme-on-surface-light);
-
-  svg, :deep(svg) {
-    opacity: 0.25;
-  }
-
-  p {
-    margin: 0;
-    font-size: $t-xs;
-    opacity: 0.5;
-    font-style: italic;
-  }
-}
-
-.db-all-favorites {
-  flex: 1;
-  overflow-y: auto;
-  border-top: 1px solid $border;
-}
-
-.db-all-fav-header {
-  @include flex-align-center;
-  gap: $s-px6;
-  padding: $s-px6 $s-px14;
-  border-bottom: 1px dashed $border;
-
-  span {
-    @include meta-label;
-    color: var(--b3-theme-on-surface);
-  }
-}
-
-.db-all-fav-list {
-  padding: $s-1 0;
-}
-
-.db-all-fav-row {
-  @include flex-align-center;
-  gap: $s-2;
-  padding: $s-px6 $s-px14;
-  cursor: pointer;
-  transition: background-color 0.12s;
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-  }
-
-  span {
-    font-family: $ff-mono;
-    font-size: $t-xs;
-    font-weight: $fw-medium;
-    color: var(--b3-theme-on-background);
-    @include text-ellipsis;
-  }
-}
-
-.db-all-fav-empty {
-  @include flex-center;
-  flex-direction: column;
-  gap: $s-2;
   padding: $s-8 $s-5;
+  text-align: center;
   color: var(--b3-theme-on-surface-light);
 
-  svg, :deep(svg) {
-    opacity: 0.25;
+  :deep(svg) {
+    opacity: 0.2;
   }
 
   p {
     margin: 0;
     font-size: $t-xs;
-    opacity: 0.5;
-    font-style: italic;
-    text-align: center;
+    opacity: 0.6;
     line-height: $lh-normal;
   }
 }

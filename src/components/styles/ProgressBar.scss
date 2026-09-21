@@ -8,6 +8,8 @@
   // 档位变量：根单点输出，四档只改几何量（圆角与轨道底色恒定）
   --si-progressbar-height: 8px; // 无对应 Token（默认档）
   --si-progressbar-font: #{$t-2xs};
+  // 填充条颜色：由 severity 档位覆盖（用于「占用率按阈值变色」）
+  --si-progressbar-value-bg: var(--b3-theme-primary, #{$c-primary});
 
   display: flex;
   align-items: center;
@@ -15,6 +17,15 @@
   width: 100%;
   font-family: $ff-zh;
   font-size: var(--si-progressbar-font, #{$t-2xs});
+
+  // ========== 颜色语义档位 ==========
+  &--warning {
+    --si-progressbar-value-bg: var(--b3-theme-warning, #{$c-warning});
+  }
+
+  &--danger {
+    --si-progressbar-value-bg: var(--b3-theme-error, #{$c-danger});
+  }
 
   // ========== 尺寸档位 ==========
   &--xsmall {
@@ -51,7 +62,7 @@
   // ========== 填充条 ==========
   &__value {
     height: 100%;
-    background: var(--b3-theme-primary, $c-primary);
+    background: var(--si-progressbar-value-bg, #{$c-primary});
     border-radius: $r-full;
     // 值变化时平滑过渡（不定态由动画接管，不冲突）
     transition: width 0.12s ease;

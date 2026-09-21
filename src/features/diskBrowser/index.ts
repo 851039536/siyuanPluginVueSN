@@ -7,8 +7,6 @@ import DiskBrowserPanel from "./index.vue"
 import { DiskBrowserStorage } from "./types/storage"
 
 export type {
-  CacheData,
-  CacheStatus,
   DiskBrowserI18n,
   DiskBrowserSettings,
   DiskInfo,
@@ -23,7 +21,7 @@ export function registerDiskBrowser(plugin: Plugin): void {
 
   createVueDockApp(plugin, DiskBrowserPanel, {
     icon: "iconFiles",
-    title: i18n.panelTitle || "磁盘浏览器",
+    title: i18n.panelTitle ?? "",
     type: "disk-browser-dock",
     width: 380,
     i18n,

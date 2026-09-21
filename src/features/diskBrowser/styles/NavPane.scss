@@ -1,7 +1,11 @@
-@use "./index.scss" as *;
+// 导航栏样式 — 磁盘列表（含用量条）+ 收藏夹 + 容量页脚
+// 布局外壳（开合/折叠）由本模块自持：Dock 面板是固定宽度容器，不需要共享 Sidebar 的折叠语义
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
 
-.db-sidebar {
+.db-nav {
+  // 显式定宽：flex 容器下若不声明宽度会按 max-content 撑开，长卷标/长路径会挤压内容区
+  flex: 0 0 132px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -10,28 +14,9 @@
   overflow: hidden;
 }
 
-.db-sidebar-header {
-  @include flex-align-center;
-  gap: $s-px6;
-  padding: $s-2 $s-px10;
-  border-bottom: 1px solid $border;
-  flex-shrink: 0;
-}
-
-.db-sidebar-title {
-  flex: 1;
-  font-size: $t-xs;
-  font-weight: $fw-semibold;
-  color: var(--b3-theme-on-background);
-  @include text-ellipsis;
-}
-
-.db-sidebar-refresh {
-  flex-shrink: 0;
-}
-
+// ==================== 磁盘列表 ====================
 .db-drives {
-  flex-shrink: 0;
+  flex: none;
   padding: $s-1 0;
 }
 
@@ -41,10 +26,14 @@
   padding: $s-px6 $s-px10;
   cursor: pointer;
   transition: background-color 0.12s;
-  position: relative;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
   }
 
   &.active {
@@ -61,28 +50,17 @@
   color: var(--b3-theme-on-surface-light);
 }
 
-.db-drive-arrow {
-  flex-shrink: 0;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.35;
-  transition: opacity 0.12s;
-
-  .db-drive-row:hover & {
-    opacity: 0.7;
-  }
-}
-
 .db-drive-info {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: $s-px1;
+  gap: $s-px3;
 }
 
 .db-drive-heading {
   @include flex-align-center;
-  gap: $s-px6;
+  gap: $s-px3;
   min-width: 0;
 }
 
@@ -94,32 +72,50 @@
   color: var(--b3-theme-on-background);
 }
 
+// 宽卷标换行到磁盘行第二行，不挤压盘符
 .db-drive-name {
-  flex: 1;
-  min-width: 0;
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
   @include text-ellipsis;
+  min-width: 0;
 }
 
-.db-drive-capacity {
+// 容量行：已用/总量 与 百分比分居两端
+.db-drive-meta {
   @include flex-align-center;
-  gap: $s-px6;
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-light);
-}
-
-.db-drive-usage {
-  font-weight: $fw-semibold;
-  color: var(--b3-theme-on-surface);
+  justify-content: space-between;
+  gap: $s-px3;
+  min-width: 0;
 }
 
 .db-drive-space {
-  opacity: 0.55;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.5;
+  @include text-ellipsis;
 }
 
+.db-drive-usage {
+  flex-shrink: 0;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.75;
+}
+
+// 磁盘列表空态（未检测到磁盘）
+.db-drive-empty {
+  padding: $s-3 $s-px10;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.55;
+  font-style: italic;
+  text-align: center;
+}
+
+// ==================== 收藏夹 ====================
 .db-favorites {
   flex: 1;
   display: flex;
@@ -145,6 +141,7 @@
 .db-fav-list {
   padding: $s-px2 0;
   overflow-y: auto;
+  @include scrollbar;
 }
 
 .db-fav-row {
@@ -160,6 +157,11 @@
     .db-fav-remove {
       opacity: 1;
     }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
   }
 }
 
@@ -185,33 +187,24 @@
   opacity: 0.55;
   font-style: italic;
   text-align: center;
+  line-height: $lh-normal;
 }
 
-.db-sidebar-footer {
+// ==================== 页脚（合计容量 + 刷新磁盘） ====================
+.db-nav-footer {
+  @include flex-align-center;
+  gap: $s-px6;
   flex-shrink: 0;
-  padding: $s-1 $s-px10;
+  padding: $s-px5 $s-px10;
   border-top: 1px solid $border;
-}
 
-.db-cache-tag {
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  padding: $s-px1 $s-px6;
-  border-radius: $r-px3;
-  color: var(--b3-theme-primary);
-  background: var(--b3-theme-primary-lightest);
-
-  &.expired {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
-    animation: pulse 2s ease-in-out infinite;
+  .db-nav-total {
+    flex: 1;
+    min-width: 0;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface-light);
+    opacity: 0.7;
+    @include text-ellipsis;
   }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
 }

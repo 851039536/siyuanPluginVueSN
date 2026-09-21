@@ -51,6 +51,12 @@ type ProgressBarMode = "determinate" | "indeterminate"
 /** 尺寸档位（与全库控件阶梯一致；官方无 `size` prop，属本项目按库规范扩展） */
 type ProgressBarSize = "xsmall" | "small" | "medium" | "large"
 
+/**
+ * 颜色语义（官方无此 prop，属本项目按库规范扩展）。
+ * 用于「占用率」这类**同一进度按阈值变色**的场景（如磁盘用量 绿→琥珀→红）。
+ */
+type ProgressBarSeverity = "primary" | "warning" | "danger"
+
 interface Props {
   /** 当前进度（0~100）；超出范围会被**钳制**而非溢出容器 */
   value?: number
@@ -60,6 +66,8 @@ interface Props {
   showValue?: boolean
   /** 尺寸档位：驱动条高、字号与标签间距 */
   size?: ProgressBarSize
+  /** 填充条颜色语义：`primary`（默认）/ `warning` / `danger` */
+  severity?: ProgressBarSeverity
   /** 不定态时的可访问文案（进度未知，`aria-valuenow` 缺省，改用它说明状态） */
   indeterminateLabel?: string
 }
@@ -69,6 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   mode: "determinate",
   showValue: true,
   size: "small",
+  severity: "primary",
   indeterminateLabel: "进行中",
 })
 
@@ -92,6 +101,7 @@ const shouldShowLabel = computed(() =>
 
 const rootClasses = computed(() => [
   `si-progressbar--${props.size}`,
+  `si-progressbar--${props.severity}`,
   {
     "si-progressbar--indeterminate": isIndeterminate.value,
     "si-progressbar--with-label": shouldShowLabel.value,

@@ -1,6 +1,31 @@
-<!-- 导航栏 — 磁盘列表（含用量条）+ 收藏夹 + 合计容量页脚 -->
+<!-- 导航栏 — 桌面入口 + 磁盘列表（含用量条）+ 收藏夹 + 合计容量页脚 -->
 <template>
   <div class="db-nav">
+    <!-- 桌面：与磁盘平级的导航根 -->
+    <div
+      v-if="desktopPath"
+      class="db-roots"
+      role="list"
+    >
+      <div
+        class="db-nav-row db-desktop-row"
+        :class="{ active: expandedDisk === desktopPath }"
+        role="listitem"
+        tabindex="0"
+        :title="desktopPath"
+        @click="$emit('selectDesktop')"
+        @keydown.enter.prevent="$emit('selectDesktop')"
+        @keydown.space.prevent="$emit('selectDesktop')"
+      >
+        <IconWrapper
+          name="desktop"
+          :size="14"
+          class="db-desktop-icon"
+        />
+        <span class="db-desktop-label">{{ i18n.desktop }}</span>
+      </div>
+    </div>
+
     <!-- 磁盘列表 -->
     <div
       class="db-drives"
@@ -9,7 +34,7 @@
       <div
         v-for="disk in disks"
         :key="disk.drive"
-        class="db-drive-row"
+        class="db-nav-row db-drive-row"
         :class="{ active: expandedDisk === disk.drive }"
         role="listitem"
         tabindex="0"
@@ -144,6 +169,7 @@ import { formatVolumePair } from "../utils"
 
 interface Props {
   disks: DiskInfo[]
+  desktopPath: string
   expandedDisk: string
   favoriteFolders: string[]
   loading: boolean
@@ -155,6 +181,7 @@ interface Props {
 defineProps<Props>()
 defineEmits<{
   selectDisk: [disk: DiskInfo]
+  selectDesktop: []
   navigateFavorite: [path: string]
   removeFavorite: [path: string]
   refreshDisks: []

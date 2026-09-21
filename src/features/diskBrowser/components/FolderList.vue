@@ -4,6 +4,8 @@
     <AddressBar
       :current-path="currentPath"
       :expanded-disk="expandedDisk"
+      :root-label="rootLabel"
+      :is-desktop-root="isDesktopRoot"
       :path-segments="pathSegments"
       :loading-folders="loadingFolders"
       :i18n="i18n"
@@ -98,6 +100,8 @@ interface Props {
   folders: FolderInfo[]
   currentPath: string
   expandedDisk: string
+  rootLabel: string
+  isDesktopRoot: boolean
   pathSegments: string[]
   loadingFolders: boolean
   loadError: string

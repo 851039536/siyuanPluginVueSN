@@ -561,9 +561,10 @@
     "usedSpace": "Used",
     "freeSpace": "Free",
     "disks": "disks",
-    "clickToBrowse": "Click a disk on the left to browse files",
+    "clickToBrowse": "Click Desktop or a disk on the left to browse files",
     "noFavorites": "No favorites yet. Click the star on a folder while browsing to add it.",
-    "noDisks": "No local disks detected"
+    "noDisks": "No local disks detected",
+    "desktop": "Desktop"
   },
   "docAnalysis": {
     "title": "Document Analysis",

@@ -9,6 +9,9 @@ import {
   getNodeModules,
   getNodeProcessModules,
 } from "@/utils/nodeModules"
+import { isSystemEntry } from "./fileKind"
+
+export * from "./fileKind"
 
 /** 卷标查询超时（ms）——卷标是装饰性数据，超时即放弃，不拖慢面板 */
 const VOLUME_LABEL_TIMEOUT = 2000
@@ -114,6 +117,74 @@ function parseVolumeLabel(stdout: string): string {
 }
 
 /**
+ * 解析当前用户的桌面目录绝对路径。
+ *
+ * 优先读注册表 `User Shell Folders\Desktop` —— 桌面可能被重定向到 OneDrive 或自定义位置
+ * （`os.homedir()/Desktop` 在这种机器上会指向不存在或误导的路径）。
+ * 注册表不可用（非 Windows / 被拒）时回退到 `homedir()/Desktop`，最后校验存在性。
+ *
+ * @returns 可用的桌面绝对路径；均不可用时返回 `null`
+ */
+export function resolveDesktopPath(): string | null {
+  const node = getNodeModules()
+  if (!node) return null
+
+  const candidates: string[] = []
+
+  // ① 注册表真实位置（可含环境变量，如 %USERPROFILE%）
+  const proc = getNodeProcessModules()
+  if (proc) {
+    try {
+      const stdout = proc.child_process.execSync(
+        'reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders" /v Desktop',
+        { timeout: VOLUME_LABEL_TIMEOUT, encoding: "utf8" },
+      ) as string
+      // 形如：    Desktop    REG_EXPAND_SZ    C:\Users\xxx\Desktop
+      const matched = stdout.match(/REG_(?:EXPAND_)?SZ\s+(.+?)\s*$/m)
+      if (matched) {
+        candidates.push(expandEnvVars(matched[1].trim(), proc.os))
+      }
+    } catch {
+      // 注册表不可用 → 走回退
+    }
+  }
+
+  // ② 回退：家目录下的 Desktop（多数默认安装即此路径）
+  if (proc) {
+    try {
+      candidates.push(node.path.join(proc.os.homedir(), "Desktop"))
+    } catch {
+      // homedir 不可用
+    }
+  }
+
+  for (const candidate of candidates) {
+    if (!candidate) continue
+    try {
+      if (node.fs.statSync(candidate).isDirectory()) return candidate
+    } catch {
+      // 该候选不存在 → 试下一个
+    }
+  }
+  return null
+}
+
+/** 展开 `%VAR%` 环境变量（注册表 `REG_EXPAND_SZ` 常见形态） */
+function expandEnvVars(value: string, os: { homedir: () => string }): string {
+  return value.replace(/%([^%]+)%/g, (whole, name: string) => {
+    if (/^users?profile$/i.test(name)) {
+      try {
+        return os.homedir()
+      } catch {
+        return whole
+      }
+    }
+    // 其余变量交给 process.env（Node 在 Electron 渲染进程可用）
+    return process.env[name] ?? whole
+  })
+}
+
+/**
  * 使用 Node.js fs 模块读取目录内容。
  *
  * @returns 条目列表；返回 **`null` 表示读取失败**（无 Node 环境 / 目录不存在 / 无权限），
@@ -134,6 +205,9 @@ export function readDirectoryContents(dirPath: string): FolderInfo[] | null {
   const items: FolderInfo[] = []
 
   for (const entry of entries) {
+    // 系统文件（desktop.ini / thumbs.db 等）不展示：Windows 隐藏属性在 Node 下不可读，按名过滤
+    if (isSystemEntry(entry.name)) continue
+
     const fullPath = `${dirPath}${separator}${entry.name}`
 
     if (entry.isDirectory()) {

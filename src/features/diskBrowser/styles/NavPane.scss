@@ -1,4 +1,4 @@
-// 导航栏样式 — 磁盘列表（含用量条）+ 收藏夹 + 容量页脚
+// 导航栏样式 — 桌面入口 + 磁盘列表（含用量条）+ 收藏夹 + 容量页脚
 // 布局外壳（开合/折叠）由本模块自持：Dock 面板是固定宽度容器，不需要共享 Sidebar 的折叠语义
 @use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
@@ -14,14 +14,9 @@
   overflow: hidden;
 }
 
-// ==================== 磁盘列表 ====================
-.db-drives {
-  flex: none;
-  padding: $s-1 0;
-}
-
-// 磁盘行：单列内容（盘符/卷标 + 用量条 + 容量），无左侧图标
-.db-drive-row {
+// ==================== 导航根行（桌面 + 磁盘共用的交互基类） ====================
+// 抽出的理由：两种根行的 hover / focus / active 底色逐字相同，差异只在内部内容布局
+.db-nav-row {
   @include flex-align-center;
   padding: $s-px6 $s-px10;
   cursor: pointer;
@@ -38,10 +33,47 @@
 
   &.active {
     background: var(--b3-theme-primary-lightest);
+  }
+}
 
-    .db-drive-label {
-      color: var(--b3-theme-primary);
-    }
+// ==================== 桌面入口（与磁盘平级） ====================
+.db-roots {
+  flex: none;
+  padding-top: $s-1;
+}
+
+.db-desktop-row {
+  gap: $s-px6;
+}
+
+.db-desktop-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-light);
+
+  .db-desktop-row.active & {
+    color: var(--b3-theme-primary);
+  }
+}
+
+.db-desktop-label {
+  min-width: 0;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-background);
+  @include text-ellipsis;
+}
+
+// ==================== 磁盘列表 ====================
+.db-drives {
+  flex: none;
+  padding: $s-1 0;
+}
+
+// 磁盘行：单列内容（盘符/卷标 + 用量条 + 容量），无左侧图标
+.db-drive-row {
+  // 交互样式继承 .db-nav-row；此处只补选中态的盘符变色
+  &.active .db-drive-label {
+    color: var(--b3-theme-primary);
   }
 }
 

@@ -59,6 +59,7 @@ export interface DiskBrowserI18n {
   clickToBrowse?: string
   noFavorites?: string
   noDisks?: string
+  desktop?: string
 }
 
 export const STORAGE_KEY = "disk-browser-settings"

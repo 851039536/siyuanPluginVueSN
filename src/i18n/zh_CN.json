@@ -561,9 +561,10 @@
     "usedSpace": "已用",
     "freeSpace": "可用",
     "disks": "磁盘",
-    "clickToBrowse": "点击左侧磁盘浏览文件",
+    "clickToBrowse": "点击左侧「桌面」或磁盘浏览文件",
     "noFavorites": "暂无收藏，浏览文件夹时点击星标即可添加",
-    "noDisks": "未检测到可用的本地磁盘"
+    "noDisks": "未检测到可用的本地磁盘",
+    "desktop": "桌面"
   },
   "docAnalysis": {
     "title": "文档分析",

@@ -4,6 +4,7 @@
     <div class="db-layout">
       <NavPane
         :disks="disks"
+        :desktop-path="desktopPath"
         :expanded-disk="expandedDisk"
         :favorite-folders="favoriteFolders"
         :loading="loading"
@@ -11,6 +12,7 @@
         :total-used="totalUsed"
         :i18n="i18n"
         @select-disk="toggleDisk"
+        @select-desktop="toggleDesktop"
         @navigate-favorite="navigateToFavorite"
         @remove-favorite="toggleFavorite"
         @refresh-disks="refreshDisks"
@@ -21,6 +23,8 @@
         :folders="folders"
         :current-path="currentPath"
         :expanded-disk="expandedDisk"
+        :root-label="rootLabel"
+        :is-desktop-root="isDesktopRoot"
         :path-segments="pathSegments"
         :loading-folders="loadingFolders"
         :load-error="loadError"
@@ -70,6 +74,7 @@ const props = defineProps<Props>()
 
 const {
   disks,
+  desktopPath,
   expandedDisk,
   folders,
   loading,
@@ -79,10 +84,13 @@ const {
   favoriteFolders,
   favoriteSet,
   pathSegments,
+  rootLabel,
+  isDesktopRoot,
   totalCapacity,
   totalUsed,
   toggleFavorite,
   toggleDisk,
+  toggleDesktop,
   openPath,
   refreshDisks,
   refreshCurrentFolder,

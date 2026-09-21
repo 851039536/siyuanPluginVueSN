@@ -13,23 +13,27 @@
         :class="{ active: expandedDisk === disk.drive }"
         role="listitem"
         tabindex="0"
-        :title="disk.label ? `${disk.label} (${disk.drive})` : disk.drive"
+        :title="driveTitle(disk)"
         @click="$emit('selectDisk', disk)"
         @keydown.enter.prevent="$emit('selectDisk', disk)"
         @keydown.space.prevent="$emit('selectDisk', disk)"
       >
-        <IconWrapper
-          name="diskBrowser"
-          :size="16"
-          class="db-drive-icon"
-        />
         <div class="db-drive-info">
+          <!-- 盘符 + 已用/总量 + 百分比同处一行；卷标在无容量数据时兜底显示 -->
+          <!-- 完整精度（2 位小数 + 卷标）放在行 title 中，窄侧栏无需牺牲可读性 -->
           <div class="db-drive-heading">
             <span class="db-drive-label">{{ disk.drive }}</span>
             <span
-              v-if="disk.label"
+              v-if="disk.total"
+              class="db-drive-space"
+            >{{ formatVolumePair(disk.used ?? 0, disk.total) }}</span>
+            <span
+              v-if="disk.total"
+              class="db-drive-usage"
+            >{{ disk.usagePercent ?? 0 }}%</span>
+            <span
+              v-else-if="disk.label"
               class="db-drive-name"
-              :title="disk.label"
             >{{ disk.label }}</span>
           </div>
           <ProgressBar
@@ -39,13 +43,6 @@
             size="xsmall"
             :show-value="false"
           />
-          <div
-            v-if="disk.total"
-            class="db-drive-meta"
-          >
-            <span class="db-drive-space">{{ formatFileSize(disk.used ?? 0) }} / {{ formatFileSize(disk.total) }}</span>
-            <span class="db-drive-usage">{{ disk.usagePercent ?? 0 }}%</span>
-          </div>
         </div>
       </div>
 
@@ -121,7 +118,7 @@
         class="db-nav-total"
         :title="`${i18n.usedSpace} ${formatFileSize(totalUsed)} / ${i18n.freeSpace} ${formatFileSize(totalCapacity - totalUsed)} / ${i18n.totalSpace} ${formatFileSize(totalCapacity)}`"
       >
-        {{ formatFileSize(totalUsed) }} / {{ formatFileSize(totalCapacity) }}
+        {{ formatVolumePair(totalUsed, totalCapacity) }}
       </span>
       <Button
         variant="ghost"
@@ -143,6 +140,7 @@ import Badge from "@/components/Badge.vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import ProgressBar from "@/components/ProgressBar.vue"
+import { formatVolumePair } from "../utils"
 
 interface Props {
   disks: DiskInfo[]
@@ -167,6 +165,18 @@ function usageSeverity(percent: number): "primary" | "warning" | "danger" {
   if (percent >= 85) return "danger"
   if (percent >= 60) return "warning"
   return "primary"
+}
+
+/**
+ * 行悬浮提示：卷标 + 盘符 + **完整精度**容量。
+ * 行内为窄侧栏做了取整（`275/290 GB`），精确值与被舍去的卷标在此补全。
+ */
+function driveTitle(disk: DiskInfo): string {
+  const head = disk.label ? `${disk.label} (${disk.drive})` : disk.drive
+  if (!disk.total) return head
+  const used = formatFileSize(disk.used ?? 0)
+  const total = formatFileSize(disk.total)
+  return `${head} — ${used} / ${total}`
 }
 
 /** 取路径末段作为收藏夹显示名（"E:\a\b" → "b"，根路径回退为盘符本身） */

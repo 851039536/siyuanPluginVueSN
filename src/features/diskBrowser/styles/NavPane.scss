@@ -5,7 +5,7 @@
 
 .db-nav {
   // 显式定宽：flex 容器下若不声明宽度会按 max-content 撑开，长卷标/长路径会挤压内容区
-  flex: 0 0 132px;
+  flex: 0 0 142px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -20,9 +20,9 @@
   padding: $s-1 0;
 }
 
+// 磁盘行：单列内容（盘符/卷标 + 用量条 + 容量），无左侧图标
 .db-drive-row {
   @include flex-align-center;
-  gap: $s-2;
   padding: $s-px6 $s-px10;
   cursor: pointer;
   transition: background-color 0.12s;
@@ -39,15 +39,10 @@
   &.active {
     background: var(--b3-theme-primary-lightest);
 
-    .db-drive-icon {
+    .db-drive-label {
       color: var(--b3-theme-primary);
     }
   }
-}
-
-.db-drive-icon {
-  flex-shrink: 0;
-  color: var(--b3-theme-on-surface-light);
 }
 
 .db-drive-info {
@@ -58,10 +53,12 @@
   gap: $s-px3;
 }
 
+// 单行信息带：盘符 + 已用/总量 + 百分比。nowrap 保证不折行（容量已按窄栏取整）
 .db-drive-heading {
   @include flex-align-center;
-  gap: $s-px3;
+  gap: $s-px5;
   min-width: 0;
+  white-space: nowrap;
 }
 
 .db-drive-label {
@@ -72,24 +69,18 @@
   color: var(--b3-theme-on-background);
 }
 
-// 宽卷标换行到磁盘行第二行，不挤压盘符
+// 卷标：仅在无容量数据时显示（此时行内只余盘符，空间充足）
 .db-drive-name {
+  min-width: 0;
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
   @include text-ellipsis;
-  min-width: 0;
 }
 
-// 容量行：已用/总量 与 百分比分居两端
-.db-drive-meta {
-  @include flex-align-center;
-  justify-content: space-between;
-  gap: $s-px3;
-  min-width: 0;
-}
-
+// 已用/总量：窄栏下取整并共用单位（如 "275/290 GB"），故可 flex-shrink 让位于百分比
 .db-drive-space {
+  min-width: 0;
   font-family: $ff-mono;
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);
@@ -97,8 +88,10 @@
   @include text-ellipsis;
 }
 
+// 百分比：始终完整可见（比容量值更能表达「快满了」）
 .db-drive-usage {
   flex-shrink: 0;
+  margin-left: auto;
   font-family: $ff-mono;
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface-light);

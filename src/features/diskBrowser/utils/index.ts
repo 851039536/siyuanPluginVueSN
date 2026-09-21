@@ -174,6 +174,44 @@ function formatYmd(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 }
 
+/** 容量单位阶梯（1024 进制） */
+const VOLUME_UNITS = ["B", "KB", "MB", "GB", "TB"]
+
+/**
+ * 磁盘容量紧凑格式化：**整数单位**（值 < 10 时保留 1 位小数）。
+ *
+ * 与共享 `@/utils/format` 的 `formatFileSize`（恒 2 位小数）区分：本函数专供
+ * **窄侧栏**（`NavPane.scss` 的 `.db-nav`）单行展示 —— 完整精度放不下
+ * （`274.66 GB` 单值即 9 字符），故取整为 `275 GB`。
+ * 需要精确值时用 `formatFileSize`（本模块用于行 `title` 提示）。
+ */
+function formatVolume(bytes?: number): string {
+  if (!bytes || bytes <= 0) return "0 B"
+  let value = bytes
+  let unitIndex = 0
+  while (value >= 1024 && unitIndex < VOLUME_UNITS.length - 1) {
+    value /= 1024
+    unitIndex++
+  }
+  // 小于 10 时取整会丢失有效精度（如 1.8 TB → 2 TB），故保留 1 位小数
+  const text = unitIndex > 0 && value < 10 ? value.toFixed(1) : String(Math.round(value))
+  return `${text} ${VOLUME_UNITS[unitIndex]}`
+}
+
+/**
+ * 容量对的紧凑展示：**共用单位**，如 `275/290 GB`。
+ *
+ * 逐项调用 `formatVolume` 会得到 `275 GB / 290 GB`（16 字符），窄侧栏里必然折行；
+ * 共用单位后为 `275/290 GB`（10 字符）。两者单位不一致时（极小分区）各自带单位，避免误读。
+ */
+export function formatVolumePair(used: number, total: number): string {
+  const usedText = formatVolume(used)
+  const totalText = formatVolume(total)
+  const usedUnit = usedText.split(" ")[1]
+  if (usedUnit !== totalText.split(" ")[1]) return `${usedText} / ${totalText}`
+  return `${usedText.split(" ")[0]}/${totalText}`
+}
+
 /** 格式化修改时间：一周内用相对文案（今天 / 昨天 / N 天前），更早显示 YYYY-MM-DD */
 export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
   try {

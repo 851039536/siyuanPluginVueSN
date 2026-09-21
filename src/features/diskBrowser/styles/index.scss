@@ -16,7 +16,7 @@
 }
 
 // ==================== Two-Pane Layout ====================
-// 侧栏宽度由 NavPane.scss 显式声明（flex: 0 0 132px），此处只负责让内容区占据剩余空间
+// 侧栏宽度由 NavPane.scss 的 .db-nav 显式声明（唯一来源），此处只负责让内容区占据剩余空间
 .db-layout {
   display: flex;
   flex: 1;

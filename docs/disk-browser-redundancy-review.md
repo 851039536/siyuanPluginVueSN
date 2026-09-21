@@ -167,6 +167,14 @@ return items
 
 **整改**：删除「全部磁盘」独立视图，面板统一为**单一双栏布局**（导航栏 + 内容区）；磁盘与收藏夹各只有一份渲染（`NavPane.vue`）。聚合容量信息从被删除的 hero 概览下移到导航栏页脚（保留有用信息，去掉装饰性区块）。
 
+**磁盘行最终形态**（用户指定）：**单行**「盘符 + 已用/总量 + 百分比」+ 其下一行细用量条，如 `C: 275/290 GB 95%`。
+
+> 宽度约束的量化依据（侧栏 **142px**）：可视宽 = 142px − 2×10px padding = **122px**；等宽字体约 0.6em/字符下
+> `C: 275/290 GB 95%`（17 字符）≈ **102px** ✅，而共享 `formatFileSize` 的 2 位小数形态
+> `274.66 GB / 290.36 GB`（21 字符）≈ **126px** ❌ 必然折行。
+> 故新增 `formatVolumePair`（取整 + **共用单位** → `275/290 GB`），完整精度（`275.43 GB / 290.36 GB`）与卷标移入行 `title`。
+> 页脚合计同法处理（`576 GB / 1.4 TB` —— 单位不同则各自带单位，避免误读）。
+
 ### F9. 面板标题与刷新按钮各出现两次
 
 `index.vue:8-26` 与 `Sidebar.vue:4-21` 均为「图标 + `i18n.panelTitle` + refresh 按钮」的同一结构；且 `index.ts:26` 已把标题交给 `addDock` 作为 Dock 标签。
@@ -177,7 +185,28 @@ return items
 
 `styles/Sidebar.scss:4-11` 的 `.db-sidebar` 只有 `display: flex; flex-direction: column`，**没有 `width` / `flex-basis`**。在 `.db-layout { display: flex }` 下，该栏按 **max-content** 定宽 —— 一旦出现长卷标或长收藏夹路径，侧栏会横向撑开并**挤压内容区**（内容区虽有 `min-width: 0` 不会溢出，但列宽被压缩、观感失衡）。
 
-**整改**：显式 `flex: 0 0 132px`。
+**整改**：显式 `flex: 0 0 142px`（初版 132px，按用户要求 +10px）。
+
+> **附带发现（F10b，未在本轮修复）**：定宽后逐项核算文件列表的网格宽度，发现**列模板在 380px 面板下本就溢出**：
+>
+> | 组成 | 宽度 |
+> |---|---|
+> | 侧栏 `.db-nav` | 142px |
+> | 列表右留白 `.db-folder-items` `padding-right` | 8px |
+> | 行内边距 `.db-item-row` `padding: $s-px5 $s-2` | 16px |
+> | 大小列 + 日期列 | 68 + 78 = 146px |
+> | 操作列（4 个 `dense+xsmall` 纯图标按钮 20px + 3×1px gap + 4px margin） | 87px |
+> | **固定部分合计** | **257px** |
+>
+> 面板 380px − 侧栏 142px = 内容区 238px，再扣右留白与行内边距后网格可用仅 **214px** < 257px
+> ⇒ 名称列 `minmax(0, 1fr)` 被压到 0，**末列（操作按钮）溢出被裁**。
+>
+> 关键成因：`.db-item-actions` 用 `opacity: 0` 隐藏（非 `display: none`），**元素仍占布局** —— 87px 恒定占用，
+> 而它只在 hover 时才可见。加宽侧栏 10px 使该溢出从 −9px 扩大到 −19px。
+>
+> **建议修法（择一，需用户确认）**：① 操作列改 `position: absolute` + 行 `position: relative`，悬停时浮于行右（不占网格宽）；
+> ② 操作按钮减为 2 个（打开/复制），星标与进入改为整行交互已覆盖的能力；
+> ③ 面板宽度从 380px 增至 ≥ 430px。当前**未改动**，以免超出本次「加宽侧栏」的请求范围。
 
 ---
 
@@ -242,18 +271,18 @@ return items
 
 | 文件 | 动作 |
 |---|---|
-| `utils/index.ts` | 重写：`listDrives`（`statfsSync`）/ `readVolumeLabel`（`vol`）/ `readDirectoryContents`（失败返 `null`）/ `formatDate`；删 5 个死函数。196 → 157 行 |
+| `utils/index.ts` | 重写：`listDrives`（`statfsSync`）/ `readVolumeLabel`（`vol`）/ `readDirectoryContents`（失败返 `null`）/ `formatVolumePair`（窄栏容量对）/ `formatDate`；删 5 个死函数 |
 | `types/index.ts` | 删 `CacheData` / `CacheStatus` + 11 个 i18n 键；新增 `noDisks`。80 → 60 行 |
 | `composables/useDiskBrowser.ts` | 依赖注入签名、会话内记忆化、`loadError`、`openPath` await、聚合 computed 上移。347 → 296 行 |
 | `index.vue` | 重写为单一双栏。283 → 95 行 |
-| `components/NavPane.vue` | **新增**（替代 `Sidebar.vue`）：磁盘行 + 收藏夹 + 容量页脚，复用 `ProgressBar`。171 行 |
+| `components/NavPane.vue` | **新增**（替代 `Sidebar.vue`）：磁盘行（单行「盘符 + 已用/总量 + 百分比」+ 细用量条）+ 收藏夹 + 容量页脚，复用 `ProgressBar` |
 | `components/Sidebar.vue` | **删除**（改名并重写为 `NavPane.vue`，消除与共享 `@/components/Sidebar.vue` 的同名冲突） |
 | `components/AddressBar.vue` | 面包屑改共享 `Button`；删与状态栏重复的 `itemCount` |
 | `components/FolderList.vue` | 新增错误态分支；删缓存标签与重复路径显示 |
 | `components/FolderListItem.vue` | 键盘可达 + 共享 `formatFileSize` |
 | `styles/_mixins.scss` | **新增**（纯 mixin + `$db-columns`） |
 | `styles/index.scss` | 瘦身至 48 行（删全部 `.db-all-*`） |
-| `styles/NavPane.scss` | **新增**（替代 `Sidebar.scss`）：显式 `flex: 0 0 132px`，删缓存标签与自建进度条 |
+| `styles/NavPane.scss` | **新增**（替代 `Sidebar.scss`）：显式 `flex: 0 0 142px`，删缓存标签与自建进度条 |
 | `styles/{AddressBar,FolderList,FolderListItem}.scss` | 移除重复的 `index.scss` 引入，改用 `_mixins.scss` |
 | `src/utils/electronDialog.ts` | 新增 `openPathInShell`，`openFolderInExplorer` 委托之 |
 | `src/components/ProgressBar.vue` + `styles/ProgressBar.scss` | 新增可选 `severity` |
@@ -289,22 +318,22 @@ return items
 | 5 个 SFC 编译（template + script setup） | ✅ 全部通过 |
 | 5 个 SCSS 入口编译 | ✅ 全部通过 |
 | `ProgressBar.scss` 编译 | ✅ `--warning` / `--danger` 修饰类与变量生效 |
-| `NavPane` SSR 渲染 | ✅ 盘符/卷标/百分比/容量/收藏夹/页脚均正确；空磁盘显示 `noDisks` |
+| `NavPane` SSR 渲染 | ✅ 单行「`C: 275/290 GB 95%`」+ 用量条 severity 正确；行 `title` 补全精度与卷标；空磁盘显示 `noDisks` |
 | `FolderList` 三态 SSR 渲染 | ✅ 加载中→Loader；空→「此文件夹为空」；失败→`.db-error` 且**不再误报**空目录 |
 
 **用户待执行**：`pnpm lint`、`pnpm vite build`（按 `AGENTS.md`，AI 不运行）。
 
-**代码量**：15 个文件 / 2082 行 → 16 个文件 / 1648 行（**净减 434 行**，−21%；文件数 +1 是因按 `AGENTS_STYLE.md` 规则 3 拆出纯 mixin 载体 `_mixins.scss`，并新增 `NavPane.vue` 取代 `Sidebar.vue`）。
+**代码量**：15 个文件 / 2082 行 → 16 个文件 / 1677 行（**净减 405 行**，−19%；文件数 +1 是因按 `AGENTS_STYLE.md` 规则 3 拆出纯 mixin 载体 `_mixins.scss`，并新增 `NavPane.vue` 取代 `Sidebar.vue`）。
 
 | 文件 | 重构前 | 重构后 | 变化 |
 |---|---|---|---|
 | `index.vue` | 283 | 95 | −188 |
 | `styles/index.scss` | 379 | 48 | −331 |
-| `utils/index.ts` | 196 | 157 | −39 |
-| `composables/useDiskBrowser.ts` | 347 | 296 | −51 |
+| `utils/index.ts` | 196 | 185 | −11 |
+| `composables/useDiskBrowser.ts` | 347 | 297 | −50 |
 | `types/index.ts` | 80 | 60 | −20 |
 | `components/Sidebar.vue` + `styles/Sidebar.scss` | 161 + 217 | **删除** | −378 |
-| `components/NavPane.vue` + `styles/NavPane.scss` | **新增** | 171 + 177 | +348 |
+| `components/NavPane.vue` + `styles/NavPane.scss` | **新增** | 178 + 171 | +349 |
 | `styles/_mixins.scss` | **新增** | 65 | +65 |
 | 其余 4 个组件 + 3 个样式 + `index.ts` + `storage.ts` | 259 | 305 | +46（键盘可达、错误态、面包屑按钮化） |
 

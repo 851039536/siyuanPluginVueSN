@@ -18,11 +18,11 @@
           text
           size="xsmall"
           class="db-crumb"
-          icon="diskBrowser"
-          :title="i18n.backToRoot"
+          :icon="isDesktopRoot ? 'desktop' : 'diskBrowser'"
+          :title="rootTitle"
           @click="$emit('navigateRoot')"
         >
-          {{ expandedDisk }}
+          {{ rootLabel }}
         </Button>
         <template
           v-for="(segment, index) in pathSegments"
@@ -75,17 +75,22 @@
 
 <script setup lang="ts">
 import type { DiskBrowserI18n } from "../types"
+import { computed } from "vue"
 import Button from "@/components/Button.vue"
 
 interface Props {
   currentPath: string
   expandedDisk: string
+  /** 导航根显示名（盘符 → "E:"，桌面 → i18n.desktop） */
+  rootLabel: string
+  /** 当前根是否为桌面（决定根图标与悬浮提示） */
+  isDesktopRoot: boolean
   pathSegments: string[]
   loadingFolders: boolean
   i18n: DiskBrowserI18n
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 defineEmits<{
   back: []
   navigateRoot: []
@@ -94,6 +99,11 @@ defineEmits<{
   copyPath: [path: string]
   refresh: []
 }>()
+
+/** 根节点悬浮提示：桌面上补出真实绝对路径（面包屑只显示「桌面」） */
+const rootTitle = computed(() =>
+  props.isDesktopRoot ? `${props.i18n.desktop}: ${props.expandedDisk}` : props.i18n.backToRoot,
+)
 </script>
 
 <style scoped lang="scss">

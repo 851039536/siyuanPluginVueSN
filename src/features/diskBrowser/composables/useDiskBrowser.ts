@@ -23,6 +23,7 @@ import {
   formatDate,
   listDrives,
   readDirectoryContents,
+  resolveDesktopPath,
 } from "../utils"
 
 /** 依赖注入契约（遵循 AGENTS_ARCH.md § Composable 模式要求） */
@@ -33,6 +34,7 @@ export interface UseDiskBrowserDeps {
 
 export function useDiskBrowser(deps: UseDiskBrowserDeps): {
   disks: Ref<DiskInfo[]>
+  desktopPath: Ref<string>
   expandedDisk: Ref<string>
   folders: Ref<FolderInfo[]>
   loading: Ref<boolean>
@@ -42,10 +44,13 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
   favoriteFolders: Ref<string[]>
   favoriteSet: ComputedRef<Set<string>>
   pathSegments: ComputedRef<string[]>
+  rootLabel: ComputedRef<string>
+  isDesktopRoot: ComputedRef<boolean>
   totalCapacity: ComputedRef<number>
   totalUsed: ComputedRef<number>
   toggleFavorite: (folderPath: string) => Promise<void>
   toggleDisk: (disk: DiskInfo) => Promise<void>
+  toggleDesktop: () => Promise<void>
   openPath: (path: string) => Promise<void>
   refreshDisks: () => void
   refreshCurrentFolder: () => void
@@ -61,6 +66,9 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
   const { i18n, storage } = deps
 
   const disks = ref<DiskInfo[]>([])
+  /** 当前用户桌面目录绝对路径（空串 = 解析失败 / 非桌面端，此时不显示桌面入口） */
+  const desktopPath = ref("")
+  /** 当前导航根：盘符（如 "E:"）或桌面绝对路径 */
   const expandedDisk = ref("")
   const folders = ref<FolderInfo[]>([])
   const loading = ref(false)
@@ -74,15 +82,29 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
   const cachedDisks = ref<DiskInfo[] | null>(null)
   const folderCache = ref<Map<string, FolderInfo[]>>(new Map())
 
+  /** 导航根是否为桌面（用于面包屑/标题的文案与路径切分差异） */
+  const isDesktopRoot = computed(() => !!desktopPath.value && expandedDisk.value === desktopPath.value)
+
+  /**
+   * 面包屑路径段。
+   * ⚠️ 桌面根与盘符根的**分隔符与切分基准不同**：盘符根是 `"E:"` 需补 `\`，
+   * 桌面根已是完整路径，故按其自身长度切分。
+   */
   const pathSegments = computed(() => {
-    if (!currentPath.value || currentPath.value === expandedDisk.value)
-      return []
-    const pathWithoutDrive = currentPath.value.replace(
-      `${expandedDisk.value}\\`,
-      "",
-    )
-    return pathWithoutDrive.split("\\").filter(Boolean)
+    if (!currentPath.value || currentPath.value === expandedDisk.value) return []
+    const root = expandedDisk.value
+    if (!root) return []
+    const prefix = isDesktopRoot.value || root.endsWith("\\") ? root : `${root}\\`
+    const relative = currentPath.value.startsWith(prefix)
+      ? currentPath.value.slice(prefix.length)
+      : currentPath.value
+    return relative.split("\\").filter(Boolean)
   })
+
+  /** 导航根显示名：桌面 → i18n.desktop，盘符 → 盘符本身 */
+  const rootLabel = computed(() =>
+    isDesktopRoot.value ? (i18n.desktop ?? "") : expandedDisk.value,
+  )
 
   const totalCapacity = computed(() =>
     disks.value.reduce((sum, disk) => sum + (disk.total ?? 0), 0),
@@ -159,6 +181,33 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
     }
 
     expandedDisk.value = disk.drive
+    await setCurrentPath("")
+  }
+
+  /**
+   * 选中桌面为导航根（**不切换**）。
+   * 抽出的理由：挂载时的默认展示与点击侧栏入口都需「确保选中桌面」，
+   * 而 `toggleDesktop` 在已选中时会收起 —— 挂载时误用会把默认内容立即清空。
+   */
+  async function selectDesktop(): Promise<void> {
+    if (!desktopPath.value) return
+    if (expandedDisk.value === desktopPath.value && currentPath.value === "") return
+    expandedDisk.value = desktopPath.value
+    await setCurrentPath("")
+  }
+
+  /** 桌面入口：与磁盘平级的根，选中态由 `expandedDisk === desktopPath` 判定 */
+  async function toggleDesktop(): Promise<void> {
+    if (!desktopPath.value) return
+    if (expandedDisk.value === desktopPath.value) {
+      expandedDisk.value = ""
+      folders.value = []
+      currentPath.value = ""
+      loadError.value = ""
+      return
+    }
+
+    expandedDisk.value = desktopPath.value
     await setCurrentPath("")
   }
 
@@ -246,7 +295,9 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
     }
 
     const parentPath = currentPath.value.substring(0, lastSlash)
-    await setCurrentPath(parentPath.endsWith(":") ? "" : parentPath)
+    // 回到导航根本身时归零（盘符根形如 "E:"；桌面根是完整路径，需整体比对）
+    const isAtRoot = parentPath.endsWith(":") || parentPath === expandedDisk.value
+    await setCurrentPath(isAtRoot ? "" : parentPath)
   }
 
   async function navigateToRoot(): Promise<void> {
@@ -255,7 +306,18 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
 
   async function navigateToPath(segmentIndex: number): Promise<void> {
     const segments = pathSegments.value.slice(0, segmentIndex + 1)
-    await setCurrentPath(`${expandedDisk.value}\\${segments.join("\\")}`)
+    await setCurrentPath(joinRoot(expandedDisk.value, segments))
+  }
+
+  /**
+   * 拼接「导航根 + 相对路径段」。
+   * ⚠️ 两个根的形态不同：盘符根 `"E:"` **必须补反斜杠**才能在后面接子目录（`"E:"` 单独表示
+   * 「E 盘当前目录」而非根），而桌面根已是完整路径、直接以 `\` 相连即可。
+   */
+  function joinRoot(root: string, segments: string[]): string {
+    if (segments.length === 0) return ""
+    const base = root.endsWith("\\") ? root : `${root}\\`
+    return `${base}${segments.join("\\")}`
   }
 
   async function navigateToFavorite(path: string): Promise<void> {
@@ -299,8 +361,13 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
     formatDate(dateString, i18n)
 
   onMounted(() => {
+    desktopPath.value = resolveDesktopPath() ?? ""
     void loadFavorites()
     void fetchDisks()
+    // 默认直接展示桌面内容（解析失败时保持欢迎空态，由用户手动选磁盘）
+    if (desktopPath.value) {
+      void selectDesktop()
+    }
   })
 
   onUnmounted(() => {
@@ -310,6 +377,7 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
 
   return {
     disks,
+    desktopPath,
     expandedDisk,
     folders,
     loading,
@@ -319,10 +387,13 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
     favoriteFolders,
     favoriteSet,
     pathSegments,
+    rootLabel,
+    isDesktopRoot,
     totalCapacity,
     totalUsed,
     toggleFavorite,
     toggleDisk,
+    toggleDesktop,
     openPath,
     refreshDisks,
     refreshCurrentFolder,

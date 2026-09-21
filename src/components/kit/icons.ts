@@ -804,6 +804,9 @@ export const COMMON_ICONS = {
   home: {
     icon: "mdi:home",
   },
+  desktop: {
+    icon: "mdi:monitor",
+  },
   dockWindow: {
     icon: "mdi:dock-window",
   },

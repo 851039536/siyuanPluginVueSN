@@ -320,6 +320,24 @@ return items
 | `ProgressBar.scss` 编译 | ✅ `--warning` / `--danger` 修饰类与变量生效 |
 | `NavPane` SSR 渲染 | ✅ 单行「`C: 275/290 GB 95%`」+ 用量条 severity 正确；行 `title` 补全精度与卷标；空磁盘显示 `noDisks` |
 | `FolderList` 三态 SSR 渲染 | ✅ 加载中→Loader；空→「此文件夹为空」；失败→`.db-error` 且**不再误报**空目录 |
+| 桌面路径解析 | ✅ 注册表优先 → `C:\Users\<user>\Desktop`；桌面 36 项实测分类正确 |
+| 桌面/磁盘互斥选中 | ✅ 三态 SSR 复核：未选中 / 选中桌面 / 选中磁盘 C:，`active` 互斥且均带共享基类 `db-nav-row` |
+| 桌面根面包屑与回退 | ✅ 盘符根 `E: ▸ work ▸ proj`、桌面根 `桌面 ▸ a ▸ b`；`navigateBack` 逐级回到根后正确归零 |
+| 系统文件过滤 | ✅ 桌面 `desktop.ini` 已过滤（实测 36 项，原含该文件） |
+| 文件格式分类 | ✅ `.ts`→`code`（非 `video`）、`.lnk`/`.rdp`→`link`、`.tar.gz`→`archive`、`Makefile`→`other` |
+| 显示名剥扩展名 | ✅ 桌面 23 项 `.lnk` 全部剥离（`chrome.exe.lnk` → `chrome.exe`），与资源管理器一致；`.txt`/`.docx` 如实保留 |
+
+**报告日期后追加的功能**（不在原审查范围，按用户后续要求实现）
+
+| 项 | 说明 |
+|---|---|
+| 桌面导航根 | 侧栏新增「桌面」入口，与磁盘平级；`expandedDisk` 泛化为「盘符或桌面绝对路径」，`joinRoot()` 统一两种根的拼接差异 |
+| 默认展示桌面 | 面板打开即自动选中桌面（`onMounted` 调 `selectDesktop()`）；因 `toggleDesktop()` 在已选中时会收起，另抽**幂等**的 `selectDesktop()` 供挂载使用，避免默认内容被立即清空 |
+| 文件格式图标 | 新增 `utils/fileKind.ts`：9 类分类 → 已注册 `IconKey`（零新增图标，复用 `image`/`video`/`headphones`/`archiveOutline`/`code`/`file`/`linkVariant`/`fileOutline`/`folder`） |
+| 系统文件过滤 | `readDirectoryContents` 按名过滤 `desktop.ini` / `thumbs.db` / `.DS_Store` 等（Windows 隐藏属性在 Node 下不可读） |
+| 显示名剥扩展名 | 照搬资源管理器 `NeverShowExt` 规则（实测 12 个 ProgID 带此标志，`lnkfile` / `InternetShortcut` 等）。`.lnk` 的隐藏**不受**「显示已知扩展名」开关影响，故必须单独实现；否则桌面 62% 的项（23/37）会多出 `.lnk` 尾巴 |
+| 侧栏宽度 | 132px → **142px**（按用户要求 +10px） |
+| 新增图标键 | `desktop`（`mdi:monitor`），共 247 个 |
 
 **用户待执行**：`pnpm lint`、`pnpm vite build`（按 `AGENTS.md`，AI 不运行）。
 

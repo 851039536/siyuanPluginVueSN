@@ -11,14 +11,15 @@
   >
     <div class="db-item-name">
       <IconWrapper
-        :name="item.isFile ? 'file' : 'folder'"
+        :name="entryIconKey(item.isFile, item.name)"
         :size="16"
         class="db-item-icon"
       />
+      <!-- 显示名剥离 Windows 永久隐藏的扩展名（.lnk 等）；title 保留原始文件名 -->
       <span
         class="db-item-label"
         :title="item.name"
-      >{{ item.name }}</span>
+      >{{ item.isFile ? getDisplayName(item.name) : item.name }}</span>
     </div>
     <span class="db-item-size">{{
       item.isFile && item.size ? formatFileSize(item.size) : '\u2014'
@@ -78,6 +79,7 @@ import type {
 import { formatFileSize } from "@/utils/format"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { entryIconKey, getDisplayName } from "../utils"
 
 interface Props {
   item: FolderInfo

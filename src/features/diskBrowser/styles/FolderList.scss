@@ -1,17 +1,11 @@
-@use "./index.scss" as *;
+// 文件列表样式 — 列标题 + 列表项容器 + 加载/空/错误状态 + 状态栏
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
 
-.db-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
-}
-
+// 列头与列表行共用同一网格模板（$db-columns 定义于 _mixins.scss），保证列对齐
 .db-column-headers {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 68px 78px auto;
+  grid-template-columns: $db-columns;
   align-items: center;
   gap: 0;
   padding: $s-1 $s-2;
@@ -48,28 +42,43 @@
 
 .db-folder-items {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   // 右侧留白，避免滚动条/内容紧贴侧边栏
   padding-right: $s-2;
   @include scrollbar;
 }
 
-.db-empty {
+.db-empty,
+.db-error {
   @include flex-center;
   flex-direction: column;
+  gap: $s-2;
   padding: $s-8 $s-5;
   color: var(--b3-theme-on-surface-light);
 
-  svg, :deep(svg) {
+  :deep(svg) {
     opacity: 0.2;
-    margin-bottom: $s-2;
   }
 
   p {
     margin: 0;
     font-size: $t-xs;
-    opacity: 0.45;
+    opacity: 0.5;
     font-style: italic;
+    text-align: center;
+  }
+}
+
+.db-error {
+  color: var(--b3-theme-error);
+
+  :deep(svg) {
+    opacity: 0.5;
+  }
+
+  p {
+    opacity: 0.85;
   }
 }
 
@@ -81,6 +90,7 @@
 .db-status-bar {
   @include flex-align-center;
   justify-content: space-between;
+  gap: $s-2;
   padding: $s-px3 $s-2;
   border-top: 1px solid $border;
   background: var(--b3-theme-surface);
@@ -91,20 +101,8 @@
   opacity: 0.7;
 }
 
-.db-status-left {
-  @include flex-align-center;
-  gap: $s-px6;
-}
-
-.db-status-cache {
-  font-size: $t-2xs;
-  padding: 0 $s-1;
-  border-radius: $r-px2;
-  color: var(--b3-theme-primary);
-  background: var(--b3-theme-primary-lightest);
-
-  &.expired {
-    color: var(--b3-theme-error);
-    background: rgba(var(--b3-theme-error-rgb, 220, 38, 38), 0.08);
-  }
+.db-status-path {
+  @include text-ellipsis;
+  min-width: 0;
+  flex: 1;
 }

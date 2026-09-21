@@ -1,9 +1,11 @@
-@use "./index.scss" as *;
+// 地址栏样式 — 返回按钮 + 面包屑路径 + 操作工具栏
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
 
 .db-address-bar {
   @include flex-align-center;
   justify-content: space-between;
+  gap: $s-1;
   padding: $s-px6 $s-2;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid $border;
@@ -32,28 +34,11 @@
   mask-image: linear-gradient(90deg, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
 }
 
+// 面包屑节点：共享 Button 的 ghost + text 已承担观感，此处只补等宽字体与激活态
 .db-crumb {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px3;
-  padding: $s-px2 $s-px5;
-  border: none;
-  background: transparent;
-  border-radius: $r-px3;
+  flex-shrink: 0;
   font-family: $ff-mono;
   font-size: $t-2xs;
-  font-weight: $fw-medium;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  transition:
-    color 0.12s,
-    background-color 0.12s;
-  flex-shrink: 0;
-
-  &:hover {
-    color: var(--b3-theme-primary);
-    background: var(--b3-theme-primary-lightest);
-  }
 
   &:last-child {
     color: var(--b3-theme-on-background);
@@ -73,18 +58,4 @@
   @include flex-align-center;
   gap: $s-px2;
   flex-shrink: 0;
-  margin-left: $s-1;
-}
-
-.db-item-count {
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  padding: $s-px1 $s-px5;
-  background: var(--b3-theme-surface-lighter);
-  border-radius: $r-px3;
-  white-space: nowrap;
-  margin-right: $s-px2;
 }

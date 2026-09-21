@@ -1,11 +1,9 @@
-// 磁盘浏览器核心逻辑 composable — 磁盘加载、文件夹浏览、缓存管理、收藏夹操作
+// 磁盘浏览器核心逻辑 composable — 磁盘枚举、目录浏览、收藏夹与会话内缓存
 import type {
   ComputedRef,
   Ref,
 } from "vue"
 import type {
-  CacheData,
-  CacheStatus,
   DiskBrowserI18n,
   DiskInfo,
   FolderInfo,
@@ -19,35 +17,36 @@ import {
   ref,
 } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import { openPathInShell } from "@/utils/electronDialog"
 import { getElectronModules } from "@/utils/nodeModules"
 import {
-  CACHE_EXPIRY_TIME,
-  computeCacheStatus,
   formatDate,
-  getDefaultDisks,
-  getDiskInfo,
-  isCacheValid,
+  listDrives,
   readDirectoryContents,
 } from "../utils"
 
-export function useDiskBrowser(
-  i18n: DiskBrowserI18n,
-  storage: DiskBrowserStorage,
-): {
+/** 依赖注入契约（遵循 AGENTS_ARCH.md § Composable 模式要求） */
+export interface UseDiskBrowserDeps {
+  i18n: DiskBrowserI18n
+  storage: DiskBrowserStorage
+}
+
+export function useDiskBrowser(deps: UseDiskBrowserDeps): {
   disks: Ref<DiskInfo[]>
   expandedDisk: Ref<string>
   folders: Ref<FolderInfo[]>
   loading: Ref<boolean>
   loadingFolders: Ref<boolean>
+  loadError: Ref<string>
   currentPath: Ref<string>
   favoriteFolders: Ref<string[]>
   favoriteSet: ComputedRef<Set<string>>
   pathSegments: ComputedRef<string[]>
-  cacheStatus: ComputedRef<CacheStatus>
-  currentFolderCache: ComputedRef<CacheStatus>
-  toggleFavorite: (folderPath: string) => void
+  totalCapacity: ComputedRef<number>
+  totalUsed: ComputedRef<number>
+  toggleFavorite: (folderPath: string) => Promise<void>
   toggleDisk: (disk: DiskInfo) => Promise<void>
-  openPath: (path: string) => void
+  openPath: (path: string) => Promise<void>
   refreshDisks: () => void
   refreshCurrentFolder: () => void
   handleItemDoubleClick: (item: FolderInfo) => void
@@ -59,17 +58,21 @@ export function useDiskBrowser(
   copyPathToClipboard: (path: string) => Promise<void>
   formatDate: (dateString: string) => string
 } {
+  const { i18n, storage } = deps
+
   const disks = ref<DiskInfo[]>([])
   const expandedDisk = ref("")
   const folders = ref<FolderInfo[]>([])
   const loading = ref(false)
   const loadingFolders = ref(false)
+  const loadError = ref("")
   const currentPath = ref("")
   const favoriteFolders = ref<string[]>([])
   const favoriteSet = computed(() => new Set(favoriteFolders.value))
 
-  const diskCache = ref<CacheData<DiskInfo[]> | null>(null)
-  const folderCacheMap = ref<Map<string, CacheData<FolderInfo[]>>>(new Map())
+  // 会话内记忆化：面板存活期间避免重复的磁盘探测与目录读取，关闭面板即随之释放
+  const cachedDisks = ref<DiskInfo[] | null>(null)
+  const folderCache = ref<Map<string, FolderInfo[]>>(new Map())
 
   const pathSegments = computed(() => {
     if (!currentPath.value || currentPath.value === expandedDisk.value)
@@ -81,22 +84,13 @@ export function useDiskBrowser(
     return pathWithoutDrive.split("\\").filter(Boolean)
   })
 
-  const cacheStatus = computed(() =>
-    computeCacheStatus(diskCache.value, i18n, CACHE_EXPIRY_TIME, "full"),
+  const totalCapacity = computed(() =>
+    disks.value.reduce((sum, disk) => sum + (disk.total ?? 0), 0),
   )
 
-  const currentFolderCache = computed((): CacheStatus => {
-    const path = currentPath.value || expandedDisk.value
-    if (!path) {
-      return {
-        text: "",
-        isExpired: false,
-        tooltip: "",
-      }
-    }
-    const cached = folderCacheMap.value.get(path)
-    return computeCacheStatus(cached, i18n, CACHE_EXPIRY_TIME, "short")
-  })
+  const totalUsed = computed(() =>
+    disks.value.reduce((sum, disk) => sum + (disk.used ?? 0), 0),
+  )
 
   async function toggleFavorite(folderPath: string): Promise<void> {
     const previous = [...favoriteFolders.value]
@@ -110,21 +104,20 @@ export function useDiskBrowser(
     try {
       await storage.saveFavorites(favoriteFolders.value)
       showMessage(
-        index > -1 ? i18n.favoriteRemoved! : i18n.favoriteAdded!,
+        index > -1 ? i18n.favoriteRemoved ?? "" : i18n.favoriteAdded ?? "",
         2000,
         "info",
       )
     } catch (error) {
       favoriteFolders.value = previous
       console.error("保存收藏夹失败:", error)
-      showMessage(i18n.favoriteSaveFailed!, 3000, "error")
+      showMessage(i18n.favoriteSaveFailed ?? "", 3000, "error")
     }
   }
 
   async function loadFavorites(): Promise<void> {
     try {
-      const favorites = await storage.loadFavorites()
-      favoriteFolders.value = favorites
+      favoriteFolders.value = await storage.loadFavorites()
     } catch (error) {
       console.error("加载收藏夹失败:", error)
       favoriteFolders.value = []
@@ -132,27 +125,25 @@ export function useDiskBrowser(
   }
 
   async function fetchDisks(forceRefresh = false): Promise<void> {
-    if (!forceRefresh && isCacheValid(diskCache.value, CACHE_EXPIRY_TIME)) {
-      disks.value = diskCache.value.data
+    if (!forceRefresh && cachedDisks.value) {
+      disks.value = cachedDisks.value
       return
     }
 
     loading.value = true
     try {
-      const info = getDiskInfo()
-      if (info && info.length > 0) {
-        disks.value = info
-        diskCache.value = {
-          data: info,
-          timestamp: Date.now(),
-        }
-      } else {
-        disks.value = getDefaultDisks()
+      const detected = listDrives()
+      if (detected === null) {
+        // 无 Node 环境：属能力缺失而非空结果，仅清理列表不做错误提示
+        disks.value = []
+        return
       }
+      disks.value = detected
+      cachedDisks.value = detected
     } catch (error) {
       console.error("获取磁盘列表失败:", error)
-      showMessage(i18n.loadDisksFailed!, 3000, "error")
-      disks.value = getDefaultDisks()
+      showMessage(i18n.loadDisksFailed ?? "", 3000, "error")
+      disks.value = []
     } finally {
       loading.value = false
     }
@@ -163,6 +154,7 @@ export function useDiskBrowser(
       expandedDisk.value = ""
       folders.value = []
       currentPath.value = ""
+      loadError.value = ""
       return
     }
 
@@ -170,73 +162,71 @@ export function useDiskBrowser(
     await setCurrentPath("")
   }
 
-  /**
-   * 统一的文件夹加载函数（合并原 loadFolders / loadFoldersFromPath）
-   * @param path 磁盘根路径（如 C:）或子目录路径
-   * @param forceRefresh 是否强制刷新缓存
-   */
+  /** 加载目录内容；缓存命中直接复用，失败置 `loadError` 以区分「空目录」与「读取失败」 */
   async function loadFolderContent(
     path: string,
     forceRefresh = false,
   ): Promise<void> {
-    const cached = folderCacheMap.value.get(path)
-    if (!forceRefresh && isCacheValid(cached, CACHE_EXPIRY_TIME)) {
-      folders.value = cached.data
-      return
+    loadError.value = ""
+
+    if (!forceRefresh) {
+      const cached = folderCache.value.get(path)
+      if (cached) {
+        folders.value = cached
+        return
+      }
     }
 
     loadingFolders.value = true
     folders.value = []
 
     try {
-      const displayPath = /^[A-Z]:$/.test(path) ? `${path}\\` : path
+      // 盘符根路径需补尾反斜杠（"C:" 表示当前目录，需写作 "C:\"）
+      const displayPath = /^[A-Z]:$/i.test(path) ? `${path}\\` : path
       const itemList = readDirectoryContents(displayPath)
-      if (itemList) {
-        folders.value = itemList
-        folderCacheMap.value.set(path, {
-          data: itemList,
-          timestamp: Date.now(),
-        })
+      if (itemList === null) {
+        loadError.value = i18n.loadFoldersFailed ?? ""
+        return
       }
+      folders.value = itemList
+      folderCache.value.set(path, itemList)
     } catch (error) {
       console.error("加载文件夹失败:", error)
-      showMessage(i18n.loadFoldersFailed!, 3000, "error")
+      loadError.value = i18n.loadFoldersFailed ?? ""
     } finally {
       loadingFolders.value = false
     }
   }
 
-  function openPath(path: string): void {
-    const electron = getElectronModules()
-    if (!electron) {
-      showMessage(i18n.openDiskNotSupported!, 3000, "error")
+  async function openPath(path: string): Promise<void> {
+    // 非桌面端无 Electron shell：属能力缺失而非操作失败，给出可区分的提示
+    if (!getElectronModules()) {
+      showMessage(i18n.openDiskNotSupported ?? "", 3000, "error")
       return
     }
-    try {
-      electron.shell.openPath(path)
-      showMessage(i18n.opened!, 2000, "info")
-    } catch (error) {
-      console.error("打开失败:", error)
-      showMessage(i18n.openDiskFailed!, 3000, "error")
-    }
+    const opened = await openPathInShell(path)
+    showMessage(
+      opened ? i18n.opened ?? "" : i18n.openDiskFailed ?? "",
+      2000,
+      opened ? "info" : "error",
+    )
   }
 
   function refreshDisks(): void {
     void fetchDisks(true)
-    showMessage(i18n.refreshing!, 2000, "info")
+    showMessage(i18n.refreshing ?? "", 2000, "info")
   }
 
   function refreshCurrentFolder(): void {
     const pathToRefresh = currentPath.value || expandedDisk.value
-    if (pathToRefresh) {
-      void loadFolderContent(pathToRefresh, true)
-      showMessage(i18n.refreshing!, 2000, "info")
-    }
+    if (!pathToRefresh) return
+    void loadFolderContent(pathToRefresh, true)
+    showMessage(i18n.refreshing ?? "", 2000, "info")
   }
 
   function handleItemDoubleClick(item: FolderInfo): void {
     if (item.isFile) {
-      openPath(item.path)
+      void openPath(item.path)
     } else {
       void navigateIntoFolder(item)
     }
@@ -270,22 +260,23 @@ export function useDiskBrowser(
 
   async function navigateToFavorite(path: string): Promise<void> {
     try {
-      const driveMatch = path.match(/^([A-Z]:)/)
+      // 盘符大小写归一（收藏夹中可能存有小写形态）
+      const driveMatch = path.match(/^([A-Za-z]:)/)
       if (!driveMatch) {
-        showMessage(i18n.invalidPath!, 2000, "error")
+        showMessage(i18n.invalidPath ?? "", 2000, "error")
         return
       }
 
-      const drive = driveMatch[1]
+      const drive = driveMatch[1].toUpperCase()
       expandedDisk.value = drive
 
       const targetPath = path === drive || path === `${drive}\\` ? "" : path
       await setCurrentPath(targetPath)
 
-      showMessage(i18n.navigatedToFavorite!, 2000, "info")
+      showMessage(i18n.navigatedToFavorite ?? "", 2000, "info")
     } catch (error) {
       console.error("导航到收藏夹失败:", error)
-      showMessage(i18n.navigationFailed!, 2000, "error")
+      showMessage(i18n.navigationFailed ?? "", 2000, "error")
     }
   }
 
@@ -298,7 +289,7 @@ export function useDiskBrowser(
   async function copyPathToClipboard(path: string): Promise<void> {
     const success = await copyToClipboard(path)
     showMessage(
-      success ? i18n.pathCopied! : i18n.copyFailed!,
+      success ? i18n.pathCopied ?? "" : i18n.copyFailed ?? "",
       2000,
       success ? "info" : "error",
     )
@@ -313,9 +304,8 @@ export function useDiskBrowser(
   })
 
   onUnmounted(() => {
-    // 清理缓存
-    diskCache.value = null
-    folderCacheMap.value.clear()
+    cachedDisks.value = null
+    folderCache.value.clear()
   })
 
   return {
@@ -324,12 +314,13 @@ export function useDiskBrowser(
     folders,
     loading,
     loadingFolders,
+    loadError,
     currentPath,
     favoriteFolders,
     favoriteSet,
     pathSegments,
-    cacheStatus,
-    currentFolderCache,
+    totalCapacity,
+    totalUsed,
     toggleFavorite,
     toggleDisk,
     openPath,

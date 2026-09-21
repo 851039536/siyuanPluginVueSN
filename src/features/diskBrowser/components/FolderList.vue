@@ -1,4 +1,4 @@
-<!-- 文件列表内容区 — 地址栏 + 列标题 + 列表项 + 加载/空状态 + 底栏 -->
+<!-- 文件列表内容区 — 地址栏 + 列标题 + 列表项 + 加载/空/错误状态 + 底栏 -->
 <template>
   <div class="db-content">
     <AddressBar
@@ -6,7 +6,6 @@
       :expanded-disk="expandedDisk"
       :path-segments="pathSegments"
       :loading-folders="loadingFolders"
-      :item-count="folders.length"
       :i18n="i18n"
       @back="$emit('back')"
       @navigate-root="$emit('navigateRoot')"
@@ -16,45 +15,58 @@
       @refresh="$emit('refresh')"
     />
 
-    <div
-      v-if="folders.length > 0"
-      class="db-column-headers"
-    >
-      <span class="db-col-name">{{ i18n.name }}</span>
-      <span class="db-col-size">{{ i18n.size }}</span>
-      <span class="db-col-date">{{ i18n.date }}</span>
-      <span class="db-col-actions" />
-    </div>
-
-    <div
-      v-if="!loadingFolders"
-      class="db-folder-items"
-    >
-      <FolderListItem
-        v-for="item in folders"
-        :key="item.path"
-        :item="item"
-        :is-favorite="favoriteSet.has(item.path)"
-        :i18n="i18n"
-        :format-date="formatDate"
-        @item-dblclick="$emit('itemDblclick', $event)"
-        @toggle-favorite="$emit('toggleFavorite', $event)"
-        @navigate="$emit('navigate', $event)"
-        @open="$emit('open', $event)"
-        @copy-path="$emit('copyPath', $event)"
-      />
+    <template v-if="!loadingFolders">
+      <!-- 读取失败：与「空目录」区分（权限拒绝 / 路径消失等） -->
       <div
-        v-if="folders.length === 0"
-        class="db-empty"
+        v-if="loadError"
+        class="db-error"
       >
         <IconWrapper
-          name="folder"
-          :size="36"
-          color="var(--b3-theme-on-surface-light)"
+          name="error"
+          :size="32"
         />
-        <p>{{ i18n.emptyFolder }}</p>
+        <p>{{ loadError }}</p>
       </div>
-    </div>
+
+      <template v-else>
+        <div
+          v-if="folders.length > 0"
+          class="db-column-headers"
+        >
+          <span class="db-col-name">{{ i18n.name }}</span>
+          <span class="db-col-size">{{ i18n.size }}</span>
+          <span class="db-col-date">{{ i18n.date }}</span>
+          <span class="db-col-actions" />
+        </div>
+
+        <div class="db-folder-items">
+          <FolderListItem
+            v-for="item in folders"
+            :key="item.path"
+            :item="item"
+            :is-favorite="favoriteSet.has(item.path)"
+            :i18n="i18n"
+            :format-date="formatDate"
+            @item-dblclick="$emit('itemDblclick', $event)"
+            @toggle-favorite="$emit('toggleFavorite', $event)"
+            @navigate="$emit('navigate', $event)"
+            @open="$emit('open', $event)"
+            @copy-path="$emit('copyPath', $event)"
+          />
+          <div
+            v-if="folders.length === 0"
+            class="db-empty"
+          >
+            <IconWrapper
+              name="folder"
+              :size="36"
+            />
+            <p>{{ i18n.emptyFolder }}</p>
+          </div>
+        </div>
+      </template>
+    </template>
+
     <div
       v-else
       class="db-loading"
@@ -63,25 +75,17 @@
     </div>
 
     <div class="db-status-bar">
-      <span class="db-status-left">
-        <span
-          v-if="currentFolderCache.text"
-          class="db-status-cache"
-          :class="{ expired: currentFolderCache.isExpired }"
-          :title="currentFolderCache.tooltip"
-        >{{ currentFolderCache.text }}</span>
-        <span v-if="expandedDisk">{{ expandedDisk }}</span>
-      </span>
-      <span class="db-status-right">
-        {{ folders.length }} {{ i18n.items }}
-      </span>
+      <span
+        class="db-status-path"
+        :title="currentPath || expandedDisk"
+      >{{ currentPath || expandedDisk }}</span>
+      <span v-if="!loadError">{{ folders.length }} {{ i18n.items }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import type {
-  CacheStatus,
   DiskBrowserI18n,
   FolderInfo,
 } from "../types"
@@ -96,7 +100,7 @@ interface Props {
   expandedDisk: string
   pathSegments: string[]
   loadingFolders: boolean
-  currentFolderCache: CacheStatus
+  loadError: string
   favoriteSet: Set<string>
   i18n: DiskBrowserI18n
   formatDate: (date: string) => string
@@ -118,5 +122,4 @@ defineEmits<{
 
 <style scoped lang="scss">
 @use "../styles/FolderList.scss";
-@use "../styles/index.scss";
 </style>

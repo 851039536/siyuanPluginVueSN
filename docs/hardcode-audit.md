@@ -152,11 +152,11 @@
 | `toolCollection/tools/wordQuery/components/CodeExplainer.vue` | 11 | 同上 |
 | `toolCollection/tools/wordQuery/components/CodeTranslationPanel.vue` | 11 | 同上 |
 | `toolCollection/tools/wordQuery/components/CodeCommentGenerator.vue` | 8 | 同上 |
-| `diskBrowser/utils/index.ts` | 6 | `diskBrowser.json` |
+| ~~`diskBrowser/utils/index.ts`~~ | ~~6~~ → **0** | ✅ 已修（2026-09-21，见 `docs/disk-browser-redundancy-review.md` § F16） |
 | `compactMode/components/CompactModeSettings.vue` | 5 | `compactMode.json` |
 | `superPanel/types/index.ts`(4) / `superPanel/index.vue`(3) / `SuperPanelHeader.vue`(2) | 9 | `superPanel.json` |
 | `skillLearning/index.ts`(2) / `statusBar/featureRegistry.ts`(2) / `wordQuery/composables/useWordQuery.ts`(2) | 6 | 各自 feature 分片 |
-| `apiDebugger/index.ts`、`diskBrowser/index.ts`、`docAnalysis/index.ts`、`gitPush/GitPushManager.ts`、`globalRelations/index.ts`、`rssReader/index.ts`、`componentPreview/types/index.ts`、`docAnalysis/types/manager.ts`、`everythingSearch/types/index.ts`、`floatingToolbar/core/FloatingToolbar.ts`、`ideaGenerator/types/index.ts`、`minimalBrowser/types/index.ts`、`scriptLauncher/types/index.ts`、`toolCollection/types/index.ts` | 各 1 | 各 feature 分片 |
+| `apiDebugger/index.ts`、~~`diskBrowser/index.ts`~~、`docAnalysis/index.ts`、`gitPush/GitPushManager.ts`、`globalRelations/index.ts`、`rssReader/index.ts`、`componentPreview/types/index.ts`、`docAnalysis/types/manager.ts`、`everythingSearch/types/index.ts`、`floatingToolbar/core/FloatingToolbar.ts`、`ideaGenerator/types/index.ts`、`minimalBrowser/types/index.ts`、`scriptLauncher/types/index.ts`、`toolCollection/types/index.ts` | 各 1 | 各 feature 分片（`diskBrowser/index.ts` 已修） |
 
 典型形态：`title: i18n.panelTitle || "磁盘浏览器"`、`langText: i18n.panelTitle || "全局关系列表"`、`title: (plugin.i18n as any).apiDebugger?.panelTitle || "API调试器"`。
 修复要点：**删除 `|| "中文"` 并确认对应分片键存在且已加载**——兜底值会掩盖「i18n 未加载 / 键缺失」的真实 bug。
@@ -340,7 +340,7 @@ TOP：`statistics/MilestonesCard.scss`(11)、`statistics/NotebookActivity.scss`(
 | `rssReader/utils/fetchRss.ts` | 4 | 请求超时 `15000/20000` | `RSS_FETCH_TIMEOUT_MS` |
 | `generalSettings/utils/styles.ts:363` | 1 | 轮询超时 `5000` | `ELEMENT_WAIT_TIMEOUT_MS` |
 | `gitPush/composables/usePagedList.ts:5` | 1 | `pageSize = 50` | `DEFAULT_PAGE_SIZE` |
-| `skillLearning/components/SkillListView.vue:109`、`resourceManager/...`、`diskBrowser/utils/index.ts:23`、`useIdeManagement.ts:211`、`useResultActions.ts:120` 等 | 各 1 | 分页/超时 | 各自 feature 的 `types/` |
+| `skillLearning/components/SkillListView.vue:109`、`resourceManager/...`、~~`diskBrowser/utils/index.ts:23`~~、`useIdeManagement.ts:211`、`useResultActions.ts:120` 等 | 各 1 | 分页/超时 | 各自 feature 的 `types/`（diskBrowser 已改为具名常量 `VOLUME_LABEL_TIMEOUT`） |
 
 **已是具名常量、无需再改**：`flashcardReading/types/index.ts:50` 的 `PAGE_SIZE: 10`、`docAnalysis/components/DocListView/index.vue:222` 的 `PAGE_SIZE = 50`、`gitPush/types/storage.ts:29` 的 `DEFAULT_NETWORK_TIMEOUT = 240`。
 

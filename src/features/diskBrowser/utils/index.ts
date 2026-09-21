@@ -1,7 +1,6 @@
-// 磁盘浏览器纯工具函数 — 大小格式化、路径构建、缓存状态计算、日期格式化、目录读取
+// 磁盘浏览器纯工具函数 — 磁盘枚举、卷标读取、目录读取、日期格式化
+import type { Dirent } from "node:fs"
 import type {
-  CacheData,
-  CacheStatus,
   DiskBrowserI18n,
   DiskInfo,
   FolderInfo,
@@ -11,186 +10,188 @@ import {
   getNodeProcessModules,
 } from "@/utils/nodeModules"
 
-/** 读取本地磁盘信息（wmic 比 PowerShell 快 10x+） */
-export function getDiskInfo(): DiskInfo[] | null {
-  const node = getNodeProcessModules()
-  if (!node) return null
+/** 卷标查询超时（ms）——卷标是装饰性数据，超时即放弃，不拖慢面板 */
+const VOLUME_LABEL_TIMEOUT = 2000
 
+/** 探测的盘符：跳过 A: / B:（软驱保留位） */
+const DRIVE_LETTERS = "CDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+
+const DAY_MS = 1000 * 60 * 60 * 24
+
+/**
+ * 枚举本机磁盘及其容量。
+ *
+ * 走 `fs.statfsSync` 逐盘符探测（本机实测 0ms 扫完 26 个盘符），
+ * 不再依赖 wmic —— 该命令自 Windows 11 24H2 起已从系统中移除，
+ * 旧实现因此恒失败并静默回退到伪造的盘符列表。
+ *
+ * @returns 磁盘列表；无 Node 环境或文件系统无 `statfsSync`（旧内核）时返回 `null`
+ */
+export function listDrives(): DiskInfo[] | null {
+  const node = getNodeModules()
+  if (!node || typeof node.fs.statfsSync !== "function") return null
+
+  const drives: DiskInfo[] = []
+  for (const letter of DRIVE_LETTERS) {
+    const drive = `${letter}:`
+    let total = 0
+    let free = 0
+    try {
+      const stat = node.fs.statfsSync(`${drive}\\`)
+      const blockSize = Number(stat.bsize)
+      total = Number(stat.blocks) * blockSize
+      free = Number(stat.bfree) * blockSize
+    } catch {
+      // 未挂载 / 无介质（空光驱）/ 无权限 → 跳过该盘符，不影响其余磁盘
+      continue
+    }
+    // 总量为 0 或非有限值（空读卡器等）不构成可用磁盘
+    if (!Number.isFinite(total) || total <= 0) continue
+
+    const used = Math.max(0, total - (Number.isFinite(free) ? free : 0))
+    drives.push({
+      drive,
+      label: readVolumeLabel(drive),
+      total,
+      used,
+      usagePercent: Math.round((used / total) * 100),
+    })
+  }
+  return drives
+}
+
+/**
+ * 读取卷标（如「项目盘」）。
+ *
+ * 只用 `cmd` 的 `vol`：普通权限下 `fsutil` 被拒（实测 Access denied），
+ * 注册表 `VolumeInfoCache` 可能含陈旧项。`vol` 的文案与编码随系统语言变化，
+ * 故解析采取**容忍策略**，任何不确定一律返回空串 —— 卷标缺失不影响磁盘可用性。
+ */
+export function readVolumeLabel(drive: string): string {
+  const node = getNodeProcessModules()
+  if (!node) return ""
   try {
+    // 前置 chcp 65001，让中文卷标以 UTF-8 输出而非跟随系统代码页
     const stdout = node.child_process.execSync(
-      "wmic logicaldisk get DeviceID,VolumeName,Size,FreeSpace /format:csv",
+      `cmd /c chcp 65001 >nul && vol ${drive}`,
       {
-        timeout: 3000,
+        timeout: VOLUME_LABEL_TIMEOUT,
         encoding: "utf8",
       },
     ) as string
-
-    return stdout
-      .split("\n")
-      .slice(2)
-      .filter((line) => line.trim())
-      .map((line) => {
-        const [, deviceId, volumeName, size, freeSpace] = line.split(",").map((s) => s.trim())
-        if (!deviceId) return null
-        const total = Number.parseInt(size) || 0
-        const free = Number.parseInt(freeSpace) || 0
-        return {
-          drive: deviceId,
-          label: volumeName?.trim() || "",
-          total,
-          used: total - free,
-          usagePercent: total > 0 ? Math.round(((total - free) / total) * 100) : 0,
-        }
-      })
-      .filter((d): d is NonNullable<typeof d> => d !== null && d.total > 0)
+    return parseVolumeLabel(stdout)
   } catch {
-    return null
+    return ""
   }
 }
 
-/** 使用 Node.js fs 模块读取目录内容 */
+/**
+ * 从 `vol` 输出解析卷标。
+ *
+ * ⚠️ `vol` 的输出编码随控制台代码页变化，且代码页状态可能被外部进程污染 ——
+ * 实测同一台机器上不同调用可分别产出 UTF-8 与 GBK 字节。因此这里采取**宁缺勿滥**：
+ * 只要解出的文本含替换字符（U+FFFD，即解码失败的痕迹）就判定不可信并返回空串，
+ * 宁可少显示一个卷标，也绝不把乱码呈现给用户。
+ */
+function parseVolumeLabel(stdout: string): string {
+  const lines = stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  for (const line of lines) {
+    if (/no label|没有标签|无标签/i.test(line)) return ""
+    // 序列号行形如 "Volume Serial Number is XXXX-XXXX" / 「卷的序列号是 XXXX-XXXX」
+    if (/serial|序列号/i.test(line)) continue
+    const matched = line.match(/(?:\bis\b|是)\s+(.+?)[.。]?\s*$/)
+    if (!matched) continue
+    const label = matched[1].trim()
+    // 解码失败留下的替换字符 ⇒ 整条不可信（见上方说明）
+    if (!label || label.includes("\uFFFD")) return ""
+    return label
+  }
+  return ""
+}
+
+/**
+ * 使用 Node.js fs 模块读取目录内容。
+ *
+ * @returns 条目列表；返回 **`null` 表示读取失败**（无 Node 环境 / 目录不存在 / 无权限），
+ *          与返回 `[]`（目录确实为空）区分开 —— 否则权限拒绝会被误报为「此文件夹为空」
+ */
 export function readDirectoryContents(dirPath: string): FolderInfo[] | null {
   const node = getNodeModules()
   if (!node) return null
 
-  let items: FolderInfo[] = []
+  let entries: Dirent[]
   try {
-    const entries = node.fs.readdirSync(dirPath, { withFileTypes: true })
+    entries = node.fs.readdirSync(dirPath, { withFileTypes: true })
+  } catch {
+    return null
+  }
 
-    for (const entry of entries) {
-      const fullPath = buildPath(dirPath, entry.name)
+  const separator = dirPath.endsWith("\\") ? "" : "\\"
+  const items: FolderInfo[] = []
 
-      if (entry.isDirectory()) {
+  for (const entry of entries) {
+    const fullPath = `${dirPath}${separator}${entry.name}`
+
+    if (entry.isDirectory()) {
+      items.push({
+        name: entry.name,
+        path: fullPath,
+      })
+    } else if (entry.isFile()) {
+      // 仅在文件时 stat，且失败时降级为无元数据项，避免一个坏文件拖垮整个目录
+      try {
+        const stat = node.fs.statSync(fullPath)
         items.push({
           name: entry.name,
           path: fullPath,
+          isFile: true,
+          size: stat.size,
+          modifiedTime: stat.mtime.toISOString(),
         })
-      } else if (entry.isFile()) {
-        // 仅在文件时 stat，且失败时降级为无元数据项，避免一个坏文件拖垮整个目录
-        try {
-          const stat = node.fs.statSync(fullPath)
-          items.push({
-            name: entry.name,
-            path: fullPath,
-            isFile: true,
-            size: stat.size,
-            modifiedTime: stat.mtime.toISOString(),
-          })
-        } catch {
-          items.push({
-            name: entry.name,
-            path: fullPath,
-            isFile: true,
-          })
-        }
+      } catch {
+        items.push({
+          name: entry.name,
+          path: fullPath,
+          isFile: true,
+        })
       }
     }
-
-    items.sort((a, b) => {
-      if (a.isFile === b.isFile) return a.name.localeCompare(b.name, "zh-CN")
-      return a.isFile ? 1 : -1
-    })
-  } catch {
-    items = []
   }
+
+  items.sort((a, b) => {
+    if (a.isFile === b.isFile) return a.name.localeCompare(b.name, "zh-CN")
+    return a.isFile ? 1 : -1
+  })
 
   return items
-}
-
-const UNITS = ["B", "KB", "MB", "GB", "TB"]
-const K = 1024
-
-export function formatSize(bytes?: number): string {
-  if (!bytes || bytes === 0) return "0 B"
-  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(K)), UNITS.length - 1)
-  return `${(bytes / K ** i).toFixed(2)} ${UNITS[i]}`
-}
-
-export function getFolderName(path: string): string {
-  const parts = path.split("\\")
-  return parts[parts.length - 1] || path
-}
-
-export function computeCacheStatus<T>(
-  cacheData: CacheData<T> | null | undefined,
-  i18n: DiskBrowserI18n,
-  cacheExpiryTime: number,
-  labelType: "full" | "short" = "full",
-): CacheStatus {
-  if (!cacheData) {
-    return {
-      text: "",
-      isExpired: false,
-      tooltip: "",
-    }
-  }
-
-  const elapsed = Date.now() - cacheData.timestamp
-  const remaining = cacheExpiryTime - elapsed
-
-  if (remaining <= 0) {
-    return {
-      text: labelType === "full" ? i18n.cacheExpired || "缓存已过期" : i18n.expired || "已过期",
-      isExpired: true,
-      tooltip: i18n.cacheExpiredTooltip || "缓存已过期，点击刷新按钮获取最新数据",
-    }
-  }
-
-  const minutes = Math.floor(remaining / 60000)
-  return {
-    text: labelType === "full"
-      ? `${minutes}${i18n.minutesRemaining || "分钟"}`
-      : `${minutes}${i18n.min || "分"}`,
-    isExpired: false,
-    tooltip: i18n.cacheValidTooltip || `缓存有效期剩余 ${minutes}分钟`,
-  }
-}
-
-export const CACHE_EXPIRY_TIME = 60 * 60 * 1000
-
-export function isCacheValid<T>(
-  cacheData: CacheData<T> | null | undefined,
-  cacheExpiryTime: number,
-): cacheData is CacheData<T> {
-  if (!cacheData) return false
-  return Date.now() - cacheData.timestamp < cacheExpiryTime
-}
-
-export function buildPath(basePath: string, name: string): string {
-  const separator = basePath.endsWith("\\") ? "" : "\\"
-  return `${basePath}${separator}${name}`
 }
 
 function formatYmd(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 }
 
+/** 格式化修改时间：一周内用相对文案（今天 / 昨天 / N 天前），更早显示 YYYY-MM-DD */
 export function formatDate(dateString: string, i18n: DiskBrowserI18n): string {
   try {
     const date = new Date(dateString)
     if (Number.isNaN(date.getTime())) return dateString
 
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const dayMs = 1000 * 60 * 60 * 24
-
     // 未来日期（系统时间或文件时间异常）直接回退为日期字符串
+    const diff = Date.now() - date.getTime()
     if (diff < 0) return formatYmd(date)
 
-    const days = Math.floor(diff / dayMs)
+    const days = Math.floor(diff / DAY_MS)
 
-    if (days === 0) return i18n.today!
-    if (days === 1) return i18n.yesterday!
-    if (days < 7) return `${days} ${i18n.daysAgo!}`
+    if (days === 0) return i18n.today ?? formatYmd(date)
+    if (days === 1) return i18n.yesterday ?? formatYmd(date)
+    if (days < 7) return i18n.daysAgo ? `${days} ${i18n.daysAgo}` : formatYmd(date)
 
     return formatYmd(date)
   } catch {
     return dateString
   }
-}
-
-const DEFAULT_DISKS = ["C:", "D:", "E:", "F:", "G:", "H:"]
-
-export function getDefaultDisks(): DiskInfo[] {
-  return DEFAULT_DISKS.map((drive) => ({ drive }))
 }

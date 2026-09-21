@@ -1,4 +1,4 @@
-// 磁盘浏览器类型定义 — DiskInfo、FolderInfo、缓存数据结构及默认磁盘列表
+// 磁盘浏览器类型定义 — DiskInfo、FolderInfo 及 i18n 契约
 export interface DiskInfo {
   drive: string
   label?: string
@@ -13,17 +13,6 @@ export interface FolderInfo {
   isFile?: boolean
   size?: number
   modifiedTime?: string
-}
-
-export interface CacheData<T> {
-  data: T
-  timestamp: number
-}
-
-export interface CacheStatus {
-  text: string
-  isExpired: boolean
-  tooltip: string
 }
 
 export interface DiskBrowserSettings {
@@ -47,12 +36,6 @@ export interface DiskBrowserI18n {
   browse?: string
   open?: string
   emptyFolder?: string
-  cacheExpired?: string
-  cacheExpiredTooltip?: string
-  cacheValidTooltip?: string
-  minutesRemaining?: string
-  expired?: string
-  min?: string
   loadDisksFailed?: string
   loadFoldersFailed?: string
   opened?: string
@@ -75,6 +58,7 @@ export interface DiskBrowserI18n {
   disks?: string
   clickToBrowse?: string
   noFavorites?: string
+  noDisks?: string
 }
 
 export const STORAGE_KEY = "disk-browser-settings"

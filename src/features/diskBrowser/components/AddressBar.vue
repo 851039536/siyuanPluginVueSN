@@ -1,4 +1,4 @@
-<!-- 地址栏组件 — 返回按钮 + 面包屑路径 + 操作工具栏 -->
+<!-- 地址栏 — 返回按钮 + 面包屑路径 + 打开/复制/刷新操作 -->
 <template>
   <div class="db-address-bar">
     <div class="db-address-left">
@@ -6,66 +6,65 @@
         v-if="currentPath"
         variant="ghost"
         size="xsmall"
+        dense
         icon="back"
-        :icon-size="14"
         class="db-back-btn"
         :title="i18n.back"
         @click="$emit('back')"
       />
       <div class="db-breadcrumb">
-        <button
+        <Button
+          variant="ghost"
+          text
+          size="xsmall"
           class="db-crumb"
+          icon="diskBrowser"
           :title="i18n.backToRoot"
           @click="$emit('navigateRoot')"
         >
-          <IconWrapper
-            name="diskBrowser"
-            :size="11"
-          />
           {{ expandedDisk }}
-        </button>
+        </Button>
         <template
           v-for="(segment, index) in pathSegments"
           :key="index"
         >
           <span class="db-crumb-sep">&#9656;</span>
-          <button
+          <Button
+            variant="ghost"
+            text
+            size="xsmall"
             class="db-crumb"
             :title="segment"
             @click="$emit('navigatePath', index)"
           >
             {{ segment }}
-          </button>
+          </Button>
         </template>
       </div>
     </div>
 
     <div class="db-toolbar-actions">
-      <span
-        v-if="itemCount > 0"
-        class="db-item-count"
-      >{{ itemCount }}</span>
       <Button
         variant="ghost"
         size="xsmall"
+        dense
         icon="openInNew"
-        :icon-size="13"
         :title="i18n.openInExplorer"
         @click="$emit('open', currentPath || expandedDisk)"
       />
       <Button
         variant="ghost"
         size="xsmall"
+        dense
         icon="contentCopy"
-        :icon-size="13"
         :title="i18n.copyPath"
         @click="$emit('copyPath', currentPath || expandedDisk)"
       />
       <Button
         variant="ghost"
         size="xsmall"
+        dense
         icon="refresh"
-        :icon-size="13"
         :loading="loadingFolders"
         :title="i18n.refreshing"
         @click="$emit('refresh')"
@@ -77,14 +76,12 @@
 <script setup lang="ts">
 import type { DiskBrowserI18n } from "../types"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
   currentPath: string
   expandedDisk: string
   pathSegments: string[]
   loadingFolders: boolean
-  itemCount: number
   i18n: DiskBrowserI18n
 }
 
@@ -101,5 +98,4 @@ defineEmits<{
 
 <style scoped lang="scss">
 @use "../styles/AddressBar.scss";
-@use "../styles/index.scss";
 </style>

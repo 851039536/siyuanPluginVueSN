@@ -78,7 +78,7 @@ src/features/gitPush/
 │   ├── useProjectQueryScheduler.ts  # 项目查询调度器（单飞去重 + 分支名复用 + 新鲜度节流 + 脏标记，查询调度唯一权威）
 │   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 ├── components/
-│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，27 个；二次确认统一用共享 ConfirmDialog）
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，29 个；二次确认统一用共享 ConfirmDialog）
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
 │   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理；导航底部=管理分类入口）
@@ -99,6 +99,9 @@ src/features/gitPush/
 │   │   ├── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
 │   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换 + 批量旋转进度指示器）
 │   │   ├── CommitCountSelect.vue    # 分析条数选择下拉（共享 Select xsmall 档，提交分析与规则检查工具条共用）
+│   │   ├── AnalysisToolbar.vue      # 分析类视图统一工具条（状态文案 + run 按钮 + controls 插槽；提交分析/规则检查/行数统计共用）
+│   │   ├── AnalysisGate.vue         # 分析类视图状态门（分析中占位/未分析空态/失败提示条 + 默认插槽；四分析视图共用）
+│   │   ├── StatCardGrid.vue         # KPI 卡片网格（数值+标签+语义色，stat-card mixin 驱动；五处总览卡片共用）
 │   │   ├── CommitFilesDialog.vue    # 提交文件列表弹窗
 │   │   ├── CommitFilesList.vue      # 提交文件列表
 │   │   ├── CommitFileDiffDialog.vue # 提交文件差异弹窗
@@ -123,13 +126,12 @@ src/features/gitPush/
 │   │   ├── TagPanel.vue             # 标签面板
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
 │   │   └── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
-│   ├── StatsView/                   # 统计视图专属（5 个区块 + common/ 共享组件）
-│   │   ├── index.vue               # 统计视图入口容器（空态 + 自适应网格组合各区块；窄卡并排 + 表格区块全宽）
-│   │   ├── OverviewCards.vue       # 总览卡片区（总项目数/已配远程/待推送/未提交/收藏/已归档）
-│   │   ├── CoverageSection.vue     # 远程覆盖率区块（四平台 + 多远程合计）
+│   ├── StatsView/                   # 统计视图专属（4 个区块 + common/ 共享组件）
+│   │   ├── index.vue               # 统计视图入口容器（空态 + 总览区 + 自适应网格组合各区块）
+│   │   ├── OverviewCards.vue       # 总览区（KPI 卡片 + 推送状态 chips；chips 原属待处理区块，已上移避免同源计数重复）
 │   │   ├── CategoryDistributionSection.vue # 分类分布区块（category.color 着色条形）
-│   │   ├── PendingProjectsSection.vue # 待处理项目区块（推送状态 chips + 待处理表格）
-│   │   ├── PlatformStatusSection.vue # 平台配置状态区块（每项目各平台是否已配置）
+│   │   ├── PendingProjectsSection.vue # 待处理项目区块（待处理表格）
+│   │   ├── PlatformSection.vue     # 平台区块（覆盖率汇总条 + 每项目平台配置矩阵合并；原 CoverageSection + PlatformStatusSection 两块合一）
 │   │   ├── RepoLinkAuditSection.vue # 仓库链接一致性审计
 │   │   └── common/                 # 统计区块共享组件（StatsSection 区块包裹器 / StatusChipBar 状态 chips 条 / PlatformTable 平台矩阵表格 / AllClear 全部正常空态）
 │   ├── LogPanel/                    # 操作日志视图专属（6 个）
@@ -139,10 +141,8 @@ src/features/gitPush/
 │   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
 │   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
 │   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
-│   ├── CommitAnalysis/              # 提交分析视图专属（12 个）
+│   ├── CommitAnalysis/              # 提交分析视图专属（10 个）
 │   │   ├── index.vue                # 提交分析视图入口容器（状态编排 + 各区块组合）
-│   │   ├── AnalysisToolbar.vue      # 顶部工具条（分析状态 + 条数 + 分析按钮 + 显示设置）
-│   │   ├── AnalysisOverviewCards.vue# 总览卡片（总提交/已分析项目 + 失败提示）
 │   │   ├── ProjectRankingSection.vue# 项目提交排行区块（条形 + 百分比，点击跳转）
 │   │   ├── RecentCommitsSection.vue # 最近提交记录区块（条目 + 分页加载）
 │   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（viewSettings 切换）
@@ -152,9 +152,8 @@ src/features/gitPush/
 │   │   ├── AnalysisSettingsForm.vue # 分析显示设置表单（视图/范围/周起始/颜色，popover 与设置汇总弹窗共用）
 │   │   ├── CommitCalendar.vue       # 提交日历
 │   │   └── CommitHeatmap.vue        # 提交热力图
-│   ├── CommitRuleCheck/             # 提交规则检查视图专属（5 个）
+│   ├── CommitRuleCheck/             # 提交规则检查视图专属（4 个）
 │   │   ├── index.vue                # 提交规则检查视图入口容器（状态编排 + 区块组合 + 修正弹窗）
-│   │   ├── RuleCheckToolbar.vue     # 顶部工具条（分析状态 + 条数 + 分析按钮）
 │   │   ├── RuleCheckOverview.vue    # 总览区块（检查数/不合规/合规率卡片 + 规则提示）
 │   │   ├── ReasonDistributionSection.vue # 违规类型分布区块（紧凑 chips：标题与计数圆片同行）
 │   │   └── ViolationListSection.vue # 不合规提交列表区块（条目 + 修正/删除入口 + 分页）
@@ -164,10 +163,8 @@ src/features/gitPush/
 │   │   ├── LargeBlobSection.vue     # 大文件列表区块（体积 + 占比条形 + 分页）
 │   │   ├── CleanWizardDialog.vue    # BFG 清理向导弹窗（策略表单 → 前置检查 → 执行 → 结果，四段式）
 │   │   └── format.ts                # 字节人类可读化工具（formatBytes）
-│   └── LineStats/                   # 行数统计专属（7 个）
+│   └── LineStats/                   # 行数统计专属（5 个）
 │       ├── index.vue                # 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行 + 弹窗）
-│       ├── LineStatsToolbar.vue     # 顶部工具条（分析状态 + 过滤配置 + 分析按钮；无条数选择，统计范围固定全部提交）
-│       ├── LineStatsCards.vue       # 顶部汇总卡片（总新增/删除/净增/当前总行数）
 │       ├── LineRankingSection.vue   # 项目代码行数排行区块（吸顶表头 + 共享 LineRankRow 行，点击行打开详情）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       ├── ProjectLineDetail.vue    # 项目行数详情弹窗
@@ -199,7 +196,10 @@ src/features/gitPush/
     ├── DropCommitDialog.scss        # 删除历史提交弹窗样式
     ├── BatchFixDialog.scss          # 提交信息批量修正弹窗样式
     ├── RepoCleanPanel.scss          # 仓库清理面板样式（体检卡片 + 大文件列表 + BFG 向导弹窗）
-    ├── LineStatsPanel.scss          # 行数统计面板样式（工具条 + 汇总卡片 + 净增语义色；排行行样式 → LineRankRow.scss）
+    ├── LineStatsPanel.scss          # 行数统计面板样式（面板基座 + 单栏堆叠；工具条/汇总卡片/失败提示已收敛至共享）
+    ├── AnalysisToolbar.scss         # 分析类视图统一工具条样式（三视图共用）
+    ├── AnalysisGate.scss            # 分析类视图状态门样式（失败提示条 .gp-analysishint）
+    ├── StatCardGrid.scss            # KPI 卡片网格样式（五视图共用；原 .gp-stat-card/.gpa-card/.grc-card/.gls-card/.gpr-card 五份合一）
     ├── LineRankRow.scss             # 行数排行行样式（列模板单点定义 + 表头吸顶 + 条形 + 数字列 + lrr-net 语义色）
     ├── LineShareBar.scss            # 行数占比迷你条样式
     ├── ProjectLineDetail.scss       # 项目行数详情弹窗样式（弹窗尺寸 + 头部 + 文件明细表格）

@@ -34,8 +34,17 @@
   opacity: 0.45;
 }
 
-// ── 统计/报告区块标题与计数徽章（StatsPanel 的 .gp-stats-section-* 与 index.scss 的 .gpr-section-* 共用，
-// 原两处逐字重复，经冗余审查合并为共享 mixin）──
+// ── 视图面板基座（统计/提交分析/行数统计/规则检查/报告/仓库清理 六视图共用）──
+// 六个视图根容器原本逐字重复同一段声明，此处收敛为单点，改一处即全视图生效。
+// 右侧留白 8px：滚动内容不紧贴 Dock 侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
+@mixin panel-base {
+  flex: 1;
+  overflow-y: auto;
+  padding: $s-1 $s-2 $s-1 0;
+}
+
+// ── 统计/报告区块标题与计数徽章（StatsPanel / CommitAnalysis / LineStats / CommitRuleCheck
+// 的 .*-section-title 与 CodeReport 的 .gpr-section-* 共用，原五处逐字重复）──
 @mixin gp-section-title-base {
   @include gp-label-base;
   font-size: $t-xs;
@@ -152,9 +161,18 @@
   font-size: $t-lg; // 数据突出展示：统计数值大号字体
   font-weight: $fw-bold;
   font-family: $ff-mono;
+  font-variant-numeric: tabular-nums; // 等宽数字：数值变化时列宽不抖动（原仅行数统计汇总卡独有，回灌为共享口径）
   line-height: $lh-tight;
   margin-bottom: $s-px1; // 数值与标签的最小视觉间隔（小于 $s-px2，刻意紧贴）
   color: var(--b3-theme-on-surface);
+}
+
+// ── 分析视图工具条状态文案（提交分析/规则检查/行数统计共用；占满剩余空间并超长省略）──
+@mixin analysis-status {
+  min-width: 0;
+  @include text-ellipsis;
+  font-size: $t-xs;
+  opacity: 0.6;
 }
 
 // 卡片标签（两级字号制：辅助标签）

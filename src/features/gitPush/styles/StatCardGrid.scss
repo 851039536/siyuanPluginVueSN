@@ -1,0 +1,56 @@
+// gitPush 通用 KPI 卡片网格（五个视图总览卡片共用；原五份 .*-cards/. *-card 重复定义）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+.gp-statgrid {
+  display: grid;
+  // 自适应列数：--gp-statgrid-min 由调用方按视图给定最小卡宽（容器宽度驱动，不用 @media）
+  grid-template-columns: repeat(auto-fit, minmax(var(--gp-statgrid-min, 110px), 1fr));
+  gap: $s-2;
+  margin-bottom: $s-2;
+}
+
+.gp-statgrid-card {
+  @include stat-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $s-1;
+}
+
+.gp-statgrid-value {
+  @include stat-card-value;
+  margin-bottom: 0; // flex gap 已提供数值与标签的间距，覆盖 mixin 刻意紧贴的 1px
+}
+
+// 长文本数值（如「最活跃贡献者」人名）：单行省略，避免撑破卡片
+.gp-statgrid-value--truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.gp-statgrid-label {
+  @include stat-card-label;
+}
+
+// ── 语义色修饰（作用于数值；各视图按需选用）──
+.gp-statgrid-card--info .gp-statgrid-value { color: var(--b3-theme-primary); }
+.gp-statgrid-card--warn .gp-statgrid-value { color: var(--b3-theme-warning); }
+.gp-statgrid-card--danger .gp-statgrid-value { color: var(--b3-theme-error); }
+.gp-statgrid-card--accent .gp-statgrid-value { color: var(--gp-accent-color); }
+.gp-statgrid-card--star .gp-statgrid-value { color: var(--b3-theme-warning); }
+.gp-statgrid-card--muted .gp-statgrid-value { opacity: 0.45; }
+
+// ── 数值附加色（行数统计：总新增绿 / 总删除红 / 总净增按正负 / 当前总行数中性）──
+.gp-statgrid-value--add { color: var(--b3-theme-success); }
+.gp-statgrid-value--del { color: var(--b3-theme-error); }
+.gp-statgrid-value--net-pos { color: var(--b3-theme-success); }
+.gp-statgrid-value--net-neg { color: var(--b3-theme-error); }
+.gp-statgrid-value--net-zero { opacity: 0.5; }
+
+.gp-statgrid-value--total {
+  color: var(--b3-theme-on-surface);
+  opacity: 0.85;
+}

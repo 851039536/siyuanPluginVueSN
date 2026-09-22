@@ -81,10 +81,10 @@
       :i18n="i18n"
       :project-count="projects.length"
       :project-ranking="projectLineRanking"
-      :analyzing="analysisAnalyzing"
-      :analyzed="analysisAnalyzed"
-      :analyzed-at="analysisAnalyzedAt"
-      :failed-count="analysisFailedCount"
+      :analyzing="lineAnalyzing"
+      :analyzed="lineAnalyzed"
+      :analyzed-at="lineAnalyzedAt"
+      :failed-count="lineFailedCount"
       :fetch-failures="fetchFailures"
       :summary="lineStatsSummary"
       :selected-extensions="selectedExtensions"
@@ -603,7 +603,11 @@ const {
   analyzing: analysisAnalyzing,
   analyzed: analysisAnalyzed,
   analyzedAt: analysisAnalyzedAt,
-  failedCount: analysisFailedCount,
+  // 行数统计域（独立进度/时间戳/失败计数：不再与提交分析互相覆盖）
+  lineAnalyzing,
+  lineAnalyzed,
+  lineAnalyzedAt,
+  lineFailedCount,
   fetchFailures,
   commitCount: analysisCommitCount,
   setCommitCount,

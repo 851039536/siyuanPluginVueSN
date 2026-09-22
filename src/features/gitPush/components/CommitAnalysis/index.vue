@@ -9,42 +9,50 @@
     />
 
     <template v-else>
-      <!-- 顶部工具条 -->
+      <!-- 顶部工具条：状态文案 + 条数选择 + 分析按钮 + 显示设置 -->
       <AnalysisToolbar
         :i18n="i18n"
-        :analyzing="analyzing"
-        :analyzed="analyzed"
+        :running="analyzing"
+        :done="analyzed"
         :analyzed-at="analyzedAt"
-        :commit-count="commitCount"
-        :view-settings="viewSettings"
-        :year-options="yearOptions"
-        @run-analysis="emit('runAnalysis')"
-        @update-count="emit('updateCount', $event)"
-        @update-view-settings="emit('updateViewSettings', $event)"
-      />
-
-      <!-- 首次分析中占位 -->
-      <div
-        v-if="analyzing && !analyzed"
-        class="gp-loading"
+        not-run-key="analysisNotRun"
+        icon="chartTimelineVariant"
+        :run-text="i18n.auditRun"
+        :rerun-text="i18n.auditRerun"
+        :aria-label="i18n.analysisView"
+        @run="emit('runAnalysis')"
       >
-        <Loader />
-        <!-- 加载中文案："分析中…" -->
-        <span class="gp-loading-text">{{ i18n.auditing }}</span>
-      </div>
+        <template #controls>
+          <!-- 条数选择（tooltip："每项目 {0} 条"） -->
+          <CommitCountSelect
+            :i18n="i18n"
+            :commit-count="commitCount"
+            @update-count="emit('updateCount', $event)"
+          />
+          <!-- 显示设置菜单 -->
+          <CommitAnalysisSettings
+            :i18n="i18n"
+            :view-settings="viewSettings"
+            :years="yearOptions"
+            @update="emit('updateViewSettings', $event)"
+          />
+        </template>
+      </AnalysisToolbar>
 
-      <!-- 未分析提示 -->
-      <EmptyState
-        v-else-if="!analyzed"
+      <!-- 四态门：分析中占位 / 未分析提示 / 失败提示 / 已就绪内容 -->
+      <AnalysisGate
+        :running="analyzing"
+        :done="analyzed"
+        :not-run-text="i18n.analysisNotRun"
+        :running-text="i18n.auditing"
         icon="mdi:chart-timeline-variant"
-        :text="i18n.analysisNotRun"
-      />
-
-      <template v-else>
-        <!-- 总览卡片 + 失败提示 -->
-        <AnalysisOverviewCards
-          :i18n="i18n"
-          :stats="stats"
+        :failed-count="stats.failedCount"
+        :fail-text="i18n.analysisFailedCount.replace('{0}', String(stats.failedCount))"
+      >
+        <!-- 总览卡片：总提交次数 / 已分析项目 -->
+        <StatCardGrid
+          :min-width="110"
+          :cards="overviewCards"
         />
 
         <!-- 空状态：分析完成但无提交数据 -->
@@ -88,7 +96,7 @@
             :stats="stats"
           />
         </template>
-      </template>
+      </AnalysisGate>
     </template>
   </div>
 </template>
@@ -97,13 +105,16 @@
 // gitPush 提交分析视图入口容器（状态编排 + 各功能区块组合，纯编排无领域状态）
 import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
+import type { StatCardItem } from "../common/StatCardGrid.vue"
 import { computed } from "vue"
 import EmptyState from "../common/EmptyState.vue"
-import Loader from "@/components/Loader.vue"
+import AnalysisGate from "../common/AnalysisGate.vue"
+import AnalysisToolbar from "../common/AnalysisToolbar.vue"
+import CommitCountSelect from "../common/CommitCountSelect.vue"
+import StatCardGrid from "../common/StatCardGrid.vue"
 import { buildYearOptions } from "../../utils"
-import AnalysisOverviewCards from "./AnalysisOverviewCards.vue"
-import AnalysisToolbar from "./AnalysisToolbar.vue"
 import AuthorTypeSection from "./AuthorTypeSection.vue"
+import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import DailyTrendSection from "./DailyTrendSection.vue"
 import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"
 import ProjectRankingSection from "./ProjectRankingSection.vue"
@@ -129,6 +140,12 @@ const emit = defineEmits<{
 
 /** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（供工具条设置弹窗与设置汇总弹窗共用逻辑） */
 const yearOptions = computed(() => buildYearOptions(props.stats.entries, props.viewSettings.range))
+
+/** 总览卡片：总提交次数 / 已分析项目（失败计数由 AnalysisGate 统一承担，不再在此重复渲染） */
+const overviewCards = computed<StatCardItem[]>(() => [
+  { key: "commits", value: props.stats.totalCommits, label: props.i18n.analysisTotalCommits },
+  { key: "covered", value: `${props.stats.analyzedCount} / ${props.stats.projectCount}`, label: props.i18n.analysisCoveredProjects },
+])
 </script>
 
 <style lang="scss">

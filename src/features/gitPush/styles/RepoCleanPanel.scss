@@ -3,12 +3,9 @@
 
 // ── 仓库清理视图（RepoCleanPanel + CleanWizardDialog，前缀 grcp-）──
 
-// 面板根容器（与 .grc-panel 同范式：滚动 + 右侧留白）
+// 面板根容器（六视图共用 panel-base：滚动 + 右侧留白）
 .grcp-panel {
-  flex: 1;
-  overflow-y: auto;
-  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $s-1 $s-2 $s-1 0;
+  @include panel-base;
 }
 
 // 顶部工具条（两行：第一行控件，第二行状态文案）

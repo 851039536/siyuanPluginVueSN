@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图入口容器（空态 + 总览卡片 + 自适应网格组合各功能区块） -->
+<!-- gitPush 统计视图入口容器（空态 + 总览区 + 自适应网格组合各功能区块） -->
 <template>
   <div class="gp-stats-panel">
     <!-- 空状态：无项目时显示"暂无项目统计" -->
@@ -15,21 +15,15 @@
         :stats="stats"
       />
 
-      <!-- 自适应网格：窄卡（覆盖率/分类分布）并排，表格区块跨全宽（--full）；容器 < 约 672px 自动单列（容器宽度驱动） -->
+      <!-- 自适应网格：窄卡（分类分布）单列，表格区块跨全宽（--full）；容器 < 约 672px 自动单列（容器宽度驱动） -->
       <div class="gp-stats-grid">
-        <!-- 远程覆盖率 -->
-        <CoverageSection
-          :i18n="i18n"
-          :stats="stats"
-        />
-
         <!-- 分类分布 -->
         <CategoryDistributionSection
           :i18n="i18n"
           :stats="stats"
         />
 
-        <!-- 待处理项目（推送状态概览 + 待处理表格合并，全宽） -->
+        <!-- 待处理项目（待处理表格，全宽） -->
         <PendingProjectsSection
           class="gp-stats-section--full"
           :i18n="i18n"
@@ -37,8 +31,8 @@
           @view-project="emit('viewProject', $event)"
         />
 
-        <!-- 平台配置状态（矩阵表格，全宽） -->
-        <PlatformStatusSection
+        <!-- 平台区块（覆盖率汇总 + 每项目平台配置矩阵合并，全宽） -->
+        <PlatformSection
           class="gp-stats-section--full"
           :i18n="i18n"
           :stats="stats"
@@ -66,10 +60,9 @@
 import type { RepoLinkAuditRow, RepoLinkAuditSummary, StatsView } from "../../types"
 import EmptyState from "../common/EmptyState.vue"
 import CategoryDistributionSection from "./CategoryDistributionSection.vue"
-import CoverageSection from "./CoverageSection.vue"
 import OverviewCards from "./OverviewCards.vue"
 import PendingProjectsSection from "./PendingProjectsSection.vue"
-import PlatformStatusSection from "./PlatformStatusSection.vue"
+import PlatformSection from "./PlatformSection.vue"
 import RepoLinkAuditSection from "./RepoLinkAuditSection.vue"
 
 defineProps<{

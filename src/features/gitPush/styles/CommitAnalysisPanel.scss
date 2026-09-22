@@ -1,69 +1,16 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 面板基座（与 StatsPanel 一致：独立滚动 + 上下留白）──
+// ── 面板基座（六视图共用 panel-base：独立滚动 + 上下留白 + 右侧间距）──
 .gpa-panel {
-  flex: 1;
-  overflow-y: auto;
-  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $s-1 $s-2 $s-1 0;
+  @include panel-base;
 }
 
-// ── 顶部工具条 ──
-.gpa-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $s-2;
-  margin-bottom: $s-3;
-}
+// ── 顶部工具条与状态文案：已收敛至 styles/AnalysisToolbar.scss（统一工具条共用）──
 
-// 分析状态文案（未分析/分析中/完成；占满剩余空间，超长省略避免挤压右侧控件）
-.gpa-status {
-  flex: 1;
-  min-width: 0;
-  @include text-ellipsis;
-  font-size: $t-xs;
-  opacity: 0.6;
-}
+// ── 总览卡片：已收敛至 styles/StatCardGrid.scss（五视图共用 KPI 卡片网格）──
 
-.gpa-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-}
-
-// ── 总览卡片（复用 gp-stat-card 视觉模式）──
-.gpa-cards {
-  display: grid;
-  // 两列等宽卡片（总提交次数 + 已分析项目）
-  grid-template-columns: repeat(2, 1fr);
-  gap: $s-2;
-  margin-bottom: $s-3;
-}
-
-// 卡片三件套复用共享 mixin（与代码统计报告的 .gpr-card / .gpc-card 同构，消除第三份逐行重复）。
-// 复用后与另两处卡片一致地获得 hover 描边效果，属跨分区交互统一。
-.gpa-card {
-  @include stat-card;
-}
-
-.gpa-card-value {
-  @include stat-card-value;
-}
-
-.gpa-card-label {
-  @include stat-card-label;
-}
-
-// 抓取失败提示（弱化展示，不打断正常结果阅读）
-.gpa-fail-hint {
-  font-size: $t-2xs;
-  color: var(--b3-theme-warning);
-  margin-bottom: $s-2;
-}
-
-// ── 区块标题（复用 gp-stats-section-title 视觉模式）──
+// ── 区块标题（与其余四个分析类视图共用 gp-section-title-base）──
 .gpa-section {
   margin-bottom: $s-3;
 }
@@ -117,13 +64,9 @@
   flex-basis: 72px; // 无对应 Token（窄列标签宽度）
 }
 
+// 区块标题（与其余四个分析类视图共用 gp-section-title-base）
 .gpa-section-title {
-  @include gp-label-base;
-  font-size: $t-xs;
-  margin-bottom: $s-2;
-  display: flex;
-  align-items: center;
-  gap: $s-1;
+  @include gp-section-title-base;
 }
 
 // 标题计数徽章：底色/文字/几何由共享 Tag（primary + xsmall + square）承担，

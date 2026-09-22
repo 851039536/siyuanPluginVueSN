@@ -1,0 +1,13 @@
+// gitPush 分析类视图统一工具条（提交分析 / 规则检查 / 行数统计共用）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+.gp-analysistoolbar {
+  margin-bottom: $s-3;
+}
+
+// 分析状态文案（未分析/分析中/完成；占满 start 槽剩余空间，超长省略避免挤压右侧控件）
+.gp-analysistoolbar-status {
+  flex: 1;
+  @include analysis-status;
+}

@@ -9,41 +9,55 @@
     />
 
     <template v-else>
-      <!-- 顶部工具条 -->
-      <LineStatsToolbar
+      <!-- 顶部工具条：状态文案 + 扩展名过滤 + 分析按钮 -->
+      <AnalysisToolbar
         :i18n="i18n"
-        :analyzing="analyzing"
-        :analyzed="analyzed"
+        :running="analyzing"
+        :done="analyzed"
         :analyzed-at="analyzedAt"
-        :selected-extensions="selectedExtensions"
-        @run-analysis="emit('runAnalysis')"
-        @open-ext-dialog="showExtDialog = true"
-      />
-
-      <!-- 首次分析中占位 -->
-      <div
-        v-if="analyzing && !analyzed"
-        class="gp-loading"
+        not-run-key="lineStatsNotRun"
+        fallback-key="timeJustNow"
+        icon="codeTags"
+        outlined
+        :run-text="i18n.lineStatsRun"
+        :rerun-text="i18n.auditRerun"
+        :aria-label="i18n.lineStatsView"
+        @run="emit('runAnalysis')"
       >
-        <Loader />
-        <!-- 加载中文案："分析中…" -->
-        <span class="gp-loading-text">{{ i18n.auditing }}</span>
-      </div>
+        <template #controls>
+          <!-- 文件格式过滤配置按钮（已选数量走共享 Badge 角标；有生效过滤时描边转主题色） -->
+          <Badge
+            :content="selectedExtensions.length"
+            :hidden="selectedExtensions.length === 0"
+            variant="primary"
+            size="xsmall"
+          >
+            <Button
+              icon="filterVariant"
+              size="xsmall"
+              variant="ghost"
+              :outlined="true"
+              :severity="selectedExtensions.length > 0 ? 'primary' : undefined"
+              :disabled="analyzing"
+              :title="i18n.lineStatsExtFilter"
+              @click="showExtDialog = true"
+            />
+          </Badge>
+        </template>
+      </AnalysisToolbar>
 
-      <!-- 未分析提示 -->
-      <EmptyState
-        v-else-if="!analyzed"
+      <!-- 四态门：分析中占位 / 未分析提示 / 失败提示 / 已就绪内容 -->
+      <AnalysisGate
+        :running="analyzing"
+        :done="analyzed"
+        :not-run-text="i18n.lineStatsNotRun"
+        :running-text="i18n.auditing"
         icon="mdi:code-tags"
-        :text="i18n.lineStatsNotRun"
-      />
-
-      <template v-else>
-        <!-- 失败提示：名称与原因收纳在明细弹窗里（旧缓存无明细时仅显示计数） -->
-        <div
-          v-if="failedCount > 0"
-          class="gls-fail-hint"
-        >
-          <span>{{ i18n.analysisFailedCount.replace("{0}", String(failedCount)) }}</span>
+        :failed-count="failedCount"
+        :fail-text="i18n.analysisFailedCount.replace('{0}', String(failedCount))"
+      >
+        <!-- 失败明细入口（名称与原因收纳在弹窗里；旧缓存无明细时仅显示计数） -->
+        <template #failAction>
           <Button
             v-if="fetchFailures.length > 0"
             variant="ghost"
@@ -52,7 +66,7 @@
             icon="alertCircleOutline"
             @click="showFailDialog = true"
           >{{ i18n.lineStatsFailureShow }}</Button>
-        </div>
+        </template>
 
         <!-- 空状态：分析完成但无行数数据 -->
         <EmptyState
@@ -66,10 +80,10 @@
           v-else
           class="gls-pair"
         >
-          <!-- 顶部汇总卡片 -->
-          <LineStatsCards
-            :i18n="i18n"
-            :summary="summary"
+          <!-- 顶部汇总卡片：总新增 / 总删除 / 总净增 / 当前总行数 -->
+          <StatCardGrid
+            :min-width="78"
+            :cards="summaryCards"
           />
 
           <!-- 项目代码行数排行 -->
@@ -79,7 +93,7 @@
             @view-project="emit('viewProject', $event)"
           />
         </div>
-      </template>
+      </AnalysisGate>
     </template>
 
     <!-- 文件格式过滤配置弹窗（点击过滤按钮弹出，确定后 emit 更新扩展名排除列表） -->
@@ -120,15 +134,17 @@
 // gitPush 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行区块 + 弹窗）
 import type { NumstatCommit } from "../../reportMetrics"
 import type { LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
+import type { StatCardItem } from "../common/StatCardGrid.vue"
 import { computed, ref } from "vue"
+import Badge from "@/components/Badge.vue"
 import Button from "@/components/Button.vue"
 import EmptyState from "../common/EmptyState.vue"
+import AnalysisGate from "../common/AnalysisGate.vue"
+import AnalysisToolbar from "../common/AnalysisToolbar.vue"
+import StatCardGrid from "../common/StatCardGrid.vue"
 import ExtFilterDialog from "./ExtFilterDialog.vue"
 import FetchFailuresDialog from "./FetchFailuresDialog.vue"
 import LineRankingSection from "./LineRankingSection.vue"
-import LineStatsCards from "./LineStatsCards.vue"
-import LineStatsToolbar from "./LineStatsToolbar.vue"
-import Loader from "@/components/Loader.vue"
 import ProjectLineDetail from "./ProjectLineDetail.vue"
 
 const props = defineProps<{
@@ -173,6 +189,18 @@ const showExtDialog = ref(false)
 
 /** 失败明细弹窗显示状态 */
 const showFailDialog = ref(false)
+
+/** 汇总卡片：总新增 / 总删除 / 总净增 / 当前总行数（顺序：增删在前便于与净增横向对照） */
+const summaryCards = computed<StatCardItem[]>(() => {
+  const { added, deleted, net, totalLines } = props.summary
+  const netSuffix = net > 0 ? "pos" : net < 0 ? "neg" : "zero"
+  return [
+    { key: "added", value: `+${added.toLocaleString()}`, label: props.i18n.lineStatsTotalAdded, valueCls: "gp-statgrid-value--add" },
+    { key: "deleted", value: `−${deleted.toLocaleString()}`, label: props.i18n.lineStatsTotalDeleted, valueCls: "gp-statgrid-value--del" },
+    { key: "net", value: net.toLocaleString(), label: props.i18n.lineStatsTotalNet, valueCls: `gp-statgrid-value--net-${netSuffix}` },
+    { key: "totalLines", value: totalLines.toLocaleString(), label: props.i18n.lineStatsTotalLines, valueCls: "gp-statgrid-value--total", hint: props.i18n.lineStatsTotalHint },
+  ]
+})
 
 /** 详情弹窗目标行（单次查找，项目名与总行数共用；项目已删除时为 undefined） */
 const lineDetailRow = computed(() => props.projectRanking.find((r) => r.id === props.lineDetailProjectId))

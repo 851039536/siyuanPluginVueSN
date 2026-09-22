@@ -2,49 +2,24 @@
 @use "./mixins" as *;
 
 .gp-stats-panel {
-  flex: 1;
-  overflow-y: auto;
-  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $s-1 $s-2 $s-1 0;
+  @include panel-base;
 }
 
-// ── 总览卡片 ──
-.gp-stats-cards {
-  display: grid;
-  // 自适应列数：全屏单行 6 卡，窄 Dock（约 420px）自动折为 3 列两行（容器宽度驱动，不用 @media）
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: $s-2;
+// ── 总览卡片：已收敛至共享 StatCardGrid（.gp-statgrid-*，五视图共用）──
+
+// ── 总览区（KPI 卡片 + 推送状态 chips）──
+.gp-overview {
   margin-bottom: $s-2;
-}
 
-// 卡片骨架与 _mixins.scss 的 stat-card 系列合流（原两处逐字重复，本次消除复制粘贴）
-.gp-stat-card {
-  @include stat-card;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $s-1;
-  transition: border-color 0.12s ease;
+  // chips 条原本在区块内部，移到总览区后取消其底部外边距（改由 .gp-statgrid 的 margin-bottom 统一控制间距）
+  .gp-status-bar {
+    margin-bottom: 0;
+  }
 }
-
-.gp-stat-card-value {
-  @include stat-card-value;
-  margin-bottom: 0; // flex gap 已提供数值与标签的间距，覆盖 mixin 刻意紧贴的 1px
-}
-
-.gp-stat-card-label {
-  @include stat-card-label;
-}
-
-.gp-stat-card--info .gp-stat-card-value { color: var(--b3-theme-primary); }
-.gp-stat-card--warn .gp-stat-card-value { color: var(--b3-theme-warning); }
-.gp-stat-card--accent .gp-stat-card-value { color: var(--gp-accent-color); }
-.gp-stat-card--star .gp-stat-card-value { color: var(--b3-theme-warning); } // 收藏卡：与列表星标按钮（.gp-star-btn）同色
-.gp-stat-card--muted .gp-stat-card-value { opacity: 0.45; } // 归档卡：弱化展示（非活跃数据）
 
 // ── 自适应网格布局 ──
 .gp-stats-grid {
-  // 自适应列数：容器 ≥ 约 672px（21rem×2 + gap）时双列，窄 Dock 自动单列（容器宽度驱动，不用 @media）；
+  // 自适应列数：容器 ≥ 约 21rem 时双列，窄 Dock 自动单列（容器宽度驱动，不用 @media）；
   // align-items: start 使同一行的窄卡按各自内容收缩，不互相拉伸出空腔
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
@@ -58,8 +33,6 @@
 }
 
 // ── 区块卡片（StatsSection 包裹器统一凸出：surface 底 + 边框分层，与总览卡同范式）──
-// 注：.gp-stats-section-title/-count 与 index.scss 的 .gpr-section-title/-count 几乎逐字重复，
-// 属第 2 次出现（Rule of Three），第 3 处出现时再提取共享 mixin
 .gp-stats-section {
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
@@ -72,24 +45,13 @@
   }
 }
 
+// 区块标题/计数徽章与 CodeReport 的 .gpr-section-* 共用共享 mixin（原两处逐字重复）
 .gp-stats-section-title {
-  @include gp-label-base;
-  font-size: $t-xs;
-  margin-bottom: $s-2;
-  display: flex;
-  align-items: center;
-  gap: $s-1;
+  @include gp-section-title-base;
 }
 
 .gp-stats-section-count {
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  padding: 0 $s-px6;
-  border-radius: $r-sm;
-  background: var(--b3-theme-primary-lightest);
-  color: var(--b3-theme-primary);
-  font-weight: $fw-semibold;
-  letter-spacing: 0;
+  @include gp-section-count-base;
 }
 
 // ── 远程覆盖率 ──

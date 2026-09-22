@@ -1,39 +1,16 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 面板基座（与 CommitAnalysisPanel 一致：独立滚动 + 上下留白）──
+// ── 面板基座（六视图共用 panel-base：独立滚动 + 上下留白 + 右侧间距）──
 .gls-panel {
-  flex: 1;
-  overflow-y: auto;
-  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $s-1 $s-2 $s-1 0;
+  @include panel-base;
 }
 
-// ── 顶部工具条（flex 三段布局由共享 Toolbar 承载，此处仅调与下方内容间距）──
-.gls-toolbar {
-  margin-bottom: $s-3;
-}
+// ── 顶部工具条与状态文案：已收敛至 styles/AnalysisToolbar.scss（统一工具条共用）──
 
-// 分析状态文案（未分析/分析中/完成；占满 start 槽剩余空间，超长省略避免挤压右侧控件）
-.gls-status {
-  flex: 1;
-  min-width: 0;
-  @include text-ellipsis;
-  font-size: $t-xs;
-  opacity: 0.6;
-}
+// ── 抓取失败提示：已收敛至 styles/AnalysisGate.scss（.gp-analysishint）──
 
-// 抓取失败提示（弱化展示，不打断正常结果阅读；右侧「查看失败项目」按钮展开明细弹窗）
-.gls-fail-hint {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-  font-size: $t-2xs;
-  color: var(--b3-theme-warning);
-  margin-bottom: $s-2;
-}
-
-// ── 单栏堆叠（汇总卡片 + 项目行数排行 + 作者行数排行 纵向排列，各占整行）──
+// ── 单栏堆叠（汇总卡片 + 项目行数排行纵向排列，各占整行）──
 .gls-pair {
   display: flex;
   flex-direction: column;
@@ -44,83 +21,15 @@
   }
 }
 
-// ── 顶部汇总卡片（总新增 / 总删除 / 总净增 / 当前总行数，复用 CommitAnalysisPanel 总览卡片视觉模式）──
-.gls-cards {
-  display: grid;
-  // 自适应列宽：常规面板宽度下一行四张，窄面板自动折行；每张不低于 78px，数值不被压碎
-  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
-  gap: $s-2;
-  margin-bottom: $s-2;
-}
-
-// 共享 Card 落地外观收敛：底色取 surface 凸出（Card 默认 background 与面板同底），圆角沿用 6px 既有观感。
-// 类名重复一次是为了压过 Card 组件内 scoped 的 `.si-card[data-v-*]`（同特异性时胜负取决于样式注入顺序，不稳定）
-.gls-cards .gls-card.gls-card {
-  background: var(--b3-theme-surface);
-  border-radius: $r-base;
-}
-
-// 卡片内层（Card 走 body-no-padding，内边距与居中由本层自控）
-.gls-card-inner {
-  padding: $s-2 $s-1;
-  text-align: center;
-}
-
-.gls-card-value {
-  font-size: $t-lg; // 数据突出展示：汇总统计数值大号字体
-  font-weight: $fw-bold;
-  font-family: $ff-mono;
-  font-variant-numeric: tabular-nums; // 等宽数字：数值变化时列宽不抖动
-  line-height: $lh-tight;
-  color: var(--b3-theme-on-surface);
-}
-
-.gls-card-label {
-  font-size: $t-2xs; // 辅助标签弱化展示（两级字号制）
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-// 总新增 → 绿（success）；总删除 → 红（error）；总净增复用行内净增语义色（gls-net--*）
-.gls-card-value--add {
-  color: var(--b3-theme-success);
-}
-
-.gls-card-value--del {
-  color: var(--b3-theme-error);
-}
-
-// 当前总行数 → 中性色（存量口径，与增量指标（新增绿/删除红/净增主题色）区分）
-.gls-card-value--total {
-  color: var(--b3-theme-on-surface);
-  opacity: 0.85;
-}
+// ── 顶部汇总卡片：已收敛至共享 StatCardGrid（数值/标签/语义色均由 .gp-statgrid-* 承担）──
 
 .gls-section {
   margin-bottom: $s-3;
 }
 
+// 区块标题（与其余四个分析类视图共用 gp-section-title-base）
 .gls-section-title {
-  @include gp-label-base;
-  font-size: $t-xs;
-  margin-bottom: $s-2;
-  display: flex;
-  align-items: center;
-  gap: $s-1;
+  @include gp-section-title-base;
 }
 
 // ── 行数排行行 / 表头 / 数字列 / 占比与总行数列已迁移至 styles/LineRankRow.scss（.lrr-*，项目排行与作者排行共用）──
-
-// 净增行语义色：正→绿 / 负→红 / 零→灰（顶部汇总卡片净增值专用，前缀 gls-net）
-.gls-net--pos {
-  color: var(--b3-theme-success);
-}
-
-.gls-net--neg {
-  color: var(--b3-theme-error);
-}
-
-.gls-net--zero {
-  opacity: 0.5;
-}

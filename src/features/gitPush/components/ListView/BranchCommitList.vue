@@ -69,11 +69,8 @@
       <div
         v-for="entry in filteredEntries"
         :key="entry.hash"
+        :ref="(el) => setRowEl(entry.hash, el)"
         class="bcl-entry"
-        @pointerenter="openStatTip(entry.hash, $event)"
-        @pointerleave="closeStatTip"
-        @focusin="openStatTip(entry.hash, $event)"
-        @focusout="closeStatTip"
       >
         <span
           class="bcl-hash"
@@ -157,25 +154,28 @@
             <span class="bcl-date-absolute">{{ formatDateTime(entry.date) }}</span>
           </span>
         </span>
+
+        <!--
+          提交变更规模提示：直接复用 Tooltip 内建的 hover + focus 触发器（focus 经 focusin 冒泡，
+          覆盖行内按钮的键盘聚焦），本组件不再重复绑定事件；锚点即本行元素，逐行一个实例以保持触发器与锚点一一对应。
+        -->
+        <Tooltip
+          v-if="statOf(entry.hash)"
+          :target="() => rowEls.get(entry.hash) ?? null"
+          placement="top"
+          size="xsmall"
+          :max-width="300"
+        >
+          <span class="bcl-stat">
+            <span>{{ statFiles(entry.hash) }}</span>
+            <span class="bcl-stat-sep">·</span>
+            <span class="bcl-stat-add">{{ statInsertions(entry.hash) }}</span>
+            <span class="bcl-stat-sep">·</span>
+            <span class="bcl-stat-del">{{ statDeletions(entry.hash) }}</span>
+          </span>
+        </Tooltip>
       </div>
     </div>
-
-    <!--
-      提交变更规模提示：单个受控 Tooltip 复用给所有行（而非每行挂一个实例 —— 200 行会多挂 200 个组件）。
-      锚点取指针/焦点所在行元素，内容随目标行切换。
-      `disabled` 关掉组件内建的 hover/focus 触发器：锚点随行列变化，而组件的触发器只在挂载时绑定一次，
-      留着会绑到过期行上；本组件改由行上的 pointerenter/focus 显式驱动（可同时覆盖鼠标移入与键盘聚焦）。
-    -->
-    <Tooltip
-      :visible="tipVisible"
-      :target="tipAnchor"
-      :text="tipText"
-      placement="top"
-      size="xsmall"
-      :max-width="280"
-      disabled
-      @update:visible="tipVisible = $event"
-    />
   </div>
 </template>
 
@@ -285,41 +285,36 @@ function handleCountChange(value: string | number | boolean | null) {
   emit("reloadCommitLog", displayCount.value)
 }
 
-// ── 提交变更规模提示（单个受控 Tooltip 服务所有行）──
+// ── 提交变更规模提示（逐行一个 Tooltip，锚点为行元素）──
 
-/** 提示是否显示（受控；指针悬停或行获得焦点时打开） */
-const tipVisible = ref(false)
-/** 提示锚点（当前悬停/聚焦的行元素） */
-const tipAnchor = ref<HTMLElement | null>(null)
-/** 提示文案（随目标行切换） */
-const tipText = ref("")
+/** 行元素（hash → DOM）：作为该行 Tooltip 的定位锚点 */
+const rowEls = new Map<string, HTMLElement>()
+
+/** v-for 内的函数 ref：登记/注销行元素（元素移除时 Vue 传 null，同步清理避免残留） */
+function setRowEl(hash: string, el: unknown) {
+  if (el instanceof HTMLElement) rowEls.set(hash, el)
+  else rowEls.delete(hash)
+}
 
 /** 取该提交的变更规模（未加载/merge 提交/超出统计上限时为 undefined） */
 function statOf(hash: string): CommitStat | undefined {
   return props.stats?.get(hash)
 }
 
-/** 变更规模文案："6 个文件变更 · 6 行插入(+) · 3 行删除(−)"（三段均为 i18n 文案，随语言切换） */
-function statText(hash: string): string {
+/** 变更规模文案（三段均为 i18n 文案，随语言切换；增删两段在样式上分别着绿/红） */
+function statFiles(hash: string): string {
   const stat = statOf(hash)
-  if (!stat) return ""
-  return [
-    props.i18n.commitStatFiles.replace("{0}", String(stat.files)),
-    props.i18n.commitStatInsertions.replace("{0}", stat.insertions.toLocaleString()),
-    props.i18n.commitStatDeletions.replace("{0}", stat.deletions.toLocaleString()),
-  ].join(" · ")
+  return stat ? props.i18n.commitStatFiles.replace("{0}", String(stat.files)) : ""
 }
 
-/** 打开提示：无统计时不打开（merge 提交与超出统计上限的行保持原样） */
-function openStatTip(hash: string, event: Event) {
-  if (!statOf(hash)) return
-  tipAnchor.value = event.currentTarget as HTMLElement
-  tipText.value = statText(hash)
-  tipVisible.value = true
+function statInsertions(hash: string): string {
+  const stat = statOf(hash)
+  return stat ? props.i18n.commitStatInsertions.replace("{0}", stat.insertions.toLocaleString()) : ""
 }
 
-function closeStatTip() {
-  tipVisible.value = false
+function statDeletions(hash: string): string {
+  const stat = statOf(hash)
+  return stat ? props.i18n.commitStatDeletions.replace("{0}", stat.deletions.toLocaleString()) : ""
 }
 </script>
 

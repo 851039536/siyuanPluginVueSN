@@ -206,6 +206,11 @@
   --gp-diff-add-emph-bg: #abf2bc;
   --gp-diff-del-emph-bg: #ffcecb;
 
+  // 提示气泡内的增删着色：气泡底色恒与内容底色相反（见 components/styles/Tooltip.scss），
+  // 浅色主题下气泡是深底，故此处取与 diff 相反的一套（深色主题下互换）
+  --gp-tip-add-color: #3fb950;
+  --gp-tip-del-color: #f85149;
+
   // 暗色主题：GitHub Dark 调色板——背景改半透明深色，避免浅底浅字；前景提亮保证对比度
   :root[data-theme-mode="dark"] & {
     --gp-diff-add-color: #3fb950;
@@ -215,5 +220,7 @@
     --gp-diff-del-bg: rgba(248, 81, 73, 0.18);
     --gp-diff-add-emph-bg: rgba(46, 160, 67, 0.4);
     --gp-diff-del-emph-bg: rgba(248, 81, 73, 0.4);
+    --gp-tip-add-color: #1a7f37;
+    --gp-tip-del-color: #cf222e;
   }
 }

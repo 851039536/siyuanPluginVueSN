@@ -194,7 +194,6 @@
             variant="ghost"
             size="xsmall"
             dense
-            icon="sparkles"
             :loading="generating"
             :disabled="generating || deepGenerating"
             @click.stop="$emit('generateMsg')"
@@ -206,7 +205,6 @@
             variant="ghost"
             size="xsmall"
             dense
-            icon="binoculars"
             :loading="deepGenerating"
             :disabled="generating || deepGenerating"
             :title="i18n.deepGenerateMsgTip"

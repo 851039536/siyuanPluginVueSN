@@ -29,6 +29,8 @@ export function useBatchProgress(options?: {
   const timers = new TimerRegistry()
   /** 批内并发数（runBatch 时动态求值，跟随 git 并发设置） */
   const getBatchSize = () => Math.max(1, options?.getBatchSize?.() ?? 3)
+  /** 批次序号：延迟 end() 前校验，防上一批的清理定时器误清新批次进度 */
+  let runSeq = 0
 
   function start(total: number, label: string) {
     state.value = { visible: true, current: 0, total, label }
@@ -42,10 +44,15 @@ export function useBatchProgress(options?: {
     state.value = { ...DEFAULT_STATE }
   }
 
-  /** 完成批量操作：切换完成图标，短暂停留后自动消失 */
-  function finish() {
+  /** 完成批量操作：切换完成图标，短暂停留后自动消失（仅当期间无新批次启动时执行） */
+  function finish(seq: number) {
     state.value = { ...state.value, done: true }
-    timers.setTimeout(end, AUTO_HIDE_DELAY)
+    timers.setTimeout(() => {
+      // 3s 延迟窗口内可能已有新批次 start()（如首屏加载紧接切换视图）：
+      // 此时清空会抹掉新批次的可见进度（表现为进度条闪现即消失），故按序号丢弃过期清理
+      if (seq !== runSeq) return
+      end()
+    }, AUTO_HIDE_DELAY)
   }
 
   /** 跨批次串行链：同一时刻只允许一个批次占用共享进度状态。
@@ -63,6 +70,7 @@ export function useBatchProgress(options?: {
     runChain = new Promise<void>((r) => { release = r })
     try {
       await prev
+      const seq = ++runSeq
       start(items.length, label)
       try {
         await poolProcess(items, getBatchSize(), async (item) => {
@@ -75,7 +83,7 @@ export function useBatchProgress(options?: {
           }
         })
       } finally {
-        finish()
+        finish(seq)
       }
     } finally {
       release()

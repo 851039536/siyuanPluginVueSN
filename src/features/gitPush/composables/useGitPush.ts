@@ -58,12 +58,15 @@ export function useGitPush(manager: GitPushManager) {
     workingTrees: gitOps.workingTrees,
     committing: gitOps.committing,
     stashLoading: gitOps.stashLoading,
-    cardRefreshSignals: gitOps.cardRefreshSignals,
+    // 查询调度器（单飞/新鲜度/脏标记唯一权威）
+    scheduler: gitOps.scheduler,
     bumpCardRefresh: gitOps.bumpCardRefresh,
     loadPushStatus: gitOps.loadPushStatus,
     loadWorkingTree: gitOps.loadWorkingTree,
     loadProjectGitStatus: gitOps.loadProjectGitStatus,
     loadStatsData: gitOps.loadStatsData,
+    ensureProjectStatus: gitOps.ensureProjectStatus,
+    refreshProjectStatus: gitOps.refreshProjectStatus,
     switchBranch: gitOps.switchBranch,
     stageItem: gitOps.stageItem,
     stageAllItems: gitOps.stageAllItems,
@@ -83,7 +86,6 @@ export function useGitPush(manager: GitPushManager) {
     doStashApply: gitOps.doStashApply,
     doStashDrop: gitOps.doStashDrop,
     generateStashDesc: gitOps.generateStashDesc,
-    fetchAllRemotes: gitOps.fetchAllRemotes,
 
     // ── 操作日志 ──
     opLogs: gitOps.opLogs,

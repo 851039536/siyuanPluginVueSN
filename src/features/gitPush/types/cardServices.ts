@@ -2,6 +2,7 @@
 import type { InjectionKey, Ref } from "vue"
 import type { GitPushManager } from "../GitPushManager"
 import type { PlatformKey } from "./meta"
+import type { ProjectQueryScheduler } from "./queryScheduler"
 import type {
   CommitTemplate,
   CustomIde,
@@ -12,12 +13,6 @@ import type {
   PushStatusInfo,
   WorkingTreeInfo,
 } from "./storage"
-
-/** 卡片自持数据域（父层操作完成后经 cardRefreshSignals 按域通知卡片重载） */
-export type CardDataDomain = "log" | "branches" | "stash" | "tags" | "conflicts"
-
-/** 按项目 id 键控的刷新信号计数（域计数递增 = 该域需要重载） */
-export type CardRefreshSignals = Record<string, Partial<Record<CardDataDomain, number>>>
 
 /** 跨卡片共享数据（原 ProjectCard props 的静态/共享类，index.vue 持有） */
 export interface CardSharedData {
@@ -111,6 +106,10 @@ export interface CardOps {
   handleForcePushToAll: (id: string) => void
   cancelPush: (id: string) => void
   handleFetchAll: (id: string) => void
+  /** 卡片首次展开/点击时补齐项目状态（ensure 语义 + 最小间隔节流，防首屏批量后立刻重刷同一项目） */
+  ensureProjectStatus: (id: string) => Promise<void>
+  /** Tab 切回工作区时的显式刷新（refresh 语义 + 最小间隔节流） */
+  refreshProjectStatus: (id: string) => Promise<void>
   openRepoWebUrl: (url: string) => void
   openLocalPath: (path: string) => void
 }
@@ -121,8 +120,8 @@ export interface CardServices {
   manager: GitPushManager
   /** 更新项目元信息并同步父层项目列表（useProjectCrud 版本，含 patchProject 本地同步） */
   updateProjectMeta: (id: string, patch: Partial<Pick<GitProject, "name">>) => Promise<GitProject | null>
-  /** 父层操作（提交/stash/tag/冲突/批量刷新）完成后的按域重载信号，卡片 watch 响应 */
-  cardRefreshSignals: Ref<CardRefreshSignals>
+  /** 项目查询调度器（单飞/新鲜度/脏标记唯一权威；卡片经此重载自持数据与查询状态） */
+  scheduler: ProjectQueryScheduler
   /** 提交日志加载后同步项目最近活动时间（原 useGitOps.loadCommitLog 的副作用） */
   recordCommitActivity: (id: string, isoTime: string) => Promise<void>
   /** 跨卡片共享数据 */

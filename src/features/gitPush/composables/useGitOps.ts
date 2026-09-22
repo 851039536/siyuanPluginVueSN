@@ -1,12 +1,10 @@
-// Git 底层操作封装（加载/提交/暂存/分支切换；远程推送/拉取已提取到 useRemoteProgress）
+// Git 底层操作封装（加载/提交/暂存/分支切换；远程推送/拉取已提取到 useRemoteProgress，查询调度已下沉 useProjectQueryScheduler）
 import type { Ref } from "vue"
 import type {
-  CardDataDomain,
-  CardRefreshSignals,
   GitProject,
   GitPushManager,
-  PushStatusInfo,
-  WorkingTreeInfo,
+  LoadStatusOptions,
+  ProjectQueryKind,
 } from "../types"
 import { onUnmounted, ref } from "vue"
 import {
@@ -18,25 +16,32 @@ import {
 } from "../utils"
 import { useRemoteProgress } from "./useRemoteProgress"
 import { useOpLog } from "./useOpLog"
+import { useProjectQueryScheduler } from "./useProjectQueryScheduler"
 export type { PushOutputEntry, ProgressStatus } from "./useRemoteProgress"
 
 export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) {
-  /** 项目推送状态缓存 */
-  const pushStatuses = ref<Record<string, PushStatusInfo>>({})
-  /** 工作区状态缓存 */
-  const workingTrees = ref<Record<string, WorkingTreeInfo>>({})
   /** 正在提交的项目 id → true */
   const committing = ref<Record<string, boolean>>({})
   /** Stash 操作加载中（引用计数防并发同类操作先完成者提前清除标志） */
   const stashLoading = ref<Record<string, number>>({})
-  /** 卡片自持数据的按域刷新信号（log/branches/stash/tags/conflicts 已下沉 ProjectCard，父层操作后经此通知重载） */
-  const cardRefreshSignals = ref<CardRefreshSignals>({})
 
-  /** 按域递增指定项目的刷新信号，触发卡片重载对应数据 */
-  function bumpCardRefresh(id: string, ...domains: CardDataDomain[]) {
-    const cur = { ...(cardRefreshSignals.value[id] || {}) }
-    for (const d of domains) cur[d] = (cur[d] || 0) + 1
-    cardRefreshSignals.value = { ...cardRefreshSignals.value, [id]: cur }
+  // ── 查询调度（单飞/新鲜度/脏标记唯一权威；pushStatuses / workingTrees 由调度器持有）──
+  const scheduler = useProjectQueryScheduler(manager, projects)
+  const { pushStatuses, workingTrees } = scheduler
+
+  /** 按域标记卡片自持数据为脏，触发卡片重载对应数据（原 cardRefreshSignals 的 push 型信号入口） */
+  function bumpCardRefresh(id: string, ...domains: ProjectQueryKind[]) {
+    scheduler.invalidate(id, ...domains)
+  }
+
+  /** 项目状态补齐（ensure 语义：已有缓存即跳过） */
+  function ensureProjectStatus(id: string) {
+    return scheduler.loadStatus(id, { mode: "ensure" })
+  }
+
+  /** 项目状态显式刷新（refresh 语义 + 2s 最小间隔，合并面板内操作与自动刷新的重复触发） */
+  function refreshProjectStatus(id: string) {
+    return scheduler.loadStatus(id, { mode: "refresh", minIntervalMs: 2000 })
   }
 
   /** 待清理的 setTimeout ID */
@@ -52,60 +57,52 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return id
   }
 
-  // ── 加载函数 ──
+  // ── 加载函数（委托调度器，保持既有调用签名） ──
 
-  async function loadPushStatus(id: string, opts?: { branch?: string, fetchFirst?: boolean }) {
-    pushStatuses.value[id] = await manager.checkPushStatus(id, opts
-      ? { branch: opts.branch, fetchFirst: opts.fetchFirst }
-      : undefined)
+  function loadPushStatus(id: string, opts?: LoadStatusOptions) {
+    return scheduler.loadPushStatus(id, opts)
   }
 
-  async function loadWorkingTree(id: string, branch?: string) {
-    const project = findProject(projects, id)
-    if (!project) return
-    workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), { branch })
+  function loadWorkingTree(id: string, opts?: LoadStatusOptions) {
+    return scheduler.loadWorkingTree(id, opts)
   }
 
   /** 合并加载 pushStatus + workingTree（共享 rev-parse HEAD，减少子进程调用） */
-  async function loadProjectGitStatus(id: string) {
-    const project = findProject(projects, id)
-    if (!project) return
-    const cwd = resolveValidPath(project)
-    const branch = await manager.getBranch(cwd)
-    if (!branch) return
-    await Promise.all([
-      loadPushStatus(id, { branch }),
-      loadWorkingTree(id, branch),
-    ])
+  function loadProjectGitStatus(id: string) {
+    return scheduler.loadStatus(id, { mode: "ensure" })
   }
 
-  async function loadStatsData(id: string) {
-    const project = findProject(projects, id)
-    if (!project) return
-    const cwd = resolveValidPath(project)
-    const branch = await manager.getBranch(cwd)
-    if (!branch) return
-    await Promise.all([
-      pushStatuses.value[id] ? Promise.resolve() : loadPushStatus(id, { branch }),
-      workingTrees.value[id] ? Promise.resolve() : loadWorkingTree(id, branch),
-    ])
+  /** 统计视图最小数据集（与 loadProjectGitStatus 同语义，合并为调度器单实现） */
+  function loadStatsData(id: string) {
+    return scheduler.loadStatus(id, { mode: "ensure" })
   }
 
   async function switchBranch(id: string, branch: string) {
     const project = requireProject(projects, id)
     await manager.switchBranch(resolveValidPath(project), branch)
-    await Promise.all([loadWorkingTree(id), loadPushStatus(id)])
-    // 提交日志与分支列表已下沉卡片，切换分支后经信号通知重载
+    // 分支已切换：写入新分支名，避免后续查询再发一次 rev-parse
+    scheduler.setBranch(id, branch)
+    await Promise.all([
+      loadWorkingTree(id, { branch }),
+      loadPushStatus(id, { branch }),
+    ])
+    // 提交日志与分支列表已下沉卡片，切换分支后经脏标记通知重载
     bumpCardRefresh(id, "log", "branches")
   }
 
   // ── 工作区操作 ──
 
+  /** 变更后重载工作区：复用缓存分支名，避免每次写操作再发一次 rev-parse */
+  function reloadWorkingTreeAfterWrite(id: string) {
+    const branch = workingTrees.value[id]?.branch
+    return loadWorkingTree(id, branch ? { branch } : undefined)
+  }
+
   async function withProjectPath(id: string, fn: (path: string) => Promise<void>) {
     // 变更类操作统一抛错（而非静默跳过），由调用方的 handleGitOp 展示错误
     const project = requireProject(projects, id)
     await fn(resolveValidPath(project))
-    await loadWorkingTree(id)
+    await reloadWorkingTreeAfterWrite(id)
   }
 
   async function stageItem(id: string, file: string) {
@@ -136,7 +133,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       const result = await manager.commit(resolveValidPath(project), message)
       // 立即失效推送状态缓存，防止 loadPushStatus 完成前的智能跳过用到陈旧的 ahead=0
       manager.invalidatePushStatusCache(id)
-      await Promise.all([loadWorkingTree(id), loadPushStatus(id)])
+      // 强制重查推送状态：提交改变了 ahead 计数，ensure 语义会因已有缓存而跳过；
+      // 工作区与分支名未变，复用缓存分支名避免再次 rev-parse
+      const branch = workingTrees.value[id]?.branch
+      await Promise.all([
+        reloadWorkingTreeAfterWrite(id),
+        loadPushStatus(id, branch ? { branch, force: true } : { force: true }),
+      ])
       // 操作日志埋点
       void appendOpLog({
         projectId: id,
@@ -184,9 +187,9 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
       // 变更类操作统一抛错（而非静默跳过），由调用方的 handleGitOp 展示错误
       const project = requireProject(projects, id)
       await fn(resolveValidPath(project))
-      // Stash 列表已下沉卡片，操作后经信号通知重载
+      // Stash 列表已下沉卡片，操作后经脏标记通知重载
       bumpCardRefresh(id, "stash")
-      await loadWorkingTree(id)
+      await reloadWorkingTreeAfterWrite(id)
     } finally {
       releaseFlag(stashLoading.value, id)
     }
@@ -218,9 +221,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
 
   /** 删除项目时清理全部关联缓存（含进行中操作标记与远程进度/输出） */
   function clearProjectCache(id: string) {
-    delete pushStatuses.value[id]
-    delete workingTrees.value[id]
-    delete cardRefreshSignals.value[id]
+    scheduler.clearProject(id)
     delete committing.value[id]
     delete stashLoading.value[id]
     remote.clearProject(id)
@@ -230,7 +231,12 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
   const { opLogs, ensureOpLogsLoaded, appendOpLog, clearOpLogs, flush: flushOpLogs } = useOpLog(manager)
 
   // ── 远程推送/拉取（委托 useRemoteProgress）──
-  const remote = useRemoteProgress(manager, projects, { loadPushStatus, safeTimeout, appendOpLog })
+  const remote = useRemoteProgress(manager, projects, {
+    // 推送/拉取改变了 ahead/behind：强制重查，避免复用在飞旧查询
+    loadPushStatus: (id: string) => loadPushStatus(id, { force: true }),
+    safeTimeout,
+    appendOpLog,
+  })
 
   onUnmounted(() => {
     pendingTimers.forEach(clearTimeout)
@@ -252,20 +258,22 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     pushSingle: remote.pushSingle,
     pullSingle: remote.pullSingle,
     cancelPush: remote.cancelPush,
-    fetchAllRemotes: remote.fetchAllRemotes,
     // 本地状态
     pushStatuses,
     workingTrees,
     committing,
     stashLoading,
-    // 卡片刷新信号（下沉数据的父层写入替代通道）
-    cardRefreshSignals,
+    // 查询调度器（单飞/新鲜度/脏标记唯一权威，卡片经 provide 注入消费）
+    scheduler,
+    // 卡片自持数据脏标记（下沉数据的父层写入通道）
     bumpCardRefresh,
     // 加载
     loadPushStatus,
     loadWorkingTree,
     loadProjectGitStatus,
     loadStatsData,
+    ensureProjectStatus,
+    refreshProjectStatus,
     switchBranch,
     // 工作区
     stageItem,

@@ -1,7 +1,7 @@
-// gitPush 项目卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md 卡内经 manager 直取，父层操作经 cardRefreshSignals 通知重载）
+// gitPush 项目卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md 卡内经 manager 直取，
+// 父层操作经调度器脏标记通知重载；同名查询经调度器单飞去重）
 import type {
   BranchInfo,
-  CardDataDomain,
   CommitLogEntry,
   ConflictFile,
   GitProject,
@@ -19,7 +19,10 @@ const TAG_COMMIT_MAP_LIMIT = 500
 
 export function useCardData(project: () => GitProject) {
   const services = inject(CARD_SERVICES_KEY)!
-  const { manager } = services
+  const {
+    manager,
+    scheduler,
+  } = services
 
   // ── 卡片自持数据（单项目值，替代父层 Record<projectId, T> 切片 props）──
   const branches = ref<BranchInfo[]>([])
@@ -42,8 +45,13 @@ export function useCardData(project: () => GitProject) {
   /** 当前项目有效路径（多设备路径解析，实时求值不缓存） */
   const path = () => resolveValidPath(project())
 
-  async function loadBranches() {
-    branches.value = await manager.getBranches(path())
+  /** 卡片自持数据域的统一单飞入口（force 时绕过在飞查询，用于写操作后的强制重载） */
+  function runQuery<T>(kind: "branches" | "stash" | "tags" | "remoteTags" | "conflicts", load: () => Promise<T>, force = false) {
+    return scheduler.run(project().id, kind, load, force ? { force: true } : undefined)
+  }
+
+  async function loadBranches(force = false) {
+    branches.value = await runQuery("branches", () => manager.getBranches(path()), force)
   }
 
   /** 提交日志显示条数（卡片级共享真源：决定无参加载/重载的抓取条数；默认与 LOG 列表选择框一致） */
@@ -54,21 +62,27 @@ export function useCardData(project: () => GitProject) {
     logLimit.value = count
   }
 
-  /** 加载提交日志并同步项目最近活动时间（count 缺省走 logLimit，即列表选择框当前值，替代原 30 条默认） */
-  async function loadLog(count?: number | "all") {
-    const entries = await manager.getCommitLog(path(), count ?? logLimit.value)
+  /** 加载提交日志并同步项目最近活动时间（count 缺省走 logLimit，即列表选择框当前值，替代原 30 条默认）
+   *  显式传入 count（用户切换条数）时绕过单飞：必须按新条数重抓，不能复用旧条数的在飞查询 */
+  async function loadLog(count?: number | "all", force = false) {
+    const entries = await scheduler.run(
+      project().id,
+      "log",
+      () => manager.getCommitLog(path(), count ?? logLimit.value),
+      count === undefined && !force ? undefined : { force: true },
+    )
     logEntries.value = entries
     const latest = entries[0]?.date
     if (latest) await services.recordCommitActivity(project().id, latest)
   }
 
-  async function loadStash() {
-    stashList.value = await manager.stashList(path())
+  async function loadStash(force = false) {
+    stashList.value = await runQuery("stash", () => manager.stashList(path()), force)
   }
 
-  async function loadTags() {
+  async function loadTags(force = false) {
     // 一次拉取足够多的 Tag：前 10 条供 TagPanel 展示（保持原 limit 10 行为），全量构建 hash → Tag 名映射供 LOG Tab 使用
-    const all = await manager.getTags(path(), TAG_COMMIT_MAP_LIMIT)
+    const all = await runQuery("tags", () => manager.getTags(path(), TAG_COMMIT_MAP_LIMIT), force)
     tags.value = all.slice(0, 10)
     const map = new Map<string, string[]>()
     for (const t of all) {
@@ -81,20 +95,21 @@ export function useCardData(project: () => GitProject) {
   }
 
   /** 后台拉取各远程已有的 Tag 名列表（ls-remote 网络命令并行执行，失败远程静默跳过，不阻塞 UI） */
-  async function loadRemoteTags() {
+  async function loadRemoteTags(force = false) {
     const names = getProjectRemoteNames(project()).map((r) => r.name)
     if (names.length === 0) {
       remoteTags.value = new Map()
       return
     }
-    const results = await Promise.all(names.map(async (name) => {
-      try {
-        return [name, await manager.getRemoteTags(path(), name)] as const
-      } catch {
-        // 单远程拉取失败（网络/超时）不记录，UI 不显示该远程的推送状态，避免误标"未推送"
-        return null
-      }
-    }))
+    const results = await runQuery("remoteTags", async () =>
+      Promise.all(names.map(async (name) => {
+        try {
+          return [name, await manager.getRemoteTags(path(), name)] as const
+        } catch {
+          // 单远程拉取失败（网络/超时）不记录，UI 不显示该远程的推送状态，避免误标"未推送"
+          return null
+        }
+      })), force)
     const map = new Map<string, string[]>()
     for (const r of results) {
       if (r) map.set(r[0], r[1])
@@ -102,44 +117,52 @@ export function useCardData(project: () => GitProject) {
     remoteTags.value = map
   }
 
-  async function loadConflicts() {
-    conflicts.value = await manager.getConflictFiles(path())
+  async function loadConflicts(force = false) {
+    conflicts.value = await runQuery("conflicts", () => manager.getConflictFiles(path()), force)
   }
 
   // ── 懒加载与手动刷新入口 ──
 
-  /** 首次点卡片 / 切 Tab 时懒加载详情（失败不标记，下次展开可重试） */
+  /** 首次点卡片 / 切 Tab 时懒加载详情。
+   *  实例级标记 + 在途 Promise 双守卫：原实现「await 之后才置标记」使并发两次调用都能穿过守卫而重复发 git。 */
   let detailsLoaded = false
-  async function ensureDetailsLoaded() {
+  let detailsPromise: Promise<void> | null = null
+
+  async function ensureDetailsLoaded(): Promise<void> {
     if (detailsLoaded) return
+    if (detailsPromise) return detailsPromise
     logLoading.value = true
-    try {
-      await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
-      detailsLoaded = true
-      // 远程 Tag 状态为网络命令，后台异步刷新不阻塞详情展示
-      void loadRemoteTags()
-    } catch {
-      // 加载失败不标记为已加载，允许重试
-    } finally {
-      logLoading.value = false
-    }
+    detailsPromise = (async () => {
+      try {
+        await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
+        detailsLoaded = true
+        // 远程 Tag 状态为网络命令，后台异步刷新不阻塞详情展示
+        void loadRemoteTags()
+      } catch {
+        // 加载失败不标记为已加载，允许重试
+      } finally {
+        logLoading.value = false
+        detailsPromise = null
+      }
+    })()
+    return detailsPromise
   }
 
-  /** LOG Tab 手动刷新 / 变更显示条数 */
+  /** LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景） */
   async function reloadLog(count?: number | "all") {
     logLoading.value = true
     try {
-      await loadLog(count)
+      await loadLog(count, true)
     } finally {
       logLoading.value = false
     }
   }
 
-  /** TAG Tab 手动刷新 */
+  /** TAG Tab 手动刷新（强制重取） */
   async function refreshTags() {
     tagsLoading.value = true
     try {
-      await loadTags()
+      await loadTags(true)
     } finally {
       tagsLoading.value = false
     }
@@ -160,24 +183,30 @@ export function useCardData(project: () => GitProject) {
     }
   }
 
-  // ── 父层刷新信号响应（提交/stash/tag/冲突/批量刷新完成后按域重载）──
-  function onSignal(domain: CardDataDomain, reload: () => Promise<void>) {
-    watch(
-      () => services.cardRefreshSignals.value[project().id]?.[domain],
-      (tick, prev) => {
-        if (tick !== undefined && tick !== prev) void reload()
-      },
-    )
+  // ── 父层脏标记响应（提交/stash/tag/冲突/批量刷新完成后按域重载）──
+
+  /** 消费本项目脏域并重载对应数据（幂等：无脏域则无操作）。
+   *  一律 force：脏标记语义是「数据已变，必须重取」，复用在飞旧查询会把变更前的数据写回（脏标记失效） */
+  function applyDirty() {
+    const kinds = scheduler.consumeDirty(project().id)
+    if (!kinds) return
+    if (kinds.has("log")) void loadLog(undefined, true)
+    if (kinds.has("branches")) void loadBranches(true)
+    if (kinds.has("stash")) void loadStash(true)
+    if (kinds.has("tags")) {
+      void loadTags(true).then(() => {
+        // 推送/删除 Tag 后同步刷新远程 Tag 状态（网络命令后台执行）
+        void loadRemoteTags(true)
+      })
+    }
+    if (kinds.has("conflicts")) void loadConflicts(true)
   }
-  onSignal("log", () => reloadLog())
-  onSignal("branches", loadBranches)
-  onSignal("stash", loadStash)
-  onSignal("tags", async () => {
-    await loadTags()
-    // 推送/删除 Tag 后同步刷新远程 Tag 状态（网络命令后台执行）
-    void loadRemoteTags()
-  })
-  onSignal("conflicts", loadConflicts)
+
+  // 单值 epoch watch：替代原 5 个按域 watch（每个都读取同一个 cardRefreshSignals 对象，
+  // 任一域变更都令全部卡片的全部 watcher 重新求值）。无脏域时本回调立即返回。
+  watch(() => scheduler.epoch.value, applyDirty)
+  // 卡片重挂载时补消费：卸载期间父层写入的脏标记不会被 watch 捕获
+  onMounted(applyDirty)
 
   // Markdown 文件标识：挂载时扫描一次（原父层懒扫描缓存的卡内版）
   onMounted(() => {

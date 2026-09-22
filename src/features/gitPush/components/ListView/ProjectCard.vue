@@ -345,21 +345,18 @@ function handleLogCountReload(count: number | "all") {
   void reloadLog(count)
 }
 
-// 切换回 worktree 时自动刷新工作区（父层数据）；切到 log/stash/tag 时懒加载卡内详情
+// 切回 worktree 时刷新工作区（refresh 语义 + 最小间隔节流由调度器裁决，避免与面板内操作重复发 git）；切到 log/stash/tag 时懒加载卡内详情
 watch(stashTagTab, (val) => {
   if (val === "worktree") {
-    ops.handleRefreshWorkingTree(props.project.id)
+    void ops.refreshProjectStatus(props.project.id)
   } else {
     void ensureDetailsLoaded()
   }
 })
 
-/** 点击卡片任意位置时加载当前项目数据（仅首次触发） */
-let cardDataLoaded = false
+/** 点击卡片任意位置时补齐当前项目数据（幂等：状态按 ensure + 详情在途共享，重复点击不产生额外查询） */
 function handleCardClick() {
-  if (cardDataLoaded) return
-  cardDataLoaded = true
-  ops.handleRefreshWorkingTree(props.project.id)
+  void ops.ensureProjectStatus(props.project.id)
   void ensureDetailsLoaded()
 }
 </script>

@@ -21,6 +21,7 @@ export function useRemoteProgress(
   manager: GitPushManager,
   projects: Ref<GitProject[]>,
   opts: {
+    /** 推送/拉取完成后的状态重查（由调用方注入调度器的 force 版本，确保拿到写后状态而非在飞旧查询） */
     loadPushStatus: (id: string) => Promise<void>
     safeTimeout: (fn: () => void, delay: number) => ReturnType<typeof setTimeout>
     /** 操作日志追加回调（fire-and-forget，失败不影响主流程） */
@@ -374,12 +375,6 @@ export function useRemoteProgress(
     delete opSeq[id]
   }
 
-  async function fetchAllRemotes(id: string) {
-    const result = await manager.fetchAllForProject(id)
-    await opts.loadPushStatus(id)
-    return result
-  }
-
   return {
     pushProgress,
     getPushStatus,
@@ -396,7 +391,6 @@ export function useRemoteProgress(
     pullSingle,
     cancelPush,
     cancelPull,
-    fetchAllRemotes,
     clearProject,
   }
 }

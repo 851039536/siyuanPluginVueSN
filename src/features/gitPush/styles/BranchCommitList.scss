@@ -191,3 +191,24 @@
 .bcl-date-absolute {
   opacity: 0.65;
 }
+
+// ── 提交变更规模提示内容（Tooltip 气泡内）──
+.bcl-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-1;
+  font-variant-numeric: tabular-nums;
+}
+
+.bcl-stat-sep {
+  opacity: 0.5;
+}
+
+// 增/删着色：气泡底色与内容底色相反，故用配套的 --gp-tip-*（见 _mixins.scss 的 gp-diff-color-vars）
+.bcl-stat-add {
+  color: var(--gp-tip-add-color);
+}
+
+.bcl-stat-del {
+  color: var(--gp-tip-del-color);
+}

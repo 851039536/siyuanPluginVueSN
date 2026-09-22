@@ -8,7 +8,7 @@
       <div class="workspace-info-item">
         <span class="workspace-info-label">{{ i18n.workspacePath }}</span>
         <div class="workspace-path-row">
-          <span class="info-value workspace-path">{{ workspacePath || (i18n.notSet) }}</span>
+          <span class="info-value workspace-path">{{ workspaceRoot || (i18n.notSet) }}</span>
           <div class="path-actions">
             <Button variant="ghost" size="xsmall" @click="$emit('selectPath')">
               {{ i18n.selectPath  }}
@@ -31,7 +31,6 @@
 import Button from "@/components/Button.vue"
 
 defineProps<{
-  workspacePath: string
   workspaceRoot: string
   lastBackupTime: string
   i18n: Record<string, string>

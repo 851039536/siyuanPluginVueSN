@@ -6,15 +6,26 @@
  * 删除、单文件上传至 S3 与防重判断。
  * 防重与 hostMap 均按 basename 比较（列表条目 name 可能含日期子目录前缀）。
  */
-import { ref } from "vue"
 import type { Ref } from "vue"
+import type { BackupManager } from "../modules/BackupManager"
+import type {
+  BackupLog,
+  LocalBackupInfo,
+  PersistFn,
+  S3FileInfo,
+} from "../types"
 import { showMessage } from "siyuan"
+import { ref } from "vue"
 import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
-import type { BackupManager } from "../modules/BackupManager"
-import type { BackupLog, LocalBackupInfo, PersistFn, S3FileInfo } from "../types"
-import { MAX_LOCAL_BACKUP_COUNT, MAX_UPLOAD_HOST_MAP } from "../types"
-import { getBaseName, getHostname } from "../utils"
+import {
+  MAX_LOCAL_BACKUP_COUNT,
+  MAX_UPLOAD_HOST_MAP,
+} from "../types"
+import {
+  getBaseName,
+  getHostname,
+} from "../utils"
 
 /** 依赖注入：全部来自 index.vue 已有的状态与方法 */
 export interface LocalBackupListDeps {
@@ -68,10 +79,17 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
 
   async function deleteLocalBackup(backup: LocalBackupInfo): Promise<void> {
     try {
-      const confirmDelete = confirm(i18n.confirmDelete)
+      const confirmDelete = confirm(i18n.confirmDeleteBackup)
       if (!confirmDelete) { return }
       const backupManager = deps.getBackupManager()
       if (!backupManager) {
+        deps.addLog({
+          type: "localZip",
+          action: i18n.deleteBackup,
+          fileName: backup.name,
+          success: false,
+          message: i18n.errManagerNotInitialized,
+        })
         showMessage(i18n.deleteFailed, 3000, "error")
         return
       }
@@ -79,9 +97,24 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
       // A11 修复：按 path 过滤而非 name，避免同名文件误删
       localBackupList.value = localBackupList.value.filter((b) => b.path !== backup.path)
       await deps.persist((s) => s.backupHistory.save({ list: localBackupList.value }))
-      showMessage(i18n.deleteSuccess, 2000, "info")
+      // 与云端删除对称：本地删除同样写入操作日志，避免日志页漏记
+      deps.addLog({
+        type: "localZip",
+        action: i18n.deleteBackup,
+        fileName: backup.name,
+        fileSize: backup.size,
+        success: true,
+      })
+      showMessage(i18n.deleteSuccessBackup, 2000, "info")
     } catch (error) {
       console.error("删除本地备份失败:", error)
+      deps.addLog({
+        type: "localZip",
+        action: i18n.deleteBackup,
+        fileName: backup.name,
+        success: false,
+        message: getErrorMessage(error),
+      })
       showMessage(i18n.deleteFailed, 3000, "error")
     }
   }
@@ -119,17 +152,31 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
       showMessage(i18n.alreadyUploaded, 3000, "info")
       return
     }
-    uploadingItems.value = { ...uploadingItems.value, [backup.path]: true }
+    uploadingItems.value = {
+      ...uploadingItems.value,
+      [backup.path]: true,
+    }
     try {
       // 上传 key 使用 basename：日期子目录条目上云后与顶层文件保持同一层级规则；磁盘路径版自动分片，不再整包 readFile
       const s3Key = deps.buildUploadKey(getBaseName(backup.name))
       await deps.uploadFileSmart(backup.path, s3Key)
       await recordUploadHosts([backup.name])
-      deps.addLog({ type: "s3Upload", action: i18n.uploadToS3, fileName: backup.name, success: true })
+      deps.addLog({
+        type: "s3Upload",
+        action: i18n.uploadToS3,
+        fileName: backup.name,
+        success: true,
+      })
       showMessage(i18n.uploadSuccess, 2000, "info")
       await deps.refreshBackupList()
     } catch (err: unknown) {
-      deps.addLog({ type: "s3Upload", action: i18n.uploadToS3, fileName: backup.name, success: false, message: getErrorMessage(err) })
+      deps.addLog({
+        type: "s3Upload",
+        action: i18n.uploadToS3,
+        fileName: backup.name,
+        success: false,
+        message: getErrorMessage(err),
+      })
       showMessage(`${i18n.uploadFailed}: ${getErrorMessage(err)}`, 5000, "error")
     } finally {
       // 删除键而非置 false，避免 uploadingItems 无限膨胀

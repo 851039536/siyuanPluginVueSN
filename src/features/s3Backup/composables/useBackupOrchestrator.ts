@@ -7,23 +7,38 @@
  * 自动备份触发与状态栏进度上报，以 reactive 聚合对象供面板与各 Tab 绑定。
  * 增量备份/还原的触发入口与实验 Tab 专属状态（清单信息/还原目录）由 useIncrementalPanel 提供。
  */
-import { computed, reactive, ref, watch } from "vue"
+import type { BackupResult } from "../modules/BackupManager"
+import type {
+  BackupLog,
+  BackupMode,
+} from "../types"
 import { showMessage } from "siyuan"
+import {
+  computed,
+  reactive,
+  ref,
+  watch,
+} from "vue"
+import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import { getNodeModules } from "@/utils/nodeModules"
-import { useS3Backup } from "./useS3Backup"
+import {
+  getS3BackupInstance,
+  persistS3BackupStorage,
+} from "../instance"
+import { BackupManager } from "../modules/BackupManager"
+import {
+  buildBackupUploadKey,
+  localizeBackupError,
+  makeBackupTimestamp,
+} from "../utils"
+import { useAutoBackupTrigger } from "./useAutoBackupTrigger"
+import { useCloudBackupActions } from "./useCloudBackupActions"
+import { useFullS3Upload } from "./useFullS3Upload"
 import { useIncrementalPanel } from "./useIncrementalPanel"
 import { useLocalBackupList } from "./useLocalBackupList"
-import { useFullS3Upload } from "./useFullS3Upload"
-import { useWorkspaceSettings } from "./useWorkspaceSettings"
-import { useCloudBackupActions } from "./useCloudBackupActions"
-import { useAutoBackupTrigger } from "./useAutoBackupTrigger"
 import { useLocalZipBackup } from "./useLocalZipBackup"
-import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
-import { BackupManager } from "../modules/BackupManager"
-import type { BackupResult } from "../modules/BackupManager"
-import { getS3BackupInstance, persistS3BackupStorage } from "../instance"
-import { buildBackupUploadKey, localizeBackupError, makeBackupTimestamp } from "../utils"
-import type { BackupLog, BackupMode } from "../types"
+import { useS3Backup } from "./useS3Backup"
+import { useWorkspaceSettings } from "./useWorkspaceSettings"
 
 /** 依赖注入：日志与校验值状态由宿主（index.vue）持有，编排层仅回调 */
 export interface BackupOrchestratorDeps {
@@ -34,7 +49,10 @@ export interface BackupOrchestratorDeps {
 }
 
 export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
-  const { i18n, addLog } = deps
+  const {
+    i18n,
+    addLog,
+  } = deps
 
   // ========== 领域 composable 组合 ==========
 
@@ -247,7 +265,10 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   // ========== 本地 ZIP 备份流程（composable） ==========
 
-  const { performLocalBackup, triggerZipBackupOnly } = useLocalZipBackup({
+  const {
+    performLocalBackup,
+    triggerZipBackupOnly,
+  } = useLocalZipBackup({
     i18n,
     addLog: (entry) => addLog(entry),
     getBackupManager: () => backupManager,
@@ -281,12 +302,19 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     i18n,
   })
 
-  const { handleDownload, handleDelete } = useCloudBackupActions({
+  const {
+    handleDownload,
+    handleDelete,
+    downloadingKey,
+    lastDownloadResult,
+  } = useCloudBackupActions({
     workspaceRoot,
     localBackupDir,
     downloadBackup,
     deleteObject,
     addLog: (entry) => addLog(entry),
+    // 下载期间在状态栏展示进度（面板打开时全局 toast 被遮罩盖住，状态栏是面板内的可靠反馈）
+    statusTask,
     i18n,
   })
 
@@ -372,7 +400,10 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   // ========== 自动备份触发与定时器重启（composable） ==========
 
-  const { handleAutoBackupTrigger, isInitialLoad } = useAutoBackupTrigger({
+  const {
+    handleAutoBackupTrigger,
+    isInitialLoad,
+  } = useAutoBackupTrigger({
     i18n,
     isAnyTaskRunning,
     autoBackupEnabled,
@@ -457,6 +488,8 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     refreshBackupList,
     handleDownload,
     handleDelete,
+    downloadingKey,
+    lastDownloadResult,
     performManualBackup,
     triggerZipBackupOnly,
     triggerIncrementalOnly,

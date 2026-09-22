@@ -79,6 +79,62 @@ function main() {
 
   console.log('\n🔍 Verifying i18n key synchronization...\n')
 
+  // 跨分片顶层同名键检测：merge-i18n.mjs 按字母序 Object.assign 覆盖，
+  // 同名键在多个分片中出现且值不同时，后合并的分片会静默改写先合并的文案（跨功能回归）。
+  // 值相同仅告警（历史遗留冗余），值不同视为错误。
+  // 基线：以下冲突存在于 s3Backup 之外的既有分片中，属历史遗留，需另行修复；
+  // 登记于此可让「新增」冲突直接失败，避免基线外的回归被掩盖。
+  const KNOWN_CROSS_SHARD_CONFLICTS = new Set([
+    'zh_CN:confirm',
+    'zh_CN:preview',
+    'en_US:preview',
+    'zh_CN:confirmDelete',
+    'en_US:confirmDelete',
+    'zh_CN:searchPlaceholder',
+    'en_US:searchPlaceholder',
+  ])
+
+  for (const lang of ['zh_CN', 'en_US']) {
+    const dir = join(I18N_DIR, lang)
+    if (!existsSync(dir)) { continue }
+    const files = readdirSync(dir).filter((f) => f.endsWith('.json')).sort()
+    /** @type {Map<string, { file: string, value: string }[]>} */
+    const owners = new Map()
+    for (const file of files) {
+      let content
+      try {
+        content = JSON.parse(readFileSync(join(dir, file), 'utf-8'))
+      } catch {
+        continue
+      }
+      for (const [key, value] of Object.entries(content)) {
+        if (!owners.has(key)) { owners.set(key, []) }
+        owners.get(key).push({ file, value: JSON.stringify(value) })
+      }
+    }
+    const conflicts = []
+    const baselined = []
+    for (const [key, list] of owners) {
+      if (list.length < 2) { continue }
+      const values = new Set(list.map((i) => i.value))
+      if (values.size <= 1) { continue }
+      const entry = { key, list }
+      if (KNOWN_CROSS_SHARD_CONFLICTS.has(`${lang}:${key}`)) { baselined.push(entry) } else { conflicts.push(entry) }
+    }
+    if (baselined.length > 0) {
+      console.warn(`\n⚠️  ${lang}: ${baselined.length} baselined cross-shard conflict(s) (pre-existing, fix separately): ${baselined.map((c) => c.key).join(', ')}`)
+    }
+    if (conflicts.length > 0) {
+      console.error(`\n❌ ${lang}: ${conflicts.length} NEW cross-shard top-level key conflict(s) (later shard wins, silently overriding):`)
+      for (const { key, list } of conflicts.sort((a, b) => a.key.localeCompare(b.key))) {
+        console.error(`   "${key}" — ${list.map((i) => `${i.file}=${i.value}`).join('  |  ')}`)
+      }
+      errors++
+    } else {
+      console.log(`\n✅ ${lang}: no new cross-shard top-level key conflicts`)
+    }
+  }
+
   if (checkSplit) {
     // 检查拆分文件
     for (const lang of ['zh_CN', 'en_US']) {

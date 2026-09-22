@@ -6,13 +6,33 @@
  * 2. ZIP 流式打包（performFullBackup）— 供本地压缩备份使用
  * 扫描实现（scanBackupDir/scanDirectory/SKIP_DIRS）拆分至 backupScanner.ts，此处仅委托调用。
  */
+import type {
+  IncrementalFileEntry,
+  LocalBackupInfo,
+} from "../types"
 import JSZip from "jszip"
-import { getNodeModules, getNodeCrypto, getNodeStream } from "@/utils/nodeModules"
+import {
+  getNodeCrypto,
+  getNodeModules,
+  getNodeStream,
+} from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
-import { makeBackupTimestamp, isArchiveFile, createLazyReadStream } from "../utils"
-import { DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY, BackupError } from "../types"
-import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
-import { scanBackupDir as scanBackupDirImpl, scanDirectory as scanDirectoryImpl, SKIP_DIRS, DATE_DIR_RE } from "./backupScanner"
+import {
+  BackupError,
+  DEFAULT_BACKUP_DIR,
+  MSG_DESKTOP_ONLY,
+} from "../types"
+import {
+  createLazyReadStream,
+  isArchiveFile,
+  makeBackupTimestamp,
+} from "../utils"
+import {
+  DATE_DIR_RE,
+  scanBackupDir as scanBackupDirImpl,
+  scanDirectory as scanDirectoryImpl,
+  SKIP_DIRS,
+} from "./backupScanner"
 
 // ========== 类型定义 ==========
 
@@ -47,9 +67,7 @@ interface BackupInfo {
 }
 
 export interface BackupOptions {
-  compressionLevel?: number
-  excludeDirs?: string[]
-  /** 是否按日期创建子文件夹（默认 false）*/
+  /** 是否按日期创建子文件夹（默认 false） */
   useDateFolder?: boolean
   onProgress?: (progress: BackupProgress) => void
 }
@@ -76,6 +94,9 @@ export function toLocalBackupInfo(result: BackupResult, time?: string): LocalBac
     size: result.size,
   }
 }
+
+/** 本地 ZIP 压缩级别（DEFLATE 默认档） */
+const COMPRESSION_LEVEL = 6
 
 // ========== BackupManager ==========
 
@@ -137,7 +158,10 @@ export class BackupManager {
     })
 
     const archives = await this.scanBackupDir()
-    const files = archives.map((a) => ({ fullPath: a.path, relativePath: a.name }))
+    const files = archives.map((a) => ({
+      fullPath: a.path,
+      relativePath: a.name,
+    }))
 
     onProgress?.({
       phase: "scanning",
@@ -186,8 +210,6 @@ export class BackupManager {
 
   async performFullBackup(options: BackupOptions = {}): Promise<BackupResult> {
     const {
-      compressionLevel = 6,
-      excludeDirs = [],
       useDateFolder = false,
       onProgress,
     } = options
@@ -200,7 +222,7 @@ export class BackupManager {
     const backupSourcePath = this.dataPath
     await this.validatePath(backupSourcePath)
 
-    const skipDirs = new Set([...SKIP_DIRS, ...excludeDirs])
+    const skipDirs = new Set(SKIP_DIRS)
     const zip = new JSZip()
 
     // 阶段1：扫描文件
@@ -258,14 +280,13 @@ export class BackupManager {
       skippedFiles,
     }
 
-    return this.finalizeAndSaveBackup(zip, backupInfo, compressionLevel, useDateFolder, now, onProgress, lazyStreams)
+    return this.finalizeAndSaveBackup(zip, backupInfo, useDateFolder, now, onProgress, lazyStreams)
   }
 
   /** 压缩并流式写盘保存备份（公共逻辑）；lazyStreams 供压缩中断时统一销毁 */
   private async finalizeAndSaveBackup(
     zip: JSZip,
     backupInfo: BackupInfo,
-    compressionLevel: number,
     useDateFolder: boolean,
     now: Date,
     onProgress?: (progress: BackupProgress) => void,
@@ -304,7 +325,7 @@ export class BackupManager {
               type: "nodebuffer",
               streamFiles: true,
               compression: "DEFLATE",
-              compressionOptions: { level: compressionLevel },
+              compressionOptions: { level: COMPRESSION_LEVEL },
             },
             (metadata) => {
               onProgress?.({
@@ -411,7 +432,10 @@ export class BackupManager {
 
   /** 扫描依赖快照（fs.promises 与 path 注入 backupScanner） */
   private scannerDeps() {
-    return { fs: this.fs, path: this.path }
+    return {
+      fs: this.fs,
+      path: this.path,
+    }
   }
 
   // ========== 文件校验 ==========

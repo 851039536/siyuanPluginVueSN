@@ -8,7 +8,7 @@
 - **本地 ZIP 备份**：打包 data/ 为 `data-*.zip` 保存到工作区 `data-backup/` 目录（可选按日期建 `data-YYYYMMDD/` 子文件夹）
 - **S3 上传**：上传 `data-backup/` 中的备份 ZIP 到 S3；与本地 ZIP 同时勾选时仅上传本次新生成的 ZIP。上传前按云端已有对象去重（全 key 精确匹配 + 文件名尾部匹配兜底）
 - **S3 增量备份**：基于云端 manifest 对比，仅上传新增/变更文件，并清理本地已删除文件
-- **备份管理**：查看云端备份列表，支持下载、删除；本地列表含日期子文件夹内的备份，保留数清理只删除插件生成的 `data-*.zip`（用户手工放入的归档不受影响）
+- **备份管理**：查看云端备份列表，支持下载、删除；本地列表含日期子文件夹内的备份，保留数清理只删除插件生成的 `data-*.zip`（用户手工放入的归档不受影响）。下载中按钮进入 loading 且文案切「下载中」，完成后在面板内常驻展示结果；本地/云端删除均写入操作日志
 - **连接测试**：保存配置前可测试 S3 连接是否正常
 
 ## 使用方式
@@ -52,6 +52,14 @@
 ### 大文件上传策略
 
 三条上传入口（全量上传 / 增量备份 / 手动上传）共用「大文件感知」上传：文件 > 100MB 自动走 S3 Multipart 分片上传（fd 定位读、单分片 16MB、内存峰值恒定），≤100MB 保持整读单 PUT；任一分片失败会中止会话并整文件重试。若存储端（OpenList/Alist 等代理）不支持 Multipart 协议，自动降级为整包单 PUT 并在控制台保留「大文件整体读入内存上传」警告。分片实现位于共享层 `src/utils/s3/s3Multipart.ts`（`S3Client` 本体零改动）。
+
+## 反馈通道约定（重要）
+
+本面板由 `createModalVueApp` 承载，遮罩固定 `z-index: 10000`（见 `src/utils/vueAppHelper.ts`）；而思源全局提示 `#message`（`.b3-snackbars`）的层级取自运行时自增的 `window.siyuan.zIndex`（基准 10）。**面板打开期间 `showMessage` 的提示会被遮罩完全盖住**。
+
+因此约定：**关键操作结果必须写回面板内状态**（如下载的 `downloadingKey` 按钮 loading + `lastDownloadResult` 常驻结果条，或 `statusTask` 状态栏），`showMessage` 仅作面板关闭后的补充，不得作为唯一反馈。新增交互时请遵循此约定。
+
+> 已知权衡：`styles/index.scss` 被 11 个子组件以 `scoped` 方式 `@use`，导致 `.card-section` / `.section-header` / `.form-hint` / `.empty-state` 等基座规则在 `dist/index.css` 中重复若干次。这是仓库 84 个组件共用的既有约定，单独调整会造成不一致，故保留现状。
 
 ## S3 兼容性
 

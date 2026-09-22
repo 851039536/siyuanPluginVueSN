@@ -28,7 +28,7 @@
           :loading="orch.isLoadingManifest"
           @click="orch.refreshIncrementalManifest()"
         >
-          {{ i18n.refresh }}
+          {{ i18n.refreshList }}
         </Button>
       </div>
       <!-- 未配置 S3 -->

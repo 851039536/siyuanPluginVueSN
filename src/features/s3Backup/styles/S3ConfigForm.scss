@@ -88,15 +88,10 @@
     gap: $s-3;
   }
 
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: $s-1;
-    min-width: 0;
-
-    &.form-group-checkbox {
-      grid-column: 1 / -1;
-    }
+  // 字段组基座（flex 纵向 + gap）已上移至 styles/index.scss 共享；
+  // 此处只保留 S3ConfigForm 独有覆盖：勾选类字段组跨满双列网格
+  .form-group.form-group-checkbox {
+    grid-column: 1 / -1;
   }
 
   // 操作按钮区

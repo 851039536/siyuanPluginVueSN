@@ -121,6 +121,56 @@
   margin-bottom: 0;
 }
 
+// ========== 云端下载进度与结果（BackupTab） ==========
+
+.download-progress {
+  margin-top: $s-3;
+
+  .progress-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: $s-2;
+    font-size: $t-xs;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  .progress-percent {
+    font-family: $ff-mono;
+    white-space: nowrap;
+  }
+}
+
+// 面板内下载结果条：面板打开时全局 toast 被 10000 层级遮罩盖住，此处是唯一可靠反馈
+.download-result {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  margin-top: $s-3;
+  padding: $s-2 $s-3;
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $r-base;
+  font-size: $t-xs;
+
+  &.success {
+    color: $c-success;
+    border-color: $c-success;
+    background: rgba($c-success, 0.08);
+  }
+
+  &.error {
+    color: $c-danger;
+    border-color: $c-danger;
+    background: rgba($c-danger, 0.08);
+  }
+
+  .download-result-text {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+  }
+}
+
 // ========== 表单控件（共享） ==========
 
 // 字段组基座：ManualBackupCard / S3ConfigForm / BackupModeSelector 共用。

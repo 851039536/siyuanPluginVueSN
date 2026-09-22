@@ -29,17 +29,25 @@ import {
 export interface DownloadResult {
   success: boolean
   text: string
+  /** 成功时的本地落盘绝对路径（供「打开所在文件夹」按钮使用） */
+  localPath?: string
 }
 
 /** 依赖注入：全部来自编排层已有的状态与方法 */
 export interface CloudBackupActionsDeps {
   workspaceRoot: Ref<string>
   localBackupDir: Ref<string>
-  downloadBackup: (s3Key: string, localPath: string) => Promise<void>
+  downloadBackup: (
+    s3Key: string,
+    localPath: string,
+    onProgress?: (received: number, total: number) => void,
+  ) => Promise<void>
   deleteObject: (key: string, syncList?: boolean) => Promise<void>
   addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
   /** 状态栏任务句柄（下载期间在状态栏展示进度，面板隐藏时仍可见） */
   statusTask: TaskHandle
+  /** 是否有其他备份/还原任务在跑：下载也写 statusTask，必须与备份进度互斥，避免互相覆盖 */
+  isAnyTaskRunning: () => boolean
   i18n: Record<string, string>
 }
 
@@ -49,14 +57,17 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
     i18n,
     statusTask,
   } = deps
+  // 注：deps.isAnyTaskRunning 为惰性求值函数，规避与编排层 isAnyTaskRunning 的构造期 TDZ
 
   /** 正在下载的云端对象 key（非空即全局互斥，驱动按钮 loading/禁用态） */
   const downloadingKey = ref<string | null>(null)
   /** 最近一次下载结果（常驻面板展示，成功/失败均写入） */
   const lastDownloadResult = ref<DownloadResult | null>(null)
+  /** 下载进度百分比（0-100）；总量未知（服务端无 Content-Length）时为 null，UI 走不确定态 */
+  const downloadPercent = ref<number | null>(null)
 
-  /** 下载云端对象到本地备份目录 */
-  async function downloadToLocalDir(backup: S3FileInfo): Promise<void> {
+  /** 下载云端对象到本地备份目录，返回落盘绝对路径 */
+  async function downloadToLocalDir(backup: S3FileInfo): Promise<string> {
     const node = getNodeModules()
     if (!node) { throw new Error(MSG_DESKTOP_ONLY) }
     const fs = node.fs.promises
@@ -67,13 +78,27 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
     const localPath = pathModule.join(downloadDir, backup.name)
 
     // 单文件下载重试（与上传/删除共用同一重试语义与次数）
-    const ok = await withRetry(
-      () => deps.downloadBackup(backup.key, localPath),
-      `下载失败: ${backup.name}`,
-    )
+    // 每次尝试都从头重写盘，故把进度重置为「未知」，避免残留上一轮的高百分比
+    const ok = await withRetry(async () => {
+      downloadPercent.value = null
+      await deps.downloadBackup(backup.key, localPath, (received, total) => {
+        // total 为 0 表示服务端未返回 Content-Length（分块传输/代理）：
+        // 无法计算百分比，保持 null 让 UI 走不确定态，绝不拿已收字节硬凑百分比
+        if (total <= 0) { return }
+        const percent = Math.min(100, Math.round((received / total) * 100))
+        downloadPercent.value = percent
+        statusTask.progress({
+          label: i18n.downloading,
+          percent,
+        })
+      })
+    }, `下载失败: ${backup.name}`)
     if (!ok) {
       throw new Error(`${i18n.downloadFailed}: ${backup.name}`)
     }
+    // 完成后进度条随 downloadingKey 一并收起（finally 清空），最终态由 statusTask.complete 呈现，
+    // 故此处无需再写 100%
+    return localPath
   }
 
   async function handleDownload(backup: S3FileInfo): Promise<void> {
@@ -86,28 +111,33 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
       }
       return
     }
-    // 全局互斥：同一时刻只允许一个下载任务
-    if (downloadingKey.value !== null) { return }
+    // 全局互斥：同一时刻只允许一个下载任务；
+    // 备份/还原进行中时也拒绝（两者共用 statusTask，并发会互相覆盖进度）
+    if (downloadingKey.value !== null || deps.isAnyTaskRunning()) { return }
 
     downloadingKey.value = backup.key
     lastDownloadResult.value = null
-    statusTask.progress({
-      label: i18n.downloading,
-      percent: 0,
-    })
+    // 起始为「未知」而非 0：真实百分比要等首个数据块带回 Content-Length 才有，
+    // 先写 0 会让进度条在整段下载里僵在 0%（服务端不给长度时更是永远 0%）
+    downloadPercent.value = null
+    statusTask.progress({ label: i18n.downloading })
     try {
-      await downloadToLocalDir(backup)
+      const localPath = await downloadToLocalDir(backup)
       addLog({
         type: "s3Download",
         action: i18n.download,
         fileName: backup.name,
+        fileSize: backup.size,
         success: true,
+        message: localPath,
       })
+      // 结果里带上落盘路径：面板打开时 toast 不可见，用户需要知道文件去了哪
       lastDownloadResult.value = {
         success: true,
-        text: `${i18n.downloadSuccess}: ${backup.name}`,
+        text: `${i18n.downloadSuccess}: ${backup.name} → ${localPath}`,
+        localPath,
       }
-      statusTask.complete(i18n.downloadSuccess, backup.name)
+      statusTask.complete(i18n.downloadSuccess, localPath)
       showMessage(i18n.downloadSuccess, 2000, "info")
     } catch (err: unknown) {
       const reason = localizeBackupError(err, i18n)
@@ -126,6 +156,7 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
       showMessage(`${i18n.downloadFailed}: ${reason}`, 5000, "error")
     } finally {
       downloadingKey.value = null
+      downloadPercent.value = null
     }
   }
 
@@ -160,6 +191,7 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
     handleDownload,
     handleDelete,
     downloadingKey,
+    downloadPercent,
     lastDownloadResult,
   }
 }

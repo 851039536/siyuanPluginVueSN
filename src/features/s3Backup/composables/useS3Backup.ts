@@ -83,10 +83,14 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     }
   }
 
-  /** 下载 S3 备份文件 */
-  async function downloadBackup(s3Key: string, localPath: string): Promise<void> {
+  /** 下载 S3 备份文件（onProgress 上报已接收/总字节，供进度条使用） */
+  async function downloadBackup(
+    s3Key: string,
+    localPath: string,
+    onProgress?: (received: number, total: number) => void,
+  ): Promise<void> {
     const client = requireClient()
-    await client.download(s3Key, localPath)
+    await client.download(s3Key, localPath, onProgress)
   }
 
   /** 直接上传文件内容到 S3（跳过本地打包，用于 manifest 等内存 Buffer 场景；onProgress 上报字节级发送进度） */

@@ -78,7 +78,7 @@
         <Button
           size="xsmall"
           :loading="orch.downloadingKey === item.key"
-          :disabled="orch.downloadingKey !== null"
+          :disabled="orch.downloadingKey !== null || orch.isAnyTaskRunning"
           @click="orch.handleDownload(item)"
         >
           {{ orch.downloadingKey === item.key ? i18n.downloading : i18n.download }}
@@ -89,13 +89,39 @@
       </template>
     </BackupListCard>
 
+    <!-- 下载进度：按已接收/总字节展示百分比；服务端未给 Content-Length 时走不确定态（不定态动画） -->
+    <div v-if="orch.downloadingKey !== null" class="download-progress">
+      <ProgressBar
+        :value="orch.downloadPercent ?? undefined"
+        :mode="orch.downloadPercent === null ? 'indeterminate' : 'determinate'"
+        :show-value="false"
+        :indeterminate-label="i18n.downloading"
+        size="small"
+      />
+      <div class="progress-info">
+        <span class="progress-phase">{{ i18n.downloading }}</span>
+        <span class="progress-percent">
+          {{ orch.downloadPercent === null ? i18n.downloadUnknownSize : `${orch.downloadPercent}%` }}
+        </span>
+      </div>
+    </div>
+
     <!-- 下载结果常驻提示：面板打开时全局 toast 被遮罩盖住，需在面板内同步反馈 -->
     <div
       v-if="orch.lastDownloadResult"
-      class="connection-result"
+      class="download-result"
       :class="orch.lastDownloadResult.success ? 'success' : 'error'"
     >
-      {{ orch.lastDownloadResult.text }}
+      <span class="download-result-text">{{ orch.lastDownloadResult.text }}</span>
+      <!-- 成功时提供直达入口：避免用户找不到文件落盘位置 -->
+      <Button
+        v-if="orch.lastDownloadResult.localPath"
+        variant="ghost"
+        size="xsmall"
+        @click="openDownloadFolder(orch.lastDownloadResult.localPath)"
+      >
+        {{ i18n.openFolder }}
+      </Button>
     </div>
   </div>
 </template>
@@ -107,12 +133,22 @@ import BackupProgressSection from "./BackupProgressSection.vue"
 import ManualBackupCard from "./ManualBackupCard.vue"
 import BackupListCard from "./BackupListCard.vue"
 import Button from "@/components/Button.vue"
+import ProgressBar from "@/components/ProgressBar.vue"
+import { openFolderInExplorer } from "@/utils/electronDialog"
+import { getNodeModules } from "@/utils/nodeModules"
 
 defineProps<{
   /** 备份编排聚合对象（由面板持有，本组件仅做视图投影） */
   orch: BackupOrchestrator
   i18n: Record<string, string>
 }>()
+
+/** 打开下载文件所在目录（先由文件路径取父目录） */
+function openDownloadFolder(localPath: string): void {
+  const pathModule = getNodeModules()?.path
+  const dir = pathModule ? pathModule.dirname(localPath) : localPath
+  void openFolderInExplorer(dir)
+}
 </script>
 
 <style scoped lang="scss">

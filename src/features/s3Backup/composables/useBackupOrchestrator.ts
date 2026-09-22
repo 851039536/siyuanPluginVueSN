@@ -306,6 +306,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     handleDownload,
     handleDelete,
     downloadingKey,
+    downloadPercent,
     lastDownloadResult,
   } = useCloudBackupActions({
     workspaceRoot,
@@ -315,6 +316,8 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     addLog: (entry) => addLog(entry),
     // 下载期间在状态栏展示进度（面板打开时全局 toast 被遮罩盖住，状态栏是面板内的可靠反馈）
     statusTask,
+    // 惰性求值：isAnyTaskRunning 依赖本块解构的运行标志，构造期不可直接读值
+    isAnyTaskRunning: () => isAnyTaskRunning.value,
     i18n,
   })
 
@@ -489,6 +492,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     handleDownload,
     handleDelete,
     downloadingKey,
+    downloadPercent,
     lastDownloadResult,
     performManualBackup,
     triggerZipBackupOnly,

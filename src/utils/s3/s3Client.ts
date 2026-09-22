@@ -135,13 +135,20 @@ export class S3Client {
     }
   }
 
-  /** 下载文件到本地（响应体流式写盘，避免大备份整包驻留内存） */
-  async download(key: string, localPath: string): Promise<void> {
+  /**
+   * 下载文件到本地（响应体流式写盘，避免大备份整包驻留内存）
+   * @param onProgress 已接收/总字节数回调（total 取自 Content-Length，缺失时为 0），用于进度展示
+   */
+  async download(
+    key: string,
+    localPath: string,
+    onProgress?: (received: number, total: number) => void,
+  ): Promise<void> {
     const { fs, path } = requireFsPath()
     await fs.mkdir(path.dirname(localPath), { recursive: true })
 
     const url = this.buildUrl(key)
-    const response = await this.request("GET", this.buildUri(key), "", url, null, undefined, localPath)
+    const response = await this.request("GET", this.buildUri(key), "", url, null, undefined, localPath, undefined, onProgress)
 
     if (!response.ok) {
       const body = await response.text()
@@ -277,6 +284,7 @@ export class S3Client {
    * 执行带 AWS SigV4 签名的 HTTP 请求（使用 Node.js http/https 模块，绕过浏览器 Mixed Content 限制）
    * @param saveToPath 提供时 2xx 响应体直接流式写入该本地文件（错误响应仍缓冲以解析错误 XML）
    * @param extraHeaders 额外请求头（key 转小写后进入 SigV4 签名头集合，如 x-amz-copy-source）
+   * @param onDownloadProgress 接收体字节进度（仅 saveToPath 流式下载分支生效，供进度条使用）
    */
   private async request(
     method: string,
@@ -287,6 +295,7 @@ export class S3Client {
     onProgress?: (sent: number, total: number) => void,
     saveToPath?: string,
     extraHeaders?: Record<string, string>,
+    onDownloadProgress?: (received: number, total: number) => void,
   ): Promise<NodeResponse> {
     const now = new Date()
     const amzDateStr = amzDate(now)
@@ -429,7 +438,19 @@ export class S3Client {
                 headers: res.headers,
               })
             })
+            // 必须先 pipe 再挂计数监听：'data' 监听会让流进入 flowing 模式，
+            // 若先挂监听再 pipe，pipe 接管前到达的分块会被计数却未写盘（文件损坏）。
             res.pipe(output)
+            // 字节级下载进度：total 取 Content-Length（分块传输/代理未给该头时为 0，
+            // 此时调用方只能按未知总量处理，不可自行猜总量）
+            if (onDownloadProgress) {
+              const total = Number(res.headers["content-length"]) || 0
+              let received = 0
+              res.on("data", (chunk: Buffer) => {
+                received += chunk.length
+                onDownloadProgress(received, total)
+              })
+            }
             return
           }
 

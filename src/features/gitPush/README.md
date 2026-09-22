@@ -246,7 +246,7 @@ GitPushManager (facade)
 | `pushSingle(id, target)` | 推送到指定远程 |
 | `pullToAll(id)` | 从全部已配置远程拉取（--ff-only） |
 | `pullSingle(id, target)` | 从指定远程拉取 |
-| `checkPushStatus(id, opts?)` | 检查 ahead/behind/noUpstream |
+| `checkPushStatus(id, opts?)` | 检查 ahead/behind/noUpstream（纯本地比对跟踪 ref，不发起网络请求） |
 | `getWorkingTreeStatus(path, opts?)` | 解析 `git status --porcelain` |
 | `getFileDiff(path, file, staged)` | 获取文件 diff（未跟踪/新增文件常规 diff 为空时回退 `--no-index` 展示完整内容；失败返回空串，文案由视图层 i18n 呈现） |
 | `stageFile / stageAll / unstageFile / unstageAll` | 暂存操作 |

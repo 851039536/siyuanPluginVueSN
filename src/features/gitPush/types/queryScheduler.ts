@@ -37,8 +37,6 @@ export type ProjectStatusMode =
 export interface LoadStatusOptions {
   /** 已知分支名（调用方持有，传入可省一次 rev-parse） */
   branch?: string
-  /** 先 fetch 远程再检查（仅手动「全部刷新」用；统一远程管线不重复传） */
-  fetchFirst?: boolean
   /** 绕过单飞共享，始终发起新查询（写操作后必须拿到写后状态时用） */
   force?: boolean
 }
@@ -95,7 +93,7 @@ export interface ProjectQueryScheduler {
   loadWorkingTree: (id: string, opts?: LoadStatusOptions) => Promise<void>
   /** 一次 resolveBranch 后并行加载 pushStatus + workingTree（取代 loadProjectGitStatus / loadStatsData） */
   loadStatus: (id: string, opts?: LoadProjectStatusOptions) => Promise<void>
-  /** 统一远程刷新：refreshRemotes(配置) → fetchAllForProject(网络一次) → loadPushStatus(不再 fetch) */
+  /** 统一远程刷新：refreshRemotes(配置) → fetchAllForProject(网络一次) → loadPushStatus(纯本地比对) */
   refreshRemote: (id: string, opts?: { force?: boolean }) => Promise<void>
 
   // ── 缓存清理 ──

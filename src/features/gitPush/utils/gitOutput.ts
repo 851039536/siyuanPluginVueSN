@@ -2,6 +2,7 @@
 import type {
   BranchInfo,
   CommitLogEntry,
+  CommitStat,
   FileChange,
   FileChangeStatus,
   StashEntry,
@@ -119,6 +120,44 @@ export function parseCommitLog(raw: string): CommitLogEntry[] {
     })
   }
   return entries
+}
+
+/**
+ * 解析 `git log --shortstat --format=%x01%h` 输出为「短 hash → 变更规模」映射。
+ *
+ * 用 0x01（%x01）作记录分隔而非换行：shortstat 是**可选行**（merge 提交与空改动提交没有该行），
+ * 固定行数切分必然错位；0x01 是 git format 明确支持的不可打印分隔符，且不会出现在 hash 中。
+ *
+ * 三种记录形态：
+ *   - 仅一行 hash（merge 提交 / 无文件变更）→ 不产出条目，UI 不展示悬停提示
+ *   - " N files changed, X insertions(+), Y deletions(-)"  → 完整统计
+ *   - " N files changed, X insertions(+)" / " N files changed, Y deletions(-)" → 缺项按 0
+ *
+ * 单复数与缺项都用独立的 /\d+/ 提取，不依赖 "insertions" 的复数拼写（git 在 1 时输出 "insertion"）。
+ */
+export function parseCommitShortStats(raw: string): Map<string, CommitStat> {
+  const stats = new Map<string, CommitStat>()
+  if (!raw) return stats
+  for (const record of raw.split("\x01")) {
+    const trimmed = record.trim()
+    if (!trimmed) continue
+    // 首行是 hash，其余行是（至多一行的）shortstat
+    const [firstLine, ...rest] = trimmed.split("\n")
+    const hash = firstLine.trim()
+    if (!hash) continue
+    const statLine = rest.map((l) => l.trim()).find((l) => l.includes("changed"))
+    // merge / 空改动提交：无 shortstat 行 ⇒ 不登记（UI 据此跳过提示）
+    if (!statLine) continue
+    const files = /(\d+)\s+files?\s+changed/.exec(statLine)
+    const insertions = /(\d+)\s+insertions?\(\+\)/.exec(statLine)
+    const deletions = /(\d+)\s+deletions?\(-\)/.exec(statLine)
+    stats.set(hash, {
+      files: files ? Number.parseInt(files[1], 10) : 0,
+      insertions: insertions ? Number.parseInt(insertions[1], 10) : 0,
+      deletions: deletions ? Number.parseInt(deletions[1], 10) : 0,
+    })
+  }
+  return stats
 }
 
 /** 解析 `git show --name-status --format=` 输出为文件变更列表（merge/无文件提交的空输入返回空数组） */

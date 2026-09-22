@@ -3,6 +3,7 @@
 import type {
   BranchInfo,
   CommitLogEntry,
+  CommitStat,
   ConflictFile,
   GitProject,
   StashEntry,
@@ -28,6 +29,12 @@ export function useCardData(project: () => GitProject) {
   const branches = ref<BranchInfo[]>([])
   const logEntries = ref<CommitLogEntry[]>([])
   const logLoading = ref(false)
+  /**
+   * 短 hash → 提交变更规模（文件数/增删行数），供 LOG Tab 行悬停提示。
+   * 与 logEntries 分开：--shortstat 需 git 为每条提交算 diff（实测 200 条约 2.3s，而无统计仅 0.3s），
+   * 故列表先渲染、统计后台补齐，不阻塞 LOG Tab 首次可见。
+   */
+  const logStats = ref<Map<string, CommitStat>>(new Map())
   const stashList = ref<StashEntry[]>([])
   const tags = ref<TagInfo[]>([])
   const tagsLoading = ref(false)
@@ -74,6 +81,16 @@ export function useCardData(project: () => GitProject) {
     logEntries.value = entries
     const latest = entries[0]?.date
     if (latest) await services.recordCommitActivity(project().id, latest)
+  }
+
+  /** 加载体提交变更规模（--shortstat 批量单命令；条数跟随 logLimit，上限由 manager 侧收口） */
+  async function loadLogStats(force = false) {
+    logStats.value = await scheduler.run(
+      project().id,
+      "logStats",
+      () => manager.getCommitShortStats(path(), logLimit.value),
+      force ? { force: true } : undefined,
+    )
   }
 
   async function loadStash(force = false) {
@@ -136,8 +153,10 @@ export function useCardData(project: () => GitProject) {
       try {
         await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
         detailsLoaded = true
-        // 远程 Tag 状态为网络命令，后台异步刷新不阻塞详情展示
+        // 远程 Tag 状态与提交变更统计均为额外开销，后台异步补齐不阻塞详情展示
+        // （统计需 git 逐条算 diff，实测 200 条约 2.3s，故不并入上方 Promise.all）
         void loadRemoteTags()
+        void loadLogStats()
       } catch {
         // 加载失败不标记为已加载，允许重试
       } finally {
@@ -148,7 +167,8 @@ export function useCardData(project: () => GitProject) {
     return detailsPromise
   }
 
-  /** LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景） */
+  /** LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景）。
+   *  统计与列表并行：统计失败不影响列表，故不 await（列表渲染优先级更高） */
   async function reloadLog(count?: number | "all") {
     logLoading.value = true
     try {
@@ -156,6 +176,7 @@ export function useCardData(project: () => GitProject) {
     } finally {
       logLoading.value = false
     }
+    void loadLogStats(true)
   }
 
   /** TAG Tab 手动刷新（强制重取） */
@@ -190,7 +211,10 @@ export function useCardData(project: () => GitProject) {
   function applyDirty() {
     const kinds = scheduler.consumeDirty(project().id)
     if (!kinds) return
-    if (kinds.has("log")) void loadLog(undefined, true)
+    if (kinds.has("log")) {
+      void loadLog(undefined, true)
+      void loadLogStats(true)
+    }
     if (kinds.has("branches")) void loadBranches(true)
     if (kinds.has("stash")) void loadStash(true)
     if (kinds.has("tags")) {
@@ -217,6 +241,7 @@ export function useCardData(project: () => GitProject) {
     branches,
     logEntries,
     logLoading,
+    logStats,
     stashList,
     tags,
     tagsLoading,

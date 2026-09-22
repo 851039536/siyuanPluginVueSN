@@ -16,6 +16,7 @@ import type { RepoCleanStep } from "./managers/RepoCleanOps"
 import type {
   BranchInfo,
   CommitLogEntry,
+  CommitStat,
   CommitTemplate,
   ConflictFile,
   GitProject,
@@ -44,6 +45,7 @@ import { WorktreeOps } from "./managers/WorktreeOps"
 import { GitPushStorage } from "./types/storage"
 import { BfgOps } from "./managers/BfgOps"
 import { RepoCleanOps } from "./managers/RepoCleanOps"
+import { DEFAULT_LOG_LIMIT } from "./utils"
 
 /** 自定义 Tab 模型实例的最小结构（init 回调的 this） */
 interface TabCustom {
@@ -400,6 +402,11 @@ export class GitPushManager {
 
   async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
     return this.worktreeOps.getCommitLog(projectPath, count)
+  }
+
+  /** 获取最近 N 条提交的变更规模（文件数/增删行数），供 LOG Tab 行悬停提示（批量单命令，失败返回空 Map） */
+  async getCommitShortStats(projectPath: string, count: number | "all" = DEFAULT_LOG_LIMIT): Promise<Map<string, CommitStat>> {
+    return this.worktreeOps.getCommitShortStats(projectPath, count)
   }
 
   /** 解析某次提交涉及的文件变更列表（提交日志行内查看提交文件用） */

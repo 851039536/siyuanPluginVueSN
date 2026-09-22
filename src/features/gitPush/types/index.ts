@@ -7,6 +7,7 @@ export { GitPushManager } from "../GitPushManager"
 export type {
   BranchInfo,
   CommitLogEntry,
+  CommitStat,
   CommitTemplate,
   CommitType,
   ConflictFile,

@@ -59,6 +59,7 @@
           :tag-commit-map="tagCommitMap"
           :remote-tags="remoteTags"
           :initial-count="logLimit"
+          :stats="logStats"
           @reload-commit-log="handleLogCountReload"
           @refresh-commit-log="() => reloadLog()"
           @fix-commit="openCommitFix"
@@ -211,6 +212,7 @@ const {
   branches,
   logEntries,
   logLoading,
+  logStats,
   stashList,
   tags,
   tagsLoading,

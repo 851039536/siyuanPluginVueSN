@@ -2,6 +2,7 @@
 import type {
   BranchInfo,
   CommitLogEntry,
+  CommitStat,
   FileChange,
   StashEntry,
   WorkingTreeInfo,
@@ -9,14 +10,23 @@ import type {
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import {
   buildDiffContext,
+  DEFAULT_LOG_LIMIT,
   parseBranches,
   parseCommitFiles,
   parseCommitLog,
+  parseCommitShortStats,
   parseStashList,
   parseWorktreeStatus,
 } from "../utils"
 import type { GitExecutor } from "./GitExecutor"
 import { HistoryRewriter } from "./HistoryRewriter"
+
+/**
+ * 提交变更规模统计的条数上限。
+ * --shortstat 需为每条提交计算 diff，实测 200 条约 2.3s、500 条约 3.0s；
+ * 上限取 500 兼顾覆盖率与耗时，超出部分的行不展示悬停统计（降级为原 title）。
+ */
+const LOG_STAT_LIMIT = 500
 
 export class WorktreeOps {
   private executor: GitExecutor
@@ -222,6 +232,35 @@ export class WorktreeOps {
       return parseCommitLog(raw)
     } catch {
       return []
+    }
+  }
+
+  /**
+   * 获取最近 N 条提交的变更规模（文件数 + 增删行数），供 LOG Tab 行悬停提示。
+   *
+   * ⚠️ **必须批量取**，不能按需逐个 `git show --shortstat`：
+   * `--shortstat` 会让 git 为每条提交计算一次 diff（实测本仓库 200 条提交：
+   * 不带该选项 ~0.3s，带则 ~2.3s；单条 `git show --shortstat` 约 260ms）。
+   * 逐条懒加载 200 行 ≈ 52s，批量一次约 2.3s，故采用「后台一次性取 + 前端映射」。
+   *
+   * 上限 LOG_STAT_LIMIT 条：500 条实测约 3.0s，超过后 git 侧耗时增长趋缓但收益递减，
+   * 且远超 LOG 列表默认展示的 200 条；超出部分的行不展示悬停统计（降级为原 title）。
+   *
+   * merge 提交按 git 约定无 shortstat 行，不会出现在返回的 Map 中（UI 跳过提示）。
+   */
+  async getCommitShortStats(projectPath: string, count: number | "all" = DEFAULT_LOG_LIMIT): Promise<Map<string, CommitStat>> {
+    try {
+      // 与 getCommitLog 的条数上限口径一致；"all" 同样加保护上限，避免超长历史上限击穿 maxBuffer
+      const limit = count === "all" ? LOG_STAT_LIMIT : Math.min(count, LOG_STAT_LIMIT)
+      // %x01 作记录分隔：shortstat 是可选行，换行切分无法定界（详见 parseCommitShortStats 注释）
+      const raw = await this.executor.execGit(projectPath, [
+        "log", `-${limit}`, "--shortstat", "--format=%x01%h",
+      ])
+      if (!raw) return new Map()
+      return parseCommitShortStats(raw)
+    } catch {
+      // 统计失败按「无数据」降级：LOG Tab 仅少一层悬停提示，不影响列表本身
+      return new Map()
     }
   }
 

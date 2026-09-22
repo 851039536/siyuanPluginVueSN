@@ -208,6 +208,8 @@
   display: flex;
   gap: $s-px6;
   justify-content: flex-end;
+  // 三个按钮（常规生成 / 深度生成 / 提交）在窄卡片或浮动窗口下换行，避免文案被挤压或溢出
+  flex-wrap: wrap;
 }
 
 // 提交信息实时校验违规提示（与 CommitFixDialog 的 gp-fix-invalid 同风格）

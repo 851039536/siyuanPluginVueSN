@@ -196,10 +196,23 @@
             dense
             icon="sparkles"
             :loading="generating"
-            :disabled="generating"
+            :disabled="generating || deepGenerating"
             @click.stop="$emit('generateMsg')"
           >
             {{ generating ? i18n.generating : i18n.generateMsg }}
+          </Button>
+          <!-- 深度生成：读取暂存区完整 diff 理解实际改动，输出标题行 + 改动要点（耗时与消耗高于常规生成） -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="binoculars"
+            :loading="deepGenerating"
+            :disabled="generating || deepGenerating"
+            :title="i18n.deepGenerateMsgTip"
+            @click.stop="$emit('deepGenerateMsg')"
+          >
+            {{ deepGenerating ? i18n.deepGenerating : i18n.deepGenerateMsg }}
           </Button>
           <Button
             variant="primary"
@@ -265,6 +278,8 @@ const props = defineProps<{
   tree?: WorkingTreeInfo
   committing: boolean
   generating: boolean
+  /** 深度生成中（读取暂存区完整 diff，耗时高于常规生成） */
+  deepGenerating: boolean
   commitOutput: string
   fileDiffs: Record<string, string>
   /** 差异加载中标记（与 fileDiffs 同键同构，供弹窗区分「加载中」与「无差异」） */
@@ -282,6 +297,8 @@ const emit = defineEmits<{
   unstageAll: []
   commit: [message: string]
   generateMsg: []
+  /** 深度生成提交信息（暂存区完整 diff → 标题行 + 改动要点） */
+  deepGenerateMsg: []
   loadDiff: [file: string, staged: boolean]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]

@@ -39,7 +39,8 @@ export interface CardRecordData {
   pushOutputs: Ref<Record<string, PushOutputEntry[]>>
   pullOutputs: Ref<Record<string, PushOutputEntry[]>>
   commitOutputs: Ref<Record<string, string>>
-  generatingMsgs: Ref<Record<string, { generating: boolean, text: string }>>
+  /** 提交信息生成状态：generating = 常规生成中，deepGenerating = 深度生成中（两者互斥，仅一个为 true） */
+  generatingMsgs: Ref<Record<string, { generating: boolean, deepGenerating: boolean, text: string }>>
   /** 引用计数（>0 视为 loading） */
   gitOpLoading: Ref<Record<string, number>>
   genStashDescLoading: Ref<Record<string, boolean>>
@@ -90,6 +91,8 @@ export interface CardOps {
   unstageAllItems: (id: string) => Promise<void>
   handleCommit: (id: string, msg: string) => Promise<void>
   handleGenerateMsg: (id: string) => void
+  /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
+  handleDeepGenerateMsg: (id: string) => void
   clearOutput: (id: string) => void
   handleDiscard: (id: string, file: string, staged: boolean, status: string) => void
   handleStashConfirmMsg: (id: string, msg: string) => void

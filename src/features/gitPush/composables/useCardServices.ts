@@ -24,7 +24,7 @@ export function useCardServices(project: () => GitProject): {
   pullOutputs: ComputedRef<PushOutputEntry[]>
   pushOutputs: ComputedRef<PushOutputEntry[]>
   commitOutput: ComputedRef<string>
-  generatingMsg: ComputedRef<{ generating: boolean, text: string }>
+  generatingMsg: ComputedRef<{ generating: boolean, deepGenerating: boolean, text: string }>
   gitOpLoading: ComputedRef<boolean>
   tagPushLoading: ComputedRef<string>
   genStashDescLoading: ComputedRef<boolean>
@@ -51,7 +51,7 @@ export function useCardServices(project: () => GitProject): {
   const pullOutputs = computed(() => byId(records.pullOutputs.value) ?? [])
   const pushOutputs = computed(() => byId(records.pushOutputs.value) ?? [])
   const commitOutput = computed(() => byId(records.commitOutputs.value) ?? "")
-  const generatingMsg = computed(() => byId(records.generatingMsgs.value) ?? { generating: false, text: "" })
+  const generatingMsg = computed(() => byId(records.generatingMsgs.value) ?? { generating: false, deepGenerating: false, text: "" })
   const gitOpLoading = computed(() => (byId(records.gitOpLoading.value) ?? 0) > 0)
   const tagPushLoading = computed(() => byId(records.tagPushLoading.value) ?? "")
   const genStashDescLoading = computed(() => byId(records.genStashDescLoading.value) ?? false)

@@ -169,6 +169,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     return manager.generateCommitMessage(resolveValidPath(project))
   }
 
+  /** 深度生成提交信息（读取暂存区完整 diff，输出标题行 + 改动要点） */
+  async function deepGenerateCommitMsg(id: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    const project = findProject(projects, id)
+    if (!project) { return { message: "chore: update files", source: "heuristic" } }
+    return manager.generateCommitMessageDeep(resolveValidPath(project))
+  }
+
   // ── Stash 操作 ──
 
   async function withProjectPathStash(id: string, fn: (path: string) => Promise<void>) {
@@ -268,6 +275,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     discardFile,
     doCommit,
     generateCommitMsg,
+    deepGenerateCommitMsg,
     // Stash
     doStashSave,
     doStashPop,

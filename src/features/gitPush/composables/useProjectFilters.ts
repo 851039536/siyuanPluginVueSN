@@ -19,6 +19,10 @@ interface UseProjectFiltersOptions {
   gitOpsPausedStorage: TypedStorage<boolean>
   /** 显示已归档项目持久化槽位（由 GitPushStorage 提供） */
   showArchivedStorage: TypedStorage<boolean>
+  /** 当前选中分类 id 持久化槽位（由 GitPushStorage 提供；空串 = 未选择） */
+  activeCategoryStorage: TypedStorage<string>
+  /** 当前选中分类 id（index.vue 持有，读写由本 composable 统一承担） */
+  activeCategory: Ref<string>
   projects: Ref<GitProject[]>
   needsPushProjects: Ref<{ project: GitProject }[]>
   uncommittedProjects: Ref<{ project: GitProject }[]>
@@ -33,6 +37,8 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   const {
     gitOpsPausedStorage,
     showArchivedStorage,
+    activeCategoryStorage,
+    activeCategory,
     projects,
     needsPushProjects,
     uncommittedProjects,
@@ -72,6 +78,29 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
 
   watch(showArchived, (v) => {
     showArchivedStorage.save(v).catch(() => {})
+  })
+
+  /**
+   * 恢复上次选中的分类（跨会话）。
+   * 以 allGroups（已渲染的分类 TAB，不含空分类）为有效性判据：分类被删除或已无项目时
+   * 回退为空串 = 未选择，由用户重新指定，避免落到不存在的 TAB 导致列表空白且无提示。
+   */
+  async function loadActiveCategory() {
+    const saved = await activeCategoryStorage.loadOrDefault()
+    if (!saved) return
+    const exists = allGroups.value.some((g) => g.category.id === saved)
+    if (exists) {
+      activeCategory.value = saved
+      return
+    }
+    // 失效记录清盘：否则每次进入都要重新比对一次，且设置面板读到的选中项与实际不符
+    await activeCategoryStorage.save("").catch(() => {})
+  }
+
+  // 仅在用户实际做出选择后落盘：初始空串（未选择）不覆盖已保存值
+  watch(activeCategory, (v) => {
+    if (!v) return
+    activeCategoryStorage.save(v).catch(() => {})
   })
 
   /** 智能视图模式下，命中条件的扁平项目列表 */
@@ -158,5 +187,6 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     clearTags,
     loadGitOpsPaused,
     loadShowArchived,
+    loadActiveCategory,
   }
 }

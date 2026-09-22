@@ -426,6 +426,8 @@ export class GitPushStorage {
   readonly gitOpsPaused: TypedStorage<boolean>
   /** 是否显示已归档项目（持久化） */
   readonly showArchived: TypedStorage<boolean>
+  /** 列表视图当前选中的分类 id（跨会话恢复；空串 = 用户尚未选择，此时不加载任何项目） */
+  readonly activeCategory: TypedStorage<string>
   /** 推送分支模式：all=全部分支, head=仅当前分支（持久化） */
   readonly pushBranchMode: TypedStorage<"all" | "head">
   /** 操作日志（环形上限 300 条，防抖落盘） */
@@ -461,6 +463,7 @@ export class GitPushStorage {
     this.commitTemplates = new TypedStorage(storage, "git-push-commit-templates", DEFAULT_TEMPLATES)
     this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)
     this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
+    this.activeCategory = new TypedStorage(storage, "git-push-active-category", "")
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
     this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)

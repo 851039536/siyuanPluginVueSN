@@ -135,6 +135,7 @@
       :projects="projects"
       :grouped-projects="groupedProjects"
       :filtered-groups="filteredGroups"
+      :empty-hint="listEmptyHint"
     />
     <!-- 列表视图结束 -->
 
@@ -543,12 +544,15 @@ let initTimer: ReturnType<typeof setTimeout> | null = null
 const currentView = ref<PanelView>("list")
 /** 日志视图首次读盘加载态（供 LogPanel 展示加载中占位，避免闪现空态） */
 const opLogsLoading = ref(false)
-/** 当前选中的分类 ID（onMounted 中设为首个分类） */
+/** 当前选中的分类 ID（空串 = 用户尚未选择，此时不加载任何项目；由 loadActiveCategory 恢复上次选择） */
 const activeCategory = ref<string>("")
 
-/** 按分类 TAB 过滤后的分组 */
+/**
+ * 按分类 TAB 过滤后的分组。
+ * 空串 = 未选择（渲染空态引导用户选择），**不是**「全部」——后者会在首屏一次性加载所有项目状态。
+ */
 const visibleGroups = computed(() => {
-  if (!activeCategory.value) return groupedProjects.value
+  if (!activeCategory.value) return []
   return groupedProjects.value.filter((g) => g.category.id === activeCategory.value)
 })
 
@@ -560,15 +564,31 @@ const {
   filteredGroups,
   loadGitOpsPaused,
   loadShowArchived,
+  loadActiveCategory,
 } = useProjectFilters({
   gitOpsPausedStorage: props.manager.storage.gitOpsPaused,
   showArchivedStorage: props.manager.storage.showArchived,
+  activeCategoryStorage: props.manager.storage.activeCategory,
+  activeCategory,
   projects,
   needsPushProjects,
   uncommittedProjects,
   starredProjects,
   visibleGroups,
   allGroups: groupedProjects,
+})
+
+/**
+ * 列表视图空态文案（null = 渲染卡片列表）。
+ * 仅「全部」视图 + 无搜索词 + 未选择分类 时提示选择分类；智能视图（需推送/有变更/收藏/归档）
+ * 与搜索态不依赖分类 TAB（走 smartViewProjects / allGroups），故不显示该提示，避免误导。
+ */
+const listEmptyHint = computed(() => {
+  if (projects.value.length === 0) return null
+  if (viewMode.value !== "all") return null
+  if (searchQuery.value.trim()) return null
+  if (activeCategory.value) return null
+  return props.i18n.selectCategoryHint
 })
 
 // ── 仓库链接一致性审计（批量 git 调用由统计视图内“开始分析”按钮显式触发）──
@@ -746,10 +766,8 @@ onMounted(async () => {
   scanIdes() // 扫描已安装的 IDE
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
-  // 默认选中第一个分类
-  if (!activeCategory.value && groupedProjects.value.length > 0) {
-    activeCategory.value = groupedProjects.value[0].category.id
-  }
+  // 恢复上次选中的分类（无有效记录则保持空串 = 未选择，不自动选第一个、不加载任何项目）
+  await loadActiveCategory()
   loadGitConcurrency()
   loadNetworkTimeout()
   // 预载提交规则检查偏好（含描述最短字数阈值），保证设置弹窗打开即显示已保存值
@@ -758,6 +776,8 @@ onMounted(async () => {
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
   // 分支名由调度器解析一次并缓存，分发给 pushStatus/workingTree 两个查询。
   initTimer = setTimeout(async () => {
+    // 首屏加载统一入口；此后分类 watch 恢复正常响应
+    bootstrapping = false
     if (gitOpsPaused.value) return
     await loadCurrentCategoryList()
   }, 200)
@@ -789,15 +809,28 @@ async function ensureStatusFor(list: GitProject[]) {
   await runProjectLoadBatch(list, (id) => ensureProjectStatus(id))
 }
 
-/** 加载当前分类列表视图所需的最小状态数据（分类切换 / 切回列表 / 恢复暂停共用） */
+/**
+ * 加载当前分类列表视图所需的最小状态数据（分类切换 / 切回列表 / 首次进入共用）。
+ * 未选择分类时不加载任何项目——首屏零 git 调用，等用户点选分类后再按需加载该分类。
+ */
 async function loadCurrentCategoryList() {
   const catId = activeCategory.value
-  const list = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
+  if (!catId) return
+  const list = projects.value.filter((p) => p.categoryId === catId)
   await ensureStatusFor(list)
 }
 
+/**
+ * 首屏初始化中标志：抑制分类 watch 的首次加载。
+ * 恢复持久化分类会写入 activeCategory 从而触发 watch；若不禁用，则与 initTimer 各发一批
+ * （虽然 ensure 语义保证不重复起 git 子进程，但会多闪一次空转的进度批次）。
+ * 统一由 initTimer 承担首屏加载，并保留其 200ms「先渲染后加载」延迟。
+ */
+let bootstrapping = true
+
 /** 切换分类时懒加载该分类下项目的数据（仅列表视图需要；非列表视图由统计视图统一加载，避免看不见的预加载） */
 watch(activeCategory, async (catId) => {
+  if (bootstrapping) return
   if (!catId || gitOpsPaused.value) return
   if (currentView.value !== "list") return
   await loadCurrentCategoryList()
@@ -951,10 +984,11 @@ async function handleDeleteCategory(id: string) {
 }
 
 async function doDeleteCategory(id: string) {
-  // 如果删除的是当前选中分类，切到第一个可用分类
+  // 删除的正是当前选中分类时回退为「未选择」（不再自动跳第一个）：与首次进入语义一致，
+  // 由用户自行指定下一个分类；同步清掉持久化记录，避免下次进入恢复到一个已被删除的分类
   if (activeCategory.value === id) {
-    const others = groupedProjects.value.filter((g) => g.category.id !== id)
-    activeCategory.value = others.length > 0 ? others[0].category.id : ""
+    activeCategory.value = ""
+    await props.manager.storage.activeCategory.save("")
   }
   await deleteCategoryFn(id)
 }

@@ -1427,6 +1427,7 @@
     "queryFailed": "查询失败",
     "loadingLabel": "加载中",
     "refreshingLabel": "刷新中",
+    "selectCategoryHint": "请选择上方的分类以查看项目",
     "deleteProjectTitle": "删除项目",
     "deleteProjectConfirm": "确定要删除项目 \"{0}\" 吗？此操作不可撤销。",
     "addFailed": "添加失败",

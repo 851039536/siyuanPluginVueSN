@@ -11,8 +11,19 @@
     :grouped-projects="groupedProjects"
   />
 
+  <!-- 空态提示：未选择分类时引导用户点选上方 TAB（首次进入不自动选择，避免加载全部项目的 git 状态）。
+       文案由 index.vue 计算（需综合 viewMode / searchQuery 判据），本组件保持纯渲染 -->
+  <EmptyState
+    v-if="emptyHint"
+    icon="mdi:folder-multiple-outline"
+    :text="emptyHint"
+  />
+
   <!-- 分组循环卡片列表 -->
-  <div class="gp-list">
+  <div
+    v-else
+    class="gp-list"
+  >
     <template
       v-for="group in filteredGroups"
       :key="group.category.id"
@@ -29,6 +40,7 @@
 <script setup lang="ts">
 // 列表视图容器（纯渲染，卡片数据与操作全部经 useCardServices 注入，无领域状态）
 import type { GitProject, ProjectCategory, ViewMode } from "../../types"
+import EmptyState from "../common/EmptyState.vue"
 import ListViewToolbar from "./ListViewToolbar.vue"
 import ProjectCard from "./ProjectCard.vue"
 
@@ -43,6 +55,8 @@ defineProps<{
   projects: GitProject[]
   groupedProjects: GroupedProject[]
   filteredGroups: GroupedProject[]
+  /** 空态提示文案（null = 不显示空态，走卡片列表；由 index.vue 综合视图模式与搜索词计算） */
+  emptyHint: string | null
 }>()
 
 const viewMode = defineModel<ViewMode>("viewMode", { required: true })

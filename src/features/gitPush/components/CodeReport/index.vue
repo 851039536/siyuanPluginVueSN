@@ -44,107 +44,98 @@
         </button>
       </div>
 
-      <!-- 生成中占位（首次） -->
-      <div
-        v-if="running && !generated"
-        class="gp-loading"
-      >
-        <Loader />
-        <!-- 加载中文案："分析中…" -->
-        <span class="gp-loading-text">{{ i18n.reportRunning }}</span>
-      </div>
-
-      <!-- 尚未生成提示（进入视图后自动生成前的占位，与 analysisNotRun 模式一致） -->
-      <EmptyState
-        v-else-if="!generated"
+      <!-- 四态门：生成中占位 / 未生成提示 / 已就绪内容（失败与空数据由下方各自分支处理） -->
+      <AnalysisGate
+        :running="running"
+        :done="generated"
+        :not-run-text="i18n.reportNotRun"
+        :running-text="i18n.reportRunning"
         icon="mdi:chart-box"
-        :text="i18n.reportNotRun"
-      />
-
-      <!-- 失败提示（git 命令失败：路径无效/非 git 仓库） -->
-      <div
-        v-else-if="!report.ok"
-        class="gpr-fail"
       >
-        <Icon
-          icon="mdi:alert-circle-outline"
-          height="14"
-        />
-        <span>{{ i18n.reportFailed }}</span>
-      </div>
-
-      <!-- 空数据提示（命令成功但范围内无提交/无文件，如全新仓库） -->
-      <EmptyState
-        v-else-if="report.totalCommits === 0"
-        icon="mdi:chart-box"
-        :text="i18n.reportNoData"
-      />
-
-      <template v-else>
-        <!-- 生成信息行：生成时间 + 时间范围 + 数据源概况 -->
-        <div class="gpr-meta">
-          <span
-            class="gpr-meta-item"
-            :title="report.generatedAt"
-          >{{ i18n.reportGenerated.replace("{0}", relativeTime(report.generatedAt, i18n)) }}</span>
-          <span class="gpr-meta-item">{{ i18n.reportRangeLabel.replace("{0}", report.rangeLabel) }}</span>
-          <span class="gpr-meta-item">{{ i18n.reportFilesAnalyzed.replace("{0}", String(report.analyzedFiles)) }}</span>
+        <!-- 失败提示（git 命令失败：路径无效/非 git 仓库） -->
+        <div
+          v-if="!report.ok"
+          class="gpr-fail"
+        >
+          <Icon
+            icon="mdi:alert-circle-outline"
+            height="14"
+          />
+          <span>{{ i18n.reportFailed }}</span>
         </div>
 
-        <!-- 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势） -->
-        <div class="gpr-tabs">
-          <button
-            v-for="tab in reportTabs"
-            :key="tab.id"
-            class="gpr-tab"
-            :class="{ active: activeTab === tab.id }"
-            @click="activeTab = tab.id"
-          >
-            <Icon
-              :icon="tab.icon"
-              height="12"
-            />
-            {{ i18n[tab.labelKey] }}
+        <!-- 空数据提示（命令成功但范围内无提交/无文件，如全新仓库） -->
+        <EmptyState
+          v-else-if="report.totalCommits === 0"
+          icon="mdi:chart-box"
+          :text="i18n.reportNoData"
+        />
+
+        <template v-else>
+          <!-- 生成信息行：生成时间 + 时间范围 + 数据源概况 -->
+          <div class="gpr-meta">
             <span
-              v-if="tab.count > 0"
-              class="gpr-tab-count"
-            >{{ tab.count }}</span>
-          </button>
-        </div>
+              class="gpr-meta-item"
+              :title="report.generatedAt"
+            >{{ i18n.reportGenerated.replace("{0}", relativeTime(report.generatedAt, i18n)) }}</span>
+            <span class="gpr-meta-item">{{ i18n.reportRangeLabel.replace("{0}", report.rangeLabel) }}</span>
+            <span class="gpr-meta-item">{{ i18n.reportFilesAnalyzed.replace("{0}", String(report.analyzedFiles)) }}</span>
+          </div>
 
-        <!-- 分区内容（v-if 首次激活后才挂载 + v-show 显隐保留内部状态；团队总览与代码贡献度合并展示：KPI 卡片 + 作者排行表） -->
+          <!-- 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势） -->
+          <div class="gpr-tabs">
+            <button
+              v-for="tab in reportTabs"
+              :key="tab.id"
+              class="gpr-tab"
+              :class="{ active: activeTab === tab.id }"
+              @click="activeTab = tab.id"
+            >
+              <Icon
+                :icon="tab.icon"
+                height="12"
+              />
+              {{ i18n[tab.labelKey] }}
+              <span
+                v-if="tab.count > 0"
+                class="gpr-tab-count"
+              >{{ tab.count }}</span>
+            </button>
+          </div>
 
-        <!-- 团队总览：KPI 卡片（成员数/总提交/总代码量/最活跃贡献者） -->
-        <TeamOverviewSection
-          v-if="visited.has('overview')"
-          v-show="activeTab === 'overview'"
-          :i18n="i18n"
-          :report="report"
-        />
-        <!-- 代码贡献度：作者排行表（点击行展开详情） -->
-        <AuthorContributionSection
-          v-if="visited.has('overview')"
-          v-show="activeTab === 'overview'"
-          :i18n="i18n"
-          :authors="report.authors"
-          :file-details-map="report.fileDetailsMap"
-          :get-file-patch="getFilePatch"
-        />
-        <!-- 技术债务：汇总条 + 严重度分组可展开表 -->
-        <TechDebtSection
-          v-if="visited.has('debt')"
-          v-show="activeTab === 'debt'"
-          :i18n="i18n"
-          :report="report"
-          :project="currentProject"
-        />
-        <!-- 代码热点：热点文件表 + 热度分布汇总 + 优化建议 -->
-        <HotspotSection
-          v-if="visited.has('hotspot')"
-          v-show="activeTab === 'hotspot'"
-          :i18n="i18n"
-          :report="report"
-          :project="currentProject"
+          <!-- 分区内容（v-if 首次激活后才挂载 + v-show 显隐保留内部状态；团队总览与代码贡献度合并展示：KPI 卡片 + 作者排行表） -->
+
+          <!-- 团队总览：KPI 卡片（成员数/总提交/总代码量/最活跃贡献者） -->
+          <TeamOverviewSection
+            v-if="visited.has('overview')"
+            v-show="activeTab === 'overview'"
+            :i18n="i18n"
+            :report="report"
+          />
+          <!-- 代码贡献度：作者排行表（点击行展开详情） -->
+          <AuthorContributionSection
+            v-if="visited.has('overview')"
+            v-show="activeTab === 'overview'"
+            :i18n="i18n"
+            :authors="report.authors"
+            :file-details-map="report.fileDetailsMap"
+            :get-file-patch="getFilePatch"
+          />
+          <!-- 技术债务：汇总条 + 严重度分组可展开表 -->
+          <TechDebtSection
+            v-if="visited.has('debt')"
+            v-show="activeTab === 'debt'"
+            :i18n="i18n"
+            :report="report"
+            :project="currentProject"
+          />
+          <!-- 代码热点：热点文件表 + 热度分布汇总 + 优化建议 -->
+          <HotspotSection
+            v-if="visited.has('hotspot')"
+            v-show="activeTab === 'hotspot'"
+            :i18n="i18n"
+            :report="report"
+            :project="currentProject"
         />
         <!-- 提交趋势（active 下传：非激活时卸载 canvas，避免 chart.js 实例常驻） -->
         <CandlestickSection
@@ -154,7 +145,8 @@
           :report="report"
           :active="activeTab === 'candlestick'"
         />
-      </template>
+        </template>
+      </AnalysisGate>
     </template>
   </div>
 </template>
@@ -167,8 +159,8 @@ import { computed, ref, watch } from "vue"
 import { REPORT_RANGE_LABEL_KEYS, REPORT_RANGES } from "../../types"
 import { relativeTime } from "../../utils"
 import { countDebtFiles } from "../../reportMetrics"
+import AnalysisGate from "../common/AnalysisGate.vue"
 import EmptyState from "../common/EmptyState.vue"
-import Loader from "@/components/Loader.vue"
 import Select from "@/components/Select.vue"
 import TeamOverviewSection from "./TeamOverviewSection.vue"
 import AuthorContributionSection from "./AuthorContributionSection.vue"

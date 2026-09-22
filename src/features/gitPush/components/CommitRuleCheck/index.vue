@@ -9,38 +9,49 @@
     />
 
     <template v-else>
-      <!-- 顶部工具条 -->
-      <RuleCheckToolbar
+      <!-- 顶部工具条：项目过滤 + 条数选择 + 分析按钮（状态文案由统一工具条承担） -->
+      <AnalysisToolbar
         :i18n="i18n"
-        :projects="projects"
-        :project-id="projectId"
-        :analyzing="analyzing"
-        :analyzed="analyzed"
+        :running="analyzing"
+        :done="analyzed"
         :analyzed-at="analyzedAt"
-        :commit-count="commitCount"
-        @run-analysis="emit('runAnalysis')"
-        @update-count="emit('updateCount', $event)"
-        @update-project="emit('updateProject', $event)"
-      />
-
-      <!-- 首次分析中占位 -->
-      <div
-        v-if="analyzing && !analyzed"
-        class="gp-loading"
+        not-run-key="ruleCheckNotRun"
+        icon="clipboardCheckOutline"
+        :run-text="i18n.auditRun"
+        :rerun-text="i18n.auditRerun"
+        :aria-label="i18n.ruleCheckView"
+        @run="emit('runAnalysis')"
       >
-        <Loader />
-        <!-- 加载中文案："分析中…" -->
-        <span class="gp-loading-text">{{ i18n.auditing }}</span>
-      </div>
+        <template #controls>
+          <!-- 项目过滤下拉（"全部项目"/单个项目，切换即过滤统计结果；项目多时可输入搜索） -->
+          <Select
+            :model-value="projectId"
+            class="grc-project-select"
+            size="xsmall"
+            :options="projectOptions"
+            :placeholder="i18n.ruleCheckSelectProject"
+            :max-height="200"
+            :filterable="projects.length >= 10"
+            :filter-placeholder="i18n.searchPlaceholder"
+            @change="onProjectChange"
+          />
+          <!-- 条数选择（tooltip："每项目 {0} 条"） -->
+          <CommitCountSelect
+            :i18n="i18n"
+            :commit-count="commitCount"
+            @update-count="emit('updateCount', $event)"
+          />
+        </template>
+      </AnalysisToolbar>
 
-      <!-- 未分析提示 -->
-      <EmptyState
-        v-else-if="!analyzed"
+      <!-- 四态门：分析中占位 / 未分析提示 / 已就绪内容 -->
+      <AnalysisGate
+        :running="analyzing"
+        :done="analyzed"
+        :not-run-text="i18n.ruleCheckNotRun"
+        :running-text="i18n.auditing"
         icon="mdi:clipboard-check-outline"
-        :text="i18n.ruleCheckNotRun"
-      />
-
-      <template v-else>
+      >
         <!-- 空状态：分析完成但无提交数据 -->
         <EmptyState
           v-if="stats.totalCommits === 0"
@@ -80,7 +91,7 @@
             @open-batch-fix="openBatchFix"
           />
         </template>
-      </template>
+      </AnalysisGate>
     </template>
 
     <!-- 提交信息修正弹窗（自包含：内部校验 HEAD/工作区并执行 amend） -->
@@ -121,10 +132,12 @@ import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
-import Loader from "@/components/Loader.vue"
+import AnalysisGate from "../common/AnalysisGate.vue"
+import AnalysisToolbar from "../common/AnalysisToolbar.vue"
+import CommitCountSelect from "../common/CommitCountSelect.vue"
+import Select from "@/components/Select.vue"
 import ReasonDistributionSection from "./ReasonDistributionSection.vue"
 import RuleCheckOverview from "./RuleCheckOverview.vue"
-import RuleCheckToolbar from "./RuleCheckToolbar.vue"
 import ViolationListSection from "./ViolationListSection.vue"
 
 const props = defineProps<{
@@ -151,6 +164,17 @@ const emit = defineEmits<{
 
 /** 是否限定到单个项目（违规列表隐藏重复的项目名 chip，减少视觉噪音） */
 const scoped = computed(() => !!props.projectId)
+
+/** 项目过滤下拉选项（首项"全部项目"，后续为各项目） */
+const projectOptions = computed(() => [
+  { value: "", label: props.i18n.ruleCheckAllProjects },
+  ...props.projects.map((p) => ({ value: p.id, label: p.name })),
+])
+
+/** 项目过滤变更：仅回传字符串（Select 的 change 载荷为宽类型） */
+function onProjectChange(v: string | number | boolean | null) {
+  if (typeof v === "string") emit("updateProject", v)
+}
 
 /** 当前正在编辑的违规提交（null = 未打开弹窗） */
 const editingViolation = ref<CommitRuleViolation | null>(null)

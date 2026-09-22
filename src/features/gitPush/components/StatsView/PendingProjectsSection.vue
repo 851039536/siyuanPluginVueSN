@@ -1,15 +1,9 @@
-<!-- gitPush 统计视图待处理项目区块（推送状态概览 chips + 待处理表格合并） -->
+<!-- gitPush 统计视图待处理项目区块（待处理表格；推送状态概要 chips 已上移至总览区，与汇总卡并列） -->
 <template>
   <StatsSection
     :title="i18n.pendingProjects"
     :count="stats.pendingProjects.length"
   >
-    <!-- 区块标题："待处理项目" -->
-    <!-- 推送状态概览：待推送/待拉取/已同步/无远程（配置驱动） -->
-    <StatusChipBar
-      :i18n="i18n"
-      :chips="statusChips"
-    />
     <!-- 待处理项目表格 -->
     <div
       v-if="stats.pendingProjects.length > 0"
@@ -95,36 +89,21 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 统计视图待处理项目区块（推送状态概览 + 待处理表格）
+// gitPush 统计视图待处理项目区块（待处理表格）
 import type { StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
 import AllClear from "./common/AllClear.vue"
 import StatsSection from "./common/StatsSection.vue"
-import StatusChipBar from "./common/StatusChipBar.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 统计聚合视图（取 pushStatusStats + pendingProjects） */
+  /** 统计聚合视图（取 pendingProjects） */
   stats: StatsView
 }>()
 
 const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
-
-// 推送状态 chip 配置：待推送/待拉取/已同步/无远程（labelKey 复用现有 i18n 键作 hover 提示）
-const STATUS_CHIPS = [
-  { key: "ahead", icon: "mdi:cloud-upload-outline", cls: "ahead", labelKey: "needsPush" },
-  { key: "behind", icon: "mdi:cloud-download-outline", cls: "behind", labelKey: "needsPullShort" },
-  { key: "synced", icon: "mdi:check-circle-outline", cls: "synced", labelKey: "synced" },
-  { key: "noRemote", icon: "mdi:lan-disconnect", cls: "none", labelKey: "noRemoteLabel" },
-] as const
-
-/** chip 数值视图：从推送状态统计取数 */
-const statusChips = computed(() =>
-  STATUS_CHIPS.map((c) => ({ ...c, value: props.stats.pushStatusStats[c.key] })),
-)
 
 // 变更计数列配置：已暂存/未暂存/未跟踪（field 同时作为表头 i18n 键）
 const COUNT_COLUMNS = [

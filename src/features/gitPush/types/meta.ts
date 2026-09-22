@@ -169,7 +169,7 @@ export interface RepoLinkAuditSummary {
   remoteOnly: number
 }
 
-// ── 统计视图平台矩阵表格视图模型（PlatformTable / PlatformStatusSection / RepoLinkAuditSection 共用）──
+// ── 统计视图平台矩阵表格视图模型（PlatformTable / PlatformSection / RepoLinkAuditSection 共用）──
 /** 平台单元格视图（icon 为空串时渲染占位符 -） */
 export interface PlatformTableCellView {
   key: string
@@ -399,11 +399,6 @@ export interface ProjectLineRankItem extends LineRankBase {
   totalLines?: number
 }
 
-/** 作者代码行数排行条目 */
-export interface AuthorLineRankItem extends LineRankBase {
-  author: string
-}
-
 /** 项目行数详情 — 文件明细行（弹窗内由 aggregateFileStats 即时聚合，不持久化） */
 export interface FileLineDetailRow {
   /** 文件路径（相对仓库根） */
@@ -446,10 +441,6 @@ export interface CommitAnalysisStats {
   typeDistribution: { type: CommitAnalysisType, count: number }[]
   /** 作者提交排行（降序） */
   authorRanking: { author: string, count: number }[]
-  /** 项目代码行数排行（按总行数降序，行数统计视图分析后非空） */
-  projectLineRanking: ProjectLineRankItem[]
-  /** 作者代码行数排行（按净增降序，行数统计视图分析后非空） */
-  authorLineRanking: AuthorLineRankItem[]
 }
 
 /** 提交分析结果缓存（持久化到插件存储，进入视图直接复用上次结果，避免每次重跑 git log） */
@@ -464,8 +455,6 @@ export interface CommitAnalysisCache {
   entries: CommitAnalysisEntry[]
   /** 项目代码行数排行（随缓存持久化，切换视图复用） */
   projectLineRanking: ProjectLineRankItem[]
-  /** 作者代码行数排行（随缓存持久化，切换视图复用） */
-  authorLineRanking: AuthorLineRankItem[]
 }
 
 /** 行数统计全量汇总（基于全量项目数据独立累加，供顶部汇总卡片展示） */
@@ -527,8 +516,6 @@ export interface LineStatsCache {
   failures?: ProjectFetchFailure[]
   /** 项目代码行数排行（按总行数降序） */
   projectLineRanking: ProjectLineRankItem[]
-  /** 作者代码行数排行（按净增降序） */
-  authorLineRanking: AuthorLineRankItem[]
   /** 选中的文件扩展名过滤（空数组 = 不过滤所有文件，持久化恢复上次选择） */
   selectedExtensions: string[]
   /** 全量汇总（旧缓存无此字段时由排行降级累加） */

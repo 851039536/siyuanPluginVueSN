@@ -1,0 +1,13 @@
+// gitPush 分析类视图状态门（失败提示条；分析中/未分析占位沿用共享基座的 .gp-loading / .gp-empty）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 抓取失败提示（弱化展示，不打断正常结果阅读；右侧可选「查看失败项目」等入口由插槽提供）
+.gp-analysishint {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  font-size: $t-2xs;
+  color: var(--b3-theme-warning);
+  margin-bottom: $s-2;
+}

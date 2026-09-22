@@ -370,7 +370,6 @@ const DEFAULT_ANALYSIS_CACHE: CommitAnalysisCache = {
   failedCount: 0,
   entries: [],
   projectLineRanking: [],
-  authorLineRanking: [],
 }
 
 /** 行数统计独立缓存默认值（与提交分析缓存解耦，空排行即视为未分析过） */
@@ -378,7 +377,6 @@ const DEFAULT_LINE_STATS_CACHE: LineStatsCache = {
   analyzedAt: "",
   failedCount: 0,
   projectLineRanking: [],
-  authorLineRanking: [],
   selectedExtensions: [],
 }
 

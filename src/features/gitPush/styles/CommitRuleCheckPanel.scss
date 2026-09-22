@@ -3,29 +3,12 @@
 
 // 提交规则检查面板
 .grc-panel {
-  flex: 1;
-  overflow-y: auto;
-  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏（规则见 AGENTS_STYLE §Dock 面板侧边栏间距）
-  padding: $s-1 $s-2 $s-1 0;
+  @include panel-base;
 }
 
-// 顶部工具条（两行：第一行控件，第二行状态文案）
-.grc-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: $s-1;
-  margin-bottom: $s-3;
-}
+// 顶部工具条与状态文案：已收敛至 styles/AnalysisToolbar.scss（统一工具条共用）
 
-// 工具条第一行：项目过滤 + 条数选择 + 分析按钮（窄列自动折行）
-.grc-toolbar-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: $s-1;
-}
-
-// 项目过滤下拉（xsmall 紧凑尺寸，与条数选择/分析按钮同高；固定宽度可收缩）
+// 项目过滤下拉（"全部项目"/单个项目；自统一工具条 end 槽渲染）
 .grc-project-select {
   flex: 0 1 210px;
   min-width: 0;
@@ -41,48 +24,7 @@
   }
 }
 
-// 分析状态文案（满宽第二行，超长省略）
-.grc-status {
-  min-width: 0;
-  @include text-ellipsis;
-  font-size: $t-xs;
-  opacity: 0.6;
-}
-
-// 总览卡片
-.grc-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $s-2;
-  margin-bottom: $s-3;
-}
-
-.grc-card {
-  text-align: center;
-  padding: $s-2 $s-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-}
-
-.grc-card-value {
-  font-size: $t-lg; // 数据突出展示：统计数值大号字体
-  font-weight: $fw-bold;
-  font-family: $ff-mono;
-  line-height: $lh-tight;
-  color: var(--b3-theme-on-surface);
-}
-
-.grc-card-value--danger {
-  color: var(--b3-theme-error, $c-danger);
-}
-
-.grc-card-label {
-  font-size: $t-2xs; // 辅助标签语义，与 gp-label-base 一致（两级字号制）
-  opacity: 0.5;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
+// 总览卡片：已收敛至共享 StatCardGrid（规则检查卡片的 danger 语义色走 gp-statgrid-card--danger）
 
 // 规则提示
 .grc-hint {
@@ -102,13 +44,9 @@
   margin-bottom: $s-3;
 }
 
+// 区块标题（与其余四个分析类视图共用 gp-section-title-base）
 .grc-section-title {
-  @include gp-label-base;
-  font-size: $t-xs;
-  margin-bottom: $s-2;
-  display: flex;
-  align-items: center;
-  gap: $s-1;
+  @include gp-section-title-base;
 }
 
 // 标题右侧操作区（全选 + 批量修正按钮），右对齐并重置 label 基座的 uppercase/字距

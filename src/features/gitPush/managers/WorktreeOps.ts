@@ -293,6 +293,35 @@ export class WorktreeOps {
   }
 
   /**
+   * 获取暂存区完整 diff 补丁（供 AI 深度生成理解实际改动），失败返回空串。
+   * 与 getCommitDeepContext 配对：一个面向历史提交（git show），一个面向暂存区（git diff --cached）；
+   * 输出已是纯 diff（无提交信息头），调用方直接交给 buildDiffContext 分块分配预算。
+   */
+  async getStagedDiff(projectPath: string): Promise<string> {
+    try {
+      return await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "diff", "--text", "--cached",
+      ]) || ""
+    } catch {
+      return ""
+    }
+  }
+
+  /** 解析暂存区变更文件列表（git diff --cached --name-status；无暂存内容/失败返回空数组） */
+  async getStagedFiles(projectPath: string): Promise<FileChange[]> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "diff", "--cached", "--name-status",
+      ])
+      if (!raw) return []
+      // 清单全部来自暂存区 ⇒ 覆写 staged 标记（parseCommitFiles 面向历史提交，默认 false）
+      return parseCommitFiles(raw).map((f) => ({ ...f, staged: true }))
+    } catch {
+      return []
+    }
+  }
+
+  /**
    * 获取某次提交的完整 diff 补丁（供 AI 修正/深度分析理解实际改动），失败返回空串。
    * 提交信息头原样保留不占预算；diff 部分按文件分块分配 budget（与暂存区生成的 diffContextBudget 同一配置），
    * 替代旧的 substring(0, 10000) 整体硬截断——单提交多文件时首个大文件会挤占其余文件的可见性。

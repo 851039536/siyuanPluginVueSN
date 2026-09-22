@@ -93,6 +93,79 @@ ${diffContext}`,
     }
   }
 
+  /**
+   * 深度生成提交信息：读取暂存区完整 diff，让 AI 理解实际改动后输出「标题行 + 改动要点」多行信息。
+   * 与 generateCommitMessage 的差异仅在上下文与输出格式（对照 deepAnalyzeCommitFix 之于 generateCommitFix）：
+   * - 上下文：按文件分块分配 diffContextBudget（大文件按 hunk 均匀采样），而非仅 --stat 摘要
+   * - 输出：标题行 + 空行 + 3~6 条 "- " 中文要点，便于直接提交多改动维度的内容
+   * 无 API Key / AI 失败 / 输出不合规时降级启发式单行（与普通生成同源，不返回空串）。
+   */
+  async generateCommitMessageDeep(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    try {
+      // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
+      const diffText = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "diff", "--text", "--cached", "--stat=200",
+      ])
+      if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
+
+      const aiConfig = getApiConfigFromPlugin(this.plugin)
+      const ruleConfig = await this.getRuleConfig()
+      const heuristic = this.heuristicCommitMessage(diffText)
+      if (!aiConfig.apiKey) {
+        return { message: heuristic, source: "heuristic" }
+      }
+
+      const fullDiff = await this.worktreeOps.getStagedDiff(projectPath)
+      const diffContext = fullDiff ? buildDiffContext(fullDiff, ruleConfig.diffContextBudget) : diffText
+      const fileListSection = this.buildCommitFileListSection(await this.worktreeOps.getStagedFiles(projectPath))
+
+      try {
+        const result = await callAI(
+          `请基于以下 Git 暂存区的实际改动内容（diff），深度分析本次提交做了什么，生成一条最贴合实际改动的中文 conventional commit 信息。
+输出格式（多行）：
+1. 第一行为标题行：type(scope): 中文描述（${buildCommitRulePrompt(ruleConfig)}）
+2. 标题行必须空一行后，再输出 3~6 条改动要点，每条以 "- " 开头，概括本次提交的主要改动维度（如新增功能、修复问题、补充文案与样式、优化逻辑等）
+3. type 必须综合所有文件的改动判断，反映本次改动的主体性质，不要只依据单个文件
+4. 全部使用中文；要点仅用纯文本加 "- " 前缀，不要使用其他 Markdown 语法
+5. 只输出上述格式的提交信息本身，不要输出分析过程、解释或任何其他内容
+
+示例：
+feat: 实现工作区变更的深度提交信息生成，包含：
+
+- 暂存区 diff 按文件分块送入 AI 分析实际改动
+- 新增深度生成入口，输出标题行与改动要点
+- 补充多语言文案与文档说明
+
+${fileListSection}变更统计（含各文件增删行数）：
+${diffText}
+
+各文件改动内容（diff，超长文件已截断）：
+${diffContext}`,
+          aiConfig,
+          {
+            systemPrompt: "输出要求：第一行输出 conventional commit 格式的提交标题，空一行后输出 \"- \" 开头的中文改动要点列表。禁止输出解释、分析、Markdown 代码块或任何额外内容。",
+            temperature: 0.2,
+            maxTokens: 600,
+            enableThinking: false,
+          },
+        )
+        const trimmed = result?.trim() ?? ""
+        // 多行输出同样先规范化标题行（scope/type/句号），正文要点原样保留，规范化失败才降级启发式
+        const normalized = trimmed ? normalizeCommitMessageFormat(trimmed, ruleConfig) : ""
+        if (normalized) {
+          return { message: normalized, source: "ai" }
+        }
+        console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
+      } catch (e: unknown) {
+        console.error("[gitPush] AI 深度生成提交信息失败:", e)
+      }
+
+      return { message: heuristic, source: "heuristic" }
+    } catch {
+      return { message: "chore: update files", source: "heuristic" }
+    }
+  }
+
   /** 构建修正场景的变更文件清单段（name-status 列表，diff 因配额省略时兜底文件维度信息），空清单返回空串 */
   private buildCommitFileListSection(files: FileChange[]): string {
     if (files.length === 0) { return "" }

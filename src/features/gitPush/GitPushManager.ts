@@ -565,6 +565,11 @@ export class GitPushManager {
     return this.commitMsgGen.generateCommitMessage(projectPath)
   }
 
+  /** 深度生成提交信息：读取暂存区完整 diff 让 AI 生成「标题行 + 改动要点」多行信息 */
+  async generateCommitMessageDeep(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+    return this.commitMsgGen.generateCommitMessageDeep(projectPath)
+  }
+
   async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     return this.commitMsgGen.generateCommitFix(projectPath, hash, currentMessage)
   }

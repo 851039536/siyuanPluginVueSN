@@ -72,6 +72,7 @@ export function useGitPush(manager: GitPushManager) {
     discardFile: gitOps.discardFile,
     doCommit: gitOps.doCommit,
     generateCommitMsg: gitOps.generateCommitMsg,
+    deepGenerateCommitMsg: gitOps.deepGenerateCommitMsg,
     pushToAll: gitOps.pushToAll,
     forcePushToAll: gitOps.forcePushToAll,
     pushSingle: gitOps.pushSingle,

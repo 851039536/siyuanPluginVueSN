@@ -18,6 +18,8 @@ export function useGitHandlers(deps: {
   discardFile: (id: string, file: string, staged: boolean, status: string) => Promise<void>
   doCommit: (id: string, message: string) => Promise<string>
   generateCommitMsg: (id: string) => Promise<{ message: string, source: string }>
+  /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
+  deepGenerateCommitMsg: (id: string) => Promise<{ message: string, source: string }>
   doStashSave: (id: string, msg: string) => Promise<void>
   doStashPop: (id: string, index: number) => Promise<void>
   doStashApply: (id: string, index: number) => Promise<void>
@@ -34,7 +36,7 @@ export function useGitHandlers(deps: {
 }) {
   const {
     projects, showConfirm, safeGitOp, tf,
-    discardFile, doCommit, generateCommitMsg,
+    discardFile, doCommit, generateCommitMsg, deepGenerateCommitMsg,
     doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
     createTagOp, deleteTagOp, pushTagOp,
     abortMergeOp, resolveConflictOp,
@@ -43,8 +45,8 @@ export function useGitHandlers(deps: {
 
   /** 提交输出 id → text */
   const commitOutputs = ref<Record<string, string>>({})
-  /** AI 生成状态 id → { generating, text } */
-  const generatingMsgs = ref<Record<string, { generating: boolean, text: string }>>({})
+  /** AI 生成状态 id → { generating, deepGenerating, text }（两标记互斥，仅一个为 true） */
+  const generatingMsgs = ref<Record<string, { generating: boolean, deepGenerating: boolean, text: string }>>({})
   /** 暂存/取消操作加载中 id → 计数（引用计数防止并发同类操作先完成者提前清除标志） */
   const gitOpLoading = ref<Record<string, number>>({})
   /** Stash 描述生成加载中 id → true */
@@ -189,23 +191,30 @@ export function useGitHandlers(deps: {
     }
   }
 
-  async function handleGenerateMsg(id: string) {
+  /**
+   * 提交信息生成（常规 / 深度）共用流程：两个入口只是「需要置位的加载标记」与「生成函数」不同，
+   * 状态置位、输出清理、启发式提示、失败回置完全同构，故收敛到一处避免双份分支漂移。
+   */
+  async function runGenerateMsg(
+    id: string,
+    mode: "generating" | "deepGenerating",
+    generate: (id: string) => Promise<{ message: string, source: string }>,
+  ) {
+    // 两标记互斥：手动点击另一入口时先清掉旧标记，避免两个按钮同时转圈
     generatingMsgs.value = {
       ...generatingMsgs.value,
       [id]: {
-        generating: true,
+        generating: mode === "generating",
+        deepGenerating: mode === "deepGenerating",
         text: "",
       },
     }
     commitOutputs.value[id] = ""
     try {
-      const result = await generateCommitMsg(id)
+      const result = await generate(id)
       generatingMsgs.value = {
         ...generatingMsgs.value,
-        [id]: {
-          generating: false,
-          text: result.message,
-        },
+        [id]: { generating: false, deepGenerating: false, text: result.message },
       }
       if (result.source === "heuristic") {
         commitOutputs.value[id] = tf("aiHeuristic")
@@ -214,12 +223,18 @@ export function useGitHandlers(deps: {
       commitOutputs.value[id] = tf("generateFailed", getErrorMessage(e))
       generatingMsgs.value = {
         ...generatingMsgs.value,
-        [id]: {
-          generating: false,
-          text: "",
-        },
+        [id]: { generating: false, deepGenerating: false, text: "" },
       }
     }
+  }
+
+  async function handleGenerateMsg(id: string) {
+    await runGenerateMsg(id, "generating", generateCommitMsg)
+  }
+
+  /** 深度生成提交信息：读取暂存区完整 diff 让 AI 输出多行标题 + 改动要点 */
+  async function handleDeepGenerateMsg(id: string) {
+    await runGenerateMsg(id, "deepGenerating", deepGenerateCommitMsg)
   }
 
   return {
@@ -243,5 +258,6 @@ export function useGitHandlers(deps: {
     handleResolveConflict,
     handleCommit,
     handleGenerateMsg,
+    handleDeepGenerateMsg,
   }
 }

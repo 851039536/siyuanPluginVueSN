@@ -256,6 +256,7 @@ GitPushManager (facade)
 | `generateCommitMessageDeep(path)` | AI / 启发式深度生成提交信息（多行，上下文为暂存区完整 diff 按文件分块；无 API Key / 生成失败时降级为单行启发式） |
 | `getAiConfig()` | 读取超级面板 AI 配置（统一入口 `@/utils/aiApi`，供 AI 错误分析弹窗使用） |
 | `getCommitLog(path, count?)` | 获取最近 N 条提交记录 |
+| `getCommitShortStats(path, count?)` | 获取最近 N 条提交的变更规模（文件数/增删行数），供 LOG Tab 行悬停提示；`--shortstat` 批量单命令（须批量：逐条 `git show --shortstat` 约 260ms/条），上限 500 条 |
 | `getNumstatLog(path, since?, maxCount?)` | 获取 numstat 提交日志（每文件增删行；供代码统计报告聚合） |
 | `getCommitStatsLog(path, maxCount?)` | 行数统计专用单命令抓取：numstat + hash/message/author/date（替代原 getCommitLog + getNumstatLog 双命令） |
 | `getBranches(path)` | 获取本地分支列表 |

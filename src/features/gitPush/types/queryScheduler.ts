@@ -20,6 +20,8 @@ export type ProjectQueryKind =
   | "remoteRefresh"
   // ── 卡片自持数据域（原 CardDataDomain）──
   | "log"
+  /** 提交变更规模（文件数/增删行数，LOG Tab 行悬停提示用；--shortstat 批量单命令，与 log 分开缓存） */
+  | "logStats"
   | "branches"
   | "stash"
   | "tags"

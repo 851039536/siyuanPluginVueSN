@@ -265,6 +265,22 @@ watch(
 // 方位变化即时重算（尺寸变化由滚动 / 缩放与重新打开覆盖）
 watch(() => props.placement, scheduleUpdate)
 
+/**
+ * 锚点元素变化时重算位置。
+ * 覆盖「一个 Tooltip 服务多行列表」的用法：锚点随指针所在行切换而 `visible` 始终为真，
+ * 此时 `isOpen` 不发生变化、不会触发上面的重新测量，气泡会滞留在上一行的位置。
+ * 传函数形态的锚点同样被追踪（函数体内读取的响应式依赖会被收集）。
+ */
+watch(
+  () => {
+    const target = props.target
+    return typeof target === "function" ? target() : target
+  },
+  () => {
+    if (isOpen.value) scheduleUpdate()
+  },
+)
+
 onBeforeUnmount(unbindWindowEvents)
 </script>
 

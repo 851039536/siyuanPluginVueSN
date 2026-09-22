@@ -70,6 +70,10 @@
         v-for="entry in filteredEntries"
         :key="entry.hash"
         class="bcl-entry"
+        @pointerenter="openStatTip(entry.hash, $event)"
+        @pointerleave="closeStatTip"
+        @focusin="openStatTip(entry.hash, $event)"
+        @focusout="closeStatTip"
       >
         <span
           class="bcl-hash"
@@ -155,11 +159,28 @@
         </span>
       </div>
     </div>
+
+    <!--
+      提交变更规模提示：单个受控 Tooltip 复用给所有行（而非每行挂一个实例 —— 200 行会多挂 200 个组件）。
+      锚点取指针/焦点所在行元素，内容随目标行切换。
+      `disabled` 关掉组件内建的 hover/focus 触发器：锚点随行列变化，而组件的触发器只在挂载时绑定一次，
+      留着会绑到过期行上；本组件改由行上的 pointerenter/focus 显式驱动（可同时覆盖鼠标移入与键盘聚焦）。
+    -->
+    <Tooltip
+      :visible="tipVisible"
+      :target="tipAnchor"
+      :text="tipText"
+      placement="top"
+      size="xsmall"
+      :max-width="280"
+      disabled
+      @update:visible="tipVisible = $event"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CommitLogEntry } from "../../types"
+import type { CommitLogEntry, CommitStat } from "../../types"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -170,6 +191,7 @@ import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import Tag from "@/components/Tag.vue"
+import Tooltip from "@/components/Tooltip.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -181,6 +203,8 @@ const props = defineProps<{
   remoteTags?: Map<string, string[]>
   /** 显示条数初始值（卡片级 logLimit 传入，与抓取条数保持一致；不传回退 200） */
   initialCount?: number | "all"
+  /** 短 hash → 提交变更规模（--shortstat 后台批量取；未就绪/无该项时不展示悬停提示） */
+  stats?: Map<string, CommitStat>
 }>()
 
 const emit = defineEmits<{
@@ -259,6 +283,43 @@ function handleCountChange(value: string | number | boolean | null) {
   if (value !== "all" && typeof value !== "number") return
   displayCount.value = value
   emit("reloadCommitLog", displayCount.value)
+}
+
+// ── 提交变更规模提示（单个受控 Tooltip 服务所有行）──
+
+/** 提示是否显示（受控；指针悬停或行获得焦点时打开） */
+const tipVisible = ref(false)
+/** 提示锚点（当前悬停/聚焦的行元素） */
+const tipAnchor = ref<HTMLElement | null>(null)
+/** 提示文案（随目标行切换） */
+const tipText = ref("")
+
+/** 取该提交的变更规模（未加载/merge 提交/超出统计上限时为 undefined） */
+function statOf(hash: string): CommitStat | undefined {
+  return props.stats?.get(hash)
+}
+
+/** 变更规模文案："6 个文件变更 · 6 行插入(+) · 3 行删除(−)"（三段均为 i18n 文案，随语言切换） */
+function statText(hash: string): string {
+  const stat = statOf(hash)
+  if (!stat) return ""
+  return [
+    props.i18n.commitStatFiles.replace("{0}", String(stat.files)),
+    props.i18n.commitStatInsertions.replace("{0}", stat.insertions.toLocaleString()),
+    props.i18n.commitStatDeletions.replace("{0}", stat.deletions.toLocaleString()),
+  ].join(" · ")
+}
+
+/** 打开提示：无统计时不打开（merge 提交与超出统计上限的行保持原样） */
+function openStatTip(hash: string, event: Event) {
+  if (!statOf(hash)) return
+  tipAnchor.value = event.currentTarget as HTMLElement
+  tipText.value = statText(hash)
+  tipVisible.value = true
+}
+
+function closeStatTip() {
+  tipVisible.value = false
 }
 </script>
 

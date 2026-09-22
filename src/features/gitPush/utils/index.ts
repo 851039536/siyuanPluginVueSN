@@ -51,6 +51,7 @@ export {
   parseBranches,
   parseCommitFiles,
   parseCommitLog,
+  parseCommitShortStats,
   parseStashList,
   parseWorktreeStatus,
 } from "./gitOutput"

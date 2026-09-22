@@ -226,6 +226,20 @@ export interface CommitLogEntry {
   isMerge: boolean
 }
 
+/**
+ * 单条提交的变更规模统计（git log --shortstat 派生，供 LOG Tab 行悬停提示展示）。
+ * 注意：这是「该提交本身的改动量」——merge 提交按 git 约定不计入（无 shortstat 行），
+ * 根提交正常统计；deltas 为 0 与「无统计」两种情形由 UI 区分（后者不展示提示）。
+ */
+export interface CommitStat {
+  /** 变更文件数 */
+  files: number
+  /** 新增行数 */
+  insertions: number
+  /** 删除行数 */
+  deletions: number
+}
+
 /** 分支信息 */
 export interface BranchInfo {
   /** 分支名（短名称） */

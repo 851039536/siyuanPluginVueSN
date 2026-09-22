@@ -3,7 +3,6 @@
   <div class="settings-container">
     <!-- 工作区信息 -->
     <WorkspaceInfoCard
-      :workspace-path="orch.workspaceRoot"
       :workspace-root="orch.workspaceRoot"
       :last-backup-time="orch.lastBackupTime"
       :i18n="i18n"
@@ -60,7 +59,7 @@
           {{ orch.isAlreadyUploaded(item.name) ? i18n.alreadyUploaded : i18n.uploadToS3 }}
         </Button>
         <Button variant="danger" size="xsmall" @click="orch.deleteLocalBackup(item)">
-          {{ i18n.delete }}
+          {{ i18n.deleteBackup }}
         </Button>
       </template>
     </BackupListCard>
@@ -76,14 +75,28 @@
       @refresh="orch.refreshBackupList()"
     >
       <template #actions="{ item }">
-        <Button size="xsmall" @click="orch.handleDownload(item)">
-          {{ i18n.download }}
+        <Button
+          size="xsmall"
+          :loading="orch.downloadingKey === item.key"
+          :disabled="orch.downloadingKey !== null"
+          @click="orch.handleDownload(item)"
+        >
+          {{ orch.downloadingKey === item.key ? i18n.downloading : i18n.download }}
         </Button>
         <Button variant="danger" size="xsmall" @click="orch.handleDelete(item)">
-          {{ i18n.delete }}
+          {{ i18n.deleteBackup }}
         </Button>
       </template>
     </BackupListCard>
+
+    <!-- 下载结果常驻提示：面板打开时全局 toast 被遮罩盖住，需在面板内同步反馈 -->
+    <div
+      v-if="orch.lastDownloadResult"
+      class="connection-result"
+      :class="orch.lastDownloadResult.success ? 'success' : 'error'"
+    >
+      {{ orch.lastDownloadResult.text }}
+    </div>
   </div>
 </template>
 

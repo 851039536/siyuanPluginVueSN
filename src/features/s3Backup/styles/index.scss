@@ -123,6 +123,15 @@
 
 // ========== 表单控件（共享） ==========
 
+// 字段组基座：ManualBackupCard / S3ConfigForm / BackupModeSelector 共用。
+// 原定义在 .s3-config-form 作用域内，导致作用域外的 .form-group 拿不到纵向布局。
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  min-width: 0;
+}
+
 .form-group-checkbox {
   margin-top: $s-3;
 }

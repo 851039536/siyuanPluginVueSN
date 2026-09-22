@@ -11,7 +11,7 @@
         :disabled="disableRefresh"
         @click="$emit('refresh')"
       >
-        {{ i18n.refresh }}
+        {{ i18n.refreshList }}
       </Button>
     </div>
     <!-- 备份条目列表 -->

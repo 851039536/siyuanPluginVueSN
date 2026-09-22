@@ -106,8 +106,8 @@ const props = defineProps<{
 }>()
 
 const autoBackupOptions = computed(() => [
-  { value: false, label: props.i18n.disabled },
-  { value: true, label: props.i18n.enabled },
+  { value: false, label: props.i18n.disabledLabel },
+  { value: true, label: props.i18n.enabledLabel },
 ])
 
 const frequencyOptions = computed(() => [

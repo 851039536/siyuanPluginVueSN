@@ -65,6 +65,7 @@ src/features/gitPush/
 ├── types/
 │   ├── index.ts                     # 类型桶（重导出 meta/storage + GitPushManager）
 │   ├── meta.ts                      # PLATFORM_META/FILE_STATUS_META 等共享常量（独立模块切断循环引用）
+│   ├── queryScheduler.ts            # 查询调度契约（ProjectQueryKind/ProjectQueryScheduler，切断 cardServices ↔ composable 循环）
 │   └── storage.ts                   # 类型定义 + TypedStorage 持久化
 ├── composables/
 │   ├── useGitPush.ts                # Vue 3 响应式状态层（聚合入口）
@@ -74,6 +75,7 @@ src/features/gitPush/
 │   ├── useGitStats.ts               # 统计视图 computed
 │   ├── useCardServices.ts           # 卡片服务注入（inject CARD_SERVICES_KEY + 按项目 id 派生单项目 computed）
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
+│   ├── useProjectQueryScheduler.ts  # 项目查询调度器（单飞去重 + 分支名复用 + 新鲜度节流 + 脏标记，查询调度唯一权威）
 │   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 ├── components/
 │   ├── common/                      # 复用组件（跨 ≥2 个视图引用，27 个；二次确认统一用共享 ConfirmDialog）
@@ -295,4 +297,10 @@ GitPushManager (facade)
 
 - **并发信号量**：git 命令并发上限可配置（默认 3，范围 1~10，设置页修改），本地命令与网络命令独立双池且各自受该上限约束（双池分离使本地命令洪流不挤占 push/fetch 通道），批量加载/刷新的批内并发跟随该设置
 - **批次加载**：首屏只加载工作区摘要 + 推送状态，提交日志/分支/Stash 按展开懒加载
-- **共享 rev-parse**：统计视图通过 `loadStatsData` 单次获取分支名分发给 pushStatus + workingTree
+- **查询调度器**（`useProjectQueryScheduler`，查询调度的唯一权威，三档职责互不重叠）：
+  - **单飞**：同 `(项目, 查询域)` 在飞时共享同一 Promise，任何入口的并发调用都不产生额外 git 子进程；失败不缓存，允许立即重试
+  - **分支名复用**：`rev-parse --abbrev-ref HEAD` 是 pushStatus 与 workingTree 的共同前置，解析一次后缓存分发，每轮操作至多 1 次
+  - **新鲜度节流**：成功后记录时间戳，`ensure` 模式跳过已有缓存的项目，`minIntervalMs` 抑制自动刷新的重复查询
+  - **脏标记**：父层写操作标脏 + 单值 `epoch` 递增，卡片消费脏集按需重载（取代原先每卡片 5 个 watch 读取同一个 Record 的 O(卡片数 × 域数) 求值）
+- **远程刷新单管线**：`refreshRemote` 统一「刷新远程配置 → fetch 一次 → 状态重查」，原先「Fetch」与「刷新远程状态」两条各自 fetch 的路径合并为同一单飞键，同时触发只产生一轮网络请求
+- **共享 rev-parse**：统计视图与列表视图经调度器 `loadStatus` 单次获取分支名分发给 pushStatus + workingTree

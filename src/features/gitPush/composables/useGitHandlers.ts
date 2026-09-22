@@ -2,7 +2,7 @@
 import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
-import type { CardDataDomain, GitProject } from "../types"
+import type { GitProject, ProjectQueryKind } from "../types"
 import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
@@ -30,9 +30,10 @@ export function useGitHandlers(deps: {
   pushTagOp: (id: string, remote: string, tag: string) => Promise<string>
   abortMergeOp: (id: string) => Promise<void>
   resolveConflictOp: (id: string, file: string, strategy: "theirs" | "ours") => Promise<void>
-  /** 按域通知卡片重载自持数据（log/tags/conflicts 已下沉 ProjectCard） */
-  bumpCardRefresh: (id: string, ...domains: CardDataDomain[]) => void
-  loadWorkingTree: (id: string, branch?: string) => Promise<void>
+  /** 按域标记卡片自持数据为脏（log/tags/conflicts 已下沉 ProjectCard） */
+  bumpCardRefresh: (id: string, ...domains: ProjectQueryKind[]) => void
+  /** 重载工作区状态（调度器内部复用缓存分支名，无需调用方传 branch） */
+  loadWorkingTree: (id: string) => Promise<void>
 }) {
   const {
     projects, showConfirm, safeGitOp, tf,

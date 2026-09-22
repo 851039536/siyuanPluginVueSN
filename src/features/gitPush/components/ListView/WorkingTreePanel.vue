@@ -342,13 +342,14 @@ useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
 
 /** 自动刷新防抖时长：合并「窗口获焦 + 指针按下」的连续触发 */
 const AUTO_REFRESH_DEBOUNCE_MS = 800
-/** 自动刷新最小间隔：距上次刷新过近时跳过——面板内操作本身已刷新，无需重复起 git 子进程 */
+/** 自动刷新最小间隔：距上次刷新过近时跳过——面板内操作本身已刷新，无需重复起 git 子进程。
+ *  这是**自动触发**的 UI 限流（手动刷新按钮不受限）；数据层同名查询去重由调度器单飞承担 */
 const AUTO_REFRESH_MIN_INTERVAL_MS = 2000
 
 /** 自动刷新定时器（统一入口 TimerRegistry，随组件卸载清理） */
 const autoRefreshTimers = new TimerRegistry()
 let autoRefreshTimer: TimerHandle | null = null
-/** 最近一次工作区刷新开始时间戳（含面板内操作触发的刷新，用于最小间隔去重） */
+/** 最近一次工作区刷新开始时间戳（含面板内操作触发的刷新，用于自动触发的最小间隔判断） */
 let lastRefreshStartedAt = 0
 
 // 面板内操作（暂存 / 提交 / 丢弃 / 手动刷新）都会经过刷新标记，记录下来供自动刷新去重

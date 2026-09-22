@@ -361,10 +361,7 @@ const {
   workingTrees,
   committing,
   loadProjects,
-  loadPushStatus,
   loadWorkingTree,
-  loadProjectGitStatus,
-  loadStatsData,
   stageItem,
   stageAllItems,
   unstageItem,
@@ -375,7 +372,6 @@ const {
   deepGenerateCommitMsg,
   addProject,
   removeProject,
-  refreshRemotes,
   pushToAll,
   forcePushToAll,
   pushSingle,
@@ -401,9 +397,11 @@ const {
   doStashApply,
   doStashDrop,
   generateStashDesc,
-  fetchAllRemotes,
-  // 卡片刷新信号（下沉数据的父层写入替代通道）
-  cardRefreshSignals,
+  // 查询调度器（单飞/新鲜度/脏标记唯一权威）
+  scheduler,
+  ensureProjectStatus,
+  refreshProjectStatus,
+  // 卡片自持数据脏标记（下沉数据的父层写入通道）
   bumpCardRefresh,
   // Tag 管理（仅写操作，列表数据已下沉卡片）
   createTagOp,
@@ -522,26 +520,21 @@ const { state: progressState, runBatch: runBatchWithProgress } = useBatchProgres
   getBatchSize: () => props.manager.getGitConcurrency(),
 })
 
-/** 正在加载中的项目 id（跨所有自动加载触发器共享，防止来回切换重复入队同一项目导致成倍加载） */
-const loadingProjectIds = new Set<string>()
-
 /**
- * 统一自动批量加载入口：先剔除已在加载中的项目，标记在途，完成后逐项清除。
- * 所有"切换/挂载"触发器共用，配合 useBatchProgress 的 runChain 串行化，
- * 既不重复入队同一项目，也不破坏进度计数。
+ * 统一自动批量加载入口：仅对尚未具备目标数据的项目入队。
+ * 跨触发器去重由调度器单飞承担（同 (项目, 域) 在飞时共享同一 Promise），
+ * 配合 useBatchProgress 的 runChain 串行化，既不重复发 git 子进程，也不破坏进度计数。
  */
 async function runProjectLoadBatch(
-  candidates: GitProject[], loader: (id: string) => Promise<void>,
+  candidates: GitProject[],
+  loader: (id: string) => Promise<void>,
+  /** 已具备数据的判据（缺省：pushStatus 与 workingTree 两域齐备即跳过） */
+  isLoaded: (id: string) => boolean = (id) => scheduler.has(id, "pushStatus") && scheduler.has(id, "workingTree"),
 ) {
-  const pending = candidates.filter((p) => !loadingProjectIds.has(p.id))
+  const pending = candidates.filter((p) => !isLoaded(p.id))
   if (pending.length === 0) return
-  pending.forEach((p) => loadingProjectIds.add(p.id))
   await runBatchWithProgress(pending, tf("loadingLabel"), async (p) => {
-    try {
-      await loader(p.id)
-    } finally {
-      loadingProjectIds.delete(p.id)
-    }
+    await loader(p.id)
   })
 }
 
@@ -723,10 +716,9 @@ const {
   handleRefreshRemoteStatus,
   handleFetchAll,
 } = useRefreshOps({
-  manager: props.manager, projects, runBatchWithProgress, tf,
+  projects, runBatchWithProgress, tf,
+  scheduler,
   bumpCardRefresh,
-  loadPushStatus, loadWorkingTree,
-  refreshRemotes, fetchAllRemotes,
 })
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
@@ -764,13 +756,10 @@ onMounted(async () => {
   void loadRuleCheckPrefs()
   // 首屏只加载显示卡片所需的最小集：工作区变更摘要 + 推送状态。
   // commitLog/branches/stash 改为展开工作区面板时按需懒加载（见 @expand）。
-  // getHeadHash 仅刷新去重用，首屏无历史值可对比，跳过。
-  // 使用 loadProjectGitStatus 合并 rev-parse HEAD 共享分支名
+  // 分支名由调度器解析一次并缓存，分发给 pushStatus/workingTree 两个查询。
   initTimer = setTimeout(async () => {
     if (gitOpsPaused.value) return
-    const catId = activeCategory.value
-    const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-    await runProjectLoadBatch(projList, (id) => loadProjectGitStatus(id))
+    await loadCurrentCategoryList()
   }, 200)
 })
 
@@ -790,31 +779,33 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
   }
 }
 
-/** 加载当前分类列表视图所需的最小状态数据（工作区摘要 + 推送状态）。分类切换 / 切回列表 / 恢复暂停共用 */
-async function loadCurrentCategoryList() {
-  const catId = activeCategory.value
-  const projList = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
-  const pending = projList.filter((p) => !workingTrees.value[p.id])
-  await runProjectLoadBatch(pending, (id) => loadProjectGitStatus(id))
+/**
+ * 补齐给定项目集的状态最小数据集（pushStatus + workingTree），列表视图与统计/智能视图共用。
+ * commitLog/branches/stash 不在这两类视图中展示，无需加载。
+ * 分支名由调度器解析一次并缓存分发给两个查询；在途与已加载均由调度器去重。
+ */
+async function ensureStatusFor(list: GitProject[]) {
+  if (gitOpsPaused.value) return
+  await runProjectLoadBatch(list, (id) => ensureProjectStatus(id))
 }
 
-/** 切换分类时懒加载该分类下项目的数据（仅列表视图需要；非列表视图由 ensureStats 统一加载，避免看不见的预加载） */
+/** 加载当前分类列表视图所需的最小状态数据（分类切换 / 切回列表 / 恢复暂停共用） */
+async function loadCurrentCategoryList() {
+  const catId = activeCategory.value
+  const list = catId ? projects.value.filter((p) => p.categoryId === catId) : projects.value
+  await ensureStatusFor(list)
+}
+
+/** 切换分类时懒加载该分类下项目的数据（仅列表视图需要；非列表视图由统计视图统一加载，避免看不见的预加载） */
 watch(activeCategory, async (catId) => {
   if (!catId || gitOpsPaused.value) return
   if (currentView.value !== "list") return
   await loadCurrentCategoryList()
 })
 
-/**
- * 补齐所有项目的统计最小数据集（pushStatus + workingTree），统计视图与智能视图共用。
- *  commitLog/branches/stash 不在这两类视图中展示，无需加载。
- *  使用 loadStatsData 共用 rev-parse，避免 loadPushStatus/loadWorkingTree 各调一次。
- *  在途去重下沉 runProjectLoadBatch（按项目 id），来回切换不再重复入队。
- */
+/** 补齐所有项目的统计最小数据集（统计视图与智能视图共用，未缓存的项目才入队） */
 async function ensureStatsDataLoaded() {
-  if (gitOpsPaused.value) return
-  const pending = projects.value.filter((p) => !pushStatuses.value[p.id] || !workingTrees.value[p.id])
-  return runProjectLoadBatch(pending, (id) => loadStatsData(id))
+  await ensureStatusFor(projects.value)
 }
 
 /** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
@@ -921,10 +912,13 @@ function openEditDialog(project: GitProject) {
   editDialogProjectId.value = project.id
 }
 
-/** 编辑弹窗保存后同步状态 */
+/** 编辑弹窗保存后同步状态（路径/远程可能已变，清空该项目调度缓存防 ensure 用旧状态短路） */
 async function handleEditSaved() {
+  const id = editDialogProjectId.value
   editDialogProjectId.value = ""
+  if (id) scheduler.clearProject(id)
   await loadProjects()
+  if (id) void ensureProjectStatus(id)
 }
 
 /** 仓库链接更新：仅刷新列表，不关闭弹窗 */
@@ -985,7 +979,8 @@ const { statusLabel, statusBadgeClass, needsPushFor, hasBehind } = usePushStatus
 provide(CARD_SERVICES_KEY, {
   manager: props.manager,
   updateProjectMeta,
-  cardRefreshSignals,
+  // 项目查询调度器（单飞/新鲜度/脏标记唯一权威，卡片经此重载自持数据）
+  scheduler,
   recordCommitActivity,
   shared: {
     i18n: props.i18n,
@@ -1037,6 +1032,8 @@ provide(CARD_SERVICES_KEY, {
     handleRefresh,
     handleRefreshWorkingTree,
     handleRefreshRemoteStatus,
+    ensureProjectStatus,
+    refreshProjectStatus,
     handleGitOp,
     stageItem,
     unstageItem,

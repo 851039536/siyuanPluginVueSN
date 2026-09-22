@@ -54,11 +54,9 @@ export {
 // ── 重导出卡片注入契约（provide/inject 消除中间人 props/emits）──
 export { CARD_SERVICES_KEY } from "./cardServices"
 export type {
-  CardDataDomain,
   CardDerivedFns,
   CardOps,
   CardRecordData,
-  CardRefreshSignals,
   CardServices,
   CardSharedData,
 } from "./cardServices"
@@ -81,6 +79,16 @@ export {
 } from "./meta"
 export type { AuthorLineRankItem, BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CategoryDistributionItem, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FetchFailureKind, FileLineDetailRow, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoLinkAuditSummary, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
 export { getPlatformStatus } from "./meta"
+
+// ── 重导出查询调度契约（useProjectQueryScheduler 实现，queryScheduler.ts）──
+export type {
+  LoadProjectStatusOptions,
+  LoadStatusOptions,
+  ProjectQueryKind,
+  ProjectQueryScheduler,
+  ProjectStatusMode,
+  RunQueryOptions,
+} from "./queryScheduler"
 
 // ── 重导出代码统计报告类型与常量（来自 report.ts）──
 export {

@@ -75,9 +75,10 @@
   display: flex;
   align-items: center;
   gap: $s-1;
-  padding: $s-1 $s-px6;
+  // 紧凑纵向内边距：行高由右侧 20px 紧凑图标按钮主导，配合去掉行分隔线把列表压紧成纯悬停高亮样式
+  padding: $s-px2 $s-px6;
   font-size: $t-xs;
-  @include row-divider;
+  // 刻意不加行分隔线（row-divider）：密集文件列表靠 hover 底色区分行，横线会让长列表显得割裂
   cursor: pointer; // 整行可点击查看差异
   transition: background 0.12s;
 

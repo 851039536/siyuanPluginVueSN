@@ -42,6 +42,7 @@
           <Button
             v-if="hasStaged"
             variant="ghost"
+            text
             size="xsmall"
             dense
             :disabled="gitOpLoading"

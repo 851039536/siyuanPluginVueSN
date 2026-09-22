@@ -99,9 +99,10 @@
             class="wt-diff-header-sep"
             layout="vertical"
           />
-          <!-- 暂存/取消暂存当前文件 -->
+          <!-- 暂存/取消暂存当前文件（纯图标无边框外观：密集头部操作区靠悬停底色反馈） -->
           <Button
             variant="ghost"
+            text
             size="xsmall"
             dense
             :icon="file.staged ? 'minusBoxOutline' : 'plusBoxOutline'"

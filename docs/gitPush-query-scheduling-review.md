@@ -243,7 +243,28 @@ function finish() {
 ## 八、已知限制与未纳入项
 
 1. **多面板并存（dock + 浮动 tab）**：两个 `useProjectQueryScheduler` 实例 → 跨面板仍可能对同一项目重复发 git。属既有行为，本次不修（需跨渲染进程共享缓存，代价远大于收益）。
-2. **`RemoteOps.checkPushStatus` 的 `fetchFirst` 分支保留**：为不改 manager 公共面而保留，UI 路径已不再使用（统一管线自行 fetch 一次）。
+2. ~~**`RemoteOps.checkPushStatus` 的 `fetchFirst` 分支保留**~~ → **已清理**（见 §5.1）。统一管线接管 fetch 后该参数成为死参数（全仓库无 `fetchFirst: true` 调用点），已从 `GitPushManager` 门面、`RemoteOps`、调度器选项三层一并删除。`useConsistencyAudit` 的同名 `fetchFirst` 是其弹窗自身的「分析前先 fetch」开关，与本次无关，正确保留。
 3. **`useConsistencyAudit` / `useRepoLinkAudit` / `useCommitAnalysis` / `useCodeReport` 未纳入**：它们的批量审计/分析各有独立的 `analyzing` 守卫与进度语义，属「批量任务编排」而非「项目状态查询」，混入调度器会污染单飞键空间。
 4. **`WorktreePanel` 自动刷新的 800ms 防抖保留**：这是「合并连续 UI 事件」的防抖，与调度器的「最小重查间隔」是不同关注点（前者合并事件、后者抑制重复查询），刻意不合并。
 5. **卡片卸载期间的在飞查询**：共享 Promise 仍会 resolve 并写入已卸载卡片的 ref 闭包（不渲染、无害），`recordCommitActivity` 副作用照旧触发——与改动前一致。
+
+---
+
+## 附：§5.1 `fetchFirst` 死参数清理（补充提交）
+
+**背景**：本轮调度重构把「fetch 后重查状态」收敛为唯一管线 `refreshRemote`，原先经 `checkPushStatus(fetchFirst: true)` 触发 fetch 的路径消失，该参数随即成为死参数。
+
+**验证依据**：全仓库检索 `fetchFirst: true` / `loadPushStatus(... fetchFirst ...)` → 0 处调用点。
+
+**清理范围**（4 层一并删除，避免留下「有参数无人传」的误导性 API）：
+
+| 层 | 文件 | 改动 |
+|---|---|---|
+| 调度契约 | `types/queryScheduler.ts` | `LoadStatusOptions.fetchFirst` 删除 |
+| 调度实现 | `composables/useProjectQueryScheduler.ts` | 两处透传删除；注释改为「本管线是全局唯一的 fetch 后重查路径」 |
+| 门面 | `GitPushManager.ts` | `checkPushStatus(id, opts?)` 签名收窄为 `{ branch?: string }` |
+| 执行层 | `managers/RemoteOps.ts` | 删除 `if (opts?.fetchFirst) { fetchAllForProject... }` 分支（6 行） |
+
+**保留项**：`RemoteOps.fetchAllForProject` 仍被 `refreshRemote` 使用，未删除。
+
+**影响评估**：净减 13 行；`checkPushStatus` 语义收窄为「纯本地比对跟踪 ref，不发起网络请求」，与调用方预期一致。`pnpm typecheck` 通过（签名收窄未破坏任何调用点，反证死参数结论）。

@@ -321,7 +321,8 @@ export class GitPushManager {
     return this.worktreeOps.countAheadBehind(projectPath, remoteRef, localBranch)
   }
 
-  async checkPushStatus(id: string, opts?: { branch?: string, fetchFirst?: boolean }): Promise<PushStatusInfo> {
+  /** 检查各远程推送状态（仅比对本地跟踪 ref，不发起网络请求；需 fetch 后重查请走远程刷新管线） */
+  async checkPushStatus(id: string, opts?: { branch?: string }): Promise<PushStatusInfo> {
     return this.remoteOps.checkPushStatus(id, opts)
   }
 

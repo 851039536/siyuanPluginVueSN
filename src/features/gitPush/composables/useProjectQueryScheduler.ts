@@ -27,7 +27,7 @@ function queryKey(id: string, kind: ProjectQueryKind): string {
  *
  * 收敛此前分散在 5 处的调度关注点：
  *   - useGitOps        的 loadPushStatus / loadWorkingTree / loadProjectGitStatus / loadStatsData 四份实现
- *   - useRefreshOps    内联的第五份（含 refreshRemotes + fetchFirst 竞态处理）
+ *   - useRefreshOps    内联的第五份（含 refreshRemotes 与状态重查的竞态处理）
  *   - index.vue        的 loadingProjectIds Set（跨触发器项目级去重）
  *   - useCardData      的 detailsLoaded 布尔（卡片级详情去重，原实现存在并发缺口）
  *   - WorkingTreePanel 的 lastRefreshStartedAt（自动刷新最小间隔）
@@ -142,10 +142,7 @@ export function useProjectQueryScheduler(
   async function loadPushStatus(id: string, opts?: LoadStatusOptions): Promise<void> {
     await run(id, "pushStatus", async () => {
       const branch = opts?.branch ?? (await resolveBranch(id))
-      pushStatuses.value[id] = await manager.checkPushStatus(id, {
-        branch,
-        fetchFirst: opts?.fetchFirst,
-      })
+      pushStatuses.value[id] = await manager.checkPushStatus(id, { branch })
     }, { force: opts?.force })
   }
 
@@ -178,10 +175,7 @@ export function useProjectQueryScheduler(
       // ensure 模式下已有结果的域不重复查询
       mode === "ensure" && has(id, "pushStatus")
         ? Promise.resolve()
-        : loadPushStatus(id, {
-            branch,
-            fetchFirst: opts?.fetchFirst,
-          }),
+        : loadPushStatus(id, { branch }),
       mode === "ensure" && has(id, "workingTree")
         ? Promise.resolve()
         : loadWorkingTree(id, { branch }),
@@ -190,8 +184,9 @@ export function useProjectQueryScheduler(
 
   /**
    * 统一远程刷新管线。合并此前两条会各自 fetch 的入口
-   * （handleFetchAll 的 fetchAllForProject 与 handleRefreshRemoteStatus 的 loadPushStatus(fetchFirst)）：
+   * （handleFetchAll 直调 fetchAllForProject 与 handleRefreshRemoteStatus 经 checkPushStatus 内部 fetch）：
    * 单飞后同一项目同时触发两个入口只产生一轮网络 fetch。
+   * 本管线是全局唯一的「fetch 后重查状态」路径，checkPushStatus 不再承担 fetch 职责。
    */
   async function refreshRemote(id: string, opts?: { force?: boolean }): Promise<void> {
     await run(id, "remoteRefresh", async () => {
@@ -203,8 +198,7 @@ export function useProjectQueryScheduler(
       const branch = await resolveBranch(id, { force: true })
       // 一次网络 fetch 更新跟踪分支
       await manager.fetchAllForProject(id)
-      // 状态重查必须 force：若加入别处在飞的状态查询，会拿到 fetch 之前的旧 ahead/behind。
-      // 不传 fetchFirst（fetch 已在此完成，避免二次网络往返）
+      // 状态重查必须 force：若加入别处在飞的状态查询，会拿到 fetch 之前的旧 ahead/behind
       await loadPushStatus(id, {
         branch,
         force: true,

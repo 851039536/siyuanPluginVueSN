@@ -423,10 +423,10 @@ export class RemoteOps {
   }
 
   /**
-   * 检查项目各远程的推送状态
-   * @param opts.fetchFirst 是否先 fetch 远程再检查（默认 false，手动刷新时传 true）
+   * 检查项目各远程的推送状态（纯本地比对跟踪 ref，不发起网络请求）
+   * @param opts.branch 已知分支名（调用方持有可省一次 rev-parse）
    */
-  async checkPushStatus(id: string, opts?: { branch?: string; fetchFirst?: boolean }): Promise<PushStatusInfo> {
+  async checkPushStatus(id: string, opts?: { branch?: string }): Promise<PushStatusInfo> {
     const project = await this.store.getProjectById(id)
     const emptyResult: PushStatusInfo = {
       branch: "",
@@ -458,12 +458,6 @@ export class RemoteOps {
         }
       }
       return status
-    }
-
-    // 如果指定 fetchFirst，先并行 fetch 所有已配置远程以更新跟踪分支
-    if (opts?.fetchFirst) {
-      const { errors } = await this.fetchAllForProject(id)
-      if (errors.length > 0) { console.warn("[gitPush] fetch 部分远程失败:", errors) }
     }
 
     // 由 PLATFORM_META 驱动检查

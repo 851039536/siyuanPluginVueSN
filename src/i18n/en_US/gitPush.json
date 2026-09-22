@@ -221,6 +221,7 @@
     "queryFailed": "Query failed",
     "loadingLabel": "Loading",
     "refreshingLabel": "Refreshing",
+    "selectCategoryHint": "Select a category above to view its projects",
     "deleteProjectTitle": "Delete Project",
     "deleteProjectConfirm": "Delete project \"{0}\"? This cannot be undone.",
     "addFailed": "Add failed",

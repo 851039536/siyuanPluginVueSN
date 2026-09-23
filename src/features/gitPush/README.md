@@ -20,6 +20,7 @@
 - **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test）与 GitHub 提交建议（scope 仅小写字母/数字/连字符、描述不以句号结尾、描述不少于最短字数、多行消息正文前空行），集中展示不合规提交及原因；「描述过短」阈值可在设置弹窗「常规」分区自定义（默认 10 字）；另含 3 条可选规则（默认开启，可在设置中单独关闭）：描述首字母大写（仅小写英文字母开头判违规）、WIP 临时提交检测（描述以 wip/todo/fixme/tbd 开头判违规）、正文行长限制（body 每行超限判违规，阈值默认 72 可配）；支持 AI 生成修正建议，并可修正 HEAD 或任意本地历史提交（个人项目版，历史重写后需自行 force push）；支持多选违规提交进行批量修正（批量弹窗内 AI 逐条生成 + 逐条保存，同项目内按新→旧顺序处理保证链式违规不丢修正）；违规行支持直接删除历史提交（与 LOG Tab 共用 DropCommitDialog：记录级删除、内容不变语义，merge/HEAD/rebase 残留拦截，bundle 备份可恢复且「删除前自动备份」开关持久化）
 - **仓库清理视图**：两段式 — ① 仓库体检（纯 git：.git 打包体积/对象总数 + 可达大文件 Top 50 与占比条形，非本地引用锚定的残留标注「远程引用/其他引用」徽章）；② BFG 历史清理（[BFG Repo-Cleaner](https://github.com/rtyley/bfg-repo-cleaner)）：大文件阈值清理 / 按名删除文件·文件夹 / 敏感文本全历史替换，走 mirror 裸仓库安全工作流（bundle 全量备份 → clone --mirror → BFG → gc → CAS 回写），六步步骤条 + 实时日志；Java 运行时自动探测，bfg.jar 首次使用自动下载（Maven Central 主源 + GitHub 备源），结果页一键强推远端（强推后自动 fetch --prune + gc 收尾，清除本地残留）
 - **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
+- **报告一键导出 HTML**：统计报告视图工具条「导出HTML」按钮，把当前项目 + 当前时间范围的报告导出为**单个自包含 HTML 文件**（内联 CSS + 内联 SVG 图表，零外部依赖、断网可打开、可直接分享或存档）；覆盖团队总览 / 代码贡献度 / 技术债务 / 代码热点 / 提交趋势五个分区全部内容，K 线图按 `MAX_CANDLES` 分桶压缩保证宽度有界；弹原生保存对话框选定路径，写盘后自动打开；未生成/git 失败/零提交时不产出空文件
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
 - **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红）；统计范围固定为「全部提交历史 + 工作区全部已跟踪文件」（无条数选择入口）；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
@@ -35,6 +36,8 @@ src/features/gitPush/
 ├── GitPushManager.ts                # 门面：组合 managers/ 协作者 + addTab/openWindow 独立窗口承载
 ├── reportMetrics.ts                 # 代码统计报告纯函数层：numstat 解析 + 作者/文件聚合 + 债务/热点评分 + K 线分桶压缩
 ├── reportChart.ts                   # 提交 K 线图绘制配置：chart.js 数据集/坐标轴/影线插件（自 CandlestickSection 迁出）
+├── htmlReport.ts                    # 报告导出纯函数层：CodeReportData → 单文件 HTML（内联 CSS + 内联 SVG 图表 + HTML 转义）
+├── htmlReport.ts                    # 报告导出纯函数层：CodeReportData → 单文件 HTML（内联 CSS + 内联 SVG 图表 + HTML 转义）
 ├── debtInsights.ts                  # 技术债务洞察纯函数：趋势推断 + 共变索引 + 严重度汇总（自 composables 迁出）
 ├── utils/                           # 纯函数层（按域拆分 + index.ts 汇聚，导出面与拆分前一致）
 │   ├── index.ts                     # 汇聚导出（消费方统一从 "../utils" 导入，路径零改动）
@@ -76,7 +79,8 @@ src/features/gitPush/
 │   ├── useCardServices.ts           # 卡片服务注入（inject CARD_SERVICES_KEY + 按项目 id 派生单项目 computed）
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   ├── useProjectQueryScheduler.ts  # 项目查询调度器（单飞去重 + 分支名复用 + 新鲜度节流 + 脏标记，查询调度唯一权威）
-│   └── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
+│   ├── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
+│   └── useReportExport.ts           # 报告导出编排（校验 → 保存对话框 → 渲染 → 写盘 → 提示并打开）
 ├── components/
 │   ├── common/                      # 复用组件（跨 ≥2 个视图引用，29 个；二次确认统一用共享 ConfirmDialog）
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗

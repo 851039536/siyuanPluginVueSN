@@ -7,6 +7,18 @@ interface OpenDialogResult {
   filePaths: string[]
 }
 
+/** Electron showSaveDialog 返回结果最小接口 */
+interface SaveDialogResult {
+  canceled: boolean
+  filePath?: string
+}
+
+/** 保存对话框的文件类型过滤（Electron FileFilter 最小子集） */
+export interface SaveDialogFilter {
+  name: string
+  extensions: string[]
+}
+
 /** Electron remote 模块最小接口（仅声明本项目用到的方法） */
 interface ElectronRemote {
   dialog?: {
@@ -14,6 +26,11 @@ interface ElectronRemote {
       properties: string[]
       title: string
     }) => Promise<OpenDialogResult>
+    showSaveDialog?: (options: {
+      title: string
+      defaultPath: string
+      filters?: SaveDialogFilter[]
+    }) => Promise<SaveDialogResult>
   }
 }
 
@@ -155,6 +172,35 @@ export async function pickFiles(title: string): Promise<string[] | null> {
       resolve(null)
     }
   })
+}
+
+/**
+ * 使用 Electron 原生保存对话框选择目标文件路径（取消或不可用返回 null）。
+ *
+ * 与 pickDirectory / pickFiles 同为「原生优先 + 降级」模式，但保存场景无可靠的浏览器降级路径：
+ * 浏览器 chooseFileSystemEntries 未被思源内核保证，故仅返回 null，由调用方改用下载方式兜底。
+ * defaultFileName 仅作为对话框预填名，末尾扩展名由 filters 约束。
+ */
+export async function pickSavePath(
+  title: string,
+  defaultFileName: string,
+  filters?: SaveDialogFilter[],
+): Promise<string | null> {
+  try {
+    const remote = getRemote()
+    if (remote?.dialog?.showSaveDialog) {
+      const result = await remote.dialog.showSaveDialog({
+        title,
+        defaultPath: defaultFileName,
+        filters,
+      })
+      // 原生对话框可用时直接返回结果，不穿透到降级方案
+      return !result.canceled && result.filePath ? result.filePath : null
+    }
+  } catch {
+    // remote 不可用或调用异常 → 交由调用方走下载兜底
+  }
+  return null
 }
 
 /** 获取 Electron webUtils 模块（Electron 32+ 用 getPathForFile 取拖入文件磁盘路径） */

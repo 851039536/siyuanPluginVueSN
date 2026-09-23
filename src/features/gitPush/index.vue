@@ -90,9 +90,11 @@
       :range="reportRange"
       :current-project="reportCurrentProject"
       :get-file-patch="fetchFilePatch"
+      :exporting="reportExporting"
       @run-report="runReport"
       @change-project="setProject"
       @change-range="setRange"
+      @export-html="exportReportHtml"
     />
 
     <!-- ========== 仓库清理视图 ========== -->
@@ -291,6 +293,7 @@ import { useRefreshOps } from "./composables/useRefreshOps"
 import { useRepoLinkAudit } from "./composables/useRepoLinkAudit"
 import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { useCodeReport } from "./composables/useCodeReport"
+import { useReportExport } from "./composables/useReportExport"
 import { CARD_SERVICES_KEY, PLATFORM_META } from "./types"
 import {
   openLocalPath,
@@ -624,6 +627,15 @@ const {
   ensureReport,
   fetchFilePatch,
 } = useCodeReport(props.manager, projects, props.i18n)
+
+// ── 报告导出（单文件 HTML，含内联 SVG 图表）──
+const { exporting: reportExporting, exportHtml: exportReportHtml } = useReportExport({
+  i18n: props.i18n,
+  report: reportData,
+  currentProject: reportCurrentProject,
+  generated: reportGenerated,
+  running: reportRunning,
+})
 
 const {
   detectedIdes,

@@ -34,10 +34,14 @@ const WIP_SUBJECT_REGEX = /^(wip|todo|fixme|tbd)\b/i
 export function buildCommitRulePrompt(config: CommitRuleConfig): string {
   const parts = [
     `type 必须为 ${COMMIT_TYPE_VALUES.join("/")} 之一`,
-    "scope（可选）仅允许小写字母、数字、连字符；引用模块名时转为小写连字符形式（如 HidHelper → hid-helper）",
     "描述使用中文，不得以句号（. 或 。）结尾",
     `描述不少于 ${config.minSubjectLength} 个字`,
   ]
+  // scope 字符集约束仅在开启该规则时下发：规则关闭时不再要求 AI 转小写连字符，
+  // 使设置与 AI 产出行为一致（否则会出现"设置里关了、AI 仍按开启生成"的错位）
+  if (config.scopeFormatEnabled) {
+    parts.splice(1, 0, "scope（可选）仅允许小写字母、数字、连字符；引用模块名时转为小写连字符形式（如 HidHelper → hid-helper）")
+  }
   // 首字母大写规则无需 prompt：描述使用中文即天然合规
   if (config.detectWipSubject) {
     parts.push("不要以 wip/todo/fixme 等临时标记开头")
@@ -51,7 +55,7 @@ export function buildCommitRulePrompt(config: CommitRuleConfig): string {
 /**
  * 校验单条提交信息，返回不合规原因；合规返回 null。
  * 规则：type(scope)!: 描述，type 限 feat/fix/chore/docs/style/refactor/test；
- * 另含 GitHub 建议（scope 格式/句号结尾/最短字数/标题正文空行）与可选规则（首字母大写/WIP/正文行长）。
+ * 另含 GitHub 建议（句号结尾/最短字数/标题正文空行）与可选规则（首字母大写/WIP/scope 格式/正文行长）。
  * @param config 规则配置（阈值 + 可选规则开关），缺省用默认配置，调用点向后兼容
  */
 export function checkCommitRule(
@@ -69,8 +73,10 @@ export function checkCommitRule(
   if (!ALLOWED_TYPES.has(type)) return "invalidType"
   if (scope !== undefined) {
     const trimmedScope = scope.trim()
+    // "scope 为空"恒校验：写了空括号 `feat(): xxx` 在任何配置下都是笔误，与字符集规则无关
     if (!trimmedScope) return "invalidScope"
-    if (!SCOPE_FORMAT_REGEX.test(trimmedScope)) return "invalidScopeFormat"
+    // 字符集规则按开关生效（默认关闭）：见 CommitRuleConfig.scopeFormatEnabled 注释
+    if (config.scopeFormatEnabled && !SCOPE_FORMAT_REGEX.test(trimmedScope)) return "invalidScopeFormat"
   }
 
   // 冒号后必须恰好一个空格，再接非空描述

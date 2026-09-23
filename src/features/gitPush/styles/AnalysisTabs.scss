@@ -1,0 +1,43 @@
+// gitPush 提交分析三视角切换条（提交概览 / 规则检查 / 行数排行）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// ── Tab 条（分段控件观感：外框 + 内部按钮分组，与 .gp-view-toggle 同一范式）──
+.gpa-tabs {
+  display: flex;
+  gap: $s-px2;
+  margin-bottom: $s-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  overflow: hidden;
+  align-self: flex-start; // 内容宽而非撑满（分段控件不该通栏）
+}
+
+// Tab 按钮：共享 Button（ghost + xsmall + dense）承担交互与键盘可达性；
+// 4 类 = (0,4,0)，压过 dense 档位的圆角/字号与根类的 justify-content: center
+.gpa-panel .gpa-tabs .gpa-tab.si-button {
+  border-radius: 0;
+  border: none;
+  padding: $s-1 $s-2;
+  opacity: 0.55;
+
+  &:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  // 激活态：主题色浅底 + 主题色文字（与原 .gp-view-btn.active 同观感）
+  &[aria-pressed="true"] {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    font-weight: $fw-semibold;
+  }
+}
+
+// Tab 计数角标（等宽数字，与区块标题计数徽章同口径）
+.gpa-tab-count {
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $t-2xs;
+  opacity: 0.6;
+}

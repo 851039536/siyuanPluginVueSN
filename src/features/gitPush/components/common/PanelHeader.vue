@@ -52,7 +52,7 @@
             height="12"
           />
         </button>
-        <!-- 按钮（tooltip：“提交分析”） -->
+        <!-- 按钮（tooltip："提交分析"；规则检查与行数排行为其内部 Tab，不再各占一个入口） -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === 'analysis' }"
@@ -61,18 +61,6 @@
         >
           <Icon
             icon="mdi:chart-timeline-variant"
-            height="12"
-          />
-        </button>
-        <!-- 按钮（tooltip："提交规则检查"） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'rulecheck' }"
-          :title="i18n.ruleCheckView"
-          @click="currentView = 'rulecheck'"
-        >
-          <Icon
-            icon="mdi:clipboard-check-outline"
             height="12"
           />
         </button>
@@ -85,18 +73,6 @@
         >
           <Icon
             icon="mdi:history"
-            height="12"
-          />
-        </button>
-        <!-- 按钮（tooltip："行数统计"） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'linestats' }"
-          :title="i18n.lineStatsView"
-          @click="currentView = 'linestats'"
-        >
-          <Icon
-            icon="mdi:code-tags"
             height="12"
           />
         </button>

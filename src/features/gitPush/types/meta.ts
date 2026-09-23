@@ -202,8 +202,10 @@ export interface StatsView {
   platformStatusProjects: PlatformStatusItem[]
 }
 
-/** 面板头部视图（列表/统计/操作日志/提交分析/提交规则检查/行数统计/代码统计报告/仓库清理），与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
-export type PanelView = "list" | "stats" | "log" | "analysis" | "rulecheck" | "linestats" | "report" | "repoclean"
+/** 面板头部视图（列表/统计/操作日志/提交分析/统计报告/仓库清理）。
+ * 规则检查与行数排行已合并为「提交分析」视图的内部 Tab（三者同属一次 git 抓取的不同切面），故不再是独立面板视图。
+ * 与 ViewMode（列表内筛选模式 all/needsPush/...）语义不同 */
+export type PanelView = "list" | "stats" | "log" | "analysis" | "report" | "repoclean"
 
 // ── 提交分析视图（useCommitAnalysis 产出 / CommitAnalysisPanel 消费）──
 

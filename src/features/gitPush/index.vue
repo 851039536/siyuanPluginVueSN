@@ -28,8 +28,11 @@
       :auditing="auditing"
       :audited="audited"
       :audit-summary="auditSummary"
+      :refreshing="statsRefreshing"
+      :refreshed-at="statsRefreshedAt"
       @view-project="onViewProject"
       @run-audit="runAudit"
+      @refresh="refreshStatsData"
     />
 
     <!-- ========== 操作日志视图 ========== -->
@@ -820,6 +823,30 @@ watch(activeCategory, async (catId) => {
 /** 补齐所有项目的统计最小数据集（统计视图与智能视图共用，未缓存的项目才入队） */
 async function ensureStatsDataLoaded() {
   await ensureStatusFor(projects.value)
+}
+
+/** 统计视图快照刷新中（工具条刷新按钮转圈禁用） */
+const statsRefreshing = ref(false)
+
+/** 统计视图上次快照刷新完成时间（ISO，空串 = 本次会话尚未手动刷新过；工具条状态文案数据源） */
+const statsRefreshedAt = ref("")
+
+/**
+ * 统计视图"刷新"：强制重查全部项目的状态最小数据集（pushStatus + workingTree）。
+ * 与 ensureStatsDataLoaded 的区别是不走缓存短路——调度器 loadStatus 的 refresh 模式会强制重查，
+ * 批内并发仍受 git 并发设置约束，进度经 runBatchWithProgress 复用头部旋转指示器。
+ */
+async function refreshStatsData() {
+  if (statsRefreshing.value || projects.value.length === 0) return
+  statsRefreshing.value = true
+  try {
+    await runBatchWithProgress(projects.value, tf("refreshingLabel"), async (p) => {
+      await scheduler.loadStatus(p.id, { mode: "refresh" })
+    })
+    statsRefreshedAt.value = new Date().toISOString()
+  } finally {
+    statsRefreshing.value = false
+  }
 }
 
 /** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */

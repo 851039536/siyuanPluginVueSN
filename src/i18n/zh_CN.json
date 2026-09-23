@@ -1342,6 +1342,8 @@
     "needsPushShort": "待推送",
     "needsPullShort": "待拉取",
     "categoryDistribution": "分类分布",
+    "statsProjectCount": "共 {0} 个项目",
+    "statsSnapshotAt": "上次刷新：{0}",
     "starred": "收藏",
     "needsPushList": "未及时推送项目",
     "recentCommits": "最近提交",

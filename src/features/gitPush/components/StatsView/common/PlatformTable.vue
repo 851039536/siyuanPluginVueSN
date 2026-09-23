@@ -1,13 +1,13 @@
 <!-- gitPush 统计视图平台矩阵表格（项目名 + 四平台状态列 + 操作列，单元格视图模型驱动） -->
 <template>
-  <div class="gp-table-wrap">
+  <div class="gps-table-wrap">
     <!-- 表头："项目名称" + 四平台图标列 + 操作列 -->
-    <div class="gp-table-row gp-table-row--head">
-      <span class="gp-table-cell gp-table-cell--name">{{ i18n.projectName }}</span>
+    <div class="gps-table-row gps-table-row--head">
+      <span class="gps-table-cell gps-table-cell--name">{{ i18n.projectName }}</span>
       <span
         v-for="pm in PLATFORM_META"
         :key="pm.key"
-        class="gp-table-cell gp-table-cell--platform-status"
+        class="gps-table-cell gps-table-cell--platform-status"
         :title="pm.label"
       >
         <Icon
@@ -15,29 +15,29 @@
           height="12"
         />
       </span>
-      <span class="gp-table-cell gp-table-cell--act"></span>
+      <span class="gps-table-cell gps-table-cell--act"></span>
     </div>
     <!-- 数据行：点击跳转项目详情（icon 为空渲染占位符 -） -->
     <div
       v-for="row in rows"
       :key="row.id"
-      class="gp-table-row gp-table-row--clickable"
+      class="gps-table-row gps-table-row--clickable"
       @click="emit('viewProject', row.id)"
     >
       <span
-        class="gp-table-cell gp-table-cell--name"
+        class="gps-table-cell gps-table-cell--name"
         :title="row.path"
       >
         {{ row.name }}
         <span
           v-if="row.nameSuffix"
-          class="gp-audit-error-text"
+          class="gps-error-text"
         >{{ row.nameSuffix }}</span>
       </span>
       <span
         v-for="cell in row.cells"
         :key="cell.key"
-        class="gp-table-cell gp-table-cell--platform-status"
+        class="gps-table-cell gps-table-cell--platform-status"
         :title="cell.title"
       >
         <Icon
@@ -48,10 +48,10 @@
         />
         <span
           v-else
-          class="gp-cell-empty"
+          class="gps-cell-empty"
         >-</span>
       </span>
-      <span class="gp-table-cell gp-table-cell--act">
+      <span class="gps-table-cell gps-table-cell--act">
         <Icon
           icon="mdi:arrow-right"
           height="12"

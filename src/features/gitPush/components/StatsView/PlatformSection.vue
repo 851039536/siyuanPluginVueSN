@@ -2,28 +2,33 @@
 <template>
   <StatsSection :title="i18n.platformStatus">
     <!-- 覆盖率汇总：四个平台 + 多远程合计（配置驱动渲染条形，hover 显示项目数明细） -->
-    <div class="gp-coverage-list">
+    <div class="gps-bar-list">
       <div
         v-for="c in coverageItems"
         :key="c.key"
-        class="gp-coverage-item"
-        :title="c.counts"
+        class="gps-bar-row"
       >
-        <div class="gp-coverage-head">
+        <span
+          class="gps-bar-label"
+          :title="c.label"
+        >
           <Icon
             :icon="c.icon"
             height="12"
           />
-          <span>{{ c.label }}</span>
-          <span class="gp-coverage-num">{{ c.pct }}</span>
-        </div>
-        <div class="gp-coverage-bar">
-          <div
-            class="gp-coverage-fill"
-            :class="`gp-coverage-fill--${c.key}`"
+          <span class="gps-bar-text">{{ c.label }}</span>
+        </span>
+        <span class="gps-bar-track">
+          <span
+            class="gps-bar-fill"
+            :class="`gps-bar-fill--${c.key}`"
             :style="{ width: c.pct }"
           />
-        </div>
+        </span>
+        <span
+          class="gps-bar-num"
+          :title="c.counts"
+        >{{ c.count }}</span>
       </div>
     </div>
 
@@ -38,13 +43,12 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 统计视图平台区块：把原本「远程覆盖率」与「平台配置状态」两个独立区块合并为一个——
-// 二者是同一份 PLATFORM_META 上的两种切面（汇总占比 vs 逐项目明细），分列两个卡片会让同一批数据
-// 在屏幕上出现两次标题与两层边框；合并后汇总条在上、明细矩阵在下，读作一个区块。
+// gitPush 统计视图平台区块：把「远程覆盖率」与「平台配置状态」合并为一个区块——
+// 二者是同一份 PLATFORM_META 上的两种切面（汇总占比 vs 逐项目明细），合并后汇总条在上、明细矩阵在下，读作一个区块。
 import type { PlatformTableRowView, StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { PLATFORM_META, getPlatformStatus } from "../../types"
+import { PLATFORM_META } from "../../types"
 import { ratioPct } from "../../utils"
 import PlatformTable from "./common/PlatformTable.vue"
 import StatsSection from "./common/StatsSection.vue"
@@ -59,7 +63,7 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（预计算占比与计数明细；key 同时作为 gp-coverage-fill 修饰类后缀） */
+/** 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（预计算占比与计数明细；key 同时作为填充色修饰类后缀） */
 const coverageItems = computed(() => {
   const total = props.stats.projectCount
   const platformItems = PLATFORM_META.map((pm) => {
@@ -88,19 +92,19 @@ const coverageItems = computed(() => {
   ]
 })
 
-// 平台状态行视图模型：预计算每格图标与"已配置"/"未配置"提示，避免模板中每行 12 次 getPlatformStatus 调用
+// 平台状态行视图模型：预计算每格图标与"已配置"/"未配置"提示，避免模板中每行重复做键查找与文案判定
 const platformRows = computed<PlatformTableRowView[]>(() =>
   props.stats.platformStatusProjects.map((item) => ({
     id: item.project.id,
     name: item.project.name,
     path: item.project.path,
     cells: PLATFORM_META.map((pm) => {
-      const ok = getPlatformStatus(item, pm.key)
+      const ok = item[pm.key]
       return {
         key: pm.key,
         title: ok ? props.i18n.configured : props.i18n.notConfigured,
         icon: ok ? "mdi:check-circle" : "mdi:close-circle-outline",
-        iconCls: ok ? "gp-platform-ok" : "gp-platform-missing",
+        iconCls: ok ? "gps-platform-ok" : "gps-platform-missing",
       }
     }),
   })),

@@ -1,47 +1,45 @@
-<!-- 仓库链接一致性区块（统计面板子区块：按需批量比对手动仓库链接与实际 git 远程 URL） -->
+<!-- 仓库链接一致性区块（统计视图子区块：按需批量比对手动仓库链接与实际 git 远程 URL） -->
 <template>
   <StatsSection
     :title="i18n.repoLinkAudit"
     :count="audited ? issueRows.length : undefined"
   >
-    <!-- 区块标题："仓库链接一致性" -->
+    <!-- 运行入口就放在本区块标题右侧：审计是区块自己的动作，藏在顶部工具条会让用户找不到 -->
     <template #action>
-      <!-- 按钮："开始分析"/"重新分析"（分析中转圈禁用） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm gp-audit-run-btn"
+      <Button
+        class="gps-audit-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        :outlined="audited && !auditing"
+        :icon="auditing ? 'loading' : 'linkVariant'"
+        :loading="auditing"
         :disabled="auditing"
+        :title="audited ? i18n.auditRerun : i18n.auditHint"
         @click="emit('runAudit')"
       >
-        <Icon
-          :icon="auditing ? 'mdi:loading' : 'mdi:magnify-scan'"
-          height="12"
-          :class="{ 'gp-spin': auditing }"
-        />
-        <span>{{ audited ? i18n.auditRerun : i18n.auditRun }}</span>
-      </button>
+        {{ audited ? i18n.auditRerun : i18n.auditRun }}
+      </Button>
     </template>
 
     <!-- 未分析提示："点击开始分析，将对所有项目执行 git remote -v 比对" -->
     <div
       v-if="!audited && !auditing"
-      class="gp-audit-hint"
+      class="gps-hint"
     >
       {{ i18n.auditHint }}
     </div>
     <!-- 首轮分析中占位："分析中…" -->
     <div
       v-else-if="!audited"
-      class="gp-audit-hint"
+      class="gps-hint"
     >
       {{ i18n.auditing }}
     </div>
 
     <template v-else>
       <!-- 四态汇总 chips：一致/不一致/仅配置链接/仅存在远程（hover 显示状态名） -->
-      <StatusChipBar
-        :i18n="i18n"
-        :chips="auditChips"
-      />
+      <StatusChipBar :chips="auditChips" />
       <!-- 问题项目表格（仅展示存在不一致/缺失/检测失败的项目） -->
       <PlatformTable
         v-if="issueRows.length > 0"
@@ -66,8 +64,8 @@ import type {
   RepoLinkAuditState,
   RepoLinkAuditSummary,
 } from "../../types"
-import { Icon } from "@iconify/vue"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import AllClear from "./common/AllClear.vue"
 import PlatformTable from "./common/PlatformTable.vue"
 import StatsSection from "./common/StatsSection.vue"
@@ -82,12 +80,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  runAudit: []
   viewProject: [projectId: string]
+  runAudit: []
 }>()
 
 // 审计四态元数据（chip 轮廓图标 + 单元格实心图标 + chip 修饰类 + 单元格颜色类 + 状态名 i18n 键；
-// 合并原 AUDIT_CHIPS / STATE_META 两份配置，linkOnly/remoteOnly 图标本就相同）
+// linkOnly/remoteOnly 图标本就相同，合并一份配置）
 const AUDIT_STATE_META: Record<Exclude<RepoLinkAuditState, "none">, {
   chipIcon: string
   cellIcon: string
@@ -95,19 +93,19 @@ const AUDIT_STATE_META: Record<Exclude<RepoLinkAuditState, "none">, {
   cellCls: string
   labelKey: string
 }> = {
-  match: { chipIcon: "mdi:check-circle-outline", cellIcon: "mdi:check-circle", chipCls: "synced", cellCls: "gp-audit-match", labelKey: "auditMatch" },
-  mismatch: { chipIcon: "mdi:alert-circle-outline", cellIcon: "mdi:alert-circle", chipCls: "error", cellCls: "gp-audit-mismatch", labelKey: "auditMismatch" },
-  linkOnly: { chipIcon: "mdi:link-variant-off", cellIcon: "mdi:link-variant-off", chipCls: "behind", cellCls: "gp-audit-linkonly", labelKey: "auditLinkOnly" },
-  remoteOnly: { chipIcon: "mdi:source-branch", cellIcon: "mdi:source-branch", chipCls: "ahead", cellCls: "gp-audit-remoteonly", labelKey: "auditRemoteOnly" },
+  match: { chipIcon: "mdi:check-circle-outline", cellIcon: "mdi:check-circle", chipCls: "synced", cellCls: "gps-audit-match", labelKey: "auditMatch" },
+  mismatch: { chipIcon: "mdi:alert-circle-outline", cellIcon: "mdi:alert-circle", chipCls: "error", cellCls: "gps-audit-mismatch", labelKey: "auditMismatch" },
+  linkOnly: { chipIcon: "mdi:link-variant-off", cellIcon: "mdi:link-variant-off", chipCls: "behind", cellCls: "gps-audit-linkonly", labelKey: "auditLinkOnly" },
+  remoteOnly: { chipIcon: "mdi:source-branch", cellIcon: "mdi:source-branch", chipCls: "ahead", cellCls: "gps-audit-remoteonly", labelKey: "auditRemoteOnly" },
 }
 
-/** 四态汇总 chips（数值取 summary） */
+/** 四态汇总 chips（数值取 summary；label 在此按 i18n 预渲染，chip 组件保持纯展示） */
 const auditChips = computed(() =>
   (Object.keys(AUDIT_STATE_META) as Exclude<RepoLinkAuditState, "none">[]).map((state) => ({
     key: state,
     icon: AUDIT_STATE_META[state].chipIcon,
     cls: AUDIT_STATE_META[state].chipCls,
-    labelKey: AUDIT_STATE_META[state].labelKey,
+    label: props.i18n[AUDIT_STATE_META[state].labelKey],
     value: props.summary[state],
   })),
 )
@@ -136,6 +134,6 @@ function cellTitle(cell: RepoLinkAuditCell): string {
 </script>
 
 <style lang="scss">
-@use "../../styles/RepoLinkAuditSection.scss";
+@use "../../styles/StatsPanel.scss";
 @use "../../styles/index.scss";
 </style>

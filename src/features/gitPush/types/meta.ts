@@ -261,22 +261,26 @@ export type CommitRuleReasonKey =
   | "wipSubject"
   | "bodyLineTooLong"
 
-/** 提交规则原因元数据（labelKey 对应 i18n 键 ruleCheckReason*） */
-export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: string }> = {
-  whitespace: { labelKey: "ruleCheckReasonWhitespace" },
-  missingType: { labelKey: "ruleCheckReasonMissingType" },
-  invalidType: { labelKey: "ruleCheckReasonInvalidType" },
-  invalidScope: { labelKey: "ruleCheckReasonInvalidScope" },
-  invalidScopeFormat: { labelKey: "ruleCheckReasonInvalidScopeFormat" },
-  badSeparator: { labelKey: "ruleCheckReasonBadSeparator" },
-  emptySubject: { labelKey: "ruleCheckReasonEmptySubject" },
-  notChinese: { labelKey: "ruleCheckReasonNotChinese" },
-  subjectEndsWithPeriod: { labelKey: "ruleCheckReasonEndsWithPeriod" },
-  subjectTooShort: { labelKey: "ruleCheckReasonSubjectTooShort" },
-  missingBlankLine: { labelKey: "ruleCheckReasonMissingBlankLine" },
-  subjectNotCapitalized: { labelKey: "ruleCheckReasonNotCapitalized" },
-  wipSubject: { labelKey: "ruleCheckReasonWipSubject" },
-  bodyLineTooLong: { labelKey: "ruleCheckReasonBodyLineTooLong" },
+/**
+ * 提交规则原因元数据。
+ * labelKey = 简短标签（表格/徽章内展示，如"scope 格式非法"）；
+ * descKey = 一句话说明（悬停提示，讲清"为什么判违规 + 怎么改"，如"scope 仅允许小写字母、数字、连字符"）。
+ */
+export const COMMIT_RULE_REASON_META: Record<CommitRuleReasonKey, { labelKey: string, descKey: string }> = {
+  whitespace: { labelKey: "ruleCheckReasonWhitespace", descKey: "ruleCheckReasonWhitespaceDesc" },
+  missingType: { labelKey: "ruleCheckReasonMissingType", descKey: "ruleCheckReasonMissingTypeDesc" },
+  invalidType: { labelKey: "ruleCheckReasonInvalidType", descKey: "ruleCheckReasonInvalidTypeDesc" },
+  invalidScope: { labelKey: "ruleCheckReasonInvalidScope", descKey: "ruleCheckReasonInvalidScopeDesc" },
+  invalidScopeFormat: { labelKey: "ruleCheckReasonInvalidScopeFormat", descKey: "ruleCheckReasonInvalidScopeFormatDesc" },
+  badSeparator: { labelKey: "ruleCheckReasonBadSeparator", descKey: "ruleCheckReasonBadSeparatorDesc" },
+  emptySubject: { labelKey: "ruleCheckReasonEmptySubject", descKey: "ruleCheckReasonEmptySubjectDesc" },
+  notChinese: { labelKey: "ruleCheckReasonNotChinese", descKey: "ruleCheckReasonNotChineseDesc" },
+  subjectEndsWithPeriod: { labelKey: "ruleCheckReasonEndsWithPeriod", descKey: "ruleCheckReasonEndsWithPeriodDesc" },
+  subjectTooShort: { labelKey: "ruleCheckReasonSubjectTooShort", descKey: "ruleCheckReasonSubjectTooShortDesc" },
+  missingBlankLine: { labelKey: "ruleCheckReasonMissingBlankLine", descKey: "ruleCheckReasonMissingBlankLineDesc" },
+  subjectNotCapitalized: { labelKey: "ruleCheckReasonNotCapitalized", descKey: "ruleCheckReasonNotCapitalizedDesc" },
+  wipSubject: { labelKey: "ruleCheckReasonWipSubject", descKey: "ruleCheckReasonWipSubjectDesc" },
+  bodyLineTooLong: { labelKey: "ruleCheckReasonBodyLineTooLong", descKey: "ruleCheckReasonBodyLineTooLongDesc" },
 }
 
 /** 提交规则可配置项（规则引擎纯函数的显式配置注入，不依赖模块级状态） */
@@ -291,6 +295,7 @@ export interface CommitRuleConfig {
    * 可选规则：scope 格式校验（scope 仅允许小写字母、数字、连字符，如 `hid-helper`）。
    * 关闭后任意 scope 写法（含大写、下划线、中文、带点/斜杠）均不判违规——仅保留"scope 为空"的校验。
    * 默认关闭：该规则偏严格（`feat(HidHelper)` 这类驼峰写法很常见），交由用户按团队习惯自行开启。
+   * 详细说明见 i18n 键 ruleCheckOptScopeFormatHint（设置项下方提示）。
    */
   scopeFormatEnabled: boolean
   /** 可选规则：正文行长限制开关（多行消息 body 每行超限判违规） */

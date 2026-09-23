@@ -68,6 +68,8 @@ export {
   parseCommitAnalysisType,
   rankByCount,
   resolveAnalysisRange,
+  ruleReasonDesc,
+  ruleReasonText,
 } from "./analysis"
 
 export {

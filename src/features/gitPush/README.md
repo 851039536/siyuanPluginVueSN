@@ -141,8 +141,9 @@ src/features/gitPush/
 │   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
 │   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
 │   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
-│   ├── CommitAnalysis/              # 提交分析视图专属（10 个）
-│   │   ├── index.vue                # 提交分析视图入口容器（状态编排 + 各区块组合）
+│   ├── CommitAnalysis/              # 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行；11 个）
+│   │   ├── index.vue                # 视图入口容器（三 Tab 编排 + 共用工具条/四态门；规则检查与行数排行的区块在此组合）
+│   │   ├── AnalysisTabs.vue         # 三视角切换条（三者同属一次 runCore 抓取的不同切面）
 │   │   ├── ProjectRankingSection.vue# 项目提交排行区块（条形 + 百分比，点击跳转）
 │   │   ├── RecentCommitsSection.vue # 最近提交记录区块（条目 + 分页加载）
 │   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（viewSettings 切换）
@@ -152,8 +153,7 @@ src/features/gitPush/
 │   │   ├── AnalysisSettingsForm.vue # 分析显示设置表单（视图/范围/周起始/颜色，popover 与设置汇总弹窗共用）
 │   │   ├── CommitCalendar.vue       # 提交日历
 │   │   └── CommitHeatmap.vue        # 提交热力图
-│   ├── CommitRuleCheck/             # 提交规则检查视图专属（4 个）
-│   │   ├── index.vue                # 提交规则检查视图入口容器（状态编排 + 区块组合 + 修正弹窗）
+│   ├── CommitRuleCheck/             # 规则检查视角的区块组件（无独立入口，由 CommitAnalysis 组合）
 │   │   ├── RuleCheckOverview.vue    # 总览区块（检查数/不合规/合规率卡片 + 规则提示）
 │   │   ├── ReasonDistributionSection.vue # 违规类型分布区块（紧凑 chips：标题与计数圆片同行）
 │   │   └── ViolationListSection.vue # 不合规提交列表区块（条目 + 修正/删除入口 + 分页）
@@ -163,8 +163,7 @@ src/features/gitPush/
 │   │   ├── LargeBlobSection.vue     # 大文件列表区块（体积 + 占比条形 + 分页）
 │   │   ├── CleanWizardDialog.vue    # BFG 清理向导弹窗（策略表单 → 前置检查 → 执行 → 结果，四段式）
 │   │   └── format.ts                # 字节人类可读化工具（formatBytes）
-│   └── LineStats/                   # 行数统计专属（5 个）
-│       ├── index.vue                # 行数统计视图入口容器（状态编排 + 汇总卡片 + 排行 + 弹窗）
+│   └── LineStats/                   # 行数排行视角的区块组件（无独立入口，由 CommitAnalysis 组合）
 │       ├── LineRankingSection.vue   # 项目代码行数排行区块（吸顶表头 + 共享 LineRankRow 行，点击行打开详情）
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       ├── ProjectLineDetail.vue    # 项目行数详情弹窗

@@ -42,60 +42,39 @@
       @view-project="onViewProject"
     />
 
-    <!-- ========== 提交分析视图 ========== -->
+    <!-- ========== 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行） ========== -->
     <CommitAnalysisPanel
       v-if="currentView === 'analysis'"
       :i18n="i18n"
+      :projects="projects"
       :stats="analysisStats"
+      :rule-check-stats="commitRuleStats"
       :analyzing="analysisAnalyzing"
       :analyzed="analysisAnalyzed"
       :analyzed-at="analysisAnalyzedAt"
+      :line-analyzed-at="lineAnalyzedAt"
       :commit-count="analysisCommitCount"
       :view-settings="analysisViewSettings"
-      @run-analysis="runAnalysis"
-      @update-count="setCommitCount"
-      @update-view-settings="updateViewSettings"
-      @view-project="onViewProject"
-    />
-
-    <!-- ========== 提交规则检查视图 ========== -->
-    <CommitRuleCheckPanel
-      v-if="currentView === 'rulecheck'"
-      :i18n="i18n"
-      :stats="commitRuleStats"
-      :projects="projects"
-      :project-id="effectiveRuleCheckProjectId"
-      :analyzing="analysisAnalyzing"
-      :analyzed="analysisAnalyzed"
-      :analyzed-at="analysisAnalyzedAt"
-      :commit-count="analysisCommitCount"
-      @run-analysis="runAnalysis"
-      @update-count="setCommitCount"
-      @update-project="setRuleCheckProject"
-      @view-project="onViewProject"
-    />
-
-    <!-- ========== 行数统计视图 ========== -->
-    <LineStatsPanel
-      v-if="currentView === 'linestats'"
-      :i18n="i18n"
-      :project-count="projects.length"
+      :rule-check-project-id="effectiveRuleCheckProjectId"
       :project-ranking="projectLineRanking"
-      :analyzing="lineAnalyzing"
-      :analyzed="lineAnalyzed"
-      :analyzed-at="lineAnalyzedAt"
-      :failed-count="lineFailedCount"
+      :line-stats-summary="lineStatsSummary"
+      :line-analyzing="lineAnalyzing"
+      :line-analyzed="lineAnalyzed"
+      :line-failed-count="lineFailedCount"
       :fetch-failures="fetchFailures"
-      :summary="lineStatsSummary"
       :selected-extensions="selectedExtensions"
       :line-detail-project-id="lineDetailProjectId"
+      :line-detail-refreshing="lineDetailRefreshing"
       :get-project-numstat="getProjectNumstat"
       :get-project-file-lines="getProjectFileLines"
       :refresh-project="refreshLineStatsProject"
-      :line-detail-refreshing="lineDetailRefreshing"
-      @run-analysis="runLineStatsAnalysis"
+      @run-analysis="runAnalysis"
+      @run-line-stats="runLineStatsAnalysis"
+      @update-count="setCommitCount"
+      @update-view-settings="updateViewSettings"
       @update-selected-extensions="updateSelectedExtensions"
-      @view-project="lineDetailProjectId = $event"
+      @update-project="setRuleCheckProject"
+      @view-project="onViewProject"
       @close-line-detail="lineDetailProjectId = ''"
     />
 
@@ -295,8 +274,6 @@ import SettingsDialog from "./components/common/SettingsDialog.vue"
 import StatsPanel from "./components/StatsView/index.vue"
 import LogPanel from "./components/LogPanel/index.vue"
 import CommitAnalysisPanel from "./components/CommitAnalysis/index.vue"
-import CommitRuleCheckPanel from "./components/CommitRuleCheck/index.vue"
-import LineStatsPanel from "./components/LineStats/index.vue"
 import CodeReportPanel from "./components/CodeReport/index.vue"
 import RepoCleanPanel from "./components/RepoCleanPanel/index.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
@@ -855,9 +832,10 @@ watch(currentView, async (view) => {
       opLogsLoading.value = false
     }
   }
-  if ((view === "analysis" || view === "rulecheck") && !gitOpsPaused.value) await ensureAnalysis()
-  // 行数统计缓存加载是纯本地存储读取，不触发 git 操作，暂停 git 操作时仍须恢复过滤选择与上次行数数据（否则重启后勾选丢失）
-  if (view === "linestats") await ensureLineStats()
+  if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
+  // 行数排行是「提交分析」视图的内部 Tab，其缓存加载是纯本地存储读取、不触发 git，
+  // 故与 ensureAnalysis 一并无条件执行（暂停 git 操作时仍须恢复过滤选择与上次行数数据，否则重启后勾选丢失）
+  if (view === "analysis") await ensureLineStats()
   if (view === "report" && !gitOpsPaused.value) await ensureReport()
 })
 
@@ -870,13 +848,9 @@ watch(viewMode, async (mode) => {
 /** 解除暂停时按当前上下文补载数据（暂停期间跳过的加载在恢复后立即补齐） */
 watch(gitOpsPaused, async (paused) => {
   if (paused) return
-  // 提交分析/提交规则检查视图：暂停期间跳过的缓存加载/首次分析在恢复后补齐
-  if (currentView.value === "analysis" || currentView.value === "rulecheck") {
+  // 提交分析视图（含规则检查 / 行数排行两个内部 Tab）：暂停期间跳过的缓存加载/首次分析在恢复后补齐
+  if (currentView.value === "analysis") {
     await ensureAnalysis()
-    return
-  }
-  // 行数统计视图：视图 watch 已无条件加载缓存（纯存储读取），此处仅作冗余兜底
-  if (currentView.value === "linestats") {
     await ensureLineStats()
     return
   }

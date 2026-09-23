@@ -1,10 +1,8 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 面板基座（六视图共用 panel-base：独立滚动 + 上下留白 + 右侧间距）──
-.gls-panel {
-  @include panel-base;
-}
+// ── 面板基座：行数排行已并入「提交分析」视图内部 Tab，根容器由 .gpa-panel（CommitAnalysisPanel.scss）承担，
+//    故此处不再声明 .gls-panel（无对应消费方），本文件只保留 Tab 内容区块的样式 ──
 
 // ── 顶部工具条与状态文案：已收敛至 styles/AnalysisToolbar.scss（统一工具条共用）──
 

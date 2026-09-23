@@ -190,6 +190,23 @@
             <div class="gp-set-hint">
               {{ i18n.ruleCheckOptWipHint }}
             </div>
+            <!-- 可选规则开关：scope 格式校验（勾选即时保存；默认关闭，见 DEFAULT_COMMIT_RULE_CONFIG 注释） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："scope 格式校验" -->
+              <label class="gp-set-label">{{ i18n.ruleCheckOptScopeFormat }}</label>
+              <div class="gp-set-input-row">
+                <input
+                  type="checkbox"
+                  class="gp-set-switch"
+                  :checked="ruleConfig.scopeFormatEnabled"
+                  @change="onRuleToggle('scopeFormatEnabled', $event)"
+                />
+              </div>
+            </div>
+            <!-- 提示文案："开启后 scope 仅允许小写字母、数字、连字符（如 hid-helper）；关闭则不限写法，仅拦截空 scope" -->
+            <div class="gp-set-hint">
+              {{ i18n.ruleCheckOptScopeFormatHint }}
+            </div>
             <!-- 可选规则开关：正文行长限制（勾选即时保存 + 行长阈值输入） -->
             <div class="gp-set-row gp-set-row--spaced">
               <!-- 设置项标签："正文行长限制" -->
@@ -362,7 +379,7 @@ function saveDiffContextBudget() {
 }
 
 /** 可选规则开关切换（checkbox 即时保存，同分支模式 radio 即时语义） */
-function onRuleToggle(key: "requireCapitalizedSubject" | "detectWipSubject" | "bodyLineLimitEnabled", e: Event) {
+function onRuleToggle(key: "requireCapitalizedSubject" | "detectWipSubject" | "scopeFormatEnabled" | "bodyLineLimitEnabled", e: Event) {
   const patch: Partial<CommitRuleConfig> = {}
   patch[key] = (e.target as HTMLInputElement).checked
   emit("saveRuleConfig", patch)

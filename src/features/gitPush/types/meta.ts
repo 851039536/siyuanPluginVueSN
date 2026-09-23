@@ -287,6 +287,12 @@ export interface CommitRuleConfig {
   requireCapitalizedSubject: boolean
   /** 可选规则：WIP 临时提交检测（描述以 wip/todo/fixme/tbd 开头判违规） */
   detectWipSubject: boolean
+  /**
+   * 可选规则：scope 格式校验（scope 仅允许小写字母、数字、连字符，如 `hid-helper`）。
+   * 关闭后任意 scope 写法（含大写、下划线、中文、带点/斜杠）均不判违规——仅保留"scope 为空"的校验。
+   * 默认关闭：该规则偏严格（`feat(HidHelper)` 这类驼峰写法很常见），交由用户按团队习惯自行开启。
+   */
+  scopeFormatEnabled: boolean
   /** 可选规则：正文行长限制开关（多行消息 body 每行超限判违规） */
   bodyLineLimitEnabled: boolean
   /** 正文单行最大字符数（bodyLineLimitEnabled 开启时生效） */
@@ -295,22 +301,26 @@ export interface CommitRuleConfig {
   diffContextBudget: number
 }
 
-/** 提交规则默认配置（描述过短阈值 10 字 + 可选规则全部开启 + diff 上下文预算 10000 字符） */
+/** 提交规则默认配置（描述过短阈值 10 字 + 可选规则默认值 + diff 上下文预算 10000 字符） */
 export const DEFAULT_COMMIT_RULE_CONFIG: CommitRuleConfig = {
   minSubjectLength: 10,
   requireCapitalizedSubject: true,
   detectWipSubject: true,
+  // scope 格式校验默认关闭：`feat(HidHelper)` / `feat(用户模块)` 等写法普遍且无害，
+  // 默认开启会把大量正常提交判为违规（用户反馈"scope 格式非法"即源于此），故改为按需开启
+  scopeFormatEnabled: false,
   bodyLineLimitEnabled: true,
   maxBodyLineLength: 72,
   diffContextBudget: 10000,
 }
 
-/** 从规则检查偏好读取规则配置（旧数据缺字段时逐字段回退默认值，默认语义 = 可选规则全开） */
+/** 从规则检查偏好读取规则配置（旧数据缺字段时逐字段回退默认值） */
 export function readCommitRuleConfig(prefs: RuleCheckPrefs): CommitRuleConfig {
   return {
     minSubjectLength: prefs.minSubjectLength ?? DEFAULT_COMMIT_RULE_CONFIG.minSubjectLength,
     requireCapitalizedSubject: prefs.requireCapitalizedSubject ?? DEFAULT_COMMIT_RULE_CONFIG.requireCapitalizedSubject,
     detectWipSubject: prefs.detectWipSubject ?? DEFAULT_COMMIT_RULE_CONFIG.detectWipSubject,
+    scopeFormatEnabled: prefs.scopeFormatEnabled ?? DEFAULT_COMMIT_RULE_CONFIG.scopeFormatEnabled,
     bodyLineLimitEnabled: prefs.bodyLineLimitEnabled ?? DEFAULT_COMMIT_RULE_CONFIG.bodyLineLimitEnabled,
     maxBodyLineLength: prefs.maxBodyLineLength ?? DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength,
     diffContextBudget: prefs.diffContextBudget ?? DEFAULT_COMMIT_RULE_CONFIG.diffContextBudget,
@@ -355,6 +365,8 @@ export interface RuleCheckPrefs {
   requireCapitalizedSubject?: boolean
   /** WIP 临时提交检测开关（缺省回退默认值 true） */
   detectWipSubject?: boolean
+  /** scope 格式校验开关（缺省回退默认值 false = 不校验 scope 字符集） */
+  scopeFormatEnabled?: boolean
   /** 正文行长限制开关（缺省回退默认值 true） */
   bodyLineLimitEnabled?: boolean
   /** 正文单行最大字符数（缺省回退 DEFAULT_COMMIT_RULE_CONFIG.maxBodyLineLength） */

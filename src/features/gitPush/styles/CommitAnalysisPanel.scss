@@ -41,8 +41,10 @@
     flex-shrink: 0; // 标题不随滚动区压缩
   }
 
+  // 滚动内容容器：条形列表（作者/类型分布）/ 提交列表（最近提交）/ 徽章排行列表（项目排行）
   > .gpa-bar-list,
-  > .gpa-commit-list {
+  > .gpa-commit-list,
+  > .gpa-rank-list {
     flex: 1;
     min-height: 0; // 允许 flex 子项收缩，触发内部滚动
     overflow-y: auto;
@@ -143,6 +145,80 @@
   text-align: right;
   font-family: $ff-mono;
   font-size: $t-2xs;
+  opacity: 0.5;
+}
+
+// ── 项目提交排行：徽章式排行行（名次 | 项目名 | 次数徽章 | 占比）──
+// 宽度全部交给 grid 列模板（项目名列 1fr 吸收剩余），不做任何 calc 宽度推算。
+// 历史教训：原「细长条形 + 百分比」方案要用 calc 把轨道算成「可用空间的 80%」，
+// 而 CSS calc 不允许百分比作为乘法因子（calc(X * (1 - 20%)) 属无效声明 → 宽度塌陷为零），
+// 该写法连续导致条形消失 / 右侧留空两轮问题，故整体改为徽章式布局。
+.gpa-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px3;
+}
+
+// 排行行：共享 Button（ghost + xsmall + dense）承担交互与键盘可达性；
+// Button 把默认插槽包进 .si-button__text，故网格列布局下沉到该容器。
+// 5 类 = (0,5,0)，压过 dense 档位的 padding/圆角/字号与根类 justify-content: center
+.gpa-panel .gpa-rank-list .gpa-rank-row.si-button {
+  width: 100%;
+  padding: $s-px3 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  justify-content: flex-start;
+}
+
+.gpa-panel .gpa-rank-list .gpa-rank-row.si-button .si-button__text {
+  display: grid;
+  // 名次 / 项目名（吸收剩余）/ 次数徽章 / 占比：四列定宽 + 1fr，天然铺满整行且无需算宽度
+  grid-template-columns: 16px minmax(0, 1fr) auto 44px;
+  align-items: center;
+  gap: $s-2;
+  width: 100%;
+}
+
+// 名次：「第 N 名」的数字，等宽保证纵向对齐
+.gpa-rank-no {
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $t-2xs;
+  text-align: center;
+  opacity: 0.4;
+
+  // 前三名主题色强调（其余保持弱化，名次信息一眼可辨）
+  &--top {
+    color: var(--b3-theme-primary);
+    font-weight: $fw-bold;
+    opacity: 1;
+  }
+}
+
+// 项目名：grid 的 1fr 列，超长省略（minmax(0,1fr) 是省略号在 grid 内生效的前提）
+.gpa-rank-name {
+  min-width: 0;
+  font-size: $t-xs;
+  @include text-ellipsis;
+}
+
+// 行悬停：项目名转主色（行底反馈由共享 Button 的 ghost 悬停提供）
+.gpa-panel .gpa-rank-list .gpa-rank-row:hover .gpa-rank-name {
+  color: var(--b3-theme-primary);
+}
+
+// 提交次数徽章：配色/几何由共享 Tag 承担，此处只保证不参与列宽竞争
+.gpa-panel .gpa-rank-list .gpa-rank-count.si-tag {
+  flex-shrink: 0;
+}
+
+// 占比：定宽右对齐 + 等宽数字（纵向可比），弱化展示
+.gpa-rank-share {
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $t-2xs;
+  text-align: right;
   opacity: 0.5;
 }
 

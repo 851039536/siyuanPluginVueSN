@@ -16,6 +16,10 @@ pnpm lint:fix
 # 验证功能图标是否在已注册的图标集中
 pnpm validate:icons
 
+# 单元测试（纯函数层；AI 可运行，与 lint/build 的禁令无关）
+pnpm test          # vitest run（单次）
+pnpm test:watch    # vitest（监听模式）
+
 # i18n 操作
 pnpm i18n:merge    # 合并分片 i18n 文件为 zh_CN.json / en_US.json（构建时自动执行）
 pnpm i18n:verify   # 校验 zh_CN 与 en_US 键对齐 + 检测重复键
@@ -95,11 +99,15 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 ```
 > **重要**：AI 不执行 `pnpm vite build` 和 `pnpm lint`。验证由用户自行完成。
 
+> ✅ **`pnpm test` 是例外：AI 可运行**。它是纯 Node 进程内的行为断言，不触发构建、不写产物，
+> 与上述 `lint` / `vite build` 的禁令无关。改动纯函数（解析 / 换算 / 聚合 / 签名）后应主动跑一次。
+
 > ⛔ **禁止新建临时校验脚本**（`.tmp-*.mjs` / `.tmp-*.js` 等一次性脚本，包括「离线编译 SCSS 校验 Token」这类做法）。
-> 验证只走既有入口：`read_lints`（IDE 诊断）+ `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons`；
+> 验证只走既有入口：`read_lints`（IDE 诊断）+ `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons` / `pnpm test`；
 > `pnpm lint` / `pnpm vite build` / SCSS 编译由用户执行。
-> 需要**可复用**的检查能力时，在 `scripts/` 下以正式名称落地并在文档登记（如 `audit-hardcode.mjs`），不要写成临时文件。
-> 详见 [AGENTS_BUILD.md § 构建与验证](./AGENTS_BUILD.md#构建与验证)。
+> 需要**可复用**的检查能力时：**行为断言写入 `src/**/*.spec.ts`**，静态扫描类仍在 `scripts/` 下以正式名称落地并登记
+> （如 `audit-hardcode.mjs`），不要写成临时文件。
+> 详见 [AGENTS_BUILD.md § 构建与验证](./AGENTS_BUILD.md#构建与验证) 与 [§ 单元测试](./AGENTS_BUILD.md#单元测试)。
 
 > ⛔ **类型检查必须用 `pnpm typecheck`（`vue-tsc`），禁止用 `npx tsc --noEmit`**。
 > `tsc` 读不懂 `.vue` 文件，只会退回 `src/types/vue.d.ts` 的通配 shim（该 shim 仅声明 `default` 导出、无任何具名类型），
@@ -514,6 +522,8 @@ src/
 ## 构建与验证
 
 > AI 不得执行 `pnpm vite build` 和 `pnpm lint`，验证由用户自行完成。常见 Vite 警告与处理方法见 [AGENTS_BUILD.md § 构建与验证](./AGENTS_BUILD.md#构建与验证)。
+>
+> 例外：`pnpm test`（Vitest 纯函数单元测试）**AI 可执行**，说明见 [AGENTS_BUILD.md § 单元测试](./AGENTS_BUILD.md#单元测试)。
 
 ---
 
@@ -527,6 +537,6 @@ src/
 | [AGENTS_STYLE.md](./AGENTS_STYLE.md) | UI 风格 Codex（设计 Token 全表/核心规范/`.vp-*` 组件模式库/禁止事项）、字号层级、Dock 侧边栏间距、SCSS 分离、内置字体 | 编写或审查 SCSS 样式时 |
 | [AGENTS_ARCH.md](./AGENTS_ARCH.md) | Composable 提取、文件头注释、单文件行数上限、模块提取判定标准、组件文件夹组织标准 | 代码组织、组件拆分、目录结构规划时 |
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
-| [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程时 |
+| [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、单元测试（Vitest）、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程、编写/维护单元测试时 |
 | [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
 | [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（52 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |

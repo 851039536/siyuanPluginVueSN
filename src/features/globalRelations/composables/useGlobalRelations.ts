@@ -10,12 +10,13 @@ import {
   ref,
 } from "vue"
 import {
-  getBacklink,
+  getBacklinkDocs,
   sql,
-  type IRefFile,
 } from "@/api"
+import { openBlock } from "@/utils/domUtils"
 import { escapeSql } from "@/utils/sqlHelpers"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { parseAnchorText } from "../utils"
 import type {
   DirectionFilter,
   GlobalRelationsI18n,
@@ -24,37 +25,6 @@ import type {
 
 /** 主列表最大行数（超出后截断并提示） */
 const MAX_RELATION_ROWS = 500
-
-/**
- * 解析 refs.content 字段：可能是锚文本明文，也可能是 JSON 字符串/数组/对象
- */
-function parseAnchorText(raw: unknown): string {
-  if (raw === null || raw === undefined) return ""
-  if (typeof raw !== "string") {
-    return String(raw)
-  }
-  const trimmed = raw.trim()
-  if (!trimmed) return ""
-  try {
-    const parsed = JSON.parse(trimmed)
-    if (typeof parsed === "string") return parsed
-    if (Array.isArray(parsed)) {
-      return parsed.filter((item) => typeof item === "string").join(" ")
-    }
-    if (parsed && typeof parsed === "object") {
-      const text = (parsed as any).text
-        ?? (parsed as any).content
-        ?? (parsed as any).name
-        ?? (parsed as any).anchor
-      if (typeof text === "string" && text) return text
-      return JSON.stringify(parsed)
-    }
-    return trimmed
-  } catch {
-    // 非 JSON，按明文返回
-    return trimmed
-  }
-}
 
 /** 主列表查询结果：关系行 + 是否因超限被截断 */
 interface GlobalRelationsQueryResult {
@@ -135,32 +105,6 @@ async function queryRelationContents(
   return (data as Array<{ content?: unknown }>)
     .map((item) => parseAnchorText(item.content))
     .filter((text) => text.length > 0)
-}
-
-/**
- * 查询某个文档的反向链接文档列表（getBacklink2 官方 API）
- * 合并 backlinks + backmentions 并按 id 去重，与思源前端反链面板同源。
- */
-async function queryBacklinkDocs(targetId: string): Promise<IRefFile[]> {
-  if (!targetId) return []
-  const res = await getBacklink(targetId)
-  const seen = new Set<string>()
-  const docs: IRefFile[] = []
-  const files = [
-    ...(res?.backlinks ?? []),
-    ...(res?.backmentions ?? []),
-  ]
-  for (const file of files) {
-    if (seen.has(file.id)) continue
-    seen.add(file.id)
-    docs.push({
-      id: file.id,
-      name: file.name,
-      hPath: file.hPath || "",
-      box: file.box || "",
-    })
-  }
-  return docs
 }
 
 export function useGlobalRelations(
@@ -245,13 +189,12 @@ export function useGlobalRelations(
     try {
       const [contents, backlinkDocs] = await Promise.all([
         queryRelationContents(row.sourceId, row.targetId),
-        queryBacklinkDocs(row.targetId),
+        getBacklinkDocs(row.targetId),
       ])
       row.contents = contents
       row.backlinkDocs = backlinkDocs
-      if (contents.length === 0 && backlinkDocs.length === 0) {
-        row.detailsFailed = true
-      }
+      // 注意：空结果不是失败 —— 「无锚文本」「无反链」由模板的专门空态文案承载，
+      // 只有请求真的抛错才置 detailsFailed。
     } catch (e: unknown) {
       console.error("[globalRelations] 加载关系详情失败:", e)
       row.detailsFailed = true
@@ -261,11 +204,10 @@ export function useGlobalRelations(
   }
 
   /**
-   * 跳转打开文档
+   * 跳转打开文档（复用统一入口 @/utils/domUtils 的 openBlock）
    */
   function openDoc(docId: string): void {
-    if (!docId) return
-    window.open(`siyuan://blocks/${docId}`)
+    openBlock(docId)
   }
 
   return {

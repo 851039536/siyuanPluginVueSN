@@ -1,0 +1,160 @@
+// 单条关系行样式（RelationRow.vue 专属）
+@use "@/variables.scss" as *;
+@use "./tokens" as *;
+
+.gr-row {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+  overflow: hidden;
+
+  &__main {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    padding: $s-2 $s-px10;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--b3-list-hover);
+    }
+  }
+
+  &__doc {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+
+    &--source {
+      text-align: right;
+    }
+
+    &--target {
+      text-align: left;
+    }
+  }
+
+  &__doc-name {
+    font-size: $t-xs;
+    font-weight: $fw-medium;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--b3-theme-on-background);
+
+    &:hover {
+      color: var(--b3-theme-primary);
+      text-decoration: underline;
+    }
+  }
+
+  &__doc-path {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__arrow {
+    flex-shrink: 0;
+    color: var(--b3-theme-on-surface);
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: $s-px6;
+    flex-shrink: 0;
+  }
+
+  &__chevron {
+    color: var(--b3-theme-on-surface);
+    transition: transform 0.12s ease;
+
+    &--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__details {
+    border-top: 1px solid var(--b3-border-color);
+    padding: $s-2 $s-px10;
+    display: flex;
+    flex-direction: column;
+    gap: $s-px6;
+    background: var(--b3-theme-background);
+  }
+
+  &__details-title {
+    font-size: $t-2xs;
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-on-surface);
+  }
+
+  &__details-empty {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.7;
+  }
+
+  &__contents {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+  }
+
+  &__content-item {
+    font-size: $t-2xs;
+    padding: $s-1 $s-2;
+    background: var(--b3-theme-surface);
+    border-left: 2px solid var(--b3-theme-primary);
+    border-radius: $r-px3;
+    word-break: break-all;
+  }
+
+  &__backlinks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+  }
+
+  &__backlink-item {
+    display: flex;
+    flex-direction: column;
+    gap: $s-px1;
+    padding: $s-px5 $s-2;
+    font-size: $t-2xs;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-sm;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--b3-list-hover);
+    }
+  }
+
+  &__backlink-name {
+    font-weight: $fw-medium;
+    color: var(--b3-theme-on-background);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__backlink-path {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

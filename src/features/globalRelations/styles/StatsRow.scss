@@ -1,0 +1,41 @@
+// 统计卡片行样式（StatsRow.vue 专属）
+@use "@/variables.scss" as *;
+@use "./tokens" as *;
+
+// ---------- 统计卡片 ----------
+.gr-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $s-2;
+  padding: $s-px10 $s-px14;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.gr-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $s-px2;
+  padding: $s-2 $s-1;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+
+  &__value {
+    font-size: $t-lg;
+    font-weight: $fw-bold;
+    line-height: $lh-tight;
+    color: var(--b3-theme-on-background);
+  }
+
+  &__label {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    text-align: center;
+  }
+
+  &--bidirectional .gr-stat-card__value {
+    color: $gr-accent;
+  }
+}

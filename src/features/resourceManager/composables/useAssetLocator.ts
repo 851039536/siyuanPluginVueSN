@@ -1,6 +1,7 @@
 // 资源定位 composable：查询引用资源的块并以 siyuan:// 协议跳转（assets 等值 → blocks 全路径 → 文件名兜底）
 import type { ResourceManagerI18n } from "../types"
 import { sql } from "@/api"
+import { openBlock } from "@/utils/domUtils"
 import { buildPathVariants, escapeSqlString, queryBlocksByMarkdown } from "../utils"
 
 /** assets 表单资源引用查询上限 */
@@ -72,7 +73,7 @@ export function useAssetLocator(i18n: ResourceManagerI18n, showMsg: (msg: string
       return
     }
     if (refIds.size > 1) showMsg((i18n.locateRefs ?? "").replace("{count}", String(refIds.size)))
-    window.open(`siyuan://blocks/${[...refIds][0]}`)
+    openBlock([...refIds][0])
   }
 
   return { handleLocateAsset }

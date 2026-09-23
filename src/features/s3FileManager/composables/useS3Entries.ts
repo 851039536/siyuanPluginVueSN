@@ -37,6 +37,12 @@ export function useS3Entries(deps: {
   const cache = new Map<string, S3Entry[]>()
   /** 服务端 delimiter 能力探测结果（首次失败后固定走降级路径） */
   let delimiterUnsupported = false
+  /**
+   * 请求序号：每次 loadDir 自增并记录，响应回来时比对。
+   * 快速连续导航（A→B）时 A 的慢响应会晚于 B 返回，若无此令牌会把 B 的列表
+   * 覆盖成 A 的内容、并把 currentPrefix 改回 A（面包屑回跳 + 缓存写错位）。
+   */
+  let requestSeq = 0
 
   // ========== 计算属性 ==========
 
@@ -57,6 +63,9 @@ export function useS3Entries(deps: {
 
   /** 加载指定目录（命中缓存直接展示；force 跳过缓存） */
   async function loadDir(prefix: string, force = false): Promise<void> {
+    // 本次请求的令牌：任何赋值前都校验它仍是最新请求，过期响应整体丢弃
+    const seq = ++requestSeq
+
     if (!force && cache.has(prefix)) {
       entries.value = cache.get(prefix)!
       currentPrefix.value = prefix
@@ -98,14 +107,18 @@ export function useS3Entries(deps: {
       }
 
       const built = buildEntries(files, folders)
+      // 过期响应：已发起更新的请求，本次结果一律丢弃（不写缓存、不改状态，避免覆盖新目录）
+      if (seq !== requestSeq) { return }
       cache.set(prefix, built)
       entries.value = built
       currentPrefix.value = prefix
       renderLimit.value = RENDER_BATCH_SIZE
     } catch (err) {
+      if (seq !== requestSeq) { return }
       loadError.value = getErrorMessage(err)
     } finally {
-      loading.value = false
+      // 仅最新请求有权结束 loading，否则旧请求的 finally 会提前熄灭新请求的加载态
+      if (seq === requestSeq) { loading.value = false }
     }
   }
 

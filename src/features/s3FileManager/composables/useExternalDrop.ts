@@ -33,7 +33,23 @@ export function useExternalDrop(onFiles: (files: File[]) => void) {
     isDragOver.value = true
   }
 
+  /**
+   * 结束当前拖拽悬停（清零计数并隐藏浮层）。
+   * 拖拽移出窗口时浏览器派发的 dragleave 其 dataTransfer.types 为空，
+   * hasFiles 判定为 false 会导致计数只增不减、浮层永久驻留，故用 dragend +
+   * window 级 dragleave 兜底（真正移出文档时 clientX/clientY 为 0）。
+   */
+  function resetDragOver(): void {
+    enterCount = 0
+    isDragOver.value = false
+  }
+
   function onDragLeave(e: DragEvent): void {
+    // 移出窗口（坐标归零）时直接结束悬停，不依赖 hasFiles 判定
+    if (e.clientX <= 0 && e.clientY <= 0) {
+      resetDragOver()
+      return
+    }
     if (!hasFiles(e)) { return }
     enterCount = Math.max(0, enterCount - 1)
     if (enterCount === 0) { isDragOver.value = false }
@@ -42,10 +58,14 @@ export function useExternalDrop(onFiles: (files: File[]) => void) {
   function onDrop(e: DragEvent): void {
     if (!hasFiles(e)) { return }
     e.preventDefault()
-    enterCount = 0
-    isDragOver.value = false
+    resetDragOver()
     const files = Array.from(e.dataTransfer?.files ?? [])
     if (files.length > 0) { onFiles(files) }
+  }
+
+  /** 拖拽结束（含在窗口外松手）统一清零，由宿主绑定到 dragend 兜底 */
+  function onDragEnd(): void {
+    resetDragOver()
   }
 
   return {
@@ -54,5 +74,6 @@ export function useExternalDrop(onFiles: (files: File[]) => void) {
     onDragOver,
     onDragLeave,
     onDrop,
+    onDragEnd,
   }
 }

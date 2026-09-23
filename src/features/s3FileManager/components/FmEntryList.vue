@@ -99,16 +99,8 @@
           v-for="entry in entries"
           :key="entry.key"
           class="fm-detail-row"
-          :class="{ selected: isSelected(entry.key), 'drag-over': dragOverKey === entry.key }"
-          draggable="true"
-          @click="$emit('itemClick', entry, $event)"
-          @dblclick="$emit('itemDblclick', entry)"
-          @contextmenu.prevent="$emit('itemContextmenu', entry, $event)"
-          @dragstart="onDragStart(entry, $event)"
-          @dragend="onDragEnd"
-          @dragover="onFolderDragOver(entry, $event)"
-          @dragleave="onFolderDragLeave(entry)"
-          @drop="onFolderDrop(entry, $event)"
+          :class="itemClasses(entry)"
+          v-bind="itemInteractionProps(entry)"
         >
           <span class="fm-col-name">
             <IconWrapper
@@ -133,17 +125,9 @@
           v-for="entry in entries"
           :key="entry.key"
           class="fm-icon-item"
-          :class="{ selected: isSelected(entry.key), 'drag-over': dragOverKey === entry.key }"
+          :class="itemClasses(entry)"
           :title="entry.name"
-          draggable="true"
-          @click="$emit('itemClick', entry, $event)"
-          @dblclick="$emit('itemDblclick', entry)"
-          @contextmenu.prevent="$emit('itemContextmenu', entry, $event)"
-          @dragstart="onDragStart(entry, $event)"
-          @dragend="onDragEnd"
-          @dragover="onFolderDragOver(entry, $event)"
-          @dragleave="onFolderDragLeave(entry)"
-          @drop="onFolderDrop(entry, $event)"
+          v-bind="itemInteractionProps(entry)"
         >
           <IconWrapper
             :name="entryIconKey(entry)"
@@ -216,6 +200,35 @@ const draggingKey = ref<string | null>(null)
 /** 当前作为放置目标高亮的文件夹 key */
 const dragOverKey = ref<string | null>(null)
 
+/** 条目状态类：详细信息行与图标网格项共用同一套选中/拖拽悬停语义 */
+function itemClasses(entry: S3Entry): Record<string, boolean> {
+  return {
+    "selected": props.isSelected(entry.key),
+    "drag-over": dragOverKey.value === entry.key,
+  }
+}
+
+/**
+ * 条目交互属性（点击/双击/右键/拖拽全流程）：两种视图逐字相同，抽此一处避免双份实现漂移。
+ * 以 v-bind 绑定，故用普通 DOM 属性名；v-for 中每项各调一次，开销可忽略。
+ */
+function itemInteractionProps(entry: S3Entry): Record<string, unknown> {
+  return {
+    draggable: true,
+    onClick: (ev: MouseEvent) => emit("itemClick", entry, ev),
+    onDblclick: () => emit("itemDblclick", entry),
+    onContextmenu: (ev: MouseEvent) => {
+      ev.preventDefault()
+      emit("itemContextmenu", entry, ev)
+    },
+    onDragstart: (ev: DragEvent) => onDragStart(entry, ev),
+    onDragend: () => onDragEnd(),
+    onDragover: (ev: DragEvent) => onFolderDragOver(entry, ev),
+    onDragleave: () => onFolderDragLeave(entry),
+    onDrop: (ev: DragEvent) => onFolderDrop(entry, ev),
+  }
+}
+
 /** 目标是否可放置：内部拖动中 + 目标为文件夹 + 非自身 */
 function isDropTarget(entry: S3Entry): boolean {
   return !!draggingKey.value && entry.isFolder && entry.key !== draggingKey.value
@@ -225,9 +238,9 @@ function onDragStart(entry: S3Entry, e: DragEvent): void {
   draggingKey.value = entry.key
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = "move"
-    // 自定义类型标记内部拖动，与外部 Files 拖入区分
-    e.dataTransfer.setData("application/x-s3fm", entry.key)
   }
+  // 内部/外部拖动的区分由本组件的 draggingKey 与 useExternalDrop 的 hasFiles() 完成，
+  // 无需再向 dataTransfer 写入自定义类型（旧 x-s3fm 标记全仓无任何读取方）
   emit("entryDragStart", entry)
 }
 

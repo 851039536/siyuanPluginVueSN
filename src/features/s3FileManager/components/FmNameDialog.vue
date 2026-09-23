@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from "vue"
+import { computed, nextTick, onMounted, ref, watch } from "vue"
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
 import Input from "@/components/Input.vue"
@@ -63,6 +63,9 @@ const showError = ref(false)
 const inputRef = ref<InstanceType<typeof Input> | null>(null)
 
 const isValid = computed(() => isValidEntryName(name.value))
+
+// 名称变更即清除错误态：否则一次非法提交后，即便改成合法名，输入框仍残留红色错误边框
+watch(name, () => { showError.value = false })
 
 onMounted(async () => {
   await nextTick()

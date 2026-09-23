@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, onUnmounted, ref } from "vue"
 import type { S3Client } from "@/utils/s3/s3Client"
 import { listDir } from "@/utils/s3/s3ObjectOps"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -136,6 +136,8 @@ const currentPrefix = ref(props.rootPrefix)
 const folders = ref<string[]>([])
 const loading = ref(false)
 const loadError = ref("")
+/** 列举请求序号：用于丢弃过期响应（快速切目录 / 组件卸载后） */
+let requestSeq = 0
 
 /** 面包屑段：与主列表共用 relativeSegments（同一口径，此前为逐字重复的第二份实现） */
 const segments = computed(() => relativeSegments(currentPrefix.value, props.rootPrefix))
@@ -145,20 +147,25 @@ function folderName(prefix: string): string {
 }
 
 async function navigate(prefix: string): Promise<void> {
+  // 请求令牌：快速连点 A→B 时 A 的慢响应不得覆盖 B 的列表；卸载后也一并丢弃
+  const seq = ++requestSeq
+
   loading.value = true
   loadError.value = ""
   currentPrefix.value = prefix
   try {
     const listing = await listDir(props.requireClient(), prefix)
+    if (seq !== requestSeq) { return }
     // 与主列表 loadDir 共用 normalizeListing（服务端忽略 delimiter 时折叠出子目录，否则选不到目标文件夹）
     folders.value = normalizeListing(listing, prefix).folders
   } catch (err) {
+    if (seq !== requestSeq) { return }
     // 列举失败显示错误态，与“无子目录”空态区分
     console.error("[S3文件管理] 目标目录列举失败:", getErrorMessage(err))
     loadError.value = getErrorMessage(err)
     folders.value = []
   } finally {
-    loading.value = false
+    if (seq === requestSeq) { loading.value = false }
   }
 }
 
@@ -167,9 +174,11 @@ function navigateToSegment(index: number): Promise<void> {
 }
 
 onMounted(() => navigate(props.rootPrefix))
+
+// 卸载后自增令牌，使在途 listDir 的响应整体失效（不再写入已销毁组件的状态）
+onUnmounted(() => { requestSeq++ })
 </script>
 
 <style scoped lang="scss">
 @use "../styles/FmMoveCopyDialog.scss";
-@use "../styles/index.scss";
 </style>

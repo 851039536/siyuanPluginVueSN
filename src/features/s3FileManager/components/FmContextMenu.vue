@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { onMounted, ref, watch } from "vue"
 import type { TieredMenuItem } from "@/components/TieredMenu.vue"
 import TieredMenu from "@/components/TieredMenu.vue"
 
@@ -26,9 +26,9 @@ interface Props {
   ariaLabel?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  ariaLabel: "",
-})
+// 不设 ariaLabel 默认值：留 undefined 以沿用 TieredMenu 自身的默认无障碍名称，
+// 显式传 "" 会把子组件的有意义默认值压掉
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   close: []
@@ -43,17 +43,23 @@ const menuRef = ref<InstanceType<typeof TieredMenu> | null>(null)
  * TieredMenu 的 show() 需要事件对象取触发点，此处构造等价的最小载荷
  * （仅 clientX/clientY 参与定位，见 useTieredMenu.captureTriggerPoint）。
  */
+function syncMenu(visible: boolean, x: number, y: number): void {
+  if (!visible) {
+    menuRef.value?.hide()
+    return
+  }
+  menuRef.value?.show({ clientX: x, clientY: y } as MouseEvent)
+}
+
 watch(
   () => [props.visible, props.x, props.y] as const,
-  ([visible, x, y]) => {
-    if (!visible) {
-      menuRef.value?.hide()
-      return
-    }
-    menuRef.value?.show({ clientX: x, clientY: y } as MouseEvent)
-  },
-  { immediate: true, flush: "post" },
+  ([visible, x, y]) => syncMenu(visible, x, y),
+  { flush: "post" },
 )
+
+// 挂载后补一次同步：immediate 首次执行时子组件 ref 尚未就绪（show/hide 静默 no-op），
+// 故以 visible 为 true 初始化的调用方此前会看到菜单不弹出
+onMounted(() => syncMenu(props.visible, props.x, props.y))
 
 /** 叶子项点击：上抛动作标识（菜单自身已收起） */
 function onSelect(item: TieredMenuItem): void {

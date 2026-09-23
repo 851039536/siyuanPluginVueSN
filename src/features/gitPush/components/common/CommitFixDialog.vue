@@ -34,7 +34,8 @@
               <span
                 v-if="target.reason"
                 class="gp-fix-reason"
-              >{{ i18n[COMMIT_RULE_REASON_META[target.reason].labelKey] }}</span>
+                :title="ruleReasonDesc(target.reason, i18n)"
+              >{{ ruleReasonText(target.reason, i18n) }}</span>
             </div>
 
             <!-- 原提交信息（完整多行原文；提交日志的 %s 会折叠多行，故 init 时用 %B 重取） -->
@@ -54,11 +55,12 @@
                 rows="4"
                 :placeholder="i18n.ruleFixNewPlaceholder"
               />
-              <!-- 不合规提示 -->
+              <!-- 不合规提示（悬停显示该规则的判定说明与改法） -->
               <span
                 v-if="validationReason"
                 class="gp-fix-invalid"
-              >{{ i18n[COMMIT_RULE_REASON_META[validationReason].labelKey] }}</span>
+                :title="ruleReasonDesc(validationReason, i18n)"
+              >{{ ruleReasonText(validationReason, i18n) }}</span>
             </div>
 
             <!-- 该提交修改的文件清单（辅助理解改动范围；行点击可查看差异） -->
@@ -210,9 +212,9 @@
 import type { CommitFixTarget, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, inject, onMounted, onUnmounted, ref } from "vue"
-import { COMMIT_RULE_REASON_META, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../../types"
+import { DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../../types"
 import { checkCommitRule } from "../../commitRuleChecker"
-import { resolveValidPath } from "../../utils"
+import { resolveValidPath, ruleReasonDesc, ruleReasonText } from "../../utils"
 import { CARD_SERVICES_KEY } from "../../types"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Loader from "@/components/Loader.vue"

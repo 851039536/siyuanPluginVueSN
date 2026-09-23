@@ -123,7 +123,8 @@
                   <span
                     v-if="item.reason"
                     class="gp-fix-reason"
-                  >{{ i18n[COMMIT_RULE_REASON_META[item.reason].labelKey] }}</span>
+                    :title="ruleReasonDesc(item.reason, i18n)"
+                  >{{ ruleReasonText(item.reason, i18n) }}</span>
                   <span
                     class="gp-fix-batch-state"
                     :class="`gp-fix-batch-state--${item.status}`"
@@ -156,11 +157,12 @@
                     :disabled="item.status === 'saved' || !!item.blockedReason || busy"
                     :placeholder="i18n.ruleFixNewPlaceholder"
                   />
-                  <!-- 不合规提示 -->
+                  <!-- 不合规提示（悬停显示该规则的判定说明与改法） -->
                   <span
                     v-if="validationOf(item)"
                     class="gp-fix-invalid"
-                  >{{ i18n[COMMIT_RULE_REASON_META[validationOf(item) as CommitRuleReasonKey].labelKey] }}</span>
+                    :title="ruleReasonDesc(validationOf(item) as CommitRuleReasonKey, i18n)"
+                  >{{ ruleReasonText(validationOf(item) as CommitRuleReasonKey, i18n) }}</span>
                   <!-- 保存失败提示 -->
                   <span
                     v-if="item.error"
@@ -249,11 +251,11 @@
 <script setup lang="ts">
 // gitPush 提交信息批量修正弹窗（自包含：多条违规校验、AI 批量生成、批量保存、逐项状态）
 import type { CommitRuleReasonKey, CommitRuleViolation } from "../../types"
-import { CARD_SERVICES_KEY, COMMIT_RULE_REASON_META, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../../types"
+import { CARD_SERVICES_KEY, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, inject, onMounted, onUnmounted, ref } from "vue"
 import { checkCommitRule } from "../../commitRuleChecker"
-import { resolveValidPath } from "../../utils"
+import { resolveValidPath, ruleReasonDesc, ruleReasonText } from "../../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Loader from "@/components/Loader.vue"
 

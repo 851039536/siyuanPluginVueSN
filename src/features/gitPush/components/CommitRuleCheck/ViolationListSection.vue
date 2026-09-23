@@ -63,12 +63,14 @@
             @click.stop="emit('viewProject', row.projectId)"
           >{{ row.projectName }}</span>
           <span class="grc-item-hash">{{ row.hash }}</span>
+          <!-- 违规原因徽章（悬停显示该规则的判定说明与改法） -->
           <Tag
             class="grc-item-reason"
             variant="warning"
             size="xsmall"
             shape="circle"
-          >{{ i18n[COMMIT_RULE_REASON_META[row.reason].labelKey] }}</Tag>
+            :title="ruleReasonDesc(row.reason, i18n)"
+          >{{ ruleReasonText(row.reason, i18n) }}</Tag>
           <Button
             class="grc-item-fix"
             variant="ghost"
@@ -115,12 +117,11 @@
 <script setup lang="ts">
 // gitPush 提交规则检查不合规提交列表区块（本地分页 + 修正/删除入口）
 import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
-import { COMMIT_RULE_REASON_META } from "../../types"
 import { computed, ref, watch } from "vue"
 import Button from "@/components/Button.vue"
 import Checkbox from "@/components/Checkbox.vue"
 import Tag from "@/components/Tag.vue"
-import { formatDateTime, relativeTime } from "../../utils"
+import { formatDateTime, relativeTime, ruleReasonDesc, ruleReasonText } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 

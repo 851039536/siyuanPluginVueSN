@@ -1,6 +1,6 @@
-// gitPush 提交分析纯函数：类型前缀解析、本地日期聚合、热力等级与格子展示、通用计数排行
-import type { CommitAnalysisEntry, CommitAnalysisType } from "../types"
-import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, HEAT_LEVEL_THRESHOLDS } from "../types"
+// gitPush 提交分析纯函数：类型前缀解析、本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
+import type { CommitAnalysisEntry, CommitAnalysisType, CommitRuleReasonKey } from "../types"
+import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, COMMIT_RULE_REASON_META, HEAT_LEVEL_THRESHOLDS } from "../types"
 
 /**
  * 解析 Conventional Commits 提交信息前缀类型（feat/fix/docs 等），无前缀或未知前缀返回 other。
@@ -113,4 +113,24 @@ export function rankByCount<T>(items: T[], keyFn: (item: T) => string, limit: nu
     .map(([key, count]) => ({ key, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit)
+}
+
+// ── 提交规则原因文案（元数据只存 i18n 键，文案由视图层经 i18n 解析；四处标签共用）──
+
+/**
+ * 规则原因简短标签（表格/徽章内展示，如"scope 格式非法"）。
+ * 元数据缺失或 i18n 未命中时回退原始 reason 码，避免出现空白标签（同 fileStatusText 的降级口径）。
+ */
+export function ruleReasonText(reason: CommitRuleReasonKey, i18n: Record<string, any>): string {
+  const key = COMMIT_RULE_REASON_META[reason]?.labelKey
+  return (key && i18n[key]) || reason
+}
+
+/**
+ * 规则原因悬停说明（一句话讲清"为什么判违规 + 怎么改"，如"scope 仅允许小写字母、数字、连字符"）。
+ * 供各标签的 title 使用，使用户无需查文档即可理解违规含义。
+ */
+export function ruleReasonDesc(reason: CommitRuleReasonKey, i18n: Record<string, any>): string {
+  const key = COMMIT_RULE_REASON_META[reason]?.descKey
+  return (key && i18n[key]) || ruleReasonText(reason, i18n)
 }

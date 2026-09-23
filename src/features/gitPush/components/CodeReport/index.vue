@@ -42,6 +42,20 @@
           />
           {{ generated ? i18n.reportRerun : i18n.reportRun }}
         </button>
+        <!-- 导出单文件 HTML 报告（未生成/生成中/失败时禁用，避免导出空报告） -->
+        <button
+          class="vp-btn vp-btn--ghost vp-btn--sm gpr-run-btn"
+          :disabled="running || exporting || !generated || !report.ok"
+          :title="i18n.reportExportHint"
+          @click="emit('exportHtml')"
+        >
+          <Icon
+            :icon="exporting ? 'mdi:loading' : 'mdi:file-export-outline'"
+            height="12"
+            :class="{ 'gp-spin': exporting }"
+          />
+          {{ exporting ? i18n.reportExporting : i18n.reportExport }}
+        </button>
       </div>
 
       <!-- 四态门：生成中占位 / 未生成提示 / 已就绪内容（失败与空数据由下方各自分支处理） -->
@@ -186,12 +200,16 @@ const props = defineProps<{
   range: ReportRange
   /** 按当前项目+范围懒取文件补丁（文件详情弹窗打开时异步加载） */
   getFilePatch: (path: string) => Promise<string>
+  /** 是否正在导出 HTML 报告 */
+  exporting: boolean
 }>()
 
 const emit = defineEmits<{
   runReport: []
   changeProject: [id: string]
   changeRange: [r: ReportRange]
+  /** 一键导出当前报告为单文件 HTML */
+  exportHtml: []
 }>()
 
 /** 分区 Tab 类型（团队总览已合并代码贡献度） */

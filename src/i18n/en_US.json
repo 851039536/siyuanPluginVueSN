@@ -1342,6 +1342,8 @@
     "needsPushShort": "Ahead",
     "needsPullShort": "Behind",
     "categoryDistribution": "Category Distribution",
+    "statsProjectCount": "{0} projects",
+    "statsSnapshotAt": "Last refresh: {0}",
     "starred": "Starred",
     "needsPushList": "Projects Needing Push",
     "recentCommits": "Recent Commits",

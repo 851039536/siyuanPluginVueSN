@@ -1,6 +1,6 @@
 <!-- gitPush 统计视图"全部正常"空态（勾选图标 + 文案） -->
 <template>
-  <div class="gp-status-all-clear">
+  <div class="gps-status-all-clear">
     <Icon
       icon="mdi:check-all"
       height="12"

@@ -1,125 +1,181 @@
+// gitPush 统计视图（gps-）——骨架与视觉对齐提交分析视图（gpa-）：
+// 工具条 + KPI 卡片区 + 限高滚动区块 + 双栏 Pair，区块内部沿用 gpa-bar-* 条形与 gps-table 矩阵表格。
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-.gp-stats-panel {
+// ── 面板基座（与其余分析类视图共用 panel-base：独立滚动 + 上下留白 + 右侧间距）──
+.gps-panel {
   @include panel-base;
 }
 
 // ── 总览卡片：已收敛至共享 StatCardGrid（.gp-statgrid-*，五视图共用）──
 
-// ── 总览区（KPI 卡片 + 推送状态 chips）──
-.gp-overview {
-  margin-bottom: $s-2;
-
-  // chips 条原本在区块内部，移到总览区后取消其底部外边距（改由 .gp-statgrid 的 margin-bottom 统一控制间距）
-  .gp-status-bar {
-    margin-bottom: 0;
-  }
+// ── 区块（统一样式基座：标题 + 内容；区块不再各挂卡片边框，改由 gps-pair / 单栏堆叠的间距分层）──
+.gps-section {
+  margin-bottom: $s-3;
 }
 
-// ── 自适应网格布局 ──
-.gp-stats-grid {
-  // 自适应列数：容器 ≥ 约 21rem 时双列，窄 Dock 自动单列（容器宽度驱动，不用 @media）；
-  // align-items: start 使同一行的窄卡按各自内容收缩，不互相拉伸出空腔
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
-  gap: $s-2;
-  align-items: start;
-
-  // 表格类区块（待处理项目/平台矩阵/链接审计）跨全宽，阅读顺序自上而下不再被压入窄列
-  > .gp-stats-section--full {
-    grid-column: 1 / -1;
-  }
-}
-
-// ── 区块卡片（StatsSection 包裹器统一凸出：surface 底 + 边框分层，与总览卡同范式）──
-.gp-stats-section {
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-  padding: $s-3;
-  transition: border-color 0.12s ease;
-
-  &:hover {
-    border-color: var(--b3-theme-primary-lighter);
-  }
-}
-
-// 区块标题/计数徽章与 CodeReport 的 .gpr-section-* 共用共享 mixin（原两处逐字重复）
-.gp-stats-section-title {
+// 区块标题（与其余四个分析类视图共用 gp-section-title-base）
+.gps-section-title {
   @include gp-section-title-base;
 }
 
-.gp-stats-section-count {
+// 标题计数徽章（等宽数字沿用原统计徽章观感）
+.gps-section-count {
   @include gp-section-count-base;
 }
 
-// ── 远程覆盖率 ──
-.gp-coverage-list {
+// ── 限高滚动区块（双栏 Pair 内：内容超高时列表内部滚动，标题保持可见）──
+// 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白。
+.gps-section--scroll {
+  max-height: 320px; // 上限约 8 行，超出内部滚动；无对应 Token（区块限高）
+  display: flex;
+  flex-direction: column;
+
+  > .gps-section-title {
+    flex-shrink: 0; // 标题不随滚动区压缩
+  }
+
+  > .gps-bar-list,
+  > .gps-commit-list {
+    flex: 1;
+    min-height: 0; // 允许 flex 子项收缩，触发内部滚动
+    overflow-y: auto;
+
+    // 细滚动条（窄列下减少宽度侵占）
+    &::-webkit-scrollbar {
+      width: $s-1;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--b3-border-color);
+      border-radius: $r-px2;
+    }
+  }
+}
+
+// 固定高度窄列内收敛条形标签列（轨道可读），不影响全宽区块布局
+.gps-section--scroll .gps-bar-label {
+  flex-basis: 72px; // 无对应 Token（窄列标签宽度）
+}
+
+// ── 双栏区块（与提交分析 .gpa-pair 同构：窄 Dock 下 auto-fit 自动降为单列）──
+.gps-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); // 无对应 Token（栅格断点）
+  gap: $s-3;
+  margin-bottom: $s-3;
+
+  > .gps-section {
+    margin-bottom: 0; // 网格内由 gap 控制间距，不叠加底部 margin
+  }
+}
+
+// ── 水平条形（分类分布 / 覆盖率等排行类区块共用：标签 + 轨道 + 计数）──
+.gps-bar-list {
   display: flex;
   flex-direction: column;
   gap: $s-2;
 }
 
-.gp-coverage-item {
+// 条形行基座：三列（标签 | 轨道 | 计数）横向排列。分类分布与平台覆盖率用的是纯 div 行，
+// 必须靠这条基座撑起 flex 布局——缺了它三个 span 会纵向堆叠成三行（条形完全错位）。
+.gps-bar-row {
   display: flex;
-  flex-direction: column;
-  gap: $s-px3;
+  align-items: center;
+  gap: $s-2;
+  font-size: $t-xs;
 }
 
-.gp-coverage-head {
+// 排行行（整行可点击）：共享 Button（ghost + xsmall + dense）承担交互与键盘可达性；
+// Button 会把默认插槽包进 .si-button__text，故行内三列布局下沉到该容器。
+// 5 类 = (0,5,0)，压过 dense 档位的 padding/圆角/字号与根类 justify-content: center
+.gps-panel .gps-bar-list .gps-bar-row.si-button {
+  width: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: $t-xs;
+  justify-content: flex-start;
+}
+
+.gps-panel .gps-bar-list .gps-bar-row.si-button .si-button__text {
+  flex: 1;
+  gap: $s-2;
+}
+
+// 行悬停：标签列转主色（行本身的软底反馈由共享 Button 的 ghost 悬停提供）
+.gps-panel .gps-bar-list .gps-bar-row--clickable:hover .gps-bar-label {
+  color: var(--b3-theme-primary);
+}
+
+.gps-bar-label {
+  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐；无对应 Token
+  // flex + gap：分类色点 / 平台图标与文字同行垂直居中；文字部分单独省略（见 .gps-bar-text），
+  // 避免 text-ellipsis 直接作用于 flex 容器时对裸文本节点失效
   display: flex;
   align-items: center;
   gap: $s-1;
-  font-size: $t-xs;
-  opacity: 0.7;
+  min-width: 0;
+  opacity: 0.75;
+  transition: color 0.12s;
 }
 
-.gp-coverage-num {
-  margin-left: auto;
+// 标签文字（省略号在这里生效：flex 子项 + overflow hidden + nowrap）
+.gps-bar-text {
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+.gps-bar-track {
+  flex: 1;
+  height: $s-1;
+  background: var(--b3-theme-surface);
+  border-radius: $r-px2;
+  overflow: hidden;
+}
+
+.gps-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: $r-px2;
+  background: var(--b3-theme-primary);
+}
+
+.gps-bar-num {
+  flex: 0 0 auto;
+  min-width: $s-6;
+  text-align: right;
   font-family: $ff-mono;
   font-size: $t-2xs;
   opacity: 0.5;
 }
 
-.gp-coverage-bar {
-  height: 4px;
-  // 轨道底色与卡片 surface 区分（原 surface 已随区块卡片化与卡片底同色，改用更深的面板底色形成内凹感）
-  background: var(--b3-theme-background);
-  border-radius: $r-sm;
-  overflow: hidden;
-}
-
-.gp-coverage-fill {
-  height: 100%;
-  border-radius: $r-sm;
-  background: var(--b3-theme-primary);
-  transition: width 0.3s ease;
-}
-
-.gp-coverage-fill--gitee { background: #ee3f4d; }
-.gp-coverage-fill--gitea { background: #609926; }
-.gp-coverage-fill--cnb { background: #00a8e8; }
-.gp-coverage-fill--multi { background: #8b5cf6; }
-// 注：github 无专属修饰类，沿用 .gp-coverage-fill 默认主题色；分类分布条的颜色由 category.color 内联样式驱动
-
 // 分类分布条目的分类色点（颜色由 category.color 内联驱动）
-.gp-cat-dot {
+.gps-cat-dot {
   flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
 }
 
-// ── 推送状态概览条（待处理项目顶部）──
-.gp-status-bar {
+// ── 覆盖率条形填充色（分类分布条的颜色由 category.color 内联样式驱动）──
+.gps-bar-fill--gitee { background: #ee3f4d; }
+.gps-bar-fill--gitea { background: #609926; }
+.gps-bar-fill--cnb { background: #00a8e8; }
+.gps-bar-fill--multi { background: #8b5cf6; }
+// 注：github 无专属修饰类，沿用 .gps-bar-fill 默认主题色
+
+// ── 状态概览 chips（推送状态 / 审计四态汇总）──
+.gps-status-bar {
   display: flex;
   flex-wrap: wrap; // 窄面板下四个 chip 自动换行防溢出
   gap: $s-2;
   margin-bottom: $s-2;
 }
 
-.gp-status-chip {
+.gps-status-chip {
   display: flex;
   align-items: center;
   gap: $s-1;
@@ -154,12 +210,19 @@
     background: var(--b3-theme-success-lightest);
   }
 
+  &--error {
+    border-color: var(--b3-theme-error-lighter);
+    color: var(--b3-theme-error);
+    background: var(--b3-theme-error-lightest);
+  }
+
   &--none {
     opacity: 0.35;
   }
 }
 
-.gp-status-all-clear {
+// ── "全部正常"空态（列表类区块无问题项时）──
+.gps-status-all-clear {
   display: flex;
   align-items: center;
   gap: $s-1;
@@ -169,15 +232,31 @@
   font-style: italic;
 }
 
-// ── 表格 ──
-.gp-table-wrap {
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  max-height: 320px; // 外层区块不再固高后的唯一滚动层上限（原 260px + 释放的外层空间）
-  overflow-y: auto;
+// ── 未分析/分析中提示文案（辅助文字）──
+.gps-hint {
+  font-size: $t-2xs;
+  opacity: 0.45;
+  font-style: italic;
+  padding: $s-1 0;
 }
 
-.gp-table-row {
+// 区块标题右侧的分析按钮（推到最右；标题容器自带大写/字距，按钮内文案需还原常规排版）
+.gps-audit-btn {
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+// ── 表格（待处理项目 / 平台矩阵 / 链接审计共用）──
+.gps-table-wrap {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  max-height: 320px; // 表格滚动上限，超出内部滚动
+  overflow-y: auto;
+  contain: paint; // 长表格滚动时的重排范围不外溢到整个面板
+}
+
+.gps-table-row {
   display: flex;
   align-items: center;
   gap: $s-1;
@@ -186,8 +265,7 @@
   @include row-divider;
 
   &--head {
-    // sticky 表头：滚动时常驻顶部；实色背景 + 文字色弱化（整行 opacity 会透出下层行）
-    // 背景与区块卡片 surface 同色，无缝贴合，行间 divider 提供视觉分离
+    // sticky 表头：滚动时常驻顶部（实色背景防透出下层行，整行 opacity 会透出下层）
     position: sticky;
     top: 0;
     z-index: 1;
@@ -203,14 +281,13 @@
     cursor: pointer;
     transition: background 0.12s ease;
 
-    // 行 hover 用主题色浅底：卡片底已是 surface，沿用原 surface hover 会不可见
     &:hover {
       background: var(--b3-theme-primary-lightest);
     }
   }
 }
 
-.gp-table-cell {
+.gps-table-cell {
   flex-shrink: 0;
 
   &--name {
@@ -232,14 +309,15 @@
     text-align: center;
   }
 
-  // 平台状态列（三列等宽居中）
+  // 平台状态列（四列等宽居中）
   &--platform-status {
     width: 36px;
     text-align: center;
   }
 }
 
-.gp-badge-ahead {
+// 计数徽章（待推送/已暂存等；警示与未跟踪变体各自覆盖配色）
+.gps-badge {
   display: inline-block;
   font-size: $t-2xs;
   font-weight: $fw-bold;
@@ -250,39 +328,50 @@
   color: var(--b3-theme-primary);
 }
 
-.gp-cell-empty {
+.gps-badge--warn {
+  background: var(--b3-theme-warning-lightest);
+  color: var(--b3-theme-warning);
+}
+
+.gps-badge--untracked {
+  background: var(--gp-badge-untracked-bg);
+  color: var(--gp-badge-untracked-color);
+}
+
+// 空单元格占位符（-）
+.gps-cell-empty {
   opacity: 0.2;
 }
 
-// 项目名后的错误标注（路径无效/检测失败；PlatformTable 的 nameSuffix 共享渲染）
-.gp-audit-error-text {
+// 项目名后的错误标注（路径无效/检测失败）
+.gps-error-text {
   margin-left: $s-1;
   font-size: $t-2xs;
   color: var(--b3-theme-error);
   opacity: 0.8;
 }
 
-// 待拉取/未暂存徽章：与状态 chip --behind 同色系（警告色），两选择器样式相同合并声明
-.gp-badge-behind,
-.gp-badge-unstaged {
-  @extend .gp-badge-ahead;
-  background: var(--b3-theme-warning-lightest);
-  color: var(--b3-theme-warning);
-}
-
-.gp-badge-untracked {
-  @extend .gp-badge-ahead;
-  background: var(--gp-badge-untracked-bg);
-  color: var(--gp-badge-untracked-color);
-}
-
 // ── 平台状态图标 ──
-.gp-platform-ok {
+.gps-platform-ok {
   color: var(--b3-theme-success);
 }
 
-.gp-platform-missing {
+.gps-platform-missing {
   opacity: 0.25;
 }
 
+// 单元格四态图标颜色（match 复用成功色，mismatch 错误色，linkOnly 警告色，remoteOnly 主题色）
+.gps-audit-match { color: var(--b3-theme-success); }
+.gps-audit-mismatch { color: var(--b3-theme-error); }
+.gps-audit-linkonly { color: var(--b3-theme-warning); }
+.gps-audit-remoteonly { color: var(--b3-theme-primary); }
 
+// ── 快照时段（总览区块内的紧凑元信息行：上次刷新 / 项目数）──
+.gps-snapshot {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  flex-wrap: wrap;
+  font-size: $t-2xs;
+  opacity: 0.6;
+}

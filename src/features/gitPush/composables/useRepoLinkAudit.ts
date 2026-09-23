@@ -1,4 +1,5 @@
-// 仓库链接一致性审计 — 批量执行 git remote -v，归一化后比对手动仓库链接与实际远程 URL
+// 仓库链接一致性校验 — 批量执行 git remote -v，归一化后比对手动仓库链接与实际远程 URL。
+// 统计视图「平台配置状态」卡片消费本结果：单元格在已配置/未配置之上，再叠加"链接与实际远程是否一致"的校验态。
 import type { Ref } from "vue"
 import type {
   GitProject,
@@ -6,9 +7,8 @@ import type {
   RepoLinkAuditCell,
   RepoLinkAuditRow,
   RepoLinkAuditState,
-  RepoLinkAuditSummary,
 } from "../types"
-import { computed, ref } from "vue"
+import { ref, watch } from "vue"
 import { PLATFORM_META } from "../types"
 import { findPlatformRemote, normalizeGitUrl, resolveValidPath } from "../utils"
 
@@ -21,13 +21,14 @@ function resolveCellState(link: string, remoteUrl: string): RepoLinkAuditState {
 }
 
 export function useRepoLinkAudit(manager: GitPushManager, projects: Ref<GitProject[]>) {
-  const auditRows = ref<RepoLinkAuditRow[]>([])
-  /** 是否正在批量检测 */
+  /** 项目 id → 校验行（供平台矩阵按行取单元格校验态） */
+  const auditRows = ref<Record<string, RepoLinkAuditRow>>({})
+  /** 是否正在批量校验 */
   const auditing = ref(false)
-  /** 是否已完成过至少一轮检测（区分"未分析"与"分析结果为空"） */
+  /** 是否已完成过至少一轮校验（区分"校验中"与"校验结果为空"） */
   const audited = ref(false)
 
-  /** 对单个项目执行检测并构建审计行（路径无效/git 失败 → error 行） */
+  /** 对单个项目执行校验并构建校验行（路径无效/git 失败 → error 行） */
   async function auditProject(p: GitProject): Promise<RepoLinkAuditRow> {
     let cells: RepoLinkAuditCell[] = []
     let error = false
@@ -49,37 +50,38 @@ export function useRepoLinkAudit(manager: GitPushManager, projects: Ref<GitProje
     return { id: p.id, name: p.name, path: p.path, error, cells, hasIssue }
   }
 
-  /** 批量审计全部项目（GitExecutor 自带并发上限，无需额外节流） */
+  /** 批量校验全部项目（GitExecutor 自带并发上限，无需额外节流） */
   async function runAudit() {
     if (auditing.value) { return }
     auditing.value = true
     try {
       const settled = await Promise.allSettled(projects.value.map((p) => auditProject(p)))
-      auditRows.value = settled
-        .filter((r): r is PromiseFulfilledResult<RepoLinkAuditRow> => r.status === "fulfilled")
-        .map((r) => r.value)
+      const next: Record<string, RepoLinkAuditRow> = {}
+      for (const r of settled) {
+        if (r.status === "fulfilled") { next[r.value.id] = r.value }
+      }
+      auditRows.value = next
       audited.value = true
     } finally {
       auditing.value = false
     }
   }
 
-  /** 四态汇总计数（跨全部项目全部平台单元格） */
-  const auditSummary = computed<RepoLinkAuditSummary>(() => {
-    const s: RepoLinkAuditSummary = { match: 0, mismatch: 0, linkOnly: 0, remoteOnly: 0 }
-    for (const row of auditRows.value) {
-      for (const c of row.cells) {
-        if (c.state !== "none") { s[c.state]++ }
-      }
-    }
-    return s
-  })
+  /**
+   * 校验行为并入平台卡片后不再有「开始校验」按钮，改为进入视图自动跑一次。
+   * 项目集合变化（新增/删除/编辑路径或链接）会触发重跑；immediate 保证首次挂载即执行。
+   * 已有结果时保留旧值直到新一轮完成，避免单元格在校验期间闪烁回"未校验"态。
+   */
+  watch(
+    () => projects.value.map((p) => `${p.id}:${p.path}:${p.githubRemote}:${p.giteeRemote}:${p.giteaRemote}:${p.cnbRemote}`).join("|"),
+    () => { void runAudit() },
+    { immediate: true },
+  )
 
   return {
     auditRows,
     auditing,
     audited,
-    auditSummary,
     runAudit,
   }
 }

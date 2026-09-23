@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-// 平台矩阵表格：表头 + 行骨架固定，单元格图标与 tooltip 经视图模型注入（PlatformSection / RepoLinkAuditSection 共用）
+// 平台矩阵表格：表头 + 行骨架固定，单元格图标与 tooltip 经视图模型注入（PlatformSection 消费）
 import type { PlatformTableRowView } from "../../../types"
 import { Icon } from "@iconify/vue"
 import { PLATFORM_META } from "../../../types"

@@ -232,22 +232,7 @@
   font-style: italic;
 }
 
-// ── 未分析/分析中提示文案（辅助文字）──
-.gps-hint {
-  font-size: $t-2xs;
-  opacity: 0.45;
-  font-style: italic;
-  padding: $s-1 0;
-}
-
-// 区块标题右侧的分析按钮（推到最右；标题容器自带大写/字距，按钮内文案需还原常规排版）
-.gps-audit-btn {
-  margin-left: auto;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-// ── 表格（待处理项目 / 平台矩阵 / 链接审计共用）──
+// ── 表格（待处理项目明细 / 平台矩阵共用）──
 .gps-table-wrap {
   border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;

@@ -79,22 +79,13 @@
         @view-project="emit('viewProject', $event)"
       />
 
-      <!-- 平台区块（覆盖率汇总 + 每项目平台配置矩阵合并，全宽） -->
+      <!-- 平台区块（覆盖率汇总 + 一致性汇总 + 每项目平台配置/一致性矩阵，全宽） -->
       <PlatformSection
         :i18n="i18n"
         :stats="stats"
-        @view-project="emit('viewProject', $event)"
-      />
-
-      <!-- 仓库链接一致性（运行入口在本区块标题右侧；按需批量比对手动链接与实际远程 URL，全宽） -->
-      <RepoLinkAuditSection
-        :i18n="i18n"
-        :rows="auditRows"
+        :audit-rows="auditRows"
         :auditing="auditing"
-        :audited="audited"
-        :summary="auditSummary"
         @view-project="emit('viewProject', $event)"
-        @run-audit="emit('runAudit')"
       />
     </template>
   </div>
@@ -103,7 +94,7 @@
 <script setup lang="ts">
 // gitPush 统计视图入口容器（工具条 + 卡片区 + 双栏/单栏区块组合，纯编排无领域状态）。
 // 骨架与视觉对齐提交分析视图：AnalysisToolbar 同款工具条 → StatCardGrid 总览 → gps-pair 双栏 → 全宽区块。
-import type { RepoLinkAuditRow, RepoLinkAuditSummary, StatsView } from "../../types"
+import type { RepoLinkAuditRow, StatsView } from "../../types"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import { withBarPct } from "../../utils"
@@ -114,18 +105,16 @@ import CategoryDistributionSection from "./CategoryDistributionSection.vue"
 import OverviewCards from "./OverviewCards.vue"
 import PendingProjectsSection from "./PendingProjectsSection.vue"
 import PlatformSection from "./PlatformSection.vue"
-import RepoLinkAuditSection from "./RepoLinkAuditSection.vue"
 import StatsToolbar from "./StatsToolbar.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
   /** 统计聚合视图（单对象 prop，由 useGitStats.statsView 产出） */
   stats: StatsView
-  /** 仓库链接一致性审计状态（useRepoLinkAudit 产出，透传给 RepoLinkAuditSection） */
-  auditRows: RepoLinkAuditRow[]
+  /** 项目 id → 仓库链接一致性校验行（useRepoLinkAudit 产出，自动后台执行，透传给 PlatformSection） */
+  auditRows: Record<string, RepoLinkAuditRow>
+  /** 链接一致性校验进行中 */
   auditing: boolean
-  audited: boolean
-  auditSummary: RepoLinkAuditSummary
   /** 状态数据刷新中（工具条刷新按钮转圈禁用） */
   refreshing: boolean
   /** 上次状态快照刷新完成时间（ISO，空串 = 尚未手动刷新过） */
@@ -134,7 +123,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   viewProject: [projectId: string]
-  runAudit: []
   refresh: []
 }>()
 

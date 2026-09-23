@@ -135,11 +135,11 @@ export function getPlatformStatus(item: PlatformStatusItem, key: PlatformKey): b
   return item[key]
 }
 
-// ── 仓库链接一致性审计（useRepoLinkAudit 产出 / RepoLinkAuditSection 消费）──
+// ── 仓库链接一致性校验（useRepoLinkAudit 产出 / 平台配置状态卡片消费）──
 /** 单平台比对状态：一致 / 不一致 / 仅配置链接 / 仅存在远程 / 两者皆无 */
 export type RepoLinkAuditState = "match" | "mismatch" | "linkOnly" | "remoteOnly" | "none"
 
-/** 单项目单平台的审计单元格（link/remoteUrl 保留原文供 tooltip 排错） */
+/** 单项目单平台的校验单元格（link/remoteUrl 保留原文供 tooltip 排错） */
 export interface RepoLinkAuditCell {
   key: PlatformKey
   state: RepoLinkAuditState
@@ -149,7 +149,7 @@ export interface RepoLinkAuditCell {
   remoteUrl: string
 }
 
-/** 单项目审计行 */
+/** 单项目校验行 */
 export interface RepoLinkAuditRow {
   id: string
   name: string
@@ -161,23 +161,15 @@ export interface RepoLinkAuditRow {
   hasIssue: boolean
 }
 
-/** 审计四态汇总计数 */
-export interface RepoLinkAuditSummary {
-  match: number
-  mismatch: number
-  linkOnly: number
-  remoteOnly: number
-}
-
-// ── 统计视图平台矩阵表格视图模型（PlatformTable / PlatformSection / RepoLinkAuditSection 共用）──
+// ── 统计视图平台矩阵表格视图模型（PlatformSection 消费）──
 /** 平台单元格视图（icon 为空串时渲染占位符 -） */
 export interface PlatformTableCellView {
   key: string
-  /** hover 提示原文（状态名 / 审计链接与远程 URL 原文等，由调用方预计算） */
+  /** hover 提示原文（状态名 / 链接与远程 URL 原文等，由调用方预计算） */
   title: string
   /** 图标名（空串 = 渲染占位符 -） */
   icon: string
-  /** 图标颜色修饰类（如 gp-platform-ok / gp-audit-mismatch） */
+  /** 图标颜色修饰类（如 gps-platform-ok / gps-audit-mismatch） */
   iconCls?: string
 }
 

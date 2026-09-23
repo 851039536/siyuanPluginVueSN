@@ -26,12 +26,9 @@
       :stats="statsView"
       :audit-rows="auditRows"
       :auditing="auditing"
-      :audited="audited"
-      :audit-summary="auditSummary"
       :refreshing="statsRefreshing"
       :refreshed-at="statsRefreshedAt"
       @view-project="onViewProject"
-      @run-audit="runAudit"
       @refresh="refreshStatsData"
     />
 
@@ -590,13 +587,10 @@ const listEmptyHint = computed(() => {
   return props.i18n.selectCategoryHint
 })
 
-// ── 仓库链接一致性审计（批量 git 调用由统计视图内“开始分析”按钮显式触发）──
+// ── 仓库链接一致性校验（进入视图自动后台批量执行 git remote -v，结果叠加在统计视图的平台矩阵单元格上）──
 const {
   auditRows,
   auditing,
-  audited,
-  auditSummary,
-  runAudit,
 } = useRepoLinkAudit(props.manager, projects)
 
 // ── 提交分析（批量读取各项目提交日志；结果持久化，首次进入复用缓存，无缓存时自动分析一次）──

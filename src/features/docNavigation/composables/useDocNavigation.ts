@@ -20,6 +20,7 @@ import {
   DEFAULT_NAV_SETTINGS,
 } from "../types"
 import * as api from "@/api"
+import { openBlock } from "@/utils/domUtils"
 import {
   DocNavigationCache,
   fetchBacklinks,
@@ -172,9 +173,7 @@ export function useDocNavigation(): UseDocNavigationReturn {
   }
 
   function openDoc(docId: string): void {
-    if (docId) {
-      window.open(`siyuan://blocks/${docId}`)
-    }
+    openBlock(docId)
   }
 
   function stripHtml(html: string): string {

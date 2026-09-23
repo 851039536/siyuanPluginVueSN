@@ -356,6 +356,39 @@ export async function getBacklink(
   return request(url, data)
 }
 
+/**
+ * 获取反链文档列表（反链 + 反提及合并、按 id 去重）。
+ * 收敛 globalRelations 与 docNavigation 中逐行同构的合并去重逻辑。
+ * @param id 目标块 ID
+ * @param limit 可选上限，超出即截断（不传则不限制）
+ * @returns 去重后的文档列表；请求失败或空 id 返回空数组
+ */
+export async function getBacklinkDocs(
+  id: BlockId,
+  limit?: number,
+): Promise<IRefFile[]> {
+  if (!id) return []
+  const res = await getBacklink(id)
+  const seen = new Set<string>()
+  const docs: IRefFile[] = []
+  const files = [
+    ...(res?.backlinks ?? []),
+    ...(res?.backmentions ?? []),
+  ]
+  for (const file of files) {
+    if (seen.has(file.id)) continue
+    seen.add(file.id)
+    docs.push({
+      id: file.id,
+      name: file.name,
+      hPath: file.hPath || "",
+      box: file.box || "",
+    })
+    if (limit !== undefined && docs.length >= limit) break
+  }
+  return docs
+}
+
 // **************************************** Asset Files ****************************************
 
 export async function upload(

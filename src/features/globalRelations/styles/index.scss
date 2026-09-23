@@ -1,24 +1,10 @@
-// 全局关系列表面板样式
+// 全局关系列表面板主样式（index.vue 专属）
 // 对齐项目 compact 风格：基准字号继承 .vp-dock-root / Modal 容器 12px，使用思源 CSS 变量
+//
+// ⚠️ 本文件只写 index.vue 自身模板的元素。子组件样式由子组件各自 @use 自己的 SCSS ——
+// scoped 样式不会命中子组件内部元素，把子组件选择器写在这里会静默失效。
 @use "@/variables.scss" as *;
-
-// 双向关系强调色（与 icons.ts:globalRelations 的图标色成对，须保持一致）
-$gr-accent: #06b6d4; // 无对应 Token：全局 $color-* 无语义青色档位
-
-// ---------- 全局 Token 无对应档位的取值 ----------
-// 集中声明以保证单一来源，避免散落硬编码；$spacing-* / $radius-* / $font-size-* / $line-height-* 均无这些档位
-$gr-space-1: 1px; // 无对应 Token（发丝级间隔）
-$gr-space-5: 5px; // 无对应 Token
-$gr-space-6: 6px; // 无对应 Token（全局间距档为 4px → 8px，无 6px）
-$gr-space-7: 7px; // 无对应 Token
-$gr-space-10: 10px; // 无对应 Token（全局间距档为 8px → 12px，无 10px）
-$gr-space-14: 14px; // 无对应 Token（面板横向内边距）
-$gr-space-26: 26px; // 无对应 Token（搜索框内图标占位宽度）
-$gr-font-11: 11px; // 无对应 Token（介于 $t-2xs 与 $t-xs）
-$gr-radius-3: 3px; // 无对应 Token（$r-sm 为 4px）
-$gr-radius-5: 5px; // 无对应 Token（$r-sm / $r-base 为 4px / 6px）
-$gr-lh-12: 1.2; // 无对应 Token（$lh-tight 为 1.25）
-$gr-lh-16: 1.6; // 无对应 Token（$lh-normal 为 1.5）
+@use "./tokens" as *;
 
 .global-relations-panel {
   display: flex;
@@ -35,7 +21,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$lh-normal 为 1.5）
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $gr-space-10 $gr-space-14;
+  padding: $s-px10 $s-px14;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 
@@ -57,128 +43,24 @@ $gr-lh-16: 1.6; // 无对应 Token（$lh-normal 为 1.5）
   &__actions {
     display: flex;
     align-items: center;
-    gap: $gr-space-6;
+    gap: $s-px6;
     flex-shrink: 0;
   }
 }
 
-// ---------- 按钮 ----------
-.gr-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: $gr-space-5;
-  padding: $s-1 $gr-space-10;
-  font-size: $t-xs;
-  line-height: $lh-normal;
-  color: var(--b3-theme-on-background);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $gr-radius-5;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
-
-  &:hover:not(:disabled) {
-    background: var(--b3-list-hover);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  &--icon {
-    padding: $s-1 $gr-space-7;
-  }
-
-  &--small {
-    padding: $s-px2 $s-2;
-    font-size: $gr-font-11;
-  }
-
-  &.active {
-    color: var(--b3-theme-primary);
-    border-color: var(--b3-theme-primary);
-    background: color-mix(in srgb, var(--b3-theme-primary) 12%, transparent);
-  }
-}
-
-// ---------- 统计卡片 ----------
-.gr-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: $s-2;
-  padding: $gr-space-10 $gr-space-14;
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
-}
-
-.gr-stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $s-px2;
-  padding: $s-2 $s-1;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-
-  &__value {
-    font-size: $t-lg;
-    font-weight: $fw-bold;
-    line-height: $gr-lh-12;
-    color: var(--b3-theme-on-background);
-  }
-
-  &__label {
-    font-size: $gr-font-11;
-    color: var(--b3-theme-on-surface);
-    text-align: center;
-  }
-
-  &--bidirectional .gr-stat-card__value {
-    color: $gr-accent;
-  }
-}
-
-// ---------- 工具栏 ----------
+// ---------- 工具栏（搜索框走共享 Input 组件，此处仅负责占位与拉伸） ----------
 .gr-toolbar {
   display: flex;
   align-items: center;
   gap: $s-2;
-  padding: $s-2 $gr-space-14;
+  padding: $s-2 $s-px14;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
 }
 
 .gr-search {
-  position: relative;
   flex: 1;
   min-width: 0;
-
-  &__icon {
-    position: absolute;
-    left: $s-2;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--b3-theme-on-surface);
-    pointer-events: none;
-  }
-
-  &__input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: $gr-space-5 $s-2 $gr-space-5 $gr-space-26;
-    font-size: $t-xs;
-    color: var(--b3-theme-on-background);
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $gr-radius-5;
-    outline: none;
-
-    &:focus {
-      border-color: var(--b3-theme-primary);
-    }
-  }
 }
 
 .gr-direction-filter {
@@ -192,7 +74,7 @@ $gr-lh-16: 1.6; // 无对应 Token（$lh-normal 为 1.5）
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: $s-2 $gr-space-14;
+  padding: $s-2 $s-px14;
 }
 
 .gr-empty {
@@ -211,192 +93,20 @@ $gr-lh-16: 1.6; // 无对应 Token（$lh-normal 为 1.5）
   }
 }
 
-// ---------- 关系列表 ----------
+// ---------- 关系列表容器（行本身由 RelationRow.vue 负责） ----------
 .gr-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: $gr-space-6;
+  gap: $s-px6;
 }
 
-.gr-row {
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-  overflow: hidden;
-
-  &__main {
-    display: flex;
-    align-items: center;
-    gap: $s-2;
-    padding: $s-2 $gr-space-10;
-    cursor: pointer;
-
-    &:hover {
-      background: var(--b3-list-hover);
-    }
-  }
-
-  &__doc {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    flex: 1;
-
-    &--source {
-      text-align: right;
-    }
-
-    &--target {
-      text-align: left;
-    }
-  }
-
-  &__doc-name {
-    font-size: $t-xs;
-    font-weight: $fw-medium;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--b3-theme-on-background);
-
-    &:hover {
-      color: var(--b3-theme-primary);
-      text-decoration: underline;
-    }
-  }
-
-  &__doc-path {
-    font-size: $t-2xs;
-    color: var(--b3-theme-on-surface);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__arrow {
-    flex-shrink: 0;
-    color: var(--b3-theme-on-surface);
-  }
-
-  &__meta {
-    display: flex;
-    align-items: center;
-    gap: $gr-space-6;
-    flex-shrink: 0;
-  }
-
-  &__chevron {
-    color: var(--b3-theme-on-surface);
-    transition: transform 0.12s ease;
-
-    &--open {
-      transform: rotate(180deg);
-    }
-  }
-
-  &__details {
-    border-top: 1px solid var(--b3-border-color);
-    padding: $s-2 $gr-space-10;
-    display: flex;
-    flex-direction: column;
-    gap: $gr-space-6;
-    background: var(--b3-theme-background);
-  }
-
-  &__details-title {
-    font-size: $gr-font-11;
-    font-weight: $fw-semibold;
-    color: var(--b3-theme-on-surface);
-  }
-
-  &__details-empty {
-    font-size: $gr-font-11;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.7;
-  }
-
-  &__contents {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $s-1;
-  }
-
-  &__content-item {
-    font-size: $gr-font-11;
-    padding: $s-1 $s-2;
-    background: var(--b3-theme-surface);
-    border-left: 2px solid var(--b3-theme-primary);
-    border-radius: $gr-radius-3;
-    word-break: break-all;
-  }
-
-  &__backlinks {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $s-1;
-  }
-
-  &__backlink-item {
-    display: flex;
-    flex-direction: column;
-    gap: $gr-space-1;
-    padding: $gr-space-5 $s-2;
-    font-size: $gr-font-11;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-sm;
-    cursor: pointer;
-
-    &:hover {
-      background: var(--b3-list-hover);
-    }
-  }
-
-  &__backlink-name {
-    font-weight: $fw-medium;
-    color: var(--b3-theme-on-background);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__backlink-path {
-    font-size: $t-2xs;
-    color: var(--b3-theme-on-surface);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-// ---------- 徽标 ----------
-.gr-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: $gr-space-1 $gr-space-7;
+// ---------- 截断提示 ----------
+.gr-truncated-hint {
+  padding: $s-2 0;
   font-size: $t-2xs;
-  line-height: $gr-lh-16;
-  border-radius: $r-full;
-  white-space: nowrap;
-
-  &--bidirectional {
-    color: $gr-accent;
-    background: color-mix(in srgb, $gr-accent 14%, transparent);
-    border: 1px solid color-mix(in srgb, $gr-accent 40%, transparent);
-  }
-
-  &--count {
-    color: var(--b3-theme-on-surface);
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
-  }
+  color: var(--b3-theme-on-surface);
+  text-align: center;
 }

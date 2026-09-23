@@ -196,3 +196,13 @@ export function getCurrentBlockId(): string | null {
 
   return null
 }
+
+/**
+ * 通过思源 URI 协议打开指定块/文档（在新窗口聚焦该文档）。
+ * 收敛各 feature 中复制粘贴的 window.open(`siyuan://blocks/${id}`) 写法。
+ * @param blockId 块或文档 ID，空值直接返回不动作
+ */
+export function openBlock(blockId: string): void {
+  if (!blockId) return
+  window.open(`siyuan://blocks/${blockId}`)
+}

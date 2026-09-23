@@ -321,7 +321,7 @@ import * as api from "@/api"
 import SiButton from "@/components/Button.vue"
 import Paginator from "@/components/Paginator.vue"
 import SiSelect from "@/components/Select.vue"
-import { copyToClipboard } from "@/utils/domUtils"
+import { copyToClipboard, openBlock } from "@/utils/domUtils"
 import CompressDialog from "./components/CompressDialog.vue"
 import { useImageCompress } from "./composables/useImageCompress"
 import { useImagePagination } from "./composables/useImagePagination"
@@ -554,7 +554,7 @@ const extractDocIdFromImageName = (imageName: string): string | null => {
 }
 
 const openDoc = (docId: string) => {
-  window.open(`siyuan://blocks/${docId}`)
+  openBlock(docId)
 }
 
 const navigateToDoc = async (image: ImageInfo) => {

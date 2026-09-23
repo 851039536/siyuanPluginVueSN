@@ -7,6 +7,7 @@ import {
   lsNotebooks,
   sql,
 } from "@/api"
+import { openBlock } from "@/utils/domUtils"
 import type {
   DocInfo,
   FilterOptions,
@@ -282,7 +283,7 @@ export function useDocAnalysis(plugin: Plugin) {
   // 文档操作
   // ============================================================
 
-  function openDoc(docId: string) { if (docId) window.open(`siyuan://blocks/${docId}`) }
+  function openDoc(docId: string) { openBlock(docId) }
 
   function updateSort(field: string, order: string) {
     filterOptions.sortField = field as any

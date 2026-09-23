@@ -230,8 +230,8 @@ async function handleSave(): Promise<void> {
     }
     await props.storage.config.save(encrypted)
     showMessage(props.i18n.configSaved, 2000, "info")
+    // 仅发 saved：父组件 handleConfigSaved 会关闭弹窗，重复 emit("close") 会形成两条关闭路径
     emit("saved", config)
-    emit("close")
   } catch (err) {
     showMessage(`${props.i18n.saveFailed}: ${getErrorMessage(err)}`, 4000, "error")
   } finally {
@@ -244,5 +244,4 @@ const i18n = props.i18n
 
 <style scoped lang="scss">
 @use "../styles/FmConfigDialog.scss";
-@use "../styles/index.scss";
 </style>

@@ -74,6 +74,7 @@
         @dragover="externalDrop.onDragOver"
         @dragleave="externalDrop.onDragLeave"
         @drop="externalDrop.onDrop"
+        @dragend="externalDrop.onDragEnd"
       >
         <!-- 进度条：传输与批量操作共用一段（共享 ProgressBar） -->
         <div

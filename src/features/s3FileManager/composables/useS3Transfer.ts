@@ -115,27 +115,31 @@ export function useS3Transfer(deps: {
       }
 
       // 内存预算信号量：readFile 整包驻留内存，超过预算时暂停读下一个文件，
-      // 待前序 Buffer 上传完成释放后才继续，避免多文件/大文件并发读入导致 OOM
+      // 待前序 Buffer 上传完成释放后才继续，避免多文件/大文件并发读入导致 OOM。
+      // 记账口径：reserve 返回「实际预留的字节」，release 必须按同一数值归还，
+      // 且预留值恒为有限数（clamp 到预算），否则预算会被污染为 Infinity 而永久死锁。
       let bytesInFlight = 0
       const waiters: Array<() => void> = []
-      const reserveMemory = (bytes: number): Promise<void> => {
-        if (bytes <= UPLOAD_MEMORY_BUDGET) {
-          return new Promise((resolve) => {
-            const wait = (): void => {
-              if (bytesInFlight + bytes <= UPLOAD_MEMORY_BUDGET) {
-                bytesInFlight += bytes
-                resolve()
-                return
-              }
-              waiters.push(wait)
+      const reserveMemory = (bytes: number): Promise<number> => {
+        // stat 失败等场景传入非有限值时，按「单文件独占预算」预留：既有限、又可随释放归还
+        const want = Number.isFinite(bytes) && bytes > 0 ? bytes : UPLOAD_MEMORY_BUDGET
+        // 单文件即超预算时独占整块预算（而非绕过记账），保证 release 能正确归还
+        const need = Math.min(want, UPLOAD_MEMORY_BUDGET)
+        return new Promise<number>((resolve) => {
+          const wait = (): void => {
+            if (bytesInFlight + need <= UPLOAD_MEMORY_BUDGET) {
+              bytesInFlight += need
+              resolve(need)
+              return
             }
-            wait()
-          })
-        }
-        bytesInFlight += bytes
-        return Promise.resolve()
+            waiters.push(wait)
+          }
+          wait()
+        })
       }
       const releaseMemory = (bytes: number): void => {
+        // 只归还有限的正数，避免 NaN/Infinity 把预算永久带偏
+        if (!Number.isFinite(bytes) || bytes <= 0) { return }
         bytesInFlight = Math.max(0, bytesInFlight - bytes)
         while (waiters.length > 0) {
           const before = waiters.length
@@ -148,23 +152,26 @@ export function useS3Transfer(deps: {
 
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
         let buffer: Buffer | null = null
+        // 实际预留到的字节数：reserve 成功即为有限值，finally 必须按它归还（与 readFile 是否失败无关）
+        let reservedBytes = 0
         try {
-          const bytes = sizeMap.get(task.key) ?? Number.POSITIVE_INFINITY
-          await reserveMemory(bytes)
+          const statSize = sizeMap.get(task.key)
+          reservedBytes = await reserveMemory(statSize ?? Number.POSITIVE_INFINITY)
           buffer = await fs.promises.readFile(task.path)
-          if (buffer) { buffer = Buffer.from(buffer) }
           fractions.set(task.key, 0)
           reportUpload(task.name)
-          await withRetries(() => client.uploadBuffer(buffer as Buffer, task.key, (sent, total) => {
+          const payload = buffer
+          await withRetries(() => client.uploadBuffer(payload, task.key, (sent, total) => {
             fractions.set(task.key, sent / Math.max(total, 1))
             reportUpload(task.name)
           }))
-          uploadedBytes += sizeMap.get(task.key) ?? buffer.length
+          uploadedBytes += statSize ?? payload.length
         } catch (err) {
           console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
           failed.push(task.name)
         } finally {
-          if (buffer) { releaseMemory(buffer.length) }
+          // 无条件按预留量归还：readFile 抛错时 buffer 为 null，也必须释放，否则预算只增不减
+          releaseMemory(reservedBytes)
           fractions.delete(task.key)
         }
         done++

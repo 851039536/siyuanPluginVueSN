@@ -66,3 +66,12 @@
   flex: 1;
   min-width: 0;
 }
+
+// 页脚右侧按钮组：Dialog 页脚为 flex-end，左侧另有元素时用它把右侧按钮组推到末端
+.fm-dialog-footer-right {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  margin-left: auto;
+}
+

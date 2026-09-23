@@ -38,8 +38,11 @@ export function useFmPrefs(deps: {
       deps.sortField.value = prefs.value.sortField
       deps.sortAsc.value = prefs.value.sortAsc
     } catch {
-      // 偏好加载失败用默认值（不阻断面板打开）
+      // 偏好加载失败用默认值（不阻断面板打开）。排序 ref 必须同步回滚，
+      // 否则其残留值会与默认 prefs 不一致，触发下方 watch 把默认排序落盘、覆盖用户已存偏好
       prefs.value = { ...DEFAULT_FM_PREFS }
+      deps.sortField.value = DEFAULT_FM_PREFS.sortField
+      deps.sortAsc.value = DEFAULT_FM_PREFS.sortAsc
     }
   }
 

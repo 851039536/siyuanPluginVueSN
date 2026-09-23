@@ -88,17 +88,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-// ========== 弹窗共享基座 ==========
-// 弹窗外壳/遮罩已由共享 Dialog 承担，此处只保留「页脚右侧按钮组」这类跨弹窗复用的排版
-
-// Dialog 页脚为 flex-end；左侧另有元素时用它把右侧按钮组推到末端（FmConfigDialog / FmMoveCopyDialog 共用）
-.fm-dialog-footer-right {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  margin-left: auto;
-}
-
 // ========== 浏览区 + 外部拖入提示浮层 ==========
 
 .fm-browse {

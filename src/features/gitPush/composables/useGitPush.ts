@@ -81,6 +81,7 @@ export function useGitPush(manager: GitPushManager) {
     pushSingle: gitOps.pushSingle,
     pullSingle: gitOps.pullSingle,
     cancelPush: gitOps.cancelPush,
+    clearRemoteOutput: gitOps.clearRemoteOutput,
     doStashSave: gitOps.doStashSave,
     doStashPop: gitOps.doStashPop,
     doStashApply: gitOps.doStashApply,

@@ -363,6 +363,26 @@ export function useRemoteProgress(
   function cancelPush(id: string) { manager.cancelOp(id, "push") }
   function cancelPull(id: string) { manager.cancelOp(id, "pull") }
 
+  /**
+   * 清除指定项目某一操作的结果输出（推送/拉取面板的关闭按钮）。
+   * 与 clearProject 一样用整体替换而非 delete —— ref<Record> 的 delete 不被深层响应式追踪，
+   * 必须换新对象才会触发重渲染（项目内既有约定）。
+   *
+   * 运行中不清理：此时面板展示的是过程视图，清掉输出会让「运行中」失去落点。
+   * ⚠️ 判据必须用 isOpInProgress（只看 pushing/pending），不能只看记录是否存在 ——
+   * 操作结束后进度记录仍会保留约 3s（scheduleProgressCleanup），但那期间已是终态
+   * （ok/fail），此时用户点关闭必须立即生效。
+   */
+  function clearOutput(id: string, action: "push" | "pull") {
+    const progressRef = action === "push" ? pushProgress : pullProgress
+    if (isOpInProgress(progressRef, id)) return
+    const target = action === "push" ? pushOutputs : pullOutputs
+    if (!(id in target.value)) return
+    const next = { ...target.value }
+    delete next[id]
+    target.value = next
+  }
+
   /** 清理指定项目的全部远程进度/输出缓存（删除项目时调用，避免孤儿状态残留） */
   function clearProject(id: string) {
     for (const r of [pushProgress, pullProgress, pushOutputs, pullOutputs] as Ref<Record<string, unknown>>[]) {
@@ -391,6 +411,7 @@ export function useRemoteProgress(
     pullSingle,
     cancelPush,
     cancelPull,
+    clearOutput,
     clearProject,
   }
 }

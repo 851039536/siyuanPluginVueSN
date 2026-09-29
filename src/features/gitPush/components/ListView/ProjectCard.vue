@@ -113,13 +113,14 @@
     <!-- 操作栏：拉取 / 推送 -->
     <CardActionBar :project="project" />
 
-    <!-- 拉取/推送输出（运行中显示逐平台过程行；失败时内置 AI 分析入口） -->
+    <!-- 拉取/推送输出（运行中显示逐平台过程行；失败时内置 AI 分析入口；右上角可关闭结果） -->
     <OutputPanel
       :entries="pullOutputs"
       :running-states="pullRunningStates"
       :i18n="i18n"
       :project-name="project.name"
       action="pull"
+      @clear="ops.clearRemoteOutput(project.id, 'pull')"
     />
     <OutputPanel
       :entries="pushOutputs"
@@ -127,6 +128,7 @@
       :i18n="i18n"
       :project-name="project.name"
       action="push"
+      @clear="ops.clearRemoteOutput(project.id, 'push')"
     />
 
     <!-- 提交信息修正弹窗（LOG Tab 与规则检查共用） -->

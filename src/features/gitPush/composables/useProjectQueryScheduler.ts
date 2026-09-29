@@ -151,7 +151,10 @@ export function useProjectQueryScheduler(
       const project = findProject(projects, id)
       if (!project) return
       const branch = opts?.branch ?? (await resolveBranch(id))
-      workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), { branch })
+      workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), {
+        branch,
+        fastWhenClean: opts?.fastWhenClean,
+      })
     }, { force: opts?.force })
   }
 
@@ -178,7 +181,7 @@ export function useProjectQueryScheduler(
         : loadPushStatus(id, { branch }),
       mode === "ensure" && has(id, "workingTree")
         ? Promise.resolve()
-        : loadWorkingTree(id, { branch }),
+        : loadWorkingTree(id, { branch, fastWhenClean: opts?.fastWhenClean }),
     ])
   }
 

@@ -86,7 +86,7 @@
         />
 
         <template v-else>
-          <!-- 生成信息行：生成时间 + 时间范围 + 数据源概况 -->
+          <!-- 生成信息行：生成时间 + 时间范围 + 数据源概况 + 后台刷新指示 -->
           <div class="gpr-meta">
             <span
               class="gpr-meta-item"
@@ -94,6 +94,18 @@
             >{{ i18n.reportGenerated.replace("{0}", relativeTime(report.generatedAt, i18n)) }}</span>
             <span class="gpr-meta-item">{{ i18n.reportRangeLabel.replace("{0}", report.rangeLabel) }}</span>
             <span class="gpr-meta-item">{{ i18n.reportFilesAnalyzed.replace("{0}", String(report.analyzedFiles)) }}</span>
+            <!-- 后台增量刷新指示（本地索引命中时几乎瞬时，此处仅作可见反馈） -->
+            <span
+              v-if="refreshing"
+              class="gpr-meta-item gpr-meta-item--busy"
+            >
+              <Icon
+                icon="mdi:loading"
+                height="12"
+                class="gp-spin"
+              />
+              {{ i18n.reportIndexRefreshing }}
+            </span>
           </div>
 
           <!-- 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势） -->
@@ -188,6 +200,8 @@ const props = defineProps<{
   report: CodeReportData
   /** 生成中标记 */
   running: boolean
+  /** 后台静默刷新中标记（本地提交索引增量校验；已有内容时展示） */
+  refreshing: boolean
   /** 是否已生成过至少一轮 */
   generated: boolean
   /** 项目列表（含归档，用于下拉选择） */

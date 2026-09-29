@@ -34,9 +34,12 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     scheduler.invalidate(id, ...domains)
   }
 
-  /** 项目状态补齐（ensure 语义：已有缓存即跳过） */
-  function ensureProjectStatus(id: string) {
-    return scheduler.loadStatus(id, { mode: "ensure" })
+  /**
+   * 项目状态补齐（ensure 语义：已有缓存即跳过）。
+   * @param fastWhenClean 干净工作区快速路径（供批量统计预取开启；卡片交互路径不传，保持单命令行为）
+   */
+  function ensureProjectStatus(id: string, fastWhenClean = false) {
+    return scheduler.loadStatus(id, { mode: "ensure", fastWhenClean })
   }
 
   /** 项目状态显式刷新（refresh 语义 + 2s 最小间隔，合并面板内操作与自动刷新的重复触发） */

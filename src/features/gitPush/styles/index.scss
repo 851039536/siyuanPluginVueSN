@@ -397,6 +397,15 @@
   opacity: 0.4;
 }
 
+// 索引目录路径（设置弹窗内展示，超长省略并以 title 提供完整路径）
+.gp-set-index-dir {
+  margin-top: 2px;
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .gp-cat-row {
   display: flex;
   align-items: center;

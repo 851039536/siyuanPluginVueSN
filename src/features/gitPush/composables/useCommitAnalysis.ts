@@ -178,15 +178,25 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return { projectRanking, summary }
   }
 
-  /** 抓取单项目行数数据：并行抓 numstat（增量）与 git ls-files（存量文件列表），统计每文件存量行数与项目总行数（全量分析与详情弹窗单项目刷新共用）。
-   * 行数统计固定统计全部提交历史（不传 maxCount）—— 与「当前总行数=工作区存量全量」保持同一口径，不受条数选择影响。 */
+  /** 抓取单项目行数数据：numstat（提交增量）与已跟踪文件存量行数（全量分析与详情弹窗单项目刷新共用）。
+   * 行数统计固定统计全部提交历史（不传 maxCount）—— 与「当前总行数=工作区存量全量」保持同一口径，不受条数选择影响。
+   *
+   * 索引优先：两条数据都走本地提交索引——HEAD 未变的项目零 git 调用、零 statSync
+   * （git ls-files + 逐文件读盘是行数统计最慢的一环，索引按 rootHash 复用其缓存）。
+   * 索引不可用时 getIndexed* 返回回退结果/空值，此处退回原有的直接扫描路径。 */
   async function fetchProjectLineStats(p: GitProject, path: string) {
-    const [numstat, trackedFiles] = await Promise.all([
-      manager.getCommitStatsLog(path),
-      manager.getTrackedFiles(path),
-    ])
-    // 单次遍历统计每个文件存量行数并据此聚合项目总行数（复用 countFileLines 口径，避免重复读文件）
-    const fileLines = countTrackedFileLinesMap(p, trackedFiles)
+    const numstatResult = await manager.getIndexedCommitLog(p, {})
+    const numstat = numstatResult.commits
+    // 存量行数：索引命中直接给 Map；未命中返回 null → 回退逐文件读取
+    const indexed = await manager.getIndexedFileLines(p)
+    let fileLines: Map<string, number | null>
+    if (indexed) {
+      fileLines = indexed.lines
+    } else {
+      const trackedFiles = await manager.getTrackedFiles(path)
+      fileLines = countTrackedFileLinesMap(p, trackedFiles)
+    }
+    // 单次遍历统计项目总行数（复用 countFileLines 口径，避免重复读文件）
     let totalLines = 0
     fileLines.forEach((lines, f) => {
       if (lines !== null && shouldIncludeFile(f, selectedExtensions.value)) totalLines += lines
@@ -240,7 +250,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             fileLines,
           }
         }
-        // 提交分析：原 getCommitLog 链路保持不动（内部吞错返回 []，路径预检已在上方兜底）
+        // 提交分析：保持 getCommitLog 链路（内部吞错返回 []，路径预检已在上方兜底）。
+        // 刻意不接本地索引：该分支需要 isMerge（规则检查豁免 merge 提交、修正/删除历史弹窗据此阻断），
+        // 而 numstat 索引不携带父提交信息；且此分支只取提交元信息（无 --numstat），本身已是廉价命令，
+        // 接入索引需额外存父提交数而收益有限，性价比不足。
         const log = await manager.getCommitLog(path, commitCount.value)
         return {
           projectId: p.id,

@@ -8,12 +8,15 @@
  * 安全约定：所有来自 git 的字符串（作者名/文件路径）必须经 escapeHtml 才能进入 HTML，
  * 否则仓库中的恶意路径（如 `<img onerror=...>`）会在浏览器打开报告时执行。
  */
+// 直连 types/report（纯类型与常量）而非 "./types" 桶：桶含 GitPushManager 等运行时模块，
+// 会把运行时 siyuan 依赖拉进模块图，使本纯函数模块无法在 Node 单测环境加载
+// （htmlReport.spec.ts 曾因此整体失败）。types/index.ts 仍是唯一的公共导出面。
 import type {
   CodeReportData,
   DailyCommitStat,
   DebtSeverity,
   HotspotLevel,
-} from "./types"
+} from "./types/report"
 import {
   calcMovingAverage7,
   collapseDailyStats,
@@ -25,7 +28,7 @@ import {
   HOTSPOT_LEVEL_ORDER,
   REPORT_CHART_COLORS,
   WEEKDAY_LABEL_KEYS,
-} from "./types"
+} from "./types/report"
 
 /** 报告渲染上下文（页头信息；不属于 CodeReportData 的聚合字段） */
 export interface HtmlReportContext {

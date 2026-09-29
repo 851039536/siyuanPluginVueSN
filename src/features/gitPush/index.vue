@@ -84,6 +84,7 @@
       :i18n="i18n"
       :report="reportData"
       :running="reportRunning"
+      :refreshing="reportRefreshing"
       :generated="reportGenerated"
       :projects="projects"
       :project-id="reportProjectId"
@@ -617,6 +618,7 @@ const lineDetailProjectId = ref("")
 const {
   reportData,
   running: reportRunning,
+  refreshing: reportRefreshing,
   generated: reportGenerated,
   projectId: reportProjectId,
   range: reportRange,
@@ -779,10 +781,13 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
  * 补齐给定项目集的状态最小数据集（pushStatus + workingTree），列表视图与统计/智能视图共用。
  * commitLog/branches/stash 不在这两类视图中展示，无需加载。
  * 分支名由调度器解析一次并缓存分发给两个查询；在途与已加载均由调度器去重。
+ *
+ * @param fastWhenClean 干净工作区快速路径（仅供批量统计场景；详见 WorktreeOps.getWorkingTreeStatus）。
+ *   干净工作区（查看统计时的常态）下可省掉大部分 status 解析开销，有变更时仅多花一次轻量探测。
  */
-async function ensureStatusFor(list: GitProject[]) {
+async function ensureStatusFor(list: GitProject[], fastWhenClean = false) {
   if (gitOpsPaused.value) return
-  await runProjectLoadBatch(list, (id) => ensureProjectStatus(id))
+  await runProjectLoadBatch(list, (id) => ensureProjectStatus(id, fastWhenClean))
 }
 
 /**
@@ -803,11 +808,11 @@ watch(activeCategory, async (catId) => {
   await loadCurrentCategoryList()
 })
 
-/** 补齐所有项目的统计最小数据集（统计视图与智能视图共用，未缓存的项目才入队） */
+/** 补齐所有项目的统计最小数据集（统计视图与智能视图共用，未缓存的项目才入队）。
+ * 开启干净工作区快速路径：批量场景下面向的大多是「无未提交变更」的项目，收益显著且失败可降级。 */
 async function ensureStatsDataLoaded() {
-  await ensureStatusFor(projects.value)
+  await ensureStatusFor(projects.value, true)
 }
-
 /** 统计视图快照刷新中（工具条刷新按钮转圈禁用） */
 const statsRefreshing = ref(false)
 
@@ -824,7 +829,8 @@ async function refreshStatsData() {
   statsRefreshing.value = true
   try {
     await runBatchWithProgress(projects.value, tf("refreshingLabel"), async (p) => {
-      await scheduler.loadStatus(p.id, { mode: "refresh" })
+      // 显式刷新同样开快速路径：批量重查全部项目，干净工作区的比例通常很高
+      await scheduler.loadStatus(p.id, { mode: "refresh", fastWhenClean: true })
     })
     statsRefreshedAt.value = new Date().toISOString()
   } finally {

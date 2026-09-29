@@ -19,6 +19,7 @@ import {
   buildHtmlReport,
   reportFileName,
 } from "../htmlReport"
+import { resolveValidPath } from "../utils"
 
 /** 报告导出文件的类型过滤（保存对话框用） */
 const HTML_FILTER = [{
@@ -74,7 +75,8 @@ export function useReportExport(deps: {
         report,
         {
           projectName: project.name,
-          projectPath: project.path,
+          // 用当前设备实际存在的路径（多设备场景下 project.path 可能指向另一台机器的盘符）
+          projectPath: resolveValidPath(project),
           rangeLabel: report.rangeLabel,
           generatedAt: report.generatedAt,
         },

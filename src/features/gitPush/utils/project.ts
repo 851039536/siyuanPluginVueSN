@@ -1,6 +1,8 @@
 // gitPush 项目查找/排序、多设备路径解析与本地·网页打开（纯函数，无响应式依赖）
 import type { Ref } from "vue"
-import type { GitProject } from "../types"
+// 直连 types/storage 而非 "../types" 桶：桶含 GitPushManager 等运行时模块（需 require 运行时
+// siyuan 包），会使本纯函数模块无法在 Node 单测环境加载，进而拖累 reportMetrics 等被测模块。
+import type { GitProject } from "../types/storage"
 import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** 按 ID 查找项目（消除散落在各处的 projects.value.find 重复） */

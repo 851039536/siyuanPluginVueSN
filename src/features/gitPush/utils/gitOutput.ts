@@ -1,4 +1,6 @@
 // gitPush git 命令输出文本解析（纯函数）：工作区状态 / 提交日志 / 提交文件 / stash / 分支
+// 直连 types/storage 而非 "../types" 桶（桶含 GitPushManager 运行时模块），保证本模块
+// 及其测试可在 Node 环境加载。
 import type {
   BranchInfo,
   CommitLogEntry,
@@ -6,7 +8,7 @@ import type {
   FileChange,
   FileChangeStatus,
   StashEntry,
-} from "../types"
+} from "../types/storage"
 
 /** porcelain v1 的 unmerged 状态组合（两位状态码均为冲突标记，须整体判定而非逐位解读） */
 const UNMERGED_CODES = new Set(["DD", "AU", "UD", "UA", "DU", "AA", "UU"])

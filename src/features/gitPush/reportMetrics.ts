@@ -4,7 +4,9 @@
 // - 技术债务风险分 risk = clamp(sqrt(修改次数)*10 + 参与人数*6 + 近期修改加分)，sqrt 使 churn 边际收益递减避免高分区饱和；
 //   仅统计修改 ≥门槛次（默认 3，可由偏好配置）的文件（低于门槛视为正常迭代）
 // - 热度 heat = 修改次数*2.2 + 参与人数*7 + 近期修改加分（recencyBonus 与债务评分共用）；阈值 热点≥75 / 温热≥45 / 冷却≥25
-import type { GitProject } from "./types"
+// GitProject 属于纯类型（storage.ts），但从 "./types" 桶导入会把管理器等运行时模块一起拉进
+// 模块图（进而 require 运行时 siyuan 包），使本纯函数模块无法在 Node 单测环境加载，故直连 types/storage。
+import type { GitProject } from "./types/storage"
 import type {
   AuthorReportRow,
   CodeReportData,
@@ -16,12 +18,14 @@ import type {
   HotspotFileRow,
   HotspotLevel,
   HourBucketStat,
-  ReportRange,
   WeekdayStat,
 } from "./types/report"
-import { DEBT_SEVERITY_ORDER, HOTSPOT_LEVEL_ORDER, REPORT_RANGES } from "./types/report"
+import { DEBT_SEVERITY_ORDER, HOTSPOT_LEVEL_ORDER } from "./types/report"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { formatLocalDate, resolveValidPath } from "./utils"
+// 直连纯函数模块（不经 "./utils" 桶）：桶会经 project.ts 拉入 GitPushManager（运行时 siyuan 依赖），
+// 破坏本模块在 Node 单测环境的可加载性。
+import { formatLocalDate } from "./utils/analysis"
+import { resolveValidPath } from "./utils/project"
 
 // ── 解析：git log --numstat 输出 → 结构化提交块 ──
 
@@ -50,37 +54,45 @@ function unquotePath(s: string): string {
  * 结构：每条提交 = "<RS>header 段...\n" + 若干 "新增\t删除\t路径\n" 行，提交间以空行分隔。
  * - 旧格式（getNumstatLog，报告视图）：header = "<US>作者<US>ISO日期"（2 段），解析 author/date
  * - 新格式（getCommitStatsLog，行数统计）：header = "<US>hash<US>作者<US>ISO日期<US>主题"（4 段），额外解析 hash/message
+ *
+ * 增量扫描（fetchIncremental）复用 parseNumstatBlock 逐块解析同一份输出，两者语义必须保持一致。
  */
 export function parseNumstatBlocks(raw: string): NumstatCommit[] {
   const commits: NumstatCommit[] = []
   const chunks = raw.split("\x1e")
   for (let i = 1; i < chunks.length; i++) {
-    const chunk = chunks[i]
-    const lines = chunk.split("\n")
-    const header = lines[0] || ""
-    const parts = header.split("\x1f")
-    // 4 段新格式：hash / author / date / message（subject 内含 \x1f 时用 slice(3) 保底还原）
-    if (parts.length >= 4) {
-      const hash = parts[0].trim()
-      const author = parts[1].trim()
-      const date = parts[2].trim()
-      const message = parts.slice(3).join("\x1f").trim()
-      if (!author || !date) continue
-      const files = parseFileLines(lines)
-      commits.push({ hash, author, date, message, files })
-      continue
-    }
-    // 2 段旧格式：author / date
-    if (parts.length >= 2) {
-      const author = parts[0].trim()
-      const date = parts[1].trim()
-      if (!author || !date) continue
-      const files = parseFileLines(lines)
-      commits.push({ author, date, files })
-      continue
-    }
+    const parsed = parseNumstatBlock(chunks[i])
+    if (parsed) commits.push(parsed)
   }
   return commits
+}
+
+/**
+ * 解析单个 numstat 块（不含前导 \x1e 分隔符）。
+ * 供 parseNumstatBlocks（整段解析）与 ReportOps.fetchIncremental（逐块增量解析）共用，
+ * 避免两处各写一份 header 段数判定逻辑而漂移。无法解析（header 段数不足/缺作者或日期）返回 null。
+ */
+export function parseNumstatBlock(chunk: string): NumstatCommit | null {
+  const lines = chunk.split("\n")
+  const header = lines[0] || ""
+  const parts = header.split("\x1f")
+  // 4 段新格式：hash / author / date / message（subject 内含 \x1f 时用 slice(3) 保底还原）
+  if (parts.length >= 4) {
+    const hash = parts[0].trim()
+    const author = parts[1].trim()
+    const date = parts[2].trim()
+    const message = parts.slice(3).join("\x1f").trim()
+    if (!author || !date) return null
+    return { hash, author, date, message, files: parseFileLines(lines) }
+  }
+  // 2 段旧格式：author / date
+  if (parts.length >= 2) {
+    const author = parts[0].trim()
+    const date = parts[1].trim()
+    if (!author || !date) return null
+    return { author, date, files: parseFileLines(lines) }
+  }
+  return null
 }
 
 /** 解析 numstat 块内的文件变更行（"新增\t删除\t路径"，二进制文件 git 输出 "-\t-" 跳过，无效行跳过） */
@@ -514,7 +526,15 @@ export function countFileLines(project: GitProject, filePath: string): number | 
     const modules = getNodeFsPathOs()
     const { fs, path } = modules || {}
     if (!fs || !path) return null
-    const abs = path.join(resolveValidPath(project), filePath)
+    return readLineCountAt(fs, path.join(resolveValidPath(project), filePath))
+  } catch {
+    return null
+  }
+}
+
+/** 从绝对路径读取行数（供 countFileLines 与 GhostFileIndex 复用；异常由调用方兜底） */
+function readLineCountAt(fs: typeof import("node:fs"), abs: string): number | null {
+  try {
     const stat = fs.statSync(abs)
     if (!stat.isFile() || stat.size > LOC_READ_MAX_BYTES) return null
     const content = fs.readFileSync(abs, "utf8") as string
@@ -536,16 +556,67 @@ export function countTrackedFileLinesMap(project: GitProject, files: string[]): 
   return map
 }
 
-/** 判断仓库内文件当前是否仍存在于工作区（过滤 git 历史中已删除的"幽灵文件"） */
-function fileExistsInRepo(project: GitProject, filePath: string): boolean {
-  try {
-    const modules = getNodeFsPathOs()
-    const { fs, path } = modules || {}
-    if (!fs || !path) return false
-    return fs.statSync(path.join(resolveValidPath(project), filePath)).isFile()
-  } catch {
-    return false
+/**
+ * 工作区内文件存在性索引（按目录一次性 readdir，取代逐文件 statSync）。
+ *
+ * 为什么需要：buildReportData 需过滤 git 历史中已删除的"幽灵文件"，
+ * 原先对每个排名文件各做一次 statSync（大仓库「全部」范围下可达数千次系统调用），
+ * 且每次调用还重复 getNodeFsPathOs + resolveValidPath（后者本身含 existsSync）。
+ * 按目录 readdir 后，同一目录的 N 个文件只花 1 次系统调用。
+ *
+ * 命中判定：目录已读取且条目为文件（含符号链接指向文件）。目录读取失败的路径按"不存在"处理，
+ * 与原先 statSync 抛错返回 false 的语义一致。
+ */
+class RepoFileIndex {
+  private repoRoot: string
+  private fsMod: typeof import("node:fs") | null
+  private pathMod: typeof import("node:path") | null
+  /** 目录（绝对路径）→ 该目录下的文件名集合；null 表示该目录读取失败 */
+  private dirs = new Map<string, Set<string> | null>()
+
+  constructor(repoRoot: string, fsMod: typeof import("node:fs") | null, pathMod: typeof import("node:path") | null) {
+    this.repoRoot = repoRoot
+    this.fsMod = fsMod
+    this.pathMod = pathMod
   }
+
+  /** 判断仓库内相对路径当前是否为工作区中的文件 */
+  has(filePath: string): boolean {
+    if (!this.fsMod || !this.pathMod) return false
+    const parts = filePath.split("/")
+    const name = parts.pop()
+    if (!name) return false
+    const dir = this.pathMod.join(this.repoRoot, ...parts)
+    let entries = this.dirs.get(dir)
+    if (entries === undefined) entries = this.readDir(dir)
+    return entries !== null && entries.has(name)
+  }
+
+  /** 读取目录条目（失败/不存在记为 null，表示该目录下无可用文件） */
+  private readDir(dir: string): Set<string> | null {
+    let result: Set<string> | null = null
+    try {
+      const entries = this.fsMod!.readdirSync(dir, { withFileTypes: true })
+      result = new Set<string>()
+      for (const entry of entries) {
+        // 目录条目自身排除；符号链接保守视为可能存在（readdir 不解析链接目标）
+        if (entry.isDirectory()) continue
+        result.add(entry.name)
+      }
+    } catch {
+      result = null
+    }
+    this.dirs.set(dir, result)
+    return result
+  }
+}
+
+/** 创建仓库文件存在性索引（Node 不可用时返回 null，调用方退化为"全部保留"） */
+function createRepoFileIndex(project: GitProject): RepoFileIndex | null {
+  const modules = getNodeFsPathOs()
+  const { fs, path } = modules || {}
+  if (!fs || !path) return null
+  return new RepoFileIndex(resolveValidPath(project), fs, path)
 }
 
 /** 判断是否为代码文件（排除 .md 文档：Markdown 不属于代码，不计入债务/热点/分析文件统计） */
@@ -559,13 +630,23 @@ function isCodeFile(filePath: string): boolean {
 export const DEBT_MIN_MOD_COUNT = 3
 
 /**
+ * ISO 时间距今天数（无法解析返回 -1）。
+ * 作为「相对天数」口径的单一来源：recencyBonus 分档与本模块的索引覆盖范围判据
+ * （sinceCoveredDays）共用，避免一处按天数、一处按日历月导致边界不一致。
+ */
+export function daysSince(iso: string): number {
+  const ms = parseIsoMs(iso)
+  if (ms <= 0) return -1
+  return (Date.now() - ms) / (24 * 60 * 60 * 1000)
+}
+
+/**
  * 近期修改加分（3 天+8 / 7 天+5 / 30 天+2，仅对可解析的 ISO 时间生效）。
  * 供热度评分与技术债务评分共用：同一改动量，近期发生比久远发生更值得关注（债务"恶化趋势"信号）。
  */
 function recencyBonus(lastModified: string): number {
-  const ms = parseIsoMs(lastModified)
-  if (ms <= 0) return 0
-  const diffDays = (Date.now() - ms) / (24 * 60 * 60 * 1000)
+  const diffDays = daysSince(lastModified)
+  if (diffDays < 0) return 0
   if (diffDays <= 3) return 8
   if (diffDays <= 7) return 5
   if (diffDays <= 30) return 2
@@ -622,11 +703,6 @@ function suggestionKey(hotPct: number, warmPct: number): "reportSugNormal" | "re
 
 // ── 报告组装 ──
 
-/** 报告范围对应的 since 参数（all 返回空串） */
-export function sinceForRange(range: ReportRange): string {
-  return REPORT_RANGES.find((r) => r.value === range)?.since ?? ""
-}
-
 /** 热点文件榜单上限（超出只展示头部，避免长列表淹没关键信息） */
 const HOTSPOT_LIMIT = 12
 
@@ -663,9 +739,11 @@ export function buildReportData(
   }
 
   // 文件 → 完整统计行（loc 仅在榜单 Top 读取行数控制开销）
-  // 过滤链：①非代码文件（.md 文档不属代码，廉价判断前置减少 statSync 次数）②已从工作区删除的"幽灵文件"（历史记录不因删除而消失，需按当前磁盘存在性剔除）
+  // 过滤链：①非代码文件（.md 文档不属代码，廉价判断前置减少 fs 调用）②已从工作区删除的"幽灵文件"（历史记录不因删除而消失，需按当前磁盘存在性剔除）
+  // 存在性用目录级索引（每目录一次 readdir）而非逐文件 statSync
+  const fileIndex = createRepoFileIndex(project)
   const rankedFiles = [...fileMap.entries()]
-    .filter(([path]: [string, FileAgg]) => isCodeFile(path) && fileExistsInRepo(project, path))
+    .filter(([path]: [string, FileAgg]) => isCodeFile(path) && (fileIndex === null || fileIndex.has(path)))
     .sort((a, b) => b[1].modCount - a[1].modCount)
   const debtRows: DebtFileRow[] = []
   const hotspotRows: HotspotFileRow[] = []

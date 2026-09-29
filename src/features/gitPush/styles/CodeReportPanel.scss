@@ -32,7 +32,7 @@
   padding: $s-1 $s-px6; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
-// ── 生成信息行（生成时间 + 时间范围 + 数据源概况）──
+// ── 生成信息行（生成时间 + 时间范围 + 数据源概况 + 后台刷新指示）──
 .gpr-meta {
   display: flex;
   align-items: center;
@@ -41,6 +41,14 @@
   margin-bottom: $s-2;
   font-size: $t-2xs;
   opacity: 0.45;
+}
+
+// 后台增量刷新指示：提高不透明度使其从信息行中可辨识（父级整体 0.45）
+.gpr-meta-item--busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 2.2;
 }
 
 // 生成失败提示（路径无效/非 git 仓库/无提交）

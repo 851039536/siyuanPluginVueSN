@@ -25,5 +25,14 @@ export default defineConfig({
     // 测试文件与被测源文件同目录（AGENTS_ARCH.md § 纯函数测试约定）
     include: ["src/**/*.spec.ts"],
     globals: false,
+    /**
+     * 真实 git 仓库用例的超时预算。
+     *
+     * `*.git.spec.ts` 会创建临时仓库并拉起多个 git 子进程（.git 目录创建、多次 add/commit、
+     * 重命名与 amend），单例在空闲机器上约 2~5s，但受磁盘与并发影响可达 10s+。
+     * Vitest 默认 5s 会让这些用例偶发「Test timed out」——这是超时预算不足，而非逻辑缺陷。
+     * 提到 30s：纯函数用例仍在毫秒级完成，只有 git 用例才会用到这个预算。
+     */
+    testTimeout: 30000,
   },
 })

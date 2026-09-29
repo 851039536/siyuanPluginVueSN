@@ -41,6 +41,11 @@ export interface LoadStatusOptions {
   branch?: string
   /** 绕过单飞共享，始终发起新查询（写操作后必须拿到写后状态时用） */
   force?: boolean
+  /**
+   * 干净工作区快速路径（仅工作区查询消费）：先探测已跟踪文件变更，无变更时少解析一次全量输出。
+   * 只由批量统计/预取这类偏向干净工作区的调用方开启（详见 WorktreeOps.getWorkingTreeStatus）。
+   */
+  fastWhenClean?: boolean
 }
 
 /** `loadStatus` 选项（在 LoadStatusOptions 之上增加模式与节流） */

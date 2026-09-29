@@ -111,24 +111,30 @@
   padding-right: $s-1;
 }
 
+// 自定义 IDE 行内删除按钮。
+// 常驻弱化（0.3）而非 opacity: 0 —— 后者让「能删除」这件事完全依赖鼠标悬停才能发现，
+// 键盘与触屏用户既看不到也无法触发（触屏根本没有 hover）。
+// :hover 与 :focus-within 同为「强化」入口，保证纯键盘操作也能看到焦点态。
 .gp-ide-item-del {
   margin-left: auto;
   padding: $s-px2 $s-1;
   color: var(--b3-theme-on-surface);
-  opacity: 0;
+  opacity: 0.3;
   background: none;
   border: none;
   border-radius: $r-sm;
   cursor: pointer;
   transition: opacity 0.12s;
 
-  .gp-ide-item--custom:hover & {
-    opacity: 0.35;
+  .gp-ide-item--custom:hover &,
+  .gp-ide-item--custom:focus-within & {
+    opacity: 1;
   }
 }
 
 .gp-ide-item--custom .gp-ide-item-del {
-  &:hover {
+  &:hover,
+  &:focus-visible {
     opacity: 1;
     color: var(--b3-theme-error);
     background: var(--b3-theme-error-lightest, rgba(231, 76, 60, 0.08));

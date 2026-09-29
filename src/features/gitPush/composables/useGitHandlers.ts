@@ -57,7 +57,9 @@ export function useGitHandlers(deps: {
   /** Tag 推送操作加载中 id → tagName */
   const tagPushLoading = ref<Record<string, string>>({})
 
-  /** 统一的 git 操作错误处理包装（含 loading 状态） */
+  /**
+   * 统一的 git 操作错误处理包装（含 loading 状态）
+   */
   async function handleGitOp(label: string, fn: () => Promise<void>, id: string) {
     commitOutputs.value[id] = ""
     acquireFlag(gitOpLoading.value, id)
@@ -65,11 +67,24 @@ export function useGitHandlers(deps: {
       await fn()
     } catch (e: unknown) {
       console.error(`[gitPush] ${label} 失败:`, e)
-      commitOutputs.value[id] = `${label}: ${getErrorMessage(e)}`
+      reportFailure(id, `${label}: ${getErrorMessage(e)}`)
     } finally {
       releaseFlag(gitOpLoading.value, id)
       pruneRecordCache(commitOutputs.value)
     }
+  }
+
+  /**
+   * 失败反馈统一入口：既写入项目输出框（保留完整细节供排查），又弹一次 toast。
+   *
+   * 为什么必须两条都走：输出框挂在「工作区」（CHANGES）页签内，用户当前停在
+   * LOG / STASH / TAG 页签时它根本不在屏幕上 —— 失败会完全静默。此前同为失败，
+   * tag 推送走 toast、丢弃/提交走输出框，可见度不一致。现统一为「toast 即时可见 +
+   * 输出框保留细节」，与远端操作的失败反馈口径一致。
+   */
+  function reportFailure(id: string, text: string) {
+    commitOutputs.value[id] = text
+    showMessage(text, 5000, "error")
   }
 
   async function handleDiscard(id: string, file: string, staged: boolean, status: string) {
@@ -86,7 +101,7 @@ export function useGitHandlers(deps: {
       await discardFile(id, file, staged, status)
       await loadWorkingTree(id)
     } catch (e: unknown) {
-      commitOutputs.value[id] = tf("discardOpFailed", label, getErrorMessage(e))
+      reportFailure(id, tf("discardOpFailed", label, getErrorMessage(e)))
     } finally {
       releaseFlag(gitOpLoading.value, id)
     }
@@ -188,7 +203,7 @@ export function useGitHandlers(deps: {
       // 提交日志已下沉卡片，提交后经信号通知重载
       bumpCardRefresh(id, "log")
     } catch (e: unknown) {
-      commitOutputs.value[id] = tf("commitFailed", getErrorMessage(e))
+      reportFailure(id, tf("commitFailed", getErrorMessage(e)))
     }
   }
 
@@ -221,7 +236,7 @@ export function useGitHandlers(deps: {
         commitOutputs.value[id] = tf("aiHeuristic")
       }
     } catch (e: unknown) {
-      commitOutputs.value[id] = tf("generateFailed", getErrorMessage(e))
+      reportFailure(id, tf("generateFailed", getErrorMessage(e)))
       generatingMsgs.value = {
         ...generatingMsgs.value,
         [id]: { generating: false, deepGenerating: false, text: "" },

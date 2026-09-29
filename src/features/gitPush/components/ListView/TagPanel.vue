@@ -80,7 +80,7 @@
         >{{ t.date.slice(0, 10) }}</span>
         <!-- 推送按钮：文案/提示"推送"，推送中显示旋转图标；多远程时展开远程选择 -->
         <template v-if="pushingTag === t.name">
-          <!-- 指定远程：只推该远程 -->
+          <!-- 指定远程：只推该远程（推送在途时禁用，防重复点击排出两次 git push） -->
           <Button
             v-for="r in remotes"
             :key="r"
@@ -88,6 +88,7 @@
             variant="ghost"
             size="xsmall"
             dense
+            :disabled="pushLoaded === t.name"
             :title="`${i18n.push}: ${r}`"
             @click="handlePushRemote(t.name, r)"
           >
@@ -99,6 +100,7 @@
             variant="ghost"
             size="xsmall"
             dense
+            :disabled="pushLoaded === t.name"
             :title="i18n.pushAllRemotes"
             @click="handlePushRemote(t.name)"
           >
@@ -126,7 +128,9 @@
         >
           {{ i18n.push }}
         </Button>
-        <!-- 删除按钮提示：“删除”（展开远程选择时隐藏，避免行内拥挤；悬停变红由 .gp-btn-danger 提供） -->
+        <!-- 删除按钮提示：“删除”（展开远程选择时隐藏，避免行内拥挤；悬停变红由 .gp-btn-danger 提供）。
+             :disabled 同时并入 pushLoaded —— 该 Tag 正在推送时不允许删除，否则会出现
+             「推送完成后 Tag 已不存在」的竞态（原仅判 loading，那是列表加载标志，不覆盖推送在途） -->
         <Button
           v-if="pushingTag !== t.name"
           class="gp-btn-danger"
@@ -135,7 +139,7 @@
           dense
           icon="deleteOutline"
           :title="i18n.delete"
-          :disabled="loading"
+          :disabled="loading || pushLoaded === t.name"
           @click="emit('delete', t.name)"
         />
       </div>

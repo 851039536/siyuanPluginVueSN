@@ -101,6 +101,14 @@
     border-left: 2px solid var(--b3-theme-primary);
     padding-left: $s-1;
   }
+
+  // 键盘焦点可见环：整行是 role="button" 的可聚焦元素（Enter/Space 打开差异），
+  // 必须给出可见焦点指示，否则 Tab 到哪一行无从判断。
+  // 用 outline 而非 border-left，避免与 .diff-active 的左边条互相顶掉宽度。
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
 }
 
 // 勾选框容器：只负责定位与拦截冒泡（复选框外观、勾选态与禁用态由共享 Checkbox 承担）

@@ -111,8 +111,12 @@
         </span>
         <span
           class="bcl-msg bcl-msg--clickable"
+          role="button"
+          tabindex="0"
           :title="i18n.ruleFixOpen + ': ' + entry.message"
           @click.stop="$emit('fixCommit', entry)"
+          @keydown.enter.stop.prevent="$emit('fixCommit', entry)"
+          @keydown.space.stop.prevent="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
         <!-- 查看提交文件按钮（常显；点击弹出该提交修改的文件清单） -->
         <Button

@@ -288,6 +288,7 @@
     "openFolder": "打开文件夹",
     "noIdeDetected": "未检测到 IDE",
     "confirmDeleteShort": "确认删除?",
+    "deleteCustomIdeMultiConfirm": "删除全部 {0} 条路径?",
     "deleteCustomIde": "删除此自定义 IDE",
     "manageIde": "管理 IDE...",
     "refreshOptions": "刷新选项",

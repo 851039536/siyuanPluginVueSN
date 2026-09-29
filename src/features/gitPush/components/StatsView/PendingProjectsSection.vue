@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图待处理项目区块（待处理表格；推送状态概要 chips 已上移至总览区，与汇总卡并列） -->
+<!-- gitPush 统计视图待处理项目区块（全站唯一的待处理清单：表格含推送/拉取/变更三组计数 + 远程明细徽章） -->
 <template>
   <StatsSection
     :title="i18n.pendingProjects"
@@ -34,26 +34,27 @@
         >
           {{ item.project.name }}
         </span>
+        <!-- 待推送列：各远程 ahead 计数徽章（hover 显示该远程合计；空则占位符 -） -->
         <span class="gps-table-cell gps-table-cell--num">
           <span
-            v-for="r in item.aheadByRemote"
-            :key="r.key"
+            v-if="item.totalAhead > 0"
             class="gps-badge"
-          >↑{{ r.ahead }}</span>
+            :title="remoteTitle(item.aheadByRemote, 'ahead')"
+          >{{ item.totalAhead }}</span>
           <span
-            v-if="item.aheadByRemote.length === 0"
+            v-else
             class="gps-cell-empty"
           >-</span>
         </span>
-        <!-- 待拉取列：各远程落后提交数徽章（0 时显示占位符 -） -->
+        <!-- 待拉取列：各远程 behind 计数徽章（0 时显示占位符 -） -->
         <span class="gps-table-cell gps-table-cell--num">
           <span
-            v-for="r in item.behindByRemote"
-            :key="r.key"
+            v-if="item.totalBehind > 0"
             class="gps-badge gps-badge--warn"
-          >↓{{ r.behind }}</span>
+            :title="remoteTitle(item.behindByRemote, 'behind')"
+          >{{ item.totalBehind }}</span>
           <span
-            v-if="item.behindByRemote.length === 0"
+            v-else
             class="gps-cell-empty"
           >-</span>
         </span>
@@ -90,9 +91,12 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 统计视图待处理项目区块（待处理表格）
+// 待处理项目区块：全站唯一的待处理清单（原「条形排行 + 明细表格」两份同标题同数据渲染已合并为一份）。
+// 计数列展示每组的远程合计（原来每远程一个徽章会把 40px 列宽挤爆），逐远程明细下沉到 tooltip，
+// 既保留了「哪个远程落后几笔」的排错信息，又让窄 Dock 下的表格保持可读。
 import type { StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
+import { PLATFORM_META } from "../../types"
 import AllClear from "./common/AllClear.vue"
 import StatsSection from "./common/StatsSection.vue"
 
@@ -112,6 +116,22 @@ const COUNT_COLUMNS = [
   { field: "unstaged", badge: "gps-badge--warn" },
   { field: "untracked", badge: "gps-badge--untracked" },
 ] as const
+
+/** 平台 key → 展示名（PLATFORM_META 是跨模块唯一真源，此处只做一次投影） */
+const PLATFORM_LABELS: Record<string, string> = Object.fromEntries(
+  PLATFORM_META.map((pm) => [pm.key, pm.label]),
+)
+
+/** 逐远程明细 tooltip："GitHub ↑3 · Gitee ↑1"（平台名取 PLATFORM_META 标签，缺失时回落到 key） */
+function remoteTitle(byRemote: { key: string, ahead?: number, behind?: number }[], dir: "ahead" | "behind"): string {
+  return byRemote
+    .map((r) => {
+      const label = PLATFORM_LABELS[r.key] ?? r.key
+      const arrow = dir === "ahead" ? "↑" : "↓"
+      return `${label} ${arrow}${r[dir] ?? 0}`
+    })
+    .join(" · ")
+}
 </script>
 
 <style lang="scss">

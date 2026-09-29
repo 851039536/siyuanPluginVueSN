@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图入口容器（工具条 + 总览卡片 + 单栏堆叠区块，纯编排无领域状态） -->
+<!-- gitPush 统计视图入口容器（工具条 + 健康概览 + 待处理清单 + 平台矩阵，纯编排无领域状态） -->
 <template>
   <div class="gps-panel">
     <!-- 空状态：无项目时显示"暂无项目统计" -->
@@ -18,61 +18,20 @@
         @refresh="emit('refresh')"
       />
 
-      <!-- 总览卡片区（KPI 卡片 + 推送状态 chips） -->
-      <OverviewCards
+      <!-- 健康概览：推送状态分布条 + 四态图例 + 精简 KPI（替代原「6 张 KPI 卡 + 4 个同源 chips」） -->
+      <HealthOverview
         :i18n="i18n"
         :stats="stats"
       />
 
-      <!-- 待处理项目排行（单栏，限高滚动） -->
-      <StatsSection
-        :title="i18n.pendingProjects"
-        :count="stats.pendingProjects.length"
-        scroll
-      >
-        <!-- 待处理项目排行：条形宽度相对最多待推送提交数，整行按钮点击跳转项目 -->
-        <div
-          v-if="pendingRows.length > 0"
-          class="gps-bar-list"
-        >
-          <Button
-            v-for="row in pendingRows"
-            :key="row.id"
-            class="gps-bar-row gps-bar-row--clickable"
-            variant="ghost"
-            size="xsmall"
-            dense
-            :title="row.path"
-            @click="emit('viewProject', row.id)"
-          >
-            <span
-              class="gps-bar-label"
-              :title="row.name"
-            ><span class="gps-bar-text">{{ row.name }}</span></span>
-            <span class="gps-bar-track">
-              <span
-                class="gps-bar-fill"
-                :style="{ width: row.pct }"
-              />
-            </span>
-            <span class="gps-bar-num">{{ row.count }}</span>
-          </Button>
-        </div>
-        <!-- 空态："所有项目状态正常" -->
-        <AllClear
-          v-else
-          :text="i18n.allClear"
-        />
-      </StatsSection>
-
-      <!-- 待处理项目明细表格（全宽：多列计数需横向空间） -->
+      <!-- 待处理清单：全站唯一一份（原「条形排行 + 明细表格」两份同标题同数据渲染已合并） -->
       <PendingProjectsSection
         :i18n="i18n"
         :stats="stats"
         @view-project="emit('viewProject', $event)"
       />
 
-      <!-- 平台区块（覆盖率汇总 + 一致性汇总 + 每项目平台配置/一致性矩阵，全宽） -->
+      <!-- 平台区块（覆盖率行内汇总 + 一致性问题汇总 + 每项目平台配置/一致性矩阵） -->
       <PlatformSection
         :i18n="i18n"
         :stats="stats"
@@ -85,21 +44,20 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 统计视图入口容器（工具条 + 卡片区 + 单栏区块组合，纯编排无领域状态）。
-// 骨架与视觉对齐提交分析视图：AnalysisToolbar 同款工具条 → StatCardGrid 总览 → 单栏区块堆叠。
+// gitPush 统计视图入口容器：三层信息架构，从概览到明细自上而下收敛。
+//   1. 健康概览  —— 一眼看全局（状态分布 + 需行动计数）
+//   2. 待处理清单 —— 唯一一份可行动列表（点击跳项目）
+//   3. 平台矩阵  —— 配置与链接一致性明细
+// 原先「KPI 卡 + chips + 覆盖率条 + 矩阵」的平铺堆叠把同一批计数重复渲染了三遍，
+// 且待处理项目同时以条形排行和表格出现两次；现按「概览 / 行动 / 明细」重新分层。
 import type { RepoLinkAuditRow, StatsView } from "../../types"
-import { computed } from "vue"
-import Button from "@/components/Button.vue"
-import { withBarPct } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
-import AllClear from "./common/AllClear.vue"
-import StatsSection from "./common/StatsSection.vue"
-import OverviewCards from "./OverviewCards.vue"
+import HealthOverview from "./HealthOverview.vue"
 import PendingProjectsSection from "./PendingProjectsSection.vue"
 import PlatformSection from "./PlatformSection.vue"
 import StatsToolbar from "./StatsToolbar.vue"
 
-const props = defineProps<{
+defineProps<{
   i18n: Record<string, any>
   /** 统计聚合视图（单对象 prop，由 useGitStats.statsView 产出） */
   stats: StatsView
@@ -117,19 +75,6 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
   refresh: []
 }>()
-
-/**
- * 待处理项目排行行视图：按待推送提交数降序（上游 pendingProjects 已按 totalAhead 优先排序），
- * 条形宽度相对最大值，计数列展示待推送提交数（hover 保留完整本地路径）。
- */
-const pendingRows = computed(() =>
-  withBarPct(props.stats.pendingProjects.map((p) => ({
-    id: p.project.id,
-    name: p.project.name,
-    path: p.project.path,
-    count: p.totalAhead,
-  }))),
-)
 </script>
 
 <style lang="scss">

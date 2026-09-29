@@ -111,14 +111,6 @@ export interface PendingProjectItem {
   untracked: number
 }
 
-/** 分类分布条目（用 category.color 着色的条形区块） */
-export interface CategoryDistributionItem {
-  id: string
-  name: string
-  color: string
-  count: number
-}
-
 /** 平台配置状态明细项 */
 export interface PlatformStatusItem {
   /** 仅引用 id/name/path，避免完整 GitProject 导致类型依赖链循环 */
@@ -196,8 +188,6 @@ export interface StatsView {
   starredCount: number
   /** 已归档项目数（总览卡片） */
   archivedCount: number
-  /** 分类分布（按 category.order 排序，仅含非空分类） */
-  categoryDistribution: CategoryDistributionItem[]
   /** 平台配置状态明细（每个项目的 GitHub/Gitee/Gitea/CNB 是否已配置） */
   platformStatusProjects: PlatformStatusItem[]
 }

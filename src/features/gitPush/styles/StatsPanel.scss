@@ -10,7 +10,7 @@
 
 // ── 总览卡片：已收敛至共享 StatCardGrid（.gp-statgrid-*，五视图共用）──
 
-// ── 区块（统一样式基座：标题 + 内容；区块不再各挂卡片边框，改由 gps-pair / 单栏堆叠的间距分层）──
+// ── 区块（统一样式基座：标题 + 内容；区块不再各挂卡片边框，改由单栏堆叠的底部间距分层）──
 .gps-section {
   margin-bottom: $s-3;
 }
@@ -25,7 +25,7 @@
   @include gp-section-count-base;
 }
 
-// ── 限高滚动区块（双栏 Pair 内：内容超高时列表内部滚动，标题保持可见）──
+// ── 限高滚动区块（内容超高时列表内部滚动，标题保持可见）──
 // 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白。
 .gps-section--scroll {
   max-height: 320px; // 上限约 8 行，超出内部滚动；无对应 Token（区块限高）
@@ -59,26 +59,14 @@
   flex-basis: 72px; // 无对应 Token（窄列标签宽度）
 }
 
-// ── 双栏区块（与提交分析 .gpa-pair 同构：窄 Dock 下 auto-fit 自动降为单列）──
-.gps-pair {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); // 无对应 Token（栅格断点）
-  gap: $s-3;
-  margin-bottom: $s-3;
-
-  > .gps-section {
-    margin-bottom: 0; // 网格内由 gap 控制间距，不叠加底部 margin
-  }
-}
-
-// ── 水平条形（分类分布 / 覆盖率等排行类区块共用：标签 + 轨道 + 计数）──
+// ── 水平条形（待处理排行 / 覆盖率等排行类区块共用：标签 + 轨道 + 计数）──
 .gps-bar-list {
   display: flex;
   flex-direction: column;
   gap: $s-2;
 }
 
-// 条形行基座：三列（标签 | 轨道 | 计数）横向排列。分类分布与平台覆盖率用的是纯 div 行，
+// 条形行基座：三列（标签 | 轨道 | 计数）横向排列。待处理排行与平台覆盖率用的是纯 div 行，
 // 必须靠这条基座撑起 flex 布局——缺了它三个 span 会纵向堆叠成三行（条形完全错位）。
 .gps-bar-row {
   display: flex;
@@ -152,15 +140,7 @@
   opacity: 0.5;
 }
 
-// 分类分布条目的分类色点（颜色由 category.color 内联驱动）
-.gps-cat-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-// ── 覆盖率条形填充色（分类分布条的颜色由 category.color 内联样式驱动）──
+// ── 覆盖率条形填充色 ──
 .gps-bar-fill--gitee { background: #ee3f4d; }
 .gps-bar-fill--gitea { background: #609926; }
 .gps-bar-fill--cnb { background: #00a8e8; }

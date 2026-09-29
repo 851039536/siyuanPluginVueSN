@@ -59,6 +59,7 @@
     "importSelected": "Import Selected",
     "scanError": "Scan failed",
     "conflictWarn": "Remote has new commits, pull before pushing",
+    "remotesLabel": "Remotes",
     "stashSave": "Stash changes",
     "stashRestore": "Restore",
     "stashApply": "Apply",

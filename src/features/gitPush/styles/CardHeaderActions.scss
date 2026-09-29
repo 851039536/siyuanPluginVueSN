@@ -57,11 +57,13 @@
 }
 
 // 平台链接下拉菜单（复用 IDE 弹出层同款 mixin）
-.gp-platform-wrap {
+// ⚠️ 类名刻意用 gp-link-*（而非 gp-platform-*）：面板头部的「平台官网」下拉也用 gp-platform-*，
+// 两者同时挂在同一面板上，同名会让两处弹出层的定位互相覆盖（头部靠右 / 卡片居中）。
+.gp-link-wrap {
   position: relative;
 }
 
-.gp-platform-popover {
+.gp-link-popover {
   @include popover-base;
   top: 100%;
   left: 50%;
@@ -70,7 +72,7 @@
   min-width: 140px;
 }
 
-.gp-platform-item {
+.gp-link-item {
   @include popover-item;
 
   &--none {

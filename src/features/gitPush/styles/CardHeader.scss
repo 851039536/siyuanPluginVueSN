@@ -125,7 +125,9 @@
     background: var(--b3-list-hover);
   }
 
+  // 展开态：实线描边 + 主色（配合 opacity 提升，与折叠态虚线形成可辨差异）
   &.expanded {
+    opacity: 1;
     border-style: solid;
     border-color: var(--b3-theme-primary-lightest);
     color: var(--b3-theme-primary);

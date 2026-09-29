@@ -73,6 +73,9 @@
   align-content: flex-start;
   gap: $s-1;
   overflow-y: auto;
+  // overflow-x 兜底：卡片有 390px 保底宽度（min-width），窄 Dock 下横向滚动仅限于本列表区，
+  // 不牵连整个面板；缺此声明时卡片会溢出并被静默裁掉右侧内容（参考 HotspotSection 先例）
+  overflow-x: auto;
   padding: $s-1 $s-1 $s-1 0 !important;
   width: 100% !important;
 
@@ -80,6 +83,7 @@
   // 消除分类/视图切换时右侧留白"明显不一样"的跳动（参考 .gpa-* 先例）
   &::-webkit-scrollbar {
     width: 4px;
+    height: 4px; // 横向滚动条同档（卡片溢出时出现）
   }
 }
 
@@ -95,8 +99,6 @@
   &:hover {
     border-color: var(--b3-theme-primary);
   }
-
-  .vp-btn--sm { padding: $s-px3 $s-px5; font-size: $t-2xs; }
 }
 
 // 顶栏/操作区/菜单样式 → CardHeader.scss（IDE 管理弹窗与通用弹窗样式保留在 index.scss 与 Dialog.scss）
@@ -152,14 +154,7 @@
 // 操作栏（拉取/推送）→ CardActionBar.scss
 
 // Tab 切换条样式 → CardTabs.scss
-// Stash 暂存
-.gp-stash-wrap {
-  .vp-btn--sm {
-    padding: $s-px2 $s-px5;
-    font-size: $t-2xs;
-  }
-}
-
+// Stash 暂存（按钮几何由共享 Button 承担，原 .gp-stash-wrap .vp-btn--sm 覆盖已随卡片迁移移除）
 .gp-stash-header {
   display: flex;
   align-items: center;

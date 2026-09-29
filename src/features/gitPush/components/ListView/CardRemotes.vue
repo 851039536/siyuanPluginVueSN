@@ -2,7 +2,7 @@
 <template>
   <!-- 远程仓库状态 -->
   <div class="gp-remotes">
-    <span class="gp-remotes-label">REMOTES</span>
+    <span class="gp-remotes-label">{{ i18n.remotesLabel }}</span>
     <Button
       class="gp-section-refresh"
       variant="ghost"
@@ -13,7 +13,9 @@
       :title="i18n.refreshRemoteStatus"
       @click.stop="ops.handleRefreshRemoteStatus(project.id)"
     />
-    <!-- 当前分支名（原操作栏分支检查按钮的信息价值合并至此） -->
+    <!-- 当前分支名（原操作栏分支检查按钮的信息价值合并至此）。
+         注：CardHeader 的分支行是懒加载的「可切换分支列表」，首屏通常为空，
+         故分支名的首屏展示由此承担，两者不重复。 -->
     <span
       v-if="pushStatus?.branch"
       class="gp-remote-branch"

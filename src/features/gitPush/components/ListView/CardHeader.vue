@@ -85,10 +85,11 @@
         >
           {{ getMdLabel(f.name, f.variant) }}
         </Button>
-        <!-- 折叠按钮（tooltip：展开/收起其余 Markdown 文件） -->
+        <!-- 折叠按钮（tooltip：展开/收起其余 Markdown 文件；展开态由 .expanded 提供描边强调） -->
         <Button
           v-if="hiddenMdCount > 0"
           class="gp-md-more"
+          :class="{ expanded: mdExpanded }"
           variant="ghost"
           text
           size="xsmall"
@@ -98,7 +99,8 @@
             : i18n.mdFilesExpand.replace('{0}', String(hiddenMdCount))"
           @click.stop="mdExpanded = !mdExpanded"
         >
-          {{ mdExpanded ? `-${hiddenMdCount}` : `+${hiddenMdCount}` }}
+          <!-- 折叠时显示"+N"表示还有 N 个；展开后只留"−"（不再复述隐藏数，避免"展开后仍显示 -N"的歧义） -->
+          {{ mdExpanded ? "−" : `+${hiddenMdCount}` }}
         </Button>
       </div>
       <!-- 分支标签（悬停："当前分支"/"切换到 {0}"） -->
@@ -114,6 +116,7 @@
           v-for="b in branches"
           :key="b.name"
           class="gp-branch-tag"
+          :class="{ current: b.current }"
           variant="ghost"
           text
           size="xsmall"

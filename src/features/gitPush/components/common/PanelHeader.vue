@@ -26,77 +26,18 @@
     </div>
 
     <div class="gp-header-btns">
-      <!-- 视图切换 -->
+      <!-- 视图切换（六个视图按钮由 VIEW_TABS 配置驱动：差异仅 view/icon/labelKey 三项） -->
       <div class="gp-view-toggle">
-        <!-- 按钮（tooltip："列表视图"） -->
         <button
+          v-for="tab in VIEW_TABS"
+          :key="tab.view"
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'list' }"
-          :title="i18n.listView"
-          @click="currentView = 'list'"
+          :class="{ active: currentView === tab.view }"
+          :title="i18n[tab.labelKey]"
+          @click="currentView = tab.view"
         >
           <Icon
-            icon="mdi:view-list"
-            height="12"
-          />
-        </button>
-        <!-- 按钮（tooltip：“统计视图”） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'stats' }"
-          :title="i18n.statsView"
-          @click="currentView = 'stats'"
-        >
-          <Icon
-            icon="mdi:chart-bar"
-            height="12"
-          />
-        </button>
-        <!-- 按钮（tooltip："提交分析"；规则检查与行数排行为其内部 Tab，不再各占一个入口） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'analysis' }"
-          :title="i18n.analysisView"
-          @click="currentView = 'analysis'"
-        >
-          <Icon
-            icon="mdi:chart-timeline-variant"
-            height="12"
-          />
-        </button>
-        <!-- 按钮（tooltip："操作日志"） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'log' }"
-          :title="i18n.logView"
-          @click="currentView = 'log'"
-        >
-          <Icon
-            icon="mdi:history"
-            height="12"
-          />
-        </button>
-        <!-- 按钮（tooltip："统计报告"） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'report' }"
-          :title="i18n.reportView"
-          @click="currentView = 'report'"
-        >
-          <Icon
-            icon="mdi:chart-box"
-            height="12"
-          />
-        </button>
-        <!-- 按钮（tooltip："仓库清理"） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === 'repoclean' }"
-          :title="i18n.repoCleanView"
-          @click="currentView = 'repoclean'"
-        >
-          <Icon
-            icon="mdi:broom"
+            :icon="tab.icon"
             height="12"
           />
         </button>
@@ -265,6 +206,21 @@ const emit = defineEmits<{
   openWeb: [url: string]
   openFloating: []
 }>()
+
+/**
+ * 视图切换按钮配置（六个视图的唯一事实源）。
+ * 顺序即渲染顺序；icon 为 Iconify 名（本处 raw <button> 直接用 Iconify，不受 IconKey 约束），
+ * labelKey 指向 i18n 键并同时作为 hover 提示。
+ */
+const VIEW_TABS: { view: PanelView, icon: string, labelKey: string }[] = [
+  { view: "list", icon: "mdi:view-list", labelKey: "listView" },
+  { view: "stats", icon: "mdi:chart-bar", labelKey: "statsView" },
+  // 规则检查与行数排行为「提交分析」的内部 Tab，不再各占一个入口
+  { view: "analysis", icon: "mdi:chart-timeline-variant", labelKey: "analysisView" },
+  { view: "log", icon: "mdi:history", labelKey: "logView" },
+  { view: "report", icon: "mdi:chart-box", labelKey: "reportView" },
+  { view: "repoclean", icon: "mdi:broom", labelKey: "repoCleanView" },
+]
 </script>
 
 <style lang="scss">

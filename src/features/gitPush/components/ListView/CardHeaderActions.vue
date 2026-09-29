@@ -13,7 +13,7 @@
       @update:model-value="handleCategoryChange"
     />
     <!-- 平台链接下拉菜单（本地开关，与 IDE/刷新菜单同模式） -->
-    <div class="gp-platform-wrap gp-menu-wrap">
+    <div class="gp-link-wrap gp-menu-wrap">
       <!-- 悬停提示："平台链接"（图标 + 展开箭头，双图标走默认插槽以保留原有形态） -->
       <Button
         variant="ghost"
@@ -34,13 +34,13 @@
       </Button>
       <div
         v-if="openMenu === 'platform'"
-        class="gp-platform-popover"
+        class="gp-link-popover"
         @click.stop
       >
         <!-- 空态项："未配置平台链接" -->
         <button
           v-if="platformLinks.length === 0"
-          class="gp-platform-item gp-platform-item--none"
+          class="gp-link-item gp-link-item--none"
           disabled
         >
           <Icon
@@ -53,7 +53,7 @@
         <button
           v-for="pl in platformLinks"
           :key="pl.key"
-          class="gp-platform-item"
+          class="gp-link-item"
           :title="i18n.openPlatformHint.replace('{0}', pl.label)"
           @click="openRepoWebUrl(pl.url); openMenu = null"
           @contextmenu.prevent="handleCopyUrl(pl.url)"

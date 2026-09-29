@@ -98,8 +98,11 @@
   align-items: center;
   gap: $s-1;
 
+  // 头部按钮统一几何：水平 6px（4px 过窄 / 8px 过宽，已收敛为全局 Token）。
+  // 本规则是 .gp-header-btns 后代按钮的水平内边距唯一事实源 —— 视图切换按钮与平台下拉
+  // 只需再声明各自独有的差异（前者去圆角去描边、后者圆角档位），不再重复该 padding。
   .vp-btn--sm {
-    padding: $s-1 $s-px6; // 水平 6px：4px 过窄 8px 过宽，已收敛为全局 Token
+    padding: $s-1 $s-px6;
   }
 }
 
@@ -135,10 +138,11 @@
   }
 }
 
+// 视图切换按钮：仅声明与头部基座不同的部分（去圆角 / 去描边），
+// 水平内边距由 .gp-header-btns .vp-btn--sm 统一提供
 .gp-view-toggle .vp-btn.gp-view-btn {
   border-radius: 0;
   border: none;
-  padding: $s-1 $s-px6; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
 // 平台官网下拉
@@ -152,9 +156,9 @@
   opacity: 0.5;
 }
 
+// 平台下拉按钮：仅圆角档位（水平内边距由 .gp-header-btns .vp-btn--sm 统一提供）
 .gp-platform-dropdown-btn {
   border-radius: $r-sm;
-  padding: $s-1 $s-px6; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
 .gp-platform-popover {

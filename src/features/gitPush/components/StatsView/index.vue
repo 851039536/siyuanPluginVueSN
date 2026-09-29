@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图入口容器（工具条 + 总览卡片 + 双栏 Pair + 单栏堆叠区块，纯编排无领域状态） -->
+<!-- gitPush 统计视图入口容器（工具条 + 总览卡片 + 单栏堆叠区块，纯编排无领域状态） -->
 <template>
   <div class="gps-panel">
     <!-- 空状态：无项目时显示"暂无项目统计" -->
@@ -24,53 +24,46 @@
         :stats="stats"
       />
 
-      <!-- 双栏 Pair 1：分类分布（窄卡） | 待处理项目排行（限高滚动） -->
-      <div class="gps-pair">
-        <CategoryDistributionSection
-          :i18n="i18n"
-          :stats="stats"
-        />
-
-        <StatsSection
-          :title="i18n.pendingProjects"
-          :count="stats.pendingProjects.length"
-          scroll
+      <!-- 待处理项目排行（单栏，限高滚动） -->
+      <StatsSection
+        :title="i18n.pendingProjects"
+        :count="stats.pendingProjects.length"
+        scroll
+      >
+        <!-- 待处理项目排行：条形宽度相对最多待推送提交数，整行按钮点击跳转项目 -->
+        <div
+          v-if="pendingRows.length > 0"
+          class="gps-bar-list"
         >
-          <!-- 待处理项目排行：条形宽度相对最多待推送提交数，整行按钮点击跳转项目 -->
-          <div
-            v-if="pendingRows.length > 0"
-            class="gps-bar-list"
+          <Button
+            v-for="row in pendingRows"
+            :key="row.id"
+            class="gps-bar-row gps-bar-row--clickable"
+            variant="ghost"
+            size="xsmall"
+            dense
+            :title="row.path"
+            @click="emit('viewProject', row.id)"
           >
-            <Button
-              v-for="row in pendingRows"
-              :key="row.id"
-              class="gps-bar-row gps-bar-row--clickable"
-              variant="ghost"
-              size="xsmall"
-              dense
-              :title="row.path"
-              @click="emit('viewProject', row.id)"
-            >
+            <span
+              class="gps-bar-label"
+              :title="row.name"
+            ><span class="gps-bar-text">{{ row.name }}</span></span>
+            <span class="gps-bar-track">
               <span
-                class="gps-bar-label"
-                :title="row.name"
-              ><span class="gps-bar-text">{{ row.name }}</span></span>
-              <span class="gps-bar-track">
-                <span
-                  class="gps-bar-fill"
-                  :style="{ width: row.pct }"
-                />
-              </span>
-              <span class="gps-bar-num">{{ row.count }}</span>
-            </Button>
-          </div>
-          <!-- 空态："所有项目状态正常" -->
-          <AllClear
-            v-else
-            :text="i18n.allClear"
-          />
-        </StatsSection>
-      </div>
+                class="gps-bar-fill"
+                :style="{ width: row.pct }"
+              />
+            </span>
+            <span class="gps-bar-num">{{ row.count }}</span>
+          </Button>
+        </div>
+        <!-- 空态："所有项目状态正常" -->
+        <AllClear
+          v-else
+          :text="i18n.allClear"
+        />
+      </StatsSection>
 
       <!-- 待处理项目明细表格（全宽：多列计数需横向空间） -->
       <PendingProjectsSection
@@ -92,8 +85,8 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 统计视图入口容器（工具条 + 卡片区 + 双栏/单栏区块组合，纯编排无领域状态）。
-// 骨架与视觉对齐提交分析视图：AnalysisToolbar 同款工具条 → StatCardGrid 总览 → gps-pair 双栏 → 全宽区块。
+// gitPush 统计视图入口容器（工具条 + 卡片区 + 单栏区块组合，纯编排无领域状态）。
+// 骨架与视觉对齐提交分析视图：AnalysisToolbar 同款工具条 → StatCardGrid 总览 → 单栏区块堆叠。
 import type { RepoLinkAuditRow, StatsView } from "../../types"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
@@ -101,7 +94,6 @@ import { withBarPct } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import AllClear from "./common/AllClear.vue"
 import StatsSection from "./common/StatsSection.vue"
-import CategoryDistributionSection from "./CategoryDistributionSection.vue"
 import OverviewCards from "./OverviewCards.vue"
 import PendingProjectsSection from "./PendingProjectsSection.vue"
 import PlatformSection from "./PlatformSection.vue"

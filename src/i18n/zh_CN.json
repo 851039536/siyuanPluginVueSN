@@ -1338,7 +1338,6 @@
     "noProjectsStats": "暂无项目，请在列表视图中添加",
     "needsPushShort": "待推送",
     "needsPullShort": "待拉取",
-    "categoryDistribution": "分类分布",
     "statsProjectCount": "共 {0} 个项目",
     "statsSnapshotAt": "上次刷新：{0}",
     "starred": "收藏",

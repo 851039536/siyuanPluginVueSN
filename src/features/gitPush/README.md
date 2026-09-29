@@ -135,11 +135,10 @@ src/features/gitPush/
 │   │   ├── TagPanel.vue             # 标签面板
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
 │   │   └── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
-│   ├── StatsView/                   # 统计视图专属（4 个区块 + common/ 共享组件）
-│   │   ├── index.vue               # 统计视图入口容器（空态 + 工具条 + 总览区 + 双栏/单栏区块组合）
+│   ├── StatsView/                   # 统计视图专属（3 个区块 + common/ 共享组件）
+│   │   ├── index.vue               # 统计视图入口容器（空态 + 工具条 + 总览区 + 单栏区块组合）
 │   │   ├── StatsToolbar.vue        # 顶部工具条（快照状态文案 + 刷新全部；与提交分析 AnalysisToolbar 同构）
 │   │   ├── OverviewCards.vue       # 总览区（KPI 卡片 + 推送状态 chips；chips 原属待处理区块，已上移避免同源计数重复）
-│   │   ├── CategoryDistributionSection.vue # 分类分布区块（category.color 着色条形）
 │   │   ├── PendingProjectsSection.vue # 待处理项目区块（待处理表格）
 │   │   ├── PlatformSection.vue     # 平台区块（覆盖率汇总条 + 一致性问题汇总 + 每项目平台配置/一致性矩阵；原三块合一）
 │   │   └── common/                 # 统计区块共享组件（StatsSection 区块包裹器 / StatusChipBar 状态 chips 条 / PlatformTable 平台矩阵表格 / AllClear 全部正常空态）

@@ -219,13 +219,6 @@ export function useGitStats(
     uncommittedCount: projectStats.value.uncommitted.length,
     starredCount: projectStats.value.starred.length,
     archivedCount: projectStats.value.archivedCount,
-    // 分类分布：grouped 已按 order 排序且仅含非空分类，投影为条形区块所需的最小字段
-    categoryDistribution: projectStats.value.grouped.map((g) => ({
-      id: g.category.id,
-      name: g.category.name,
-      color: g.category.color,
-      count: g.projects.length,
-    })),
     platformStatusProjects: projectStats.value.platformMissing,
   }))
 

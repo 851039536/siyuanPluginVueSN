@@ -128,9 +128,8 @@
   font-family: $ff-mono;
 }
 
-// 打 Tag / 删除提交按钮（常显，弱化色随 hover 增强）
-.bcl-tag-btn,
-.bcl-drop-btn {
+// 打 Tag 按钮（常显，弱化色随 hover 增强）
+.bcl-tag-btn {
   flex-shrink: 0;
   padding: 0 $s-px2;
   opacity: 0.7;
@@ -141,6 +140,27 @@
   &:hover {
     opacity: 1;
     color: var(--b3-theme-primary);
+  }
+}
+
+// 删除提交按钮：与相邻的无害按钮（查看文件 / 打 Tag）在**扫视**时就区分开。
+// 原先与 .bcl-tag-btn 共用同一条规则（同为中性色、hover 才变主色），导致「改写历史」这个
+// 危险入口和两个无害邻居长得完全一样，只能靠 title 分辨。现改为常驻错误色描边感。
+.bcl-drop-btn {
+  flex-shrink: 0;
+  padding: 0 $s-px2;
+  opacity: 0.7;
+  color: var(--b3-theme-error);
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    color: var(--b3-theme-error);
+    background: var(--b3-theme-error-lightest, rgba(231, 76, 60, 0.08));
   }
 }
 
@@ -159,11 +179,18 @@
   }
 }
 
-// 可点击提交信息（打开修正弹窗）
+// 可点击提交信息（打开修正弹窗；role="button" 可聚焦，需可见焦点环）
 .bcl-msg--clickable {
   cursor: pointer;
 
   &:hover {
+    color: var(--b3-theme-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: 1px;
+    border-radius: $r-sm;
     color: var(--b3-theme-primary);
   }
 }

@@ -123,8 +123,10 @@
           dense
           :icon="b.current ? 'check' : undefined"
           icon-position="right"
+          :loading="switchingBranch === b.name"
+          :disabled="switchingBranch !== '' || b.current"
           :title="b.current ? i18n.currentBranch : i18n.switchToBranch.replace('{0}', b.name)"
-          @click="ops.switchBranch(project.id, b.name)"
+          @click="handleSwitchBranch(b)"
         >
           {{ b.name }}
         </Button>
@@ -194,6 +196,25 @@ const visibleMdFiles = computed(() =>
 )
 /** 被折叠的 Markdown 文件数量（<=0 时不显示折叠按钮） */
 const hiddenMdCount = computed(() => props.mdFiles.length - MD_VISIBLE_LIMIT)
+
+// ── 分支切换（切分支含 checkout + 两次状态重载，耗时可达数秒）──
+/** 正在切换的目标分支名（空串 = 空闲）；用于按钮转圈与防重复提交 */
+const switchingBranch = ref("")
+
+/**
+ * 切换分支：置位在途标记 → 等待 → 复位。
+ * 原先直接调 ops.switchBranch 且按钮无 loading/disabled，切换期间按钮照常可点，
+ * 快速双击会排出两次 git checkout。此处用卡片本地标记收口（无需为一次性操作新增全局 Record）。
+ */
+async function handleSwitchBranch(branch: BranchInfo) {
+  if (branch.current || switchingBranch.value) return
+  switchingBranch.value = branch.name
+  try {
+    await ops.switchBranch(props.project.id, branch.name)
+  } finally {
+    switchingBranch.value = ""
+  }
+}
 </script>
 
 <style lang="scss">

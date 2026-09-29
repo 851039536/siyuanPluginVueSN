@@ -1494,6 +1494,7 @@
     "openFolder": "Open folder",
     "noIdeDetected": "No IDE detected",
     "confirmDeleteShort": "Confirm delete?",
+    "deleteCustomIdeMultiConfirm": "Delete all {0} paths?",
     "deleteCustomIde": "Delete this custom IDE",
     "manageIde": "Manage IDE...",
     "refreshOptions": "Refresh options",

@@ -140,8 +140,8 @@
           />
           <span>{{ custom.name }}</span>
           <template v-if="confirmingDelName === custom.name">
-            <!-- 二次确认："确认删除?" -->
-            <span class="gp-ide-del-confirm">{{ i18n.confirmDeleteShort }}</span>
+            <!-- 二次确认：该名称下有多条候选路径时明确告知删除范围（按名称删除 = 删整组，不止当前这一行） -->
+            <span class="gp-ide-del-confirm">{{ deleteConfirmText(custom.paths.length) }}</span>
             <button
               class="gp-ide-del-yes"
               @click.stop="ops.removeCustomIdeByName(custom.name); confirmingDelName = ''"
@@ -329,6 +329,16 @@ const uniqueCustomIdes = computed(() => {
   }
   return [...map.entries()].map(([name, paths]) => ({ name, paths }))
 })
+
+/**
+ * 删除确认文案：按名称删除会移除该 IDE 的全部候选路径，而菜单只显示一行。
+ * 多路径时必须显式说明条数，否则用户以为只删当前这一条（实际是整组）。
+ */
+function deleteConfirmText(pathCount: number): string {
+  return pathCount > 1
+    ? i18n.deleteCustomIdeMultiConfirm.replace("{0}", String(pathCount))
+    : i18n.confirmDeleteShort
+}
 </script>
 
 <style lang="scss">

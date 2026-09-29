@@ -81,8 +81,13 @@
             'partially-staged': file.staged && file.unstaged,
             'diff-active': activeDiffFile?.path === file.path,
           }"
+          role="button"
+          tabindex="0"
+          :aria-pressed="activeDiffFile?.path === file.path"
           :title="i18n.clickViewDiff + ' — ' + file.path"
           @click="toggleDiff(file)"
+          @keydown.enter.prevent="toggleDiff(file)"
+          @keydown.space.prevent="toggleDiff(file)"
         >
           <!-- 勾选框（共享 Checkbox 提供原生复选语义与 aria-checked；外层包一层拦截冒泡，避免触发整行查看差异） -->
           <span

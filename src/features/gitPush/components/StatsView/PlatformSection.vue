@@ -1,38 +1,27 @@
-<!-- gitPush 统计视图平台区块（覆盖率汇总条 + 每项目平台配置/一致性矩阵合并展示） -->
+<!-- gitPush 统计视图平台区块（覆盖率行内汇总 + 一致性问题汇总 + 每项目平台配置/一致性矩阵） -->
 <template>
   <StatsSection
     :title="i18n.platformStatus"
     :count="issueCount > 0 ? issueCount : undefined"
   >
-    <!-- 覆盖率汇总：四个平台 + 多远程合计（配置驱动渲染条形，hover 显示项目数明细） -->
-    <div class="gps-bar-list">
-      <div
+    <!-- 覆盖率行内汇总：原独立条形区块与矩阵表头重复表达同一份 PLATFORM_META，
+         改为紧贴表头的一行紧凑统计（平台图标 + 已配置数 / 总数），矩阵单元格仍是明细真源 -->
+    <div class="gps-coverage">
+      <span
         v-for="c in coverageItems"
         :key="c.key"
-        class="gps-bar-row"
+        class="gps-coverage-item"
+        :title="c.counts"
       >
-        <span
-          class="gps-bar-label"
-          :title="c.label"
-        >
-          <Icon
-            :icon="c.icon"
-            height="12"
-          />
-          <span class="gps-bar-text">{{ c.label }}</span>
-        </span>
-        <span class="gps-bar-track">
-          <span
-            class="gps-bar-fill"
-            :class="`gps-bar-fill--${c.key}`"
-            :style="{ width: c.pct }"
-          />
-        </span>
-        <span
-          class="gps-bar-num"
-          :title="c.counts"
-        >{{ c.count }}</span>
-      </div>
+        <Icon
+          :icon="c.icon"
+          height="12"
+          class="gps-coverage-icon"
+          :class="`gps-coverage-icon--${c.key}`"
+        />
+        <span class="gps-coverage-value">{{ c.count }}</span>
+        <span class="gps-coverage-label">{{ c.label }}</span>
+      </span>
     </div>
 
     <!-- 一致性问题汇总：仅在后台校验发现不一致/缺失/失败时出现；链接与远程全部一致则不占视觉空间 -->
@@ -52,6 +41,7 @@
           height="12"
         />
         <span>{{ chip.value }}</span>
+        <span class="gps-status-chip-label">{{ chip.label }}</span>
       </div>
     </div>
 
@@ -62,18 +52,23 @@
       :rows="platformRows"
       @view-project="emit('viewProject', $event)"
     />
+    <!-- 空态：所有平台均配置完整且链接一致（无待处理项目行） -->
+    <AllClear
+      v-else
+      :text="i18n.allClear"
+    />
   </StatsSection>
 </template>
 
 <script setup lang="ts">
-// gitPush 统计视图平台区块：把「远程覆盖率」「平台配置状态」「仓库链接一致性」合并为一个区块——
-// 三者是同一份 PLATFORM_META 上的三种切面（汇总占比 / 逐项目配置明细 / 链接与实际远程比对），
-// 一致性校验结果直接叠在矩阵单元格上，不再单列一个区块。
+// 平台区块：把「远程覆盖率」「平台配置状态」「仓库链接一致性」合并为一个区块——
+// 三者是同一份 PLATFORM_META 上的三种切面，一致性校验结果直接叠在矩阵单元格上。
+// 覆盖率原为独立条形区块（与矩阵表头重复表达同一份平台清单），现收敛为表头上方一行紧凑统计。
 import type { PlatformTableRowView, RepoLinkAuditRow, RepoLinkAuditState, StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { PLATFORM_META } from "../../types"
-import { ratioPct } from "../../utils"
+import AllClear from "./common/AllClear.vue"
 import PlatformTable from "./common/PlatformTable.vue"
 import StatsSection from "./common/StatsSection.vue"
 
@@ -91,32 +86,18 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（预计算占比与计数明细；key 同时作为填充色修饰类后缀） */
+/** 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（key 同时作为图标色修饰类后缀） */
 const coverageItems = computed(() => {
   const total = props.stats.projectCount
   const platformItems = PLATFORM_META.map((pm) => {
     const count = props.stats.remoteCoverage[pm.key]
-    return {
-      key: pm.key,
-      icon: pm.icon,
-      label: pm.label,
-      count,
-      pct: ratioPct(count, total),
-      counts: `${count} / ${total}`,
-    }
+    return { key: pm.key, icon: pm.icon, label: pm.label, count, counts: `${count} / ${total}` }
   })
   const multiple = props.stats.remoteCoverage.multiple
   return [
     ...platformItems,
     // 多远程项目条目："多远程项目"
-    {
-      key: "multi",
-      icon: "mdi:layers",
-      label: props.i18n.multipleRemotes,
-      count: multiple,
-      pct: ratioPct(multiple, total),
-      counts: `${multiple} / ${total}`,
-    },
+    { key: "multi", icon: "mdi:layers", label: props.i18n.multipleRemotes, count: multiple, counts: `${multiple} / ${total}` },
   ]
 })
 

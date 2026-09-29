@@ -2,9 +2,11 @@
 import type { Plugin } from "siyuan"
 import type { BfgPrefs, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, DropCommitPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
 import { DEFAULT_COMMIT_RULE_CONFIG } from "./meta"
+import type { IndexMeta } from "./indexCache"
+import { DEFAULT_INDEX_MAX_COMMITS, DEFAULT_INDEX_META } from "./indexCache"
 import type { ConsistencyCache } from "./consistency"
 import { EMPTY_CONSISTENCY_CACHE } from "./consistency"
-import type { CodeReportPrefs } from "./report"
+import type { CodeReportData, CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
@@ -125,6 +127,18 @@ export interface ProjectPathExtras {
   localPaths?: string[]
   /** 路径 → 设备电脑名映射（仅保留非空标注） */
   pathDevices?: Record<string, string>
+}
+
+/** 代码统计报告结果缓存（持久化到 git-push-report-cache，进入视图秒开上次结果后由索引增量刷新替换） */
+export interface ReportCacheEntry {
+  /** 缓存对应的项目 id（与当前选中项目不一致时不展示，避免张冠李戴） */
+  projectId: string
+  /** 缓存对应的时间范围 */
+  range: string
+  /** 报告生成时间（ISO，即 report.generatedAt） */
+  generatedAt: string
+  /** 报告聚合数据（null = 尚未生成过，模型层零 i18n 快照） */
+  report: CodeReportData | null
 }
 
 /** 项目分类 */
@@ -417,6 +431,9 @@ const DEFAULT_REPO_CLEAN_PREFS: RepoCleanPrefs = { projectId: "", thresholdMb: 1
 /** BFG 运行时路径覆盖默认值（空 = 自动探测 java + 默认缓存 jar） */
 const DEFAULT_BFG_PREFS: BfgPrefs = { javaPath: "", jarPath: "" }
 
+/** 代码统计报告结果缓存默认值（无缓存时按 null 语义处理，见 useCodeReport） */
+const DEFAULT_REPORT_CACHE: ReportCacheEntry = { projectId: "", range: "6m", generatedAt: "", report: null }
+
 const DEFAULT_UNGROUPED: ProjectCategory = {
   id: UNGROUPED_ID,
   name: "未分组",
@@ -462,6 +479,14 @@ export class GitPushStorage {
   readonly repoCleanPrefs: TypedStorage<RepoCleanPrefs>
   /** BFG 运行时路径覆盖（自定义 java / jar 路径，空 = 自动） */
   readonly bfgPrefs: TypedStorage<BfgPrefs>
+  /** 代码统计报告结果缓存（进度视图秒开上次结果；数据新鲜度由本地提交索引的后台增量刷新保证） */
+  readonly reportCache: TypedStorage<ReportCacheEntry>
+  /** 本地提交索引元数据（每项目仓库身份/HEAD 判据与截断游标；大体积提交数据在插件数据目录的 NDJSON 中） */
+  readonly indexMeta: TypedStorage<IndexMeta>
+  /** 本地提交索引总开关（关闭后全部统计路径回退到直接跑 git，作为最终安全阀） */
+  readonly indexEnabled: TypedStorage<boolean>
+  /** 单项目索引提交条数上限（超出即标记截断并提示重建） */
+  readonly indexMaxCommits: TypedStorage<number>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -485,6 +510,10 @@ export class GitPushStorage {
     this.dropCommitPrefs = new TypedStorage(storage, "git-push-dropcommit-prefs", DEFAULT_DROP_COMMIT_PREFS)
     this.repoCleanPrefs = new TypedStorage(storage, "git-push-repoclean-prefs", DEFAULT_REPO_CLEAN_PREFS)
     this.bfgPrefs = new TypedStorage(storage, "git-push-bfg-prefs", DEFAULT_BFG_PREFS)
+    this.reportCache = new TypedStorage(storage, "git-push-report-cache", DEFAULT_REPORT_CACHE)
+    this.indexMeta = new TypedStorage(storage, "git-push-index-meta", DEFAULT_INDEX_META)
+    this.indexEnabled = new TypedStorage(storage, "git-push-index-enabled", true)
+    this.indexMaxCommits = new TypedStorage(storage, "git-push-index-max-commits", DEFAULT_INDEX_MAX_COMMITS)
   }
 
   async init(): Promise<void> {

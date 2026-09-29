@@ -19,6 +19,19 @@ export const REPORT_RANGE_LABEL_KEYS: Record<ReportRange, string> = {
   "1y": "reportRange1Y",
 }
 
+/**
+ * 时间范围对应的天数下界（0 = 全部历史）。
+ * 与 REPORT_RANGES 的 since 文案一一对应，但以「天数」表达：本地提交索引的覆盖范围判据
+ * （ProjectIndexMeta.sinceCoveredDays）与索引侧提交过滤都按天数比较，避免月长差异
+ * （"3 months ago" 实际落在 89~92 天之间）导致边界漂移。
+ */
+export const REPORT_RANGE_DAYS: Record<ReportRange, number> = {
+  all: 0,
+  "3m": 90,
+  "6m": 180,
+  "1y": 365,
+}
+
 // ── 作者贡献度 ──
 
 /** 作者贡献度排行行（代码贡献度分析报告数据源） */

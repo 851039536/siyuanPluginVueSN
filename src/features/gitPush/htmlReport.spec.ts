@@ -1,10 +1,12 @@
+// 直连 types/report：本文件是被测纯函数的单测，必须在 Node 环境可加载；
+// "./types" 桶会经 GitPushManager 引入运行时 siyuan 依赖。
 import type {
   AuthorReportRow,
   CodeReportData,
   DailyCommitStat,
   DebtFileRow,
   HotspotFileRow,
-} from "./types"
+} from "./types/report"
 // src/features/gitPush/htmlReport.spec.ts — 单文件 HTML 报告渲染层单元测试
 //
 // 覆盖重点：HTML 转义（防仓库内恶意路径/作者名在浏览器打开报告时执行）、

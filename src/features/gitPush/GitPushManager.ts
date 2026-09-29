@@ -1,18 +1,16 @@
 // Git 推送任务管理门面：组合各领域协作者（managers/），对外暴露统一 API
 import type { Plugin } from "siyuan"
-import {
-  openTab,
-  openWindow,
-} from "siyuan"
 import type { App } from "vue"
-import {
-  createApp,
-  h,
-} from "vue"
 import type { AllPlatformResult } from "./managers/RemoteOps"
-import type { NumstatCommit } from "./reportMetrics"
-import type { BfgCleanPlan, BfgCleanResult, BfgRuntimeState, PlatformKey, RepoScanResult } from "./types/meta"
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
+import type { NumstatCommit } from "./reportMetrics"
+import type {
+  BfgCleanPlan,
+  BfgCleanResult,
+  BfgRuntimeState,
+  PlatformKey,
+  RepoScanResult,
+} from "./types/meta"
 import type {
   BranchInfo,
   CommitLogEntry,
@@ -30,22 +28,48 @@ import type {
   WorkingTreeInfo,
 } from "./types/storage"
 import type { AiApiConfig } from "@/utils/aiApi"
+import {
+  openTab,
+  openWindow,
+} from "siyuan"
+import {
+  createApp,
+  h,
+} from "vue"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import GitPushPanel from "./index.vue"
+import { BfgOps } from "./managers/BfgOps"
+import {
+  buildRootHash,
+  CommitIndex,
+  rootHashGitDir,
+} from "./managers/CommitIndex"
 import { CommitMsgGenerator } from "./managers/CommitMsgGenerator"
 import { GitExecutor } from "./managers/GitExecutor"
+import {
+  canSkipScan,
+  isIndexComplete,
+  nextCoveredDays,
+} from "./managers/indexCoverage"
+import { createIndexIo } from "./managers/indexDir"
 import { ProjectStore } from "./managers/ProjectStore"
 import { ProjectWriteLock } from "./managers/ProjectWriteLock"
 import { RemoteOps } from "./managers/RemoteOps"
+import { RepoCleanOps } from "./managers/RepoCleanOps"
 import { RepoOps } from "./managers/RepoOps"
 import { ReportOps } from "./managers/ReportOps"
 import { WorktreeOps } from "./managers/WorktreeOps"
+import {
+  clampIndexMaxCommits,
+  INDEX_META_VERSION,
+} from "./types/indexCache"
 import { GitPushStorage } from "./types/storage"
-import { BfgOps } from "./managers/BfgOps"
-import { RepoCleanOps } from "./managers/RepoCleanOps"
-import { DEFAULT_LOG_LIMIT } from "./utils"
+import {
+  DEFAULT_LOG_LIMIT,
+  resolveValidPath,
+} from "./utils"
 
 /** 自定义 Tab 模型实例的最小结构（init 回调的 this） */
 interface TabCustom {
@@ -77,6 +101,13 @@ export class GitPushManager {
   /** 独立窗口页签 Vue app 与容器（addTab 承载） */
   private tabApp: App | null = null
   private tabContainer: HTMLElement | null = null
+  /**
+   * 本地提交索引（延迟构造：目录解析需 await 工作空间路径，而构造函数不能是 async）。
+   * null = 尚未初始化或索引不可用（此时全部统计路径回退到直接跑 git）。
+   */
+  private commitIndex: CommitIndex | null = null
+  /** 索引初始化 Promise（并发调用共享同一次初始化，失败只告警一次） */
+  private indexInit: Promise<CommitIndex | null> | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -91,6 +122,97 @@ export class GitPushManager {
     this.bfgOps = new BfgOps(plugin, { load: () => this.storage.bfgPrefs.loadOrDefault() })
     this.repoCleanOps = new RepoCleanOps(this.executor, this.bfgOps, this.worktreeOps, plugin.name)
     this.registerTabModel()
+  }
+
+  // ── 本地提交索引（跨会话增量刷新的核心；不可用时全部路径自动回退直接跑 git）──
+
+  /**
+   * 获取索引实例（首次调用解析目录并构造；失败返回 null 且只告警一次）。
+   * 索引关闭（indexEnabled=false）时同样返回 null，使所有调用方走旧路径。
+   */
+  async getIndex(): Promise<CommitIndex | null> {
+    if (!(await this.storage.indexEnabled.loadOrDefault())) return null
+    if (this.indexInit) return this.indexInit
+    this.indexInit = (async () => {
+      try {
+        const io = await createIndexIo(this.plugin)
+        if (!io) {
+          console.warn("[gitPush] 无法确定插件数据目录，本地提交索引已禁用（统计将直接扫描 git）")
+          return null
+        }
+        const meta = await this.storage.indexMeta.loadOrDefault()
+        return new CommitIndex(io, meta)
+      } catch (e) {
+        console.warn("[gitPush] 本地提交索引初始化失败，已回退直接扫描 git", e)
+        return null
+      }
+    })()
+    this.commitIndex = await this.indexInit
+    return this.commitIndex
+  }
+
+  /** 索引元数据持久化（索引写盘后由调用方触发；失败仅告警，不影响本次统计结果） */
+  async persistIndexMeta(): Promise<void> {
+    if (!this.commitIndex) return
+    try {
+      await this.storage.indexMeta.save({
+        version: INDEX_META_VERSION,
+        projects: this.commitIndex.getProjectMetas(),
+      })
+    } catch (e) {
+      console.warn("[gitPush] 索引元数据持久化失败", e)
+    }
+  }
+
+  /** 清空本地提交索引（设置面板「重建索引」/ 排障用） */
+  async clearIndex(): Promise<void> {
+    const index = await this.getIndex()
+    if (!index) return
+    await index.clearAll()
+    await this.persistIndexMeta()
+  }
+
+  /** 索引开关（关闭后统计路径回退直接跑 git） */
+  async setIndexEnabled(on: boolean): Promise<void> {
+    await this.storage.indexEnabled.save(on)
+  }
+
+  /** 读取索引开关 */
+  async isIndexEnabled(): Promise<boolean> {
+    return this.storage.indexEnabled.loadOrDefault()
+  }
+
+  /** 单项目索引提交上限（设置项，超出即标记截断） */
+  async getIndexMaxCommits(): Promise<number> {
+    return clampIndexMaxCommits(await this.storage.indexMaxCommits.loadOrDefault())
+  }
+
+  /** 设置单项目索引提交上限（钳位后持久化；下次扫描生效） */
+  async setIndexMaxCommits(n: number): Promise<void> {
+    await this.storage.indexMaxCommits.save(clampIndexMaxCommits(n))
+  }
+
+  /** 索引状态摘要（设置面板展示：目录 + 已索引项目数 + 各项目提交数与截断标记） */
+  async getIndexStatus(): Promise<{ dir: string, projects: Array<{ projectId: string, commits: number, complete: boolean, analyzedAt: string }> }> {
+    const index = await this.getIndex()
+    if (!index) { return {
+      dir: "",
+      projects: [],
+    }
+    }
+    return {
+      dir: index.getDir(),
+      projects: index.getProjectMetas().map((p) => {
+        // 未加载的段按元数据里的提交数展示（避免为了展示状态而读盘）
+        const loaded = index.getCommitCount(p.projectId)
+        return {
+          projectId: p.projectId,
+          commits: loaded,
+          complete: p.complete,
+          analyzedAt: p.analyzedAt,
+        }
+      }),
+    }
   }
 
   async init() {
@@ -346,7 +468,7 @@ export class GitPushManager {
 
   // ── 工作区本地操作（WorktreeOps；写操作经项目级写锁串行，防 index.lock 竞争）──
 
-  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string }): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string, fastWhenClean?: boolean }): Promise<WorkingTreeInfo> {
     return this.worktreeOps.getWorkingTreeStatus(projectPath, opts)
   }
 
@@ -443,8 +565,7 @@ export class GitPushManager {
     onProgress?: (current: number, total: number) => void,
   ): Promise<string> {
     const result = await this.writeLock.runExclusive(projectPath, () =>
-      this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate, onProgress),
-    )
+      this.worktreeOps.rewriteCommitMessage(projectPath, hash, message, preserveDate, onProgress))
     // 改写后失效推送状态缓存（D6：与 commit 路径语义一致；调用方仅持有 path，按 path 反查项目 id）
     void this.invalidatePushStatusCacheByPath(projectPath)
     return result
@@ -468,8 +589,7 @@ export class GitPushManager {
    */
   async dropCommit(projectPath: string, hash: string, onProgress?: (current: number, total: number) => void): Promise<string> {
     const result = await this.writeLock.runExclusive(projectPath, () =>
-      this.worktreeOps.dropCommit(projectPath, hash, onProgress),
-    )
+      this.worktreeOps.dropCommit(projectPath, hash, onProgress))
     // 历史重写后失效推送状态缓存（与 rewriteCommitMessage 语义一致）
     void this.invalidatePushStatusCacheByPath(projectPath)
     return result
@@ -629,6 +749,209 @@ export class GitPushManager {
     return this.reportOps.getFileHistoryPatch(projectPath, file, since)
   }
 
+  // ── 索引驱动的统计抓取（本地提交索引：命中即零 git 扫描，未命中则增量补抓后落盘）──
+
+  /**
+   * 抓取项目的提交 numstat 数据（本地索引优先）。
+   *
+   * 三类结果（调用方据 `source` 区分数据新鲜度）：
+   * - `index`   索引已覆盖请求范围 → 零 git 调用，直接返回
+   * - `incremental` 本次增量补抓并已落盘 → 数据是最新的
+   * - `git`     索引不可用/初始化失败 → 回退直接跑 git（行为与改造前一致）
+   *
+   * 每次调用都打印一行 `[gitPush][索引]` 日志（耗时 + 来源 + 扫描/复用条数），
+   * 用于直接确认索引是否生效（不必靠手感判断快慢）；见 README「如何确认索引生效」。
+   *
+   * @param maxCount 仅取最近 N 条（与 git log -n 语义一致；0/undefined = 全部）
+   * @param sinceDays 时间范围下界（相对天数，0 = 全部历史）
+   * @param forceRebuild 忽略已有索引重新全量扫描（「重建索引」用）
+   */
+  async getIndexedCommitLog(
+    project: GitProject,
+    opts?: { maxCount?: number, sinceDays?: number, forceRebuild?: boolean },
+  ): Promise<{ commits: NumstatCommit[], source: "index" | "incremental" | "git", complete: boolean }> {
+    const startedAt = Date.now()
+    const maxCount = opts?.maxCount ?? 0
+    const sinceDays = opts?.sinceDays ?? 0
+    const projectPath = resolveValidPath(project)
+    const index = await this.getIndex()
+    if (!index) {
+      const commits = await this.reportOps.getCommitStatsLog(projectPath, maxCount || undefined)
+      this.logIndexCall(project, "git", startedAt, commits.length, 0, 0)
+      return {
+        commits: this.sliceByDays(commits, sinceDays),
+        source: "git",
+        complete: true,
+      }
+    }
+
+    const projectId = project.id
+    // 相对天数 → 绝对毫秒下界（与索引侧同口径；0 = 不过滤）
+    const sinceMs = sinceDays > 0 ? Date.now() - sinceDays * 24 * 60 * 60 * 1000 : 0
+    try {
+      const snapshot = await this.reportOps.getHeadSnapshot(projectPath)
+      // 空仓库（无 HEAD）：索引无意义，直接返回空
+      if (!snapshot.head) {
+        this.logIndexCall(project, "index", startedAt, 0, 0, 0)
+        return {
+          commits: [],
+          source: "index",
+          complete: true,
+        }
+      }
+      const rootHash = buildRootHash(snapshot.head, snapshot.gitDir)
+
+      if (opts?.forceRebuild) await index.invalidate(projectId)
+      await index.ensureLoaded(projectId)
+
+      // 覆盖判定：rootHash 一致（HEAD 与仓库身份都没变）且索引深度满足本范围要求
+      const meta = index.getProjectMeta(projectId)
+      if (!opts?.forceRebuild && canSkipScan({
+        rootHash,
+        meta,
+        sinceDays,
+      })) {
+        const hits = index.getLog(projectId, {
+          maxCount,
+          sinceMs,
+        })
+        this.logIndexCall(project, "index", startedAt, hits.length, 0, index.getCommitCount(projectId))
+        return {
+          commits: hits,
+          source: "index",
+          complete: true,
+        }
+      }
+
+      // 增量补抓：knownHashes 仅在「仓库身份一致」时可用，否则必须全量重扫
+      // （换机器/换仓库指向同一路径时 gitdir 不同，复用他仓库的 hash 集会导致漏抓）
+      const sameRepo = !!meta && rootHashGitDir(meta.rootHash) === snapshot.gitDir
+      const knownHashes = sameRepo && index.getCommitCount(projectId) > 0 ? index.getKnownHashes(projectId) : null
+      const indexedBefore = index.getCommitCount(projectId)
+
+      const scan = await this.reportOps.fetchIncremental(projectPath, knownHashes)
+      const maxCommits = await this.getIndexMaxCommits()
+      const coverageInput = {
+        scanComplete: scan.complete,
+        scannedCommits: scan.commits.length,
+        indexedBefore,
+        maxCommits,
+        notIncremental: knownHashes === null,
+      }
+      const complete = isIndexComplete(coverageInput)
+
+      await index.append(projectId, scan.commits, {
+        rootHash,
+        analyzedAt: new Date().toISOString(),
+        complete,
+        lastCommit: `${snapshot.lastAuthor}|${snapshot.lastDate}`,
+        // 截断项目沿用既有覆盖范围，避免每次刷新都从历史根重扫（详见 indexCoverage.ts）
+        sinceCoveredDays: nextCoveredDays(coverageInput, sameRepo, meta?.sinceCoveredDays),
+      })
+      await this.persistIndexMeta()
+      const result = index.getLog(projectId, {
+        maxCount,
+        sinceMs,
+      })
+      this.logIndexCall(project, "incremental", startedAt, result.length, scan.commits.length, index.getCommitCount(projectId))
+      return {
+        commits: result,
+        source: "incremental",
+        complete,
+      }
+    } catch (e) {
+      // 索引任何环节失败都不得影响功能：降级直接跑 git
+      console.warn("[gitPush] 索引路径失败，本次回退直接扫描 git", e)
+      const commits = await this.reportOps.getCommitStatsLog(projectPath, maxCount || undefined)
+      const sliced = this.sliceByDays(commits, sinceDays)
+      this.logIndexCall(project, "git(fallback)", startedAt, sliced.length, 0, 0)
+      return {
+        commits: sliced,
+        source: "git",
+        complete: true,
+      }
+    }
+  }
+
+  /**
+   * 打印一次索引调用的来源与耗时。
+   *
+   * `source=index` 且 `新扫描=0` 即表示「完全复用了本地索引、没有跑 git log」——
+   * 这是确认索引生效最直接的证据。耗时含 HEAD 快照（rev-parse）与索引读盘，
+   * 与改造前「全量 git log --numstat」的耗时对比即收益。
+   *
+   * 用 console.warn 而非 console.info：仓库 lint 规则只允许 warn/error（no-console）。
+   */
+  private logIndexCall(
+    project: GitProject,
+    source: string,
+    startedAt: number,
+    returned: number,
+    scanned: number,
+    indexedTotal: number,
+  ): void {
+    console.warn(
+      `[gitPush][索引] ${project.name} source=${source} 耗时=${Date.now() - startedAt}ms 返回=${returned} 条 新扫描=${scanned} 条 索引总量=${indexedTotal} 条`,
+    )
+  }
+
+  /** 按「相对天数」过滤提交（与索引侧口径一致；0 = 不过滤） */
+  private sliceByDays(commits: NumstatCommit[], sinceDays: number): NumstatCommit[] {
+    if (sinceDays <= 0) return commits
+    const cutoff = Date.now() - sinceDays * 24 * 60 * 60 * 1000
+    return commits.filter((c) => {
+      const t = Date.parse(c.date)
+      return Number.isNaN(t) ? true : t >= cutoff
+    })
+  }
+
+  /**
+   * 抓取项目的已跟踪文件存量行数（索引优先：HEAD 未变时零 IO）。
+   * 命中时不跑 `git ls-files`、也不逐文件读盘——行数统计里最贵的一环。
+   * 打印 `[gitPush][索引] ... filelines=hit|scan` 日志便于确认。
+   */
+  async getIndexedFileLines(
+    project: GitProject,
+  ): Promise<{ rootHash: string, lines: Map<string, number | null> } | null> {
+    const startedAt = Date.now()
+    const projectPath = resolveValidPath(project)
+    const index = await this.getIndex()
+    if (!index) return null
+    try {
+      const snapshot = await this.reportOps.getHeadSnapshot(projectPath)
+      if (!snapshot.head) { return {
+        rootHash: "",
+        lines: new Map(),
+      }
+      }
+      const rootHash = buildRootHash(snapshot.head, snapshot.gitDir)
+      const cached = await index.loadFileLines(project.id, rootHash)
+      if (cached) {
+        console.warn(
+          `[gitPush][索引] ${project.name} filelines=hit 耗时=${Date.now() - startedAt}ms 文件数=${cached.size}`,
+        )
+        return {
+          rootHash,
+          lines: cached,
+        }
+      }
+      const rows = await this.reportOps.getTrackedFileLines(projectPath, rootHash)
+      const lines = new Map<string, number | null>()
+      for (const row of rows) lines.set(row.f, row.n)
+      await index.setFileLines(project.id, rootHash, lines)
+      console.warn(
+        `[gitPush][索引] ${project.name} filelines=scan 耗时=${Date.now() - startedAt}ms 文件数=${lines.size}`,
+      )
+      return {
+        rootHash,
+        lines,
+      }
+    } catch (e) {
+      console.warn("[gitPush] 文件存量行数索引读写失败，回退直接扫描", e)
+      return null
+    }
+  }
+
   // ── 仓库清理（RepoCleanOps：体检扫描 + BFG 六步工作流）──
 
   /** 仓库体检：.git 体积汇总 + 可达大文件 Top N（纯 git，只读） */
@@ -682,8 +1005,7 @@ export class GitPushManager {
     } = {},
   ): Promise<BfgCleanResult> {
     const result = await this.writeLock.runExclusive(projectPath, () =>
-      this.repoCleanOps.cleanRepo(projectPath, plan, callbacks),
-    )
+      this.repoCleanOps.cleanRepo(projectPath, plan, callbacks))
     // 历史重写后失效推送状态缓存（D6：与 rewriteCommitMessage 语义一致）
     void this.invalidatePushStatusCacheByPath(projectPath)
     return result
@@ -698,8 +1020,7 @@ export class GitPushManager {
     onOutput?: (chunk: string) => void,
   ): Promise<{ fetchErrors: { remote: string, error: string }[] }> {
     const result = await this.writeLock.runExclusive(projectPath, () =>
-      this.repoCleanOps.finalizeBfgClean(projectPath, onOutput),
-    )
+      this.repoCleanOps.finalizeBfgClean(projectPath, onOutput))
     // 远程跟踪引用已同步，推送状态缓存随之过期
     void this.invalidatePushStatusCacheByPath(projectPath)
     return result

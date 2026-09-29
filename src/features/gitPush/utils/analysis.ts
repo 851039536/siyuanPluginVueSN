@@ -1,6 +1,8 @@
 // gitPush 提交分析纯函数：类型前缀解析、本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
-import type { CommitAnalysisEntry, CommitAnalysisType, CommitRuleReasonKey } from "../types"
-import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, COMMIT_RULE_REASON_META, HEAT_LEVEL_THRESHOLDS } from "../types"
+// 直连 types/meta（纯类型与常量）而非 "../types" 桶：桶含 GitPushManager 等运行时模块，
+// 会把运行时 siyuan 依赖拉进模块图，使本纯函数模块无法在 Node 单测环境加载。
+import type { CommitAnalysisEntry, CommitAnalysisType, CommitRuleReasonKey } from "../types/meta"
+import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, COMMIT_RULE_REASON_META, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
 
 /**
  * 解析 Conventional Commits 提交信息前缀类型（feat/fix/docs 等），无前缀或未知前缀返回 other。

@@ -23,6 +23,7 @@
 - **报告一键导出 HTML**：统计报告视图工具条「导出HTML」按钮，把当前项目 + 当前时间范围的报告导出为**单个自包含 HTML 文件**（内联 CSS + 内联 SVG 图表，零外部依赖、断网可打开、可直接分享或存档）；覆盖团队总览 / 代码贡献度 / 技术债务 / 代码热点 / 提交趋势五个分区全部内容，K 线图按 `MAX_CANDLES` 分桶压缩保证宽度有界；弹原生保存对话框选定路径，写盘后自动打开；未生成/git 失败/零提交时不产出空文件
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
 - **行数统计视图**：独立 Tab，统计各项目/作者的代码新增、删除、净增行数排行（千位分隔数字，净增正绿负红）；统计范围固定为「全部提交历史 + 工作区全部已跟踪文件」（无条数选择入口）；可配置文件格式过滤（扩展名多选排除列表，勾选后跳过对应格式，不选则统计所有文件）
+- **本地提交索引（增量刷新）**：插件数据目录下的 NDJSON 提交索引，使统计视图「秒开 + 后台增量」而非每次重跑全量 `git log`。HEAD 未变的项目零 git 调用、零逐文件读盘；行数统计的「当前总行数」按 HEAD 复用缓存；索引不可用时全部路径自动回退直接扫描 git（详见「性能优化 § 本地提交索引」）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
 - **远程配置**：添加/编辑/删除远程仓库，支持行内编辑 URL
 - **独立窗口承载**：面板头部「在独立窗口打开」按钮，将面板弹出为独立浮动窗口（`addTab + openTab + openWindow` 官方 API，浮动窗口内自动隐藏该按钮）
@@ -36,7 +37,6 @@ src/features/gitPush/
 ├── GitPushManager.ts                # 门面：组合 managers/ 协作者 + addTab/openWindow 独立窗口承载
 ├── reportMetrics.ts                 # 代码统计报告纯函数层：numstat 解析 + 作者/文件聚合 + 债务/热点评分 + K 线分桶压缩
 ├── reportChart.ts                   # 提交 K 线图绘制配置：chart.js 数据集/坐标轴/影线插件（自 CandlestickSection 迁出）
-├── htmlReport.ts                    # 报告导出纯函数层：CodeReportData → 单文件 HTML（内联 CSS + 内联 SVG 图表 + HTML 转义）
 ├── htmlReport.ts                    # 报告导出纯函数层：CodeReportData → 单文件 HTML（内联 CSS + 内联 SVG 图表 + HTML 转义）
 ├── debtInsights.ts                  # 技术债务洞察纯函数：趋势推断 + 共变索引 + 严重度汇总（自 composables 迁出）
 ├── utils/                           # 纯函数层（按域拆分 + index.ts 汇聚，导出面与拆分前一致）
@@ -55,7 +55,11 @@ src/features/gitPush/
 ├── managers/
 │   ├── GitExecutor.ts               # git 子进程执行器（双池信号量限流 + abort 生命周期 + stdin 流式长驻进程）
 │   ├── ProjectStore.ts              # 项目/分类/标签 CRUD 与内存缓存
-│   ├── ReportOps.ts                 # numstat 提交日志/首提交日期/已跟踪文件/文件历史补丁（弹窗懒取）
+│   ├── ReportOps.ts                 # numstat 提交日志/首提交日期/已跟踪文件/文件历史补丁（弹窗懒取）+ 增量扫描与 HEAD 快照
+│   ├── CommitIndex.ts               # 本地提交索引引擎（NDJSON 追加写 + 游标查询 + 崩溃丢尾自愈）
+│   ├── indexCoverage.ts             # 索引覆盖范围决策纯函数（能否跳过扫描 / 截断项目不重扫全历史）
+│   ├── indexIo.ts                   # 索引磁盘 IO 抽象（FsIndexIO 生产实现 / 接口注入使纯逻辑可单测）
+│   ├── indexDir.ts                  # 索引目录解析（plugin.dataDir → storage/petal/<plugin>/git-push-index）
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
 │   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志（含历史提交消息重写）
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
@@ -68,6 +72,7 @@ src/features/gitPush/
 ├── types/
 │   ├── index.ts                     # 类型桶（重导出 meta/storage + GitPushManager）
 │   ├── meta.ts                      # PLATFORM_META/FILE_STATUS_META 等共享常量（独立模块切断循环引用）
+│   ├── indexCache.ts                # 本地提交索引的记录形状与元数据常量（零依赖，保证引擎可在 Node 单测加载）
 │   ├── queryScheduler.ts            # 查询调度契约（ProjectQueryKind/ProjectQueryScheduler，切断 cardServices ↔ composable 循环）
 │   └── storage.ts                   # 类型定义 + TypedStorage 持久化
 ├── composables/
@@ -262,6 +267,11 @@ GitPushManager (facade)
 | `getCommitShortStats(path, count?)` | 获取最近 N 条提交的变更规模（文件数/增删行数），供 LOG Tab 行悬停提示；`--shortstat` 批量单命令（须批量：逐条 `git show --shortstat` 约 260ms/条），上限 500 条 |
 | `getNumstatLog(path, since?, maxCount?)` | 获取 numstat 提交日志（每文件增删行；供代码统计报告聚合） |
 | `getCommitStatsLog(path, maxCount?)` | 行数统计专用单命令抓取：numstat + hash/message/author/date（替代原 getCommitLog + getNumstatLog 双命令） |
+| `getIndexedCommitLog(project, {maxCount?, sinceDays?, forceRebuild?})` | **索引驱动的提交抓取**：HEAD 未变零 git 扫描，否则增量补抓后落盘；返回 `source`（`index`/`incremental`/`git`）标识数据来源 |
+| `getIndexedFileLines(project)` | 已跟踪文件存量行数（索引按 HEAD 复用，未变时零 `ls-files`、零逐文件读盘） |
+| `getIndex(project)` / `getIndexStatus()` | 获取索引实例 / 索引状态摘要（目录 + 各项目提交数与截断标记） |
+| `clearIndex()` / `setIndexEnabled(on)` / `isIndexEnabled()` | 清空索引 / 索引开关读写 |
+| `getIndexMaxCommits()` / `setIndexMaxCommits(n)` | 单项目索引提交上限读写（钳位 1000~100000） |
 | `getBranches(path)` | 获取本地分支列表 |
 | `switchBranch(path, branch)` | 切换分支（检测未提交变更） |
 | `getCategories / addCategory / updateCategory / deleteCategory` | 分类 CRUD |
@@ -286,9 +296,11 @@ GitPushManager (facade)
 4. **列表视图**：打开面板不自动选择分类（显示「请选择分类」提示，零 git 调用）；点选顶部分类 TAB 后加载该分类下项目的工作区变更与推送状态
 5. **统计视图**：查看远程覆盖率、待处理项目汇总、平台配置状态
 6. **行数统计视图**：点击「开始行数分析」统计各项目/作者的代码新增/删除/净增行数排行；可按需点击过滤按钮勾选要排除的文件格式
-7. 使用拉取/推送按钮同步远程仓库
-8. 暂存文件 → 生成/输入提交信息 → 提交
-9. 点击头部「在独立窗口打开」按钮，将面板弹出为独立浮动窗口（关闭浮动窗口页签自动移回主窗口）
+7. **代码统计报告**：进入视图即展示**上次结果**（毫秒级，头部标注生成时间）并在后台增量刷新——
+   仓库 HEAD 未变的项目不产生任何 `git log`；有提交的项目只补抓新增提交。切换时间范围/项目会立即重算并刷新
+8. 使用拉取/推送按钮同步远程仓库
+9. 暂存文件 → 生成/输入提交信息 → 提交
+10. 点击头部「在独立窗口打开」按钮，将面板弹出为独立浮动窗口（关闭浮动窗口页签自动移回主窗口）
 
 ## 存储
 
@@ -296,6 +308,15 @@ GitPushManager (facade)
 - `git-push-projects`：项目列表
 - `git-push-categories`：分类列表
 - `git-push-concurrency`：Git 并发数配置
+- `git-push-report-cache`：代码统计报告结果缓存（秒开上次结果；数据新鲜度由提交索引的后台增量刷新保证）
+- `git-push-index-meta`：本地提交索引元数据（每项目的仓库身份/HEAD 判据、截断游标、覆盖范围）
+- `git-push-index-enabled`：提交索引总开关（默认开启；关闭后统计路径全部回退直接跑 git）
+- `git-push-index-max-commits`：单项目索引提交上限（默认 20000，钳位 1000~100000）
+
+> **索引数据本体不走 `loadData`**：提交与文件变更存在插件数据目录
+> `<workspace>/data/storage/petal/<plugin.name>/git-push-index/` 下的 NDJSON 追加日志中，
+> 避免把体积可观的提交明细塞进思源的数据文件（`localStorage`/`loadData` 均为整文件读写）。
+> 该目录可被用户直接删除，删除后下次统计自动重建。
 
 ## 性能优化
 
@@ -308,3 +329,91 @@ GitPushManager (facade)
   - **脏标记**：父层写操作标脏 + 单值 `epoch` 递增，卡片消费脏集按需重载（取代原先每卡片 5 个 watch 读取同一个 Record 的 O(卡片数 × 域数) 求值）
 - **远程刷新单管线**：`refreshRemote` 统一「刷新远程配置 → fetch 一次 → 状态重查」，原先「Fetch」与「刷新远程状态」两条各自 fetch 的路径合并为同一单飞键，同时触发只产生一轮网络请求
 - **共享 rev-parse**：统计视图与列表视图经调度器 `loadStatus` 单次获取分支名分发给 pushStatus + workingTree
+- **干净工作区快速路径**：批量统计/显式刷新时传 `fastWhenClean`，先跑 `status --porcelain --untracked-files=no` 探测已跟踪文件变更
+  （`.gitignore` 保证不会误报），无变更时少解析一次全量输出。实测本仓库 ~1000ms → ~250ms；
+  但**有变更时会多花一次探测**，故只由批量场景开启，卡片交互路径不传该参数保持单命令行为。
+  注意：全量 `--porcelain` 仍会执行（未跟踪清单必须由它得出），因此 index 的 stat 缓存刷新语义与改造前一致
+  ——不做「跳过全量」的短路，否则后续 `git add` 等写操作要重新哈希全部文件。
+
+### 本地提交索引（`managers/CommitIndex.ts`）
+
+统计慢的根因是「每次进视图 → 对全部项目重跑全量 `git log --numstat`（全历史）」，且结果只落在无法按提交增量的 JSON 缓存里。索引把这部分变成增量：
+
+- **为什么不是 sqlite**：思源桌面端为 Electron 33（内置 Node 20，无 `node:sqlite`）；`better-sqlite3` 需原生编译且随思源升级易失效；`sql.js` 需把全库载入内存（大仓库比 `git log` 更慢）。故采用零依赖的 NDJSON 追加日志 + 内存游标。
+- **数据模型**（每个项目一段，按「提交序号 = `commits.ndjson` 行号」关联）：
+  `commits.ndjson`（一提交一行）/ `files.ndjson`（一「提交×文件」一行）/ `filelines.ndjson`（已跟踪文件存量行数）/ `meta.json`（每项目 `rootHash` 判据与游标）
+- **命中判据**：`rootHash = "<HEAD oid>:<gitdir 绝对路径>"`。gitdir 参与判据使「换机器 / 换仓库指向同一路径」自然失效重建，避免误用他仓库数据；同时它天然覆盖「切回某个已索引分支」的场景。
+- **增量扫描**（`ReportOps.fetchIncremental`）：**不带 `--since`**，改为「扫到已索引提交即停」。
+  不带 `--since` 的原因：`--since` 会把边界内已索引的提交重复输出（浪费），且历史重写（amend/rebase）后的旧提交保持原始日期、可能落在 `--since` 之外而被漏掉；而重写过的提交 hash 必然变化，靠 hash 集合去重不会漏。
+  取回后在内存索引上按时间范围过滤，语义等价且**范围切换零 git 调用**。
+- **崩溃自愈**：两个 NDJSON 分开追加，进程被 kill 时可能出现「提交行写坏、其文件行完好」（残骸引用不存在的提交序号）。加载时统一「丢弃损坏行 + 丢弃孤儿文件行」并裁齐磁盘尾部，代价仅是下次增量重抓这几个尾部提交，远优于整份索引作废。提交行先于文件行落盘，从顺序上消除该类残骸。
+- **降级**：索引目录不可写 / Node 不可用 / 任何环节抛错 → 自动回退直接跑 git（`getIndexedCommitLog` 的 `source: "git"`），功能零影响；`indexEnabled=false` 可整体关闭。
+- **上限与截断**：单项目提交数超过 `indexMaxCommits` 或单次扫描超过 20000 条时标记 `complete=false`，该仓库不再使用「切回老分支」捷径，并按需重建。
+  截断项目的 `sinceCoveredDays` **沿用旧值**（决策集中在 `managers/indexCoverage.ts` 并有 16 条单测）——
+  否则每次刷新都会从历史根重扫，正是本方案要消除的开销。
+- **多设备**：索引以 `resolveValidPath(project)` 解析出的当前设备路径为准，跨设备天然重建。
+
+**统计读取侧的其他收敛**：报告的文件存在性过滤改用目录级 `readdirSync` 缓存（原为每个排名文件一次 `statSync`，且每次都重复 `resolveValidPath`）；热点榜仍只对最终 Top N 读取 `loc`。
+
+### 如何确认索引生效
+
+「感觉变快了」不可靠。以下四种方式按可量化程度从高到低排列：
+
+**① 控制台日志（最直接）**
+
+每次索引调用都会打印一行，`source=index` 且 `新扫描=0` 即表示**完全没有跑 `git log`**：
+
+```
+[gitPush][索引] my-project source=index 耗时=42ms 返回=180 条 新扫描=0 条 索引总量=3742 条
+[gitPush][索引] my-project filelines=hit 耗时=3ms 文件数=412
+```
+
+对照关系：
+
+| 日志 | 含义 | 期望 |
+|---|---|---|
+| `source=index` `新扫描=0` | 完全复用索引 | 第二次起进报告视图应为此值，耗时通常 < 100ms |
+| `source=incremental` `新扫描=N` | 补抓了 N 条新提交 | 你在该项目提交过代码后应出现，N 等于新增提交数 |
+| `source=git` | 索引不可用，回退全量扫描 | 只在索引被关闭/目录不可写时出现 |
+| `source=git(fallback)` | 索引环节抛错后回退 | 伴随 `[gitPush] 索引路径失败…` 告警，需排查 |
+| `filelines=hit` / `=scan` | 存量行数复用 / 重算 | 同一 HEAD 下重复分析应为 `hit` |
+
+若改造前是 2~10s 而现在是几十毫秒，且日志显示 `source=index`，索引即已生效。
+
+**② 磁盘产物**
+
+索引落盘后可直接查看（路径在设置弹窗「本地提交索引」处展示，也可自行拼接）：
+
+```
+<工作空间>/data/storage/petal/siyuan-plugin-vite-vue-sn/git-push-index/
+├── commits.ndjson      # 一行一个提交（行号即提交序号）
+├── files.ndjson        # 一行一个「提交×文件」变更
+├── filelines.ndjson    # 已跟踪文件存量行数
+└── meta.json           # 每项目 rootHash（HEAD oid + gitdir）与覆盖范围
+```
+
+`wc -l commits.ndjson` 的条数应约等于该仓库的提交总数（受 `git-push-index-max-commits` 限制）。
+文件不存在 = 索引从未建立（检查索引开关或索引目录是否可写）。
+
+**③ 设置弹窗状态**
+
+设置弹窗「常规」分区 → 「本地提交索引」→「查看状态」，显示已索引项目数与提交总数。
+打开弹窗会自动查询一次，无需手动点击。此处也提供「重建索引」。
+
+**④ 进程观察（辅助）**
+
+改造前每次进报告视图必然拉起 1~N 个 `git log --numstat` 子进程；索引命中时该项目**不产生任何 git 子进程**。
+用任务管理器/Process Explorer 观察 `git.exe` 的出现次数即可旁证（注意 `rev-parse HEAD` 仍会执行一次，用于校验 HEAD 是否变化——这是索引命中判据本身的开销）。
+
+**反向验证（确认索引确实省了事）**
+
+关闭索引（`git-push-index-enabled=false`，或临时把索引目录改名）后重进报告视图：
+日志应变为 `source=git` 且耗时应回到改造前的量级。两者对比即索引的净收益。
+
+
+
+- 纯逻辑用例与被测源码同目录、命名 `*.spec.ts`；**会真实拉起 git 子进程**的用例命名 `*.git.spec.ts`（已在 `vitest.config.ts` 说明用途）。
+- 被测模块必须可在 Node 环境加载：`siyuan` 包的 `exports` 字段在 node 条件下不可解析，**任何值导入都会让相关单测整体失败**。
+  故纯类型/纯常量统一从具体模块直连（`../types/storage`、`../types/report`、`../types/meta`），不走 `types/index.ts` 桶。
+  校验工具：`node scripts/check-module-purity.mjs <入口文件...>`（报告可达的运行时 siyuan 依赖及其引入路径）。
+- git 用例通过 `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM` 指向空文件 + 固定 `TZ`/`LC_ALL` 隔离开发机配置，避免结果随机器漂移。

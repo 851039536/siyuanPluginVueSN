@@ -106,8 +106,11 @@ export interface CardOps {
   handleForcePushToAll: (id: string) => void
   cancelPush: (id: string) => void
   handleFetchAll: (id: string) => void
-  /** 卡片首次展开/点击时补齐项目状态（ensure 语义 + 最小间隔节流，防首屏批量后立刻重刷同一项目） */
-  ensureProjectStatus: (id: string) => Promise<void>
+  /**
+   * 卡片首次展开/点击时补齐项目状态（ensure 语义 + 最小间隔节流，防首屏批量后立刻重刷同一项目）。
+   * @param fastWhenClean 干净工作区快速路径（批量统计预取传 true；卡片交互不传，保持原行为）
+   */
+  ensureProjectStatus: (id: string, fastWhenClean?: boolean) => Promise<void>
   /** Tab 切回工作区时的显式刷新（refresh 语义 + 最小间隔节流） */
   refreshProjectStatus: (id: string) => Promise<void>
   openRepoWebUrl: (url: string) => void

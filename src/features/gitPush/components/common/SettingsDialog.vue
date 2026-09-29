@@ -17,7 +17,10 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" height="12" />
+          <Icon
+            icon="mdi:close"
+            height="12"
+          />
         </button>
       </div>
 
@@ -32,7 +35,10 @@
             :title="i18n[sec.labelKey]"
             @click="activeSection = sec.id"
           >
-            <Icon :icon="sec.icon" height="14" />
+            <Icon
+              :icon="sec.icon"
+              height="14"
+            />
             <!-- 导航项文案："常规"/"显示"/"Git 配置" -->
             <span>{{ i18n[sec.labelKey] }}</span>
           </button>
@@ -42,7 +48,10 @@
             :title="i18n.manageCategories"
             @click="$emit('openCategory')"
           >
-            <Icon icon="mdi:tag-outline" height="14" />
+            <Icon
+              icon="mdi:tag-outline"
+              height="14"
+            />
             <!-- 操作文案："管理分类" -->
             <span>{{ i18n.manageCategories }}</span>
           </button>
@@ -130,6 +139,49 @@
             <!-- 提示文案："网络/推送命令超时上限（30~600 秒），推送大仓库时网络较慢可将值调大" -->
             <div class="gp-set-hint">
               {{ i18n.networkTimeoutHint }}
+            </div>
+            <!-- 本地提交索引：状态 + 开关 + 重建（统计「秒开 + 增量刷新」的基础） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <label class="gp-set-label">{{ i18n.indexTitle }}</label>
+              <div class="gp-set-input-row">
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="indexBusy"
+                  @click="refreshIndexStatus"
+                >
+                  {{ i18n.indexRefreshStatus }}
+                </button>
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="indexBusy"
+                  :title="i18n.indexRebuildHint"
+                  @click="rebuildIndex"
+                >
+                  {{ i18n.indexRebuild }}
+                </button>
+              </div>
+            </div>
+            <!-- 索引状态摘要：目录 + 已索引项目数/提交数；命中即表示统计不再重跑全量 git log -->
+            <div class="gp-set-hint">
+              <template v-if="indexStatus">
+                <span v-if="!indexEnabled">{{ i18n.indexDisabled }}</span>
+                <template v-else-if="indexStatus.projects.length === 0">
+                  {{ i18n.indexEmpty }}
+                </template>
+                <template v-else>
+                  {{ i18n.indexSummary
+                    .replace("{0}", String(indexStatus.projects.length))
+                    .replace("{1}", String(indexTotalCommits)) }}
+                </template>
+                <div
+                  v-if="indexStatus.dir"
+                  class="gp-set-index-dir"
+                  :title="indexStatus.dir"
+                >{{ indexStatus.dir }}</div>
+              </template>
+              <template v-else>
+                {{ i18n.indexChecking }}
+              </template>
             </div>
             <!-- 描述最短字数设置行（提交规则检查"描述过短"阈值） -->
             <div class="gp-set-row gp-set-row--spaced">
@@ -269,7 +321,9 @@
           <!-- ── 显示分区：提交分析显示设置 ── -->
           <template v-else-if="activeSection === 'display'">
             <!-- 提示文案："改动即时保存并生效" -->
-            <div class="gp-set-hint">{{ i18n.settingsDisplayHint }}</div>
+            <div class="gp-set-hint">
+              {{ i18n.settingsDisplayHint }}
+            </div>
             <AnalysisSettingsForm
               :i18n="i18n"
               :view-settings="viewSettings"
@@ -293,23 +347,32 @@
 
 <script setup lang="ts">
 // gitPush 设置汇总弹窗（分区导航：常规 / 显示 / Git 配置，各分区改动即时或按钮保存）
-import type { CommitAnalysisViewSettings, CommitRuleConfig, GitPushManager } from "../../types"
+import type {
+  CommitAnalysisViewSettings,
+  CommitRuleConfig,
+  GitPushManager,
+} from "../../types"
 import { Icon } from "@iconify/vue"
-import { ref, watch } from "vue"
+import { showMessage } from "siyuan"
+import {
+  computed,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
 import Input from "@/components/Input.vue"
-import GitConfigSection from "./GitConfigSection.vue"
-import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
-import { clampDiffContextBudget, clampGitConcurrency, clampMaxBodyLineLength, clampMinSubjectLength, clampNetworkTimeout } from "../../types"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import {
+  clampDiffContextBudget,
+  clampGitConcurrency,
+  clampMaxBodyLineLength,
+  clampMinSubjectLength,
+  clampNetworkTimeout,
+} from "../../types"
+import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
+import GitConfigSection from "./GitConfigSection.vue"
 
 type SettingsSection = "general" | "display" | "gitconfig"
-
-/** 分区导航元数据（图标均为本地 MDI 集已注册图标） */
-const sections: { id: SettingsSection, icon: string, labelKey: string }[] = [
-  { id: "general", icon: "mdi:tune", labelKey: "settingsSectionGeneral" },
-  { id: "display", icon: "mdi:eye-outline", labelKey: "settingsSectionDisplay" },
-  { id: "gitconfig", icon: "mdi:source-branch", labelKey: "settingsSectionGitConfig" },
-]
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -338,6 +401,25 @@ const emit = defineEmits<{
   openCategory: []
 }>()
 
+/** 分区导航元数据（图标均为本地 MDI 集已注册图标） */
+const sections: { id: SettingsSection, icon: string, labelKey: string }[] = [
+  {
+    id: "general",
+    icon: "mdi:tune",
+    labelKey: "settingsSectionGeneral",
+  },
+  {
+    id: "display",
+    icon: "mdi:eye-outline",
+    labelKey: "settingsSectionDisplay",
+  },
+  {
+    id: "gitconfig",
+    icon: "mdi:source-branch",
+    labelKey: "settingsSectionGitConfig",
+  },
+]
+
 const localConcurrency = ref(clampGitConcurrency(props.concurrency))
 const localNetworkTimeout = ref(clampNetworkTimeout(props.networkTimeout))
 const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubjectLength))
@@ -352,6 +434,58 @@ void rootRef
 
 // 分支模式即时保存（radio 切换立即持久化，无需保存按钮）
 watch(localBranchMode, (mode) => emit("saveBranchMode", mode))
+
+// ── 本地提交索引状态（确认索引是否生效的可视入口）──
+
+/** 索引状态摘要（null = 尚未查询/查询中） */
+const indexStatus = ref<{ dir: string, projects: Array<{ projectId: string, commits: number, complete: boolean, analyzedAt: string }> } | null>(null)
+/** 索引开关当前值（关闭时统计回退直接跑 git） */
+const indexEnabled = ref(true)
+/** 索引操作进行中（防并发点击） */
+const indexBusy = ref(false)
+
+/** 已索引项目的提交总数（状态摘要展示用） */
+const indexTotalCommits = computed(() => {
+  const list = indexStatus.value?.projects ?? []
+  return list.reduce((sum, p) => sum + p.commits, 0)
+})
+
+/** 查询索引状态（打开弹窗时自动调用，也可手动刷新） */
+async function refreshIndexStatus() {
+  indexBusy.value = true
+  try {
+    indexEnabled.value = await props.manager.isIndexEnabled()
+    indexStatus.value = await props.manager.getIndexStatus()
+  } catch (e) {
+    console.warn("[gitPush] 读取索引状态失败", e)
+    indexStatus.value = {
+      dir: "",
+      projects: [],
+    }
+  } finally {
+    indexBusy.value = false
+  }
+}
+
+/** 重建索引：清空后立即对当前项目全量重扫（用于排障或数据结构升级后） */
+async function rebuildIndex() {
+  if (indexBusy.value) return
+  indexBusy.value = true
+  try {
+    await props.manager.clearIndex()
+    await refreshIndexStatus()
+    showMessage(props.i18n.indexRebuilt, 3000, "info")
+  } catch (e) {
+    showMessage(String(e), 3000, "error")
+  } finally {
+    indexBusy.value = false
+  }
+}
+
+// 打开弹窗即查询一次，用户无需额外操作即可看到索引是否在工作
+onMounted(() => {
+  void refreshIndexStatus()
+})
 
 /** 保存并发数（保存按钮 / Enter 键共用；汇总页多分区场景保存后不关闭弹窗） */
 function saveConcurrency() {

@@ -91,6 +91,21 @@ export type {
   RunQueryOptions,
 } from "./queryScheduler"
 
+// ── 重导出本地提交索引类型与常量（来自 indexCache.ts）──
+export {
+  clampIndexMaxCommits,
+  DEFAULT_INDEX_MAX_COMMITS,
+  DEFAULT_INDEX_META,
+  INDEX_META_VERSION,
+} from "./indexCache"
+export type {
+  IndexedCommit,
+  IndexedFileDelta,
+  IndexedFileLines,
+  IndexMeta,
+  ProjectIndexMeta,
+} from "./indexCache"
+
 // ── 重导出代码统计报告类型与常量（来自 report.ts）──
 export {
   DEFAULT_REPORT_PREFS,
@@ -100,6 +115,7 @@ export {
   HOTSPOT_LEVEL_ORDER,
   REPORT_CHART_COLORS,
   REPORT_RANGES,
+  REPORT_RANGE_DAYS,
   REPORT_RANGE_LABEL_KEYS,
   WEEKDAY_LABEL_KEYS,
 } from "./report"

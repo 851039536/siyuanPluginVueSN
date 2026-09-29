@@ -2,7 +2,10 @@
  * 插件存储通用工具类
  * 封装思源插件的 saveData 和 loadData 方法
  */
-import { Plugin } from "siyuan"
+// 仅作类型使用（从未作为值引用）：写成 import type 才能让本模块及其下游
+// 在纯 Node 环境（单元测试）中被加载——siyuan 包的 exports 字段在 node 条件下不可解析，
+// 值导入会把整个运行时依赖钉进模块图。构建产物不受影响（类型导入本就会被擦除）。
+import type { Plugin } from "siyuan"
 
 /**
  * 插件存储管理器

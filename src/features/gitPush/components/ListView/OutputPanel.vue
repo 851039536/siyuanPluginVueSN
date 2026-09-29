@@ -24,6 +24,30 @@
     v-else-if="lines.length"
     class="gp-output"
   >
+    <!-- 结果摘要头行：一眼看出「成功 / 失败 / 跳过」的整体结论与平台分布，
+         避免用户必须逐行读控制台输出来判断这次推送到底成没成。
+         左侧状态点 + 结论文案，右侧为各状态计数。 -->
+    <div
+      class="gp-output-head"
+      :class="`gp-output-head--${outcome.type}`"
+    >
+      <Icon
+        :icon="outcome.icon"
+        height="12"
+      />
+      <span class="gp-output-head-text">{{ outcome.text }}</span>
+      <span class="gp-output-head-counts">{{ outcome.counts }}</span>
+      <!-- 关闭按钮：结果（尤其成功输出）会一直留在卡片上占高度，必须给用户显式关闭入口 -->
+      <Button
+        class="gp-output-close"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="close"
+        :title="i18n.close"
+        @click.stop="emit('clear')"
+      />
+    </div>
     <div class="gp-output-scroll">
       <!-- 控制台逐行输出：头行带状态色，stdout/stderr 缩进显示 -->
       <div
@@ -94,10 +118,42 @@ const props = defineProps<{
   runningStates?: { key: string, label: string }[]
 }>()
 
+const emit = defineEmits<{
+  /** 关闭当前结果面板（清除该操作的输出记录，避免成功结果长期占据卡片高度） */
+  clear: []
+}>()
+
 /** 是否存在失败条目（非跳过且失败，控制 AI 分析按钮显隐） */
 const hasFailed = computed(() =>
   (props.entries ?? []).some((e) => !e.ok && !e.skipped),
 )
+
+/**
+ * 结果摘要：把「本次操作整体怎么样」压缩成一行。
+ * 三态优先级 —— 有失败 → 失败；全跳过 → 跳过；否则成功。
+ * counts 只列非零项，避免成功时出现「失败 0 · 跳过 0」的噪音。
+ */
+const outcome = computed(() => {
+  const all = props.entries ?? []
+  const ok = all.filter((e) => e.ok && !e.skipped).length
+  const failed = all.filter((e) => !e.ok && !e.skipped).length
+  const skipped = all.filter((e) => e.skipped).length
+
+  const type = failed > 0 ? "fail" : ok === 0 && skipped > 0 ? "skip" : "ok"
+  const actionText = props.action === "push" ? props.i18n.push : props.i18n.pull
+  const counts = [
+    ok > 0 ? `${props.i18n.done} ${ok}` : "",
+    failed > 0 ? `${props.i18n.failed} ${failed}` : "",
+    skipped > 0 ? `${props.i18n.opSkipped} ${skipped}` : "",
+  ].filter(Boolean).join(" · ")
+
+  return {
+    type,
+    icon: type === "ok" ? "mdi:check-circle" : type === "fail" ? "mdi:alert-circle" : "mdi:minus-circle-outline",
+    text: `${actionText}${type === "ok" ? props.i18n.done : type === "fail" ? props.i18n.failed : props.i18n.opSkipped}`,
+    counts,
+  }
+})
 
 /** 进行中文案：按操作类型取既有 i18n 键 */
 const runningText = computed(() => (props.action === "push" ? props.i18n.pushing : props.i18n.pulling))

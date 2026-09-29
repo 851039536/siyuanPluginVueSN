@@ -89,6 +89,8 @@ export interface CardOps {
   /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
   handleDeepGenerateMsg: (id: string) => void
   clearOutput: (id: string) => void
+  /** 关闭推送/拉取结果面板（清除该操作的输出记录；运行中不生效） */
+  clearRemoteOutput: (id: string, action: "push" | "pull") => void
   handleDiscard: (id: string, file: string, staged: boolean, status: string) => void
   handleStashConfirmMsg: (id: string, msg: string) => void
   handleGenStashDesc: (id: string) => void

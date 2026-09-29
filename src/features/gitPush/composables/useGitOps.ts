@@ -261,6 +261,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     pushSingle: remote.pushSingle,
     pullSingle: remote.pullSingle,
     cancelPush: remote.cancelPush,
+    clearRemoteOutput: remote.clearOutput,
     // 本地状态
     pushStatuses,
     workingTrees,

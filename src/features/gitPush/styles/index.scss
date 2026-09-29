@@ -243,7 +243,7 @@
   max-height: 200px; // 输出面板高度上限，超出滚动
   border-radius: $r-sm;
   background: var(--b3-theme-surface);
-  overflow: hidden;
+  overflow: hidden; // 裁剪摘要行底色，使其贴合圆角
   font-family: $ff-mono;
   // 控制台输出统一 2xs 等宽字号
   font-size: $t-2xs;
@@ -252,8 +252,54 @@
   user-select: text;
 }
 
+// 结果摘要头行：状态图标 + 结论文案 + 计数 + 关闭按钮（一行内右对齐关闭）
+// 三态底色由 --ok / --fail / --skip 修饰类给出，与下方逐行输出共用同一套语义色。
+.gp-output-head {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-1 $s-1 $s-1 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  font-weight: $fw-semibold;
+  // 摘要是 UI 文案而非控制台输出：用界面字体，与下方等宽输出区分开
+  font-family: inherit;
+
+  &--ok {
+    color: var(--b3-theme-success);
+    background: var(--b3-theme-success-lightest);
+  }
+
+  &--fail {
+    color: var(--b3-theme-error);
+    background: var(--b3-theme-error-lightest);
+  }
+
+  &--skip {
+    color: var(--b3-theme-on-surface-light);
+    background: var(--b3-theme-surface);
+  }
+
+  // 结论文案后接计数：弱化，避免与结论抢读
+  .gp-output-head-counts {
+    opacity: 0.7;
+    font-weight: $fw-normal;
+  }
+}
+
+// 关闭按钮贴右端（header 内正常流，不再绝对定位 —— 摘要行已为它留好位置）
+.gp-output-head .gp-output-close {
+  margin-left: auto;
+  opacity: 0.55;
+  transition: opacity 0.12s;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+}
+
 .gp-output-scroll {
-  max-height: 200px; // 与 .gp-output 上限一致
+  max-height: 170px; // 减去摘要行高度后与 .gp-output 的 200px 上限对齐
   overflow-y: auto;
   padding: $s-2;
 }

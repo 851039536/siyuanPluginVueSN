@@ -13,11 +13,17 @@
         <span class="lrr-label"></span>
         <span class="lrr-track"></span>
         <span class="lrr-nums">
-          <!-- 表头列："新增"（绿色） -->
-          <span class="lrr-num lrr-num--add">{{ i18n.analysisLineAdded }}</span>
-          <!-- 表头列："删除"（红色） -->
-          <span class="lrr-num lrr-num--del">{{ i18n.analysisLineDeleted }}</span>
-          <!-- 表头列："净增"（主题色强调，tooltip："净增 = 实际行数（新增 − 删除）"） -->
+          <!-- 表头列："新增"（绿色；tooltip 说明为全历史累计增量口径） -->
+          <span
+            class="lrr-num lrr-num--add"
+            :title="i18n.lineStatsAddedHint"
+          >{{ i18n.analysisLineAdded }}</span>
+          <!-- 表头列："删除"（红色；tooltip 说明为全历史累计增量口径） -->
+          <span
+            class="lrr-num lrr-num--del"
+            :title="i18n.lineStatsDeletedHint"
+          >{{ i18n.analysisLineDeleted }}</span>
+          <!-- 表头列："净增"（主题色强调，tooltip：增量口径，与总行数存量口径不同） -->
           <span
             class="lrr-num lrr-num--net lrr-head-net"
             :title="i18n.lineStatsNetHint"
@@ -63,7 +69,7 @@ import { withLineBarPct } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 项目代码行数排行（按总行数存量降序） */
+  /** 项目代码行数排行（按总行数存量降序，含无行数变化的项目） */
   projectRanking: ProjectLineRankItem[]
 }>()
 

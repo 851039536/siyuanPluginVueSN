@@ -19,7 +19,7 @@ import {
   rootHashGitDir,
   rootHashOid,
 } from "./CommitIndex"
-import { INDEX_FILE } from "./indexIo"
+import { projectIndexFile } from "./indexIo"
 import { MemoryIndexIO } from "./memoryIndexIo.testutil"
 
 /** 构造一条 numstat 提交 */
@@ -174,7 +174,7 @@ describe("崩溃与损坏恢复", () => {
   it("孤儿文件行（提交行被截断）被丢尾而非报错，索引保持可用且磁盘被裁齐", async () => {
     await index.append("p1", [commit("a1", "2024-01-01T00:00:00Z", "alice", [["a.ts", 1, 0]])], metaPatch("h:g"))
     // 模拟"提交行只写了一半、文件行已完整落盘"：提交数 1，但文件行引用了序号 1
-    io.files.set(INDEX_FILE.files, `{"c":0,"p":"a.ts","a":1,"d":0}\n{"c":1,"p":"ghost.ts","a":9,"d":9}\n`)
+    io.files.set(projectIndexFile("files", "p1"), `{"c":0,"p":"a.ts","a":1,"d":0}\n{"c":1,"p":"ghost.ts","a":9,"d":9}\n`)
 
     const reopened = new CommitIndex(io, {
       version: INDEX_META_VERSION,
@@ -188,7 +188,7 @@ describe("崩溃与损坏恢复", () => {
       deleted: 0,
     }])
     // 磁盘尾部已裁掉孤儿行，后续追加的序号不会错位
-    expect(io.raw(INDEX_FILE.files)).not.toContain("ghost.ts")
+    expect(io.raw(projectIndexFile("files", "p1"))).not.toContain("ghost.ts")
     await reopened.append("p1", [commit("b2", "2024-01-02T00:00:00Z", "alice", [["b.ts", 2, 0]])], metaPatch("h2:g"))
     expect(reopened.getLog("p1").map((c) => c.hash)).toEqual(["a1", "b2"])
     expect(reopened.getLog("p1")[1].files).toEqual([{
@@ -204,7 +204,7 @@ describe("崩溃与损坏恢复", () => {
       version: INDEX_META_VERSION,
       projects: index.getProjectMetas(),
     }
-    io.files.set(INDEX_FILE.files, `{"c":5,"p":"ghost.ts","a":1,"d":0}\n`)
+    io.files.set(projectIndexFile("files", "p1"), `{"c":5,"p":"ghost.ts","a":1,"d":0}\n`)
 
     // 与生产一致：从持久化的 meta 构造新实例
     const reopened = new CommitIndex(io, persistedMeta)
@@ -216,8 +216,8 @@ describe("崩溃与损坏恢复", () => {
     await index.append("p1", [commit("a1", "2024-01-01T00:00:00Z", "alice", [["a.ts", 1, 0]])], metaPatch("h:g"))
     await index.invalidate("p1")
     expect(index.getProjectMeta("p1")).toBeUndefined()
-    expect(io.raw(INDEX_FILE.commits)).toBe("")
-    expect(io.raw(INDEX_FILE.files)).toBe("")
+    expect(io.raw(projectIndexFile("commits", "p1"))).toBe("")
+    expect(io.raw(projectIndexFile("files", "p1"))).toBe("")
   })
 
   it("clearAll 后索引为空且可用于重建", async () => {

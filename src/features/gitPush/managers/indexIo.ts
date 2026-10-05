@@ -5,13 +5,48 @@
 // 本层只依赖 fs，接口注入使纯逻辑可单测（见 __tests__/commitIndex.test.ts）。
 import { getNodeModules } from "@/utils/nodeModules"
 
-/** 索引目录下的文件名（三份追加日志 + 一份小体积元数据） */
+/**
+ * 索引目录下的文件名（三份 NDJSON + 一份小体积元数据）：
+ * 注意：三份 NDJSON 是**按项目分文件**的（文件名见 projectIndexFile），
+ * 此处的常量是「后缀」而非完整文件名。历史教训：早期版本三份文件全项目共用一个文件名，
+ * 而 meta.json 按项目数组存多条且设计了「淘汰最旧项目」（INDEX_MAX_PROJECT_SEGMENTS），
+ * 两者语义直接冲突 —— 第二个项目一写入就覆盖掉第一个项目的段，
+ * 且全量分析是并发抓取（Promise.allSettled），并发覆盖后各项目数据互相串号，
+ * 表现为行数排行里几十个项目的增删净/总行数大量相同。故必须按项目隔离文件。
+ */
 export const INDEX_FILE = {
   commits: "commits.ndjson",
   files: "files.ndjson",
   fileLines: "filelines.ndjson",
   meta: "meta.json",
 } as const
+
+/** 文件名安全的字符集合（字母/数字/点/下划线/连字符；其余一律转义） */
+const SAFE_SLUG_CHAR = /^[\w.-]$/
+
+/**
+ * 按项目 id 生成安全的文件名片段（项目 id 可能含 / \ : * ? " < > | 等非法/越目录字符）。
+ * 非 SAFE_SLUG_CHAR 一律转义为 `_<hex>`，保证：① 不越出索引目录 ② 不同 id 不碰撞
+ * （逐字符转义而非简单替换，避免 "a/b" 与 "a_b" 撞成同一文件名而互相覆盖）。
+ */
+function safeProjectSlug(projectId: string): string {
+  let out = ""
+  for (const ch of projectId) {
+    out += SAFE_SLUG_CHAR.test(ch)
+      ? ch
+      : `_${ch.codePointAt(0)!.toString(16)}`
+  }
+  // 空 id 或全非法字符导致空串时兜底，避免生成 ".commits.ndjson" 这类隐藏文件
+  return out.length > 0 ? out : "project"
+}
+
+/**
+ * 单项目索引文件的完整文件名（`<项目 slug>.<后缀>`）。
+ * 三份 NDJSON 都走此命名，保证项目之间物理隔离、并发写互不覆盖。
+ */
+export function projectIndexFile(kind: "commits" | "files" | "fileLines", projectId: string): string {
+  return `${safeProjectSlug(projectId)}.${INDEX_FILE[kind]}`
+}
 
 /** 索引磁盘 IO 抽象（生产实现走 fs，测试可注入内存实现） */
 export interface IndexFileIO {

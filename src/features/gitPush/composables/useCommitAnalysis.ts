@@ -163,18 +163,20 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     let summaryTotalLines = 0
     for (const t of projectTotalLines.values()) summaryTotalLines += t
     const summary: LineStatsSummary = { added: summaryAdded, deleted: summaryDeleted, net: summaryAdded - summaryDeleted, totalLines: summaryTotalLines }
-    // 按总行数（存量）降序，同存量再按净增、新增降序；totalLines 缺失（旧缓存）按 0 计入；剔除无行数变化的项目/作者（项目排行不截断，全部展示）
-    const projectRanking = [...projectLines.entries()]
-      .filter(([, agg]) => agg.added + agg.deleted > 0)
-      .map(([id, agg]) => ({
-        id,
-        name: nameById.get(id) || id,
-        added: agg.added,
-        deleted: agg.deleted,
-        net: agg.added - agg.deleted,
-        totalLines: projectTotalLines.get(id),
-      }))
-      .sort(compareProjectLineRank)
+    // 按总行数（存量）降序，同存量再按净增、新增降序；totalLines 缺失（旧缓存）按 0 计入（项目排行不截断，全部展示）
+    const all = [...projectLines.entries()].map(([id, agg]) => ({
+      id,
+      name: nameById.get(id) || id,
+      added: agg.added,
+      deleted: agg.deleted,
+      net: agg.added - agg.deleted,
+      totalLines: projectTotalLines.get(id),
+    }))
+    // 全部成功抓取的项目都进榜单（含新增+删除=0 的项目，它们显示 0/0/0 与真实总行数）。
+    // 为什么不再过滤：早期版本剔除「无行数变化」的项目，导致用户看到「62 个项目只剩 2 个」
+    // 却无从得知其余项目去哪了；且这类项目本身有真实的存量总行数，理应可见可比。
+    // 排序仍按总行数（存量）降序，故无变更项目会自然沉到榜单末尾，不会淹没头部真实排行。
+    const projectRanking = [...all].sort(compareProjectLineRank)
     return { projectRanking, summary }
   }
 
@@ -508,12 +510,21 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       if (numstat.length > 0) perProjectNumstat.value.set(projectId, numstat)
       else perProjectNumstat.value.delete(projectId)
       perProjectFileLines.value.set(projectId, fileLines)
-      // 项目排行 upsert：剔除旧条目后重插并按总行数降序重排（与 buildLineRankings 同口径），弹窗「当前总行数」chip 随之更新
+      // 项目排行 upsert：剔除旧条目后重插并按总行数降序重排（与 buildLineRankings 同口径），弹窗「当前总行数」chip 随之更新。
+      // 与全量分析同判据：不按有无变更过滤，全部项目都在榜单（无变更者显示 0/0/0 与真实总行数）
       const agg = sumProjectLines(numstat, selectedExtensions.value)
       const old = projectLineRanking.value.find((r) => r.id === projectId)
+      const entry: ProjectLineRankItem = {
+        id: projectId,
+        name: p.name,
+        added: agg.added,
+        deleted: agg.deleted,
+        net: agg.added - agg.deleted,
+        totalLines,
+      }
       projectLineRanking.value = [
         ...projectLineRanking.value.filter((r) => r.id !== projectId),
-        { id: projectId, name: p.name, added: agg.added, deleted: agg.deleted, net: agg.added - agg.deleted, totalLines },
+        entry,
       ].sort(compareProjectLineRank)
       // 汇总增量校正（旧条目缺席视为 0 贡献）
       const added = lineStatsSummary.value.added + agg.added - (old?.added ?? 0)

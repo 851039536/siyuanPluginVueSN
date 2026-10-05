@@ -96,9 +96,21 @@
                   <span class="pld-cell pld-cell--file">{{ i18n.lineDetailFileColumn }}</span>
                   <span class="pld-cell pld-cell--num">{{ i18n.lineDetailMods }}</span>
                   <span class="pld-cell pld-cell--num">{{ i18n.lineDetailAuthors }}</span>
-                  <span class="pld-cell pld-cell--num">{{ i18n.analysisLineAdded }}</span>
-                  <span class="pld-cell pld-cell--num">{{ i18n.analysisLineDeleted }}</span>
-                  <span class="pld-cell pld-cell--net">{{ i18n.analysisLineNet }}</span>
+                  <!-- 表头列："新增"（tooltip 说明为全历史累计增量口径，与排行页同口径） -->
+                  <span
+                    class="pld-cell pld-cell--num"
+                    :title="i18n.lineStatsAddedHint"
+                  >{{ i18n.analysisLineAdded }}</span>
+                  <!-- 表头列："删除"（tooltip 说明为全历史累计增量口径，与排行页同口径） -->
+                  <span
+                    class="pld-cell pld-cell--num"
+                    :title="i18n.lineStatsDeletedHint"
+                  >{{ i18n.analysisLineDeleted }}</span>
+                  <!-- 表头列："净增"（tooltip 说明增量口径，与总行数存量口径不同） -->
+                  <span
+                    class="pld-cell pld-cell--net"
+                    :title="i18n.lineStatsNetHint"
+                  >{{ i18n.analysisLineNet }}</span>
                   <!-- 表头列："占比"（净增绝对值占比，tooltip 说明口径） -->
                   <span
                     class="pld-cell pld-cell--share"

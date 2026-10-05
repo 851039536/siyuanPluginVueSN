@@ -4,18 +4,6 @@
 $vpd-font-15: 15px; // 无对应 Token（AGENTS_STYLE 允许标题使用的 15px 场景）
 $vpd-font-13: 13px; // 无对应 Token（介于 $t-xs 与 $t-sm）
 
-// 视频播放器对话框特定样式
-.dialog-header {
-  .icon-btn {
-    cursor: pointer;
-    color: var(--b3-theme-on-surface-light);
-
-    &:hover {
-      color: var(--b3-theme-on-background);
-    }
-  }
-}
-
 // 视频播放器容器
 .video-player-container {
   display: flex;

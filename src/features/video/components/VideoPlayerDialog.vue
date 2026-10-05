@@ -1,48 +1,34 @@
 <template>
-  <div
-    v-if="visible"
-    class="dialog-overlay"
-    @click="handleClose"
+  <Dialog
+    :visible="visible"
+    size="large"
+    :header="title"
+    :dismissable-mask="true"
+    @update:visible="handleClose"
   >
-    <div
-      class="dialog dialog-large"
-      @click.stop
-    >
-      <div class="dialog-header">
-        <h3>{{ title }}</h3>
-        <IconWrapper
-          name="close"
-          :size="14"
-          class="icon-btn"
-          @click="handleClose"
-        />
-      </div>
-      <div class="dialog-body">
-        <div class="video-player-container">
-          <VideoPlayer
-            v-if="currentVideoUrl"
-            :src="currentVideoUrl"
-            :width="playerWidth"
-            :height="playerHeight"
-            :fluid="fluid"
-            @ready="handlePlayerReady"
-            @error="handlePlayerError"
-          />
-          <div
-            v-if="video"
-            class="video-details"
-          >
-            <h4>{{ video.name }}</h4>
-            <div class="video-meta">
-              <span class="video-category">{{ video.category }}</span>
-              <span>{{ formatFileSize(video.size) }}</span>
-              <span>{{ formatDate(video.modTime) }}</span>
-            </div>
-          </div>
+    <div class="video-player-container">
+      <VideoPlayer
+        v-if="currentVideoUrl"
+        :src="currentVideoUrl"
+        :width="playerWidth"
+        :height="playerHeight"
+        :fluid="fluid"
+        @ready="handlePlayerReady"
+        @error="handlePlayerError"
+      />
+      <div
+        v-if="video"
+        class="video-details"
+      >
+        <h4>{{ video.name }}</h4>
+        <div class="video-meta">
+          <span class="video-category">{{ video.category }}</span>
+          <span>{{ formatFileSize(video.size) }}</span>
+          <span>{{ formatDate(video.modTime) }}</span>
         </div>
       </div>
     </div>
-  </div>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
@@ -51,7 +37,7 @@ import {
   computed,
   watch,
 } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
+import Dialog from "@/components/Dialog.vue"
 import { formatFileSize } from "../utils/utils"
 import VideoPlayer from "./VideoPlayer.vue"
 

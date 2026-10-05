@@ -34,7 +34,7 @@
             :options="FONT_SIZE_OPTIONS"
             size="xsmall"
             :aria-label="$t('fontSize')"
-            @update:model-value="(v) => updateFontSize(Number(v))"
+            @update:model-value="(v: string | number | boolean | null) => updateFontSize(Number(v))"
           />
         </div>
 
@@ -60,7 +60,11 @@
           :title="$t('clear')"
           @click="clearAll"
         >
-          <Icon icon="mdi:close" :width="16" :height="16" />
+          <Icon
+            icon="mdi:close"
+            :width="16"
+            :height="16"
+          />
           <span>{{ $t("clear") }}</span>
         </button>
         <!-- 交换按钮（"交换"） -->
@@ -69,7 +73,11 @@
           :title="$t('swap')"
           @click="swapTexts"
         >
-          <Icon icon="mdi:swap-horizontal" :width="16" :height="16" />
+          <Icon
+            icon="mdi:swap-horizontal"
+            :width="16"
+            :height="16"
+          />
           <span>{{ $t("swap") }}</span>
         </button>
       </div>
@@ -100,8 +108,15 @@
       <!-- 差异结果（与输入区留白分隔，不再叠加装饰性分隔条与内部标题条） -->
       <div class="result-section">
         <!-- 空状态：双文本均为空时提示（"请输入文本以查看差异"） -->
-        <div v-if="!originalText && !modifiedText" class="empty-state">
-          <Icon icon="mdi:file-compare-outline" :width="48" :height="48" />
+        <div
+          v-if="!originalText && !modifiedText"
+          class="empty-state"
+        >
+          <Icon
+            icon="mdi:file-compare-outline"
+            :width="48"
+            :height="48"
+          />
           <p>{{ $t("emptyState") }}</p>
         </div>
         <Diff
@@ -126,12 +141,15 @@
  */
 import type { Plugin } from "siyuan"
 import type { TextDiffSettings } from "./types/storage"
-import { onMounted, ref } from "vue"
 import { Icon } from "@iconify/vue"
+import {
+  onMounted,
+  ref,
+} from "vue"
 import { Diff } from "vue-diff"
+import InputPanel from "./components/InputPanel.vue"
 import { TextDiffStorage } from "./types/storage"
 import { textDiffI18n } from "./utils"
-import InputPanel from "./components/InputPanel.vue"
 import "vue-diff/dist/index.css"
 
 const props = defineProps<{
@@ -153,12 +171,30 @@ const fontSize = ref<number>(14)
 
 // 字号选项（用户可调，12-24px）
 const FONT_SIZE_OPTIONS = [
-  { value: 12, label: "12px" },
-  { value: 14, label: "14px" },
-  { value: 16, label: "16px" },
-  { value: 18, label: "18px" },
-  { value: 20, label: "20px" },
-  { value: 24, label: "24px" },
+  {
+    value: 12,
+    label: "12px",
+  },
+  {
+    value: 14,
+    label: "14px",
+  },
+  {
+    value: 16,
+    label: "16px",
+  },
+  {
+    value: 18,
+    label: "18px",
+  },
+  {
+    value: 20,
+    label: "20px",
+  },
+  {
+    value: 24,
+    label: "24px",
+  },
 ]
 
 // 国际化
@@ -166,14 +202,26 @@ const $t = (key: string): string => textDiffI18n(props.i18n, key)
 
 // 显示模式选项（"分栏" / "统一"；i18n 对象静态传入，无需 computed）
 const modeOptions = [
-  { value: "split" as const, label: $t("splitMode") },
-  { value: "unified" as const, label: $t("unifiedMode") },
+  {
+    value: "split" as const,
+    label: $t("splitMode"),
+  },
+  {
+    value: "unified" as const,
+    label: $t("unifiedMode"),
+  },
 ]
 
 // 主题选项（"浅色" / "深色"）
 const themeOptions = [
-  { value: "light" as const, label: $t("lightTheme") },
-  { value: "dark" as const, label: $t("darkTheme") },
+  {
+    value: "light" as const,
+    label: $t("lightTheme"),
+  },
+  {
+    value: "dark" as const,
+    label: $t("darkTheme"),
+  },
 ]
 
 // 加载设置

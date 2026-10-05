@@ -10,18 +10,15 @@
             icon="format"
             :text="i18n.headingStyle"
           />
-          <select
-            v-model="selectedStyle"
-            class="style-select"
-          >
-            <option
-              v-for="opt in HEADING_STYLE_OPTIONS"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ i18n[opt.labelKey] }}
-            </option>
-          </select>
+          <!-- 标题样式：共享 Select（纯受控 ⇒ 显式回写） -->
+          <Select
+            class="style-select-field"
+            :model-value="selectedStyle"
+            :options="headingStyleOptions"
+            size="xsmall"
+            :aria-label="i18n.headingStyle"
+            @update:model-value="(v) => selectedStyle = v === null ? '' : String(v)"
+          />
         </div>
       </div>
 
@@ -33,18 +30,15 @@
             icon="listOrdered"
             :text="i18n.headingLevelDisplay"
           />
-          <select
-            v-model="settings.levelDisplay"
-            class="style-select"
-          >
-            <option
-              v-for="opt in LEVEL_DISPLAY_OPTIONS"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ i18n[opt.labelKey] }}
-            </option>
-          </select>
+          <!-- 标题层级显示：共享 Select（纯受控 ⇒ 显式回写 settings） -->
+          <Select
+            class="style-select-field"
+            :model-value="settings.levelDisplay"
+            :options="levelDisplayOptions"
+            size="xsmall"
+            :aria-label="i18n.headingLevelDisplay"
+            @update:model-value="(v) => settings.levelDisplay = v === null ? '' : String(v)"
+          />
           <!-- 提示："注意:第三方主题可能会影响显示效果" -->
           <div
             v-if="settings.levelDisplay !== 'none'"
@@ -219,7 +213,10 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { HeadingColors, HeadingSettings } from "@/features/generalSettings/types/storage"
+import type {
+  HeadingColors,
+  HeadingSettings,
+} from "@/features/generalSettings/types/storage"
 import {
   computed,
   onMounted,
@@ -229,6 +226,7 @@ import {
 } from "vue"
 import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 import {
   DEFAULT_HEADING_SETTINGS,
@@ -257,32 +255,114 @@ const emit = defineEmits<Emits>()
 
 // ── 下拉选项元数据（value → i18n 键）──
 const HEADING_STYLE_OPTIONS = [
-  { value: "default", labelKey: "defaultHeadingStyle" },
-  { value: "github", labelKey: "githubStyle" },
-  { value: "mac", labelKey: "macStyle" },
-  { value: "cartoon", labelKey: "cartoonStyle" },
-  { value: "rainbow", labelKey: "rainbowStyle" },
-  { value: "monochrome", labelKey: "monochromeStyle" },
-  { value: "warm", labelKey: "warmStyle" },
-  { value: "cool", labelKey: "coolStyle" },
-  { value: "gradient", labelKey: "gradientStyle" },
-  { value: "custom", labelKey: "customStyle" },
+  {
+    value: "default",
+    labelKey: "defaultHeadingStyle",
+  },
+  {
+    value: "github",
+    labelKey: "githubStyle",
+  },
+  {
+    value: "mac",
+    labelKey: "macStyle",
+  },
+  {
+    value: "cartoon",
+    labelKey: "cartoonStyle",
+  },
+  {
+    value: "rainbow",
+    labelKey: "rainbowStyle",
+  },
+  {
+    value: "monochrome",
+    labelKey: "monochromeStyle",
+  },
+  {
+    value: "warm",
+    labelKey: "warmStyle",
+  },
+  {
+    value: "cool",
+    labelKey: "coolStyle",
+  },
+  {
+    value: "gradient",
+    labelKey: "gradientStyle",
+  },
+  {
+    value: "custom",
+    labelKey: "customStyle",
+  },
 ] as const
 
 const LEVEL_DISPLAY_OPTIONS = [
-  { value: "none", labelKey: "levelDisplayNone" },
-  { value: "number", labelKey: "levelDisplayNumber" },
-  { value: "roman", labelKey: "levelDisplayRoman" },
-  { value: "chinese", labelKey: "levelDisplayChinese" },
-  { value: "chineseUpper", labelKey: "levelDisplayChineseUpper" },
-  { value: "dots", labelKey: "levelDisplayDots" },
-  { value: "emoji", labelKey: "levelDisplayEmoji" },
-  { value: "star", labelKey: "levelDisplayStar" },
-  { value: "arrow", labelKey: "levelDisplayArrow" },
-  { value: "tag", labelKey: "levelDisplayTag" },
-  { value: "bracket", labelKey: "levelDisplayBracket" },
-  { value: "custom", labelKey: "levelDisplayCustom" },
+  {
+    value: "none",
+    labelKey: "levelDisplayNone",
+  },
+  {
+    value: "number",
+    labelKey: "levelDisplayNumber",
+  },
+  {
+    value: "roman",
+    labelKey: "levelDisplayRoman",
+  },
+  {
+    value: "chinese",
+    labelKey: "levelDisplayChinese",
+  },
+  {
+    value: "chineseUpper",
+    labelKey: "levelDisplayChineseUpper",
+  },
+  {
+    value: "dots",
+    labelKey: "levelDisplayDots",
+  },
+  {
+    value: "emoji",
+    labelKey: "levelDisplayEmoji",
+  },
+  {
+    value: "star",
+    labelKey: "levelDisplayStar",
+  },
+  {
+    value: "arrow",
+    labelKey: "levelDisplayArrow",
+  },
+  {
+    value: "tag",
+    labelKey: "levelDisplayTag",
+  },
+  {
+    value: "bracket",
+    labelKey: "levelDisplayBracket",
+  },
+  {
+    value: "custom",
+    labelKey: "levelDisplayCustom",
+  },
 ] as const
+
+/** 标题样式选项（labelKey 经 i18n 解析） */
+const headingStyleOptions = computed(() =>
+  HEADING_STYLE_OPTIONS.map((opt) => ({
+    value: opt.value as string,
+    label: props.i18n[opt.labelKey] ?? "",
+  })),
+)
+
+/** 层级显示选项（labelKey 经 i18n 解析） */
+const levelDisplayOptions = computed(() =>
+  LEVEL_DISPLAY_OPTIONS.map((opt) => ({
+    value: opt.value as string,
+    label: props.i18n[opt.labelKey] ?? "",
+  })),
+)
 
 const HEADING_LEVELS = [1, 2, 3, 4, 5, 6] as const
 const defaultTitleColor = DEFAULT_HEADING_SETTINGS.titleColor
@@ -312,7 +392,7 @@ const selectedStyle = computed<string>({
   get() {
     for (const [name, palette] of Object.entries(HEADING_COLOR_STYLES)) {
       const matched = (Object.keys(palette) as (keyof HeadingColors)[]).every(
-        k => settings.value.colors[k].toUpperCase() === palette[k].toUpperCase(),
+        (k) => settings.value.colors[k].toUpperCase() === palette[k].toUpperCase(),
       )
       if (matched) return name
     }
@@ -375,8 +455,14 @@ async function loadSettings() {
     const loaded = await storage.value.loadHeadingOrDefault()
     skipWatchOnce = true
     settings.value = {
-      colors: { ...DEFAULT_HEADING_SETTINGS.colors, ...loaded.colors },
-      fontSizes: { ...DEFAULT_HEADING_SETTINGS.fontSizes, ...loaded.fontSizes },
+      colors: {
+        ...DEFAULT_HEADING_SETTINGS.colors,
+        ...loaded.colors,
+      },
+      fontSizes: {
+        ...DEFAULT_HEADING_SETTINGS.fontSizes,
+        ...loaded.fontSizes,
+      },
       levelDisplay: loaded.levelDisplay || "none",
       customMarkers: loaded.customMarkers?.length
         ? [...loaded.customMarkers]

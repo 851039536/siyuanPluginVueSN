@@ -38,20 +38,15 @@
       <label class="interval-label">
         {{ t.updateInterval }}
       </label>
-      <!-- 间隔选项："30分钟" / "1小时" / "2小时" / "4小时" -->
-      <select
-        v-model="updateInterval"
-        class="style-select"
-        @change="handleIntervalChange"
-      >
-        <option
-          v-for="opt in intervalOptions"
-          :key="opt.value"
-          :value="opt.value"
-        >
-          {{ t[opt.labelKey] }}
-        </option>
-      </select>
+      <!-- 间隔选项："30分钟" / "1小时" / "2小时" / "4小时"；共享 Select（纯受控 ⇒ 先回写 ref 再落盘） -->
+      <Select
+        class="style-select-field"
+        :model-value="updateInterval"
+        :options="intervalSelectOptions"
+        size="xsmall"
+        :aria-label="t.updateInterval"
+        @update:model-value="onIntervalSelect"
+      />
     </div>
 
     <!-- 字体样式设置卡片 -->
@@ -68,19 +63,15 @@
         <label class="style-label">
           {{ i18n?.fontSize }}
         </label>
-        <select
-          v-model="fontSize"
-          class="style-select"
-          @change="handleFontStyleChange"
-        >
-          <option
-            v-for="size in fontSizeOptions"
-            :key="size"
-            :value="size"
-          >
-            {{ size }}
-          </option>
-        </select>
+        <!-- 字体大小：共享 Select（纯受控 ⇒ 先回写 ref 再落盘） -->
+        <Select
+          class="style-select-field"
+          :model-value="fontSize"
+          :options="fontSizeSelectOptions"
+          size="xsmall"
+          :aria-label="i18n?.fontSize"
+          @update:model-value="onFontSizeSelect"
+        />
       </div>
 
       <div class="style-row">
@@ -100,20 +91,15 @@
         <label class="style-label">
           {{ i18n?.fontWeight }}
         </label>
-        <!-- 粗细选项："正常" / "粗体" / "细体" -->
-        <select
-          v-model="fontWeight"
-          class="style-select"
-          @change="handleFontStyleChange"
-        >
-          <option
-            v-for="opt in weightOptions"
-            :key="opt.value"
-            :value="opt.value"
-          >
-            {{ t[opt.labelKey] }}
-          </option>
-        </select>
+        <!-- 粗细选项："正常" / "粗体" / "细体"；共享 Select（纯受控 ⇒ 先回写 ref 再落盘） -->
+        <Select
+          class="style-select-field"
+          :model-value="fontWeight"
+          :options="weightSelectOptions"
+          size="xsmall"
+          :aria-label="i18n?.fontWeight"
+          @update:model-value="onFontWeightSelect"
+        />
       </div>
 
       <div class="style-row">
@@ -121,19 +107,15 @@
         <label class="style-label">
           {{ i18n?.displayFormat }}
         </label>
-        <select
-          v-model="displayFormat"
-          class="style-select"
-          @change="handleDisplayFormatChange"
-        >
-          <option
-            v-for="opt in formatOptions"
-            :key="opt.value"
-            :value="opt.value"
-          >
-            {{ opt.label }}
-          </option>
-        </select>
+        <!-- 显示格式：共享 Select（纯受控 ⇒ 先回写 ref 再落盘） -->
+        <Select
+          class="style-select-field"
+          :model-value="displayFormat"
+          :options="formatOptions"
+          size="xsmall"
+          :aria-label="i18n?.displayFormat"
+          @update:model-value="onDisplayFormatSelect"
+        />
       </div>
 
       <div class="style-row">
@@ -189,6 +171,7 @@ import {
   ref,
 } from "vue"
 import ColorField from "@/components/ColorField.vue"
+import Select from "@/components/Select.vue"
 import SiSwitch from "@/components/Switch.vue"
 import {
   DEFAULT_DOC_COUNT_SETTINGS,
@@ -264,6 +247,56 @@ const formatOptions = (Object.keys(DOC_COUNT_FORMATTERS) as DocCountFormat[]).ma
     label: DOC_COUNT_FORMATTERS[value](123).trim(),
   }),
 )
+
+// ============================================================
+// 共享 Select 选项（值类型与对应 ref 严格一致，避免选中态静默匹配失败）
+// ============================================================
+/** 更新间隔选项：值为毫秒字符串（与 updateInterval ref 的字符串类型一致） */
+const intervalSelectOptions = computed(() =>
+  intervalOptions.map((opt) => ({
+    value: opt.value as string,
+    label: t.value[opt.labelKey],
+  })),
+)
+
+/** 字体大小选项 */
+const fontSizeSelectOptions = computed(() =>
+  fontSizeOptions.map((size) => ({
+    value: size as string,
+    label: size,
+  })),
+)
+
+/** 字体粗细选项 */
+const weightSelectOptions = computed(() =>
+  weightOptions.map((opt) => ({
+    value: opt.value as string,
+    label: t.value[opt.labelKey],
+  })),
+)
+
+// ============================================================
+// Select 选择处理：受控组件不回写 v-model，故先写 ref 再触发既有落盘逻辑
+// ============================================================
+function onIntervalSelect(value: string | number | boolean | null): void {
+  updateInterval.value = value === null ? "" : String(value)
+  void handleIntervalChange()
+}
+
+function onFontSizeSelect(value: string | number | boolean | null): void {
+  fontSize.value = value === null ? "" : String(value)
+  handleFontStyleChange()
+}
+
+function onFontWeightSelect(value: string | number | boolean | null): void {
+  fontWeight.value = value === null ? "" : String(value)
+  handleFontStyleChange()
+}
+
+function onDisplayFormatSelect(value: string | number | boolean | null): void {
+  displayFormat.value = String(value ?? "") as DocCountFormat
+  void handleDisplayFormatChange()
+}
 
 const gsStorage = props.plugin ? new GeneralSettingsStorage(props.plugin) : null
 

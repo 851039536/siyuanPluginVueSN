@@ -35,9 +35,10 @@
 
 <script setup lang="ts">
 import type {
+  Difficulty,
   SkillI18n,
 } from "../types"
-import type { Difficulty } from "../types"
+
 import { computed } from "vue"
 import Select from "@/components/Select.vue"
 import { langLabel } from "../composables/useLangLabel"
@@ -67,21 +68,39 @@ function toStr(value: string | number | boolean | null): string {
 
 /** 语言选项（首项空串 = 全部） */
 const languageOptions = computed(() => [
-  { value: "", label: props.i18n.allLanguages },
-  ...props.languages.map((lang) => ({ value: lang, label: langLabel(lang) })),
+  {
+    value: "",
+    label: props.i18n.allLanguages,
+  },
+  ...props.languages.map((lang) => ({
+    value: lang,
+    label: langLabel(lang),
+  })),
 ])
 
 /** 分类选项（首项空串 = 全部） */
 const categoryOptions = computed(() => [
-  { value: "", label: props.i18n.allCategories },
-  ...props.categories.map((cat) => ({ value: cat, label: cat })),
+  {
+    value: "",
+    label: props.i18n.allCategories,
+  },
+  ...props.categories.map((cat) => ({
+    value: cat,
+    label: cat,
+  })),
 ])
 
 /** 难度选项（首项空串 = 全部；标签复用 DIFFICULTY_I18N_KEYS 映射，与 DifficultyBadge 同源） */
 const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"]
 const difficultyOptions = computed(() => [
-  { value: "", label: props.i18n.allDifficulties },
-  ...DIFFICULTIES.map((d) => ({ value: d, label: props.i18n[DIFFICULTY_I18N_KEYS[d]] })),
+  {
+    value: "",
+    label: props.i18n.allDifficulties,
+  },
+  ...DIFFICULTIES.map((d) => ({
+    value: d,
+    label: props.i18n[DIFFICULTY_I18N_KEYS[d]],
+  })),
 ])
 </script>
 

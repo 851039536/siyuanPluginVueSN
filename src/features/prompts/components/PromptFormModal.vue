@@ -62,21 +62,17 @@
           <div class="vp-form-group">
             <!-- 标签文案："分类" -->
             <label for="prompt-category">{{ i18n?.category }}</label>
-            <select
+            <!-- 分类：共享 Select（纯受控 ⇒ 显式回写 form.category） -->
+            <Select
               id="prompt-category"
-              v-model="form.category"
-              class="vp-select"
+              class="vp-select-field"
+              :model-value="form.category"
+              :options="categoryOptions"
+              size="xsmall"
               required
-              aria-required="true"
-            >
-              <option
-                v-for="cat in categories"
-                :key="cat.id"
-                :value="cat.id"
-              >
-                {{ cat.name }}
-              </option>
-            </select>
+              :aria-label="i18n?.category"
+              @update:model-value="(v) => form.category = v === null ? '' : String(v)"
+            />
           </div>
 
           <!-- 动态内容块编辑区 -->
@@ -172,12 +168,12 @@
 </template>
 
 <script setup lang="ts">
+import type { CategoryManager } from "../composables/useCategoryManager"
+import type { PromptsManager } from "../composables/usePrompts"
 import type {
   Prompt,
   PromptContent,
 } from "../types"
-import type { CategoryManager } from "../composables/useCategoryManager"
-import type { PromptsManager } from "../composables/usePrompts"
 
 import { showMessage } from "siyuan"
 import {
@@ -186,6 +182,7 @@ import {
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Select from "@/components/Select.vue"
 
 const props = defineProps<{
   show: boolean
@@ -207,6 +204,14 @@ const editingPrompt = computed(() =>
     : null,
 )
 const categories = computed(() => props.categoryManager.categories.value)
+
+/** 分类选项（值 = 分类 id，与 form.category 语义一致） */
+const categoryOptions = computed(() =>
+  categories.value.map((cat) => ({
+    value: cat.id,
+    label: cat.name,
+  })),
+)
 
 const form = reactive<{
   title: string

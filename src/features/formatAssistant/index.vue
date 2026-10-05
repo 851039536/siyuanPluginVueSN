@@ -64,29 +64,26 @@
         </div>
         <div class="option-group">
           <span class="option-label">{{ $t('fontSize') }}</span>
-          <select
-            v-model.number="fontSize"
-            class="size-select"
-          >
-            <option
-              v-for="s in fontSizeOptions"
-              :key="s"
-              :value="s"
-            >{{ s }}px</option>
-          </select>
+          <!-- 字号：共享 Select（纯受控 ⇒ 数值载荷归一后回写） -->
+          <Select
+            class="size-select-field"
+            :model-value="fontSize"
+            :options="fontSizeSelectOptions"
+            size="xsmall"
+            :aria-label="$t('fontSize')"
+            @update:model-value="(v) => fontSize = Number(v)"
+          />
         </div>
         <div class="option-group">
           <span class="option-label">{{ $t('lineHeight') }}</span>
-          <select
-            v-model.number="lineHeight"
-            class="size-select"
-          >
-            <option
-              v-for="l in lineHeightOptions"
-              :key="l"
-              :value="l"
-            >{{ l }}</option>
-          </select>
+          <Select
+            class="size-select-field"
+            :model-value="lineHeight"
+            :options="lineHeightSelectOptions"
+            size="xsmall"
+            :aria-label="$t('lineHeight')"
+            @update:model-value="(v) => lineHeight = Number(v)"
+          />
         </div>
         <div class="option-group">
           <label class="checkbox-label">
@@ -220,6 +217,7 @@ import {
   ref,
   watch,
 } from "vue"
+import Select from "@/components/Select.vue"
 import { FormatAssistantStorage } from "./types/storage"
 import {
   convertMdToBilibili,
@@ -269,6 +267,18 @@ const targetOptions = [
 
 const fontSizeOptions = [13, 14, 15, 16, 17, 18]
 const lineHeightOptions = [1.3, 1.5, 1.6, 1.75, 1.8, 2.0]
+
+/** 字号选项（数值载荷，与 fontSize ref 一致） */
+const fontSizeSelectOptions = fontSizeOptions.map((s) => ({
+  value: s,
+  label: `${s}px`,
+}))
+
+/** 行高选项（数值载荷，与 lineHeight ref 一致） */
+const lineHeightSelectOptions = lineHeightOptions.map((l) => ({
+  value: l,
+  label: String(l),
+}))
 const codeWrapOptions: { value: CodeWrapMode, label: string }[] = [
   {
     value: "scroll",

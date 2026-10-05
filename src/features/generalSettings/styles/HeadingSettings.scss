@@ -25,21 +25,9 @@
   width: 100%;
 }
 
-/* 下拉选择器 */
-.style-select {
-  padding: $s-1 $s-2;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  cursor: pointer;
-
-  &:hover,
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
+/* 下拉选择器（共享 Select：外观由组件承担，仅保留最小宽度） */
+.style-select-field {
+  min-width: 120px;
 }
 
 /* 层级显示提示 */

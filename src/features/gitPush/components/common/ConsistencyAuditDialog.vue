@@ -246,10 +246,13 @@ import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import Select from "@/components/Select.vue"
 import SiSwitch from "@/components/Switch.vue"
-import { PROJECT_LIMIT_OPTIONS } from "../../types"
-import { relativeTime, formatDateTime } from "../../utils"
 import { useConsistencyAudit } from "../../composables/useConsistencyAudit"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import { PROJECT_LIMIT_OPTIONS } from "../../types"
+import {
+  formatDateTime,
+  relativeTime,
+} from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -288,23 +291,50 @@ function onLimitChange(value: string | number | boolean | null) {
 
 /** 项目数量上限选项（值统一为字符串，与 projectLimit 的 "all" | number 契约对应） */
 const limitOptions = computed(() =>
-  PROJECT_LIMIT_OPTIONS.map((opt) => ({ value: String(opt), label: limitLabel(opt) })),
+  PROJECT_LIMIT_OPTIONS.map((opt) => ({
+    value: String(opt),
+    label: limitLabel(opt),
+  })),
 )
 
 // 七态图标 + 文案键（cls 对应 gca-chip--*/gca-state--* 修饰类）
 const STATE_META: Record<ConsistencyState, { icon: string, labelKey: string }> = {
-  synced: { icon: "mdi:check-circle-outline", labelKey: "consistencySynced" },
-  ahead: { icon: "mdi:arrow-up", labelKey: "consistencyAhead" },
-  behind: { icon: "mdi:arrow-down", labelKey: "consistencyBehind" },
-  diverged: { icon: "mdi:call-split", labelKey: "consistencyDiverged" },
-  localOnly: { icon: "mdi:laptop", labelKey: "consistencyLocalOnly" },
-  remoteOnly: { icon: "mdi:cloud-outline", labelKey: "consistencyRemoteOnly" },
-  error: { icon: "mdi:alert-circle-outline", labelKey: "consistencyStateError" },
+  synced: {
+    icon: "mdi:check-circle-outline",
+    labelKey: "consistencySynced",
+  },
+  ahead: {
+    icon: "mdi:arrow-up",
+    labelKey: "consistencyAhead",
+  },
+  behind: {
+    icon: "mdi:arrow-down",
+    labelKey: "consistencyBehind",
+  },
+  diverged: {
+    icon: "mdi:call-split",
+    labelKey: "consistencyDiverged",
+  },
+  localOnly: {
+    icon: "mdi:laptop",
+    labelKey: "consistencyLocalOnly",
+  },
+  remoteOnly: {
+    icon: "mdi:cloud-outline",
+    labelKey: "consistencyRemoteOnly",
+  },
+  error: {
+    icon: "mdi:alert-circle-outline",
+    labelKey: "consistencyStateError",
+  },
 }
 
 // 汇总 chips（键序 = 定义序，从 STATE_META 派生避免逐项复制）
 const SUMMARY_CHIPS = (Object.keys(STATE_META) as ConsistencyState[])
-  .map((state) => ({ state, ...STATE_META[state] }))
+  .map((state) => ({
+    state,
+    ...STATE_META[state],
+  }))
 
 /** 领先/落后列文案（synced/localOnly/remoteOnly/error 显示 "-"） */
 function diffText(b: ConsistencyBranchRow): string {

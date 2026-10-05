@@ -373,11 +373,11 @@
 </template>
 
 <script setup lang="ts">
+import type { ImageCreationI18n } from "../types"
 /**
  * 代码图片 Tab：配置表单 + 字体/主题/导出设置 + 装饰/底色 + 预览与灵感候选
  */
 import type { SelectOption } from "@/components/Select.vue"
-import type { ImageCreationI18n } from "../types"
 import {
   onMounted,
   ref,
@@ -428,9 +428,18 @@ const {
 void codePreview
 
 const exportFormatOptions: SelectOption[] = [
-  { value: "png", label: t.formatPng },
-  { value: "jpeg", label: t.formatJpeg },
-  { value: "webp", label: t.formatWebp },
+  {
+    value: "png",
+    label: t.formatPng,
+  },
+  {
+    value: "jpeg",
+    label: t.formatJpeg,
+  },
+  {
+    value: "webp",
+    label: t.formatWebp,
+  },
 ]
 
 // 背景图

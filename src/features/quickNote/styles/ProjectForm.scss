@@ -21,12 +21,10 @@
   font-weight: $fw-medium;
 }
 
+/* 共享 Select（外观由组件承担，仅保留固定宽度） */
 .qn-proj-form__status {
   width: 6.5rem;
   flex-shrink: 0;
-  // 辅助文字
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-background);
 }
 
 // 常规字段（当前进度/下一步/卡点）

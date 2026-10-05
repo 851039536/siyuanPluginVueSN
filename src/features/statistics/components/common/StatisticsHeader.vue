@@ -99,14 +99,38 @@ const refreshIcon = computed<IconKey>(() => {
 
 /** 自动刷新间隔选项（分钟），0 = 关闭；label 直接取 i18n 键，不硬编码兜底 */
 const intervalOptions = [
-  { value: 0, labelKey: "refreshOff" },
-  { value: 1, labelKey: "interval1min" },
-  { value: 5, labelKey: "interval5min" },
-  { value: 10, labelKey: "interval10min" },
-  { value: 30, labelKey: "interval30min" },
-  { value: 60, labelKey: "interval1hour" },
-  { value: 120, labelKey: "interval2hour" },
-  { value: 360, labelKey: "interval6hour" },
+  {
+    value: 0,
+    labelKey: "refreshOff",
+  },
+  {
+    value: 1,
+    labelKey: "interval1min",
+  },
+  {
+    value: 5,
+    labelKey: "interval5min",
+  },
+  {
+    value: 10,
+    labelKey: "interval10min",
+  },
+  {
+    value: 30,
+    labelKey: "interval30min",
+  },
+  {
+    value: 60,
+    labelKey: "interval1hour",
+  },
+  {
+    value: 120,
+    labelKey: "interval2hour",
+  },
+  {
+    value: 360,
+    labelKey: "interval6hour",
+  },
 ] as const
 
 function handleRefresh() {
@@ -115,7 +139,10 @@ function handleRefresh() {
 
 /** 刷新间隔选项：由 intervalOptions 派生（label 取 i18n，与原生 option 一致） */
 const intervalSelectOptions = computed(() =>
-  intervalOptions.map((opt) => ({ value: opt.value, label: props.i18n[opt.labelKey] })),
+  intervalOptions.map((opt) => ({
+    value: opt.value,
+    label: props.i18n[opt.labelKey],
+  })),
 )
 </script>
 

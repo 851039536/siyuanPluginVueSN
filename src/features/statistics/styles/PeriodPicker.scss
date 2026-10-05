@@ -16,15 +16,7 @@
   width: 14px;
 }
 
-.period-select {
-  padding: $s-1 $s-px6;
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$r-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
+/* 共享 Select（外观由组件承担，仅保留等宽字体） */
+.period-select-field {
   font-family: stats.$font-mono;
-  font-size: stats.$t-xs;
-  outline: none;
-
-  @include stats.codex-focus-glow;
 }

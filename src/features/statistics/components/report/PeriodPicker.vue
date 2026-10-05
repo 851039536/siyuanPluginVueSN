@@ -2,49 +2,62 @@
 <template>
   <div class="period-picker">
     <span class="period-label">{{ label }}</span>
-    <select
-      v-model="yearModel"
-      class="period-select"
-    >
-      <option
-        v-for="y in yearOptions"
-        :key="y"
-        :value="y"
-      >
-        {{ y }}年
-      </option>
-    </select>
-    <select
-      v-model="monthModel"
-      class="period-select"
-    >
-      <option :value="MONTH_ALL">
-        全年
-      </option>
-      <option
-        v-for="m in 12"
-        :key="m"
-        :value="m"
-      >
-        {{ m }}月
-      </option>
-    </select>
+    <!-- 年份/月份：共享 Select（纯受控 ⇒ 经 defineModel 回写；载荷为 number） -->
+    <Select
+      class="period-select-field"
+      :model-value="yearModel"
+      :options="yearSelectOptions"
+      size="xsmall"
+      :aria-label="label"
+      @update:model-value="(v) => yearModel = Number(v)"
+    />
+    <Select
+      class="period-select-field"
+      :model-value="monthModel"
+      :options="monthSelectOptions"
+      size="xsmall"
+      :aria-label="label"
+      @update:model-value="(v) => monthModel = Number(v)"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
+import Select from "@/components/Select.vue"
+
 interface Props {
   label: string
   yearOptions: number[]
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 /** 月份取 0 表示整年（全年统计） */
 const MONTH_ALL = 0
 
 const yearModel = defineModel<number>("year", { required: true })
 const monthModel = defineModel<number>("month", { required: true })
+
+/** 年份选项（数值载荷，与 yearModel 的 number 契约一致） */
+const yearSelectOptions = computed(() =>
+  props.yearOptions.map((y) => ({
+    value: y,
+    label: `${y}年`,
+  })),
+)
+
+/** 月份选项（0 = 全年，与 MONTH_ALL 语义一致） */
+const monthSelectOptions = computed(() => [
+  {
+    value: MONTH_ALL,
+    label: "全年",
+  },
+  ...Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: `${i + 1}月`,
+  })),
+])
 </script>
 
 <style scoped lang="scss">

@@ -129,7 +129,7 @@
           :options="tierOptions"
           size="xsmall"
           :aria-label="i18n.tierLabel"
-          @update:model-value="(v) => newAchievement.tier = v === null ? '' : String(v)"
+          @update:model-value="(v) => newAchievement.tier = toTier(v)"
         />
       </div>
       <div class="ach-form-actions">
@@ -147,23 +147,29 @@
 </template>
 
 <script setup lang="ts">
+import type { Tier } from "../../types/milestoneData"
 // 自定义成就管理 Tab：成就列表 + 新增表单（i18n 键见 i18n/statistics.json，类型元数据见 milestoneRules.ts）
-import type { CustomAchievement, MilestoneTypeKey } from "../../types/milestoneRules"
+import type {
+  CustomAchievement,
+  MilestoneTypeKey,
+} from "../../types/milestoneRules"
 import type { IconKey } from "@/config/icons"
+import {
+  computed,
+  ref,
+} from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import {
   COMMON_ICONS,
   FEATURE_ICONS,
 } from "@/config/icons"
-import { computed, ref } from "vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import Select from "@/components/Select.vue"
 import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
 import {
   MILESTONE_TYPES,
   STAT_TYPE_DESCRIPTIONS,
   TIER_LABELS,
 } from "../../types/milestoneRules"
-import type { Tier } from "../../types/milestoneData"
 
 interface Props {
   i18n?: Record<string, any>
@@ -195,16 +201,26 @@ function createEmptyAchievement(): Omit<CustomAchievement, "id"> {
 
 /** 统计类型选项（MILESTONE_TYPES 仅含 labelKey，经 i18n 解析） */
 const typeOptions = computed(() =>
-  MILESTONE_TYPES.map((t) => ({ value: t.key as string, label: props.i18n[t.labelKey] as string })),
-)
-
-/** 稀有度选项（TIER_LABELS 值为 i18n 键，需二次解析） */
-const tierOptions = computed(() =>
-  Object.entries(TIER_LABELS).map(([key, labelKey]) => ({
-    value: key,
-    label: props.i18n[labelKey as string] as string,
+  MILESTONE_TYPES.map((t) => ({
+    value: t.key as string,
+    label: props.i18n[t.labelKey] as string,
   })),
 )
+
+/** 稀有度选项（TIER_LABELS 值为 i18n 键，需二次解析；键序 = Tier 联合类型定义序） */
+const TIERS: Tier[] = ["common", "rare", "epic", "legendary"]
+const tierOptions = computed(() =>
+  TIERS.map((tier) => ({
+    value: tier,
+    label: textByKey(TIER_LABELS[tier]),
+  })),
+)
+
+/** Select 载荷收窄为 Tier：非枚举值回退默认档（避免任意字符串以 Tier 入库） */
+function toTier(value: string | number | boolean | null): Tier {
+  const next = value === null ? "" : String(value)
+  return (TIERS as string[]).includes(next) ? next as Tier : "common"
+}
 
 function generateAchievementId(): string {
   return `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`

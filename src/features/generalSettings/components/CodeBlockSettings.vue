@@ -311,7 +311,10 @@ import {
   DEFAULT_CODEBLOCK_SETTINGS,
   GeneralSettingsStorage,
 } from "@/features/generalSettings/types/storage"
-import { BUILTIN_FONTS, CODEBLOCK_STYLE_META } from "../utils/styles"
+import {
+  BUILTIN_FONTS,
+  CODEBLOCK_STYLE_META,
+} from "../utils/styles"
 import BuiltinFontHint from "./BuiltinFontHint.vue"
 import SettingLabel from "./SettingLabel.vue"
 import SettingSlider from "./SettingSlider.vue"
@@ -336,11 +339,26 @@ const emit = defineEmits<Emits>()
 // ── 常量 ──
 /** 代码字体预设（内置字体条目由 BUILTIN_FONTS 单一来源派生，随插件分发无需系统安装） */
 const presetFonts = [
-  { value: "Consolas", label: "Consolas" },
-  { value: "Courier New", label: "Courier New" },
-  { value: "JetBrains Mono", label: "JetBrains Mono" },
-  { value: "Cascadia Code", label: "Cascadia Code" },
-  { value: "Hack", label: "Hack" },
+  {
+    value: "Consolas",
+    label: "Consolas",
+  },
+  {
+    value: "Courier New",
+    label: "Courier New",
+  },
+  {
+    value: "JetBrains Mono",
+    label: "JetBrains Mono",
+  },
+  {
+    value: "Cascadia Code",
+    label: "Cascadia Code",
+  },
+  {
+    value: "Hack",
+    label: "Hack",
+  },
   // 内置字体：随插件分发，未在系统安装也能使用
   ...BUILTIN_FONTS.map((font) => ({
     value: font.fontFamily,
@@ -377,8 +395,14 @@ const presetCodeFont = computed({
 
 /** 字体选项：占位项（空串）+ 预设列表（与原生 option 结构等价） */
 const fontSelectOptions = computed(() => [
-  { value: "", label: props.i18n.selectFont },
-  ...presetFonts.map((f) => ({ value: f.value, label: f.label })),
+  {
+    value: "",
+    label: props.i18n.selectFont,
+  },
+  ...presetFonts.map((f) => ({
+    value: f.value,
+    label: f.label,
+  })),
 ])
 
 /** 选中预设字体：空值（占位项）不覆盖手输字体，交由 computed setter 的既有语义处理 */
@@ -391,10 +415,22 @@ const formatPx = (v: number) => `${v}px`
 const formatPercent = (v: number) => `${Math.round(v * 100)}%`
 
 const shadowOptions = computed(() => [
-  { label: props.i18n.noneShadow, value: "none" },
-  { label: props.i18n.lightShadow, value: "0 2px 8px rgba(0, 0, 0, 0.1)" },
-  { label: props.i18n.mediumShadow, value: "0 4px 12px rgba(0, 0, 0, 0.15)" },
-  { label: props.i18n.heavyShadow, value: "0 8px 24px rgba(0, 0, 0, 0.2)" },
+  {
+    label: props.i18n.noneShadow,
+    value: "none",
+  },
+  {
+    label: props.i18n.lightShadow,
+    value: "0 2px 8px rgba(0, 0, 0, 0.1)",
+  },
+  {
+    label: props.i18n.mediumShadow,
+    value: "0 4px 12px rgba(0, 0, 0, 0.15)",
+  },
+  {
+    label: props.i18n.heavyShadow,
+    value: "0 8px 24px rgba(0, 0, 0, 0.2)",
+  },
 ])
 
 // ── 防抖：自动保存 ──

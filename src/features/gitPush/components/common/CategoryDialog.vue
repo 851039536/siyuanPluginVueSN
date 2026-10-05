@@ -18,7 +18,10 @@
           class="vp-btn vp-btn--ghost vp-btn--sm"
           @click="$emit('close')"
         >
-          <Icon icon="mdi:close" height="12" />
+          <Icon
+            icon="mdi:close"
+            height="12"
+          />
         </button>
       </div>
       <div class="gp-dialog-body">
@@ -76,13 +79,13 @@
 </template>
 
 <script setup lang="ts">
+import type { ProjectCategory } from "../../types"
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
 import ColorField from "@/components/ColorField.vue"
 import Input from "@/components/Input.vue"
-import type { ProjectCategory } from "../../types"
-import { UNGROUPED_ID } from "../../types"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import { UNGROUPED_ID } from "../../types"
 
 defineProps<{
   i18n: Record<string, any>
@@ -90,9 +93,9 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  "close": []
-  "addCategory": [name: string, color: string]
-  "deleteCategory": [id: string]
+  close: []
+  addCategory: [name: string, color: string]
+  deleteCategory: [id: string]
 }>()
 
 // ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。

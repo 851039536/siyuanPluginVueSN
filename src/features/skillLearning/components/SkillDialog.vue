@@ -80,7 +80,7 @@
               :options="languageSelectOptions"
               size="xsmall"
               :aria-label="t.language"
-              @update:model-value="(v) => form.language = toStr(v)"
+              @update:model-value="(v) => form.language = toStr(v) as Language"
             />
           </div>
           <div class="skill-dialog__field">
@@ -142,12 +142,12 @@ import {
   reactive,
   ref,
 } from "vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import {
   callAI,
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
-import IconWrapper from "@/components/IconWrapper.vue"
-import Select from "@/components/Select.vue"
 import { LANGUAGE_OPTIONS } from "../composables/useLangLabel"
 import { DIFFICULTY_I18N_KEYS } from "../types"
 
@@ -173,13 +173,19 @@ function toStr(value: string | number | boolean | null): string {
 
 /** 语言下拉选项（LANGUAGE_OPTIONS 用 key，需映射为 Select 的 value） */
 const languageSelectOptions = computed(() =>
-  LANGUAGE_OPTIONS.map((opt) => ({ value: opt.key, label: opt.label })),
+  LANGUAGE_OPTIONS.map((opt) => ({
+    value: opt.key,
+    label: opt.label,
+  })),
 )
 
 /** 难度下拉选项（标签复用 DIFFICULTY_I18N_KEYS，与 DifficultyBadge 同源） */
 const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"]
 const difficultySelectOptions = computed(() =>
-  DIFFICULTIES.map((d) => ({ value: d, label: props.i18n[DIFFICULTY_I18N_KEYS[d]] })),
+  DIFFICULTIES.map((d) => ({
+    value: d,
+    label: props.i18n[DIFFICULTY_I18N_KEYS[d]],
+  })),
 )
 
 const tagsInput = ref(props.editCard?.tags.join(", ") || "")

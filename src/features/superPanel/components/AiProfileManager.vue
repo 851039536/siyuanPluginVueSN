@@ -95,8 +95,14 @@ const canSave = computed(() => nameInput.value.trim() !== "")
 
 /** 档案下拉选项：空串代表占位（与 selectedName 的空值语义一致） */
 const profileOptions = computed(() => [
-  { value: "", label: props.i18n.profileSelectPlaceholder },
-  ...props.profiles.map((p) => ({ value: p.name, label: p.name })),
+  {
+    value: "",
+    label: props.i18n.profileSelectPlaceholder,
+  },
+  ...props.profiles.map((p) => ({
+    value: p.name,
+    label: p.name,
+  })),
 ])
 
 const handleSelect = (value: string | number | boolean | null) => {

@@ -90,16 +90,9 @@
   margin-bottom: $s-1;
 }
 
-.style-select {
+/* 共享 Select（外观由组件承担，仅保留满宽） */
+.style-select-field {
   width: 100%;
-  padding: $s-1 $s-2;
-  font-size: $t-xs;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $r-base;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  @include select-interactive;
 }
 
 .style-preview {

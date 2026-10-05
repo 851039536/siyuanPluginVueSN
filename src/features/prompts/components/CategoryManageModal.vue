@@ -89,9 +89,9 @@
 </template>
 
 <script setup lang="ts">
-import type { PromptCategory } from "../types"
 import type { CategoryManager } from "../composables/useCategoryManager"
 import type { PromptsManager } from "../composables/usePrompts"
+import type { PromptCategory } from "../types"
 import { showMessage } from "siyuan"
 import {
   computed,

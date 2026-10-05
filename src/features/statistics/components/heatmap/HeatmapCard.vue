@@ -186,7 +186,10 @@ import {
   ref,
 } from "vue"
 import Select from "@/components/Select.vue"
-import { formatDate, parseYmd } from "../../utils"
+import {
+  formatDate,
+  parseYmd,
+} from "../../utils"
 import HeatmapDailyDetail from "./HeatmapDailyDetail.vue"
 
 interface Props {
@@ -221,8 +224,14 @@ const selectedNotebook = ref('')
 
 /** 笔记本选项：空串代表"全部笔记本"（与 selectedNotebook 的空值语义一致） */
 const notebookOptions = computed(() => [
-  { value: '', label: props.i18n.allNotebooks },
-  ...props.notebooks.map((nb) => ({ value: nb.id, label: nb.name })),
+  {
+    value: '',
+    label: props.i18n.allNotebooks,
+  },
+  ...props.notebooks.map((nb) => ({
+    value: nb.id,
+    label: nb.name,
+  })),
 ])
 const loading = ref(false)
 

@@ -234,14 +234,24 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from "@iconify/vue"
-import { computed, onMounted, ref } from "vue"
-import Select from "@/components/Select.vue"
 import type { GitPushManager } from "../../types"
-import type { GitConfigEntry, GitConfigScope } from "../../types/gitConfigDesc"
-import { GIT_PRESET_KEYS, parseGitConfigText } from "../../types/gitConfigDesc"
+import type {
+  GitConfigEntry,
+  GitConfigScope,
+} from "../../types/gitConfigDesc"
+import { Icon } from "@iconify/vue"
+import {
+  computed,
+  onMounted,
+  ref,
+} from "vue"
+import Select from "@/components/Select.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { getErrorMessage } from "@/utils/stringUtils"
+import {
+  GIT_PRESET_KEYS,
+  parseGitConfigText,
+} from "../../types/gitConfigDesc"
 import { openLocalPath } from "../../utils"
 
 const props = defineProps<{
@@ -384,7 +394,10 @@ function onPresetChange(value: string | number | boolean | null) {
 
 /** 预设键选项：空串占位 + 常用键列表（label 含键名提示，与原 option 文案一致） */
 const presetOptions = computed(() => [
-  { value: "", label: props.i18n.gitConfigPresetPlaceholder },
+  {
+    value: "",
+    label: props.i18n.gitConfigPresetPlaceholder,
+  },
   ...GIT_PRESET_KEYS.map((preset) => ({
     value: preset.key,
     label: `${preset.label} (${preset.key})`,

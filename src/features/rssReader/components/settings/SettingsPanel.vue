@@ -127,12 +127,15 @@
 </template>
 
 <script setup lang="ts">
+import type { RssSettings } from "../../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
-import { computed, ref } from "vue"
+import {
+  computed,
+  ref,
+} from "vue"
 import Select from "@/components/Select.vue"
 import { getErrorMessage } from "@/utils/stringUtils"
-import type { RssSettings } from "../../types"
 
 interface Props {
   i18n: Record<string, string>
@@ -154,18 +157,42 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 /** 自动刷新间隔选项（值为分钟数，0 = 禁用；与 RssSettings.refreshInterval 同源） */
 const refreshIntervalOptions = computed(() => [
-  { value: 0, label: props.i18n.disabled },
-  { value: 15, label: `15 ${props.i18n.minutes}` },
-  { value: 30, label: `30 ${props.i18n.minutes}` },
-  { value: 60, label: `1 ${props.i18n.hour}` },
-  { value: 120, label: `2 ${props.i18n.hours}` },
-  { value: 360, label: `6 ${props.i18n.hours}` },
+  {
+    value: 0,
+    label: props.i18n.disabled,
+  },
+  {
+    value: 15,
+    label: `15 ${props.i18n.minutes}`,
+  },
+  {
+    value: 30,
+    label: `30 ${props.i18n.minutes}`,
+  },
+  {
+    value: 60,
+    label: `1 ${props.i18n.hour}`,
+  },
+  {
+    value: 120,
+    label: `2 ${props.i18n.hours}`,
+  },
+  {
+    value: 360,
+    label: `6 ${props.i18n.hours}`,
+  },
 ])
 
 /** 排序方式选项 */
 const sortOrderOptions = computed(() => [
-  { value: "newest", label: props.i18n.newestFirst },
-  { value: "oldest", label: props.i18n.oldestFirst },
+  {
+    value: "newest",
+    label: props.i18n.newestFirst,
+  },
+  {
+    value: "oldest",
+    label: props.i18n.oldestFirst,
+  },
 ])
 
 function handleSettingChange(key: string, value: unknown) {

@@ -39,15 +39,15 @@
       >
         {{ i18n.jsonFormatter?.clear }}
       </button>
-      <!-- 缩进选择 -->
-      <select
-        v-model="indent"
-        class="jf-indent-select"
-      >
-        <option :value="2">2 spaces</option>
-        <option :value="4">4 spaces</option>
-        <option :value="8">tab</option>
-      </select>
+      <!-- 缩进选择：共享 Select（纯受控 ⇒ 数值载荷归一后回写） -->
+      <Select
+        class="jf-indent-select-field"
+        :model-value="indent"
+        :options="INDENT_OPTIONS"
+        size="xsmall"
+        :aria-label="i18n.jsonFormatter?.indent"
+        @update:model-value="(v) => indent = Number(v)"
+      />
       <!-- 状态提示 -->
       <span
         class="jf-status"
@@ -84,6 +84,7 @@
  */
 import type { Plugin } from "siyuan"
 import { ref } from "vue"
+import Select from "@/components/Select.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
   formatJson,
@@ -101,6 +102,22 @@ const props = defineProps<Props>()
 const inputText = ref("")
 const output = ref("")
 const indent = ref(2)
+
+/** 缩进选项（值为空格数；文案保持原样，8 在原实现中即标注为 tab） */
+const INDENT_OPTIONS = [
+  {
+    value: 2,
+    label: "2 spaces",
+  },
+  {
+    value: 4,
+    label: "4 spaces",
+  },
+  {
+    value: 8,
+    label: "tab",
+  },
+]
 const statusText = ref("")
 const statusType = ref<"success" | "error" | "">("")
 
@@ -138,7 +155,7 @@ const handleClear = () => {
   statusType.value = ""
 }
 
-function applyResult(result: { success: boolean; output: string; error?: string }) {
+function applyResult(result: { success: boolean, output: string, error?: string }) {
   if (result.success) {
     output.value = result.output
     statusText.value = props.i18n.jsonFormatter?.successMsg ?? "✓ Done"

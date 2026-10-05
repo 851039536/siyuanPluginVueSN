@@ -233,7 +233,10 @@ const availableYears = computed(() => {
 
 /** 年份选项（数值载荷，与 update:selectedYear 的 number 契约一致） */
 const yearOptions = computed(() =>
-  availableYears.value.map((year) => ({ value: year, label: String(year) })),
+  availableYears.value.map((year) => ({
+    value: year,
+    label: String(year),
+  })),
 )
 
 // 时段均值标签：随视图模式切换（日均/周均/月均/年均字数）

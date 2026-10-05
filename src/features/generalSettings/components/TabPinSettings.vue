@@ -169,6 +169,7 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
+import type { TabPinSettings } from "@/features/generalSettings/types/storage"
 import {
   onMounted,
   ref,
@@ -180,7 +181,7 @@ import Switch from "@/components/Switch.vue"
 import {
   DEFAULT_TABPIN_SETTINGS,
   GeneralSettingsStorage,
-  type TabPinSettings,
+
 } from "@/features/generalSettings/types/storage"
 import { TAB_PIN_MODE_META } from "@/features/generalSettings/utils/styles"
 

@@ -99,12 +99,23 @@
  * AI 润色走 useAiPolish 流式回填内容，新增/编辑模式均可使用
  */
 import type { Plugin } from "siyuan"
-import type { ProjectItem, TodoItem, TodoSubmitPayload } from "../../types"
-import { computed, ref, watch } from "vue"
+import type {
+  ProjectItem,
+  TodoItem,
+  TodoSubmitPayload,
+} from "../../types"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
-import { PRIORITY_META, TODO_PRIORITIES } from "../../types"
 import { useAiPolish } from "../../composables/useAiPolish"
+import {
+  PRIORITY_META,
+  TODO_PRIORITIES,
+} from "../../types"
 import { polishText } from "../../utils"
 
 const props = defineProps<{
@@ -129,8 +140,14 @@ const projectId = ref<string>("")
 
 /** 关联项目选项：空串代表"不关联"（与 projectId 的空值语义一致） */
 const projectOptions = computed(() => [
-  { value: "", label: props.i18n.noProject },
-  ...props.projects.map((proj) => ({ value: proj.id, label: proj.name })),
+  {
+    value: "",
+    label: props.i18n.noProject,
+  },
+  ...props.projects.map((proj) => ({
+    value: proj.id,
+    label: proj.name,
+  })),
 ])
 
 /** 编辑待办变化时回填/清空表单（immediate 确保首次渲染时也不遗漏） */
@@ -153,7 +170,10 @@ watch(
 )
 
 // AI 润色：新增/编辑共用实例，润色结果流式回填内容草稿（由用户确认后保存）
-const { polishing, polish } = useAiPolish(props.plugin)
+const {
+  polishing,
+  polish,
+} = useAiPolish(props.plugin)
 
 /** AI 润色草稿：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示（复用共享辅助函数） */
 const handlePolish = async () => {

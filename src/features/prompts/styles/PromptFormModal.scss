@@ -12,8 +12,7 @@
     }
 
     // 扁平描边风格：控件透明底，仅边框描边，避免在弹窗底色上叠加第二层填充
-    .vp-textarea,
-    .vp-select {
+    .vp-textarea {
       @include m.form-input;
       background-color: transparent;
     }
@@ -22,13 +21,9 @@
       background-color: transparent;
     }
 
-    .vp-select {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: $s-10;
+    /* 共享 Select（自带触发器外观与下拉箭头，仅保留满宽） */
+    .vp-select-field {
+      width: 100%;
     }
 
     .vp-textarea {

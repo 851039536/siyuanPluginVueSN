@@ -7,16 +7,15 @@
         class="vp-input qn-proj-form__name"
         :placeholder="i18n.projNamePlaceholder"
       />
-      <select
-        v-model="status"
-        class="vp-input qn-proj-form__status"
-      >
-        <option
-          v-for="s in PROJECT_STATUSES"
-          :key="s"
-          :value="s"
-        >{{ i18n[STATUS_META[s].labelKey] }}</option>
-      </select>
+      <!-- 状态：共享 Select（纯受控 ⇒ 显式回写 status） -->
+      <Select
+        class="qn-proj-form__status"
+        :model-value="status"
+        :options="statusOptions"
+        size="xsmall"
+        :aria-label="i18n[STATUS_META[status].labelKey]"
+        @update:model-value="(v) => status = toStatus(v)"
+      />
     </div>
     <!-- 当前进度 -->
     <input
@@ -76,10 +75,21 @@
  * 新增模式：提交后清空表单；编辑模式：通过 editingProject prop 回填，
  * 保存 emit(submit + id)、取消 emit(cancel)，表单由 watch(editingProject) 自动复位
  */
-import type { ProjectItem, ProjectSubmitPayload } from "../../types"
-import { ref, watch } from "vue"
+import type {
+  ProjectItem,
+  ProjectSubmitPayload,
+} from "../../types"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { PROJECT_STATUSES, STATUS_META } from "../../types"
+import Select from "@/components/Select.vue"
+import {
+  PROJECT_STATUSES,
+  STATUS_META,
+} from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, string>
@@ -98,6 +108,22 @@ const status = ref<ProjectItem["status"]>("active")
 const currentStep = ref("")
 const nextStep = ref("")
 const blockers = ref("")
+
+/** 状态选项（STATUS_META 提供 i18n 键；值与 ProjectStatus 联合类型一致） */
+const statusOptions = computed(() =>
+  PROJECT_STATUSES.map((s) => ({
+    value: s,
+    label: props.i18n[STATUS_META[s].labelKey],
+  })),
+)
+
+/** Select 载荷收窄为 ProjectStatus：非枚举值回退默认档 */
+function toStatus(value: string | number | boolean | null): ProjectItem["status"] {
+  const next = value === null ? "" : String(value)
+  return (PROJECT_STATUSES as string[]).includes(next)
+    ? next as ProjectItem["status"]
+    : "active"
+}
 
 /** 编辑项目变化时回填/清空表单（immediate 确保首次渲染时也不遗漏） */
 watch(

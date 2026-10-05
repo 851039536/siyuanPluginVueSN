@@ -182,11 +182,24 @@
 </template>
 
 <script setup lang="ts">
+import type {
+  DocI18n,
+  FilterOptions,
+  PlatformMeta,
+  QueryState,
+} from "../../types/index"
 import { Icon } from "@iconify/vue"
-import { computed, onBeforeUnmount, ref, watch } from "vue"
+import {
+  computed,
+  onBeforeUnmount,
+  ref,
+  watch,
+} from "vue"
 import Select from "@/components/Select.vue"
-import type { DocI18n, FilterOptions, PlatformMeta, QueryState } from "../../types/index"
-import { SORT_FIELD_OPTIONS, getCategoryLabel } from "../../types/index"
+import {
+  getCategoryLabel,
+  SORT_FIELD_OPTIONS,
+} from "../../types/index"
 import DocListItem from "./DocListItem.vue"
 
 interface Props {

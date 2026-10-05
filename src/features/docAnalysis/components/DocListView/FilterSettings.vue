@@ -86,14 +86,17 @@
 </template>
 
 <script setup lang="ts">
-import type { FilterOptions, NotebookInfo } from "../../types/index"
-import { DEFAULT_FILTER_OPTIONS } from "../../types/index"
+import type {
+  FilterOptions,
+  NotebookInfo,
+} from "../../types/index"
 import { Icon } from "@iconify/vue"
 import {
   computed,
   onBeforeUnmount,
 } from "vue"
 import Select from "@/components/Select.vue"
+import { DEFAULT_FILTER_OPTIONS } from "../../types/index"
 
 interface Props {
   options: FilterOptions
@@ -119,8 +122,14 @@ onBeforeUnmount(() => {
 
 /** 笔记本选项：空串代表"全部笔记本"（与 FilterOptions.notebookId 的空值语义一致） */
 const notebookOptions = computed(() => [
-  { value: "", label: "全部笔记本" },
-  ...props.notebooks.map((nb) => ({ value: nb.id, label: nb.name })),
+  {
+    value: "",
+    label: "全部笔记本",
+  },
+  ...props.notebooks.map((nb) => ({
+    value: nb.id,
+    label: nb.name,
+  })),
 ])
 
 /** 是否有任何非空过滤条件 */

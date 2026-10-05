@@ -32,34 +32,23 @@
     <template v-else>
       <div class="report-controls">
         <div class="report-selector">
-          <select
-            v-model="reportYear"
-            class="report-select"
-          >
-            <option
-              v-for="y in yearOptions"
-              :key="y"
-              :value="y"
-            >
-              {{ yearText(y) }}
-            </option>
-          </select>
-          <select
-            v-model="reportMonth"
-            class="report-select"
-          >
-            <option :value="0">
-              <!-- 月份选项："全年报告" -->
-              {{ i18n.fullYearReport }}
-            </option>
-            <option
-              v-for="m in 12"
-              :key="m"
-              :value="m"
-            >
-              {{ monthText(m) }}
-            </option>
-          </select>
+          <!-- 年份/月份：共享 Select（纯受控 ⇒ 回写 ref；载荷为 number） -->
+          <Select
+            class="report-select-field"
+            :model-value="reportYear"
+            :options="yearSelectOptions"
+            size="xsmall"
+            :aria-label="i18n.generateReport"
+            @update:model-value="(v) => reportYear = Number(v)"
+          />
+          <Select
+            class="report-select-field"
+            :model-value="reportMonth"
+            :options="monthSelectOptions"
+            size="xsmall"
+            :aria-label="i18n.fullYearReport"
+            @update:model-value="(v) => reportMonth = Number(v)"
+          />
           <button
             class="report-generate-btn"
             @click="generate"
@@ -218,12 +207,13 @@ import {
   ref,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import {
   formatNumber,
   formatReportPeriod,
 } from "../../utils"
-import ReportTrendChart from "./ReportTrendChart.vue"
 import ComparisonView from "./ComparisonView.vue"
+import ReportTrendChart from "./ReportTrendChart.vue"
 
 interface Props {
   onGetReportData?: (year?: number, month?: number) => Promise<ReportData>
@@ -280,6 +270,26 @@ const yearOptions = computed(() => {
   }
   return years
 })
+
+/** 年份选项（复用既有 yearText 文案；数值载荷与 reportYear 一致） */
+const yearSelectOptions = computed(() =>
+  yearOptions.value.map((y) => ({
+    value: y,
+    label: yearText(y),
+  })),
+)
+
+/** 月份选项（0 = 全年报告，复用既有 monthText 文案） */
+const monthSelectOptions = computed(() => [
+  {
+    value: 0,
+    label: i18n.value.fullYearReport ?? "",
+  },
+  ...Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: monthText(i + 1),
+  })),
+])
 
 function removeReport(idx: number) {
   reports.value.splice(idx, 1)

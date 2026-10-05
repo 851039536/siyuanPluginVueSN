@@ -69,17 +69,26 @@ const modelOptions = computed(() => {
     list.push({
       isGroup: true,
       label: props.i18n.commonModels ?? "",
-      options: availableModels.value.common.map((m) => ({ value: m.value, label: m.label })),
+      options: availableModels.value.common.map((m) => ({
+        value: m.value,
+        label: m.label,
+      })),
     })
   }
   if (availableModels.value.all.length > 0) {
     list.push({
       isGroup: true,
       label: props.i18n.allModels ?? "",
-      options: availableModels.value.all.map((m) => ({ value: m.value, label: m.label })),
+      options: availableModels.value.all.map((m) => ({
+        value: m.value,
+        label: m.label,
+      })),
     })
   }
-  list.push({ value: "custom", label: props.i18n.customModel ?? "" })
+  list.push({
+    value: "custom",
+    label: props.i18n.customModel ?? "",
+  })
   return list
 })
 

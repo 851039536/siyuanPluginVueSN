@@ -12,7 +12,10 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import Select from "@/components/Select.vue"
-import { PROVIDERS, getProviderDisplayName } from "./providers"
+import {
+  getProviderDisplayName,
+  PROVIDERS,
+} from "./providers"
 
 interface Props {
   modelValue: string
@@ -28,7 +31,10 @@ const emit = defineEmits<Emits>()
 
 /** 提供商选项（标签走 i18n，缺失回退 fallbackName） */
 const options = computed(() =>
-  PROVIDERS.map((p) => ({ value: p.id, label: props.i18n[p.i18nKey] || p.fallbackName })),
+  PROVIDERS.map((p) => ({
+    value: p.id,
+    label: props.i18n[p.i18nKey] || p.fallbackName,
+  })),
 )
 
 const handleChange = (value: string | number | boolean | null) => {

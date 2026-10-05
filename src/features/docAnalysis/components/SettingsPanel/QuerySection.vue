@@ -1,7 +1,9 @@
 <!-- 文档分析功能 - 设置弹窗查询默认分区（隐藏零值/默认笔记本/默认排序） -->
 <template>
   <section class="settings-section">
-    <div class="settings-section-title">查询默认</div>
+    <div class="settings-section-title">
+      查询默认
+    </div>
 
     <!-- 隐藏零值行开关 -->
     <div class="settings-row">
@@ -52,10 +54,14 @@
 </template>
 
 <script setup lang="ts">
+import type {
+  NotebookInfo,
+  SortField,
+  SortOrder,
+} from "../../types/index"
 import { computed } from "vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
-import type { NotebookInfo, SortField, SortOrder } from "../../types/index"
 import { SORT_FIELD_OPTIONS } from "../../types/index"
 
 interface Props {
@@ -77,14 +83,26 @@ const emit = defineEmits<{
 
 /** 排序方向选项（与 SortOrder 联合类型编译期绑定） */
 const SORT_ORDER_OPTIONS: { value: SortOrder, label: string }[] = [
-  { value: "asc", label: "升序" },
-  { value: "desc", label: "降序" },
+  {
+    value: "asc",
+    label: "升序",
+  },
+  {
+    value: "desc",
+    label: "降序",
+  },
 ]
 
 /** 笔记本选项：空串代表"全部笔记本"（与 FilterOptions.notebookId 的空值语义一致） */
 const notebookOptions = computed(() => [
-  { value: "", label: "全部笔记本" },
-  ...props.notebooks.map((nb) => ({ value: nb.id, label: nb.name })),
+  {
+    value: "",
+    label: "全部笔记本",
+  },
+  ...props.notebooks.map((nb) => ({
+    value: nb.id,
+    label: nb.name,
+  })),
 ])
 
 /** Select 载荷归一为字符串（组件载荷为 string | number | boolean | null） */

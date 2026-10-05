@@ -36,13 +36,9 @@
       }
     }
 
-    .jf-indent-select {
-      padding: $s-1 $s-2;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $r-base;
-      background: var(--b3-theme-background);
-      color: var(--b3-theme-on-background);
-      font-size: $t-2xs;
+    /* 共享 Select（外观由组件承担，仅保留最小宽度） */
+    .jf-indent-select-field {
+      min-width: 96px;
     }
 
     .jf-status {

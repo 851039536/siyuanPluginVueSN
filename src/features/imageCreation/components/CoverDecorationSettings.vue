@@ -217,13 +217,16 @@
 </template>
 
 <script setup lang="ts">
+import type { CoverSettingsService } from "../composables/useCoverSettings"
+import type {
+  ImageCreationI18n,
+  WatermarkPosition,
+} from "../types"
 /**
  * 封面装饰设置：自定义主题色 + 水印 + Logo 角标
  * 自包含：直接读写共享的 CoverSettingsService，无中间人 emit
  */
 import type { SelectOption } from "@/components/Select.vue"
-import type { ImageCreationI18n, WatermarkPosition } from "../types"
-import type { CoverSettingsService } from "../composables/useCoverSettings"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import ColorField from "@/components/ColorField.vue"
@@ -232,7 +235,10 @@ import Select from "@/components/Select.vue"
 import Slider from "@/components/Slider.vue"
 import Switch from "@/components/Switch.vue"
 import { usePlugin } from "@/main"
-import { LOGO_POSITIONS, WATERMARK_POSITIONS } from "../types"
+import {
+  LOGO_POSITIONS,
+  WATERMARK_POSITIONS,
+} from "../types"
 import { DEFAULT_COVER_SETTINGS } from "../types/storage"
 
 interface Props {

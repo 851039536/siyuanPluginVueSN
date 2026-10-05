@@ -173,9 +173,9 @@
 5. `TabPinSettings.vue:94-99` 已有 `.lazy` 文本输入 + 注释「失焦/回车才提交，避免每敲一个字符触发保存」⇒ **迁移必须保留该语义**（正好与 `ColorField` 的 `change` 一致）。
 6. `.gp-color-input` 定义在**共享** `styles/index.scss`，仍被他处依赖 ⇒ **不能随迁移删除**。
 
-### 3.3 🔴 原生 `<select>`（~18 处 / 13 文件）✅ **已整改（批次 B，实测 21 处 / 17 文件）**
+### 3.3 🔴 原生 `<select>`（~18 处 / 13 文件）✅ **已整改（批次 B，实测 36 处 / 24 文件）**
 
-> **状态**：已于 2026-09-14 全部迁共享 `Select`，实施记录见 §七「批次 B」。⚠️ **实测比本节登记多 3 处 / 4 文件**（以 `HTMLSelectElement` 为收敛判据后发现漏登），且 `AnalysisSettingsForm.vue` 一条为**误报**（前序已迁）。以下保留审查时原貌以便回溯。
+> **状态**：已于 2026-09-14 全部迁共享 `Select`，实施记录见 §七「批次 B」。⚠️ **实测规模是本节约 2 倍**（36 处 / 24 文件），漏登原因与收敛判据的修正见 §七「批次 B」第 1 条 —— **这是本报告最重要的方法论教训**。另 `AnalysisSettingsForm.vue` 一条为**误报**（前序已迁）。以下保留审查时原貌以便回溯。
 
 | 位置 | 用途 |
 |------|------|
@@ -413,7 +413,7 @@
 | 批次 | 内容 | 规模 | 前置 | 主要风险 |
 |------|------|------|------|---------|
 | **A** | 原生取色器 → `ColorField`，**修功能缺陷** | 8 处 / 6 文件 | 本地草稿 `ref` 范式（已有先例） | 双事件语义、逐字写盘、宽度未实测 | ✅ **已完成**（见 §七） |
-| **B** | 原生 `<select>` → `Select` | ~18 处 / 13 文件（**实测 21 处 / 17 文件**） | — | 受控回写、载荷归一、双层框、死样式 | ✅ **已完成**（见 §七） |
+| **B** | 原生 `<select>` → `Select` | ~18 处 / 13 文件（**实测 36 处 / 24 文件**） | — | 受控回写、载荷归一、双层框、死样式 | ✅ **已完成**（见 §七） |
 | **C** | 原生 `radio` → `RadioButton` | 11 处 / 5 文件 | — | 同组 `name`、`value` 类型 |
 | **D** | 自建 Tab → `Tabs` 五件套 | 3~4 处 | — | 必须 `lazy`、`value` 必填、焦点移交 |
 | **E** | 自建弹层 → `Dialog` / `Drawer` | ~40 文件，**分两阶段** | 逐项裁决例外 | 无 Teleport、点关判定、裁剪 |
@@ -431,7 +431,9 @@
 
 ### 批次 B：原生 `<select>` → 共享 `Select`（✅ 已完成 2026-09-14）
 
-**改动文件（13 个组件 / 21 处 select + 12 个 SCSS）**：
+**改动文件（21 个组件 / 36 处 select + 20 个 SCSS）**：
+
+**第一批（17 文件 / 21 处，已提交 `736cbbcf`）**：
 
 | 文件 | 处数 | 备注 |
 |------|------|------|
@@ -454,15 +456,33 @@
 | `gitPush/components/common/GitConfigSection.vue` | 1 | 预设键 |
 | `gitPush/components/common/ConsistencyAuditDialog.vue` | 1 | 项目数量上限（**`disabled` 须保留**） |
 
-**⚠️ 实施中发现的实质差异（审查清单不完整，已实证修正）**：
+**第二批（8 文件 / 15 处，大小写敏感扫描补漏）**：
 
-1. **`HTMLSelectElement` 才是可靠判据，而非 grep `<select`**：本轮以 `HTMLSelectElement`（handler 内的类型断言）为收敛信号，**发现审查阶段漏登 8 处**（`AiProviderSelect` 整文件、`AchievementsTab` 2 处、`SkillDialog`/`rssReader`/`StatisticsHeader`/`ViewModeSection`/`textDiff` 各 1 处）。⇒ **真实总数 21 处 > 审查登记的 18 处**，且**分布差异较大**。
+| 文件 | 处数 | 备注 |
+|------|------|------|
+| `generalSettings/components/DocCountSettings.vue` | **4** | 更新间隔 / 字号 / 粗细 / 显示格式（**handler 全为无参 + 150ms 防抖 ⇒ 须先写 ref 再调**） |
+| `generalSettings/components/HeadingSettings.vue` | **2** | 标题样式 / 层级显示 |
+| `formatAssistant/index.vue` | **2** | 字号 / 行高（数值载荷） |
+| `statistics/components/report/PeriodPicker.vue` | **2** | 年 / 月（`defineModel` number） |
+| `statistics/components/report/ReportView.vue` | **2** | 年 / 月（复用既有 `yearText`/`monthText`） |
+| `prompts/components/PromptFormModal.vue` | 1 | 分类（**原 `id` + `required` + `aria-required` 须保留**） |
+| `quickNote/components/project/ProjectForm.vue` | 1 | 状态（`STATUS_META` 派生标签） |
+| `toolCollection/tools/jsonFormatter/index.vue` | 1 | 缩进（值为 2/4/8，**8 在原实现中即标注 "tab"，按原样保留**） |
+
+**⚠️ 实施中发现的实质差异（审查清单严重不完整，已实证修正）**：
+
+1. **§3.3 的「13 文件」是错的：真实规模是 24 文件 / 36 处。** 两轮补漏过程：
+   - **第一轮**（`HTMLSelectElement` 为判据）：补出 8 处漏登 —— `AiProviderSelect` 整文件、`AchievementsTab` 2 处、`SkillDialog`/`rssReader`/`StatisticsHeader`/`ViewModeSection`/`textDiff` 各 1 处。
+   - **第二轮**（**大小写敏感**的 `<select` 全文扫描）：**再补出 8 文件 / 15 处** —— `DocCountSettings` 4 处、`HeadingSettings` 2 处、`formatAssistant` 2 处、`PeriodPicker` 2 处、`ReportView` 2 处、`PromptFormModal`/`ProjectForm`/`jsonFormatter` 各 1 处。
+   - **教训（高价值）**：`HTMLSelectElement` 只覆盖「handler 内做类型断言」的写法；用 `v-model` 直绑的原生 `<select>` **完全没有类型断言**，因而两轮都漏。**唯一可靠判据是大小写敏感的 `<select` 全文扫描**（工具层大小写不敏感搜索会把 `<Select` 组件一起算进来，造成 126 处假阳性而掩盖 15 处真阳性 —— 这正是前两轮都未能收敛的原因）。
 2. **审查误报 1 处**：`gitPush/CommitAnalysis/AnalysisSettingsForm.vue` 已于前序批次迁移完毕（`Select` 同时 emit `update:modelValue` 与 `change`，`:374-375`）⇒ 审查时误判为待迁移，**回读原文后已修正**。
 3. **`AiModelSelect.vue` 有 `<optgroup>`**：共享 `Select` 支持分组（`SelectGroupOption` 的 `isGroup: true` + `options`，见 `select/types.ts:22-30`）⇒ 用分组形式等价迁移，**未降级为平铺选项**。
 4. **`CodeBlockSettings.vue` 的 `presetCodeFont` 是带 setter 的 computed**：setter 内 `if (v) {...}` 意味着「空值不覆盖手输字体」⇒ 迁移时抽出 `onFontSelectChange` 保留该语义，**未直接用内联赋值**（否则空串会走进 setter 分支被丢弃，行为看似相同但语义变模糊）。
-5. **`ConsistencyAuditDialog.vue` 的 `:disabled="analyzing"`** 必须保留（分析中禁用）；共享 `Select` 自带 `disabled` 样式，故旧 SCSS 的 `&:disabled { opacity; cursor }` 随之删除。
-6. **`StatisticsHeader.vue` 的 `opacity: 0.35 → hover 0.7` 淡显交互**是有意的既有设计（与存储路径按钮一致）⇒ 迁移时**只保留 opacity 过渡**，其余外观交还组件。
-7. **载荷归一是本批最主要的风险点**：涉及数值的下拉（`rssReader` 刷新间隔、`StatisticsHeader` 间隔、`ViewModeSection` 年份、`ConsistencyAuditDialog` 上限）全部按「options 值类型 ↔ handler 归一」成对处理，**未混用** `String(y)` 与 `number`（否则选中态会静默匹配失败）。
+5. **`DocCountSettings.vue` 的 handler 全部不接载荷**（`handleIntervalChange` / `handleFontStyleChange` / `handleDisplayFormatChange` 内部读 ref，且带 150ms 防抖）⇒ 迁移时必须**先写回 ref、再调用既有 handler**，否则落盘路径读到旧值。这是「受控组件 + 无参 handler」的典型陷阱。
+6. **`ConsistencyAuditDialog.vue` 的 `:disabled="analyzing"`** 必须保留（分析中禁用）；共享 `Select` 自带 `disabled` 样式，故旧 SCSS 的 `&:disabled { opacity; cursor }` 随之删除。
+7. **`StatisticsHeader.vue` 的 `opacity: 0.35 → hover 0.7` 淡显交互**是有意的既有设计（与存储路径按钮一致）⇒ 迁移时**只保留 opacity 过渡**，其余外观交还组件。
+8. **载荷归一是本批最主要的风险点**：涉及数值的下拉（`rssReader` 刷新间隔、`StatisticsHeader` 间隔、`ViewModeSection` 年份、`ConsistencyAuditDialog` 上限、`DocCountSettings` 间隔/字号、`PeriodPicker` 年/月、`ReportView` 年/月、`formatAssistant` 字号/行高、`jsonFormatter` 缩进）全部按「options 值类型 ↔ handler 归一」成对处理，**未混用** `String(y)` 与 `number`（否则选中态会静默匹配失败）。
+9. **`vue-tsc` 实测抓出 3 个我引入的类型错误**（`SkillDialog` 的 `Language`、`AchievementsTab` 的 `Tier`、`textDiff` 的隐式 `any`）⇒ 印证仓库规范「`tsc` 不解析 `.vue`，既报假错又漏真错」；两处改为**类型收窄函数**（`toTier` / `toStatus`）而非 `as` 强转，避免任意字符串以联合类型入库。
 
 **SCSS 交还外观**：12 个 SCSS 中，`.settings-select` / `.sort-select` / `.filter-select` / `.notebook-select` / `.font-select` / `.gp-cfg-select` / `.gca-limit-select` / `.ach-form-select` / `.year-select` / `.refresh-interval-select` 等自绘外观规则全部删除，仅保留**限宽 / 伸缩 / 淡显**等布局与交互规则。⚠️ 其中 `rssReader/_dialog.scss` 的 `input, select { ... }` 是**共享后代规则**（仍被同面板其他 `<input>` 依赖）⇒ **未删除**，改为新增 `.rss-setting-select` 以 (0,3,0) 覆盖（否则会出现**双层框**）。
 
@@ -470,12 +490,17 @@
 
 | 检查 | 结果 |
 |------|------|
-| 残留断言 `HTMLSelectElement` | ✅ 全项目 **0 命中**（收敛的硬判据） |
+| 残留断言 `<select`（**大小写敏感**，全 `src`） | ✅ **0 命中**（唯一可靠判据） |
+| 残留断言 `HTMLSelectElement` | ✅ 全项目 **0 命中** |
 | 残留断言 `<optgroup>` | ✅ 0 命中（仅 1 条注释提及） |
 | 死类名核对 | ✅ 全部新类名（`*-field` 后缀）模板与 SCSS **一一对应**，无孤立定义 |
-| 共享规则未被误删 | ✅ `rssReader` 的 `input, select` 祖先规则保留（仅新增覆盖规则） |
-| `computed` 导入核对 | ✅ 逐文件确认（`GitConfigSection` / `TodoForm` / `rssReader` 等原本未导入者已补） |
-| `read_lints` / `pnpm typecheck` | ⏳ **待用户执行**（本环境 `pwsh` 被沙箱 ACL 拒绝，AI 侧无法运行命令） |
+| 共享规则未被误删 | ✅ `rssReader` 的 `input, select` 祖先规则保留（仅新增覆盖规则）；`PromptFormModal` 的 `.vp-textarea` 共享规则保留（仅删 `.vp-select`） |
+| `computed` / `Select` 导入核对 | ✅ 逐文件确认（`GitConfigSection` / `TodoForm` / `rssReader` / `DocCountSettings` / `ReportView` / `ProjectForm` / `PromptFormModal` / `jsonFormatter` / `formatAssistant` 等原本未导入者已补） |
+| `pnpm typecheck`（vue-tsc） | ✅ **exit 0**（首轮抓出 3 个我引入的类型错误，已修；详见上方第 9 条） |
+| `pnpm validate:icons` | ✅ 247 个图标全部有效 |
+| `pnpm i18n:verify` | ✅ 4584 个叶子键中英对齐、无重复键（0 新增键 ⇒ 未破坏 i18n 面） |
+| `eslint --fix`（全部 24 个改动文件） | ✅ 我引入的错误 **0 条**（`--fix` 后仅剩 14 条**既有**错误，位于我未改动的代码行，且较改动前**减少**） |
+| `pnpm lint` / `pnpm vite build` | ⏳ **由用户执行**（AI 禁跑） |
 | 目视回归 | ⏳ **待确认**：各 `Select` 下拉面板定位（就地 `fixed`，非 Teleport）与限宽后的行内布局 |
 
 **有意的观感变化（记录在案）**：

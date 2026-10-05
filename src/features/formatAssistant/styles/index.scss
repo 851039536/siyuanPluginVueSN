@@ -130,16 +130,9 @@ $fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微�
   }
 }
 
-// 选择器
-.size-select {
-  padding: $s-1 $s-2;
-  font-size: $t-xs;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  outline: none;
+// 选择器（共享 Select：外观由组件承担，仅保留最小宽度）
+.size-select-field {
+  min-width: 80px;
 }
 
 // 复选框

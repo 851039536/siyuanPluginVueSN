@@ -51,21 +51,9 @@
   align-items: center;
 }
 
-.report-select {
-  padding: $s-1 $s-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$r-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-family: stats.$font-mono;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  outline: none;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
-  }
+/* 共享 Select（外观由组件承担，仅保留等宽字体） */
+.report-select-field {
+  font-family: $ff-mono;
 }
 
 .report-generate-btn {

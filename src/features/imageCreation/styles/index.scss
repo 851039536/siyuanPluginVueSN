@@ -76,7 +76,7 @@
     }
   }
 
-  // Tab 栏
+  // Tab 栏（外观由共享 Tabs/Tab 承担，仅保留容器排版）
   .tab-bar {
     display: flex;
     gap: 0;
@@ -84,49 +84,6 @@
     border-bottom: 1px solid var(--b3-theme-background-light);
     background: var(--b3-theme-surface);
     flex-shrink: 0;
-
-    .tab-btn {
-      display: flex;
-      align-items: center;
-      gap: $s-px3;
-      padding: $s-2 $s-4;
-      border: none;
-      background: transparent;
-      color: var(--b3-theme-on-surface);
-      opacity: 0.6;
-      font-size: $t-xs;
-      font-weight: $fw-medium;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-      font-family: inherit;
-
-      &::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: $s-4;
-        right: $s-4;
-        height: $s-px2;
-        border-radius: $r-sm $r-sm 0 0;
-        background: transparent;
-        transition: background 0.2s ease;
-      }
-
-      &:hover:not(.active) {
-        opacity: 0.85;
-        background: var(--b3-theme-background-light);
-      }
-
-      &.active {
-        opacity: 1;
-        color: var(--b3-theme-primary);
-
-        &::after {
-          background: var(--b3-theme-primary);
-        }
-      }
-    }
   }
 
   .dialog-body {

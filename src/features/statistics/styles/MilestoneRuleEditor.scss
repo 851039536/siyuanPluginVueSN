@@ -59,7 +59,7 @@
   }
 }
 
-// ── Tab bar ──
+// ── Tab bar（外观由共享 Tabs/Tab 承担，仅保留容器排版） ──
 .rule-editor-tabs {
   display: flex;
   gap: 0;
@@ -67,39 +67,6 @@
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
-}
-
-.tab-btn {
-  padding: $s-2 $s-px14;
-  border: none;
-  background: transparent;
-  color: var(--b3-theme-on-surface-light);
-  font-family: $ff-zh;
-  font-size: $t-xs;
-  font-weight: $fw-semibold;
-  letter-spacing: 0.02em;
-  cursor: pointer;
-  position: relative;
-
-  &:hover {
-    color: var(--b3-theme-on-surface);
-  }
-
-  &.active {
-    color: var(--b3-theme-primary);
-    font-weight: $fw-bold;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 8px;
-      right: 8px;
-      height: 2px;
-      background: var(--b3-theme-primary);
-      border-radius: 1px 1px 0 0;
-    }
-  }
 }
 
 // ── Toolbar (milestones tab) ──

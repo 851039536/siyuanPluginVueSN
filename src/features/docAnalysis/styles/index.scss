@@ -19,40 +19,9 @@
   border-bottom: 2px solid var(--b3-border-color);
   flex-shrink: 0;
 
-  .tab-btn {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: $s-1;
-    padding: $s-px6 $s-px14;
-    border: none;
-    background: transparent;
-    color: var(--b3-theme-on-surface-variant);
-    font-size: $t-sm;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-
-    &:hover {
-      background: var(--b3-theme-surface-light);
-      color: var(--b3-theme-on-background);
-    }
-
-    &.active {
-      background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
-      color: var(--b3-theme-primary);
-      font-weight: $fw-semibold;
-
-      // 下划线指示条：绝对定位贴合容器底边，覆盖灰色底线，避免负 margin 错位导致的双层
-      &::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: -2px;
-        height: 2px;
-        background: var(--b3-theme-primary);
-      }
-    }
+  // 共享 Tabs：仅占内容宽，余量交给 spacer 把右侧动作按钮推到末端
+  .tab-bar__tabs {
+    flex: 0 0 auto;
   }
 
   .tab-bar-spacer {

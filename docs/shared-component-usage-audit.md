@@ -271,7 +271,9 @@
 4. **例外边界（逐字沿用先例判据）**：只含「浮层**内部**项按钮」可豁免，**浮层锚点按钮仍是违规**（`docs/gitPush-listview-controls-review.md:51-52`）。
 5. `Drawer` 与 `Dialog` 的遮罩/Esc/焦点接管**全复用私有目录 `overlay/`**，事件集一致（`update:visible`/`show`/`hide`/`after-hide`）；`Dialog` 用 `header` 插槽时须把 `headerId` 打到标题元素（`MEMORY.md:73`）。
 
-### 3.6 🟡 自建 Tab 切换条（4 处，未用 `Tabs` 五件套）
+### 3.6 🟡 自建 Tab 切换条（4 处，未用 `Tabs` 五件套）✅ **已整改（批次 D，3 处；第 4 处登记为观察项）**
+
+> **状态**：3 处已于 2026-09-14 迁共享 `Tabs` 五件套，实施记录见 §七「批次 D」。`AnalysisTabs.vue` 按本表原判**登记为观察项、未改动**（形态已合规）。以下保留审查时原貌以便回溯。
 
 | 位置 | 现状 | 处置 |
 |------|------|------|
@@ -417,7 +419,7 @@
 | **A** | 原生取色器 → `ColorField`，**修功能缺陷** | 8 处 / 6 文件 | 本地草稿 `ref` 范式（已有先例） | 双事件语义、逐字写盘、宽度未实测 | ✅ **已完成**（见 §七） |
 | **B** | 原生 `<select>` → `Select` | ~18 处 / 13 文件（**实测 36 处 / 24 文件**） | — | 受控回写、载荷归一、双层框、死样式 | ✅ **已完成**（见 §七） |
 | **C** | 原生 `radio` → `RadioButton` | 10 处 / 5 文件 | — | 同组 `name`、`value` 类型 | ✅ **已完成**（见 §七） |
-| **D** | 自建 Tab → `Tabs` 五件套 | 3~4 处 | — | 必须 `lazy`、`value` 必填、焦点移交 |
+| **D** | 自建 Tab → `Tabs` 五件套 | 3~4 处 | — | 必须 `lazy`、`value` 必填、焦点移交 | ✅ **已完成**（3 处；第 4 处观察项，见 §七） |
 | **E** | 自建弹层 → `Dialog` / `Drawer` | ~40 文件，**分两阶段** | 逐项裁决例外 | 无 Teleport、点关判定、裁剪 |
 | **F** | 自建 `.vp-btn` → `Button` | ~60 处 / ~28 文件 | 图标补登 | 纯图标禁插槽、dense 协同、覆写特异性 |
 | **G** | `Checkbox` / `Slider` / `ProgressBar` | ~54 处 | 确认环形能力缺口 | `Checkbox` 纯受控 + 无 `title` |
@@ -430,6 +432,42 @@
 ---
 
 ## 七、整改实施记录
+
+### 批次 D：自建 Tab → 共享 `Tabs` 五件套（✅ 已完成 2026-09-14，3 处）
+
+**改动文件（3 组件 / 3 SCSS）**：
+
+| 文件 | Tab 数 | 备注 |
+|------|--------|------|
+| `docAnalysis/index.vue` | 3 | 统计 / 文档列表 / 排版；**Tab 栏内还混有动作按钮**（浮动窗口 / 设置 / 分析）⇒ 只用 `Tabs`+`TabList` 包住标签组，动作按钮留在 `.tab-bar` 内 |
+| `imageCreation/index.vue` | 2 | 文章封面 / 代码图片；`activeTab` 为**模块级单例 ref**（`useImageCreationState`）⇒ 受控绑定 + `switchTab()` |
+| `statistics/components/milestones/MilestoneRuleEditor.vue` | 3 | 里程碑规则 / 自定义成就 / 等级设置；`activeTab` 为本地 3 值联合 ref |
+
+**⚠️ 实施中的关键判断**：
+
+1. **`TabPanel` 无法用于这三处（重要边界发现）**：`TabPanel` 经 `useTabsContext()` 取上下文，**脱离 `Tabs` 即抛错**；且 `TabPanels` 只是个 `div` 包裹层，要求各面板为**同级相邻子节点**。而三处的面板**均与其它内容交错**：
+   - `docAnalysis`：`stats` / `list` 面板 → 底部信息栏 → 发布标准提示 → `publish` 面板（**中间夹了两块常驻内容**）
+   - `imageCreation` / `MilestoneRuleEditor`：面板是**独立组件**（`CoverTab` / `CodeImageTab`、`AchievementsTab` / `LevelConfigTab`），本就各自持有内部状态
+   强行合并成 `TabPanels` 会把底栏与提示**移出原位置**，属有回归风险的布局重构（且无目视条件）。⇒ **本轮只迁标签组（`Tabs`+`TabList`+`Tab`），保留既有面板容器**：`Tab` 的 `aria-controls` 指向的面板 id 由库内生成，面板侧未配对 `TabPanel` ⇒ `aria-controls` 成悬空引用。**这是有意的取舍**：换来了标签的键盘漫游（←/→、Home/End、roving tabindex）与 `role="tablist"`/`aria-selected` 语义，代价是面板侧缺 `role="tabpanel"`。已登记为**待办**（见 §八），待有目视回归条件时再把面板并入 `TabPanels`。
+2. **必须非 `lazy`**：三处原实现分别是 `v-show`（docAnalysis、imageCreation）与 `v-if`/`v-show` 混合（MilestoneRuleEditor），但共同意图是**保留面板内部状态**（`imageCreation` 注释明写「v-show 保持组件常驻，关闭后重开不丢状态」）⇒ 均不传 `lazy`（默认 `false`，仅隐藏不卸载）。**若误传 `lazy` 会重置用户在各 Tab 内的编辑状态** —— 这是本批最危险的误用点。
+3. **受控绑定不可省**：三处的 `activeTab` 都被**面板外**的代码写入（`docAnalysis` 有 6 处深链写入：`handlePublishDoc` / 分类下钻 / 平台下钻等）⇒ 必须 `:value` + `@update:value` 受控，**不能用非受控自持**，否则外部切换会与库内状态分叉。
+4. **`value` 类型收窄**：三个文件分别用 `v as TabKey`（`docAnalysis`）、`switchTab(v as TabType)`（`imageCreation`）、`v as MilestoneTabKey`（本文件新增该类型别名，原为内联联合）。`Tab` 的 `value` 限 `string | number` 且**严格相等**判定。
+5. **`IconWrapper`（业务图标组件）留在 `Tab` 默认插槽内**是正确的：`Button.icon` 受 `IconKey` 约束，但 `Tab` 的插槽是普通内容节点，不经图标系统 —— `docAnalysis` 的裸 `<Icon>` 同理（未改）。
+
+**SCSS 交还外观（3 个文件，删除量最大的一批）**：`.tab-btn` 三处定义（`docAnalysis` 含 `.active::after` 下划线指示条、`imageCreation` 含 `::after` + hover、`MilestoneRuleEditor` 含全局 `.tab-btn`）全部删除，仅保留 `.tab-bar` / `.rule-editor-tabs` 的容器排版（padding / border-bottom / background / flex）。**净减 71 行**（+111 / −182）。`docAnalysis` 的 `.tab-bar__tabs { flex: 0 0 auto }` 为新增：保证 `Tabs` 只占内容宽、余量交给 `.tab-bar-spacer` 把动作按钮推到末端。
+
+**验证（批次 D）**：
+
+| 检查 | 结果 |
+|------|------|
+| 残留断言 `tab-btn`（全 `src`，`.vue`+`.scss`） | ✅ **0 命中** |
+| `pnpm typecheck`（vue-tsc） | ✅ **exit 0** |
+| `eslint --fix`（3 文件） | ✅ **0 error / 24 warning**（全部为未改动函数的既有 `explicit-function-return-type`）；首轮抓出 1 个我引入的 `import/no-duplicates`（`./types` 拆成两行）已修 |
+| 行尾一致性 `git ls-files --eol` | ✅ 3 个文件全部 `w/crlf`（**`edit` 工具与 `eslint --fix` 都会造成 `w/mixed`/`w/lf`，已两次归一**） |
+| 编码完整性 | ✅ 3 个文件无 mojibake |
+| 目视回归 | ⏳ **待确认（本批最需要目视的一批）**：①标签的选中态指示条（原为 `$s-4`/8px 内缩的圆角条，现由 `Tab` 自身承担，观感必然变化）；②`xsmall` 档位下的标签内边距与图标间距；③`docAnalysis` 标签组与右侧动作按钮的间距（`.tab-bar` gap 为 `$s-px2`） |
+
+**有意的观感变化（记录在案）**：三处 Tab 的选中指示条由各自的 `::after` 自绘（内缩 8px / `$s-4`，圆角）改为 `Tab` 组件内置样式；`imageCreation` 原有的 `opacity: 0.6 → 1` 淡入与 hover 变色、`MilestoneRuleEditor` 原有的 `letter-spacing: 0.02em` 与 `$ff-zh` 字体均随自绘规则删除，改由库内档位承担。
 
 ### 批次 C：原生 `radio` → 共享 `RadioButton`（✅ 已完成 2026-09-14）
 
@@ -624,3 +662,5 @@
 | 4 | 环形进度 → 是否给 `ProgressBar` 扩展环形能力？ | ✅ **已实证不支持**（`mode` 仅 determinate/indeterminate）⇒ 建议**登记例外**，不为两处改造共享库 |
 | 5 | `SettingSlider.vue` 走「扩展 `Slider`」还是「登记例外」？ | 建议 **(a) 扩展共享 `Slider`**（加可选 `stepButtons` / `showValue`，向后兼容）后删除自建文件 |
 | 6 | `Listbox`/`Splitter`/`Inplace`/`FocusTrap`/`MeterGroup`/`SpeedDial`/`Sidebar`/`Toast` 零采用是否要「制造使用点」 | 建议**不制造** —— 逐项确认无场景即登记「本场景不适用」，不做无意义改造 |
+| 7 | **批次 D 遗留：三处 Tab 的面板未配 `TabPanel`**（`aria-controls` 悬空） | 需把 `docAnalysis` 的底栏/提示移出面板区、或接受 `aria-controls` 悬空。**有目视回归条件时再做**（属布局重构，本轮无目视条件故未做） |
+| 8 | **批次 D 的观感变化较大**（三处 Tab 选中指示条全部换成库内样式） | 建议在思源内目视确认后，再决定是否需要用覆写规则贴近原观感 |

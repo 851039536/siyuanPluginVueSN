@@ -1,18 +1,25 @@
 <!-- 文档分析功能 - Dock 侧边栏主面板，含统计/列表/排版三 Tab -->
 <template>
   <div class="doc-analysis-panel">
-    <!-- Tab 切换栏 -->
+    <!-- Tab 切换栏：共享 Tabs 五件套（受控 value；非 lazy 以保留各面板内部状态） -->
     <div class="tab-bar">
-      <button
-        v-for="tab in TABS"
-        :key="tab.key"
-        class="tab-btn"
-        :class="{ active: activeTab === tab.key }"
-        @click="activeTab = tab.key"
+      <Tabs
+        :value="activeTab"
+        size="xsmall"
+        class="tab-bar__tabs"
+        @update:value="(v) => activeTab = v as TabKey"
       >
-        <Icon :icon="tab.icon" />
-        {{ tab.label }}
-      </button>
+        <TabList>
+          <Tab
+            v-for="tab in TABS"
+            :key="tab.key"
+            :value="tab.key"
+          >
+            <Icon :icon="tab.icon" />
+            {{ tab.label }}
+          </Tab>
+        </TabList>
+      </Tabs>
       <div class="tab-bar-spacer" />
       <!-- 在独立窗口打开（浮动窗口内隐藏；关闭浮动窗口自动移回主窗口） -->
       <button
@@ -185,10 +192,16 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
+import type { SettingsDraft } from "./components/SettingsPanel/index.vue"
+import type {
+  DocI18n,
+  PlatformMeta,
+  ViewSettings,
+} from "./types/index"
+import { Icon } from "@iconify/vue"
 import {
   getFrontend,
 } from "siyuan"
-import { Icon } from "@iconify/vue"
 import {
   computed,
   onBeforeUnmount,
@@ -198,17 +211,21 @@ import {
 import {
   getBlockAttrs,
 } from "@/api"
+import Tab from "@/components/Tab.vue"
+import TabList from "@/components/TabList.vue"
+import Tabs from "@/components/Tabs.vue"
 import AttrsPanel from "./components/AttrsPanel/index.vue"
-import DocListView from "./components/DocListView/index.vue"
 import FilterSettings from "./components/DocListView/FilterSettings.vue"
+import DocListView from "./components/DocListView/index.vue"
 import PublishPanel from "./components/PublishPanel/index.vue"
 import SettingsPanel from "./components/SettingsPanel/index.vue"
 import StatsOverview from "./components/StatsView/index.vue"
-import { useDocAnalysis } from "./composables/useDocAnalysis"
 import { PLATFORM_META } from "./composables/platformMeta"
-import type { SettingsDraft } from "./components/SettingsPanel/index.vue"
-import type { DocI18n, PlatformMeta, ViewSettings } from "./types/index"
-import { DEFAULT_FILTER_OPTIONS, DEFAULT_VIEW_SETTINGS } from "./types/index"
+import { useDocAnalysis } from "./composables/useDocAnalysis"
+import {
+  DEFAULT_FILTER_OPTIONS,
+  DEFAULT_VIEW_SETTINGS,
+} from "./types/index"
 
 interface Props {
   /** docAnalysis 分片 i18n（index.ts 传入 plugin.i18n.docAnalysis，扁平键值） */
@@ -311,9 +328,21 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { key: "stats", label: "统计", icon: "mdi:chart-bar" },
-  { key: "list", label: "文档列表", icon: "mdi:format-list-bulleted" },
-  { key: "publish", label: "排版", icon: "mdi:brush" },
+  {
+    key: "stats",
+    label: "统计",
+    icon: "mdi:chart-bar",
+  },
+  {
+    key: "list",
+    label: "文档列表",
+    icon: "mdi:format-list-bulleted",
+  },
+  {
+    key: "publish",
+    label: "排版",
+    icon: "mdi:brush",
+  },
 ]
 
 // Tab 切换

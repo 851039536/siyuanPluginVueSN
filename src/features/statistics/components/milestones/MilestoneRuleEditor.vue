@@ -22,32 +22,28 @@
         </button>
       </div>
 
-      <!-- Tab bar -->
+      <!-- Tab bar：共享 Tabs 五件套（受控 value；非 lazy 以保留各 Tab 内部状态） -->
       <div class="rule-editor-tabs">
-        <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'milestones' }"
-          @click="activeTab = 'milestones'"
+        <Tabs
+          :value="activeTab"
+          size="xsmall"
+          @update:value="(v) => activeTab = v as MilestoneTabKey"
         >
-          <!-- Tab："里程碑规则" -->
-          {{ i18n.rulesTab }}
-        </button>
-        <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'achievements' }"
-          @click="activeTab = 'achievements'"
-        >
-          <!-- Tab："自定义成就" -->
-          {{ i18n.achievementsTab }}
-        </button>
-        <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'level' }"
-          @click="activeTab = 'level'"
-        >
-          <!-- Tab："等级设置" -->
-          {{ i18n.levelsTab }}
-        </button>
+          <TabList>
+            <Tab value="milestones">
+              <!-- Tab："里程碑规则" -->
+              {{ i18n.rulesTab }}
+            </Tab>
+            <Tab value="achievements">
+              <!-- Tab："自定义成就" -->
+              {{ i18n.achievementsTab }}
+            </Tab>
+            <Tab value="level">
+              <!-- Tab："等级设置" -->
+              {{ i18n.levelsTab }}
+            </Tab>
+          </TabList>
+        </Tabs>
       </div>
 
       <!-- Milestones tab toolbar -->
@@ -180,6 +176,9 @@ import {
   watch,
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Tab from "@/components/Tab.vue"
+import TabList from "@/components/TabList.vue"
+import Tabs from "@/components/Tabs.vue"
 import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
 import { MILESTONE_TYPES } from "../../types/milestoneRules"
 import { generateDefaultRules } from "../../utils/milestones"
@@ -211,7 +210,9 @@ const {
 } = useMilestoneStorage()
 
 // ── Tabs ──
-const activeTab = ref<"milestones" | "achievements" | "level">("milestones")
+/** 三个 Tab 的取值（与 Tabs/Tab 的 value 严格相等判定对应） */
+type MilestoneTabKey = "milestones" | "achievements" | "level"
+const activeTab = ref<MilestoneTabKey>("milestones")
 
 // ── Milestones state ──
 const editableRows = ref<Row[]>([])

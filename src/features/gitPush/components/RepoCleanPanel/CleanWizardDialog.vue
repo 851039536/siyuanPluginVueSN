@@ -9,13 +9,15 @@
         <div class="gp-dialog-header">
           <!-- 弹窗标题："历史清理（BFG）" -->
           <span class="gp-dialog-title">{{ i18n.bfgTitle }}</span>
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--xs"
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="close"
             :disabled="running"
+            :aria-label="i18n.close"
             @click="$emit('close')"
-          >
-            <Icon icon="mdi:close" height="10" />
-          </button>
+          />
         </div>
 
         <div class="gp-dialog-body">
@@ -110,15 +112,17 @@
                   />
                   <span>{{ item.label }}</span>
                   <!-- jar 缺失时内联下载按钮 -->
-                  <button
+                  <Button
                     v-if="item.key === 'jar' && !item.ok && !jarDownloading"
-                    class="vp-btn vp-btn--ghost vp-btn--xs"
+                    variant="ghost"
+                    size="xsmall"
+                    dense
+                    icon="downloadOutline"
                     @click="downloadJar"
                   >
-                    <Icon icon="mdi:download-outline" height="10" />
                     <!-- 按钮文案："下载" -->
                     {{ i18n.bfgDownloadJar }}
-                  </button>
+                  </Button>
                   <span
                     v-if="item.key === 'jar' && jarDownloading"
                     class="grcp-check-progress"
@@ -211,59 +215,66 @@
           <div class="gp-grow" />
 
           <!-- 阶段 1：下一步 -->
-          <button
+          <Button
             v-if="phase === 'plan'"
-            class="vp-btn vp-btn--primary vp-btn--sm"
+            variant="primary"
+            size="xsmall"
+            dense
             :disabled="!hasAnyStrategy"
             @click="goCheck"
           >
             <!-- 按钮文案："下一步" -->
             {{ i18n.bfgNext }}
-          </button>
+          </Button>
 
           <!-- 阶段 2：返回 + 开始清理（红色危险按钮） -->
           <template v-if="phase === 'check'">
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
               @click="phase = 'plan'"
             >
               <!-- 按钮文案："返回" -->
               {{ i18n.bfgBack }}
-            </button>
-            <button
-              class="vp-btn vp-btn--danger vp-btn--sm"
+            </Button>
+            <Button
+              variant="danger"
+              size="xsmall"
+              dense
+              icon="databaseRemoveOutline"
               :disabled="!allChecksOk || running"
               @click="startClean"
             >
-              <Icon icon="mdi:database-remove-outline" height="12" />
               <!-- 按钮文案："开始清理" -->
               {{ i18n.bfgStart }}
-            </button>
+            </Button>
           </template>
 
-          <!-- 阶段 4：强推远端 + 完成 -->
+          <!-- 阶段 4：强推远端 + 完成（loading 承担转圈与禁用，保宽且自动禁用） -->
           <template v-if="phase === 'result'">
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
+              icon="cloudUpload"
+              :loading="forcePushing || finalizing"
               :disabled="forcePushing || finalizing"
               @click="forcePush"
             >
-              <Icon
-                :icon="forcePushing || finalizing ? 'mdi:loading' : 'mdi:cloud-upload-outline'"
-                height="12"
-                :class="{ 'gp-spin': forcePushing || finalizing }"
-              />
               <!-- 按钮文案："强推远端"/"收尾中…" -->
               {{ finalizing ? i18n.bfgFinalizingBtn : i18n.bfgForcePush }}
-            </button>
-            <button
-              class="vp-btn vp-btn--primary vp-btn--sm"
+            </Button>
+            <Button
+              variant="primary"
+              size="xsmall"
+              dense
               :disabled="forcePushing || finalizing"
               @click="finishWizard"
             >
               <!-- 按钮文案："完成" -->
               {{ i18n.bfgDone }}
-            </button>
+            </Button>
           </template>
         </div>
       </div>
@@ -279,6 +290,7 @@ import { Icon } from "@iconify/vue"
 import { computed, onMounted, onUnmounted, ref } from "vue"
 import { getErrorMessage } from "@/utils/stringUtils"
 import CloneLogPanel from "../common/CloneLogPanel.vue"
+import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { formatBytes } from "./format"

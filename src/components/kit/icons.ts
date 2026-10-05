@@ -751,6 +751,12 @@ export const COMMON_ICONS = {
   download: {
     icon: "mdi:download",
   },
+  downloadOutline: {
+    icon: "mdi:download-outline",
+  },
+  databaseRemoveOutline: {
+    icon: "mdi:database-remove-outline",
+  },
   fileCopy: {
     icon: "mdi:file-document-multiple",
   },

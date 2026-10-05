@@ -48,25 +48,29 @@
         <label class="color-row">
           <!-- 颜色项："背景色" -->
           <span>{{ t.colorBg }}</span>
-          <input
-            v-model="s.colors.bg"
-            type="color"
+          <!-- 颜色字段：共享 ColorField（原生 input[type=color] 在 Electron 下不弹窗）；落盘由 service 防抖统一处理 -->
+          <ColorField
+            class="color-field-inline"
+            :model-value="s.colors.bg"
+            @update:model-value="s.colors.bg = $event"
           />
         </label>
         <label class="color-row">
           <!-- 颜色项："标题色" -->
           <span>{{ t.colorTitle }}</span>
-          <input
-            v-model="s.colors.titleColor"
-            type="color"
+          <ColorField
+            class="color-field-inline"
+            :model-value="s.colors.titleColor"
+            @update:model-value="s.colors.titleColor = $event"
           />
         </label>
         <label class="color-row">
           <!-- 颜色项："强调色" -->
           <span>{{ t.colorAccent }}</span>
-          <input
-            v-model="s.colors.accent"
-            type="color"
+          <ColorField
+            class="color-field-inline"
+            :model-value="s.colors.accent"
+            @update:model-value="s.colors.accent = $event"
           />
         </label>
       </div>
@@ -222,6 +226,7 @@ import type { ImageCreationI18n, WatermarkPosition } from "../types"
 import type { CoverSettingsService } from "../composables/useCoverSettings"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
+import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
 import Slider from "@/components/Slider.vue"

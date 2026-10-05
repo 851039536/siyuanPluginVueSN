@@ -92,11 +92,12 @@
         class="feature-color-input"
       >
         <span class="feature-color-label">{{ colorLabel || '' }}</span>
-        <input
-          type="color"
-          :value="colorValue"
-          @input="onColorInput"
-        >
+        <!-- 颜色字段：改用共享 ColorField（原生 input[type=color] 在 Electron 下不弹窗） -->
+        <ColorField
+          class="feature-color-field"
+          :model-value="colorValue"
+          @update:model-value="emit('colorChange', $event)"
+        />
       </div>
     </div>
   </div>
@@ -106,6 +107,7 @@
 import type { Feature } from "../types"
 import { Icon } from "@iconify/vue"
 import Button from "@/components/Button.vue"
+import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
 
@@ -133,15 +135,10 @@ interface Emits {
   (e: "colorChange", value: string): void
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const handleAction = (actionKey: string): void => {
   emit("action", actionKey)
-}
-
-const onColorInput = (event: Event): void => {
-  const input = event.target as HTMLInputElement
-  emit("colorChange", input.value)
 }
 </script>

@@ -209,12 +209,8 @@
   opacity: 0.75;
 }
 
-.feature-color-input input[type="color"] {
-  width: 28px;
-  height: 20px;
-  padding: 0;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: transparent;
-  cursor: pointer;
+// 共享 ColorField 根为 width:100%，在 flex 行内需收缩为内容宽
+.feature-color-field {
+  flex: 1;
+  min-width: 0;
 }

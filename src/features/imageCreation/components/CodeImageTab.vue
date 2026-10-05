@@ -149,11 +149,11 @@
               size="xsmall"
               @update:model-value="state.bgColorEnabled = $event"
             />
-            <input
+            <ColorField
               v-if="state.bgColorEnabled"
-              v-model="state.bgColor"
-              type="color"
-              class="color-swatch"
+              class="color-swatch-field"
+              :model-value="state.bgColor"
+              @update:model-value="state.bgColor = $event"
             />
           </div>
           <div class="deco-group-title">
@@ -383,6 +383,7 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
+import ColorField from "@/components/ColorField.vue"
 import Select from "@/components/Select.vue"
 import Slider from "@/components/Slider.vue"
 import Switch from "@/components/Switch.vue"

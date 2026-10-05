@@ -38,12 +38,12 @@
               :aria-label="i18n?.categoryName"
               @keyup.enter="handleAdd"
             />
-            <!-- 无障碍标签："分类颜色" -->
-            <input
-              v-model="form.color"
-              type="color"
-              class="vp-color-input"
-              :aria-label="i18n?.categoryColor"
+            <!-- 分类颜色：改用共享 ColorField（原生 input[type=color] 在 Electron 下不弹窗） -->
+            <ColorField
+              class="vp-category-color-field"
+              :model-value="form.color"
+              :placeholder="i18n?.categoryColor"
+              @update:model-value="form.color = $event"
             />
             <!-- 按钮文案："添加" -->
             <Button
@@ -98,6 +98,7 @@ import {
   reactive,
 } from "vue"
 import Button from "@/components/Button.vue"
+import ColorField from "@/components/ColorField.vue"
 import { DEFAULT_CATEGORY_COLOR } from "../types"
 
 const props = defineProps<{

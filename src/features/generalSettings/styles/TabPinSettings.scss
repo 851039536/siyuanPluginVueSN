@@ -130,35 +130,10 @@
   flex-wrap: wrap;
 }
 
-.color-picker {
-  width: 48px;
-  height: 32px;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $r-base;
-  cursor: pointer;
-  background: transparent;
-}
-
-.color-picker:hover {
-  border-color: var(--b3-theme-primary);
-}
-
-.color-text {
-  flex: 1;
-  min-width: 100px;
-  padding: $s-1 $s-2;
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  font-family: $ff-mono;
-  text-transform: uppercase;
-}
-
-.color-text:focus {
-  outline: none;
-  border-color: var(--b3-theme-primary);
+/* 共享 ColorField：内容宽即可，避免在 flex 行内按 width:100% 撑满 */
+.tab-pin-color-field {
+  flex: 0 0 auto;
+  width: 200px;
 }
 
 .reset-color-btn {
@@ -251,11 +226,7 @@
     align-items: stretch;
   }
 
-  .color-picker {
+  .tab-pin-color-field {
     width: 100%;
-  }
-
-  .color-text {
-    min-width: auto;
   }
 }

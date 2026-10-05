@@ -190,15 +190,10 @@
   flex-direction: column;
 }
 
-// 底色取色器与背景图缩略图
-.color-swatch {
-  width: $s-6;
-  height: $s-5;
-  padding: 0;
-  border: 1px solid var(--b3-theme-background-light);
-  border-radius: $r-sm;
-  background: transparent;
-  cursor: pointer;
+// 底色取色器（共享 ColorField，根为 width:100% ⇒ 行内限宽）
+.color-swatch-field {
+  flex: 0 0 auto;
+  width: 150px;
 }
 
 .bg-thumb {

@@ -52,12 +52,12 @@
             style="flex:1"
             @keydown.enter="addCategory()"
           />
-          <!-- 分类颜色拾取器：提示“颜色” -->
-          <input
-            v-model="newCatColor"
-            type="color"
-            class="gp-color-input"
-            :title="i18n.catColorTitle"
+          <!-- 分类颜色拾取器：改用共享 ColorField（原生 input[type=color] 在 Electron 下不弹窗） -->
+          <ColorField
+            class="gp-cat-color-field"
+            :model-value="newCatColor"
+            :placeholder="i18n.catColorTitle"
+            @update:model-value="newCatColor = $event"
           />
           <button
             class="vp-btn vp-btn--primary vp-btn--sm"
@@ -78,6 +78,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
+import ColorField from "@/components/ColorField.vue"
 import Input from "@/components/Input.vue"
 import type { ProjectCategory } from "../../types"
 import { UNGROUPED_ID } from "../../types"

@@ -19,14 +19,10 @@
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
 
-  input[type="color"] {
-    width: $s-6;
-    height: $s-5;
-    padding: 0;
-    border: 1px solid var(--b3-theme-background-light);
-    border-radius: $r-sm;
-    background: transparent;
-    cursor: pointer;
+  // 共享 ColorField 根为 width:100%，在 space-between 行内需限宽避免撑满
+  .color-field-inline {
+    flex: 0 0 auto;
+    width: 150px;
   }
 }
 

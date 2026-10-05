@@ -16,23 +16,10 @@
       @include m.form-input;
     }
 
-    .vp-color-input {
-      width: 40px;
-      height: 36px;
-      padding: $s-px2;
-      border: 1px solid var(--b3-border-color);
-      border-radius: $r-base;
-      cursor: pointer;
-      background: var(--b3-theme-surface);
-
-      &::-webkit-color-swatch-wrapper {
-        padding: $s-px2;
-      }
-
-      &::-webkit-color-swatch {
-        border: none;
-        border-radius: $r-sm;
-      }
+    // 共享 ColorField 根为 width:100% ⇒ 行内限宽，避免撑满表单行
+    .vp-category-color-field {
+      flex: 0 0 auto;
+      width: 150px;
     }
   }
 }

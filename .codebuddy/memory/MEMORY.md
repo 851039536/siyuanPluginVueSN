@@ -72,6 +72,7 @@
 - **gitPush 失败真因**：①路径不存在（多设备未配 `localPaths`）②`not a git repository` ③空仓库 `git log` 退出码非 0 ④超时（本地命令走本地池）⑤`spawn git ENOENT` ⑥dubious ownership ⑦`index.lock` 残留 ⑧大仓库 `git log --numstat` 逼近 10MB maxBuffer
 - **共享控件迁移（2026-09-14 gitPush/ListView 完成）**：`Button` 新增 `dense`（仅与 `size="xsmall"` 协同）；覆写共享组件统一抬 (0,3,0)～(0,4,0)（padding/圆角须 (0,4,0)）；`Dialog` 用 header 插槽须把 `headerId` 打到标题元素；删 `import { Icon }` 前必须 grep 模板 `<Icon`（残留时 lint 与 typecheck 都不报）。报告 `docs/gitPush-listview-controls-review.md`
 - **shortcut**：已迁入 `toolCollection/tools/shortcut/`（独立 Dock 已摘除；规格 `docs/shortcut-refactor-spec.md`）；存储键 `plugin-toolCollection-shortcut-custom`；单例 Manager 必须 `ref` 镜像
-- **待迁移**：feature 内原生 radio 5 处、`input[type=color]` 8 处、`<select>` 30+ 处、`ReviewRadarChart` 未迁 `Chart`
+- **共享组件复用审查**：全量报告 `docs/shared-component-usage-audit.md`（违规 8 类/约 130 处/约 70 文件）。✅ **原生取色器 8 处已迁 `ColorField`**（批次 A，6 组件+5 SCSS）；**待迁移**：自建 `.vp-btn` ~60 处（gitPush `RepoCleanPanel`/`common/` 重灾区）、`<select>` ~18 处、原生 radio 11 处（`RadioButton` 采用数 0）、自建弹层 ~40 文件（`Drawer` 采用数 0）、自建 Tab 4 处、自建进度条 ~20 处、`checkbox`/`range` ~34 处、`ReviewRadarChart` 未迁 `Chart`
+- ⚠️ **迁 `ColorField` 三坑**：①双事件（`update:modelValue` 逐字仅改内存 / `change` 才落盘）⇒ 父级「收值即保存」的必须加本地草稿 `ref`（仅 `TabPinSettings` 属此列；`imageCreation` 两个 service 已有 `setTimeout` 防抖 ⇒ 无需草稿）；②**无 `aria-label` / `title` prop** ⇒ 无障碍名走可见标签 + `placeholder`，别透传（只会落到根 div）；③根 `width:100%` ⇒ 放进 flex 行必须限宽（否则撑满）。`TabPinSettings.backgroundColor` 默认值是 `rgba(var(--b3-theme-primary-rgb),0.1)` **含 CSS 变量的表达式而非 hex** ⇒ 草稿需 `toPickerHex` 归一 + `watch` 回填
 - **超 500 行未拆**：`gitPush/types/meta.ts` 672、`toolCollection/tools/base64Image/index.vue` 917、`unitConverter/utils/units.ts` 690、`wordQuery/styles/codeUtils.scss` 530
 - 其余细节见各模块 `README.md` 与当日日志

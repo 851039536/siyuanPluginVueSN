@@ -85,17 +85,14 @@
             ></button>
           </div>
           <div class="color-input-group">
-            <input
-              :value="toPickerHex(backgroundColor)"
-              type="color"
-              class="color-picker"
-              @input="onColorPickerInput($event)"
-            />
-            <!-- 文本框用 .lazy：失焦/回车才提交，避免每敲一个字符触发保存与样式注入 -->
-            <input
-              v-model.lazy="backgroundColor"
-              type="text"
-              class="color-text"
+            <!-- 颜色字段：共享 ColorField（原生 input[type=color] 在 Electron 下不弹窗）。
+                 draft 承接逐字输入（仅改内存），change 才提交到 backgroundColor ⇒ 避免逐字保存与样式注入 -->
+            <ColorField
+              class="tab-pin-color-field"
+              :model-value="colorDraft"
+              :placeholder="defaultBackgroundColor"
+              @update:model-value="colorDraft = $event"
+              @change="commitColor"
             />
             <button
               v-if="backgroundColor !== defaultBackgroundColor"
@@ -177,6 +174,7 @@ import {
   ref,
   watch,
 } from "vue"
+import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Switch from "@/components/Switch.vue"
 import {
@@ -215,7 +213,8 @@ const PRESET_COLORS: string[] = [
   "rgba(60, 160, 240, 0.18)",
 ]
 
-// 将颜色值归一化为拾取器可用的 6 位 hex；非 hex 值（如默认 rgba(var(...))）回退黑色仅作展示
+// 将颜色值归一化为 ColorField 可展示的 6 位 hex；非 hex 值（默认值形如 rgba(var(--b3-theme-primary-rgb), 0.1)）
+// 回退黑色仅作展示，真实值仍以 backgroundColor 为准
 function toPickerHex(value: string): string {
   if (/^#[0-9a-f]{6}$/i.test(value)) return value
   if (/^#[0-9a-f]{3}$/i.test(value)) {
@@ -224,9 +223,17 @@ function toPickerHex(value: string): string {
   return "#000000"
 }
 
-// 拾取器始终产出合法的 #rrggbb，可直接回写
-function onColorPickerInput(event: Event) {
-  backgroundColor.value = (event.target as HTMLInputElement).value
+/** 颜色草稿：ColorField 的 update:modelValue 逐字触发（仅改本地草稿），change 才提交，避免逐字写盘 */
+const colorDraft = ref(toPickerHex(defaultBackgroundColor))
+
+/** 提交草稿：空值不覆盖，合法值与默认表达式均落库 */
+function commitColor() {
+  const next = colorDraft.value.trim()
+  if (!next) {
+    colorDraft.value = toPickerHex(backgroundColor.value)
+    return
+  }
+  backgroundColor.value = next
 }
 
 // 状态
@@ -235,6 +242,11 @@ const displayMode = ref<TabPinSettings["displayMode"]>(DEFAULT_TABPIN_SETTINGS.d
 const backgroundColor = ref(defaultBackgroundColor)
 let initialized = false
 const storage = ref<GeneralSettingsStorage | null>(null)
+
+// 外部（预设色板 / 重置 / 加载）改变 backgroundColor 时同步草稿
+watch(backgroundColor, (value) => {
+  colorDraft.value = toPickerHex(value)
+})
 
 // 统一监听所有响应式变化：样式应用由父链路 GeneralSettings.handleSettingsChange 承担，
 // 面板只负责通知 + 保存（初始加载期间跳过）

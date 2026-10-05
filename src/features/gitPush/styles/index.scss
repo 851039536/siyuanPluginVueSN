@@ -477,14 +477,10 @@
   margin-top: $s-2;
 }
 
-.gp-color-input {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  cursor: pointer;
-  padding: $s-px2;
-  background: none;
+// 分类颜色字段（共享 ColorField 根为 width:100% ⇒ 行内限宽，避免撑满添加行）
+.gp-cat-color-field {
+  flex: 0 0 auto;
+  width: 150px;
 }
 
 // 卡片内联分类下拉样式 → CardHeader.scss

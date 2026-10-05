@@ -64,21 +64,15 @@
           @keyup.enter="triggerQuery"
         />
       </div>
-      <select
-        v-model="options.notebookId"
-        class="filter-select notebook-select"
-      >
-        <option value="">
-          全部笔记本
-        </option>
-        <option
-          v-for="nb in notebooks"
-          :key="nb.id"
-          :value="nb.id"
-        >
-          {{ nb.name }}
-        </option>
-      </select>
+      <!-- 笔记本过滤：共享 Select（纯受控 ⇒ 显式回写 options.notebookId） -->
+      <Select
+        class="filter-select-field notebook-select-field"
+        :model-value="options.notebookId"
+        :options="notebookOptions"
+        size="xsmall"
+        aria-label="笔记本过滤"
+        @update:model-value="(v) => options.notebookId = v === null ? '' : String(v)"
+      />
       <input
         v-model="options.bookmarkName"
         type="text"
@@ -99,6 +93,7 @@ import {
   computed,
   onBeforeUnmount,
 } from "vue"
+import Select from "@/components/Select.vue"
 
 interface Props {
   options: FilterOptions
@@ -121,6 +116,12 @@ onBeforeUnmount(() => {
     debounceTimer = null
   }
 })
+
+/** 笔记本选项：空串代表"全部笔记本"（与 FilterOptions.notebookId 的空值语义一致） */
+const notebookOptions = computed(() => [
+  { value: "", label: "全部笔记本" },
+  ...props.notebooks.map((nb) => ({ value: nb.id, label: nb.name })),
+])
 
 /** 是否有任何非空过滤条件 */
 const hasAnyFilter = computed(() => {

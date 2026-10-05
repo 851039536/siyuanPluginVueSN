@@ -73,35 +73,26 @@
         <div class="skill-dialog__row">
           <div class="skill-dialog__field">
             <label class="skill-dialog__label">{{ t.language }}</label>
-            <select
-              v-model="form.language"
+            <!-- 下拉：共享 Select（纯受控 ⇒ 显式回写 form） -->
+            <Select
               class="skill-dialog__select"
-            >
-              <option
-                v-for="opt in languageOptions"
-                :key="opt.key"
-                :value="opt.key"
-              >
-                {{ opt.label }}
-              </option>
-            </select>
+              :model-value="form.language"
+              :options="languageSelectOptions"
+              size="xsmall"
+              :aria-label="t.language"
+              @update:model-value="(v) => form.language = toStr(v)"
+            />
           </div>
           <div class="skill-dialog__field">
             <label class="skill-dialog__label">{{ t.difficulty }}</label>
-            <select
-              v-model="form.difficulty"
+            <Select
               class="skill-dialog__select"
-            >
-              <option value="beginner">
-                {{ t.beginner }}
-              </option>
-              <option value="intermediate">
-                {{ t.intermediate }}
-              </option>
-              <option value="advanced">
-                {{ t.advanced }}
-              </option>
-            </select>
+              :model-value="form.difficulty"
+              :options="difficultySelectOptions"
+              size="xsmall"
+              :aria-label="t.difficulty"
+              @update:model-value="(v) => form.difficulty = toStr(v) as Difficulty"
+            />
           </div>
         </div>
 
@@ -156,7 +147,9 @@ import {
   getApiConfigFromPlugin,
 } from "@/utils/aiApi"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import { LANGUAGE_OPTIONS } from "../composables/useLangLabel"
+import { DIFFICULTY_I18N_KEYS } from "../types"
 
 const props = defineProps<{
   i18n: Required<SkillI18n>
@@ -172,7 +165,22 @@ const emit = defineEmits<{
 
 const isEdit = computed(() => !!props.editCard)
 const t = computed(() => props.i18n)
-const languageOptions = LANGUAGE_OPTIONS
+
+/** Select 载荷归一为字符串（组件载荷为 string | number | boolean | null） */
+function toStr(value: string | number | boolean | null): string {
+  return value === null ? "" : String(value)
+}
+
+/** 语言下拉选项（LANGUAGE_OPTIONS 用 key，需映射为 Select 的 value） */
+const languageSelectOptions = computed(() =>
+  LANGUAGE_OPTIONS.map((opt) => ({ value: opt.key, label: opt.label })),
+)
+
+/** 难度下拉选项（标签复用 DIFFICULTY_I18N_KEYS，与 DifficultyBadge 同源） */
+const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"]
+const difficultySelectOptions = computed(() =>
+  DIFFICULTIES.map((d) => ({ value: d, label: props.i18n[DIFFICULTY_I18N_KEYS[d]] })),
+)
 
 const tagsInput = ref(props.editCard?.tags.join(", ") || "")
 const aiGenerating = ref(false)

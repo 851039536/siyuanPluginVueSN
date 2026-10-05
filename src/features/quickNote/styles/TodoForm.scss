@@ -121,12 +121,8 @@
   font-size: $t-2xs;
 }
 
-// 关联项目下拉
+// 关联项目下拉（共享 Select：外观由组件承担，仅保留行内伸缩）
 .qn-todo-form__project {
   flex: 1;
   min-width: 0;
-  padding: $s-1 $s-2;
-  // 辅助文字
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-background);
 }

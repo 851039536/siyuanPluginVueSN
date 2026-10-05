@@ -66,19 +66,15 @@
       <div class="ach-form-row">
         <!-- 表单标签："统计类型" -->
         <label class="ach-form-label">{{ i18n.statTypeLabel }}</label>
-        <select
-          v-model="newAchievement.type"
-          class="ach-form-select"
-        >
-          <!-- 类型选项按 labelKey 查 i18n（MILESTONE_TYPES 无 label 字段），如："笔记数" -->
-          <option
-            v-for="t in MILESTONE_TYPES"
-            :key="t.key"
-            :value="t.key"
-          >
-            {{ i18n[t.labelKey] }}
-          </option>
-        </select>
+        <!-- 下拉：共享 Select（纯受控 ⇒ 显式回写 newAchievement） -->
+        <Select
+          class="ach-form-select-field"
+          :model-value="newAchievement.type"
+          :options="typeOptions"
+          size="xsmall"
+          :aria-label="i18n.statTypeLabel"
+          @update:model-value="(v) => newAchievement.type = v === null ? '' : String(v)"
+        />
         <!-- 类型说明（按 statTypeDesc* 键解析，如："笔记总数达到指定值"） -->
         <span class="ach-form-hint">{{ typeHint(newAchievement.type) }}</span>
       </div>
@@ -126,19 +122,15 @@
       <div class="ach-form-row">
         <!-- 表单标签："稀有度" -->
         <label class="ach-form-label">{{ i18n.tierLabel }}</label>
-        <select
-          v-model="newAchievement.tier"
-          class="ach-form-select"
-        >
-          <!-- 稀有度选项由 TIER_LABELS 单一数据源驱动，值经 i18n 解析 -->
-          <option
-            v-for="(labelKey, key) in TIER_LABELS"
-            :key="key"
-            :value="key"
-          >
-            {{ i18n[labelKey] }}
-          </option>
-        </select>
+        <!-- 稀有度选项由 TIER_LABELS 单一数据源驱动，值经 i18n 解析 -->
+        <Select
+          class="ach-form-select-field"
+          :model-value="newAchievement.tier"
+          :options="tierOptions"
+          size="xsmall"
+          :aria-label="i18n.tierLabel"
+          @update:model-value="(v) => newAchievement.tier = v === null ? '' : String(v)"
+        />
       </div>
       <div class="ach-form-actions">
         <!-- 提交按钮："添加成就" -->
@@ -164,6 +156,7 @@ import {
 } from "@/config/icons"
 import { computed, ref } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import { useMilestoneStorage } from "../../composables/useMilestoneStorage"
 import {
   MILESTONE_TYPES,
@@ -199,6 +192,19 @@ function createEmptyAchievement(): Omit<CustomAchievement, "id"> {
     threshold: 1,
   }
 }
+
+/** 统计类型选项（MILESTONE_TYPES 仅含 labelKey，经 i18n 解析） */
+const typeOptions = computed(() =>
+  MILESTONE_TYPES.map((t) => ({ value: t.key as string, label: props.i18n[t.labelKey] as string })),
+)
+
+/** 稀有度选项（TIER_LABELS 值为 i18n 键，需二次解析） */
+const tierOptions = computed(() =>
+  Object.entries(TIER_LABELS).map(([key, labelKey]) => ({
+    value: key,
+    label: props.i18n[labelKey as string] as string,
+  })),
+)
 
 function generateAchievementId(): string {
   return `custom-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`

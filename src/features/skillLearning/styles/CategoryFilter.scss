@@ -8,20 +8,9 @@
     gap: $s-px6;
   }
 
+  // 共享 Select（外观由组件承担，此处仅等分三列）
   &__select {
     flex: 1;
-    padding: $s-px6 $s-2;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-base;
-    background: var(--b3-theme-background, #fff);
-    color: var(--b3-theme-on-background, #333);
-    font-size: $t-xs;
-    outline: none;
-    cursor: pointer;
-    appearance: auto;
-
-    &:focus {
-      border-color: var(--b3-theme-primary);
-    }
+    min-width: 0;
   }
 }

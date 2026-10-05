@@ -24,35 +24,15 @@
           <!-- 设置描述："0表示不自动刷新" -->
           {{ i18n.refreshIntervalDesc }}
         </div>
-        <select
-          :value="settings.refreshInterval"
-          @change="handleSettingChange('refreshInterval', Number(($event.target as HTMLSelectElement).value))"
-        >
-          <option :value="0">
-            <!-- 选项："禁用" -->
-            {{ i18n.disabled }}
-          </option>
-          <option :value="15">
-            <!-- 15 分钟 -->
-            15 {{ i18n.minutes }}
-          </option>
-          <option :value="30">
-            <!-- 30 分钟 -->
-            30 {{ i18n.minutes }}
-          </option>
-          <option :value="60">
-            <!-- 1 小时 -->
-            1 {{ i18n.hour }}
-          </option>
-          <option :value="120">
-            <!-- 2 小时 -->
-            2 {{ i18n.hours }}
-          </option>
-          <option :value="360">
-            <!-- 6 小时 -->
-            6 {{ i18n.hours }}
-          </option>
-        </select>
+        <!-- 下拉：共享 Select（纯受控 ⇒ 显式回写；数值选项经 Number 归一后交父级） -->
+        <Select
+          class="rss-setting-select"
+          :model-value="settings.refreshInterval"
+          :options="refreshIntervalOptions"
+          size="xsmall"
+          :aria-label="i18n.refreshInterval"
+          @update:model-value="(v) => handleSettingChange('refreshInterval', Number(v))"
+        />
       </div>
 
       <!-- 每源最大文章数 -->
@@ -80,19 +60,15 @@
           <!-- 设置项："排序方式" -->
           {{ i18n.sortOrder }}
         </div>
-        <select
-          :value="settings.sortOrder"
-          @change="handleSettingChange('sortOrder', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="newest">
-            <!-- 选项："最新优先" -->
-            {{ i18n.newestFirst }}
-          </option>
-          <option value="oldest">
-            <!-- 选项："最早优先" -->
-            {{ i18n.oldestFirst }}
-          </option>
-        </select>
+        <!-- 下拉：共享 Select（纯受控 ⇒ 显式回写） -->
+        <Select
+          class="rss-setting-select"
+          :model-value="settings.sortOrder"
+          :options="sortOrderOptions"
+          size="xsmall"
+          :aria-label="i18n.sortOrder"
+          @update:model-value="(v) => handleSettingChange('sortOrder', v === null ? '' : String(v))"
+        />
       </div>
 
       <!-- OPML 导出 -->
@@ -153,7 +129,8 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
-import { ref } from "vue"
+import { computed, ref } from "vue"
+import Select from "@/components/Select.vue"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { RssSettings } from "../../types"
 
@@ -174,6 +151,22 @@ const emit = defineEmits<{
 
 const importing = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+
+/** 自动刷新间隔选项（值为分钟数，0 = 禁用；与 RssSettings.refreshInterval 同源） */
+const refreshIntervalOptions = computed(() => [
+  { value: 0, label: props.i18n.disabled },
+  { value: 15, label: `15 ${props.i18n.minutes}` },
+  { value: 30, label: `30 ${props.i18n.minutes}` },
+  { value: 60, label: `1 ${props.i18n.hour}` },
+  { value: 120, label: `2 ${props.i18n.hours}` },
+  { value: 360, label: `6 ${props.i18n.hours}` },
+])
+
+/** 排序方式选项 */
+const sortOrderOptions = computed(() => [
+  { value: "newest", label: props.i18n.newestFirst },
+  { value: "oldest", label: props.i18n.oldestFirst },
+])
 
 function handleSettingChange(key: string, value: unknown) {
   emit("settingChange", key, value)

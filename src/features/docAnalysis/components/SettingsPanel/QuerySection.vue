@@ -17,51 +17,43 @@
     <!-- 默认笔记本 -->
     <div class="settings-row">
       <span class="settings-row-label">默认笔记本</span>
-      <select
-        :value="notebookId"
-        class="settings-select"
-        @change="onNotebookChange"
-      >
-        <option value="">
-          全部笔记本
-        </option>
-        <option
-          v-for="nb in notebooks"
-          :key="nb.id"
-          :value="nb.id"
-        >
-          {{ nb.name }}
-        </option>
-      </select>
+      <!-- 下拉：共享 Select（纯受控，显示全取 modelValue ⇒ handler 内回写 ref） -->
+      <Select
+        class="settings-select-field"
+        :model-value="notebookId"
+        :options="notebookOptions"
+        size="xsmall"
+        aria-label="默认笔记本"
+        @update:model-value="(v) => emit('update:notebookId', toStr(v))"
+      />
     </div>
 
     <!-- 默认排序字段与方向 -->
     <div class="settings-row">
       <span class="settings-row-label">默认排序</span>
-      <select
-        :value="sortField"
-        class="settings-select"
-        @change="onSortFieldChange"
-      >
-        <option
-          v-for="opt in SORT_FIELD_OPTIONS"
-          :key="opt.value"
-          :value="opt.value"
-        >{{ opt.label }}</option>
-      </select>
-      <select
-        :value="sortOrder"
-        class="settings-select settings-select--small"
-        @change="onSortOrderChange"
-      >
-        <option value="asc">升序</option>
-        <option value="desc">降序</option>
-      </select>
+      <Select
+        class="settings-select-field"
+        :model-value="sortField"
+        :options="SORT_FIELD_OPTIONS"
+        size="xsmall"
+        aria-label="默认排序"
+        @update:model-value="(v) => emit('update:sortField', toStr(v) as SortField)"
+      />
+      <Select
+        class="settings-select-field settings-select-field--small"
+        :model-value="sortOrder"
+        :options="SORT_ORDER_OPTIONS"
+        size="xsmall"
+        aria-label="排序方向"
+        @update:model-value="(v) => emit('update:sortOrder', toStr(v) as SortOrder)"
+      />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
+import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 import type { NotebookInfo, SortField, SortOrder } from "../../types/index"
 import { SORT_FIELD_OPTIONS } from "../../types/index"
@@ -74,7 +66,7 @@ interface Props {
   notebooks: NotebookInfo[]
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: "update:hideZero", value: boolean): void
@@ -83,19 +75,21 @@ const emit = defineEmits<{
   (e: "update:sortOrder", value: SortOrder): void
 }>()
 
-/** 默认笔记本变更（模板事件经函数包装，保证 emit 参数类型可推断） */
-function onNotebookChange(e: Event) {
-  emit("update:notebookId", (e.target as HTMLSelectElement).value)
-}
+/** 排序方向选项（与 SortOrder 联合类型编译期绑定） */
+const SORT_ORDER_OPTIONS: { value: SortOrder, label: string }[] = [
+  { value: "asc", label: "升序" },
+  { value: "desc", label: "降序" },
+]
 
-/** 默认排序字段变更 */
-function onSortFieldChange(e: Event) {
-  emit("update:sortField", (e.target as HTMLSelectElement).value as SortField)
-}
+/** 笔记本选项：空串代表"全部笔记本"（与 FilterOptions.notebookId 的空值语义一致） */
+const notebookOptions = computed(() => [
+  { value: "", label: "全部笔记本" },
+  ...props.notebooks.map((nb) => ({ value: nb.id, label: nb.name })),
+])
 
-/** 默认排序方向变更 */
-function onSortOrderChange(e: Event) {
-  emit("update:sortOrder", (e.target as HTMLSelectElement).value as SortOrder)
+/** Select 载荷归一为字符串（组件载荷为 string | number | boolean | null） */
+function toStr(value: string | number | boolean | null): string {
+  return value === null ? "" : String(value)
 }
 </script>
 

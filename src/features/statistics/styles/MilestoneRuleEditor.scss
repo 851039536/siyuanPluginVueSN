@@ -521,19 +521,9 @@
   font-size: $t-base; // 图标字形尺寸（非正文文字）
 }
 
-.ach-form-select {
-  padding: $s-1 $s-px6;
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$r-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
+// 共享 Select（外观由组件承担；限宽避免撑满表单行）
+.ach-form-select-field {
+  min-width: 120px;
 }
 
 .ach-form-hint {

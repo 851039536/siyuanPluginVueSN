@@ -140,22 +140,10 @@
   gap: $s-1;
 }
 
-.gp-cfg-select {
+// 预设键下拉（共享 Select）：仅保留行内伸缩，外观交还组件
+.gp-cfg-select-field {
   flex: 1 1 150px;
   min-width: 0;
-  padding: $s-1 $s-px6;
-  font-size: $t-xs;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.12s;
-
-  &:focus {
-    @include focus-ring;
-  }
 }
 
 .gp-cfg-input {

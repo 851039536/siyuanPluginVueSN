@@ -1,42 +1,14 @@
 <template>
   <div>
-    <select
+    <!-- 模型下拉：共享 Select（分组走 isGroup 形式；纯受控 ⇒ handler 内回写） -->
+    <Select
       v-if="!showCustomInput"
-      :value="modelValue"
       class="setting-select"
-      @change="handleModelChange"
-    >
-      <!-- 分组标签："常用模型" -->
-      <optgroup
-        v-if="availableModels.common.length > 0"
-        :label="i18n.commonModels"
-      >
-        <option
-          v-for="model in availableModels.common"
-          :key="model.value"
-          :value="model.value"
-        >
-          {{ model.label }}
-        </option>
-      </optgroup>
-      <!-- 分组标签："全部模型" -->
-      <optgroup
-        v-if="availableModels.all.length > 0"
-        :label="i18n.allModels"
-      >
-        <option
-          v-for="model in availableModels.all"
-          :key="model.value"
-          :value="model.value"
-        >
-          {{ model.label }}
-        </option>
-      </optgroup>
-      <!-- 选项文案："自定义模型" -->
-      <option value="custom">
-        {{ i18n.customModel }}
-      </option>
-    </select>
+      :model-value="modelValue"
+      :options="modelOptions"
+      :aria-label="i18n.commonModels"
+      @update:model-value="handleModelChange"
+    />
 
     <!-- 占位提示："输入模型名称，如: gpt-4" -->
     <TextInput
@@ -50,6 +22,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import Select from "@/components/Select.vue"
 import { PROVIDER_MAP } from "./providers"
 import TextInput from "./TextInput.vue"
 
@@ -86,9 +59,32 @@ const availableModels = computed(() => {
   return PROVIDER_MAP[props.provider]?.models ?? EMPTY_MODELS
 })
 
-const handleModelChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
-  emit("update:modelValue", target.value)
+/** 模型选项：两个分组（常用/全部）+ 末尾"自定义模型"（与原生 optgroup 结构等价） */
+const modelOptions = computed(() => {
+  const list: Array<
+    | { isGroup: true, label: string, options: { value: string, label: string }[] }
+    | { value: string, label: string }
+  > = []
+  if (availableModels.value.common.length > 0) {
+    list.push({
+      isGroup: true,
+      label: props.i18n.commonModels ?? "",
+      options: availableModels.value.common.map((m) => ({ value: m.value, label: m.label })),
+    })
+  }
+  if (availableModels.value.all.length > 0) {
+    list.push({
+      isGroup: true,
+      label: props.i18n.allModels ?? "",
+      options: availableModels.value.all.map((m) => ({ value: m.value, label: m.label })),
+    })
+  }
+  list.push({ value: "custom", label: props.i18n.customModel ?? "" })
+  return list
+})
+
+const handleModelChange = (value: string | number | boolean | null) => {
+  emit("update:modelValue", value === null ? "" : String(value))
 }
 
 const handleCustomModelChange = (value: string) => {

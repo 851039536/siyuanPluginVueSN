@@ -1,22 +1,14 @@
 <!-- 超级面板 AI 配置档案管理器：档案下拉选择、应用/保存/删除操作行 -->
 <template>
   <div class="profile-manager">
-    <!-- 下拉选择已保存档案（仅选中，不改动任何 AI 配置字段） -->
-    <select
-      class="setting-select profile-select"
-      :value="selectedName"
-      @change="handleSelect"
-    >
-      <!-- 占位选项文案："选择已保存的配置…" -->
-      <option value="">{{ i18n.profileSelectPlaceholder }}</option>
-      <option
-        v-for="profile in profiles"
-        :key="profile.name"
-        :value="profile.name"
-      >
-        {{ profile.name }}
-      </option>
-    </select>
+    <!-- 下拉选择已保存档案（共享 Select；仅选中，不改动任何 AI 配置字段） -->
+    <Select
+      class="profile-select"
+      :model-value="selectedName"
+      :options="profileOptions"
+      :aria-label="i18n.profileSelectPlaceholder"
+      @update:model-value="handleSelect"
+    />
 
     <!-- 操作行：应用 / 删除所选档案 -->
     <div class="profile-actions">
@@ -73,6 +65,7 @@ import {
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Select from "@/components/Select.vue"
 import TextInput from "./TextInput.vue"
 
 interface Props {
@@ -100,11 +93,17 @@ const hasSelection = computed(() =>
 
 const canSave = computed(() => nameInput.value.trim() !== "")
 
-const handleSelect = (event: Event) => {
-  const value = (event.target as HTMLSelectElement).value
-  selectedName.value = value
+/** 档案下拉选项：空串代表占位（与 selectedName 的空值语义一致） */
+const profileOptions = computed(() => [
+  { value: "", label: props.i18n.profileSelectPlaceholder },
+  ...props.profiles.map((p) => ({ value: p.name, label: p.name })),
+])
+
+const handleSelect = (value: string | number | boolean | null) => {
+  const next = value === null ? "" : String(value)
+  selectedName.value = next
   // 选择已有档案时同步名称，点击保存即覆盖该档案
-  nameInput.value = value
+  nameInput.value = next
 }
 
 const handleApply = () => {

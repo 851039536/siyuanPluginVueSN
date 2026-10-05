@@ -156,19 +156,15 @@
       v-if="showAdd"
       class="gp-cfg-add"
     >
-      <select
-        class="gp-cfg-select"
-        :value="presetSelect"
-        @change="onPresetChange"
-      >
-        <!-- 选项文案："选择常用键..." -->
-        <option value="">{{ i18n.gitConfigPresetPlaceholder }}</option>
-        <option
-          v-for="preset in GIT_PRESET_KEYS"
-          :key="preset.key"
-          :value="preset.key"
-        >{{ preset.label }} ({{ preset.key }})</option>
-      </select>
+      <!-- 预设键下拉：共享 Select（纯受控 ⇒ handler 内回写并填充 key 输入框） -->
+      <Select
+        class="gp-cfg-select-field"
+        :model-value="presetSelect"
+        :options="presetOptions"
+        size="xsmall"
+        :aria-label="i18n.gitConfigPresetPlaceholder"
+        @update:model-value="onPresetChange"
+      />
       <input
         v-model="newKey"
         class="gp-cfg-input gp-cfg-input--key"
@@ -239,7 +235,8 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { onMounted, ref } from "vue"
+import { computed, onMounted, ref } from "vue"
+import Select from "@/components/Select.vue"
 import type { GitPushManager } from "../../types"
 import type { GitConfigEntry, GitConfigScope } from "../../types/gitConfigDesc"
 import { GIT_PRESET_KEYS, parseGitConfigText } from "../../types/gitConfigDesc"
@@ -379,11 +376,20 @@ function toggleAdd() {
 }
 
 /** 预设下拉选择后填充 key 输入框 */
-function onPresetChange(e: Event) {
-  const key = (e.target as HTMLSelectElement).value
+function onPresetChange(value: string | number | boolean | null) {
+  const key = value === null ? "" : String(value)
   presetSelect.value = key
   newKey.value = key
 }
+
+/** 预设键选项：空串占位 + 常用键列表（label 含键名提示，与原 option 文案一致） */
+const presetOptions = computed(() => [
+  { value: "", label: props.i18n.gitConfigPresetPlaceholder },
+  ...GIT_PRESET_KEYS.map((preset) => ({
+    value: preset.key,
+    label: `${preset.label} (${preset.key})`,
+  })),
+])
 
 /** 新增配置项（校验 key/value 非空后写入） */
 async function addEntry() {

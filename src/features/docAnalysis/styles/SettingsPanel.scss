@@ -165,21 +165,13 @@
   }
 }
 
-.settings-select {
-  padding: $s-px2 $s-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-background);
-  font-size: $t-xs;
-  outline: none;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
+// 共享 Select（外观由组件自身承担，此处仅限宽以贴合原行内布局）
+.settings-select-field {
+  min-width: 120px;
 
   &--small {
     width: 96px;
+    min-width: 0;
   }
 }
 

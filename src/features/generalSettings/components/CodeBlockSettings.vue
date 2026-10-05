@@ -183,22 +183,15 @@
                   class="text-input font-input"
                   :placeholder="i18n.fontFamilyPlaceholder"
                 />
-                <select
-                  v-model="presetCodeFont"
-                  class="font-select"
-                >
-                  <!-- 占位项："选择字体" -->
-                  <option value="">
-                    {{ i18n.selectFont }}
-                  </option>
-                  <option
-                    v-for="f in presetFonts"
-                    :key="f.value"
-                    :value="f.value"
-                  >
-                    {{ f.label }}
-                  </option>
-                </select>
+                <!-- 字体下拉：共享 Select（纯受控 ⇒ 显式回写 presetCodeFont） -->
+                <Select
+                  class="font-select-field"
+                  :model-value="presetCodeFont"
+                  :options="fontSelectOptions"
+                  size="xsmall"
+                  :aria-label="i18n.selectFont"
+                  @update:model-value="onFontSelectChange"
+                />
               </div>
             </div>
             <!-- 内置字体提示：选中内置字体时显示（已随插件分发，无需系统安装） -->
@@ -312,6 +305,7 @@ import {
 } from "vue"
 import ColorField from "@/components/ColorField.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 import {
   DEFAULT_CODEBLOCK_SETTINGS,
@@ -380,6 +374,17 @@ const presetCodeFont = computed({
     }
   },
 })
+
+/** 字体选项：占位项（空串）+ 预设列表（与原生 option 结构等价） */
+const fontSelectOptions = computed(() => [
+  { value: "", label: props.i18n.selectFont },
+  ...presetFonts.map((f) => ({ value: f.value, label: f.label })),
+])
+
+/** 选中预设字体：空值（占位项）不覆盖手输字体，交由 computed setter 的既有语义处理 */
+function onFontSelectChange(value: string | number | boolean | null) {
+  presetCodeFont.value = value === null ? "" : String(value)
+}
 
 // ── 值格式化 ──
 const formatPx = (v: number) => `${v}px`

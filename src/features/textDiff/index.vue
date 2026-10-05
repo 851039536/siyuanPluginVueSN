@@ -27,19 +27,15 @@
         <!-- 字号选择（"字体大小"） -->
         <div class="option-group">
           <span class="option-label">{{ $t("fontSize") }}</span>
-          <select
-            class="font-select"
-            :value="fontSize"
-            @change="updateFontSize(Number(($event.target as HTMLSelectElement).value))"
-          >
-            <option
-              v-for="opt in FONT_SIZE_OPTIONS"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ opt.label }}
-            </option>
-          </select>
+          <!-- 字号选择：共享 Select（纯受控 ⇒ 数值载荷归一后回写） -->
+          <Select
+            class="font-select-field"
+            :model-value="fontSize"
+            :options="FONT_SIZE_OPTIONS"
+            size="xsmall"
+            :aria-label="$t('fontSize')"
+            @update:model-value="(v) => updateFontSize(Number(v))"
+          />
         </div>
 
         <!-- 主题切换（"主题"） -->

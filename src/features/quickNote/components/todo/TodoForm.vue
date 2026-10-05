@@ -78,21 +78,15 @@
         />
       </label>
 
-      <!-- 关联项目下拉 -->
-      <select
-        v-model="projectId"
-        class="vp-input qn-todo-form__project"
-        :title="i18n.linkProject"
-      >
-        <option value="">
-          {{ i18n.noProject }}
-        </option>
-        <option
-          v-for="proj in projects"
-          :key="proj.id"
-          :value="proj.id"
-        >{{ proj.name }}</option>
-      </select>
+      <!-- 关联项目下拉：共享 Select（纯受控 ⇒ 显式回写 projectId） -->
+      <Select
+        class="qn-todo-form__project"
+        :model-value="projectId"
+        :options="projectOptions"
+        size="xsmall"
+        :aria-label="i18n.linkProject"
+        @update:model-value="(v) => projectId = v === null ? '' : String(v)"
+      />
     </div>
   </div>
 </template>
@@ -106,8 +100,9 @@
  */
 import type { Plugin } from "siyuan"
 import type { ProjectItem, TodoItem, TodoSubmitPayload } from "../../types"
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import { PRIORITY_META, TODO_PRIORITIES } from "../../types"
 import { useAiPolish } from "../../composables/useAiPolish"
 import { polishText } from "../../utils"
@@ -131,6 +126,12 @@ const content = ref("")
 const priority = ref<TodoItem["priority"]>("medium")
 const dueDate = ref<string>("")
 const projectId = ref<string>("")
+
+/** 关联项目选项：空串代表"不关联"（与 projectId 的空值语义一致） */
+const projectOptions = computed(() => [
+  { value: "", label: props.i18n.noProject },
+  ...props.projects.map((proj) => ({ value: proj.id, label: proj.name })),
+])
 
 /** 编辑待办变化时回填/清空表单（immediate 确保首次渲染时也不遗漏） */
 watch(

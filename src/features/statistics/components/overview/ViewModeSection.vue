@@ -66,19 +66,15 @@
       v-if="modelValue === 'year'"
       class="year-selector"
     >
-      <select
-        :value="selectedYear"
-        class="year-select"
-        @change="$emit('update:selectedYear', Number(($event.target as HTMLSelectElement).value))"
-      >
-        <option
-          v-for="year in availableYears"
-          :key="year"
-          :value="year"
-        >
-          {{ year }}
-        </option>
-      </select>
+      <!-- 年份选择：共享 Select（纯受控 ⇒ 数值载荷归一后 emit） -->
+      <Select
+        class="year-select-field"
+        :model-value="selectedYear"
+        :options="yearOptions"
+        size="xsmall"
+        :aria-label="String(selectedYear)"
+        @update:model-value="(v) => $emit('update:selectedYear', Number(v))"
+      />
     </div>
   </div>
 </template>
@@ -86,6 +82,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import { formatNumber } from "../../utils"
 
 interface Props {
@@ -233,6 +230,11 @@ const availableYears = computed(() => {
   }
   return years
 })
+
+/** 年份选项（数值载荷，与 update:selectedYear 的 number 契约一致） */
+const yearOptions = computed(() =>
+  availableYears.value.map((year) => ({ value: year, label: String(year) })),
+)
 
 // 时段均值标签：随视图模式切换（日均/周均/月均/年均字数）
 const periodAvgLabel = computed(() => {

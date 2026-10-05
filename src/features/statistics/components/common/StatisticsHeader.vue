@@ -17,21 +17,15 @@
       >
         <svg><use xlink:href="#iconFolder"></use></svg>
       </button>
-      <!-- 自动刷新间隔下拉："关闭"选项值为 0 -->
-      <select
+      <!-- 自动刷新间隔下拉："关闭"选项值为 0；共享 Select（纯受控 ⇒ 数值归一后 emit） -->
+      <Select
         class="refresh-interval-select"
-        :value="autoRefreshInterval"
-        :title="i18n.autoRefresh"
-        @change="handleIntervalChange"
-      >
-        <option
-          v-for="opt in intervalOptions"
-          :key="opt.value"
-          :value="opt.value"
-        >
-          {{ i18n[opt.labelKey] }}
-        </option>
-      </select>
+        :model-value="autoRefreshInterval"
+        :options="intervalSelectOptions"
+        size="xsmall"
+        :aria-label="i18n.autoRefresh"
+        @update:model-value="(v) => emit('autoRefreshChange', Number(v))"
+      />
     </div>
     <div class="header-right">
       <div class="last-update">
@@ -65,6 +59,7 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Select from "@/components/Select.vue"
 
 interface StoragePathItem {
   key: string
@@ -118,10 +113,10 @@ function handleRefresh() {
   emit("refresh")
 }
 
-function handleIntervalChange(e: Event): void {
-  const value = Number((e.target as HTMLSelectElement).value)
-  emit("autoRefreshChange", value)
-}
+/** 刷新间隔选项：由 intervalOptions 派生（label 取 i18n，与原生 option 一致） */
+const intervalSelectOptions = computed(() =>
+  intervalOptions.map((opt) => ({ value: opt.value, label: props.i18n[opt.labelKey] })),
+)
 </script>
 
 <style scoped lang="scss">

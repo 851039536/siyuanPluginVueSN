@@ -23,20 +23,16 @@
 
         <!-- 工具栏：项目数量选择 + fetch 开关 + 仅显示问题开关 + 分析按钮 -->
         <div class="gca-toolbar">
-          <!-- 选择框："全部项目/10/20/30/50/100"（本次分析的项目数量上限） -->
-          <select
-            class="gca-limit-select"
-            :value="String(projectLimit)"
-            :title="i18n.consistencyProjectLimitTitle"
+          <!-- 选择框："全部项目/10/20/30/50/100"（本次分析的项目数量上限）；共享 Select（纯受控 ⇒ 显式回写） -->
+          <Select
+            class="gca-limit-select-field"
+            :model-value="String(projectLimit)"
+            :options="limitOptions"
+            size="xsmall"
             :disabled="analyzing"
-            @change="onLimitChange"
-          >
-            <option
-              v-for="opt in PROJECT_LIMIT_OPTIONS"
-              :key="String(opt)"
-              :value="String(opt)"
-            >{{ limitLabel(opt) }}</option>
-          </select>
+            :aria-label="i18n.consistencyProjectLimitTitle"
+            @update:model-value="onLimitChange"
+          />
           <!-- 开关："分析前先 fetch 远程"（悬停提示解释 fetch 含义与开关影响） -->
           <label
             class="gca-switch-item"
@@ -248,6 +244,7 @@ import type {
 } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
+import Select from "@/components/Select.vue"
 import SiSwitch from "@/components/Switch.vue"
 import { PROJECT_LIMIT_OPTIONS } from "../../types"
 import { relativeTime, formatDateTime } from "../../utils"
@@ -284,10 +281,15 @@ function limitLabel(opt: ProjectLimit): string {
 }
 
 /** 选择框变更：映射回 "all" | number */
-function onLimitChange(e: Event) {
-  const v = (e.target as HTMLSelectElement).value
+function onLimitChange(value: string | number | boolean | null) {
+  const v = value === null ? "all" : String(value)
   projectLimit.value = v === "all" ? "all" : Number(v)
 }
+
+/** 项目数量上限选项（值统一为字符串，与 projectLimit 的 "all" | number 契约对应） */
+const limitOptions = computed(() =>
+  PROJECT_LIMIT_OPTIONS.map((opt) => ({ value: String(opt), label: limitLabel(opt) })),
+)
 
 // 七态图标 + 文案键（cls 对应 gca-chip--*/gca-state--* 修饰类）
 const STATE_META: Record<ConsistencyState, { icon: string, labelKey: string }> = {

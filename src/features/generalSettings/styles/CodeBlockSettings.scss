@@ -245,24 +245,9 @@
   min-width: 0;
 }
 
-.font-select {
-  padding: $s-1 $s-2;
-  font-size: $t-2xs;
-  border: 1px solid var(--b3-theme-outline);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
+/* 共享 Select（外观由组件承担，此处仅保留最小宽度） */
+.font-select-field {
   min-width: 100px;
-
-  &:hover {
-    border-color: var(--b3-theme-primary);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 /* 代码颜色设置样式 */

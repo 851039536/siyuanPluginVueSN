@@ -83,21 +83,9 @@
   }
 }
 
-.notebook-select {
-  padding: $s-1 $s-2; // 5px 8px → 4px 8px
-  border: 1px solid var(--b3-border-color);
-  border-radius: stats.$r-sm;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  font-family: stats.$font-mono;
-  font-size: $t-2xs; // 辅助控件文字（两级字号制）
-  font-weight: $fw-semibold;
-  outline: none;
+/* 共享 Select（外观由组件承担，仅保留限宽） */
+.notebook-select-field {
   max-width: 140px;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-  }
 }
 
 .hm-loading {

@@ -84,23 +84,9 @@
   .year-selector {
 
     margin-top: $s-px10;
-    .year-select {
+    // 共享 Select（外观由组件承担，仅保留满宽）
+    .year-select-field {
       width: 100%;
-      padding: $s-px6 $s-3;
-      border: 1px solid var(--b3-border-color);
-      border-radius: stats.$r-sm;
-      background: var(--b3-theme-surface);
-      color: var(--b3-theme-on-surface);
-      font-family: stats.$font-mono;
-      font-size: $t-xs;
-      font-weight: $fw-semibold;
-      cursor: pointer;
-      outline: none;
-
-      &:focus {
-        border-color: var(--b3-theme-primary);
-        outline: none;
-      }
     }
   }
 

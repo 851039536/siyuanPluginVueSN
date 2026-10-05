@@ -21,8 +21,7 @@
     gap: $s-1;
   }
 
-  .filter-input,
-  .filter-select {
+  .filter-input {
     height: $s-6;
     box-sizing: border-box;
     padding: 0 $s-px6;
@@ -39,10 +38,6 @@
     }
   }
 
-  .filter-select {
-    cursor: pointer;
-  }
-
   .title-input,
   .content-input {
     flex: 1;
@@ -57,7 +52,8 @@
     flex: 1;
   }
 
-  .notebook-select {
+  // 共享 Select（外观由组件承担，此处仅撑满行内剩余宽度）
+  .notebook-select-field {
     flex: 1;
   }
 

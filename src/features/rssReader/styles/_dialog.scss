@@ -55,6 +55,13 @@
           transition: border-color 0.12s;
           @include input-focus-ring;
         }
+        // 共享 Select：外观由组件自身承担，仅保留满宽（(0,3,0) 压过上方 input/select 的 (0,2,0)）
+        .rss-setting-select {
+          width: 100%;
+          border: none;
+          padding: 0;
+          background: transparent;
+        }
       }
     }
 

@@ -173,7 +173,9 @@
 5. `TabPinSettings.vue:94-99` 已有 `.lazy` 文本输入 + 注释「失焦/回车才提交，避免每敲一个字符触发保存」⇒ **迁移必须保留该语义**（正好与 `ColorField` 的 `change` 一致）。
 6. `.gp-color-input` 定义在**共享** `styles/index.scss`，仍被他处依赖 ⇒ **不能随迁移删除**。
 
-### 3.3 🔴 原生 `<select>`（~18 处 / 13 文件）
+### 3.3 🔴 原生 `<select>`（~18 处 / 13 文件）✅ **已整改（批次 B，实测 21 处 / 17 文件）**
+
+> **状态**：已于 2026-09-14 全部迁共享 `Select`，实施记录见 §七「批次 B」。⚠️ **实测比本节登记多 3 处 / 4 文件**（以 `HTMLSelectElement` 为收敛判据后发现漏登），且 `AnalysisSettingsForm.vue` 一条为**误报**（前序已迁）。以下保留审查时原貌以便回溯。
 
 | 位置 | 用途 |
 |------|------|
@@ -183,7 +185,7 @@
 | `skillLearning/components/CategoryFilter.vue:10,27,44` | 分类 / 难度 / 状态（`:47-53` 含 `beginner`/`intermediate`/`advanced`） |
 | `skillLearning/components/SkillDialog.vue:95` | 难度（`:95-101`） |
 | `rssReader/components/settings/SettingsPanel.vue:87` | 排序（`:87-91` `newest`/`oldest`） |
-| `gitPush/components/CommitAnalysis/AnalysisSettingsForm.vue:33,47` | 显示范围 / 每周第一天 |
+| `gitPush/components/CommitAnalysis/AnalysisSettingsForm.vue:33,47` | ~~显示范围 / 每周第一天~~ **✅ 已于前序批次 C 迁移完毕（回读确认 `:32-53` 已是共享 `Select`）** |
 | `gitPush/components/common/GitConfigSection.vue:165` | 预设选择 |
 | `superPanel/components/AiProfileManager.vue:11` | AI 配置档案 |
 | `superPanel/components/AiModelSelect.vue:36` | 模型（含 `value="custom"`） |
@@ -411,7 +413,7 @@
 | 批次 | 内容 | 规模 | 前置 | 主要风险 |
 |------|------|------|------|---------|
 | **A** | 原生取色器 → `ColorField`，**修功能缺陷** | 8 处 / 6 文件 | 本地草稿 `ref` 范式（已有先例） | 双事件语义、逐字写盘、宽度未实测 | ✅ **已完成**（见 §七） |
-| **B** | 原生 `<select>` → `Select` | ~18 处 / 13 文件 | — | 受控回写、载荷归一、双层框、死样式 |
+| **B** | 原生 `<select>` → `Select` | ~18 处 / 13 文件（**实测 21 处 / 17 文件**） | — | 受控回写、载荷归一、双层框、死样式 | ✅ **已完成**（见 §七） |
 | **C** | 原生 `radio` → `RadioButton` | 11 处 / 5 文件 | — | 同组 `name`、`value` 类型 |
 | **D** | 自建 Tab → `Tabs` 五件套 | 3~4 处 | — | 必须 `lazy`、`value` 必填、焦点移交 |
 | **E** | 自建弹层 → `Dialog` / `Drawer` | ~40 文件，**分两阶段** | 逐项裁决例外 | 无 Teleport、点关判定、裁剪 |
@@ -426,6 +428,66 @@
 ---
 
 ## 七、整改实施记录
+
+### 批次 B：原生 `<select>` → 共享 `Select`（✅ 已完成 2026-09-14）
+
+**改动文件（13 个组件 / 21 处 select + 12 个 SCSS）**：
+
+| 文件 | 处数 | 备注 |
+|------|------|------|
+| `docAnalysis/components/SettingsPanel/QuerySection.vue` | 3 | 笔记本 / 排序字段 / 排序方向 |
+| `docAnalysis/components/DocListView/index.vue` | 1 | 排序字段 |
+| `docAnalysis/components/DocListView/FilterSettings.vue` | 1 | 笔记本过滤 |
+| `skillLearning/components/CategoryFilter.vue` | 3 | 语言 / 分类 / 难度 |
+| `skillLearning/components/SkillDialog.vue` | **2** | 语言 / 难度（**审查漏登语言处**） |
+| `rssReader/components/settings/SettingsPanel.vue` | **2** | 刷新间隔 / 排序（**审查漏登刷新间隔**） |
+| `quickNote/components/todo/TodoForm.vue` | 1 | 关联项目 |
+| `superPanel/components/AiProfileManager.vue` | 1 | 配置档案 |
+| `superPanel/components/AiProviderSelect.vue` | 1 | **审查完全漏登**（整文件即一个 select 包装） |
+| `superPanel/components/AiModelSelect.vue` | 1 | 模型选择（**含 `<optgroup>` ⇒ 改用 `isGroup` 分组形式**） |
+| `generalSettings/components/CodeBlockSettings.vue` | 1 | 预设字体（**computed setter 语义须保留**） |
+| `statistics/components/heatmap/HeatmapCard.vue` | 1 | 笔记本过滤 |
+| `statistics/components/common/StatisticsHeader.vue` | 1 | 自动刷新间隔（**审查漏登**） |
+| `statistics/components/overview/ViewModeSection.vue` | 1 | 年份（**审查漏登**） |
+| `statistics/components/milestones/AchievementsTab.vue` | **2** | 统计类型 / 稀有度（**审查完全漏登**） |
+| `textDiff/index.vue` | 1 | 字号（**审查漏登**） |
+| `gitPush/components/common/GitConfigSection.vue` | 1 | 预设键 |
+| `gitPush/components/common/ConsistencyAuditDialog.vue` | 1 | 项目数量上限（**`disabled` 须保留**） |
+
+**⚠️ 实施中发现的实质差异（审查清单不完整，已实证修正）**：
+
+1. **`HTMLSelectElement` 才是可靠判据，而非 grep `<select`**：本轮以 `HTMLSelectElement`（handler 内的类型断言）为收敛信号，**发现审查阶段漏登 8 处**（`AiProviderSelect` 整文件、`AchievementsTab` 2 处、`SkillDialog`/`rssReader`/`StatisticsHeader`/`ViewModeSection`/`textDiff` 各 1 处）。⇒ **真实总数 21 处 > 审查登记的 18 处**，且**分布差异较大**。
+2. **审查误报 1 处**：`gitPush/CommitAnalysis/AnalysisSettingsForm.vue` 已于前序批次迁移完毕（`Select` 同时 emit `update:modelValue` 与 `change`，`:374-375`）⇒ 审查时误判为待迁移，**回读原文后已修正**。
+3. **`AiModelSelect.vue` 有 `<optgroup>`**：共享 `Select` 支持分组（`SelectGroupOption` 的 `isGroup: true` + `options`，见 `select/types.ts:22-30`）⇒ 用分组形式等价迁移，**未降级为平铺选项**。
+4. **`CodeBlockSettings.vue` 的 `presetCodeFont` 是带 setter 的 computed**：setter 内 `if (v) {...}` 意味着「空值不覆盖手输字体」⇒ 迁移时抽出 `onFontSelectChange` 保留该语义，**未直接用内联赋值**（否则空串会走进 setter 分支被丢弃，行为看似相同但语义变模糊）。
+5. **`ConsistencyAuditDialog.vue` 的 `:disabled="analyzing"`** 必须保留（分析中禁用）；共享 `Select` 自带 `disabled` 样式，故旧 SCSS 的 `&:disabled { opacity; cursor }` 随之删除。
+6. **`StatisticsHeader.vue` 的 `opacity: 0.35 → hover 0.7` 淡显交互**是有意的既有设计（与存储路径按钮一致）⇒ 迁移时**只保留 opacity 过渡**，其余外观交还组件。
+7. **载荷归一是本批最主要的风险点**：涉及数值的下拉（`rssReader` 刷新间隔、`StatisticsHeader` 间隔、`ViewModeSection` 年份、`ConsistencyAuditDialog` 上限）全部按「options 值类型 ↔ handler 归一」成对处理，**未混用** `String(y)` 与 `number`（否则选中态会静默匹配失败）。
+
+**SCSS 交还外观**：12 个 SCSS 中，`.settings-select` / `.sort-select` / `.filter-select` / `.notebook-select` / `.font-select` / `.gp-cfg-select` / `.gca-limit-select` / `.ach-form-select` / `.year-select` / `.refresh-interval-select` 等自绘外观规则全部删除，仅保留**限宽 / 伸缩 / 淡显**等布局与交互规则。⚠️ 其中 `rssReader/_dialog.scss` 的 `input, select { ... }` 是**共享后代规则**（仍被同面板其他 `<input>` 依赖）⇒ **未删除**，改为新增 `.rss-setting-select` 以 (0,3,0) 覆盖（否则会出现**双层框**）。
+
+**验证（批次 B）**：
+
+| 检查 | 结果 |
+|------|------|
+| 残留断言 `HTMLSelectElement` | ✅ 全项目 **0 命中**（收敛的硬判据） |
+| 残留断言 `<optgroup>` | ✅ 0 命中（仅 1 条注释提及） |
+| 死类名核对 | ✅ 全部新类名（`*-field` 后缀）模板与 SCSS **一一对应**，无孤立定义 |
+| 共享规则未被误删 | ✅ `rssReader` 的 `input, select` 祖先规则保留（仅新增覆盖规则） |
+| `computed` 导入核对 | ✅ 逐文件确认（`GitConfigSection` / `TodoForm` / `rssReader` 等原本未导入者已补） |
+| `read_lints` / `pnpm typecheck` | ⏳ **待用户执行**（本环境 `pwsh` 被沙箱 ACL 拒绝，AI 侧无法运行命令） |
+| 目视回归 | ⏳ **待确认**：各 `Select` 下拉面板定位（就地 `fixed`，非 Teleport）与限宽后的行内布局 |
+
+**有意的观感变化（记录在案）**：
+
+| 项 | 变化 | 原因 |
+|----|------|------|
+| 全部 21 处下拉 | 原生 `<select>` → 共享 `Select`（自绘触发器 + 浮层选项 + 键盘导航） | 统一外观与交互；原生下拉无法走库内档位 |
+| 选项浮层 | OS 原生下拉 → 组件自绘浮层（`position: fixed`，**不 Teleport**） | 库范式（`MEMORY.md:21`） |
+| 字号/几何 | 各处自定（`$t-2xs`/`$t-xs`、自绘边框圆角内边距）→ 统一 `xsmall` 档位 | 走共享档位 |
+| `DocumentFontSettings` / `textDiff` 的 `.font-select` | 保持原名（不同组件、不同 scoped 文件）⇒ **未受影响** | 同名类分属不同 SCSS 文件 |
+
+**业务行为零改动**：所有 emit 契约（`update:notebookId` / `sortChange` / `update:sortField` / `update:selectedLanguage` / `settingChange` / `update:selectedYear` / `autoRefreshChange` / `emit('save'|'apply'|'delete')` 等）与数值归一结果全部保持不变。
 
 ### 批次 A：原生取色器 → `ColorField`（✅ 已完成 2026-09-14）
 

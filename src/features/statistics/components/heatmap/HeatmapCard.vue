@@ -66,22 +66,16 @@
         </button>
       </div>
 
-      <select
+      <!-- 笔记本过滤：共享 Select（纯受控 ⇒ 显式回写并触发重载） -->
+      <Select
         v-if="notebooks.length > 1"
-        class="notebook-select"
-        :value="selectedNotebook"
-        @change="switchNotebook(($event.target as HTMLSelectElement).value)"
-      >
-        <option value="">
-          <!-- 下拉默认项："全部笔记本" -->
-          {{ i18n.allNotebooks }}
-        </option>
-        <option
-          v-for="nb in notebooks"
-          :key="nb.id"
-          :value="nb.id"
-        >{{ nb.name }}</option>
-      </select>
+        class="notebook-select-field"
+        :model-value="selectedNotebook"
+        :options="notebookOptions"
+        size="xsmall"
+        :aria-label="i18n.allNotebooks"
+        @update:model-value="(v) => switchNotebook(v === null ? '' : String(v))"
+      />
     </div>
 
     <!-- 加载态 -->
@@ -191,6 +185,7 @@ import {
   computed,
   ref,
 } from "vue"
+import Select from "@/components/Select.vue"
 import { formatDate, parseYmd } from "../../utils"
 import HeatmapDailyDetail from "./HeatmapDailyDetail.vue"
 
@@ -223,6 +218,12 @@ const MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8�
 const selectedRange = ref(12)
 const selectedMetric = ref<HeatmapMetric>('docsModified')
 const selectedNotebook = ref('')
+
+/** 笔记本选项：空串代表"全部笔记本"（与 selectedNotebook 的空值语义一致） */
+const notebookOptions = computed(() => [
+  { value: '', label: props.i18n.allNotebooks },
+  ...props.notebooks.map((nb) => ({ value: nb.id, label: nb.name })),
+])
 const loading = ref(false)
 
 // 请求时序计数：每次筛选发起的加载自增，回填前比对以丢弃过期响应

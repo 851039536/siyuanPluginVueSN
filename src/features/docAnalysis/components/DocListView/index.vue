@@ -72,19 +72,15 @@
         v-if="queryState.results.length > 0"
         class="sort-controls"
       >
-        <select
-          :value="filterOptions.sortField"
-          class="sort-select"
-          @change="handleSortChange"
-        >
-          <option
-            v-for="opt in SORT_FIELD_OPTIONS"
-            :key="opt.value"
-            :value="opt.value"
-          >
-            {{ opt.label }}
-          </option>
-        </select>
+        <!-- 排序字段：共享 Select（纯受控 ⇒ handler 内回写） -->
+        <Select
+          class="sort-select-field"
+          :model-value="filterOptions.sortField"
+          :options="SORT_FIELD_OPTIONS"
+          size="xsmall"
+          aria-label="排序字段"
+          @update:model-value="handleSortChange"
+        />
         <button
           class="sort-order-btn"
           @click="$emit('toggleSortOrder')"
@@ -188,6 +184,7 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { computed, onBeforeUnmount, ref, watch } from "vue"
+import Select from "@/components/Select.vue"
 import type { DocI18n, FilterOptions, PlatformMeta, QueryState } from "../../types/index"
 import { SORT_FIELD_OPTIONS, getCategoryLabel } from "../../types/index"
 import DocListItem from "./DocListItem.vue"
@@ -277,10 +274,9 @@ onBeforeUnmount(() => {
   }
 })
 
-/** 排序字段变更（转发给父层 updateSort） */
-function handleSortChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  emit("sortChange", target.value)
+/** 排序字段变更（转发给父层 updateSort）；载荷归一为字符串 */
+function handleSortChange(value: string | number | boolean | null) {
+  emit("sortChange", value === null ? "" : String(value))
 }
 </script>
 

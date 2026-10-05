@@ -35,24 +35,25 @@
         <div class="form-group">
           <label>{{ t("compressMode") }}</label>
           <div class="compress-mode-selector">
-            <label class="radio-label">
-              <input
-                :checked="mode === 'crf'"
-                type="radio"
-                value="crf"
-                @change="emit('update:mode', 'crf')"
-              />
-              <span>{{ t("crfMode") }}</span>
-            </label>
-            <label class="radio-label">
-              <input
-                :checked="mode === 'bitrate'"
-                type="radio"
-                value="bitrate"
-                @change="emit('update:mode', 'bitrate')"
-              />
-              <span>{{ t("bitrateMode") }}</span>
-            </label>
+            <!-- 压缩模式单选组（同组共用 name） -->
+            <RadioButton
+              class="compress-mode-radio"
+              name="video-compress-mode"
+              :model-value="mode"
+              value="crf"
+              size="xsmall"
+              :label="t('crfMode')"
+              @update:model-value="emit('update:mode', 'crf')"
+            />
+            <RadioButton
+              class="compress-mode-radio"
+              name="video-compress-mode"
+              :model-value="mode"
+              value="bitrate"
+              size="xsmall"
+              :label="t('bitrateMode')"
+              @update:model-value="emit('update:mode', 'bitrate')"
+            />
           </div>
         </div>
 
@@ -208,15 +209,16 @@
 </template>
 
 <script setup lang="ts">
-import { usePlugin } from "@/main"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
+import RadioButton from "@/components/RadioButton.vue"
 import Select from "@/components/Select.vue"
+import { usePlugin } from "@/main"
 
 defineProps<{
   visible: boolean
-  videoOptions: Array<{ label: string; value: string }>
+  videoOptions: Array<{ label: string, value: string }>
   selectedVideo: string
   mode: string
   crf: string | number
@@ -225,7 +227,7 @@ defineProps<{
   originalSize: string
   progress: boolean
   progressPercent: number
-  result: { success: boolean; outputPath?: string; error?: string } | null
+  result: { success: boolean, outputPath?: string, error?: string } | null
   originalSizeResult: string
   newSize: string
   compressionRate: string

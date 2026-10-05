@@ -91,24 +91,25 @@
               <!-- 设置项标签："推送分支模式" -->
               <label class="gp-set-label">{{ i18n.pushBranchModeLabel }}</label>
               <div class="gp-set-radio-group">
-                <label class="gp-set-radio">
-                  <input
-                    v-model="localBranchMode"
-                    type="radio"
-                    value="all"
-                  >
-                  <!-- 选项文案："全部分支 (--all)" -->
-                  <span>{{ i18n.pushBranchAllOpt }}</span>
-                </label>
-                <label class="gp-set-radio">
-                  <input
-                    v-model="localBranchMode"
-                    type="radio"
-                    value="head"
-                  >
-                  <!-- 选项文案："仅当前分支 (HEAD)" -->
-                  <span>{{ i18n.pushBranchHeadOpt }}</span>
-                </label>
+                <!-- 分支模式单选组（同组共用 name，方向键与 ARIA 语义方生效） -->
+                <RadioButton
+                  class="gp-set-radio"
+                  name="gp-push-branch-mode"
+                  :model-value="localBranchMode"
+                  value="all"
+                  size="xsmall"
+                  :label="i18n.pushBranchAllOpt"
+                  @update:model-value="localBranchMode = toBranchMode($event)"
+                />
+                <RadioButton
+                  class="gp-set-radio"
+                  name="gp-push-branch-mode"
+                  :model-value="localBranchMode"
+                  value="head"
+                  size="xsmall"
+                  :label="i18n.pushBranchHeadOpt"
+                  @update:model-value="localBranchMode = toBranchMode($event)"
+                />
               </div>
             </div>
             <!-- 提示文案："仅当前分支模式更快，避免推送无变更的其他分支" -->
@@ -361,6 +362,7 @@ import {
   watch,
 } from "vue"
 import Input from "@/components/Input.vue"
+import RadioButton from "@/components/RadioButton.vue"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import {
   clampDiffContextBudget,
@@ -426,6 +428,11 @@ const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubj
 const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBodyLineLength))
 const localDiffContextBudget = ref(clampDiffContextBudget(props.ruleConfig.diffContextBudget))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
+
+/** Select/RadioButton 载荷收窄为分支模式：非枚举值回退 "head"（与默认行为一致） */
+function toBranchMode(value: unknown): "all" | "head" {
+  return value === "all" ? "all" : "head"
+}
 const activeSection = ref<SettingsSection>("general")
 // ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
 // TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各弹窗）。

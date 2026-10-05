@@ -375,25 +375,12 @@
   }
 }
 
-// ── 设置弹窗：分支模式 radio ──
+// ── 设置弹窗：分支模式 radio（外观由共享 RadioButton 承担） ──
 .gp-set-radio-group {
   display: flex;
   flex-direction: column;
   gap: $s-1;
-}
-
-.gp-set-radio {
-  display: flex;
-  align-items: center;
-  gap: $s-px6;
-  font-size: $t-xs;
-  color: var(--b3-theme-on-background);
-  cursor: pointer;
-  padding: $s-px2 0;
-
-  input[type="radio"] {
-    accent-color: var(--b3-theme-primary);
-  }
+  align-items: flex-start;
 }
 
 // dialog/form styles → Dialog.scss / Form.scss

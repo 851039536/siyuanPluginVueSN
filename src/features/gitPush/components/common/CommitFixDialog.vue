@@ -13,7 +13,10 @@
             class="vp-btn vp-btn--ghost vp-btn--xs"
             @click="$emit('close')"
           >
-            <Icon icon="mdi:close" height="10" />
+            <Icon
+              icon="mdi:close"
+              height="10"
+            />
           </button>
         </div>
 
@@ -104,24 +107,25 @@
               <!-- 标签："提交时间" -->
               <label class="gp-label">{{ i18n.ruleFixDateChoice }}</label>
               <div class="gp-fix-date-options">
-                <label class="gp-fix-date-option">
-                  <input
-                    type="radio"
-                    name="gp-fix-date-choice"
-                    :checked="preserveDate"
-                    @change="onDateChoiceChange(true)"
-                  />
-                  {{ i18n.ruleFixPreserveDate }}
-                </label>
-                <label class="gp-fix-date-option">
-                  <input
-                    type="radio"
-                    name="gp-fix-date-choice"
-                    :checked="!preserveDate"
-                    @change="onDateChoiceChange(false)"
-                  />
-                  {{ i18n.ruleFixDefaultDate }}
-                </label>
+                <!-- 二值 radio（binary 模式：modelValue 直接即选中值，无需 value） -->
+                <RadioButton
+                  class="gp-fix-date-radio"
+                  binary
+                  name="gp-fix-date-choice"
+                  :model-value="preserveDate"
+                  size="xsmall"
+                  :label="i18n.ruleFixPreserveDate"
+                  @update:model-value="onDateChoiceChange(true)"
+                />
+                <RadioButton
+                  class="gp-fix-date-radio"
+                  binary
+                  name="gp-fix-date-choice"
+                  :model-value="!preserveDate"
+                  size="xsmall"
+                  :label="i18n.ruleFixDefaultDate"
+                  @update:model-value="onDateChoiceChange(false)"
+                />
               </div>
             </div>
 
@@ -139,7 +143,7 @@
               <div class="gp-fix-progress">
                 <div
                   class="gp-fix-progress-bar"
-                  :style="{ width: (rewriteProgress ? Math.round(rewriteProgress.current / rewriteProgress.total * 100) : 0) + '%' }"
+                  :style="{ width: `${rewriteProgress ? Math.round(rewriteProgress.current / rewriteProgress.total * 100) : 0}%` }"
                 />
               </div>
             </div>
@@ -209,15 +213,34 @@
 </template>
 
 <script setup lang="ts">
-import type { CommitFixTarget, GitProject } from "../../types"
+import type {
+  CommitFixTarget,
+  GitProject,
+} from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, inject, onMounted, onUnmounted, ref } from "vue"
-import { DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../../types"
-import { checkCommitRule } from "../../commitRuleChecker"
-import { resolveValidPath, ruleReasonDesc, ruleReasonText } from "../../utils"
-import { CARD_SERVICES_KEY } from "../../types"
-import { getErrorMessage } from "@/utils/stringUtils"
+import {
+  computed,
+  inject,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
 import Loader from "@/components/Loader.vue"
+import RadioButton from "@/components/RadioButton.vue"
+import { getErrorMessage } from "@/utils/stringUtils"
+import { checkCommitRule } from "../../commitRuleChecker"
+import {
+  CARD_SERVICES_KEY,
+  DEFAULT_COMMIT_RULE_CONFIG,
+  readCommitRuleConfig,
+
+} from "../../types"
+
+import {
+  resolveValidPath,
+  ruleReasonDesc,
+  ruleReasonText,
+} from "../../utils"
 import CommitFilesList from "./CommitFilesList.vue"
 
 const props = defineProps<{
@@ -385,7 +408,10 @@ async function performSave(preserve: boolean) {
   rewriteProgress.value = null
   try {
     await manager.rewriteCommitMessage(projectPath.value, props.target.hash, newMessage.value.trim(), preserve, (current, total) => {
-      rewriteProgress.value = { current, total }
+      rewriteProgress.value = {
+        current,
+        total,
+      }
     })
     emit("saved", props.target.projectId)
     emit("close")

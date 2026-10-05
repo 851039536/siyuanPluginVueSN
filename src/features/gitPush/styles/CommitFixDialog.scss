@@ -47,19 +47,12 @@
   margin-top: $s-2;
 }
 
-// 提交时间策略勾选（radio 横向排列；accent-color 由全局 radio 样式提供）
+// 提交时间策略勾选（radio 横向排列；外观由共享 RadioButton 承担）
 .gp-fix-date-options {
   display: flex;
   gap: $s-3;
   flex-wrap: wrap;
-}
-
-.gp-fix-date-option {
-  display: inline-flex;
   align-items: center;
-  gap: $s-1;
-  font-size: $t-xs;
-  cursor: pointer;
 }
 
 .gp-fix-original {

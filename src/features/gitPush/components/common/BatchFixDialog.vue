@@ -14,7 +14,10 @@
             :disabled="busy"
             @click="emit('close')"
           >
-            <Icon icon="mdi:close" height="10" />
+            <Icon
+              icon="mdi:close"
+              height="10"
+            />
           </button>
         </div>
 
@@ -33,24 +36,25 @@
               <!-- 标签："提交时间" -->
               <label class="gp-label">{{ i18n.ruleFixDateChoice }}</label>
               <div class="gp-fix-date-options">
-                <label class="gp-fix-date-option">
-                  <input
-                    type="radio"
-                    name="gp-fix-batch-date-choice"
-                    :checked="preserveDate"
-                    @change="onDateChoiceChange(true)"
-                  />
-                  {{ i18n.ruleFixPreserveDate }}
-                </label>
-                <label class="gp-fix-date-option">
-                  <input
-                    type="radio"
-                    name="gp-fix-batch-date-choice"
-                    :checked="!preserveDate"
-                    @change="onDateChoiceChange(false)"
-                  />
-                  {{ i18n.ruleFixDefaultDate }}
-                </label>
+                <!-- 二值 radio（binary 模式：modelValue 直接即选中值，无需 value） -->
+                <RadioButton
+                  class="gp-fix-date-radio"
+                  binary
+                  name="gp-fix-batch-date-choice"
+                  :model-value="preserveDate"
+                  size="xsmall"
+                  :label="i18n.ruleFixPreserveDate"
+                  @update:model-value="onDateChoiceChange(true)"
+                />
+                <RadioButton
+                  class="gp-fix-date-radio"
+                  binary
+                  name="gp-fix-batch-date-choice"
+                  :model-value="!preserveDate"
+                  size="xsmall"
+                  :label="i18n.ruleFixDefaultDate"
+                  @update:model-value="onDateChoiceChange(false)"
+                />
               </div>
             </div>
 
@@ -86,7 +90,7 @@
               <div class="gp-fix-progress">
                 <div
                   class="gp-fix-progress-bar"
-                  :style="{ width: (currentRewrite ? Math.round(currentRewrite.current / currentRewrite.total * 100) : 0) + '%' }"
+                  :style="{ width: `${currentRewrite ? Math.round(currentRewrite.current / currentRewrite.total * 100) : 0}%` }"
                 />
               </div>
             </div>
@@ -239,7 +243,10 @@
             class="vp-btn vp-btn--ghost vp-btn--sm"
             @click="emit('close')"
           >
-            <Icon icon="mdi:check" height="12" />
+            <Icon
+              icon="mdi:check"
+              height="12"
+            />
             <span>{{ i18n.ruleFixBatchDone }}</span>
           </button>
         </div>
@@ -250,14 +257,32 @@
 
 <script setup lang="ts">
 // gitPush 提交信息批量修正弹窗（自包含：多条违规校验、AI 批量生成、批量保存、逐项状态）
-import type { CommitRuleReasonKey, CommitRuleViolation } from "../../types"
-import { CARD_SERVICES_KEY, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../../types"
+import type {
+  CommitRuleReasonKey,
+  CommitRuleViolation,
+} from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, inject, onMounted, onUnmounted, ref } from "vue"
-import { checkCommitRule } from "../../commitRuleChecker"
-import { resolveValidPath, ruleReasonDesc, ruleReasonText } from "../../utils"
-import { getErrorMessage } from "@/utils/stringUtils"
+import {
+  computed,
+  inject,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
 import Loader from "@/components/Loader.vue"
+import RadioButton from "@/components/RadioButton.vue"
+import { getErrorMessage } from "@/utils/stringUtils"
+import { checkCommitRule } from "../../commitRuleChecker"
+import {
+  CARD_SERVICES_KEY,
+  DEFAULT_COMMIT_RULE_CONFIG,
+  readCommitRuleConfig,
+} from "../../types"
+import {
+  resolveValidPath,
+  ruleReasonDesc,
+  ruleReasonText,
+} from "../../utils"
 
 /** 单个违规的批量修正视图：原信息 + 可编辑新信息 + 阻止原因 + 处理状态 */
 interface BatchFixItem {
@@ -415,7 +440,11 @@ async function init() {
         manager.getWorkingTreeStatus(path),
         manager.isInRebaseState(path),
       ])
-      const rt: ProjectRuntime = { headHash: head, workingTreeClean: !wt.hasChanges, rebaseStuck: stuck }
+      const rt: ProjectRuntime = {
+        headHash: head,
+        workingTreeClean: !wt.hasChanges,
+        rebaseStuck: stuck,
+      }
 
       await Promise.all(targets.map(async (t) => {
         const isMerge = await manager.isMergeCommit(path, t.hash)
@@ -490,7 +519,10 @@ async function saveAll() {
     for (const item of targets) {
       try {
         await manager.rewriteCommitMessage(item.projectPath, item.hash, item.newMessage.trim(), preserveDate.value, (cur, total) => {
-          currentRewrite.value = { current: cur, total }
+          currentRewrite.value = {
+            current: cur,
+            total,
+          }
         })
         item.status = "saved"
       } catch (e) {
@@ -518,7 +550,11 @@ function finalize() {
     else if (it.status === "error") failed++
     else skipped++
   }
-  summary.value = { succeeded, failed, skipped }
+  summary.value = {
+    succeeded,
+    failed,
+    skipped,
+  }
   const projectIds = [...new Set(items.value.filter((it) => it.status === "saved").map((it) => it.projectId))]
   if (projectIds.length > 0) emit("saved", projectIds)
 }

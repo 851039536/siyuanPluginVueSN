@@ -216,7 +216,9 @@
 5. `gitPush/components/CommitAnalysis/AnalysisSettingsForm.vue:33,47` 是**已整改批次 C 的遗留**（同文件分段切换与取色器均已迁完，仅剩这两个 select）⇒ 优先收口，成本最低。
 6. `QuerySection.vue:57-58` 的 `<option value="asc">升序</option>` 是**硬编码中文** ⇒ 迁 `Select` 时须同步走 i18n（另涉 `AGENTS_I18N.md` 禁令）。
 
-### 3.4 🔴 原生 `<input type="radio">`（11 处 / 5 文件，`RadioButton` 采用数 = **0**）
+### 3.4 🔴 原生 `<input type="radio">`（11 处 / 5 文件，`RadioButton` 采用数 = **0**）✅ **已整改（批次 C，实测 10 处 / 5 文件）**
+
+> **状态**：已于 2026-09-14 全部迁共享 `RadioButton`，实施记录见 §七「批次 C」。实测 **10 处**（本节登记 11 处，其中 1 处为计数偏差：`RadioButton.vue` 自身的 `type="radio"` 曾被计入）。以下保留审查时原貌以便回溯。
 
 | 位置 | 用途 |
 |------|------|
@@ -414,7 +416,7 @@
 |------|------|------|------|---------|
 | **A** | 原生取色器 → `ColorField`，**修功能缺陷** | 8 处 / 6 文件 | 本地草稿 `ref` 范式（已有先例） | 双事件语义、逐字写盘、宽度未实测 | ✅ **已完成**（见 §七） |
 | **B** | 原生 `<select>` → `Select` | ~18 处 / 13 文件（**实测 36 处 / 24 文件**） | — | 受控回写、载荷归一、双层框、死样式 | ✅ **已完成**（见 §七） |
-| **C** | 原生 `radio` → `RadioButton` | 11 处 / 5 文件 | — | 同组 `name`、`value` 类型 |
+| **C** | 原生 `radio` → `RadioButton` | 10 处 / 5 文件 | — | 同组 `name`、`value` 类型 | ✅ **已完成**（见 §七） |
 | **D** | 自建 Tab → `Tabs` 五件套 | 3~4 处 | — | 必须 `lazy`、`value` 必填、焦点移交 |
 | **E** | 自建弹层 → `Dialog` / `Drawer` | ~40 文件，**分两阶段** | 逐项裁决例外 | 无 Teleport、点关判定、裁剪 |
 | **F** | 自建 `.vp-btn` → `Button` | ~60 处 / ~28 文件 | 图标补登 | 纯图标禁插槽、dense 协同、覆写特异性 |
@@ -428,6 +430,44 @@
 ---
 
 ## 七、整改实施记录
+
+### 批次 C：原生 `radio` → 共享 `RadioButton`（✅ 已完成 2026-09-14）
+
+**改动文件（5 组件 / 10 处 + 4 SCSS）**：
+
+| 文件 | 处数 | 模式 | 备注 |
+|------|------|------|------|
+| `gitPush/components/common/BatchFixDialog.vue` | 2 | **二值（`binary`）** | `preserveDate` 布尔；原 `:checked` + `@change` 无参回调 |
+| `gitPush/components/common/CommitFixDialog.vue` | 2 | **二值（`binary`）** | 同上（同源结构） |
+| `gitPush/components/common/SettingsDialog.vue` | 2 | 单选组（`"all"｜"head"`） | **原 `v-model` 且无 `name`** ⇒ 补 `name="gp-push-branch-mode"` 修复方向键/ARIA 语义缺失 |
+| `video/components/CompressDialog.vue` | 2 | 单选组（`crf`｜`bitrate`） | 原 `:checked` 手写；改为受控 `:model-value` + `value` |
+| `toolCollection/tools/wordQuery/components/WordQueryPanel.vue` | 2 | 单选组（`uk`｜`us`） | 原 `v-model` 且无 `name` |
+
+**⚠️ 实施中发现的实质情况**：
+
+1. **两类语义必须区分**：`BatchFixDialog` / `CommitFixDialog` 的 `preserveDate` 是**布尔二值**（两个 radio 各持 `:checked="x"` / `:checked="!x"`）⇒ 用 `binary` 模式（`modelValue` 直接即选中值，**不传 `value`**）；其余三处是**同值单选组** ⇒ 用 `:model-value` + `value`。若把二值那两处按单选组写，需引入一个不存在的中间值类型，属过度改造。
+2. **补 `name` 是实质修复而非形式统一**：`SettingsDialog.vue` / `WordQueryPanel.vue` 原本**完全没有 `name`** ⇒ 浏览器把同页所有无名 radio 视为**同一组**（方向键会跨组跳、读屏无法判定组边界）。迁移时统一补 `name`，`RadioButton.vue:84-85` 明示「同组必须一致，否则方向键与 ARIA 语义失效」。
+3. **产出 3 处联合类型收窄函数**（沿用批次 B 的既定做法，**不用 `as` 强转**）：
+   - `SettingsDialog.vue` → `toBranchMode()`（`"all" | "head"`，非枚举回退 `"head"`）
+   - `WordQueryPanel.vue` → `toPronunciationType()`（`"uk" | "us"`，非枚举回退 `"uk"`，与 `useSettings` 默认值一致）
+   - `vue-tsc` **实测抓出后者**（`Type 'string' is not assignable to type '"uk" | "us"'`）⇒ 再次印证 `.vue` props 的类型校验只有 `vue-tsc` 能做。
+4. **`.radio-label` / `.gp-set-radio` / `.gp-fix-date-option` 三个自绘标签类全部失效** ⇒ 删除；但 `WordQueryPanel.scss` 中 `.radio-label` 与 `.checkbox-label` **共用一条规则**（checkbox 仍为原生，属批次 G）⇒ **拆开保留 `.checkbox-label` 部分**，未整块删除。
+5. **`CompressDialog` 原有的悬停高亮**（`.radio-label:hover { background: primary-lightest }`）随自绘标签删除 ⇒ 观感变化，交由 `RadioButton` 自身的交互反馈承担（已登记）。
+
+**SCSS 交还外观（4 个文件）**：`CommitFixDialog.scss`（删 `.gp-fix-date-option`，`gap` 保留 + 补 `align-items`）、`gitPush/styles/index.scss`（删 `.gp-set-radio`，含其内部 `input[type="radio"] { accent-color }`）、`video/styles/index.scss`（删 `.radio-label` 整块含 hover）、`WordQueryPanel.scss`（**拆分**共用规则，保留 `.checkbox-label`）。
+
+**验证（批次 C）**：
+
+| 检查 | 结果 |
+|------|------|
+| 残留断言 `type="radio"`（大小写敏感，全 `src`） | ✅ 仅剩 `src/components/RadioButton.vue:16`（组件本体） |
+| `pnpm typecheck`（vue-tsc） | ✅ **exit 0**（首轮抓出 1 个联合类型错误，已用收窄函数修复） |
+| `eslint --fix`（5 个改动文件） | ✅ **0 error / 28 warning**（全部为未改动函数的既有 `explicit-function-return-type`） |
+| 行尾一致性 `git ls-files --eol` | ✅ 5 个文件全部 `w/crlf`（**中途出现 3 个 `w/mixed`，已修复**；1 个曾被写成 `w/lf`，已还原） |
+| 编码完整性 | ✅ 5 个文件逐一无 mojibake（**中途一次 PowerShell 改写造成中文乱码 + 语法损坏，已 `git checkout` 还原后用 edit 工具重做**） |
+| 目视回归 | ⏳ **待确认**：`RadioButton` 的圆框几何与 `xsmall` 档位在各紧凑表单行内的表现 |
+
+**⚠️ 本轮最重要的工具教训（已写入 MEMORY）**：**禁止用 PowerShell 的 `Get-Content -Raw` + `-replace` + `Set-Content` 改源码**。该写法有双重破坏性：①`-Encoding utf8` 往返把中文注释写成乱码，且**注释行会吞掉下一行代码**（实测 `// 复制…  const handleCopy = ...` 被并成一行，导致 `TS1128`）；②行尾被整篇转为 LF。**改源码一律用 `edit` 工具**（它保编码、保行尾）；仅在**纯行尾归一**这种不碰内容字节的场景才可用 .NET `File::WriteAllText` + `UTF8Encoding($false)`。
 
 ### 批次 B：原生 `<select>` → 共享 `Select`（✅ 已完成 2026-09-14）
 

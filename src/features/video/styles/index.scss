@@ -347,33 +347,12 @@
   }
 }
 
-// 压缩模式选择器
+// 压缩模式选择器（外观由共享 RadioButton 承担，仅保留纵向排列）
 .compress-mode-selector {
   display: flex;
   flex-direction: column;
   gap: $s-2;
-
-  .radio-label {
-    display: flex;
-    align-items: center;
-    gap: $s-2;
-    cursor: pointer;
-    padding: $s-px6 $s-2;
-    border-radius: $r-sm;
-
-    &:hover {
-      background: var(--b3-theme-primary-lightest);
-    }
-
-    input[type="radio"] {
-      cursor: pointer;
-    }
-
-    span {
-      font-size: $t-sm;
-      color: var(--b3-theme-on-surface);
-    }
-  }
+  align-items: flex-start;
 }
 
 // 视频播放器

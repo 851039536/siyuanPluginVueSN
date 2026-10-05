@@ -72,22 +72,25 @@
             <span>{{ i18n.pronunciation || '发音设置' }}</span>
           </label>
           <div class="option-row">
-            <label class="radio-label">
-              <input
-                v-model="pronunciationType"
-                type="radio"
-                value="uk"
-              />
-              <span>{{ i18n.britishPronunciation || '英式发音' }}</span>
-            </label>
-            <label class="radio-label">
-              <input
-                v-model="pronunciationType"
-                type="radio"
-                value="us"
-              />
-              <span>{{ i18n.americanPronunciation || '美式发音' }}</span>
-            </label>
+            <!-- 发音类型单选组（同组共用 name，方向键与 ARIA 语义方生效） -->
+            <RadioButton
+              class="option-radio"
+              name="wordquery-pronunciation"
+              :model-value="pronunciationType"
+              value="uk"
+              size="xsmall"
+              :label="i18n.britishPronunciation || '英式发音'"
+              @update:model-value="pronunciationType = toPronunciationType($event)"
+            />
+            <RadioButton
+              class="option-radio"
+              name="wordquery-pronunciation"
+              :model-value="pronunciationType"
+              value="us"
+              size="xsmall"
+              :label="i18n.americanPronunciation || '美式发音'"
+              @update:model-value="pronunciationType = toPronunciationType($event)"
+            />
           </div>
         </div>
 
@@ -279,17 +282,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue"
+import type { WordQueryComponentProps } from "../types"
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
-import type { WordQueryComponentProps } from "../types"
-import { useWordQuery } from "../composables/useWordQuery"
+import RadioButton from "@/components/RadioButton.vue"
 import { useSettings } from "../composables/useSettings"
+import { useWordQuery } from "../composables/useWordQuery"
 
 const props = defineProps<WordQueryComponentProps>()
 
 const i18n = props.i18n
+
+/** RadioButton 载荷收窄为发音类型：非枚举值回退 "uk"（与 useSettings 默认值一致） */
+function toPronunciationType(value: unknown): "uk" | "us" {
+  return value === "us" ? "us" : "uk"
+}
 
 // 设置（发音偏好）
 const {

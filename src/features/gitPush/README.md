@@ -116,7 +116,7 @@ src/features/gitPush/
 │   │   ├── CommitFileDiffDialog.vue # 提交文件差异弹窗
 │   │   ├── DiffLines.vue            # diff 着色行共享渲染片段
 │   │   ├── TagCommitDialog.vue      # 标签提交弹窗
-│   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/条形/增删净/占比/可选总行数；clickable 时原生 button 可键盘激活；行数统计面板与详情弹窗共用）
+│   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/增删净/占比/可选总行数；clickable 时原生 button 可键盘激活；行数统计面板与详情弹窗共用）
 │   │   └── LineShareBar.vue         # 行数占比迷你条（轨道 + 填充 + 百分比文本，填充按净增正负着色；详情弹窗文件明细占比列用）
 │   ├── ListView/                    # 列表视图专属（16 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）
@@ -207,7 +207,7 @@ src/features/gitPush/
     ├── AnalysisToolbar.scss         # 分析类视图统一工具条样式（三视图共用）
     ├── AnalysisGate.scss            # 分析类视图状态门样式（失败提示条 .gp-analysishint）
     ├── StatCardGrid.scss            # KPI 卡片网格样式（五视图共用；原 .gp-stat-card/.gpa-card/.grc-card/.gls-card/.gpr-card 五份合一）
-    ├── LineRankRow.scss             # 行数排行行样式（列模板单点定义 + 表头吸顶 + 条形 + 数字列 + lrr-net 语义色）
+    ├── LineRankRow.scss             # 行数排行行样式（列模板单点定义 + 表头吸顶 + 数字列 + lrr-net 语义色）
     ├── LineShareBar.scss            # 行数占比迷你条样式
     ├── ProjectLineDetail.scss       # 项目行数详情弹窗样式（弹窗尺寸 + 头部 + 文件明细表格）
     ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式

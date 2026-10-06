@@ -6,12 +6,11 @@
       {{ i18n.analysisLineProjectRanking }}
     </div>
     <div class="lrr-list">
-      <!-- 吸顶表头行："新增 / 删除 / 净增 / 占比 / 总行数"（净增加粗主题色 = 实际行数，悬停见说明）；
-           列模板与数据行共用 styles/LineRankRow.scss 的 $_lrr-cols（跨行条形对齐硬约束） -->
+      <!-- 吸顶表头行："新增 / 删除 / 净增 / 占比 / 总行数"（净增加粗主题色，悬停见说明）；
+           列模板与数据行共用 styles/LineRankRow.scss 的 $_lrr-cols（各列对齐硬约束） -->
       <div class="lrr-head">
         <span class="lrr-rank"></span>
         <span class="lrr-label"></span>
-        <span class="lrr-track"></span>
         <span class="lrr-nums">
           <!-- 表头列："新增"（绿色；tooltip 说明为全历史累计增量口径） -->
           <span
@@ -46,7 +45,6 @@
         :key="row.id"
         :rank="idx + 1"
         :label="row.name"
-        :pct="row.pct"
         :share="row.share"
         :added="row.added"
         :deleted="row.deleted"
@@ -77,7 +75,7 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 行视图（pct=相对最大总行数的条形宽度，share=总行数占比，与「按总行数降序」排序同口径） */
+/** 行视图（share=总行数占比，与「按总行数存量降序」排序同口径；条形已移除，pct 不再消费） */
 const rows = computed(() => withLineBarPct(props.projectRanking, (r) => r.totalLines ?? 0))
 </script>
 

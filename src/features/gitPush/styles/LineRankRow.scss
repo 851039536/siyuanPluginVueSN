@@ -3,11 +3,11 @@
 
 // ── 行数排行行（项目排行 + 详情弹窗作者排行共用）
 // 列模板单点定义：数据行（.lrr-row）与表头（.lrr-head）必须共用同一模板，
-// 否则跨行条形起止点错位（这是排行可读性的硬约束）──
-// 排名 | 名称（自适应）| 条形轨道（自适应）| 三列数字 | 占比 | 总行数
-$_lrr-cols: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 40px minmax(40px, auto);
+// 否则各列起止点错位（这是排行可读性的硬约束）──
+// 排名 | 名称（自适应）| 三列数字 | 占比 | 总行数
+$_lrr-cols: 18px minmax(64px, 1.1fr) auto 40px minmax(40px, auto);
 // 无总行数列（作者明细场景）：占比列对齐到末列
-$_lrr-cols-no-total: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 42px;
+$_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
 
 // 排行列表容器（两处共用：面板项目排行 + 弹窗作者排行）
 .lrr-list {
@@ -32,11 +32,6 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 42px;
   color: var(--b3-theme-on-surface-light);
   background: var(--b3-theme-background); // 吸顶遮挡：必须不透明
   border-bottom: 1px solid var(--b3-border-color);
-
-  // 排名/名称/轨道三列仅作占位，空轨道不显示背景避免视觉干扰
-  .lrr-track {
-    background: transparent;
-  }
 
   // 表头数字与占比文字不弱化（覆盖数据行的 opacity 弱化）
   .lrr-num,
@@ -105,24 +100,6 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 42px;
   opacity: 0.75;
 }
 
-.lrr-track {
-  // 轨道高度 5px、圆角 4px（radius-sm），色块存在感更强
-  height: 5px;
-  min-width: 0;
-  background: var(--b3-theme-surface);
-  border-radius: $r-sm;
-  overflow: hidden;
-}
-
-.lrr-fill {
-  display: block;
-  height: 100%;
-  min-width: 2px; // 极小占比也保留 2px 可见宽度（可读性优先于严格比例，有意取舍）
-  border-radius: $r-sm;
-  background: var(--b3-theme-primary);
-  transition: width 0.12s ease;
-}
-
 // ── 行数排行数字列（+新增 / −删除 / 净增 三列等宽数字，整块右对齐）──
 // 靠右对齐让三列数字尾部跨行对齐；相邻数字用 margin 保证间距（不依赖 flex gap 支持，根除粘连）
 .lrr-nums {
@@ -189,14 +166,5 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) minmax(36px, 1fr) auto 42px;
 
 .lrr-net--zero {
   opacity: 0.5;
-}
-
-// fill 的净增着色（barNetColored 场景：作者排行/净增口径占比）
-.lrr-fill.lrr-net--pos {
-  background: var(--b3-theme-success);
-}
-
-.lrr-fill.lrr-net--neg {
-  background: var(--b3-theme-error);
 }
 

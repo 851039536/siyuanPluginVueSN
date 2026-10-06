@@ -157,7 +157,7 @@
               </template>
             </TabPanel>
 
-            <!-- 作者明细 Tab：共享 LineRankRow（非交互，无总行数列，fill 随净增着色） -->
+            <!-- 作者明细 Tab：共享 LineRankRow（非交互，无总行数列；净增数字按正负着色） -->
             <TabPanel value="author">
               <EmptyState
                 v-if="authorRows.length === 0"
@@ -173,12 +173,10 @@
                   :key="row.author"
                   :rank="idx + 1"
                   :label="row.author"
-                  :pct="row.pct"
                   :share="row.share"
                   :added="row.added"
                   :deleted="row.deleted"
                   :net="row.net"
-                  bar-net-colored
                   :i18n="i18n"
                 />
               </div>

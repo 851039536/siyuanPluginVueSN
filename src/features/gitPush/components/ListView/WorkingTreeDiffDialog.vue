@@ -12,7 +12,10 @@
   >
     <!-- 标题行 + 操作区（header 插槽整体替换标题；headerId 打到标题元素上以建立 aria-labelledby） -->
     <template #header="{ headerId }">
-      <div class="wt-diff-header">
+      <div
+        ref="rootEl"
+        class="wt-diff-header"
+      >
         <div class="wt-diff-title-row">
           <Icon
             icon="mdi:file-compare"
@@ -317,8 +320,25 @@ watch(
 // ← → 切换文件（组件仅在弹窗打开时挂载，onMounted/onUnmounted 即等价于开关监听）
 // 捕获阶段拦截并阻止继续派发，避免按键穿透触发下层弹窗的监听（对齐 CommitFileDiffDialog）；
 // Esc 关闭与焦点归还由共享 Dialog 内建处理
+/** 本组件的根节点（用于判定自己是否是最上层弹窗） */
+const rootEl = ref<HTMLElement | null>(null)
+
+/**
+ * 是否最上层弹窗：多张卡片各自打开差异弹窗时，多个实例都会挂 window 捕获监听，
+ * 首个注册者会把箭头键全部吞掉（stopImmediatePropagation），导致方向键在后台弹窗上翻页。
+ * 共享 Dialog 未提供弹窗栈，故按「谁的根节点在文档中最后出现」近似判定层级。
+ */
+function isTopmostDialog(): boolean {
+  const masks = document.querySelectorAll(".si-dialog-mask")
+  if (masks.length <= 1) return true
+  const mine = rootEl.value?.closest(".si-dialog-mask")
+  return !mine || masks[masks.length - 1] === mine
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return
+  // 非最上层不抢按键：交回给实际可见的那张弹窗
+  if (!isTopmostDialog()) return
   e.stopImmediatePropagation()
   navigate(e.key === "ArrowLeft" ? -1 : 1)
 }

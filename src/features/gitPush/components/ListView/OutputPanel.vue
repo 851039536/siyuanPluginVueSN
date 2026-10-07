@@ -147,10 +147,16 @@ const outcome = computed(() => {
     skipped > 0 ? `${props.i18n.opSkipped} ${skipped}` : "",
   ].filter(Boolean).join(" · ")
 
+  // 结论文案走带占位符的模板键：直接拼接「动作词 + 结果词」在英文下会粘成 "PushDone"/"PullFailed"
+  // （中文因无需分隔符恰好可读，属跨语言缺陷），模板键让各语言自行决定语序与间隔
+  const resultTemplate = type === "ok"
+    ? props.i18n.opResultOk
+    : type === "fail" ? props.i18n.opResultFail : props.i18n.opResultSkip
+
   return {
     type,
     icon: type === "ok" ? "mdi:check-circle" : type === "fail" ? "mdi:alert-circle" : "mdi:minus-circle-outline",
-    text: `${actionText}${type === "ok" ? props.i18n.done : type === "fail" ? props.i18n.failed : props.i18n.opSkipped}`,
+    text: String(resultTemplate).replace("{0}", actionText),
     counts,
   }
 })
@@ -172,12 +178,16 @@ const elapsed = ref(0)
 /** 操作批次开始时间戳 */
 let startTime = 0
 
-/** 随 runningStates 启停计时：非空开始累计，清空停止并复位 */
+/** 是否正在进行中（多平台逐个完成时数组长度会 2→1→0，只看「有无运行」避免中途误复位计时） */
+const isRunning = computed(() => (props.runningStates?.length ?? 0) > 0)
+
+/** 随「有无运行」启停计时：空闲→运行开始累计，运行→空闲停止并复位。
+ *  不能 watch 数组长度：多远程推送时逐平台完成会让长度 2→1，若据此重启计时，
+ *  显示的累计耗时会每次掉回 0s，失去「本次操作总耗时」的意义。 */
 function syncElapsedTimer() {
-  const running = (props.runningStates?.length ?? 0) > 0
   elapsedTimer.clearAll()
   elapsed.value = 0
-  if (running) {
+  if (isRunning.value) {
     startTime = Date.now()
     elapsedTimer.setInterval(() => {
       elapsed.value = Math.floor((Date.now() - startTime) / 1000)
@@ -185,7 +195,7 @@ function syncElapsedTimer() {
   }
 }
 
-watch(() => props.runningStates?.length, syncElapsedTimer)
+watch(isRunning, syncElapsedTimer)
 // 视图切换回来时若操作仍在进行，补齐计时
 onMounted(syncElapsedTimer)
 onUnmounted(() => elapsedTimer.clearAll())
@@ -217,7 +227,7 @@ function entryToLines(entry: PushOutputEntry): ConsoleLine[] {
     }
   }
   if (entry.fullStderr) {
-    for (const text of entry.fullStderr.trimEnd().split("\n")) {
+    for (const text of truncate(entry.fullStderr).trimEnd().split("\n")) {
       result.push({ text, type: "err" })
     }
   }

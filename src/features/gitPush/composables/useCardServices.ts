@@ -28,7 +28,7 @@ export function useCardServices(project: () => GitProject): {
   gitOpLoading: ComputedRef<boolean>
   tagPushLoading: ComputedRef<string>
   genStashDescLoading: ComputedRef<boolean>
-  /** 全局单值（非按 id）：外部生成的 stash 描述文案 */
+  /** 外部生成的 stash 描述文案（按项目 id 分槽，与 genStashDescLoading 同域） */
   generatedStashMsg: ComputedRef<string>
   fetching: ComputedRef<boolean>
   remoteStatusLoading: ComputedRef<boolean>
@@ -55,7 +55,7 @@ export function useCardServices(project: () => GitProject): {
   const gitOpLoading = computed(() => (byId(records.gitOpLoading.value) ?? 0) > 0)
   const tagPushLoading = computed(() => byId(records.tagPushLoading.value) ?? "")
   const genStashDescLoading = computed(() => byId(records.genStashDescLoading.value) ?? false)
-  const generatedStashMsg = computed(() => records.generatedStashMsg.value)
+  const generatedStashMsg = computed(() => byId(records.generatedStashMsg.value) ?? "")
   const fetching = computed(() => (byId(records.fetching.value) ?? 0) > 0)
   const remoteStatusLoading = computed(() => (byId(records.remoteStatusLoading.value) ?? 0) > 0)
   const refreshingWorkingTree = computed(() => (byId(records.refreshingWorkingTree.value) ?? 0) > 0)

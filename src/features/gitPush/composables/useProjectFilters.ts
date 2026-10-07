@@ -9,6 +9,7 @@ import {
 } from "vue"
 import { VIEW_MODE_META } from "../types"
 import { sortProjects } from "../utils"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import type { TypedStorage } from "@/utils/typedStorage"
 
 /** 分类分组结构（与 useGitStats.groupedProjects 元素结构一致） */
@@ -49,13 +50,14 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   const searchQuery = ref("")
   /** 防抖后的搜索词（300ms），用于过滤计算，避免每次按键都重算 computed 与 DOM diff */
   const debouncedQuery = ref("")
-  let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+  /** 搜索防抖定时器（统一走 TimerRegistry，随组件卸载清理） */
+  const searchTimers = new TimerRegistry()
   watch(searchQuery, (v) => {
-    if (searchDebounceTimer) { clearTimeout(searchDebounceTimer) }
-    searchDebounceTimer = setTimeout(() => { debouncedQuery.value = v }, 300)
+    searchTimers.clearAll()
+    searchTimers.setTimeout(() => { debouncedQuery.value = v }, 300)
   })
   onUnmounted(() => {
-    if (searchDebounceTimer) { clearTimeout(searchDebounceTimer) }
+    searchTimers.clearAll()
   })
   const viewMode = ref<ViewMode>("all")
   const showArchived = ref(false)

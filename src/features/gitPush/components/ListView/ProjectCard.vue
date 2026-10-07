@@ -311,7 +311,25 @@ function openCommitFiles(entry: CommitLogEntry) {
 /** 当前正在打 Tag 的提交条目（null = 未打开打 Tag 弹窗） */
 const taggingEntry = ref<CommitLogEntry | null>(null)
 
-/** 打 Tag 弹窗目标（含该提交已命中的 Tag，来自 tagCommitMap 短 hash 匹配） */
+/**
+ * 短 hash → Tag 名数组映射。
+ * tagCommitMap 的键是**完整** hash（来自 `git tag --format=%(objectname)`），
+ * 而 CommitLogEntry.hash 是**短** hash（`git log --format=%h`，7 位）——
+ * 直接 `tagCommitMap.get(entry.hash)` 永不命中，会导致打 Tag 弹窗的「已有 Tag」恒为空。
+ * 故与 BranchCommitList.shortTagMap 一致，按前 7 位截取后建短 hash 映射。
+ */
+const shortTagMap = computed(() => {
+  const map = new Map<string, string[]>()
+  for (const [fullHash, names] of tagCommitMap.value) {
+    const short = fullHash.slice(0, 7)
+    const existing = map.get(short)
+    if (existing) existing.push(...names)
+    else map.set(short, [...names])
+  }
+  return map
+})
+
+/** 打 Tag 弹窗目标（含该提交已命中的 Tag，按短 hash 前缀匹配） */
 const tagDialogTarget = computed(() => {
   const entry = taggingEntry.value
   if (!entry) {
@@ -326,7 +344,7 @@ const tagDialogTarget = computed(() => {
     projectName: props.project.name,
     hash: entry.hash,
     message: entry.message,
-    existingTags: tagCommitMap.value.get(entry.hash) ?? [],
+    existingTags: shortTagMap.value.get(entry.hash) ?? [],
   }
 })
 

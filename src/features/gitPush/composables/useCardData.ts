@@ -70,14 +70,21 @@ export function useCardData(project: () => GitProject) {
   }
 
   /** 加载提交日志并同步项目最近活动时间（count 缺省走 logLimit，即列表选择框当前值，替代原 30 条默认）
-   *  显式传入 count（用户切换条数）时绕过单飞：必须按新条数重抓，不能复用旧条数的在飞查询 */
+   *  显式传入 count（用户切换条数）时绕过单飞：必须按新条数重抓，不能复用旧条数的在飞查询。
+   *  绕过单飞 ⇒ 可能并发多笔（快速切换条数），故用请求序号守卫写入：
+   *  条数小的查询通常更快，若慢的「大条数」结果后到并覆盖，列表会少于用户所选条数 */
+  let logRequestSeq = 0
+
   async function loadLog(count?: number | "all", force = false) {
+    const seq = ++logRequestSeq
     const entries = await scheduler.run(
       project().id,
       "log",
       () => manager.getCommitLog(path(), count ?? logLimit.value),
       count === undefined && !force ? undefined : { force: true },
     )
+    // 仅最后一次发起的请求可写入（陈旧响应直接丢弃，避免小条数结果被后到的大条数结果覆盖）
+    if (seq !== logRequestSeq) return
     logEntries.value = entries
     const latest = entries[0]?.date
     if (latest) await services.recordCommitActivity(project().id, latest)
@@ -140,6 +147,24 @@ export function useCardData(project: () => GitProject) {
 
   // ── 懒加载与手动刷新入口 ──
 
+  /** logLoading 用引用计数而非布尔：详情首载与手动刷新/切换条数可能并发，
+   *  布尔会被先完成的那笔翻回 false，导致仍在飞的查询对应的转圈提前消失
+   *  （与 stashLoading / gitOpLoading 的引用计数范式一致） */
+  let logLoadingRefCount = 0
+
+  /** 进入一笔日志查询（返回退出函数，保证异常路径也能正确减计数） */
+  function beginLogLoading(): () => void {
+    logLoadingRefCount++
+    logLoading.value = true
+    let ended = false
+    return () => {
+      if (ended) return
+      ended = true
+      logLoadingRefCount = Math.max(0, logLoadingRefCount - 1)
+      logLoading.value = logLoadingRefCount > 0
+    }
+  }
+
   /** 首次点卡片 / 切 Tab 时懒加载详情。
    *  实例级标记 + 在途 Promise 双守卫：原实现「await 之后才置标记」使并发两次调用都能穿过守卫而重复发 git。 */
   let detailsLoaded = false
@@ -148,19 +173,21 @@ export function useCardData(project: () => GitProject) {
   async function ensureDetailsLoaded(): Promise<void> {
     if (detailsLoaded) return
     if (detailsPromise) return detailsPromise
-    logLoading.value = true
+    const endLoading = beginLogLoading()
     detailsPromise = (async () => {
       try {
-        await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
+        // conflicts 一并纳入首载：若项目在打开面板前就处于冲突合并态，
+        // 仅靠 dirty 信号（由 resolve/abort 触发）永远拉不到，ConflictSection 会被静默隐藏
+        await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags(), loadConflicts()])
         detailsLoaded = true
         // 远程 Tag 状态与提交变更统计均为额外开销，后台异步补齐不阻塞详情展示
         // （统计需 git 逐条算 diff，实测 200 条约 2.3s，故不并入上方 Promise.all）
-        void loadRemoteTags()
-        void loadLogStats()
+        void loadRemoteTags().catch(() => {})
+        void loadLogStats().catch(() => {})
       } catch {
         // 加载失败不标记为已加载，允许重试
       } finally {
-        logLoading.value = false
+        endLoading()
         detailsPromise = null
       }
     })()
@@ -170,13 +197,15 @@ export function useCardData(project: () => GitProject) {
   /** LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景）。
    *  统计与列表并行：统计失败不影响列表，故不 await（列表渲染优先级更高） */
   async function reloadLog(count?: number | "all") {
-    logLoading.value = true
+    const endLoading = beginLogLoading()
     try {
       await loadLog(count, true)
+    } catch {
+      // 刷新失败静默降级：调用方（点击/切换条数）不处理拒绝，避免未处理的 Promise 拒绝
     } finally {
-      logLoading.value = false
+      endLoading()
     }
-    void loadLogStats(true)
+    void loadLogStats(true).catch(() => {})
   }
 
   /** TAG Tab 手动刷新（强制重取） */
@@ -211,19 +240,24 @@ export function useCardData(project: () => GitProject) {
   function applyDirty() {
     const kinds = scheduler.consumeDirty(project().id)
     if (!kinds) return
+    // 全部后台重载统一吞掉拒绝：这些调用无人 await，插件也未注册 unhandledrejection 处理器，
+    // 一旦 git 失败（路径被删/仓库损坏）会冒泡成未处理的 Promise 拒绝。失败按「本次不刷新」降级，
+    // 与 loadDiff 的 catch-and-fallback 一致
+    const safeReload = (p: Promise<unknown>) => { p.catch(() => {}) }
     if (kinds.has("log")) {
-      void loadLog(undefined, true)
-      void loadLogStats(true)
+      safeReload(loadLog(undefined, true))
+      safeReload(loadLogStats(true))
     }
-    if (kinds.has("branches")) void loadBranches(true)
-    if (kinds.has("stash")) void loadStash(true)
+    if (kinds.has("branches")) safeReload(loadBranches(true))
+    if (kinds.has("stash")) safeReload(loadStash(true))
     if (kinds.has("tags")) {
-      void loadTags(true).then(() => {
+      // loadTags 失败时跳过远程 Tag 刷新（否则 .then 不执行且整链成为未处理拒绝）
+      safeReload(loadTags(true).then(() => {
         // 推送/删除 Tag 后同步刷新远程 Tag 状态（网络命令后台执行）
-        void loadRemoteTags(true)
-      })
+        loadRemoteTags(true).catch(() => {})
+      }))
     }
-    if (kinds.has("conflicts")) void loadConflicts(true)
+    if (kinds.has("conflicts")) safeReload(loadConflicts(true))
   }
 
   // 单值 epoch watch：替代原 5 个按域 watch（每个都读取同一个 cardRefreshSignals 对象，

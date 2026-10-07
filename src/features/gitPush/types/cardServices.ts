@@ -39,8 +39,8 @@ export interface CardRecordData {
   /** 引用计数（>0 视为 loading） */
   gitOpLoading: Ref<Record<string, number>>
   genStashDescLoading: Ref<Record<string, boolean>>
-  /** 全局单值（非按 id）：外部生成的 stash 描述文案 */
-  generatedStashMsg: Ref<string>
+  /** 外部生成的 stash 描述文案（按项目 id 分槽，与 genStashDescLoading 同域） */
+  generatedStashMsg: Ref<Record<string, string>>
   tagPushLoading: Ref<Record<string, string>>
   /** 引用计数（>0 视为 loading） */
   fetching: Ref<Record<string, number>>

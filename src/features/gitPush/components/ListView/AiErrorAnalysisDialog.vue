@@ -193,7 +193,7 @@ const errorText = computed(() => {
   })
   const text = parts.join("\n\n")
   return text.length > MAX_ERROR_CHARS
-    ? `${text.slice(0, MAX_ERROR_CHARS)}\n...[已截断]`
+    ? `${text.slice(0, MAX_ERROR_CHARS)}\n${props.i18n.aiAnalyzeTruncated}`
     : text
 })
 

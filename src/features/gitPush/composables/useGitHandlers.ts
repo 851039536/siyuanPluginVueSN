@@ -52,8 +52,8 @@ export function useGitHandlers(deps: {
   const gitOpLoading = ref<Record<string, number>>({})
   /** Stash 描述生成加载中 id → true */
   const genStashDescLoading = ref<Record<string, boolean>>({})
-  /** 外部生成的 stash 描述文案 */
-  const generatedStashMsg = ref("")
+  /** 外部生成的 stash 描述文案 id → text（按项目分槽：单值 ref 会让 A 项目生成的描述串到 B 项目的输入框） */
+  const generatedStashMsg = ref<Record<string, string>>({})
   /** Tag 推送操作加载中 id → tagName */
   const tagPushLoading = ref<Record<string, string>>({})
 
@@ -113,7 +113,7 @@ export function useGitHandlers(deps: {
     genStashDescLoading.value[id] = true
     try {
       const desc = await generateStashDesc(id)
-      if (desc) generatedStashMsg.value = desc
+      if (desc) generatedStashMsg.value[id] = desc
     } catch {
       // 失败则保持输入内容不变
     } finally {

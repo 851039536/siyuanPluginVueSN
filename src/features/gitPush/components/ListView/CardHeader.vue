@@ -205,12 +205,16 @@ const switchingBranch = ref("")
  * 切换分支：置位在途标记 → 等待 → 复位。
  * 原先直接调 ops.switchBranch 且按钮无 loading/disabled，切换期间按钮照常可点，
  * 快速双击会排出两次 git checkout。此处用卡片本地标记收口（无需为一次性操作新增全局 Record）。
+ * switchBranch 内部不吞异常，而本处理器由 click 直接调用（无人 await），
+ * 故必须自捕获：失败反馈由 useGitOps 侧 toast/输出框统一给出，这里只需避免未处理的 Promise 拒绝。
  */
 async function handleSwitchBranch(branch: BranchInfo) {
   if (branch.current || switchingBranch.value) return
   switchingBranch.value = branch.name
   try {
     await ops.switchBranch(props.project.id, branch.name)
+  } catch {
+    // 失败反馈已在 ops.switchBranch 内上报（toast + 输出框），此处仅收口拒绝
   } finally {
     switchingBranch.value = ""
   }

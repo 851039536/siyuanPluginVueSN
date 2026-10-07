@@ -369,11 +369,15 @@ watch(() => props.refreshingWorkingTree, (refreshing) => {
  * 两个触发源共用本处理器——① 窗口重新获得焦点（从编辑器/其他应用切回）；
  * ② 面板内按下指针（双窗口并列时不会切换窗口焦点）。git 操作在途或距上次刷新不足
  * 最小间隔时直接跳过，避免与面板内操作竞争子进程。
+ *
+ * 已有待发定时器时不再重置：本处理器同时挂在 pointerdown 与 window focus 上，
+ * 若每次触发都刷新 800ms 窗口，用户在面板内的连续点击（每次 pointerdown 都会触发）
+ * 会让刷新被无限推迟 —— 与「自动同步」意图相反。
  */
 function handleAutoRefreshTrigger() {
+  if (autoRefreshTimer !== null) return
   if (props.gitOpLoading || props.refreshingWorkingTree) return
   if (Date.now() - lastRefreshStartedAt < AUTO_REFRESH_MIN_INTERVAL_MS) return
-  autoRefreshTimers.clear(autoRefreshTimer)
   autoRefreshTimer = autoRefreshTimers.setTimeout(() => {
     autoRefreshTimer = null
     // 防抖期间可能已有操作触发过刷新，真正发出前再判一次
@@ -441,13 +445,27 @@ function handleDiffRequest(staged: boolean) {
   emit("loadDiff", file.path, staged)
 }
 
-/** 弹窗内暂存切换：翻转 staged 后重新加载 diff（缓存键含 staged 前缀） */
+/**
+ * 弹窗内暂存切换：翻转 staged 后重新加载 diff（缓存键含 staged 前缀）。
+ *
+ * 部分暂存文件（porcelain MM/AM：staged && unstaged）在「暂存」后，
+ * 工作区那份改动已被并入暂存区 —— 若只翻转 staged 而保留 unstaged，
+ * 弹窗会继续提供切到「已暂存」范围，而那份 diff 此时已为空。
+ * 故暂存时同时清掉 unstaged，让 canSwitchScope 与实际状态一致；
+ * 反向（取消暂存）则把内容交回工作区。
+ * 真实状态仍以后续 tree 刷新为准（失败回滚由下方 watch 自愈）。
+ */
 function handleDiffStageToggle() {
   const file = activeDiffFile.value
   if (!file) return
+  const nextStaged = !file.staged
   toggleStage(file)
-  activeDiffFile.value = { ...file, staged: !file.staged }
-  emit("loadDiff", file.path, !file.staged)
+  activeDiffFile.value = {
+    ...file,
+    staged: nextStaged,
+    unstaged: nextStaged ? false : file.unstaged,
+  }
+  emit("loadDiff", file.path, nextStaged)
 }
 
 /** 弹窗内丢弃：透传给父级确认流程，文件从树中消失后由下方 watch 关闭弹窗 */
@@ -499,7 +517,15 @@ function handleCommit() {
   emit("commit", commitMessage.value.trim())
 }
 
-defineExpose({ clear: () => { commitMessage.value = ""; commitType.value = "chore" } })
+// 提交成功后清空输入与类型选择：成功的判据是「暂存区已空」（挂在 v-if="hasStaged" 上的表单随之消失），
+// 而失败时暂存区仍有内容、输入保留供用户修改重试。
+// 此前把 clear() 经 defineExpose 暴露出去但无人调用，导致下一轮提交会看到上一轮的旧信息。
+watch(hasStaged, (nowStaged, wasStaged) => {
+  if (wasStaged && !nowStaged) {
+    commitMessage.value = ""
+    commitType.value = "chore"
+  }
+})
 </script>
 
 <style lang="scss">

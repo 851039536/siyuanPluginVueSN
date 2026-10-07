@@ -14,15 +14,18 @@ import type { TypedStorage } from "@/utils/typedStorage"
 /** 分类分组结构（与 useGitStats.groupedProjects 元素结构一致） */
 type ProjectGroup = { category: { id: string, name: string, color: string, order: number }, projects: GitProject[] }
 
+/** 「命中项目集合」响应式引用（needsPush / needsPull / uncommitted 等共用：项只需含 project 字段） */
+type ProjectItemListRef = Ref<{ project: GitProject }[]>
+
 interface UseProjectFiltersOptions {
   /** git 操作暂停状态持久化槽位（由 GitPushStorage 提供） */
   gitOpsPausedStorage: TypedStorage<boolean>
   /** 显示已归档项目持久化槽位（由 GitPushStorage 提供） */
   showArchivedStorage: TypedStorage<boolean>
   projects: Ref<GitProject[]>
-  needsPushProjects: Ref<{ project: GitProject }[]>
-  needsPullProjects: Ref<{ project: GitProject }[]>
-  uncommittedProjects: Ref<{ project: GitProject }[]>
+  needsPushProjects: ProjectItemListRef
+  needsPullProjects: ProjectItemListRef
+  uncommittedProjects: ProjectItemListRef
   starredProjects: Ref<GitProject[]>
   /** 按分类 TAB 过滤后的分组（无搜索词时的数据源） */
   visibleGroups: Ref<ProjectGroup[]>
@@ -76,16 +79,19 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     showArchivedStorage.save(v).catch(() => {})
   })
 
+  /**
+   * 按「命中项目集合」筛选并排序（needsPush / needsPull 等共用）。
+   * 集合项只需含 project 字段，故对 GitProject 之外的项目项类型同样适用。
+   */
+  function pickByIds(source: ProjectItemListRef): GitProject[] {
+    const ids = new Set(source.value.map((n) => n.project.id))
+    return sortProjects(projects.value.filter((p) => ids.has(p.id)))
+  }
+
   /** 智能视图模式下，命中条件的扁平项目列表 */
   const smartViewProjects = computed<GitProject[]>(() => {
-    if (viewMode.value === "needsPush") {
-      const ids = new Set(needsPushProjects.value.map((n) => n.project.id))
-      return sortProjects(projects.value.filter((p) => ids.has(p.id)))
-    }
-    if (viewMode.value === "needsPull") {
-      const ids = new Set(needsPullProjects.value.map((n) => n.project.id))
-      return sortProjects(projects.value.filter((p) => ids.has(p.id)))
-    }
+    if (viewMode.value === "needsPush") return pickByIds(needsPushProjects)
+    if (viewMode.value === "needsPull") return pickByIds(needsPullProjects)
     if (viewMode.value === "uncommitted") {
       return sortProjects(uncommittedProjects.value.map((u) => u.project))
     }

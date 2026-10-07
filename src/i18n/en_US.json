@@ -1806,6 +1806,7 @@
     "logColOps": "Actions",
     "viewModeAll": "All",
     "viewModeNeedsPush": "Needs push",
+    "viewModeNeedsPull": "Needs pull",
     "viewModeUncommitted": "Changed",
     "viewModeStarred": "Starred",
     "viewModeArchived": "Archived",

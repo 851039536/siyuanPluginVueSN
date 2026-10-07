@@ -1806,6 +1806,7 @@
     "logColOps": "操作",
     "viewModeAll": "全部",
     "viewModeNeedsPush": "需推送",
+    "viewModeNeedsPull": "需拉取",
     "viewModeUncommitted": "有变更",
     "viewModeStarred": "收藏",
     "viewModeArchived": "归档",

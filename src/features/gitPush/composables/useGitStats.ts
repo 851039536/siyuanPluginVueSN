@@ -176,6 +176,7 @@ export function useGitStats(
   const groupedProjects = computed(() => projectStats.value.grouped)
   const projectCount = computed(() => projectStats.value.count)
   const needsPushProjects = computed(() => projectStats.value.needsPush)
+  const needsPullProjects = computed(() => projectStats.value.needsPull)
   const uncommittedProjects = computed(() => projectStats.value.uncommitted)
   const starredProjects = computed(() => projectStats.value.starred)
 
@@ -232,6 +233,7 @@ export function useGitStats(
     groupedProjects,
     projectCount,
     needsPushProjects,
+    needsPullProjects,
     uncommittedProjects,
     starredProjects,
     statsView,

@@ -555,13 +555,14 @@ export const ANALYSIS_MONTH_KEYS = [
 ] as const
 
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */
-export const VIEW_MODES = ["all", "needsPush", "uncommitted", "starred", "archived"] as const
+export const VIEW_MODES = ["all", "needsPush", "needsPull", "uncommitted", "starred", "archived"] as const
 export type ViewMode = typeof VIEW_MODES[number]
 
 /** 智能视图模式元数据（i18n 标签键 + 图标），Record<ViewMode> 保证键与联合类型编译期对齐 */
 export const VIEW_MODE_META: Record<ViewMode, { labelKey: string, icon: string }> = {
   all: { labelKey: "viewModeAll", icon: "mdi:view-grid-outline" },
   needsPush: { labelKey: "viewModeNeedsPush", icon: "mdi:cloud-upload-outline" },
+  needsPull: { labelKey: "viewModeNeedsPull", icon: "mdi:cloud-download-outline" },
   uncommitted: { labelKey: "viewModeUncommitted", icon: "mdi:source-branch" },
   starred: { labelKey: "viewModeStarred", icon: "mdi:star" },
   archived: { labelKey: "viewModeArchived", icon: "mdi:archive-outline" },

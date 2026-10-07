@@ -399,6 +399,7 @@ const {
   // 统计视图数据
   projectCount,
   needsPushProjects,
+  needsPullProjects,
   uncommittedProjects,
   statsView,
   // 操作日志
@@ -550,6 +551,7 @@ const {
   showArchivedStorage: props.manager.storage.showArchived,
   projects,
   needsPushProjects,
+  needsPullProjects,
   uncommittedProjects,
   starredProjects,
   visibleGroups,

@@ -116,6 +116,7 @@ export function useGitPush(manager: GitPushManager) {
     setNetworkTimeout: stats.setNetworkTimeout,
     projectCount: stats.projectCount,
     needsPushProjects: stats.needsPushProjects,
+    needsPullProjects: stats.needsPullProjects,
     uncommittedProjects: stats.uncommittedProjects,
     statsView: stats.statsView,
     groupedProjects: stats.groupedProjects,

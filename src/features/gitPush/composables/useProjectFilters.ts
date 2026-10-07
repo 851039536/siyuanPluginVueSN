@@ -21,6 +21,7 @@ interface UseProjectFiltersOptions {
   showArchivedStorage: TypedStorage<boolean>
   projects: Ref<GitProject[]>
   needsPushProjects: Ref<{ project: GitProject }[]>
+  needsPullProjects: Ref<{ project: GitProject }[]>
   uncommittedProjects: Ref<{ project: GitProject }[]>
   starredProjects: Ref<GitProject[]>
   /** 按分类 TAB 过滤后的分组（无搜索词时的数据源） */
@@ -35,6 +36,7 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     showArchivedStorage,
     projects,
     needsPushProjects,
+    needsPullProjects,
     uncommittedProjects,
     starredProjects,
     visibleGroups,
@@ -78,6 +80,10 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
   const smartViewProjects = computed<GitProject[]>(() => {
     if (viewMode.value === "needsPush") {
       const ids = new Set(needsPushProjects.value.map((n) => n.project.id))
+      return sortProjects(projects.value.filter((p) => ids.has(p.id)))
+    }
+    if (viewMode.value === "needsPull") {
+      const ids = new Set(needsPullProjects.value.map((n) => n.project.id))
       return sortProjects(projects.value.filter((p) => ids.has(p.id)))
     }
     if (viewMode.value === "uncommitted") {

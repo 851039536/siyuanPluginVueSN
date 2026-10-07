@@ -89,6 +89,7 @@ import ToggleButton from "@/components/ToggleButton.vue"
 const VIEW_MODE_ICONS: Record<ViewMode, IconKey> = {
   all: "layoutGrid",
   needsPush: "cloudUpload",
+  needsPull: "downloadOutline",
   uncommitted: "sourceBranch",
   starred: "star",
   archived: "archiveOutline",

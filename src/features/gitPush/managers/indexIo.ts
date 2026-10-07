@@ -129,11 +129,19 @@ export class FsIndexIO implements IndexFileIO {
   async writeText(file: string, text: string): Promise<void> {
     const { fs } = this.node()
     this.ensureDir()
-    // 先写临时文件再改名：崩溃不会留下半截 meta.json（读取侧仍做 JSON 容错）
+    // 先写临时文件再改名：崩溃不会留下半截 meta.json（读取侧仍做 JSON 容错）。
+    // 临时名必须唯一：同一文件的并发写（不同视图/项目同时 persistMeta）若共用 `${abs}.tmp`，
+    // 会互相覆盖对方尚未改名的内容，甚至让某次 rename 搬走半截文件。
     const abs = this.abs(file)
-    const tmp = `${abs}.tmp`
-    await fs.promises.writeFile(tmp, text, "utf8")
-    await fs.promises.rename(tmp, abs)
+    const tmp = `${abs}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}.tmp`
+    try {
+      await fs.promises.writeFile(tmp, text, "utf8")
+      await fs.promises.rename(tmp, abs)
+    } catch (e) {
+      // 失败时清掉残留临时文件，避免索引目录里堆积垃圾
+      await fs.promises.rm(tmp, { force: true }).catch(() => {})
+      throw e
+    }
   }
 
   async readText(file: string): Promise<string | null> {

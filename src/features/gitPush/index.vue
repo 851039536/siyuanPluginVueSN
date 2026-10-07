@@ -631,7 +631,13 @@ const {
   setProject,
   ensureReport,
   fetchFilePatch,
+  markStale: markReportStale,
 } = useCodeReport(props.manager, projects, props.i18n)
+
+// 仓库写操作（提交/stash/tag/冲突/历史重写）后使报告缓存失效：
+// 卡片脏标记是这些写操作的统一信号通道，报告数据与之同源（都来自 git 提交历史），
+// 故复用同一信号，避免用户提交后切回报告视图仍看到旧的提交数/行数。
+watch(scheduler.epoch, () => { markReportStale() })
 
 // ── 报告导出（单文件 HTML，含内联 SVG 图表）──
 const { exporting: reportExporting, exportHtml: exportReportHtml } = useReportExport({

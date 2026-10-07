@@ -129,11 +129,15 @@ export class GitPushManager {
   /**
    * 获取索引实例（首次调用解析目录并构造；失败返回 null 且只告警一次）。
    * 索引关闭（indexEnabled=false）时同样返回 null，使所有调用方走旧路径。
+   *
+   * 失败时**清空缓存的初始化 Promise**：否则一次瞬时失败（启动期 dataDir 尚未就绪、
+   * 目录短暂不可写）会把 `indexInit` 永久钉死为 null，导致整个会话都用不上索引，
+   * 且 `setIndexEnabled(true)` / `clearIndex()` 都无法恢复。清空后下次调用会重试。
    */
   async getIndex(): Promise<CommitIndex | null> {
     if (!(await this.storage.indexEnabled.loadOrDefault())) return null
     if (this.indexInit) return this.indexInit
-    this.indexInit = (async () => {
+    const init = (async () => {
       try {
         const io = await createIndexIo(this.plugin)
         if (!io) {
@@ -147,8 +151,12 @@ export class GitPushManager {
         return null
       }
     })()
-    this.commitIndex = await this.indexInit
-    return this.commitIndex
+    this.indexInit = init
+    const index = await init
+    // 初始化失败（null）不保留缓存，允许后续调用重新尝试；成功则保持缓存复用
+    if (!index && this.indexInit === init) this.indexInit = null
+    this.commitIndex = index
+    return index
   }
 
   /** 索引元数据持久化（索引写盘后由调用方触发；失败仅告警，不影响本次统计结果） */
@@ -192,26 +200,40 @@ export class GitPushManager {
     await this.storage.indexMaxCommits.save(clampIndexMaxCommits(n))
   }
 
-  /** 索引状态摘要（设置面板展示：目录 + 已索引项目数 + 各项目提交数与截断标记） */
+  /**
+   * 索引状态摘要（设置面板展示：目录 + 已索引项目数 + 各项目提交数与截断标记）。
+   *
+   * 必须逐项目 `ensureLoaded` 后再取提交数：`getCommitCount` 返回的是**内存段长度**，
+   * 未加载的项目恒为 0，直接展示会让设置面板对每个项目都显示「0 条提交」。
+   * 单项目读取失败（文件损坏/被删）按 0 呈现，不让整个状态查询失败。
+   */
   async getIndexStatus(): Promise<{ dir: string, projects: Array<{ projectId: string, commits: number, complete: boolean, analyzedAt: string }> }> {
     const index = await this.getIndex()
-    if (!index) { return {
-      dir: "",
-      projects: [],
+    if (!index) {
+      return {
+        dir: "",
+        projects: [],
+      }
     }
-    }
+    const metas = index.getProjectMetas()
+    const projects = await Promise.all(metas.map(async (p) => {
+      let commits = 0
+      try {
+        await index.ensureLoaded(p.projectId)
+        commits = index.getCommitCount(p.projectId)
+      } catch {
+        // 单项目读取失败不影响其余项目（文件被删/损坏时按 0 展示）
+      }
+      return {
+        projectId: p.projectId,
+        commits,
+        complete: p.complete,
+        analyzedAt: p.analyzedAt,
+      }
+    }))
     return {
       dir: index.getDir(),
-      projects: index.getProjectMetas().map((p) => {
-        // 未加载的段按元数据里的提交数展示（避免为了展示状态而读盘）
-        const loaded = index.getCommitCount(p.projectId)
-        return {
-          projectId: p.projectId,
-          commits: loaded,
-          complete: p.complete,
-          analyzedAt: p.analyzedAt,
-        }
-      }),
+      projects,
     }
   }
 

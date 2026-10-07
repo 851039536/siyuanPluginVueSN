@@ -97,6 +97,29 @@ export class CommitIndex {
   private loaded = new Set<string>()
   /** 索引整体可用性（目录不可写等致命错误后置 false，本次会话不再重试） */
   private available = true
+  /** 每项目的写队列尾（把 ensureLoaded→写入→persistMeta 串成链，消除并发写互相覆盖） */
+  private writeChains = new Map<string, Promise<unknown>>()
+  /** 元数据版本不符（构造期无法做异步 IO，故延后到首次读写前清盘） */
+  private needsVersionReset = false
+  /** 版本不符时待清理的项目 id（构造期从旧 meta 留存，因 this.meta.projects 已被清空） */
+  private staleProjectIds: string[] = []
+
+  /**
+   * 串行执行项目的写操作（同一项目的调用排队，不同项目互不阻塞）。
+   *
+   * 为什么必须串行：报告视图与行数统计可能同时触发同一项目的索引写入，
+   * 两笔都会先 `ensureLoaded` 读到同一个 `segment.commits.length` 作为起始序号，
+   * 于是序号重叠、提交重复落盘，破坏「提交序号 = 文件行号」这一不变量
+   * （表现为统计数字重复计入，且此后每次加载都会读到错位的段）。
+   * 各 composable 自己的 running/refreshing 标记不跨视图，挡不住这种并发。
+   */
+  private withProjectLock<T>(projectId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.writeChains.get(projectId) ?? Promise.resolve()
+    // 前序失败不应阻断后续操作，故先吞掉其拒绝再排队
+    const next = prev.catch(() => {}).then(fn)
+    this.writeChains.set(projectId, next.catch(() => {}))
+    return next
+  }
 
   /**
    * @param io 索引磁盘 IO（生产传 FsIndexIO，测试可注入内存实现）
@@ -104,12 +127,41 @@ export class CommitIndex {
    */
   constructor(io: IndexFileIO, meta: IndexMeta) {
     this.io = io
-    this.meta = meta.version === INDEX_META_VERSION
+    const versionMatched = meta.version === INDEX_META_VERSION
+    this.meta = versionMatched
       ? meta
       : {
           version: INDEX_META_VERSION,
           projects: [],
         }
+    // 版本不符：内存已丢弃旧元数据，磁盘上的旧格式 NDJSON 也必须清掉。
+    // 构造函数不能做异步 IO，故只记下待清理的项目 id，由首次读写前统一执行（见 ensureVersionReset）。
+    // 必须在此处留存旧 projects —— 上面已把 this.meta.projects 清空，
+    // 事后靠 meta.projects 反推待删项目会一个都拿不到（清盘将完全空转）。
+    this.needsVersionReset = !versionMatched
+    this.staleProjectIds = versionMatched ? [] : meta.projects.map((p) => p.projectId)
+  }
+
+  /**
+   * 元数据版本不符时清空磁盘索引（幂等，仅首次生效）。
+   *
+   * 为什么必须做：版本号的全部意义就是「结构变了，旧数据不可再用」。
+   * 若只丢弃内存 meta 而留着旧格式的 NDJSON，后续 ensureLoaded 会用**新**记录形状
+   * 去解析旧行、append 再把新记录混进同一文件——正是版本号本该防住的损坏。
+   */
+  private async ensureVersionReset(): Promise<void> {
+    if (!this.needsVersionReset) return
+    this.needsVersionReset = false
+    const stale = this.staleProjectIds
+    this.staleProjectIds = []
+    console.warn("[gitPush] 索引元数据版本不符，已清空磁盘索引并按新结构重建")
+    // 直接删除留存的项目文件（不能用 clearAll：其 id 来源是已清空的 meta.projects）
+    for (const id of stale) {
+      await this.io.remove(projectIndexFile("commits", id))
+      await this.io.remove(projectIndexFile("files", id))
+      await this.io.remove(projectIndexFile("fileLines", id))
+    }
+    await this.persistMeta()
   }
 
   /** 索引是否可用（不可用时调用方应走「直接跑 git」的旧路径） */
@@ -147,6 +199,7 @@ export class CommitIndex {
    */
   async ensureLoaded(projectId: string): Promise<void> {
     if (!this.available) throw new IndexUnavailableError("索引不可用")
+    await this.ensureVersionReset()
     if (this.loaded.has(projectId)) return
     // 按项目分文件读取：项目之间物理隔离，并发加载互不覆盖
     const [commitLines, fileLines] = await Promise.all([
@@ -209,7 +262,11 @@ export class CommitIndex {
     }
   }
 
-  /** 已索引的提交条数（未加载时返回元数据中的值不准确，故调用前应先 ensureLoaded） */
+  /**
+   * 已索引的提交条数。
+   * 返回的是**内存段长度**，未加载（未调用 ensureLoaded）的项目恒为 0，
+   * 故调用前应先 ensureLoaded —— 需要展示真实条数时尤其如此（如设置面板的索引状态）。
+   */
   getCommitCount(projectId: string): number {
     return this.segments.get(projectId)?.commits.length ?? 0
   }
@@ -255,7 +312,11 @@ export class CommitIndex {
     }))
   }
 
-  /** 已索引提交的早期时间下界（最早一条提交的毫秒时间戳；无提交返回 0；供「全部历史」范围标签） */
+  /**
+   * 已索引最早的提交时间（ISO 字符串；无提交返回空串）。
+   * 注意：报告路径的「全部历史」标签走的是 `ReportOps.getFirstCommitDate`（基于 git），
+   * 此方法目前无生产调用方，仅保留给按索引取范围下界的场景。
+   */
   getFirstCommitDate(projectId: string): string {
     const segment = this.segments.get(projectId)
     return segment && segment.commits.length > 0 ? segment.commits[0].d : ""
@@ -274,6 +335,9 @@ export class CommitIndex {
   /**
    * 追加一批已扫描到的提交（按时间升序传入）、其文件变更与新的项目元数据。
    * 追加写两个 NDJSON（顺序写保证提交序号与行号一致），最后整体重写 meta.json（体积恒定）。
+   *
+   * 整个「载入 → 分配序号 → 落盘 → 落 meta」临界区经项目写队列串行化，
+   * 避免同项目并发追加各自读到同一个起始序号而错位（见 withProjectLock）。
    */
   async append(
     projectId: string,
@@ -281,62 +345,83 @@ export class CommitIndex {
     patch: Omit<ProjectIndexMeta, "projectId"> & { projectId?: string },
   ): Promise<void> {
     if (!this.available) throw new IndexUnavailableError("索引不可用")
-    await this.ensureLoaded(projectId)
-    const segment = this.segments.get(projectId)!
-    // 追加提交行（文件行与提交行分开收集：先写提交再写文件，保证序号引用的提交已存在）
-    const commitLines: string[] = []
-    const fileLines: string[] = []
-    for (const c of commits) {
-      const index = segment.commits.length
-      const hash = c.hash ?? ""
-      // 空 hash 不入索引（无法参与增量去重，且多个空 hash 会互相覆盖）
-      if (hash) segment.hashIndex.set(hash, index)
-      segment.commits.push({
-        h: hash,
-        a: c.author,
-        d: c.date,
-        m: foldMessage(c.message ?? ""),
-      })
-      segment.files[index] = []
-      for (const f of c.files) {
-        const row: IndexedFileDelta = {
-          c: index,
-          p: f.path,
-          a: f.added,
-          d: f.deleted,
+    return this.withProjectLock(projectId, async () => {
+      await this.ensureVersionReset()
+      await this.ensureLoaded(projectId)
+      const segment = this.segments.get(projectId)!
+      // 追加前的段长：落盘失败时回滚到此位置（见下方 catch）
+      const startIndex = segment.commits.length
+      // 追加提交行（文件行与提交行分开收集：先写提交再写文件，保证序号引用的提交已存在）
+      const commitLines: string[] = []
+      const fileLines: string[] = []
+      for (const c of commits) {
+        const index = segment.commits.length
+        const hash = c.hash ?? ""
+        // 空 hash 不入索引（无法参与增量去重，且多个空 hash 会互相覆盖）
+        if (hash) segment.hashIndex.set(hash, index)
+        segment.commits.push({
+          h: hash,
+          a: c.author,
+          d: c.date,
+          m: foldMessage(c.message ?? ""),
+        })
+        segment.files[index] = []
+        for (const f of c.files) {
+          const row: IndexedFileDelta = {
+            c: index,
+            p: f.path,
+            a: f.added,
+            d: f.deleted,
+          }
+          segment.files[index].push(row)
+          fileLines.push(JSON.stringify(row))
         }
-        segment.files[index].push(row)
-        fileLines.push(JSON.stringify(row))
+        commitLines.push(JSON.stringify(segment.commits[index]))
       }
-      commitLines.push(JSON.stringify(segment.commits[index]))
-    }
-    // 提交行必须先落盘：否则崩溃时文件行会引用尚不存在的提交序号（本项目专属文件，不与其他项目竞争）
-    if (commitLines.length > 0) await this.io.appendLines(projectIndexFile("commits", projectId), commitLines)
-    if (fileLines.length > 0) await this.io.appendLines(projectIndexFile("files", projectId), fileLines)
-    this.loaded.add(projectId)
-    this.setProjectMeta({
-      ...patch,
-      projectId,
-    } as ProjectIndexMeta)
-    await this.persistMeta()
+      // 提交行必须先落盘：否则崩溃时文件行会引用尚不存在的提交序号（本项目专属文件，不与其他项目竞争）
+      try {
+        if (commitLines.length > 0) await this.io.appendLines(projectIndexFile("commits", projectId), commitLines)
+        if (fileLines.length > 0) await this.io.appendLines(projectIndexFile("files", projectId), fileLines)
+      } catch (e) {
+        // 落盘失败必须回滚内存：否则内存里留着「磁盘上并不存在」的提交，
+        // 后续 getLog 会把它算进统计（数字对但数据来源已失真），且下次增量扫描会
+        // 因为 hash 已在内存索引中而跳过重抓 —— 这份数据将永久缺失。
+        segment.commits.length = startIndex
+        segment.files.length = startIndex
+        for (const c of commits) {
+          const hash = c.hash ?? ""
+          if (hash) segment.hashIndex.delete(hash)
+        }
+        throw e
+      }
+      this.loaded.add(projectId)
+      this.setProjectMeta({
+        ...patch,
+        projectId,
+      } as ProjectIndexMeta)
+      await this.persistMeta()
+    })
   }
 
-  /** 替换项目的文件存量行数缓存并落盘（本项目专属文件，整体重写；不影响其他项目） */
+  /** 替换项目的文件存量行数缓存并落盘（本项目专属文件，整体重写；不影响其他项目）。
+   *  经项目写队列串行化：与同项目的 append 竞争同一目录时避免写入交错。 */
   async setFileLines(projectId: string, rootHash: string, lines: Map<string, number | null>): Promise<void> {
     if (!this.available) throw new IndexUnavailableError("索引不可用")
-    this.fileLinesByProject.set(projectId, {
-      rootHash,
-      lines,
+    return this.withProjectLock(projectId, async () => {
+      this.fileLinesByProject.set(projectId, {
+        rootHash,
+        lines,
+      })
+      const rows: string[] = []
+      for (const [f, n] of lines) {
+        rows.push(JSON.stringify({
+          r: rootHash,
+          f,
+          n,
+        } satisfies IndexedFileLines))
+      }
+      await this.io.writeText(projectIndexFile("fileLines", projectId), rows.length > 0 ? `${rows.join("\n")}\n` : "")
     })
-    const rows: string[] = []
-    for (const [f, n] of lines) {
-      rows.push(JSON.stringify({
-        r: rootHash,
-        f,
-        n,
-      } satisfies IndexedFileLines))
-    }
-    await this.io.writeText(projectIndexFile("fileLines", projectId), rows.length > 0 ? `${rows.join("\n")}\n` : "")
   }
 
   /** 从磁盘载入文件存量行数（rootHash 一致才复用；不一致/损坏返回 null） */
@@ -363,24 +448,28 @@ export class CommitIndex {
   /**
    * 丢弃项目段（内存 + 磁盘）：用于重建、项目删除与索引淘汰。
    * 只删本项目文件 —— 其他项目的段必须完好（修复原先「任一项目失效即整体清空」的跨项目破坏）。
+   * 经项目写队列串行化：否则与在途 append 竞争时，删文件后 append 会把数据写回一个「meta 中已不存在」的段。
    */
   async invalidate(projectId: string): Promise<void> {
-    this.segments.delete(projectId)
-    this.loaded.delete(projectId)
-    this.fileLinesByProject.delete(projectId)
-    this.meta = {
-      ...this.meta,
-      projects: this.meta.projects.filter((p) => p.projectId !== projectId),
-    }
-    await this.io.remove(projectIndexFile("commits", projectId))
-    await this.io.remove(projectIndexFile("files", projectId))
-    await this.io.remove(projectIndexFile("fileLines", projectId))
-    await this.persistMeta()
+    return this.withProjectLock(projectId, async () => {
+      this.segments.delete(projectId)
+      this.loaded.delete(projectId)
+      this.fileLinesByProject.delete(projectId)
+      this.meta = {
+        ...this.meta,
+        projects: this.meta.projects.filter((p) => p.projectId !== projectId),
+      }
+      await this.io.remove(projectIndexFile("commits", projectId))
+      await this.io.remove(projectIndexFile("files", projectId))
+      await this.io.remove(projectIndexFile("fileLines", projectId))
+      await this.persistMeta()
+    })
   }
 
   /**
    * 清空整个索引（设置面板「重建索引」/ 排障用）：
    * 按内存中已知的项目 id 逐个删除其文件，确保不残留其他项目的段。
+   * 对每个项目都走其写队列，避免与在途 append 竞争（清空后又被写回）。
    */
   async clearAll(): Promise<void> {
     // 先收集待删项目 id：内存段 + meta 记录（段可能尚未加载，meta 是唯一线索）
@@ -397,10 +486,13 @@ export class CommitIndex {
       version: INDEX_META_VERSION,
       projects: [],
     }
+    // 逐项目排队删除：与本项目在途的 append/setFileLines 互斥
     for (const id of ids) {
-      await this.io.remove(projectIndexFile("commits", id))
-      await this.io.remove(projectIndexFile("files", id))
-      await this.io.remove(projectIndexFile("fileLines", id))
+      await this.withProjectLock(id, async () => {
+        await this.io.remove(projectIndexFile("commits", id))
+        await this.io.remove(projectIndexFile("files", id))
+        await this.io.remove(projectIndexFile("fileLines", id))
+      })
     }
     await this.persistMeta()
   }

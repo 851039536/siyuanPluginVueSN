@@ -66,11 +66,30 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
   /** 聚合后的报告数据（未生成时为空报告） */
   const reportData = ref<CodeReportData>(buildEmptyReport(""))
   /**
-   * 本会话已完成"当前项目 + 范围 + 报告版本"校验的键集合。
-   * 命中即说明这份数据在本会话内已被确认是最新的，用于抑制反复切换视图时的无谓刷新；
-   * 跨会话的新鲜度由索引的 rootHash 判据负责（命中时刷新本身就是零 git 扫描）。
+   * 本会话已校验过的「项目 + 范围」对。
+   * 刻意**不含** reportData.generatedAt：那个值只在刷新跑完后才变，把它编进键会让键自我指涉——
+   * 一旦写入就永远命中，同一会话内用户提交了新代码再切回报告视图也不会重新校验。
+   * 同会话的新鲜度改由 indexVersion 承担（见 markStale）。
    */
   const verifiedKeys = new Set<string>()
+  /** 有在途请求时被挡下的新请求（结束后补跑一次，避免切换项目/范围丢失刷新） */
+  let pendingRerun = false
+  /** 索引数据变更计数（提交/历史重写等写操作后自增，使已校验键失效） */
+  const indexVersion = ref(0)
+
+  /** 当前校验键（项目 + 范围 + 索引版本；不含自我指涉的 generatedAt） */
+  function verifyKey(): string {
+    return `${currentProject.value?.id ?? ""}|${range.value}|${indexVersion.value}`
+  }
+
+  /**
+   * 标记报告数据可能已过期（仓库发生写操作后由调用方触发）。
+   * 清空已校验键并递增版本，使下次 ensureReport 重新校验；若当前已有内容则后台静默刷新。
+   */
+  function markStale() {
+    indexVersion.value++
+    verifiedKeys.clear()
+  }
 
   /** 当前生效的项目（选中项优先，未选中或已删除回退首个项目；无项目返回 null） */
   const currentProject = computed<GitProject | null>(() => {
@@ -78,11 +97,6 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     const selected = findProject(projects, projectId.value)
     return selected ?? projects.value[0]
   })
-
-  /** 当前校验键（项目 + 范围 + 报告生成时刻，任一项变化即需重新校验） */
-  function verifyKey(): string {
-    return `${currentProject.value?.id ?? ""}|${range.value}|${reportData.value.generatedAt}`
-  }
 
   /** 从存储载入偏好（上次项目 + 时间范围；项目已删时回退首个） */
   async function loadPrefs() {
@@ -104,8 +118,9 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
 
   /**
    * 载入上次报告结果（秒开）。
-   * 仅在「缓存的项目与当前选中项目一致」时采用：换项目后展示旧项目的报告会造成误读，
-   * 此时宁可直接生成（索引命中的情况下本身就很快）。
+   * 仅在「缓存的项目与选中项目一致」**且「缓存的时间范围与当前范围一致」**时采用：
+   * 缓存是针对特定范围算出来的，跨范围复用会让头部范围标签与图表内容不一致
+   * （换项目后展示旧项目报告更会造成误读）。此时宁可直接生成（索引命中的情况下本身就很快）。
    */
   async function loadCachedReport() {
     if (cacheLoaded) return
@@ -113,16 +128,23 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     const cache = await manager.storage.reportCache.loadOrDefault()
     const project = currentProject.value
     if (!cache.report || !project || cache.projectId !== project.id) return
+    if (cache.range !== range.value) return
     reportData.value = cache.report
     generated.value = true
   }
 
-  /** 报告结果落盘（失败仅告警：缓存是纯加速手段，不应影响统计本身） */
-  async function saveReportCache(report: CodeReportData) {
+  /**
+   * 报告结果落盘（失败仅告警：缓存是纯加速手段，不应影响统计本身）。
+   *
+   * 键必须由调用方**显式传入**（在 await 之前捕获）：若此处读 `currentProject.value`，
+   * 用户在本轮 await 期间切换项目/范围时，会把「旧项目算出的报告」写进「新项目的键」，
+   * 之后 loadCachedReport 按 projectId 命中就把错误数据当成最新结果显示。
+   */
+  async function saveReportCache(report: CodeReportData, cacheProjectId: string, cacheRange: ReportRange) {
     try {
       await manager.storage.reportCache.save({
-        projectId: currentProject.value?.id ?? "",
-        range: range.value,
+        projectId: cacheProjectId,
+        range: cacheRange,
         generatedAt: report.generatedAt,
         report,
       })
@@ -151,11 +173,19 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     const project = currentProject.value
     if (!project) return
     const silent = opts?.silent ?? false
-    if (running.value || refreshing.value) return
+    // 本轮请求的键在 await 之前捕获：期间用户可能切换项目/范围，落缓存必须用「算这份数据时」的键
+    const reqProjectId = project.id
+    const reqRange = range.value
+    if (running.value || refreshing.value) {
+      // 已有在途请求：不能静默丢弃本次请求（否则 setRange/setProject 改了状态却不出新数据，
+      // 头部范围与图表内容长期不一致）。标记待重跑，等当前请求结束后补一次。
+      pendingRerun = true
+      return
+    }
     if (silent) refreshing.value = true
     else running.value = true
     try {
-      const sinceDays = REPORT_RANGE_DAYS[range.value]
+      const sinceDays = REPORT_RANGE_DAYS[reqRange]
       let commits: NumstatCommit[] = []
       let gitFailed = false
       try {
@@ -164,19 +194,33 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
       } catch {
         gitFailed = true
       }
+      // 请求期间用户已切换项目/范围 → 这份结果已过期，丢弃；待重跑逻辑会补算新键
+      if (project.id !== reqProjectId || range.value !== reqRange) {
+        pendingRerun = true
+        return
+      }
       if (gitFailed) {
-        reportData.value = buildEmptyReport(rangeLabelFor([]))
-        generated.value = false
+        // 静默后台刷新失败时保留屏上已有内容：用户本来看着一份有效报告，
+        // 不该因为一次后台校验失败就变成空白失败态（仅无任何内容时才展示失败）
+        if (!silent || !generated.value) {
+          reportData.value = buildEmptyReport(rangeLabelFor([]))
+          generated.value = false
+        }
       } else {
         reportData.value = buildReportData(project, commits, rangeLabelFor(commits))
         generated.value = true
-        await saveReportCache(reportData.value)
+        await saveReportCache(reportData.value, reqProjectId, reqRange)
       }
       verifiedKeys.add(verifyKey())
       await savePrefs()
     } finally {
       running.value = false
       refreshing.value = false
+      // 在途期间有新请求被挡下：补跑一次（置于 finally，保证异常路径也能补上）
+      if (pendingRerun) {
+        pendingRerun = false
+        void runReport({ silent: generated.value })
+      }
     }
   }
 
@@ -241,5 +285,7 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     setProject,
     ensureReport,
     fetchFilePatch,
+    /** 仓库写操作后调用：使本会话已校验键失效，下次进报告视图会重新校验 */
+    markStale,
   }
 }

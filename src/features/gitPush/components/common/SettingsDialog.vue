@@ -141,10 +141,22 @@
             <div class="gp-set-hint">
               {{ i18n.networkTimeoutHint }}
             </div>
-            <!-- 本地提交索引：状态 + 开关 + 重建（统计「秒开 + 增量刷新」的基础） -->
+            <!-- 本地提交索引：开关 + 状态 + 重建（统计「秒开 + 增量刷新」的基础） -->
             <div class="gp-set-row gp-set-row--spaced">
               <label class="gp-set-label">{{ i18n.indexTitle }}</label>
               <div class="gp-set-input-row">
+                <!-- 索引总开关：关闭后统计路径全部回退直接跑 git（行为与改造前一致） -->
+                <ToggleButton
+                  :model-value="indexEnabled"
+                  size="xsmall"
+                  dense
+                  :on-label="i18n.indexEnabledLabel"
+                  :off-label="i18n.indexDisabledLabel"
+                  :aria-label="i18n.indexToggleTip"
+                  :title="i18n.indexToggleTip"
+                  :disabled="indexBusy"
+                  @update:model-value="toggleIndexEnabled"
+                />
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm"
                   :disabled="indexBusy"
@@ -154,7 +166,7 @@
                 </button>
                 <button
                   class="vp-btn vp-btn--ghost vp-btn--sm"
-                  :disabled="indexBusy"
+                  :disabled="indexBusy || !indexEnabled"
                   :title="i18n.indexRebuildHint"
                   @click="rebuildIndex"
                 >
@@ -164,7 +176,9 @@
             </div>
             <!-- 索引状态摘要：目录 + 已索引项目数/提交数；命中即表示统计不再重跑全量 git log -->
             <div class="gp-set-hint">
-              <template v-if="indexStatus">
+              <!-- 读取失败与「索引为空」必须区分：否则目录不可写会伪装成正常空态 -->
+              <span v-if="indexError">{{ i18n.indexLoadFailed }}</span>
+              <template v-else-if="indexStatus">
                 <span v-if="!indexEnabled">{{ i18n.indexDisabled }}</span>
                 <template v-else-if="indexStatus.projects.length === 0">
                   {{ i18n.indexEmpty }}
@@ -363,6 +377,7 @@ import {
 } from "vue"
 import Input from "@/components/Input.vue"
 import RadioButton from "@/components/RadioButton.vue"
+import ToggleButton from "@/components/ToggleButton.vue"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import {
   clampDiffContextBudget,
@@ -450,6 +465,28 @@ const indexStatus = ref<{ dir: string, projects: Array<{ projectId: string, comm
 const indexEnabled = ref(true)
 /** 索引操作进行中（防并发点击） */
 const indexBusy = ref(false)
+/**
+ * 索引状态读取失败（与「索引为空」区分展示）。
+ * 目录不可写/权限拒绝时若也归入空态，用户无法察觉索引其实坏了。
+ */
+const indexError = ref(false)
+/**
+ * 索引操作的并发深度。
+ * `rebuildIndex` 会内层调用 `refreshIndexStatus`，若各自在 finally 里清 `indexBusy`，
+ * 内层结束就会提前解锁按钮（外层仍在跑），"防并发点击"形同虚设。
+ * 故用深度计数：只有最外层结束时才复位。
+ */
+let indexBusyDepth = 0
+
+function beginIndexBusy() {
+  indexBusyDepth++
+  indexBusy.value = true
+}
+
+function endIndexBusy() {
+  indexBusyDepth = Math.max(0, indexBusyDepth - 1)
+  indexBusy.value = indexBusyDepth > 0
+}
 
 /** 已索引项目的提交总数（状态摘要展示用） */
 const indexTotalCommits = computed(() => {
@@ -459,25 +496,45 @@ const indexTotalCommits = computed(() => {
 
 /** 查询索引状态（打开弹窗时自动调用，也可手动刷新） */
 async function refreshIndexStatus() {
-  indexBusy.value = true
+  beginIndexBusy()
   try {
     indexEnabled.value = await props.manager.isIndexEnabled()
     indexStatus.value = await props.manager.getIndexStatus()
+    indexError.value = false
   } catch (e) {
     console.warn("[gitPush] 读取索引状态失败", e)
-    indexStatus.value = {
-      dir: "",
-      projects: [],
-    }
+    indexStatus.value = null
+    indexError.value = true
   } finally {
-    indexBusy.value = false
+    endIndexBusy()
   }
 }
 
-/** 重建索引：清空后立即对当前项目全量重扫（用于排障或数据结构升级后） */
+/** 切换索引开关（关闭后统计路径全部回退直接跑 git；下次统计生效） */
+async function toggleIndexEnabled() {
+  if (indexBusy.value) return
+  beginIndexBusy()
+  try {
+    const next = !indexEnabled.value
+    await props.manager.setIndexEnabled(next)
+    indexEnabled.value = next
+    showMessage(next ? props.i18n.indexEnabledOn : props.i18n.indexEnabledOff, 3000, "info")
+    // 关闭后状态摘要已无意义（索引不再参与统计）；开启则重新查询一次
+    if (next) await refreshIndexStatus()
+  } catch (e) {
+    showMessage(String(e), 3000, "error")
+  } finally {
+    endIndexBusy()
+  }
+}
+
+/**
+ * 重建索引：清空索引，下次统计时按当前结构全量重建。
+ * 只做清空不做立即重扫（重扫需用户进入统计视图，那里有进度反馈）。
+ */
 async function rebuildIndex() {
   if (indexBusy.value) return
-  indexBusy.value = true
+  beginIndexBusy()
   try {
     await props.manager.clearIndex()
     await refreshIndexStatus()
@@ -485,7 +542,7 @@ async function rebuildIndex() {
   } catch (e) {
     showMessage(String(e), 3000, "error")
   } finally {
-    indexBusy.value = false
+    endIndexBusy()
   }
 }
 

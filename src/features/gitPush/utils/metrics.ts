@@ -44,19 +44,30 @@ export function maxOf(list: ReadonlyArray<number>, min: number): number {
   return list.reduce((acc, n) => (n > acc ? n : acc), min)
 }
 
-/** 行数排行条形/占比预计算（按 pick 指定的行数指标取绝对值，负值安全）：pct=相对最大值的条形宽度，share=占总和的百分比（total=0 兜底防除零）。
- * 项目排行传 totalLines（存量口径，与「按总行数降序」一致）；详情弹窗文件/作者明细传 net（净增口径）。 */
+/**
+ * 行数排行占比预计算（按 pick 指定的行数指标取绝对值，负值安全）：share=占总和的百分比（total=0 兜底防除零）。
+ * 项目排行传 totalLines（存量口径，与「按总行数降序」一致）；详情弹窗作者明细传 net（净增口径）。
+ * 行内无条形（LineRankRow 已移除条形）时用本函数，避免预计算用不到的 pct。
+ */
+export function withLineShare<T>(rows: T[], pick: (r: T) => number): (T & { share: string })[] {
+  const total = rows.reduce((s, r) => s + Math.abs(pick(r)), 0) || 1
+  return rows.map((r) => ({
+    ...r,
+    share: `${((Math.abs(pick(r)) / total) * 100).toFixed(1)}%`,
+  }))
+}
+
+/**
+ * 行数排行占比 + 条形宽度预计算（口径同 withLineShare，额外给出相对最大值的 pct）。
+ * 供仍渲染条形（LineShareBar）的场景使用：详情弹窗文件明细行的迷你占比条。
+ */
 export function withLineBarPct<T>(rows: T[], pick: (r: T) => number): (T & { pct: string, share: string })[] {
   const max = maxOf(rows.map((r) => Math.abs(pick(r))), 1)
-  const total = rows.reduce((s, r) => s + Math.abs(pick(r)), 0) || 1
-  return rows.map((r) => {
-    const v = Math.abs(pick(r))
-    return {
-      ...r,
-      pct: `${Math.round((v / max) * 100)}%`,
-      share: `${((v / total) * 100).toFixed(1)}%`,
-    }
-  })
+  return withLineShare(rows, pick).map((r, i) => ({
+    ...r,
+    // 下标回取原始行：withLineShare 已展平 share，此处只需补 pct
+    pct: `${Math.round((Math.abs(pick(rows[i])) / max) * 100)}%`,
+  }))
 }
 
 /** 项目行数排行排序比较器（单一来源）：按总行数（存量）降序，同存量再按净增、新增降序。

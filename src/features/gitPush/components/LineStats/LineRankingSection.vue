@@ -63,7 +63,7 @@
 import type { ProjectLineRankItem } from "../../types"
 import { computed } from "vue"
 import LineRankRow from "../common/LineRankRow.vue"
-import { withLineBarPct } from "../../utils"
+import { withLineShare } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -75,8 +75,8 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 行视图（share=总行数占比，与「按总行数存量降序」排序同口径；条形已移除，pct 不再消费） */
-const rows = computed(() => withLineBarPct(props.projectRanking, (r) => r.totalLines ?? 0))
+/** 行视图（share=总行数占比，与「按总行数存量降序」排序同口径；行内无条形，故只预计算 share） */
+const rows = computed(() => withLineShare(props.projectRanking, (r) => r.totalLines ?? 0))
 </script>
 
 <style lang="scss">

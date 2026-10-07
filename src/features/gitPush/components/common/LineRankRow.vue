@@ -51,7 +51,7 @@ const props = withDefaults(defineProps<{
   rank: number
   /** 名称（项目名 / 作者名，完整内容走 title） */
   label: string
-  /** 占比文本（占总和的百分比，withLineBarPct 预计算） */
+  /** 占比文本（占总和的百分比，withLineShare / withLineBarPct 预计算） */
   share: string
   /** 新增行数 */
   added: number

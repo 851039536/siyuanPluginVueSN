@@ -215,7 +215,7 @@ import LineRankRow from "../common/LineRankRow.vue"
 import LineShareBar from "../common/LineShareBar.vue"
 import { aggregateFileStats, shouldIncludeFile, sumAuthorLines } from "../../reportMetrics"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
-import { netClass as sharedNetClass, withLineBarPct } from "../../utils"
+import { netClass as sharedNetClass, withLineBarPct, withLineShare } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 
 const props = defineProps<{
@@ -249,7 +249,7 @@ const commits = computed(() => props.getNumstat(props.projectId))
 /** 该项目已跟踪文件的存量行数 Map（路径→行数|null，null=2MB/二进制/读失败/已删除；未提供 getFileLines 时为空 Map） */
 const fileLinesMap = computed(() => props.getFileLines?.(props.projectId) ?? new Map<string, number | null>())
 
-/** 文件明细行：按文件聚合增删行 + 修改次数/参与作者，按净增降序（同净增量再按新增降序，与全局排行同口径）；pct/share 由共享 withLineBarPct 按净增绝对值预计算；totalLines 为该文件存量行数 */
+/** 文件明细行：按文件聚合增删行 + 修改次数/参与作者，按净增降序（同净增量再按新增降序，与全局排行同口径）；pct/share 由共享 withLineBarPct 按净增绝对值预计算（该行渲染 LineShareBar 迷你占比条，故需 pct）；totalLines 为该文件存量行数 */
 const fileRows = computed<FileLineDetailRow[]>(() => {
   const raw = [...aggregateFileStats(commits.value).entries()]
     .filter(([path]) => shouldIncludeFile(path, props.extensions))
@@ -266,7 +266,7 @@ const fileRows = computed<FileLineDetailRow[]>(() => {
   return withLineBarPct(raw, (r) => r.net)
 })
 
-/** 作者明细行：按作者聚合增删行，按净增降序（与全局作者排行同模式；pct/share 由共享 withLineBarPct 预计算） */
+/** 作者明细行：按作者聚合增删行，按净增降序（与全局作者排行同模式；行内无条形，故只预计算 share） */
 const authorRows = computed(() => {
   const lines = sumAuthorLines(commits.value, props.extensions)
   const raw = [...lines.entries()]
@@ -278,7 +278,7 @@ const authorRows = computed(() => {
       net: agg.added - agg.deleted,
     }))
     .sort((a, b) => b.net - a.net || b.added - a.added)
-  return withLineBarPct(raw, (r) => r.net)
+  return withLineShare(raw, (r) => r.net)
 })
 
 /** 净增行语义色（统一前缀 lrr-net，与共享排行行/占比条同一套样式） */

@@ -92,6 +92,7 @@ export {
   ratioPct,
   withBarPct,
   withLineBarPct,
+  withLineShare,
 } from "./metrics"
 
 export { highlightSegments } from "./search"

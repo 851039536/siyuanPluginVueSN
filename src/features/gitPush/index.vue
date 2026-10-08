@@ -791,8 +791,9 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
  * commitLog/branches/stash 不在这两类视图中展示，无需加载。
  * 分支名由调度器解析一次并缓存分发给两个查询；在途与已加载均由调度器去重。
  *
- * @param fastWhenClean 干净工作区快速路径（仅供批量统计场景；详见 WorktreeOps.getWorkingTreeStatus）。
- *   干净工作区（查看统计时的常态）下可省掉大部分 status 解析开销，有变更时仅多花一次轻量探测。
+ * @param fastWhenClean 兼容保留（当前 no-op）。原「干净工作区快速路径」已移除：
+ *   实测探测 + 全量 ≈ 2× 单次全量（瓶颈是每次 git 调用的进程启动费 ~310ms，而非文件扫描量），
+ *   故全场景统一走单次 `git status --porcelain`。详见 WorktreeOps.getWorkingTreeStatus。
  */
 async function ensureStatusFor(list: GitProject[], fastWhenClean = false) {
   if (gitOpsPaused.value) return

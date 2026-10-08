@@ -42,8 +42,9 @@ export interface LoadStatusOptions {
   /** 绕过单飞共享，始终发起新查询（写操作后必须拿到写后状态时用） */
   force?: boolean
   /**
-   * 干净工作区快速路径（仅工作区查询消费）：先探测已跟踪文件变更，无变更时少解析一次全量输出。
-   * 只由批量统计/预取这类偏向干净工作区的调用方开启（详见 WorktreeOps.getWorkingTreeStatus）。
+   * 兼容保留（当前为 no-op）。曾用于「干净工作区快速路径」，该路径已因净亏被移除
+   * （探测 + 全量 ≈ 2× 单次全量；瓶颈是每次 git 调用的进程启动费，而非文件扫描量）。
+   * 详见 WorktreeOps.getWorkingTreeStatus 的说明。
    */
   fastWhenClean?: boolean
 }

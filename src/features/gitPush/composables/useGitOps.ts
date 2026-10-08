@@ -36,7 +36,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
 
   /**
    * 项目状态补齐（ensure 语义：已有缓存即跳过）。
-   * @param fastWhenClean 干净工作区快速路径（供批量统计预取开启；卡片交互路径不传，保持单命令行为）
+   * @param fastWhenClean 兼容保留（当前 no-op；原干净工作区快速路径因净亏已移除）
    */
   function ensureProjectStatus(id: string, fastWhenClean = false) {
     return scheduler.loadStatus(id, { mode: "ensure", fastWhenClean })

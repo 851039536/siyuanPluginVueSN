@@ -110,7 +110,7 @@ export interface CardOps {
   handleFetchAll: (id: string) => void
   /**
    * 卡片首次展开/点击时补齐项目状态（ensure 语义 + 最小间隔节流，防首屏批量后立刻重刷同一项目）。
-   * @param fastWhenClean 干净工作区快速路径（批量统计预取传 true；卡片交互不传，保持原行为）
+   * @param fastWhenClean 兼容保留（当前 no-op；原干净工作区快速路径因净亏已移除）
    */
   ensureProjectStatus: (id: string, fastWhenClean?: boolean) => Promise<void>
   /** Tab 切回工作区时的显式刷新（refresh 语义 + 最小间隔节流） */

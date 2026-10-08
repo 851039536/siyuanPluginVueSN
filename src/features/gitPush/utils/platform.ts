@@ -63,6 +63,13 @@ export function getProjectRemoteNames(project: GitProject): { key: PlatformKey, 
   return result
 }
 
+/** 平台 key → 展示名（缺失/未识别时回落为 key 原文）。
+ * 消除 ProjectCard / useRemoteProgress / PendingProjectsSection 等多处
+ * `PLATFORM_META.find(pm => pm.key === key)?.label ?? key` 的重复写法。 */
+export function platformLabel(key: string): string {
+  return PLATFORM_META.find((pm) => pm.key === key)?.label ?? key
+}
+
 /** 判断远程是否需要推送（noUpstream 或 ahead > 0，消除多处 .noUpstream || .ahead > 0 重复） */
 export function isAheadOfRemote(rs: RemotePushStatus): boolean {
   return rs.noUpstream || rs.ahead > 0

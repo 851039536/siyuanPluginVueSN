@@ -27,6 +27,7 @@ export {
   isAheadOfRemote,
   normalizeGitUrl,
   PLATFORM_FLAG_BY_KEY,
+  platformLabel,
   resolveRemotePlatform,
 } from "./platform"
 
@@ -82,6 +83,7 @@ export {
   hasLogPlatforms,
   logActionLabel,
   relativeTime,
+  statsStatusText,
 } from "./format"
 
 export {

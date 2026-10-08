@@ -122,11 +122,6 @@ export interface PlatformStatusItem {
   missingCount: number
 }
 
-/** 类型安全地获取平台状态 */
-export function getPlatformStatus(item: PlatformStatusItem, key: PlatformKey): boolean {
-  return item[key]
-}
-
 // ── 仓库链接一致性校验（useRepoLinkAudit 产出 / 平台配置状态卡片消费）──
 /** 单平台比对状态：一致 / 不一致 / 仅配置链接 / 仅存在远程 / 两者皆无 */
 export type RepoLinkAuditState = "match" | "mismatch" | "linkOnly" | "remoteOnly" | "none"

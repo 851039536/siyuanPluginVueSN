@@ -3,7 +3,7 @@ import type { Ref } from "vue"
 import type { GitOpAction, GitProject, GitPushManager, PlatformKey, PushOutputEntry } from "../types"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
-import { findProject, pruneRecordCache, resolveValidPath } from "../utils"
+import { findProject, platformLabel, pruneRecordCache, resolveValidPath } from "../utils"
 import type { AppendOpLogInput } from "./useOpLog"
 
 /** 推送/拉取单平台结构化输出（类型定义迁移至 types/storage.ts，此处 re-export 保持向后兼容） */
@@ -136,7 +136,7 @@ export function useRemoteProgress(
       const project = findProject(projects, id)
       key = (project && PLATFORM_META.find((pm) => project[pm.remoteProp])?.key) || "github"
     }
-    const label = PLATFORM_META.find((m) => m.key === key)?.label ?? key
+    const label = platformLabel(key)
     return {
       platform: key,
       label,
@@ -250,10 +250,9 @@ export function useRemoteProgress(
         [id]: { ...progressRef.value[id], [target]: result.ok ? "ok" : "fail" },
       }
 
-      const pm = PLATFORM_META.find((m) => m.key === target)
       const entries: PushOutputEntry[] = [{
         platform: target,
-        label: pm?.label ?? target,
+        label: platformLabel(target),
         ok: result.ok,
         skipped: false,
         duration,
@@ -283,11 +282,10 @@ export function useRemoteProgress(
         ...progressRef.value,
         [id]: { ...progressRef.value[id], [target]: "fail" },
       }
-      const pm = PLATFORM_META.find((m) => m.key === target)
       const errMsg = String(e?.message || e)
       outputsRef.value[id] = [{
         platform: target,
-        label: pm?.label ?? target,
+        label: platformLabel(target),
         ok: false,
         skipped: false,
         duration,
@@ -304,7 +302,7 @@ export function useRemoteProgress(
         action: action as GitOpAction,
         ok: false,
         summary: errMsg.split("\n")[0]?.trim() || "操作失败",
-        platforms: [{ key: target, label: pm?.label ?? target, ok: false, skipped: false, summary: errMsg.split("\n")[0]?.trim() || "失败" }],
+        platforms: [{ key: target, label: platformLabel(target), ok: false, skipped: false, summary: errMsg.split("\n")[0]?.trim() || "失败" }],
       })
       // 与 remoteOpAll 策略统一：不重抛（调用方为模板事件处理器，无 catch），返回结构化错误
       return { ok: false, stdout: "", stderr: errMsg }

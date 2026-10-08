@@ -32,7 +32,7 @@
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Toolbar from "@/components/Toolbar.vue"
-import { relativeTime } from "../../utils"
+import { statsStatusText } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -48,12 +48,13 @@ const emit = defineEmits<{
   refresh: []
 }>()
 
-/** 状态文案：刷新中优先 → 有快照时间则显示相对时间 → 否则回落到项目总数 */
-const statusText = computed(() => {
-  if (props.refreshing) return props.i18n.loadingLabel
-  if (props.refreshedAt) return props.i18n.statsSnapshotAt.replace("{0}", relativeTime(props.refreshedAt, props.i18n))
-  return props.i18n.statsProjectCount.replace("{0}", String(props.projectCount))
-})
+/** 状态文案：刷新中优先 → 有快照时间则显示相对时间 → 否则回落到项目总数（逻辑收敛至 utils.statsStatusText） */
+const statusText = computed(() => statsStatusText({
+  refreshing: props.refreshing,
+  refreshedAt: props.refreshedAt,
+  projectCount: props.projectCount,
+  i18n: props.i18n,
+}))
 </script>
 
 <style lang="scss">

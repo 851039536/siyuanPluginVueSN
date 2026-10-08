@@ -72,6 +72,25 @@ export function analysisStatusText(opts: {
   return i18n[notRunKey]
 }
 
+/**
+ * 统计视图快照状态文案统一："刷新中… / 上次刷新 xx / 共 n 个项目"。
+ * 与 analysisStatusText 同源（都走 relativeTime 的三态收敛），差异仅在三态各自取用的 i18n 键：
+ * 刷新中取 loadingLabel、有快照取 statsSnapshotAt、从未刷新取 statsProjectCount。
+ * 抽出本函数消除 StatsToolbar 内联的同构三元表达式（原与该统一逻辑重复）。
+ */
+export function statsStatusText(opts: {
+  refreshing: boolean
+  /** 上次刷新完成时间（ISO，空串 = 本次会话尚未刷新过） */
+  refreshedAt: string
+  projectCount: number
+  i18n: Record<string, any>
+}): string {
+  const { refreshing, refreshedAt, projectCount, i18n } = opts
+  if (refreshing) return i18n.loadingLabel
+  if (refreshedAt) return i18n.statsSnapshotAt.replace("{0}", relativeTime(refreshedAt, i18n))
+  return i18n.statsProjectCount.replace("{0}", String(projectCount))
+}
+
 /** 按活动时间分级（用于卡片颜色提示） */
 export function activityLevel(iso?: string): "fresh" | "recent" | "stale" | "dead" {
   if (!iso) return "dead"

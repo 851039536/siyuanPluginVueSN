@@ -180,8 +180,7 @@ import { checkCommitRule } from "../../commitRuleChecker"
 import { useCardData } from "../../composables/useCardData"
 import { useCardServices } from "../../composables/useCardServices"
 import { provideCardMenu } from "../../composables/useCardMenu"
-import { PLATFORM_META } from "../../types"
-import { getProjectRemoteNames } from "../../utils"
+import { getProjectRemoteNames, platformLabel } from "../../utils"
 import BranchCommitList from "./BranchCommitList.vue"
 import CardActionBar from "./CardActionBar.vue"
 import CardHeader from "./CardHeader.vue"
@@ -251,7 +250,7 @@ const pullRunningStates = computed(() =>
 function buildRunningStates(isRunning: (key: string) => boolean) {
   return getProjectRemoteNames(props.project)
     .filter(({ key }) => isRunning(key))
-    .map(({ key }) => ({ key, label: PLATFORM_META.find((pm) => pm.key === key)?.label ?? key }))
+    .map(({ key }) => ({ key, label: platformLabel(key) }))
 }
 
 /** 当前正在修正的提交条目（null = 未打开修正弹窗） */

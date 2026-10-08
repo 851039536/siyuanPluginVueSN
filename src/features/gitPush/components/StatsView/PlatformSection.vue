@@ -64,7 +64,7 @@
 // 平台区块：把「远程覆盖率」「平台配置状态」「仓库链接一致性」合并为一个区块——
 // 三者是同一份 PLATFORM_META 上的三种切面，一致性校验结果直接叠在矩阵单元格上。
 // 覆盖率原为独立条形区块（与矩阵表头重复表达同一份平台清单），现收敛为表头上方一行紧凑统计。
-import type { PlatformTableRowView, RepoLinkAuditRow, RepoLinkAuditState, StatsView } from "../../types"
+import type { PlatformTableRowView, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { PLATFORM_META } from "../../types"
@@ -118,28 +118,6 @@ const ISSUE_CHIPS = [
   { key: "remoteOnly", icon: "mdi:source-branch", cls: "ahead", labelKey: "auditRemoteOnly" },
 ] as const
 
-/** 存在一致性问题的项目数（一个项目多个平台有问题只计一次） */
-const issueCount = computed(() =>
-  Object.values(props.auditRows).filter((r) => r.hasIssue).length,
-)
-
-/** 问题分类计数（跨全部项目的全部平台单元格；hover 显示状态名） */
-const issueChips = computed(() => {
-  const counts: Record<string, number> = { mismatch: 0, linkOnly: 0, remoteOnly: 0 }
-  for (const row of Object.values(props.auditRows)) {
-    for (const c of row.cells) {
-      if (c.state !== "none" && c.state !== "match") { counts[c.state]++ }
-    }
-  }
-  return ISSUE_CHIPS.map((c) => ({
-    key: c.key,
-    icon: c.icon,
-    cls: c.cls,
-    label: props.i18n[c.labelKey],
-    value: counts[c.key],
-  }))
-})
-
 /** 单元格 tooltip：校验态名称 + 链接与远程原文（排错必需；无校验结果时回落到已配置/未配置） */
 function cellTitle(cell: { state: RepoLinkAuditState, link: string, remoteUrl: string }): string {
   const label = cell.state === "none"
@@ -148,11 +126,29 @@ function cellTitle(cell: { state: RepoLinkAuditState, link: string, remoteUrl: s
   return `${label}\n${props.i18n.auditLinkPrefix}: ${cell.link || "-"}\n${props.i18n.auditRemotePrefix}: ${cell.remoteUrl || "-"}`
 }
 
-// 平台状态行视图模型：单元格图标与 tooltip 在此预计算，模板只做渲染。
-// 校验结果到达后单元格从「已配置/未配置」升级为四态校验图标（一致/不一致/仅链接/仅远程）。
-const platformRows = computed<PlatformTableRowView[]>(() =>
-  props.stats.platformStatusProjects.map((item) => {
+/**
+ * 一致性校验结果单次遍历聚合：问题项目数 + 分类计数 + 平台矩阵行视图一次产出。
+ *
+ * 原实现分三个 computed（issueCount / issueChips / platformRows）各自 Object.values(auditRows)
+ * 遍历一遍，且 platformRows 内层还有 `audit.cells.find(...)` 嵌在 PLATFORM_META.map 里，
+ * 构成 O(项目 × 平台²)。此处改为单次遍历 + 单元格按 key 建索引，与 useGitStats.projectStats
+ * 的「单次遍历、派生 computed 只取字段」模式保持一致。
+ */
+const auditAggregate = computed(() => {
+  const counts: Record<string, number> = { mismatch: 0, linkOnly: 0, remoteOnly: 0 }
+  let issueCount = 0
+
+  const rows: PlatformTableRowView[] = props.stats.platformStatusProjects.map((item) => {
     const audit = props.auditRows[item.project.id]
+    if (audit?.hasIssue) issueCount++
+
+    // 单元格按 key 建索引，避免在平台循环内做线性 find
+    const cellByKey = new Map<string, RepoLinkAuditCell>()
+    for (const c of audit?.cells ?? []) {
+      cellByKey.set(c.key, c)
+      if (c.state !== "none" && c.state !== "match") counts[c.state]++
+    }
+
     return {
       id: item.project.id,
       name: item.project.name,
@@ -160,7 +156,7 @@ const platformRows = computed<PlatformTableRowView[]>(() =>
       nameSuffix: audit?.error ? props.i18n.auditError : "",
       cells: PLATFORM_META.map((pm) => {
         const ok = item[pm.key]
-        const cell = audit?.cells.find((c) => c.key === pm.key)
+        const cell = cellByKey.get(pm.key)
         // 有可比对信息（校验态非 none）→ 用四态图标；否则回落为「已配置/未配置」
         const state = cell && cell.state !== "none" ? cell.state : null
         return {
@@ -171,8 +167,27 @@ const platformRows = computed<PlatformTableRowView[]>(() =>
         }
       }),
     }
-  }),
+  })
+
+  return { issueCount, counts, rows }
+})
+
+/** 存在一致性问题的项目数（一个项目多个平台有问题只计一次） */
+const issueCount = computed(() => auditAggregate.value.issueCount)
+
+/** 问题分类计数（跨全部项目的全部平台单元格；hover 显示状态名） */
+const issueChips = computed(() =>
+  ISSUE_CHIPS.map((c) => ({
+    key: c.key,
+    icon: c.icon,
+    cls: c.cls,
+    label: props.i18n[c.labelKey],
+    value: auditAggregate.value.counts[c.key],
+  })),
 )
+
+/** 平台状态行视图模型：单元格图标与 tooltip 已预计算，模板只做渲染 */
+const platformRows = computed<PlatformTableRowView[]>(() => auditAggregate.value.rows)
 </script>
 
 <style lang="scss">

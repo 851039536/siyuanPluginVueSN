@@ -14,6 +14,7 @@ import type {
 } from "../types"
 import { computed, ref } from "vue"
 import { PLATFORM_META, UNGROUPED_ID, DEFAULT_NETWORK_TIMEOUT, type PlatformStatusItem } from "../types"
+import { getProjectRemoteNames } from "../utils"
 
 export function useGitStats(
   manager: GitPushManager,
@@ -49,6 +50,10 @@ export function useGitStats(
   /**
    * 单次遍历计算所有统计指标，避免多个 computed 各自遍历 projects 数组。
    * 派生 computed 仅从该对象取出对应字段，零额外遍历开销。
+   *
+   * 「待处理项目」的三路来源（待推送 / 待拉取 / 未提交）本就在同一个循环内逐项目判定，
+   * 故在此用同一张 pendingMap 直接累积合并条目 —— 原实现先用三个数组分别收集、
+   * 再在 pendingProjects computed 里二次遍历合并（3 次多余遍历 + Map 重建）。
    */
   const projectStats = computed(() => {
     const groupedMap = new Map<string, { category: ProjectCategory; projects: GitProject[] }>()
@@ -66,12 +71,32 @@ export function useGitStats(
     let behind = 0
     let synced = 0
     let noRemote = 0
+    const pendingMap = new Map<string, PendingProjectItem>()
     const needsPush: NeedsPushItem[] = []
     const needsPull: NeedsPullItem[] = []
     const uncommitted: UncommittedItem[] = []
     const platformMissing: PlatformStatusItem[] = []
     const starred: GitProject[] = []
     let archivedCount = 0
+
+    /** 取或创建合并条目（三种待处理来源共用，随主循环一次性累积） */
+    const pendingEntry = (p: GitProject): PendingProjectItem => {
+      let item = pendingMap.get(p.id)
+      if (!item) {
+        item = {
+          project: p,
+          aheadByRemote: [],
+          totalAhead: 0,
+          behindByRemote: [],
+          totalBehind: 0,
+          staged: 0,
+          unstaged: 0,
+          untracked: 0,
+        }
+        pendingMap.set(p.id, item)
+      }
+      return item
+    }
 
     for (const p of projects.value) {
       // ── 分组 ──
@@ -83,11 +108,15 @@ export function useGitStats(
       }
 
       // ── 远程覆盖率（基于实际 git remote 配置，非手动输入的仓库链接）──
-      const remoteCount = [p.githubRemote, p.giteeRemote, p.giteaRemote, p.cnbRemote].filter(Boolean).length
-      if (p.githubRemote) github++
-      if (p.giteeRemote) gitee++
-      if (p.giteaRemote) gitea++
-      if (p.cnbRemote) cnb++
+      // 由 PLATFORM_META 驱动，避免四个平台写死四次的重复；getProjectRemoteNames 是既有单一真源
+      const remoteNames = getProjectRemoteNames(p)
+      const remoteCount = remoteNames.length
+      for (const { key } of remoteNames) {
+        if (key === "github") github++
+        else if (key === "gitee") gitee++
+        else if (key === "gitea") gitea++
+        else cnb++
+      }
       if (remoteCount > 0) hasRemote++
       if (remoteCount >= 2) multipleRemote++
 
@@ -102,7 +131,7 @@ export function useGitStats(
         else synced++
       }
 
-      // ── 待推送 / 待拉取项目 ──
+      // ── 待推送 / 待拉取项目（同时累积合并条目）──
       if (status) {
         const aheadByRemote: { key: string; ahead: number }[] = []
         const behindByRemote: { key: string; behind: number }[] = []
@@ -112,38 +141,36 @@ export function useGitStats(
           if (rs && rs.behind > 0) behindByRemote.push({ key: pm.key, behind: rs.behind })
         }
         if (aheadByRemote.length > 0) {
-          needsPush.push({
-            project: p,
-            aheadByRemote,
-            totalAhead: aheadByRemote.reduce((s, r) => s + r.ahead, 0),
-          })
+          const totalAhead = aheadByRemote.reduce((s, r) => s + r.ahead, 0)
+          needsPush.push({ project: p, aheadByRemote, totalAhead })
+          Object.assign(pendingEntry(p), { aheadByRemote, totalAhead })
         }
         if (behindByRemote.length > 0) {
-          needsPull.push({
-            project: p,
-            behindByRemote,
-            totalBehind: behindByRemote.reduce((s, r) => s + r.behind, 0),
-          })
+          const totalBehind = behindByRemote.reduce((s, r) => s + r.behind, 0)
+          needsPull.push({ project: p, behindByRemote, totalBehind })
+          Object.assign(pendingEntry(p), { behindByRemote, totalBehind })
         }
       }
 
-      // ── 未提交变更 ──
+      // ── 未提交变更（同时累积合并条目）──
       const wt = workingTrees.value[p.id]
       if (wt?.hasChanges) {
-        uncommitted.push({
-          project: p,
+        const changeCounts = {
           staged: wt.stagedCount,
           unstaged: wt.unstagedCount,
           untracked: wt.untrackedCount,
-        })
+        }
+        uncommitted.push({ project: p, ...changeCounts })
+        Object.assign(pendingEntry(p), changeCounts)
       }
 
       // ── 平台缺失（基于实际 git remote 配置）──
-      const hasGithub = !!p.githubRemote
-      const hasGitee = !!p.giteeRemote
-      const hasGitea = !!p.giteaRemote
-      const hasCnb = !!p.cnbRemote
-      const missCount = (hasGithub ? 0 : 1) + (hasGitee ? 0 : 1) + (hasGitea ? 0 : 1) + (hasCnb ? 0 : 1)
+      const configured = new Set(remoteNames.map((r) => r.key))
+      const hasGithub = configured.has("github")
+      const hasGitee = configured.has("gitee")
+      const hasGitea = configured.has("gitea")
+      const hasCnb = configured.has("cnb")
+      const missCount = PLATFORM_META.length - configured.size
       if (missCount > 0) {
         platformMissing.push({ project: p, github: hasGithub, gitee: hasGitee, gitea: hasGitea, cnb: hasCnb, missingCount: missCount })
       }
@@ -158,6 +185,15 @@ export function useGitStats(
       .filter((g) => g.projects.length > 0)
       .sort((a, b) => a.category.order - b.category.order)
 
+    // 待处理项目排序：totalAhead 降序 → totalBehind 降序 → 变更总数降序
+    const pending = [...pendingMap.values()].sort((a, b) => {
+      if (a.totalAhead !== b.totalAhead) return b.totalAhead - a.totalAhead
+      if (a.totalBehind !== b.totalBehind) return b.totalBehind - a.totalBehind
+      const aTotal = a.staged + a.unstaged + a.untracked
+      const bTotal = b.staged + b.unstaged + b.untracked
+      return bTotal - aTotal
+    })
+
     return {
       grouped,
       count: projects.value.length,
@@ -166,6 +202,7 @@ export function useGitStats(
       needsPush: needsPush.sort((a, b) => b.totalAhead - a.totalAhead),
       needsPull,
       uncommitted,
+      pending,
       platformMissing: platformMissing.sort((a, b) => b.missingCount - a.missingCount),
       starred,
       archivedCount,
@@ -180,36 +217,8 @@ export function useGitStats(
   const uncommittedProjects = computed(() => projectStats.value.uncommitted)
   const starredProjects = computed(() => projectStats.value.starred)
 
-  /** 待处理项目：需要推送 + 需要拉取 + 有未提交变更 的合并视图（供统计面板表格使用） */
-  const pendingProjects = computed<PendingProjectItem[]>(() => {
-    const map = new Map<string, PendingProjectItem>()
-    // 取或创建项目对应的合并条目（三个来源共用）
-    const entry = (p: GitProject): PendingProjectItem => {
-      let item = map.get(p.id)
-      if (!item) {
-        item = { project: p, aheadByRemote: [], totalAhead: 0, behindByRemote: [], totalBehind: 0, staged: 0, unstaged: 0, untracked: 0 }
-        map.set(p.id, item)
-      }
-      return item
-    }
-    for (const np of projectStats.value.needsPush) {
-      Object.assign(entry(np.project), { aheadByRemote: np.aheadByRemote, totalAhead: np.totalAhead })
-    }
-    for (const nl of projectStats.value.needsPull) {
-      Object.assign(entry(nl.project), { behindByRemote: nl.behindByRemote, totalBehind: nl.totalBehind })
-    }
-    for (const uc of projectStats.value.uncommitted) {
-      Object.assign(entry(uc.project), { staged: uc.staged, unstaged: uc.unstaged, untracked: uc.untracked })
-    }
-    // 按 totalAhead 降序 → totalBehind 降序 → staged+unstaged+untracked 降序
-    return [...map.values()].sort((a, b) => {
-      if (a.totalAhead !== b.totalAhead) return b.totalAhead - a.totalAhead
-      if (a.totalBehind !== b.totalBehind) return b.totalBehind - a.totalBehind
-      const aTotal = a.staged + a.unstaged + a.untracked
-      const bTotal = b.staged + b.unstaged + b.untracked
-      return bTotal - aTotal
-    })
-  })
+  /** 待处理项目：需要推送 + 需要拉取 + 有未提交变更 的合并视图（已在 projectStats 主循环内合并排序） */
+  const pendingProjects = computed<PendingProjectItem[]>(() => projectStats.value.pending)
 
   /** 统计面板聚合视图（StatsPanel 唯一数据 prop，新增统计维度只需改这里 + 类型 + 面板三处） */
   const statsView = computed<StatsView>(() => ({

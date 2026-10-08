@@ -2,15 +2,16 @@
 <template>
   <StatsSection
     :title="i18n.pendingProjects"
-    :count="stats.pendingProjects.length"
+    :count="rows.length"
   >
-    <!-- 待处理项目表格 -->
-    <div
-      v-if="stats.pendingProjects.length > 0"
-      class="gps-table-wrap"
+    <!-- 待处理项目表格（骨架走共享 StatsTable，本区块只提供计数列） -->
+    <StatsTable
+      v-if="rows.length > 0"
+      :i18n="i18n"
+      :rows="rows"
+      @view-project="emit('viewProject', $event)"
     >
-      <div class="gps-table-row gps-table-row--head">
-        <span class="gps-table-cell gps-table-cell--name">{{ i18n.projectName }}</span>
+      <template #head>
         <span class="gps-table-cell gps-table-cell--num">{{ i18n.needsPushShort }}</span>
         <!-- 表头："待拉取" -->
         <span class="gps-table-cell gps-table-cell--num">{{ i18n.needsPullShort }}</span>
@@ -20,27 +21,16 @@
           :key="col.field"
           class="gps-table-cell gps-table-cell--num"
         >{{ i18n[col.field] }}</span>
-        <span class="gps-table-cell gps-table-cell--act"></span>
-      </div>
-      <div
-        v-for="item in stats.pendingProjects"
-        :key="item.project.id"
-        class="gps-table-row gps-table-row--clickable"
-        @click="emit('viewProject', item.project.id)"
-      >
-        <span
-          class="gps-table-cell gps-table-cell--name"
-          :title="item.project.path"
-        >
-          {{ item.project.name }}
-        </span>
+      </template>
+
+      <template #row="{ row }">
         <!-- 待推送列：各远程 ahead 计数徽章（hover 显示该远程合计；空则占位符 -） -->
         <span class="gps-table-cell gps-table-cell--num">
           <span
-            v-if="item.totalAhead > 0"
+            v-if="row.totalAhead > 0"
             class="gps-badge"
-            :title="remoteTitle(item.aheadByRemote, 'ahead')"
-          >{{ item.totalAhead }}</span>
+            :title="remoteTitle(row.aheadByRemote, 'ahead')"
+          >{{ row.totalAhead }}</span>
           <span
             v-else
             class="gps-cell-empty"
@@ -49,10 +39,10 @@
         <!-- 待拉取列：各远程 behind 计数徽章（0 时显示占位符 -） -->
         <span class="gps-table-cell gps-table-cell--num">
           <span
-            v-if="item.totalBehind > 0"
+            v-if="row.totalBehind > 0"
             class="gps-badge gps-badge--warn"
-            :title="remoteTitle(item.behindByRemote, 'behind')"
-          >{{ item.totalBehind }}</span>
+            :title="remoteTitle(row.behindByRemote, 'behind')"
+          >{{ row.totalBehind }}</span>
           <span
             v-else
             class="gps-cell-empty"
@@ -65,23 +55,17 @@
           class="gps-table-cell gps-table-cell--num"
         >
           <span
-            v-if="item[col.field] > 0"
+            v-if="row[col.field] > 0"
             class="gps-badge"
             :class="col.badge"
-          >{{ item[col.field] }}</span>
+          >{{ row[col.field] }}</span>
           <span
             v-else
             class="gps-cell-empty"
           >-</span>
         </span>
-        <span class="gps-table-cell gps-table-cell--act">
-          <Icon
-            icon="mdi:arrow-right"
-            height="12"
-          />
-        </span>
-      </div>
-    </div>
+      </template>
+    </StatsTable>
     <!-- 空态："所有项目状态正常" -->
     <AllClear
       v-else
@@ -94,13 +78,15 @@
 // 待处理项目区块：全站唯一的待处理清单（原「条形排行 + 明细表格」两份同标题同数据渲染已合并为一份）。
 // 计数列展示每组的远程合计（原来每远程一个徽章会把 40px 列宽挤爆），逐远程明细下沉到 tooltip，
 // 既保留了「哪个远程落后几笔」的排错信息，又让窄 Dock 下的表格保持可读。
+// 表格骨架（表头/可点击行/项目名/操作箭头）已收敛至共享 StatsTable，本区块只负责计数列。
 import type { StatsView } from "../../types"
-import { Icon } from "@iconify/vue"
-import { PLATFORM_META } from "../../types"
+import { computed } from "vue"
+import { platformLabel } from "../../utils"
 import AllClear from "./common/AllClear.vue"
 import StatsSection from "./common/StatsSection.vue"
+import StatsTable from "./common/StatsTable.vue"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   /** 统计聚合视图（取 pendingProjects） */
   stats: StatsView
@@ -117,18 +103,27 @@ const COUNT_COLUMNS = [
   { field: "untracked", badge: "gps-badge--untracked" },
 ] as const
 
-/** 平台 key → 展示名（PLATFORM_META 是跨模块唯一真源，此处只做一次投影） */
-const PLATFORM_LABELS: Record<string, string> = Object.fromEntries(
-  PLATFORM_META.map((pm) => [pm.key, pm.label]),
-)
+/** 表格行视图：把 PendingProjectItem 的嵌套 project 展平为 StatsTable 需要的 id/name/path，
+ * 其余计数字段原样带出（row 插槽按 field 取用）。 */
+const rows = computed(() => props.stats.pendingProjects.map((item) => ({
+  id: item.project.id,
+  name: item.project.name,
+  path: item.project.path,
+  aheadByRemote: item.aheadByRemote,
+  totalAhead: item.totalAhead,
+  behindByRemote: item.behindByRemote,
+  totalBehind: item.totalBehind,
+  staged: item.staged,
+  unstaged: item.unstaged,
+  untracked: item.untracked,
+})))
 
-/** 逐远程明细 tooltip："GitHub ↑3 · Gitee ↑1"（平台名取 PLATFORM_META 标签，缺失时回落到 key） */
+/** 逐远程明细 tooltip："GitHub ↑3 · Gitee ↑1"（平台名取统一 platformLabel，缺失时回落 key） */
 function remoteTitle(byRemote: { key: string, ahead?: number, behind?: number }[], dir: "ahead" | "behind"): string {
   return byRemote
     .map((r) => {
-      const label = PLATFORM_LABELS[r.key] ?? r.key
       const arrow = dir === "ahead" ? "↑" : "↓"
-      return `${label} ${arrow}${r[dir] ?? 0}`
+      return `${platformLabel(r.key)} ${arrow}${r[dir] ?? 0}`
     })
     .join(" · ")
 }

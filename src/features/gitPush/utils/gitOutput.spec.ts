@@ -4,6 +4,7 @@
 // 不重复计数、shortstat 为可选行（merge/空改动无该行）导致的记录切分差异。
 import { describe, expect, it } from "vitest"
 import {
+  parseAheadBehind,
   parseBranches,
   parseCommitFiles,
   parseCommitLog,
@@ -16,6 +17,60 @@ import {
 function first<T>(arr: T[]): T | undefined {
   return arr[0]
 }
+
+describe("parseAheadBehind", () => {
+  it("空输入返回空映射（noUpstream / 无平台 ref 时 for-each-ref 静默空输出）", () => {
+    expect(parseAheadBehind("").size).toBe(0)
+    expect(parseAheadBehind("\n").size).toBe(0)
+  })
+
+  it("字段顺序为 <behind> <ahead>（与 rev-list --left-right 一致，勿颠倒）", () => {
+    // 真实分叉仓库实测：落后 3、领先 2 时 for-each-ref 输出 "3 2"
+    const r = parseAheadBehind("origin/main\x003 2")
+    expect(r.get("origin/main")).toEqual({ behind: 3, ahead: 2 })
+  })
+
+  it("完全同步：0 0", () => {
+    expect(parseAheadBehind("origin/main\x000 0").get("origin/main")).toEqual({ behind: 0, ahead: 0 })
+  })
+
+  it("多远程一次解析（单次 for-each-ref 覆盖全部平台）", () => {
+    const raw = [
+      "github/main\x000 5",
+      "gitee/main\x002 0",
+      "gitea/main\x000 0",
+      "cnb/main\x001 1",
+    ].join("\n")
+    const r = parseAheadBehind(raw)
+    expect(r.size).toBe(4)
+    expect(r.get("github/main")).toEqual({ behind: 0, ahead: 5 })
+    expect(r.get("gitee/main")).toEqual({ behind: 2, ahead: 0 })
+    expect(r.get("cnb/main")).toEqual({ behind: 1, ahead: 1 })
+  })
+
+  it("NUL 分隔：分支名含空格时不错位", () => {
+    const r = parseAheadBehind("origin/feature/my branch\x004 7")
+    expect(r.get("origin/feature/my branch")).toEqual({ behind: 4, ahead: 7 })
+  })
+
+  it("带斜杠的分支名保留完整 refname", () => {
+    const r = parseAheadBehind("origin/feature/x\x000 3")
+    expect(r.get("origin/feature/x")).toEqual({ behind: 0, ahead: 3 })
+  })
+
+  it("无 NUL 分隔的异常行被忽略", () => {
+    const r = parseAheadBehind("garbage-line-without-separator")
+    expect(r.size).toBe(0)
+  })
+
+  it("缺字段时缺失项按 0 兜底", () => {
+    expect(parseAheadBehind("origin/main\x007").get("origin/main")).toEqual({ behind: 7, ahead: 0 })
+  })
+
+  it("空 refname 的行被忽略", () => {
+    expect(parseAheadBehind("\x000 0").size).toBe(0)
+  })
+})
 
 describe("parseWorktreeStatus", () => {
   it("空输入返回空结果与零计数", () => {

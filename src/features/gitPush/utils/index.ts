@@ -49,6 +49,7 @@ export {
 export type { DiffLine, DiffLineType, DiffSegment } from "./diffText"
 
 export {
+  parseAheadBehind,
   parseBranches,
   parseCommitFiles,
   parseCommitLog,

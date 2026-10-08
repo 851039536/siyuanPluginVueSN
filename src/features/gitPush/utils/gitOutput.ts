@@ -91,6 +91,40 @@ export function parseWorktreeStatus(raw: string): WorktreeStatusParse {
   }
 }
 
+/**
+ * 解析 `git for-each-ref --format=%(refname:short)%00%(ahead-behind:HEAD) refs/remotes` 输出，
+ * 得到「远程跟踪 ref 短名 → { ahead, behind }」映射（一次调用覆盖全部远程，取代逐远程 rev-list）。
+ *
+ * 字段顺序经真实分叉仓库实测确认为 **`<behind> <ahead>`**（与 `rev-list --left-right --count A...B`
+ * 的左=behind、右=ahead 一致），切勿按直觉当成 ahead/behind 颠倒。
+ *
+ * 用 NUL（%00）分隔 refname 与计数而非空格：分支名可含空格，按空格切分会错位。
+ *
+ * ref 不存在（noUpstream：远程分支尚未建立）时 for-each-ref **不报错**、仅不产出该行
+ * （退出码 0，空输出）——调用方按「映射中无该 ref」判定 noUpstream，
+ * 比原先匹配 rev-list 的多套英文报错措辞更稳妥。
+ */
+export function parseAheadBehind(raw: string): Map<string, { ahead: number, behind: number }> {
+  const result = new Map<string, { ahead: number, behind: number }>()
+  if (!raw) return result
+  for (const line of raw.split("\n")) {
+    if (!line) continue
+    const sep = line.indexOf("\x00")
+    if (sep < 0) continue
+    const refName = line.substring(0, sep).trim()
+    if (!refName) continue
+    // ahead-behind 输出形如 "3 2"（behind ahead）或 "0 0"
+    const parts = line.substring(sep + 1).trim().split(/\s+/)
+    const behind = Number.parseInt(parts[0] || "0", 10)
+    const ahead = Number.parseInt(parts[1] || "0", 10)
+    result.set(refName, {
+      ahead: Number.isFinite(ahead) ? ahead : 0,
+      behind: Number.isFinite(behind) ? behind : 0,
+    })
+  }
+  return result
+}
+
 /** 解析 `git stash list` 输出（`stash@{n}: message`），无法识别的行忽略 */
 export function parseStashList(raw: string): StashEntry[] {
   const entries: StashEntry[] = []

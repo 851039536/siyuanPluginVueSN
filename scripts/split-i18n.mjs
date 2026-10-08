@@ -141,7 +141,7 @@ const MODULE_RULES = [
   },
   // 二维码
   {
-    pattern: /^(qrcode|qrCode)/,
+    pattern: /^(qrcode|qrCode|barcode)/,
     module: 'qrcode',
   },
   // 单位转换

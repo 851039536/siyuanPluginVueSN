@@ -50,7 +50,22 @@
 }
 
 // ========================================
-// 二维码预览
+// 码类型切换（一组互斥选项：Button 分组 + aria-pressed）
+// ========================================
+.code-type-row {
+  display: flex;
+  gap: g.$s-2;
+
+  // 按下态与未按下态只靠底色/描边区分，不加尺寸差异以免行高跳动
+  [aria-pressed="true"] {
+    background: var(--b3-theme-primary-lightest);
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+// ========================================
+// 二维码 / 条形码预览
 // ========================================
 .qrcode-preview {
   @include ft.flex-center;
@@ -60,7 +75,7 @@
   border-radius: g.$r-sm;
   padding: g.$s-3;
 
-  // 画布由 QRCode.toCanvas 运行时创建，无 scope 属性，需用 :deep 穿透
+  // 画布由 QRCode.toCanvas / JsBarcode 运行时创建，无 scope 属性，需用 :deep 穿透
   :deep(canvas) {
     max-width: 100%;
     height: auto;
@@ -69,6 +84,15 @@
   @media (max-width: ft.$breakpoint-md) {
     min-height: 160px;
     padding: g.$s-2;
+  }
+}
+
+// 条形码为宽扁比例，降低最小高度避免上下留白过多
+.qrcode-preview--barcode {
+  min-height: 120px;
+
+  @media (max-width: ft.$breakpoint-md) {
+    min-height: 100px;
   }
 }
 
@@ -83,7 +107,7 @@
 }
 
 // ========================================
-// 设置行：大小滑块 + 纠错级别
+// 设置行：二维码（大小滑块 + 纠错级别）/ 条形码（格式 + 条宽 + 高度 + 显示文字）
 // ========================================
 .settings-row {
   display: flex;
@@ -101,12 +125,30 @@
     flex-shrink: 0;
   }
 
+  // 格式下拉取值较短（CODE128 等），无需 160px
+  .setting-format {
+    width: 130px; // 布局尺寸，非间距 Token
+  }
+
+  // 开关不参与 flex 拉伸，与滑块标签行对齐
+  .setting-toggle {
+    display: flex;
+    align-items: flex-end;
+    flex-shrink: 0;
+    min-height: 32px; // 与同档 Slider 标签行高对齐
+  }
+
   @media (max-width: ft.$breakpoint-sm) {
     flex-direction: column;
     align-items: stretch;
 
-    .setting-level {
+    .setting-level,
+    .setting-format {
       width: 100%;
+    }
+
+    .setting-toggle {
+      align-items: flex-start;
     }
   }
 }

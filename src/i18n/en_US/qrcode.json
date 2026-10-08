@@ -18,5 +18,20 @@
   "qrcodeCopyFailed": "Copy failed",
   "qrcodeDownloaded": "QR code downloaded",
   "qrcodeDownloadFailed": "Download failed",
-  "qrcodeGenerateFailed": "Failed to generate QR code"
+  "qrcodeGenerateFailed": "Failed to generate QR code",
+  "qrcodeTabQrcode": "QR Code",
+  "qrcodeTabBarcode": "Barcode",
+  "barcodeGenerate": "Generate Barcode",
+  "barcodeFormat": "Format",
+  "barcodeWidth": "Bar Width",
+  "barcodeHeight": "Height",
+  "barcodeDisplayValue": "Show Text",
+  "barcodePlaceholder": "Enter digits or letters to generate a barcode...",
+  "barcodeNotGenerated": "Please generate a barcode first",
+  "barcodeCopied": "Barcode copied to clipboard",
+  "barcodeDownloaded": "Barcode downloaded",
+  "barcodeGenerateFailed": "Failed to generate barcode",
+  "barcodeInvalidEan13": "EAN-13 requires 12 or 13 digits (check digit must be valid for 13)",
+  "barcodeInvalidItf14": "ITF-14 requires 13 or 14 digits",
+  "barcodeInvalidChars": "Content contains characters unsupported by this format"
 }

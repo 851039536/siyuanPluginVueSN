@@ -108,6 +108,12 @@ export const FEATURE_ICONS = {
     color: "#6366f1",
   },
 
+  // 条形码生成
+  barcode: {
+    icon: "mdi:barcode",
+    color: "#6366f1",
+  },
+
   // 快捷键面板
   shortcuts: {
     icon: "mdi:keyboard",

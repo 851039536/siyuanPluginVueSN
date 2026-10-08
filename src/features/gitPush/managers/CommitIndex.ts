@@ -29,8 +29,8 @@ import { INDEX_META_VERSION } from "../types/indexCache"
 import {
   FsIndexIO,
   INDEX_FILE,
+  legacyProjectIndexFile,
   projectIndexFile,
-
 } from "./indexIo"
 
 /** 单次索引查询的过滤条件 */
@@ -103,6 +103,8 @@ export class CommitIndex {
   private needsVersionReset = false
   /** 版本不符时待清理的项目 id（构造期从旧 meta 留存，因 this.meta.projects 已被清空） */
   private staleProjectIds: string[] = []
+  /** 清盘进行中的 Promise：并发调用方共享同一次清盘，避免边删边写 */
+  private versionResetPromise: Promise<void> | null = null
 
   /**
    * 串行执行项目的写操作（同一项目的调用排队，不同项目互不阻塞）。
@@ -117,7 +119,15 @@ export class CommitIndex {
     const prev = this.writeChains.get(projectId) ?? Promise.resolve()
     // 前序失败不应阻断后续操作，故先吞掉其拒绝再排队
     const next = prev.catch(() => {}).then(fn)
-    this.writeChains.set(projectId, next.catch(() => {}))
+    // 队列尾写入的是「吞掉拒绝」版本，后续调用拿到它不会因前序失败而中断
+    const tail = next.catch(() => {})
+    this.writeChains.set(projectId, tail)
+    // 链已排空即回收条目：长期运行的窗口里项目 id 会不断增删，
+    // 不回收则 writeChains 无界增长且每个条目都钉住一个已 settle 的 Promise。
+    // 仅当队尾仍是本笔写入时才删除，防止本笔 settle 时已有后续写入排队（删掉会破坏串行性）。
+    void tail.then(() => {
+      if (this.writeChains.get(projectId) === tail) this.writeChains.delete(projectId)
+    })
     return next
   }
 
@@ -150,18 +160,43 @@ export class CommitIndex {
    * 去解析旧行、append 再把新记录混进同一文件——正是版本号本该防住的损坏。
    */
   private async ensureVersionReset(): Promise<void> {
-    if (!this.needsVersionReset) return
+    if (!this.needsVersionReset) {
+      // 已有清盘在途（或已完成）：必须等待其结束再放行读写。
+      // 原实现只翻转 needsVersionReset 就 await 删除，并发调用方看到标志已 false 便直接
+      // 进入 ensureLoaded/append，可能出现「清盘尚未删完，新数据已写入」——
+      // 随后到达的 remove 会把刚写的新格式数据一并删掉。
+      if (this.versionResetPromise) await this.versionResetPromise
+      return
+    }
+    // 同步翻标志 + 同步建立共享 Promise：两者之间无 await，故并发调用不可能穿插进来
     this.needsVersionReset = false
     const stale = this.staleProjectIds
     this.staleProjectIds = []
-    console.warn("[gitPush] 索引元数据版本不符，已清空磁盘索引并按新结构重建")
-    // 直接删除留存的项目文件（不能用 clearAll：其 id 来源是已清空的 meta.projects）
-    for (const id of stale) {
-      await this.io.remove(projectIndexFile("commits", id))
-      await this.io.remove(projectIndexFile("files", id))
-      await this.io.remove(projectIndexFile("fileLines", id))
+    this.versionResetPromise = (async () => {
+      console.warn("[gitPush] 索引元数据版本不符，已清空磁盘索引并按新结构重建")
+      // 直接删除留存的项目文件（不能用 clearAll：其 id 来源是已清空的 meta.projects）。
+      // 删除操作彼此独立，并发发出以缩短清盘耗时（项目多时串行等待是各项目延迟之和）
+      await Promise.all(stale.flatMap((id) => [
+        this.io.remove(projectIndexFile("commits", id)),
+        this.io.remove(projectIndexFile("files", id)),
+        this.io.remove(projectIndexFile("fileLines", id)),
+      ]))
+      // 兼容清理：文件命名规则本身变更的版本（如 v2 把转义前缀由 `_` 改为 `~`）下，
+      // 旧文件是用**旧**规则命名的，按新规则生成的路径删不到它们，会永久残留在索引目录。
+      // 故额外按 v2 之前的命名规则删一遍（legacyProjectIndexFile）。
+      await Promise.all(stale.flatMap((id) => [
+        this.io.remove(legacyProjectIndexFile("commits", id)),
+        this.io.remove(legacyProjectIndexFile("files", id)),
+        this.io.remove(legacyProjectIndexFile("fileLines", id)),
+      ]))
+      await this.persistMeta()
+    })()
+    try {
+      await this.versionResetPromise
+    } finally {
+      // 失败也清空：允许下次重试，而不是永久卡在已失败的 Promise 上
+      this.versionResetPromise = null
     }
-    await this.persistMeta()
   }
 
   /** 索引是否可用（不可用时调用方应走「直接跑 git」的旧路径） */
@@ -388,9 +423,15 @@ export class CommitIndex {
         // 因为 hash 已在内存索引中而跳过重抓 —— 这份数据将永久缺失。
         segment.commits.length = startIndex
         segment.files.length = startIndex
+        // 只回滚「本批新增」的 hash 映射：仓库身份变化时调用方会传 knownHashes=null
+        // 重扫全部历史，同一个 hash 可能早已存在于更早的段中（该 index < startIndex）。
+        // 若无条件 delete，会把这份既有映射一并抹掉，导致后续增量去重失效、提交重复追加。
+        // 仅当其当前值落在本次回滚区间时才删除。
         for (const c of commits) {
           const hash = c.hash ?? ""
-          if (hash) segment.hashIndex.delete(hash)
+          if (!hash) continue
+          const mapped = segment.hashIndex.get(hash)
+          if (mapped !== undefined && mapped >= startIndex) segment.hashIndex.delete(hash)
         }
         throw e
       }
@@ -479,6 +520,17 @@ export class CommitIndex {
       ...this.fileLinesByProject.keys(),
       ...this.meta.projects.map((p) => p.projectId),
     ])
+    // 逐项目排队删除：与本项目在途的 append/setFileLines 互斥。
+    // 各项目的队列与文件相互独立，故并发排队：串行等待是各项目延迟之和（上限
+    // INDEX_MAX_PROJECT_SEGMENTS=40 个项目时明显），并发后约为最慢一项。
+    //
+    // 内存清空必须发生在「所有项目锁均已获得之后」：原实现在排入队列前就同步清空
+    // segments/meta，若某项目已有在途 append 排队在前，该 append 会先跑完并重新填充
+    // this.segments 与 meta（setProjectMeta 会把该项目写回 meta），随后清空的
+    // persistMeta 反而把「文件已删」的项目又写进 meta —— 内存段残留且元数据指向已删文件。
+    const pending = [...ids].map((id) => this.withProjectLock(id, async () => { /* 仅占位以排空该项目队列 */ }))
+    await Promise.all(pending)
+    // 此刻所有相关写队列均已排空，清空内存状态不会再被在途写入重新填充
     this.segments.clear()
     this.loaded.clear()
     this.fileLinesByProject.clear()
@@ -486,14 +538,12 @@ export class CommitIndex {
       version: INDEX_META_VERSION,
       projects: [],
     }
-    // 逐项目排队删除：与本项目在途的 append/setFileLines 互斥
-    for (const id of ids) {
-      await this.withProjectLock(id, async () => {
-        await this.io.remove(projectIndexFile("commits", id))
-        await this.io.remove(projectIndexFile("files", id))
-        await this.io.remove(projectIndexFile("fileLines", id))
-      })
-    }
+    // 删除同样是独立的：按项目并发（每项目内三份文件也并发）
+    await Promise.all([...ids].map((id) => Promise.all([
+      this.io.remove(projectIndexFile("commits", id)),
+      this.io.remove(projectIndexFile("files", id)),
+      this.io.remove(projectIndexFile("fileLines", id)),
+    ])))
     await this.persistMeta()
   }
 

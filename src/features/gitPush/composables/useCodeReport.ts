@@ -74,6 +74,8 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
   const verifiedKeys = new Set<string>()
   /** 有在途请求时被挡下的新请求（结束后补跑一次，避免切换项目/范围丢失刷新） */
   let pendingRerun = false
+  /** 补跑请求是否可静默：只要有一笔被挡下的请求是显式（用户触发）的，补跑就必须非静默 */
+  let pendingRerunSilent = true
   /** 索引数据变更计数（提交/历史重写等写操作后自增，使已校验键失效） */
   const indexVersion = ref(0)
 
@@ -84,7 +86,8 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
 
   /**
    * 标记报告数据可能已过期（仓库发生写操作后由调用方触发）。
-   * 清空已校验键并递增版本，使下次 ensureReport 重新校验；若当前已有内容则后台静默刷新。
+   * 仅做失效：清空已校验键并递增版本，使下次 ensureReport 重新校验并重算
+   * （本函数自身不发起刷新，实际重算发生在下次进入报告视图时）。
    */
   function markStale() {
     indexVersion.value++
@@ -179,7 +182,10 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     if (running.value || refreshing.value) {
       // 已有在途请求：不能静默丢弃本次请求（否则 setRange/setProject 改了状态却不出新数据，
       // 头部范围与图表内容长期不一致）。标记待重跑，等当前请求结束后补一次。
+      // 补跑的可静默性取「与」：任一笔被挡下的请求是显式的，补跑就必须非静默，
+      // 否则用户触发的 setRange 会被静默吞掉，既不显示生成中态也不暴露错误。
       pendingRerun = true
+      pendingRerunSilent = pendingRerunSilent && silent
       return
     }
     if (silent) refreshing.value = true
@@ -206,12 +212,14 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
           reportData.value = buildEmptyReport(rangeLabelFor([]))
           generated.value = false
         }
+        // 校验失败不记账：verifyKey 若在此加入，ensureReport 的早退分支会认为
+        // 「本项目 + 范围 + 版本已校验」，此后永不重试，用户只能一直看着陈旧数据
       } else {
         reportData.value = buildReportData(project, commits, rangeLabelFor(commits))
         generated.value = true
         await saveReportCache(reportData.value, reqProjectId, reqRange)
+        verifiedKeys.add(verifyKey())
       }
-      verifiedKeys.add(verifyKey())
       await savePrefs()
     } finally {
       running.value = false
@@ -219,7 +227,10 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
       // 在途期间有新请求被挡下：补跑一次（置于 finally，保证异常路径也能补上）
       if (pendingRerun) {
         pendingRerun = false
-        void runReport({ silent: generated.value })
+        const rerunSilent = pendingRerunSilent
+        // 重置为「可静默」，使下一轮重新累积本轮被挡下请求的意图
+        pendingRerunSilent = true
+        void runReport({ silent: rerunSilent })
       }
     }
   }

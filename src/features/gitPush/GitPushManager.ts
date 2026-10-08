@@ -68,8 +68,12 @@ import {
 import { GitPushStorage } from "./types/storage"
 import {
   DEFAULT_LOG_LIMIT,
+  poolProcess,
   resolveValidPath,
 } from "./utils"
+
+/** 索引状态查询的加载并发上限（每项目 2 次 NDJSON 读盘 + 解析；限流压住设置面板打开时的 IO 峰值） */
+const INDEX_STATUS_LOAD_CONCURRENCY = 4
 
 /** 自定义 Tab 模型实例的最小结构（init 回调的 this） */
 interface TabCustom {
@@ -206,6 +210,11 @@ export class GitPushManager {
    * 必须逐项目 `ensureLoaded` 后再取提交数：`getCommitCount` 返回的是**内存段长度**，
    * 未加载的项目恒为 0，直接展示会让设置面板对每个项目都显示「0 条提交」。
    * 单项目读取失败（文件损坏/被删）按 0 呈现，不让整个状态查询失败。
+   *
+   * 并发受限：`ensureLoaded` 每项目要读盘解析两份 NDJSON，且解析后的段会常驻内存
+   * （仅 invalidate/clearAll 时释放）。原实现用 `Promise.all` 对全部项目并发，
+   * 在索引项目较多时打开设置面板即形成一次性 N 路读盘 + 解析峰值。改为经
+   * poolProcess 限流（恒定并发、无批次屏障），既压住峰值又不拖慢整体。
    */
   async getIndexStatus(): Promise<{ dir: string, projects: Array<{ projectId: string, commits: number, complete: boolean, analyzedAt: string }> }> {
     const index = await this.getIndex()
@@ -216,7 +225,9 @@ export class GitPushManager {
       }
     }
     const metas = index.getProjectMetas()
-    const projects = await Promise.all(metas.map(async (p) => {
+    const projects: Array<{ projectId: string, commits: number, complete: boolean, analyzedAt: string }> = []
+    // 结果按 metas 原序写入（poolProcess 的 index 即原数组下标），保持展示顺序稳定
+    await poolProcess(metas, INDEX_STATUS_LOAD_CONCURRENCY, async (p, i) => {
       let commits = 0
       try {
         await index.ensureLoaded(p.projectId)
@@ -224,13 +235,13 @@ export class GitPushManager {
       } catch {
         // 单项目读取失败不影响其余项目（文件被删/损坏时按 0 展示）
       }
-      return {
+      projects[i] = {
         projectId: p.projectId,
         commits,
         complete: p.complete,
         analyzedAt: p.analyzedAt,
       }
-    }))
+    })
     return {
       dir: index.getDir(),
       projects,

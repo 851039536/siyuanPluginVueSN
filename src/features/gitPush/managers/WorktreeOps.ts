@@ -480,10 +480,33 @@ export class WorktreeOps {
 
   /** 是否 merge 提交（存在第二父；批量修正弹窗据此标记不可修正项），无法解析时按非 merge 处理 */
   async isMergeCommit(projectPath: string, hash: string): Promise<boolean> {
-    const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`]).catch(() => "")).trim()
-    if (!fullHash) return false
-    const secondParent = (await this.executor.execGit(projectPath, ["rev-parse", "--verify", `${fullHash}^2`]).catch(() => "")).trim()
-    return !!secondParent
+    const info = await this.resolveCommitInfo(projectPath, hash)
+    return info.isMerge
+  }
+
+  /**
+   * 一次解析提交的完整 hash 与第二父信息（merge 判定）。
+   *
+   * 合并原先分散在 isMergeCommit / isAncestorOfHead / dropCommit / rewriteCommitMessage
+   * 的重复调用：每处都先 `rev-parse <hash>^{commit}` 再 `rev-parse --verify <fullHash>^2`，
+   * 而 dropCommit 等调用方在调用前已自行解析过一次 fullHash，造成同一次用户操作内
+   * 对同一 hash 反复 spawn git 子进程（Windows 下单次进程创建 20~50ms）。
+   *
+   * @param knownFullHash 调用方已知的完整 hash，传入可省一次 `rev-parse ^{commit}`
+   * @returns fullHash 为空串表示解析失败（提交不存在）
+   */
+  private async resolveCommitInfo(
+    projectPath: string,
+    hash: string,
+    knownFullHash?: string,
+  ): Promise<{ fullHash: string, isMerge: boolean }> {
+    const fullHash = (knownFullHash
+      || await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`]).catch(() => "")).trim()
+    if (!fullHash) return { fullHash: "", isMerge: false }
+    const secondParent = (await this.executor.execGit(
+      projectPath, ["rev-parse", "--verify", `${fullHash}^2`],
+    ).catch(() => "")).trim()
+    return { fullHash, isMerge: !!secondParent }
   }
 
   /**
@@ -506,13 +529,13 @@ export class WorktreeOps {
       throw new Error("仓库处于 rebase 中断状态（可能由上次操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")
     }
 
-    // 解析完整 hash，避免短 hash 在后续定位中匹配错误
-    const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
+    // 解析完整 hash 避免短 hash 定位错误，同时取第二父供 merge 判定（一次命令取代原先两次）
+    const info = await this.resolveCommitInfo(projectPath, hash)
+    const fullHash = info.fullHash
     if (!fullHash) throw new Error("找不到指定提交")
 
     // merge 提交直接拒绝：其消息由 git 自动生成（非用户书写），修正无意义
-    const secondParent = (await this.executor.execGit(projectPath, ["rev-parse", "--verify", `${fullHash}^2`]).catch(() => "")).trim()
-    if (secondParent) {
+    if (info.isMerge) {
       throw new Error("该提交是 merge 提交，不支持修正：merge 消息由 git 自动生成")
     }
 
@@ -555,8 +578,10 @@ export class WorktreeOps {
       throw new Error("仓库处于 rebase 中断状态（可能由上次操作失败残留），请先在终端执行 git rebase --abort 恢复后重试")
     }
 
-    // 解析完整 hash，避免短 hash 在后续定位中匹配错误
-    const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
+    // 解析完整 hash，避免短 hash 在后续定位中匹配错误；同时取第二父信息供 merge 判定
+    // （fullHash 复用给 isMergeCommit / isAncestorOfHead，省去两处重复 rev-parse）
+    const info = await this.resolveCommitInfo(projectPath, hash)
+    const fullHash = info.fullHash
     if (!fullHash) throw new Error("找不到指定提交")
 
     const headHash = (await this.getHeadHash(projectPath)).trim()
@@ -565,23 +590,27 @@ export class WorktreeOps {
       throw new Error("不支持删除最新提交（HEAD）：该操作会同时丢失其内容变更，请使用丢弃变更或重置功能")
     }
     // merge 拒绝：多父提交被跳过后，子提交的父指向存在歧义（该接第一父还是合并两侧？）
-    if (await this.isMergeCommit(projectPath, fullHash)) {
+    if (info.isMerge) {
       throw new Error("该提交是 merge 提交，不支持删除：跳过后子提交的父指向存在歧义")
     }
     // 祖先校验：目标不在 HEAD 历史上时重建范围抓不到它的后代，操作会静默无效，必须显式报错
-    if (!(await this.isAncestorOfHead(projectPath, fullHash))) {
+    if (!(await this.isAncestorOfHead(projectPath, fullHash, headHash))) {
       throw new Error("该提交不在当前分支的历史上（可能在其他分支），无法从当前分支删除")
     }
 
     return await this.historyRewriter.drop(projectPath, fullHash, headHash, onProgress)
   }
 
-  /** 目标提交是否为当前 HEAD 的祖先（hash 支持短/完整；merge-base --is-ancestor 退出码判定；解析失败按否处理） */
-  async isAncestorOfHead(projectPath: string, hash: string): Promise<boolean> {
+  /** 目标提交是否为当前 HEAD 的祖先（hash 支持短/完整；merge-base --is-ancestor 退出码判定；解析失败按否处理）
+   *  @param knownFullHash 调用方已知的完整 hash（省一次 rev-parse）
+   *  @param knownHeadHash 调用方已知的 HEAD hash（省一次 rev-parse） */
+  async isAncestorOfHead(projectPath: string, hash: string, knownFullHash?: string, knownHeadHash?: string): Promise<boolean> {
     try {
-      const fullHash = (await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
+      const fullHash = (knownFullHash
+        || await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`])).trim()
       if (!fullHash) return false
-      const headHash = await this.getHeadHash(projectPath)
+      const headHash = knownHeadHash !== undefined ? knownHeadHash : await this.getHeadHash(projectPath)
+      if (!headHash) return false
       await this.executor.execGit(projectPath, ["merge-base", "--is-ancestor", fullHash, headHash])
       return true
     } catch {

@@ -21,20 +21,31 @@ export const INDEX_FILE = {
   meta: "meta.json",
 } as const
 
-/** 文件名安全的字符集合（字母/数字/点/下划线/连字符；其余一律转义） */
+/** 文件名安全的字符集合（字母/数字/点/连字符；其余一律转义） */
 const SAFE_SLUG_CHAR = /^[\w.-]$/
 
 /**
+ * 转义前缀字符：原实现用 `_` 作转义前缀，但 `_` 本身属于 `\w`（安全字符），
+ * 导致转义结果可与字面 id 碰撞 —— id `a/b` → `a_2fb`，而字面 id `a_2fb` 原样输出也是 `a_2fb`，
+ * 两个项目落到同一份索引文件互相覆盖（正是按项目分文件想消除的串号问题）。
+ * 故改用不属于安全字符集、且无法由字面 id 产生的 `~` 作前缀。
+ */
+const ESCAPE_PREFIX = "~"
+
+/**
  * 按项目 id 生成安全的文件名片段（项目 id 可能含 / \ : * ? " < > | 等非法/越目录字符）。
- * 非 SAFE_SLUG_CHAR 一律转义为 `_<hex>`，保证：① 不越出索引目录 ② 不同 id 不碰撞
- * （逐字符转义而非简单替换，避免 "a/b" 与 "a_b" 撞成同一文件名而互相覆盖）。
+ * 非 SAFE_SLUG_CHAR 一律转义为 `~<hex>`，保证：① 不越出索引目录 ② 不同 id 不碰撞。
+ *
+ * 单射性论证：`~` 不属于 SAFE_SLUG_CHAR，故字面 id 中的 `~` 必然被转义为 `~7e`，
+ * 输出里出现的 `~` 只可能来自转义序列；解码时按 `~` 切分即可唯一还原原 id。
+ * （逐字符转义而非简单替换，避免 "a/b" 与 "a_b" 撞成同一文件名而互相覆盖。）
  */
 function safeProjectSlug(projectId: string): string {
   let out = ""
   for (const ch of projectId) {
     out += SAFE_SLUG_CHAR.test(ch)
       ? ch
-      : `_${ch.codePointAt(0)!.toString(16)}`
+      : `${ESCAPE_PREFIX}${ch.codePointAt(0)!.toString(16)}`
   }
   // 空 id 或全非法字符导致空串时兜底，避免生成 ".commits.ndjson" 这类隐藏文件
   return out.length > 0 ? out : "project"
@@ -46,6 +57,26 @@ function safeProjectSlug(projectId: string): string {
  */
 export function projectIndexFile(kind: "commits" | "files" | "fileLines", projectId: string): string {
   return `${safeProjectSlug(projectId)}.${INDEX_FILE[kind]}`
+}
+
+/** v1 的转义前缀（`_`）：仅用于版本升级时定位并清理历史遗留文件 */
+const LEGACY_ESCAPE_PREFIX = "_"
+
+/**
+ * v2 之前的文件名（转义前缀为 `_`）。
+ *
+ * 仅用于版本升级时清理历史遗留文件：v2 把前缀改为 `~` 后，按新规则生成的路径
+ * 定位不到旧文件，若不清扫会永久残留在索引目录（用户可见的垃圾文件与占用）。
+ * 新代码生成文件名一律用 projectIndexFile，不得使用本函数。
+ */
+export function legacyProjectIndexFile(kind: "commits" | "files" | "fileLines", projectId: string): string {
+  let out = ""
+  for (const ch of projectId) {
+    out += SAFE_SLUG_CHAR.test(ch)
+      ? ch
+      : `${LEGACY_ESCAPE_PREFIX}${ch.codePointAt(0)!.toString(16)}`
+  }
+  return `${out.length > 0 ? out : "project"}.${INDEX_FILE[kind]}`
 }
 
 /** 索引磁盘 IO 抽象（生产实现走 fs，测试可注入内存实现） */

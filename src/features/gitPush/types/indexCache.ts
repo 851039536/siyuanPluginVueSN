@@ -69,8 +69,15 @@ export interface IndexMeta {
   projects: ProjectIndexMeta[]
 }
 
-/** 索引元数据存储版本（结构变更时递增，加载时版本不符即丢弃重建） */
-export const INDEX_META_VERSION = 1
+/**
+ * 索引元数据存储版本（结构变更时递增，加载时版本不符即丢弃重建）。
+ *
+ * v2：项目索引文件名转义前缀由 `_` 改为 `~`（原方案不满足单射性：id `a/b` 与字面 id
+ * `a_2fb` 会生成同名文件互相覆盖）。文件名规则变更后旧文件无法按新规则定位，
+ * 故递增版本号，由 ensureVersionReset 删除旧命名的 NDJSON 后按新规则重建
+ * （代价仅是下次统计重新扫一遍，换取消除索引串号风险）。
+ */
+export const INDEX_META_VERSION = 2
 
 /** 索引元数据默认值（无任何项目已索引） */
 export const DEFAULT_INDEX_META: IndexMeta = {

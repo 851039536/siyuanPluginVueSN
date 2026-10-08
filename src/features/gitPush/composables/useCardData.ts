@@ -90,14 +90,22 @@ export function useCardData(project: () => GitProject) {
     if (latest) await services.recordCommitActivity(project().id, latest)
   }
 
-  /** 加载体提交变更规模（--shortstat 批量单命令；条数跟随 logLimit，上限由 manager 侧收口） */
+  /** 加载体提交变更规模（--shortstat 批量单命令；条数跟随 logLimit，上限由 manager 侧收口）。
+   *  与 loadLog 同因：强制重取绕过单飞，快速切换条数会并发多笔 --shortstat 查询
+   *  （全历史扫 diff，代价高），若慢的「小条数」结果后到会覆盖新的大条数统计。
+   *  同样用请求序号守卫写入；logStats 按短 hash 索引，条数不匹配不会报错只会静默缺数据。 */
+  let logStatsRequestSeq = 0
+
   async function loadLogStats(force = false) {
-    logStats.value = await scheduler.run(
+    const seq = ++logStatsRequestSeq
+    const stats = await scheduler.run(
       project().id,
       "logStats",
       () => manager.getCommitShortStats(path(), logLimit.value),
       force ? { force: true } : undefined,
     )
+    if (seq !== logStatsRequestSeq) return
+    logStats.value = stats
   }
 
   async function loadStash(force = false) {
@@ -160,7 +168,10 @@ export function useCardData(project: () => GitProject) {
     return () => {
       if (ended) return
       ended = true
-      logLoadingRefCount = Math.max(0, logLoadingRefCount - 1)
+      // 不再用 Math.max(0, …) 夹取：那会掩盖 enter/exit 配对错误（重复调用退出函数会
+      // 让计数变负却静默归零）。上方 ended 守卫已保证每个闭包至多减一次，
+      // 若仍出现负数即为真实缺陷，应在开发期暴露而非被夹掉。
+      logLoadingRefCount--
       logLoading.value = logLoadingRefCount > 0
     }
   }
@@ -176,10 +187,16 @@ export function useCardData(project: () => GitProject) {
     const endLoading = beginLogLoading()
     detailsPromise = (async () => {
       try {
-        // conflicts 一并纳入首载：若项目在打开面板前就处于冲突合并态，
-        // 仅靠 dirty 信号（由 resolve/abort 触发）永远拉不到，ConflictSection 会被静默隐藏
-        await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags(), loadConflicts()])
+        // 首载并发收敛：同步等待的只有「首屏可见」的 4 项。
+        // 原实现把 loadConflicts 也并入同一 Promise.all，单卡片首开即 5 路 git 子进程，
+        // 而 GitExecutor 的本地池上限默认 3（gitMaxConcurrent），超出部分排队 ——
+        // 多卡片工作区下会把共享池占满，拖慢其他卡片与本卡片后续操作。
+        await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
         detailsLoaded = true
+        // conflicts 改为后台异步补齐（不阻塞详情展示，语义不变）：
+        // 若项目在打开面板前即处于冲突合并态，仅靠 dirty 信号（resolve/abort 触发）
+        // 永远拉不到，故仍必须在首载时发起，只是不再占用首屏等待窗口。
+        void loadConflicts().catch(() => {})
         // 远程 Tag 状态与提交变更统计均为额外开销，后台异步补齐不阻塞详情展示
         // （统计需 git 逐条算 diff，实测 200 条约 2.3s，故不并入上方 Promise.all）
         void loadRemoteTags().catch(() => {})

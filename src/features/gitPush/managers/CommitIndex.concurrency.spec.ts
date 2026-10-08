@@ -22,7 +22,7 @@ import {
   buildRootHash,
   CommitIndex,
 } from "./CommitIndex"
-import { projectIndexFile } from "./indexIo"
+import { legacyProjectIndexFile, projectIndexFile } from "./indexIo"
 import { MemoryIndexIO } from "./memoryIndexIo.testutil"
 
 /** 构造一条 numstat 提交 */
@@ -220,6 +220,26 @@ describe("索引元数据版本不符", () => {
     })
     await reopened.ensureLoaded("p1")
     expect(reopened.getLog("p1").map((c) => c.hash)).toEqual(["a1"])
+  })
+
+  it("版本不符时同时清理旧命名规则（v1 `_` 前缀）的遗留文件", async () => {
+    // 项目 id 含非法字符：v1 与 v2 会生成不同的文件名
+    const pid = "a/b"
+    await io.appendLines(legacyProjectIndexFile("commits", pid), [JSON.stringify({ h: "old1", a: "a", d: "2024-01-01T00:00:00Z", m: "x" })])
+    expect(io.raw(legacyProjectIndexFile("commits", pid))).not.toBe("")
+
+    // 升级到版本号不符的 meta，触发清盘
+    const upgraded = new CommitIndex(io, {
+      version: INDEX_META_VERSION + 1,
+      projects: [{
+        projectId: pid,
+        ...metaPatch("h:g"),
+      }],
+    })
+    await upgraded.ensureLoaded(pid)
+
+    // 旧命名的文件必须一并删除，否则会永久残留在索引目录
+    expect(io.raw(legacyProjectIndexFile("commits", pid))).toBe("")
   })
 
   it("rootHash 编解码保持可往返", () => {

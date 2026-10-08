@@ -83,21 +83,26 @@ export class ReportOps {
     return { commits, complete }
   }
 
-  /** 抓取 HEAD 快照：HEAD oid + git dir（仓库身份）+ 末条提交作者/时间（索引短路判据） */
+  /** 抓取 HEAD 快照：HEAD oid + git dir（仓库身份）+ 末条提交作者/时间（索引短路判据）。
+   *
+   *  性能：原先串行三步（`rev-parse HEAD` 与 `--absolute-git-dir` 并行 → await → `log -n 1`），
+   *  串行段使每次索引短路比较都要多等一个 git 进程。改为两步并发：
+   *  ① `log -n 1 --pretty=%H%x1f%an%x1f%aI` 一次拿到 oid + 作者 + 时间（取代 rev-parse HEAD 与后续 log）
+   *  ② `rev-parse --absolute-git-dir` 与①并发（空仓库时①失败，②仍能给出 gitDir 身份）
+   *  空仓库（①失败）时 head/lastAuthor/lastDate 均为空串，行为与原先一致。 */
   async getHeadSnapshot(projectPath: string): Promise<HeadSnapshot> {
     const empty: HeadSnapshot = { head: "", gitDir: "", lastAuthor: "", lastDate: "" }
-    const [head, gitDir] = await Promise.all([
-      this.executor.execGit(projectPath, ["rev-parse", "HEAD"]).catch(() => ""),
+    const [logRaw, gitDir] = await Promise.all([
+      this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false", "log", "-n", "1", "--pretty=format:%H%x1f%an%x1f%aI",
+      ]).catch(() => ""),
       this.executor.execGit(projectPath, ["rev-parse", "--absolute-git-dir"]).catch(() => ""),
     ])
-    if (!head.trim()) return { ...empty, gitDir: gitDir.trim() }
-    // 末条提交判据：与索引末条（hash/author/date）比较，用于「切回已索引分支」的复用捷径
-    const raw = await this.executor.execGit(projectPath, [
-      "-c", "core.quotepath=false", "log", "-n", "1", "--pretty=format:%h%x1f%an%x1f%aI",
-    ]).catch(() => "")
-    const parts = raw.split("\x1f")
+    const parts = logRaw.split("\x1f")
+    const head = (parts[0] || "").trim()
+    if (!head) return { ...empty, gitDir: gitDir.trim() }
     return {
-      head: head.trim(),
+      head,
       gitDir: gitDir.trim(),
       lastAuthor: (parts[1] || "").trim(),
       lastDate: (parts[2] || "").trim(),

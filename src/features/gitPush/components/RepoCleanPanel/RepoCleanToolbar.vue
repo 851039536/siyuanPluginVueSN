@@ -24,19 +24,16 @@
         :title="i18n.repoCleanThresholdTitle"
         @change="onThresholdChange"
       />
-      <!-- 按钮文案："开始体检"/"重新体检"（扫描中切换为环形 loading 图标并旋转） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <!-- 按钮文案："开始体检"/"重新体检"（扫描中走共享 Button 的 loading 态保宽；
+           图标用已注册的 magnify（体检=扫描分析），原 mdi:broom 未登记在 IconKey 中） -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        :icon="scanning ? 'loading' : 'magnify'"
+        :loading="scanning"
         :disabled="scanning"
         @click="emit('runScan')"
-      >
-        <Icon
-          :icon="scanning ? 'mdi:loading' : 'mdi:broom'"
-          height="12"
-          :class="{ 'gp-spin': scanning }"
-        />
-        {{ scanned ? i18n.auditRerun : i18n.repoCleanRun }}
-      </button>
+      >{{ scanned ? i18n.auditRerun : i18n.repoCleanRun }}</Button>
     </div>
     <!-- 状态文案："扫描中…/上次扫描 xx/未扫描" -->
     <span class="grcp-status">{{ statusText }}</span>
@@ -46,9 +43,10 @@
 <script setup lang="ts">
 // gitPush 仓库清理顶部工具条（项目选择 + 阈值 + 扫描按钮）
 import type { GitProject } from "../../types"
-import { Icon } from "@iconify/vue"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
+import { relativeTime } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -83,11 +81,11 @@ const thresholdOptions = computed(() =>
   THRESHOLD_OPTIONS.map((mb) => ({ value: mb, label: `≥ ${mb} MB` })),
 )
 
-/** 状态文案（复用规则检查的三态文案模式，键独立） */
+/** 状态文案（三态：扫描中 / 上次扫描相对时间 / 未扫描；相对时间走共享 relativeTime，与各工具条口径一致） */
 const statusText = computed(() => {
   if (props.scanning) return props.i18n.repoCleanScanning
   if (props.scanned && props.scannedAt) {
-    return `${props.i18n.repoCleanLastScan}${new Date(props.scannedAt).toLocaleString()}`
+    return props.i18n.repoCleanLastScan.replace("{0}", relativeTime(props.scannedAt, props.i18n))
   }
   return props.i18n.repoCleanNotRun
 })

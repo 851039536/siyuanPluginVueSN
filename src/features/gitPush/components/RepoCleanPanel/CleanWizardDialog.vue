@@ -170,23 +170,15 @@
 
           <!-- ── 阶段 4：结果 ── -->
           <template v-else>
-            <!-- 前后体积对比 -->
-            <div class="grcp-result-cards">
-              <div class="grcp-result-card">
-                <div class="grcp-card-value">{{ formatBytes(resultData?.sizeBefore ?? 0) }}</div>
-                <!-- 卡片标签："清理前" -->
-                <div class="grcp-card-label">{{ i18n.bfgResultBefore }}</div>
-              </div>
-              <div class="grcp-result-card">
-                <div class="grcp-card-value">{{ formatBytes(resultData?.sizeAfter ?? 0) }}</div>
-                <!-- 卡片标签："清理后" -->
-                <div class="grcp-card-label">{{ i18n.bfgResultAfter }}</div>
-              </div>
-            </div>
+            <!-- 前后体积对比（共享 StatCardGrid，消除手写 .grcp-result-card 重复） -->
+            <StatCardGrid
+              :min-width="90"
+              :cards="resultCards"
+            />
 
-            <!-- 备份路径 -->
+            <!-- 备份路径（中性信息：已安全备份。原用 grcp-wizard-warning 危险边框会误导为出错） -->
             <div
-              class="grcp-wizard-warning"
+              class="grcp-wizard-note"
               :title="resultData?.backupPath"
             >
               <Icon icon="mdi:content-save-edit-outline" height="12" />
@@ -286,6 +278,7 @@
 // gitPush BFG 历史清理向导弹窗（策略表单 → 前置检查 → 执行 → 结果，自包含调 manager）
 import type { GitProject, BfgCleanPlan, BfgCleanResult } from "../../types"
 import type { GitPushManager } from "../../GitPushManager"
+import type { StatCardItem } from "../common/StatCardGrid.vue"
 import { Icon } from "@iconify/vue"
 import { computed, onMounted, onUnmounted, ref } from "vue"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -293,6 +286,7 @@ import CloneLogPanel from "../common/CloneLogPanel.vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import StatCardGrid from "../common/StatCardGrid.vue"
 import { formatBytes } from "./format"
 import { useCloneLog } from "../../composables/useCloneLog"
 
@@ -378,6 +372,24 @@ const forcePushing = ref(false)
 const finalizing = ref(false)
 /** 强推/下载错误提示 */
 const actionError = ref("")
+
+/** 清理前后体积对比卡（共享 StatCardGrid；清理后变小则标绿以突出收益） */
+const resultCards = computed<StatCardItem[]>(() => {
+  const before = resultData.value?.sizeBefore ?? 0
+  const after = resultData.value?.sizeAfter ?? 0
+  const shrunk = after < before
+  return [
+    { key: "before", value: formatBytes(before), label: props.i18n.bfgResultBefore },
+    {
+      key: "after",
+      value: formatBytes(after),
+      label: props.i18n.bfgResultAfter,
+      valueCls: shrunk ? "gp-statgrid-value--add" : undefined,
+      // 缩减量直接可见，免去用户心算差值
+      sub: shrunk ? `−${formatBytes(before - after)}` : "",
+    },
+  ]
+})
 
 /** 底部提示文案（结果阶段显示耗时，错误阶段显示错误） */
 const footerHint = computed(() => {

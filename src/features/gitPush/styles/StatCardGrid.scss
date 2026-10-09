@@ -35,6 +35,15 @@
   @include stat-card-label;
 }
 
+// 副值行（可选）：数值下方的补充量级，字号介于数值与标签之间，弱化但不隐藏
+.gp-statgrid-sub {
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $t-2xs;
+  line-height: $lh-tight;
+  opacity: 0.6;
+}
+
 // ── 语义色修饰（作用于数值；各视图按需选用）──
 .gp-statgrid-card--info .gp-statgrid-value { color: var(--b3-theme-primary); }
 .gp-statgrid-card--warn .gp-statgrid-value { color: var(--b3-theme-warning); }

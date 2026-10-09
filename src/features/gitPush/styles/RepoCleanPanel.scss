@@ -50,40 +50,23 @@
   opacity: 0.6;
 }
 
-// 总览卡片（三列网格，与 .grc-cards 同范式）
-.grcp-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $s-2;
-  margin-bottom: $s-3;
-}
+// 总览卡片与向导结果对比卡：已收敛至共享 styles/StatCardGrid.scss
+// （原 .grcp-cards/.grcp-card/.grcp-card-value/.grcp-card-label 与 .grcp-result-cards/.grcp-result-card
+//   两套手写卡片与 .gp-statgrid-* 逐字同构 —— 而 StatCardGrid 正是为消灭这类重复而建的共享组件）。
+// 收益不止去重：手写的 repeat(3, 1fr) 在窄 Dock 下会把卡片挤变形，共享版用 auto-fit + minmax 自动降列。
 
-.grcp-card {
-  text-align: center;
-  padding: $s-2 $s-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-}
-
-.grcp-card-value {
-  font-size: $t-lg;
-  font-weight: $fw-bold;
-  font-family: $ff-mono;
-  font-variant-numeric: tabular-nums;
-  line-height: $lh-tight;
-  color: var(--b3-theme-on-surface);
-}
-
-.grcp-card-value--danger {
-  color: var(--b3-theme-error, $c-danger);
-}
-
-.grcp-card-label {
-  margin-top: $s-1;
+// 扫描失败错误条（替代原 alert：Electron 下原生 alert 会阻塞渲染进程，且与插件对话框体系脱节）
+.grcp-error {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  margin-bottom: $s-2;
+  padding: $s-1 $s-2;
+  border: 1px solid var(--b3-theme-error, $c-danger);
+  border-radius: $r-sm;
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
-  opacity: 0.7;
+  color: var(--b3-theme-error, $c-danger);
+  word-break: break-all;
 }
 
 // 大文件区块（标题 + 列表 + 分页）
@@ -132,6 +115,15 @@
   font-size: $t-xs;
   font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
+}
+
+// 占打包体积百分比（等宽小字，条形已改为量级口径，故此处承担绝对占比）
+.grcp-item-share {
+  flex: 0 0 auto;
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+  font-size: $t-2xs;
+  opacity: 0.5;
 }
 
 // 锚定来源徽章（BFG 清理后残留诊断："远程引用"= 仅被 refs/remotes 锚定；"其他引用"= stash 等）
@@ -264,6 +256,20 @@
   }
 }
 
+// 中性信息条（如备份路径：属"已安全备份"的正面信息，不应套危险色边框让人误以为出错）
+.grcp-wizard-note {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $s-1;
+  margin-bottom: $s-2;
+  padding: $s-1 $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
+}
+
 .grcp-backup-path {
   min-width: 0;
   word-break: break-all;
@@ -327,21 +333,7 @@
   }
 }
 
-// 结果对比卡片（两列）
-.grcp-result-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: $s-2;
-  margin-bottom: $s-3;
-}
-
-.grcp-result-card {
-  text-align: center;
-  padding: $s-2 $s-1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-}
+// 结果对比卡片：已收敛至共享 StatCardGrid（见上方说明）
 
 // 底部提示（耗时/错误/备份说明，超长省略）
 .grcp-wizard-hint {

@@ -23,6 +23,18 @@
         @run-scan="runScan"
       />
 
+      <!-- 扫描失败提示（非空时展示；替代原 alert） -->
+      <div
+        v-if="scanError"
+        class="grcp-error"
+      >
+        <Icon
+          icon="mdi:alert-circle-outline"
+          height="12"
+        />
+        <span>{{ i18n.repoCleanFailed }}: {{ scanError }}</span>
+      </div>
+
       <!-- 扫描中占位（首次扫描时） -->
       <div
         v-if="scanning && !scanned"
@@ -49,30 +61,11 @@
         />
 
         <template v-else>
-          <!-- 总览卡片：打包体积 / 对象总数 / 超阈值大文件 -->
-          <div class="grcp-cards">
-            <div class="grcp-card">
-              <div class="grcp-card-value">{{ formatBytes(result.packSize) }}</div>
-              <!-- 卡片标签："打包体积" -->
-              <div class="grcp-card-label">{{ i18n.repoCleanPackSize }}</div>
-            </div>
-            <div class="grcp-card">
-              <div class="grcp-card-value">{{ result.objectCount }}</div>
-              <!-- 卡片标签："对象总数" -->
-              <div class="grcp-card-label">{{ i18n.repoCleanObjectCount }}</div>
-            </div>
-            <div class="grcp-card">
-              <div
-                class="grcp-card-value"
-                :class="{ 'grcp-card-value--danger': result.oversizedCount > 0 }"
-              >{{ result.oversizedCount }}</div>
-              <!-- 卡片标签："超阈值大文件"（title 显示累计体积） -->
-              <div
-                class="grcp-card-label"
-                :title="`${i18n.repoCleanOversizedBytes}: ${formatBytes(result.oversizedBytes)}`"
-              >{{ i18n.repoCleanOversized }}</div>
-            </div>
-          </div>
+          <!-- 总览卡片（共享 StatCardGrid：窄 Dock 下自动降列；4 张卡平级呈现各维度） -->
+          <StatCardGrid
+            :min-width="96"
+            :cards="overviewCards"
+          />
 
           <!-- 大文件 Top 列表 -->
           <LargeBlobSection
@@ -84,17 +77,12 @@
 
           <!-- 历史清理入口 -->
           <div class="grcp-actions">
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="databaseRemoveOutline"
               @click="showWizard = true"
-            >
-              <Icon
-                icon="mdi:database-remove-outline"
-                height="12"
-              />
-              <!-- 按钮文案："历史清理（BFG）" -->
-              {{ i18n.bfgOpenWizard }}
-            </button>
+            >{{ i18n.bfgOpenWizard }}</Button>
           </div>
         </template>
       </template>
@@ -117,14 +105,18 @@
 import type { GitProject } from "../../types"
 import type { RepoScanResult } from "../../types"
 import type { GitPushManager } from "../../GitPushManager"
+import type { StatCardItem } from "../common/StatCardGrid.vue"
 import { computed, ref } from "vue"
-import { Icon } from "@iconify/vue"
+import Button from "@/components/Button.vue"
 import CleanWizardDialog from "./CleanWizardDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
 import LargeBlobSection from "./LargeBlobSection.vue"
 import Loader from "@/components/Loader.vue"
 import RepoCleanToolbar from "./RepoCleanToolbar.vue"
+import StatCardGrid from "../common/StatCardGrid.vue"
+import { Icon } from "@iconify/vue"
 import { formatBytes } from "./format"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -137,6 +129,8 @@ const props = defineProps<{
 const result = ref<RepoScanResult | null>(null)
 const scanning = ref(false)
 const scanned = ref(false)
+/** 扫描失败原因（非空时展示错误条，替代原 alert —— Electron 下原生 alert 会阻塞渲染进程且与插件对话框体系脱节） */
+const scanError = ref("")
 /** 清理向导弹窗开关 */
 const showWizard = ref(false)
 
@@ -149,6 +143,40 @@ const thresholdMb = ref(10)
 const currentProject = computed(() =>
   props.projects.find((p) => p.id === projectId.value) || null,
 )
+
+/**
+ * 总览卡片：打包体积 / 对象总数 / 超阈值大文件数 / 超阈值共占体积。
+ *
+ * 第 3、4 张拆开是有意的：原实现把累计体积塞进第 3 张卡的 label tooltip，
+ * 而「7 个超阈值文件」到底是 7×11MB（可忽略）还是 7×500MB（该清了）取决于体积 ——
+ * 这是决定是否清理的主数据，必须直接可见（故用 sub 副值行而非 hint）。
+ * 第 4 张独立成卡后，两数可各自纵向比较。
+ */
+const overviewCards = computed<StatCardItem[]>(() => {
+  const r = result.value
+  if (!r) return []
+  const hasOversized = r.oversizedCount > 0
+  return [
+    { key: "packSize", value: formatBytes(r.packSize), label: props.i18n.repoCleanPackSize },
+    { key: "objectCount", value: r.objectCount, label: props.i18n.repoCleanObjectCount },
+    {
+      key: "oversizedCount",
+      value: r.oversizedCount,
+      label: props.i18n.repoCleanOversized,
+      cls: hasOversized ? "gp-statgrid-card--danger" : "gp-statgrid-card--muted",
+    },
+    {
+      key: "oversizedBytes",
+      value: formatBytes(r.oversizedBytes),
+      label: props.i18n.repoCleanOversizedBytes,
+      cls: hasOversized ? "gp-statgrid-card--danger" : "gp-statgrid-card--muted",
+      // 占打包体积的比例：直观回答"清理能省多少"
+      sub: r.packSize > 0
+        ? `${Math.round((r.oversizedBytes / r.packSize) * 100)}% ${props.i18n.repoCleanOfPackSize}`
+        : "",
+    },
+  ]
+})
 
 /** 初始化：恢复持久化偏好（进视图一次） */
 let prefsLoaded = false
@@ -177,6 +205,7 @@ function updateProject(id: string) {
   projectId.value = id
   scanned.value = false
   result.value = null
+  scanError.value = ""
   void persistPrefs()
 }
 
@@ -191,11 +220,14 @@ async function runScan() {
   if (!project || scanning.value) return
   scanning.value = true
   scanned.value = false
+  scanError.value = ""
   try {
     result.value = await props.manager.scanRepoObjects(project.path, thresholdMb.value)
     scanned.value = true
-  } catch (e) {
-    alert(e instanceof Error ? e.message : String(e))
+  } catch (e: unknown) {
+    // 与全站一致：错误经 getErrorMessage 归一后以错误条呈现（原为原生 alert，会阻塞渲染进程）
+    scanError.value = getErrorMessage(e) || String(e)
+    scanned.value = true
   } finally {
     scanning.value = false
   }

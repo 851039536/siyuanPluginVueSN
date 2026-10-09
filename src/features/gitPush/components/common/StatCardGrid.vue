@@ -15,6 +15,11 @@
         :class="[card.valueCls, { 'gp-statgrid-value--truncate': card.truncate }]"
         :title="card.hint"
       >{{ card.value }}</div>
+      <!-- 副值行（可选）：主数值之外的关键数量级/补充口径，需直接可见而非藏在 tooltip 里 -->
+      <div
+        v-if="card.sub"
+        class="gp-statgrid-sub"
+      >{{ card.sub }}</div>
       <div class="gp-statgrid-label">{{ card.label }}</div>
     </div>
   </div>
@@ -36,6 +41,12 @@ export interface StatCardItem {
   valueCls?: string
   /** 悬停提示（口径说明；不传则无 tooltip） */
   hint?: string
+  /**
+   * 副值行（可选，显示在数值与标签之间）。
+   * 用于必须**直接可见**的补充量级 —— 典型如「超阈值文件 7」还需知道「共占 1.2 GB」
+   * 才能判断值不值得清理；这类信息放 hint 里等于让用户靠 hover 才能发现。
+   */
+  sub?: string
   /** 数值是否为长文本（如「最活跃贡献者」人名）：true 时单行省略，避免撑破卡片 */
   truncate?: boolean
 }

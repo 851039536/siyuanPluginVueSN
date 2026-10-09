@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { formatLocalDate, heatCellColor, heatCellTooltip, heatLevel } from "../../utils"
+import { buildDayCell, formatLocalDate } from "../../utils"
 import { ANALYSIS_WEEKDAY_KEYS } from "../../types"
 
 const props = defineProps<{
@@ -76,11 +76,7 @@ interface DayCell {
   date: string
   dayNum: number
   count: number
-  /**
-   * 预计算的格子内联样式对象。
-   * 存对象而非颜色串：模板绑定同一引用后，Vue 不会把每次重渲染都当成 style 变更去 patch
-   * （一年 12 个月 × 31 天 ≈ 372 格，逐格 patch 是明显浪费）。
-   */
+  /** 预计算的格子内联样式对象（buildDayCell 产出，与热力图同一口径） */
   style: Record<string, string>
   future: boolean
   today: boolean
@@ -117,15 +113,13 @@ const months = computed<MonthCell[]>(() => {
       const date = formatLocalDate(new Date(year, month, d))
       const count = props.dayCounts.get(date) || 0
       total += count
+      // 日格样式与 tooltip 经 utils.buildDayCell 预计算（与热力图同一口径）
       days.push({
-        date,
+        ...buildDayCell(props.i18n, date, count, props.color),
         dayNum: d,
-        count,
-        style: { background: heatCellColor(heatLevel(count), props.color) },
         // 当前月内超出范围末尾（今天之后）的日期弱化展示
         future: date > endStr,
         today: date === todayStr,
-        tooltip: heatCellTooltip(props.i18n, date, count),
       })
     }
     list.push({

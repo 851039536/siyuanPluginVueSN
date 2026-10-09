@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { formatLocalDate, heatCellColor, heatCellTooltip, heatLevel } from "../../utils"
+import { buildDayCell, formatLocalDate, heatCellColor } from "../../utils"
 import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS } from "../../types"
 
 const props = defineProps<{
@@ -75,8 +75,7 @@ const props = defineProps<{
 
 /**
  * 周列 × 7 行单元格：起点回退到 weekStart 对齐，范围末尾补齐完整周（空单元格隐藏）。
- * style 对象一并预计算：模板直接绑定引用，避免每格每次渲染都新建 style 对象触发 patch
- * （一年 53 周 × 7 行 = 371 格，逐格 patch 是明显浪费）。
+ * 日格的样式与 tooltip 经 utils.buildDayCell 预计算（与日历视图同一口径）。
  */
 const cells = computed<{ date: string, tooltip: string, style: Record<string, string> | undefined }[]>(() => {
   const [sy, sm, sd] = props.start.split("-").map(Number)
@@ -90,12 +89,7 @@ const cells = computed<{ date: string, tooltip: string, style: Record<string, st
   const cursor = new Date(start)
   while (cursor <= end) {
     const date = formatLocalDate(cursor)
-    const count = props.dayCounts.get(date) || 0
-    list.push({
-      date,
-      tooltip: heatCellTooltip(props.i18n, date, count),
-      style: { background: heatCellColor(heatLevel(count), props.color) },
-    })
+    list.push(buildDayCell(props.i18n, date, props.dayCounts.get(date) || 0, props.color))
     cursor.setDate(cursor.getDate() + 1)
   }
   const remainder = list.length % 7

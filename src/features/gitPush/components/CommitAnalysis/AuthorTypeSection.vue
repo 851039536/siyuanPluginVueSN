@@ -15,23 +15,14 @@
         >{{ authorTruncatedHint }}</span>
       </div>
       <div class="gpa-bar-list">
-        <div
+        <!-- 行结构走共享 BarRow（标签+轨道+填充+计数），本区块只提供数据 -->
+        <BarRow
           v-for="a in authorRows"
           :key="a.author"
-          class="gpa-bar-row"
-        >
-          <span
-            class="gpa-bar-label"
-            :title="a.author"
-          >{{ a.author }}</span>
-          <span class="gpa-bar-track">
-            <span
-              class="gpa-bar-fill"
-              :style="{ width: a.pct }"
-            />
-          </span>
-          <span class="gpa-bar-num">{{ a.count }}</span>
-        </div>
+          :label="a.author"
+          :pct="a.pct"
+          :count="a.count"
+        />
       </div>
     </div>
 
@@ -42,20 +33,15 @@
         {{ i18n.analysisTypeDistribution }}
       </div>
       <div class="gpa-bar-list">
-        <div
+        <!-- 填充色按提交类型取 COMMIT_ANALYSIS_TYPE_META（作者排行无类型色，用默认主题色） -->
+        <BarRow
           v-for="t in typeRows"
           :key="t.type"
-          class="gpa-bar-row"
-        >
-          <span class="gpa-bar-label">{{ i18n[COMMIT_ANALYSIS_TYPE_META[t.type].labelKey] }}</span>
-          <span class="gpa-bar-track">
-            <span
-              class="gpa-bar-fill"
-              :style="{ width: t.pct, background: COMMIT_ANALYSIS_TYPE_META[t.type].color }"
-            />
-          </span>
-          <span class="gpa-bar-num">{{ t.count }}</span>
-        </div>
+          :label="i18n[COMMIT_ANALYSIS_TYPE_META[t.type].labelKey]"
+          :pct="t.pct"
+          :count="t.count"
+          :color="COMMIT_ANALYSIS_TYPE_META[t.type].color"
+        />
       </div>
     </div>
   </div>
@@ -67,6 +53,7 @@ import type { CommitAnalysisStats } from "../../types"
 import { computed } from "vue"
 import { COMMIT_ANALYSIS_TYPE_META } from "../../types"
 import { withBarPct } from "../../utils"
+import BarRow from "./BarRow.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>

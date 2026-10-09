@@ -58,9 +58,11 @@ export {
   parseWorktreeStatus,
 } from "./gitOutput"
 export type { WorktreeStatusParse } from "./gitOutput"
+export type { DayCellView } from "./analysis"
 
 export {
   buildDailyCommitBuckets,
+  buildDayCell,
   buildDayCountMap,
   formatIsoDate,
   formatLocalDate,

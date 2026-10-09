@@ -103,6 +103,43 @@ export function heatCellTooltip(i18n: Record<string, any>, date: string, count: 
     .replace("{2}", String(count))
 }
 
+/** 热力图/日历共用：单个日格的展示数据（样式 + tooltip + 计数） */
+export interface DayCellView {
+  /** YYYY-MM-DD */
+  date: string
+  /** 该日提交数 */
+  count: number
+  /**
+   * 预计算的格子内联样式**对象**。
+   * 存对象而非颜色串：模板绑定同一引用后，Vue 不会把每次重渲染都当成 style 变更去 patch
+   * （一年 53 周 × 7 行 = 371 格 / 12 月 × 31 天 ≈ 372 格，逐格 patch 是明显浪费）。
+   */
+  style: Record<string, string>
+  /** 悬停文案（"2026-08-01（周六）：3 次提交"） */
+  tooltip: string
+}
+
+/**
+ * 构建单个日格的展示数据（热力图与日历共用，消除两处重复的
+ * `heatLevel → heatCellColor` + `heatCellTooltip` 组合）。
+ *
+ * 两个组件对同一份 dayCounts 渲染出不同形态（周列网格 vs 月卡片），
+ * 但「某一天显示什么颜色、什么 tooltip」的口径必须一致，故收敛到此处。
+ */
+export function buildDayCell(
+  i18n: Record<string, any>,
+  date: string,
+  count: number,
+  color: string,
+): DayCellView {
+  return {
+    date,
+    count,
+    style: { background: heatCellColor(heatLevel(count), color) },
+    tooltip: heatCellTooltip(i18n, date, count),
+  }
+}
+
 /** 通用计数排行：按 keyFn 分组计数，降序取前 limit 条（项目/作者/类型排行共用） */
 export function rankByCount<T>(items: T[], keyFn: (item: T) => string, limit: number): { key: string, count: number }[] {
   return rankByCountWithTotal(items, keyFn, limit).rows

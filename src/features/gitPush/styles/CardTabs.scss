@@ -2,11 +2,25 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── Stash + Tag Tab 切换容器（仅保留与上方区块的分隔）──
+// ── Stash + Tag Tab 切换容器（仅保留与上方区块的间距，不画分隔线）──
 .gp-stash-tag-tabs {
-  border-top: 1px solid var(--b3-border-color);
-  margin-top: $s-px6;
-  padding-top: $s-px6;
+  // 与上方远程状态行的间距。
+  // 原为 margin-top 6px + padding-top 6px（合计 12px，另加 .gp-remotes 的 3px 下边距 = 15px）——
+  // padding-top 是给已移除的分隔线留的呼吸位，线去掉后成了纯空白，故一并收敛。
+  margin-top: $s-1; // 4px（+ .gp-remotes 3px 下边距 ≈ 7px 视觉间距）
+}
+
+// 去掉 Tab 栏自身那条通栏下边线（共享 TabList 的 .si-tablist border-bottom）。
+// 只作用于本卡片，不改共享组件（TabList 另有 5 个功能在用，全局去掉会破坏它们的栏底分隔）。
+// ⚠️ 非 scoped 样式禁用 :deep()（见 MarkdownPreviewDialog.scss 的同款注释），此处用普通后代选择器。
+.gp-stash-tag-tabs .si-tablist {
+  border-bottom: none;
+}
+
+// 激活标签的下划线指示器原本用 `bottom: -1px` 压在栏底线上（Tab.scss），
+// 线去掉后会悬在栏外 1px，故回正为 0，保持「下划线紧贴标签底」的观感。
+.gp-stash-tag-tabs .si-tab--active::after {
+  bottom: 0;
 }
 
 // ── Tab 内的计数徽标（共享 Tab 的 scoped 样式不覆盖子元素，此处无需抬特异性）──

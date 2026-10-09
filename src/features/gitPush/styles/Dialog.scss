@@ -25,21 +25,9 @@
 }
 
 // ── 通用弹窗样式 ──
+// 遮罩几何/底色/z-index 收敛到 overlay-base（与其余三个弹窗共用同一口径）
 .gp-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  // 基准字号：弹窗内未显式声明字号的描述/提示文字继承内容级 12px
-  font-size: $t-xs;
-
-  &:focus { outline: none; }
+  @include overlay-base;
 }
 
 .gp-dialog {

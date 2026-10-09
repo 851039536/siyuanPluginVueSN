@@ -44,7 +44,7 @@
   white-space: nowrap;
   cursor: default;
   flex-shrink: 0;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.12s, color 0.12s;
 
   // 完成态：切换为成功色徽章，图标停止旋转
   &.is-done {

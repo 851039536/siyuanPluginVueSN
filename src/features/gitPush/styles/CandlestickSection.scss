@@ -79,9 +79,9 @@
   opacity: 0.45;
   cursor: pointer;
   transition:
-    opacity 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease;
+    opacity 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
 
   &:hover:not(:disabled) {
     opacity: 1;
@@ -242,7 +242,7 @@
   min-height: 2px;
   border-radius: $r-px2 $r-px2 0 0;
   background: #64748b; // REPORT_CHART_COLORS.flat（非高峰星期用中性色）
-  transition: background 0.15s;
+  transition: background 0.12s;
 }
 
 // 最活跃星期柱高亮（主题色）
@@ -277,7 +277,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-px2;
   cursor: default;
-  transition: opacity 0.15s;
+  transition: opacity 0.12s;
 
   &:hover {
     opacity: 0.8;

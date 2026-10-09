@@ -2,20 +2,10 @@
 @use "./mixins" as *;
 
 // ── 远程与本地一致性分析弹窗（gca- 前缀自包含，不依赖 StatsPanel 的 gp-* 基类）──
+// 遮罩几何/底色/z-index 收敛到 overlay-base（原为 z-index 99999 + rgba 0.45，
+// 会盖住一切弹窗，使叠弹窗层级不可预测）
 .gca-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  // 基准字号：弹窗内文字继承内容级 12px
-  font-size: $t-xs;
-
-  &:focus {
-    outline: none;
-  }
+  @include overlay-base;
 }
 
 .gca-dialog {
@@ -220,9 +210,7 @@
 }
 
 .gca-project-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
 }
 
 // 项目级问题徽章
@@ -274,9 +262,7 @@
   padding: $s-px2 $s-2;
   font-size: $t-2xs;
   line-height: $lh-normal;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
   display: inline-flex;
   align-items: center;
   gap: $s-px2;

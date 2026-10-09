@@ -25,6 +25,65 @@
   }
 }
 
+// ── 弹窗三段结构（header / footer，各弹窗共用）──
+// 原 GitConfigDialog / MarkdownPreviewDialog / LogDetailDialog / FileDetailModal 四处
+// 各自手写同一段声明（仅 background 有无之差，由调用方按需追加）。
+@mixin dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+  padding: $s-2 $s-3;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+@mixin dialog-footer {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-2 $s-3;
+  border-top: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+// ── 只读代码/原文块（提交信息修正 / 删除提交 / 打 Tag 三个弹窗共用）──
+// 三处原为逐字相同的 13 行声明（.gp-fix-original / .gp-drop-original / .gp-tagc-message），
+// 此处收敛为单点。等宽 + pre-wrap + break-all 保证长 hash / 长信息不撑破弹窗。
+@mixin code-block {
+  margin: 0;
+  padding: $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+// ── 全屏遮罩基座（Dialog / LogDetailDialog / FileDetailModal / ConsistencyAuditDialog 共用）──
+// 收敛三个此前各写各的维度（见 AGENTS_STYLE §强制规则：背景与过渡对齐 gitPush 范式）：
+//   1. 底色统一 rgba(0,0,0,0.5) —— 原为 0.4 / 0.45 / 0.5 三档并存
+//   2. z-index 统一 10000 —— 原为 9999 / 10000 / 99999 三档并存，叠弹窗时层级不可预测
+//   3. 禁止 backdrop-filter —— blur/saturate 在 Electron 下有滚动性能开销
+// 基准字号 12px：弹窗内未显式声明字号的描述/提示文字继承内容级字号
+@mixin overlay-base {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  font-size: $t-xs;
+
+  &:focus { outline: none; }
+}
+
 // 大写标签样式（.gp-label / .gp-tag-label 共享）
 @mixin gp-label-base {
   font-size: $t-2xs;
@@ -149,7 +208,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
-  transition: border-color 0.15s;
+  transition: border-color 0.12s;
 
   &:hover {
     border-color: var(--b3-theme-primary);

@@ -48,7 +48,7 @@
 // 每个文件的整体块：块间用分割线区隔，悬停整块高亮便于扫描
 .gpr-debt-file {
   @include row-divider;
-  transition: background 0.15s;
+  transition: background 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface);
@@ -99,7 +99,7 @@
   flex-shrink: 0;
   margin-left: $s-1;
   opacity: 0.35;
-  transition: transform 0.15s;
+  transition: transform 0.12s;
 
   &.open {
     opacity: 0.7;

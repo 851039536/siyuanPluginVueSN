@@ -166,7 +166,7 @@
     border-radius: 1px;
     transform: scaleX(var(--gpr-net-fill, 0));
     transform-origin: left;
-    transition: transform 0.2s ease;
+    transition: transform 0.12s ease;
   }
 
   &--pos .gpr-net-bar-fill {

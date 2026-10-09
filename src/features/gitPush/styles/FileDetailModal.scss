@@ -2,17 +2,10 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// 遮罩（居中 + 半透明模糊底；基准字号 12px 兜底，防内部文字继承思源默认 14px）
+// 遮罩：几何/底色/z-index 收敛到 overlay-base（原为 z-index 9999 + rgba 0.4 + backdrop-filter，
+// 三者均偏离 AGENTS_STYLE 的遮罩规范；blur 在 Electron 下有滚动性能开销）
 .gpr-fm-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  font-size: $t-xs;
+  @include overlay-base;
   // Teleport 到 body 后取不到面板上的 diff 着色变量，须在此重新注入
   @include gp-diff-color-vars;
 }
@@ -33,14 +26,9 @@
 // ── 头部 ──
 
 .gpr-fm-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $s-2;
-  padding: $s-2 $s-3;
+  @include dialog-header;
+  // 本弹窗头部用 surface 实底（与内容区背景区分）
   background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
 }
 
 // 标题（图标 + 文字）

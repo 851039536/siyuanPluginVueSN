@@ -429,9 +429,7 @@
 .gp-set-index-dir {
   margin-top: 2px;
   font-family: monospace;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
 }
 
 .gp-cat-row {
@@ -636,7 +634,7 @@
   gap: $s-2;
   padding: $s-px6 $s-1;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface);
@@ -723,7 +721,7 @@
   color: var(--b3-theme-on-surface);
   font-size: $t-2xs;
   cursor: pointer;
-  transition: opacity 0.15s, border-color 0.15s, background 0.15s;
+  transition: opacity 0.12s, border-color 0.12s, background 0.12s;
   opacity: 0.55;
   flex-shrink: 0;
   white-space: nowrap;

@@ -18,12 +18,7 @@
 
 // ── 头部 ──
 .gp-md-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $s-2 $s-3;
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
+  @include dialog-header;
 }
 
 .gp-md-title {
@@ -322,12 +317,7 @@
 
 // ── 底部操作栏 ──
 .gp-md-footer {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  padding: $s-2 $s-3;
-  border-top: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
+  @include dialog-footer;
 }
 
 .gp-md-warn {

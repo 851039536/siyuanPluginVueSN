@@ -3,18 +3,12 @@
 
 // ── 操作日志详情弹窗（Teleport 到 body，样式全局生效） ──
 
+// 遮罩：几何/底色/z-index 收敛到 overlay-base（原为 z-index 9999 + rgba 0.4 + backdrop-filter，
+// 三者均偏离 AGENTS_STYLE 的遮罩规范；blur 在 Electron 下有滚动性能开销）
 .gp-logd-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  // 基准字号：弹窗内未显式声明字号的文字继承内容级 12px
-  font-size: $t-xs;
-  outline: none;
+  @include overlay-base;
+  // 可选中文本（diff/日志内容需支持复制）
+  user-select: text;
 }
 
 .gp-logd-dialog {
@@ -42,14 +36,9 @@
 
 // ── 头部 ──
 .gp-logd-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $s-2;
-  padding: $s-2 $s-3;
+  @include dialog-header;
+  // 本弹窗头部/底部用 surface 实底（与内容区背景区分）
   background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
 }
 
 .gp-logd-title {
@@ -245,11 +234,6 @@
 
 // ── 底部操作栏 ──
 .gp-logd-footer {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  padding: $s-2 $s-3;
+  @include dialog-footer;
   background: var(--b3-theme-surface);
-  border-top: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
 }

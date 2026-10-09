@@ -42,9 +42,7 @@
   font-size: $t-xs;
   font-family: $ff-mono;
   font-weight: $fw-semibold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-ellipsis;
 }
 
 // 重命名/复制的原路径（弱化展示，超长省略）

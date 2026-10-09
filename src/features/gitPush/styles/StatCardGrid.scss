@@ -25,9 +25,7 @@
 
 // 长文本数值（如「最活跃贡献者」人名）：单行省略，避免撑破卡片
 .gp-statgrid-value--truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  @include text-ellipsis;
   max-width: 100%;
 }
 

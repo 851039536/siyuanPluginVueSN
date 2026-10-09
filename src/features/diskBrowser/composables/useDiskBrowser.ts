@@ -114,27 +114,60 @@ export function useDiskBrowser(deps: UseDiskBrowserDeps): {
     disks.value.reduce((sum, disk) => sum + (disk.used ?? 0), 0),
   )
 
+  /**
+   * 乐观切换收藏，并在保存失败时回滚。
+   *
+   * 并发安全：收藏有列表项与侧栏两处入口、均可被快速连点。若放任多次保存并发：
+   *  - 回滚用「点击前快照」整体赋值，先失败的那次会抹掉后一次的结果
+   *    （实测连点 A、B 且 A 失败 → 内存变 []，与盘上 ["A","B"] 不一致）；
+   *  - 即便改成按项回滚，两次 save 仍各自把「当时的完整列表」落盘、后写覆盖先写，
+   *    内存与存储照样对不齐。
+   * 因此这里把保存**串行化**（同一时刻至多一个 save 在途），且每次都写入
+   * 最新的 favoriteFolders，使存储始终收敛到内存的最终状态；失败时才按项回滚。
+   */
+  let saveQueue: Promise<void> = Promise.resolve()
+
   async function toggleFavorite(folderPath: string): Promise<void> {
-    const previous = [...favoriteFolders.value]
     const index = favoriteFolders.value.indexOf(folderPath)
-    if (index > -1) {
-      favoriteFolders.value.splice(index, 1)
-    } else {
+    const adding = index === -1
+
+    if (adding) {
       favoriteFolders.value.push(folderPath)
+    } else {
+      favoriteFolders.value.splice(index, 1)
     }
 
-    try {
-      await storage.saveFavorites(favoriteFolders.value)
-      showMessage(
-        index > -1 ? i18n.favoriteRemoved ?? "" : i18n.favoriteAdded ?? "",
-        2000,
-        "info",
-      )
-    } catch (error) {
-      favoriteFolders.value = previous
-      console.error("保存收藏夹失败:", error)
-      showMessage(i18n.favoriteSaveFailed ?? "", 3000, "error")
-    }
+    // 串行执行：排队等待前一次保存结束后，再落盘「当前最新」的收藏列表
+    const task = saveQueue.then(async () => {
+      try {
+        await storage.saveFavorites([...favoriteFolders.value])
+        showMessage(
+          adding ? i18n.favoriteAdded ?? "" : i18n.favoriteRemoved ?? "",
+          2000,
+          "info",
+        )
+      } catch (error) {
+        // 仅撤销本次点击造成的那一项，不影响期间发生的其他收藏变更
+        if (adding) {
+          const i = favoriteFolders.value.indexOf(folderPath)
+          if (i > -1) favoriteFolders.value.splice(i, 1)
+        } else if (!favoriteFolders.value.includes(folderPath)) {
+          favoriteFolders.value.push(folderPath)
+        }
+        console.error("保存收藏夹失败:", error)
+        showMessage(i18n.favoriteSaveFailed ?? "", 3000, "error")
+        // 回滚后需把修正过的列表重新落盘：失败的那次 save 可能已把「含该项」的
+        // 列表写入存储（如并发连点时），不补写会让存储残留一个已被回滚的收藏。
+        try {
+          await storage.saveFavorites([...favoriteFolders.value])
+        } catch (rollbackError) {
+          console.error("回滚收藏夹失败:", rollbackError)
+        }
+      }
+    })
+    // 队列本身吞掉异常，避免一次失败阻断后续保存（错误已在内部处理并提示）
+    saveQueue = task.catch(() => {})
+    await task
   }
 
   async function loadFavorites(): Promise<void> {

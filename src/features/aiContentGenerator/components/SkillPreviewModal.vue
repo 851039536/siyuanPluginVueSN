@@ -72,4 +72,10 @@ const renderedContent = computed(() => {
 
 <style scoped lang="scss">
 @use "./styles/SkillPreviewModal.scss" as *;
+@use "../styles/index.scss" as *;
+
+// 共享 Markdown 预览骨架按需 @include
+.markdown-preview {
+  @include markdown-preview;
+}
 </style>

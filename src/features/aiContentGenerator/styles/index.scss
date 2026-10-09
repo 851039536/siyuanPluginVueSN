@@ -1,7 +1,13 @@
 @use "@/variables.scss" as *;
 
-// AI内容生成器面板样式 — 仅保留跨组件共享的基座（面板壳层 / 共用 mixin / 多组件共用的
-// .markdown-preview 与空/错误态骨架）；组件专属样式见同目录各 <Component>.scss 与
+// AI内容生成器面板样式 — 仅保留跨组件共享的 mixin（本文件不发射任何具体规则）
+//
+// 设计约定：本文件**只允许定义 mixin / @keyframes**，供各组件按需 @include。
+// 任何以选择器形式写在这里的规则，都会被每个 @use 它的组件重复发射一份
+// （实测曾达 10 份），这是本模块此前的重复来源，勿再回退。
+//
+// 面板壳层规则（.ai-content-panel / .content-display-section）见 styles/_shell.scss，
+// 由 index.vue 引入一次；组件专属样式见同目录各 <Component>.scss 与
 // components/styles/ 下的组件专属文件
 
 // ============ 可折叠区块 mixin（复用于 ReviewPanel 等跨组件场景） ============
@@ -39,31 +45,9 @@
   opacity: 0.45;
 }
 
-.ai-content-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  // 基准字号:未显式声明字号的文字继承内容级 12px,而非思源默认的更大字号
-  font-size: $t-xs;
-  overflow: hidden;
-  position: relative;
-}
-
-.content-display-section {
-  flex: 1;
-  overflow-y: auto;
-  padding: $s-px10;
-  display: flex;
-  flex-direction: column;
-  gap: $s-2;
-  min-height: 0;
-}
-
-// 错误态（MainContentArea）与空态（ContentAreaEmpty）共用的居中骨架
-.error-state,
-.empty-state {
+// ============ 错误态 / 空态骨架（MainContentArea 与 ContentAreaEmpty 共用） ============
+// 以 mixin 暴露：各消费组件 @include 后只发射自己那一份，避免多个 @use 点重复发射
+@mixin state-skeleton {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -74,7 +58,7 @@
 }
 
 // ============ 闪烁状态点（MainContentArea 与 ReviewPanel 共用） ============
-.dot-flashing {
+@mixin dot-flashing {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -82,7 +66,7 @@
 }
 
 // ============ Markdown 预览（MainContentArea 与 SkillPreviewModal 共用） ============
-.markdown-preview {
+@mixin markdown-preview {
   padding: $s-2 $s-px10;
   background: var(--b3-theme-surface);
   border-radius: $r-sm;

@@ -300,6 +300,7 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 - **图标注册**：`FEATURE_ICONS` 中添加映射 + 运行 `pnpm validate:icons`
 - **README 文档**：每个 `src/features/*/` 目录下必须有 `README.md`
 - **全局样式**：`@use "@/index.scss" as *;`
+- **禁止用脚本批量改写源文件**：禁止用 `Set-Content` / `Out-File` / `>` 重定向，或任何 PowerShell / shell 正则批量替换来改写源文件（`.ts` / `.vue` / `.scss` / `.json` / `.md` 等）。PowerShell 的 `Set-Content` 默认按系统 ANSI 代码页写盘，会把文件中的中文注释与中文文案（本仓库大量存在）写成乱码，且**破坏后 `git diff` 仍显示为可读的改动行数**，难以当场发现 —— 直到 `pnpm build` 报 `invalid UTF-8 text` 或打包产物出现乱码才暴露。批量/单点改写一律走编辑工具（`edit` / `write`）逐文件修改；确需脚本处理时，必须显式指定 `New-Object System.Text.UTF8Encoding($false)` 作为编码参数写入，并在写后逐个文件校验 BOM 与 `U+FFFD` 替换字符
 - **优先思源内置图标** 或 @iconify/vue
 - **图标规则**：禁止使用 emoji 表情作为图标。使用 `src/components/kit/icons.ts`（真源）中 `FEATURE_ICONS` / `COMMON_ICONS` 已注册的 Iconify 图标（`mdi:xxx`、`carbon:xxx` 等）。需要新图标时在 `icons.ts` 注册映射后引用，浏览图标 https://icon-sets.iconify.design/
 - **文件头注释**：每个 `.ts` / `.vue` 文件顶部必须包含简要功能说明注释（`.scss` 不适用），格式见 [AGENTS_ARCH.md § 强制规则：文件头注释](./AGENTS_ARCH.md#强制规则文件头注释)

@@ -64,5 +64,4 @@ const isSafeUrl = (url: string): boolean => /^https?:\/\//i.test(url)
 
 <style scoped lang="scss">
 @use "../styles/SearchResultsSection.scss" as *;
-@use "../styles/index.scss" as *;
 </style>

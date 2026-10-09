@@ -336,6 +336,5 @@ const inputPlaceholder = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss" as *;
 @use "./styles/BottomInputArea.scss" as *;
 </style>

@@ -304,4 +304,17 @@ watch(
 <style scoped lang="scss">
 @use "../styles/MainContentArea.scss" as *;
 @use "../styles/index.scss" as *;
+
+// 共享骨架按需 @include（不再经由 index.scss 重复发射全局规则）
+.error-state {
+  @include state-skeleton;
+}
+
+.dot-flashing {
+  @include dot-flashing;
+}
+
+.markdown-preview {
+  @include markdown-preview;
+}
 </style>

@@ -1,6 +1,6 @@
 // 空状态引导专属样式（ContentAreaEmpty.vue 三步操作说明）
-@use "../../../variables" as *;
-@use "./index.scss" as *;
+// .empty-state 骨架由组件侧 @include state-skeleton 提供，故此处不再引用 index.scss
+@use "@/variables.scss" as *;
 
 .empty-icon { color: var(--b3-theme-primary); opacity: 0.35; margin-bottom: $s-3; }
 .empty-title { font-size: $t-xs; font-weight: $fw-medium; margin-bottom: $s-3; color: var(--b3-theme-on-background); }

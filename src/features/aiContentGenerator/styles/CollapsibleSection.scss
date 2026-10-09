@@ -1,4 +1,4 @@
-@use "../../../variables" as *;
+@use "@/variables.scss" as *;
 @use "./index.scss" as *;
 
 // ============ 折叠卡片基础样式（原共享 mixin 内联，仅本组件消费） ============

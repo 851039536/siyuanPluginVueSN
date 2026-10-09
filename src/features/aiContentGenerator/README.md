@@ -29,9 +29,22 @@ aiContentGenerator/
 │   ├── SearchResultsSection.vue # 联网搜索来源折叠区块
 │   └── ContentAreaEmpty.vue  # 空状态三步引导
 └── styles/                   # SCSS（样式强制从 .vue 提取）
-    ├── index.scss            # 跨组件共享基座：面板壳层、共用 mixin、.markdown-preview、.dot-flashing
+    ├── index.scss            # 仅 mixin 与 @keyframes：跨组件共享的 mixin（不发射任何规则）
+    ├── _shell.scss           # 面板壳层规则，仅 index.vue 引入一次
     └── <Component>.scss      # 各组件专属样式
 ```
+
+### 样式引入约定（避免重复发射）
+
+- `styles/index.scss` **只允许定义 mixin / `@keyframes`**，不得写任何选择器规则。
+  以选择器形式写在这里的规则会被每个 `@use` 它的组件各发射一份（带各自 scope hash），
+  历史上 `.ai-content-panel` 等曾因此重复 10 份。
+- 面板壳层规则（`.ai-content-panel` / `.content-display-section`）放 `styles/_shell.scss`，
+  仅由 `index.vue` 引入一次。
+- 跨组件共用的组件形态（`.markdown-preview` / `.dot-flashing` / 空态·错误态骨架）
+  以 mixin 暴露（`markdown-preview` / `dot-flashing` / `state-skeleton`），
+  由消费组件在自己的 `<style scoped>` 中 `@include`，只发射自己那一份。
+- SCSS 变量统一用别名形式 `@use "@/variables.scss" as *;`（勿用相对路径 `../../../variables`）。
 
 ## UI 层约定
 

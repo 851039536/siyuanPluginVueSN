@@ -196,5 +196,4 @@ const axisLabels = computed(() =>
 
 <style scoped lang="scss">
 @use "../styles/ReviewRadarChart.scss" as *;
-@use "../styles/index.scss" as *;
 </style>

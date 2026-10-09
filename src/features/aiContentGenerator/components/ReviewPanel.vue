@@ -305,4 +305,9 @@ const formatTime = (ts: number): string => {
 <style scoped lang="scss">
 @use "../styles/ReviewPanel.scss" as *;
 @use "../styles/index.scss" as *;
+
+// 共享闪烁状态点按需 @include
+.dot-flashing {
+  @include dot-flashing;
+}
 </style>

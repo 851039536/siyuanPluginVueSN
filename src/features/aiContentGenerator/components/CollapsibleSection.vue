@@ -65,5 +65,4 @@ const bodyId = `ai-collapsible-body-${useId()}`
 
 <style scoped lang="scss">
 @use "../styles/CollapsibleSection.scss" as *;
-@use "../styles/index.scss" as *;
 </style>

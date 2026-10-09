@@ -133,5 +133,4 @@ const diffStats = computed(() => {
 
 <style scoped lang="scss">
 @use "../styles/DiffPreview.scss" as *;
-@use "../styles/index.scss";
 </style>

@@ -1,0 +1,32 @@
+// AI内容生成器面板壳层样式 — 仅在面板根（index.vue）全局引入一次
+//
+// 为何独立成文件：.ai-content-panel / .content-display-section 是面板自身的壳层结构，
+// 只有 index.vue 的根节点会渲染。若把它们留在 styles/index.scss，则每个
+// `@use "../styles/index.scss"` 的组件都会重复发射一份带各自 scope hash 的副本
+// （实测曾达 10 份），因此壳层规则与「可复用的 mixin」分离存放。
+//
+// 本文件由 index.vue 的 <style scoped> 引入；因规则作用于面板根节点下的直接结构，
+// 其 scope 与面板根一致，语义正确。
+@use "@/variables.scss" as *;
+
+.ai-content-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  // 基准字号:未显式声明字号的文字继承内容级 12px,而非思源默认的更大字号
+  font-size: $t-xs;
+  overflow: hidden;
+  position: relative;
+}
+
+.content-display-section {
+  flex: 1;
+  overflow-y: auto;
+  padding: $s-px10;
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  min-height: 0;
+}

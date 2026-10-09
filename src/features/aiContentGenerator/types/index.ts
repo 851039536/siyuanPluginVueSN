@@ -44,42 +44,55 @@ export interface EditActionMeta {
   reviewLabel: string
 }
 
+/**
+ * 快捷动作/自定义编辑 prompt 的统一输出约束后缀
+ *
+ * 6 条 ACTION_META[].prompt 与 index.vue 的自定义编辑指令均以此收尾，
+ * 抽为常量避免 7 处重复维护同一句约束（改一处即全局生效）。
+ */
+export const MD_OUTPUT_SUFFIX = "保持Markdown格式，直接输出"
+
+/** 拼接「动作描述 + 统一输出约束」，生成完整 prompt */
+export function buildActionPrompt(instruction: string, output = "完整文档内容"): string {
+  return `${instruction}。${MD_OUTPUT_SUFFIX}${output}：`
+}
+
 /** 六个快捷编辑动作的完整元数据表（键顺序即按钮展示顺序） */
 export const ACTION_META: Record<EditActionKey, EditActionMeta> = {
   polish: {
     labelKey: "actionPolish",
     icon: "edit",
-    prompt: "请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：",
+    prompt: buildActionPrompt("请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅", "优化后的完整文档内容"),
     reviewLabel: "对文档进行润色优化",
   },
   expand: {
     labelKey: "actionExpand",
     icon: "plus",
-    prompt: "请对以下文档进行扩写，增加更详细的说明、例子和补充信息，使内容更加丰富和全面。保持Markdown格式，直接输出扩写后的完整文档内容：",
+    prompt: buildActionPrompt("请对以下文档进行扩写，增加更详细的说明、例子和补充信息，使内容更加丰富和全面", "扩写后的完整文档内容"),
     reviewLabel: "对文档进行扩写",
   },
   condense: {
     labelKey: "actionCondense",
     icon: "minus",
-    prompt: "请对以下文档进行精简，去除冗余内容，保留核心要点，使表达更加简洁有力。保持Markdown格式，直接输出精简后的完整文档内容：",
+    prompt: buildActionPrompt("请对以下文档进行精简，去除冗余内容，保留核心要点，使表达更加简洁有力", "精简后的完整文档内容"),
     reviewLabel: "对文档进行精简",
   },
   fix: {
     labelKey: "actionFix",
     icon: "check",
-    prompt: "请对以下文档进行错误检查和修正，包括拼写错误、语法错误、逻辑错误等。保持Markdown格式，直接输出修正后的完整文档内容：",
+    prompt: buildActionPrompt("请对以下文档进行错误检查和修正，包括拼写错误、语法错误、逻辑错误等", "修正后的完整文档内容"),
     reviewLabel: "对文档进行错误修正",
   },
   rewrite: {
     labelKey: "actionRewrite",
     icon: "refresh",
-    prompt: "请用不同的表达方式重写以下文档，保持核心意思不变，但使用全新的语言风格和句式结构。保持Markdown格式，直接输出改写后的完整文档内容：",
+    prompt: buildActionPrompt("请用不同的表达方式重写以下文档，保持核心意思不变，但使用全新的语言风格和句式结构", "改写后的完整文档内容"),
     reviewLabel: "对文档进行改写",
   },
   summary: {
     labelKey: "actionSummary",
     icon: "list",
-    prompt: "请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息。保持Markdown格式，直接输出总结内容：",
+    prompt: buildActionPrompt("请为以下文档生成一个简洁的总结，包括主要内容和关键要点。总结应该清晰明了，突出文档的核心信息", "总结内容"),
     reviewLabel: "为文档生成总结",
   },
 }

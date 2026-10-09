@@ -42,4 +42,9 @@ defineProps<{
 <style scoped lang="scss">
 @use "../styles/ContentAreaEmpty.scss" as *;
 @use "../styles/index.scss" as *;
+
+// 共享空态骨架按需 @include
+.empty-state {
+  @include state-skeleton;
+}
 </style>

@@ -85,7 +85,7 @@ import { showMessage } from "siyuan"
 
 // 类型
 import type { DeepSeekReasoningEffort, GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
-import { ACTION_META, DEFAULT_SYSTEM_PROMPTS } from "./types"
+import { ACTION_META, DEFAULT_SYSTEM_PROMPTS, MD_OUTPUT_SUFFIX } from "./types"
 import type { EditActionKey, ScanSkillsFn } from "./types"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 
@@ -288,7 +288,7 @@ const handleCustomEdit = async () => {
       }
 
       if (editCustomInput.value.trim()) {
-        userInput = `请根据以下指令对文档进行编辑。保持Markdown格式，直接输出编辑后的完整文档内容：
+        userInput = `请根据以下指令对文档进行编辑。${MD_OUTPUT_SUFFIX}编辑后的完整文档内容：
 
 编辑指令：${editCustomInput.value}
 
@@ -404,5 +404,5 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use "./styles/index.scss" as *;
+@use "./styles/shell.scss" as *;
 </style>

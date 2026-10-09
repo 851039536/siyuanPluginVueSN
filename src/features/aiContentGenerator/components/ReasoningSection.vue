@@ -36,5 +36,4 @@ defineEmits<{
 
 <style scoped lang="scss">
 @use "../styles/ReasoningSection.scss" as *;
-@use "../styles/index.scss" as *;
 </style>

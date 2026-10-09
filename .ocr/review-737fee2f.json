@@ -1,0 +1,407 @@
+{
+  "status": "complete",
+  "llm": {
+    "provider": "mygw",
+    "model": "deepseek-v4.1-flash"
+  },
+  "message": "Review complete: 10 finding(s) across 20 selected item(s).",
+  "summary": {
+    "files_reviewed": 20,
+    "comments": 10,
+    "total_tokens": 3094011,
+    "input_tokens": 3051021,
+    "output_tokens": 42990,
+    "elapsed": "3m37s"
+  },
+  "tool_calls": {
+    "total": 261,
+    "by_tool": {
+      "code_comment": 5,
+      "code_search": 150,
+      "file_find": 10,
+      "file_read": 94,
+      "file_read_diff": 2
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [
+    {
+      "path": "src/i18n/zh_CN/wordQuery.json",
+      "content": "The new `suggestions` key's zh_CN value (\"优化建议\") does not match its en_US counterpart (\"Suggestions\") nor the component that consumes it. `CodeTranslationPanel.vue` reads `i18n.suggestions || '备选'` (fallback meaning \"alternatives/candidates\"), whereas \"优化建议\" is the wording for `CodeExplainer` (which actually uses `suggestionsLabel`). Consider aligning the value with the translation panel's semantics (e.g. \"备选\") so the key is not misleading.",
+      "suggestion_code": "\"suggestions\": \"备选\"",
+      "existing_code": "\"suggestions\": \"优化建议\"",
+      "start_line": 123,
+      "end_line": 123,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "src/i18n/en_US/wordQuery.json",
+      "content": "The new `suggestions` key overlaps semantically with the existing `suggestionsLabel` key (both = \"Suggestions\"). Since the consumer `CodeTranslationPanel.vue` uses this key to mean \"alternatives/candidates\" (fallback `'备选'`), consider a distinct key name such as `alternatives` (label wording without the `Label` suffix) to avoid confusion between the two keys.",
+      "suggestion_code": "\"alternatives\": \"Alternatives\"",
+      "existing_code": "\"suggestions\": \"Suggestions\"",
+      "start_line": 123,
+      "end_line": 123,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "src/features/aiContentGenerator/components/styles/BottomInputArea.scss",
+      "content": "Inconsistent variable import style across the new/edited partials. `BottomInputArea.scss` uses `@use \"@/variables.scss\" as *;` while the sibling partials added in this same refactor (`styles/DiffPreview.scss`, `styles/MainContentArea.scss`, `styles/ContentAreaEmpty.scss`) use the relative `@use \"../../../variables\" as *;`. Both resolve to `src/_variables.scss` so behavior is identical, but the mixed alias/relative style is exactly the kind of inconsistency this dedup refactor is meant to eliminate. Pick one convention and apply it across all partials.",
+      "suggestion_code": "@use \"../../../variables\" as *;",
+      "existing_code": "@use \"@/variables.scss\" as *;",
+      "start_line": 2,
+      "end_line": 2,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "src/features/aiContentGenerator/components/styles/BottomInputArea.scss",
+      "content": "`.quick-action-btn` (L74-106) and `.rag-toggle` (L119-165) in the same file are near-duplicates: both declare `display: inline-flex; align-items: center; gap: 3px; color: var(--b3-theme-on-surface); background: var(--b3-theme-background); border: 1px solid var(--b3-theme-surface-lighter); cursor: pointer; white-space: nowrap;` plus identical `svg` opacity handling and the same `:hover { border-color: var(--b3-theme-primary); }` behavior. Now that they are co-located in one extracted file, consider hoisting the shared chrome into a `%chip-base` placeholder / mixin and `@extend`ing it, per the refactor's consolidation goal.",
+      "existing_code": ".quick-action-btn {\n  display: inline-flex;\n  align-items: center;\n  gap: 3px;\n  padding: 3px 7px;\n  font-size: $font-size-2xs;\n  color: var(--b3-theme-on-surface);\n  background: var(--b3-theme-background);\n  border: 1px solid var(--b3-theme-surface-lighter);\n  border-radius: 4px;\n  cursor: pointer;\n  white-space: nowrap;\n  line-height: 1.4;",
+      "start_line": 74,
+      "end_line": 86,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "src/features/aiContentGenerator/components/styles/BottomInputArea.scss",
+      "content": "The moved `.quick-action-btn` block still uses hardcoded `border-radius: 4px` and `line-height: 1.4`, while the rules it sits next to in this file (`.rag-toggle`, `.model-select`, `.reasoning-effort-select`) use the `$radius-sm` / `$line-height-normal` tokens. Since this block was relocated into a file that is otherwise tokenized, align it with the shared tokens for consistency.",
+      "suggestion_code": "  border-radius: $radius-sm;\n  cursor: pointer;\n  white-space: nowrap;\n  line-height: $line-height-normal;",
+      "existing_code": "  border-radius: 4px;\n  cursor: pointer;\n  white-space: nowrap;\n  line-height: 1.4;",
+      "start_line": 83,
+      "end_line": 86,
+      "category": "style",
+      "severity": "low"
+    },
+    {
+      "path": "src/features/aiContentGenerator/components/BottomInputArea.vue",
+      "content": "`BottomInputArea.vue`'s `\u003cstyle scoped\u003e` imports both `../styles/index.scss` and `./styles/BottomInputArea.scss`, and `styles/index.scss` is itself pulled in by the partial chain elsewhere. Note that `index.scss` emits unscoped/shared rules (`.ai-content-panel`, `.content-display-section`, `.error-state`/`.empty-state`, `.markdown-preview`, mixins). Double-loading it into a component's scoped block re-emits those rules inside that component instead of once globally. This mirrors a pre-existing pattern, but as this refactor is explicitly consolidating the style entry points, it is worth confirming the shared `index.scss` is intended to be imported by each `\u003cstyle scoped\u003e` block rather than once at the panel root.",
+      "existing_code": "@use \"../styles/index.scss\" as *;\n@use \"./styles/BottomInputArea.scss\" as *;",
+      "start_line": 269,
+      "end_line": 270,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "src/features/aiContentGenerator/components/DiffPreview.vue",
+      "content": "`DiffPreview.vue` imports `../styles/index.scss` without the `as *` namespace, unlike every sibling component which uses `@use \"../styles/index.scss\" as *;`. Using it namespaced is harmless for pure CSS emission, but if this file ever needs members (mixins/variables) from `index.scss` they would be invisible without the `as *`. For consistency with the rest of the module, drop the namespace here too.",
+      "suggestion_code": "@use \"../styles/DiffPreview.scss\" as *;\n@use \"../styles/index.scss\" as *;",
+      "existing_code": "@use \"../styles/DiffPreview.scss\" as *;\n@use \"../styles/index.scss\";",
+      "start_line": 126,
+      "end_line": 127,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "src/i18n/zh_CN.json",
+      "content": "This file is a build artifact: per the project's i18n rule (MEMORY.md / AGENTS.md), `src/i18n/zh_CN.json` and `src/i18n/en_US.json` are generated by `pnpm i18n:merge` from the shard files under `src/i18n/zh_CN/` and must not be edited manually. The diff here (removing the AI-generator block, adding `inputPlaceholder`/`generating`/`retry`/`suggestions`) matches what the merge would produce from the modified shards, so it appears regenerated rather than hand-edited. Please just confirm this was produced by `pnpm i18n:merge` and `pnpm i18n:verify` rather than by hand, so future shard edits aren't silently overwritten.",
+      "existing_code": "  \"retry\": \"重来\",",
+      "start_line": 3155,
+      "end_line": 3155,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "src/features/aiContentGenerator/types/index.ts",
+      "content": "The six `prompt` values share an identical trailing template \"保持Markdown格式，直接输出…完整文档内容：\" (only the middle verb/object differs). Since this refactor's stated goal is consolidating repeated prompt literals into a single source of truth, consider extracting this shared suffix/prefix into a constant (e.g. a `const EDIT_PROMPT_SUFFIX = \"保持Markdown格式，直接输出\"` builder) so the boilerplate lives in one place. Purely a maintainability / de-dup nit — not a functional issue.",
+      "existing_code": "  polish: {\n    label: \"润色\",\n    icon: \"#iconEdit\",\n    prompt: \"请对以下文档进行润色优化，保持原有结构，提升语言质量和可读性，使表达更加专业、流畅。保持Markdown格式，直接输出优化后的完整文档内容：\",\n    reviewLabel: \"对文档进行润色优化\",\n  },",
+      "start_line": 48,
+      "end_line": 53,
+      "category": "maintainability",
+      "severity": "low"
+    },
+    {
+      "path": "src/features/aiContentGenerator/styles/ContentAreaEmpty.scss",
+      "content": "`ContentAreaEmpty.scss` only consumes variables (no mixin/function from `index.scss` — there is no `@include`/member reference in this file), yet it pulls in `./index.scss`. Its sole consumer `ContentAreaEmpty.vue` already imports `../styles/index.scss` directly, so this `@use` is a redundant import that serves no purpose here. Given the refactor's goal of removing duplication/dead code, drop it and keep only the variables import (mirroring `DiffPreview.scss`, which correctly imports only variables).",
+      "existing_code": "@use \"../../../variables\" as *;\n@use \"./index.scss\" as *;",
+      "start_line": 2,
+      "end_line": 3,
+      "category": "maintainability",
+      "severity": "low"
+    }
+  ],
+  "groups": [
+    {
+      "label": "aiContentGenerator components and styles",
+      "files": [
+        "src/features/aiContentGenerator/components/BottomInputArea.vue",
+        "src/features/aiContentGenerator/components/DiffPreview.vue",
+        "src/features/aiContentGenerator/components/styles/BottomInputArea.scss",
+        "src/features/aiContentGenerator/styles/ContentAreaEmpty.scss",
+        "src/features/aiContentGenerator/styles/DiffPreview.scss",
+        "src/features/aiContentGenerator/styles/MainContentArea.scss",
+        "src/features/aiContentGenerator/styles/index.scss"
+      ]
+    },
+    {
+      "label": "aiContentGenerator logic, types, and module",
+      "files": [
+        "src/features/aiContentGenerator/composables/useEditOperations.ts",
+        "src/features/aiContentGenerator/composables/useGeneration.ts",
+        "src/features/aiContentGenerator/index.vue",
+        "src/features/aiContentGenerator/modules/AIContentGenerator.ts",
+        "src/features/aiContentGenerator/types/index.ts",
+        "src/features/aiContentGenerator/utils.ts"
+      ]
+    },
+    {
+      "label": "aiContentGenerator i18n messages",
+      "files": [
+        "src/i18n/en_US.json",
+        "src/i18n/en_US/aiContentGenerator.json",
+        "src/i18n/zh_CN.json",
+        "src/i18n/zh_CN/aiContentGenerator.json"
+      ]
+    },
+    {
+      "label": "wordQuery i18n messages",
+      "files": [
+        "src/i18n/en_US/wordQuery.json",
+        "src/i18n/zh_CN/wordQuery.json"
+      ]
+    },
+    {
+      "label": "AI model config",
+      "files": [
+        "src/config/aiModels.ts"
+      ]
+    }
+  ],
+  "session_id": "9f3e90a8-d1fa-47bb-8bda-5f17864514ae",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "9f3e90a8-d1fa-47bb-8bda-5f17864514ae",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {},
+    "input": {
+      "mode": "commit",
+      "requested_head": "737fee2f",
+      "resolved_base": "be522f545f380e9deeabfa3d06f315bc28163358",
+      "resolved_head": "737fee2f8678bfc725b7ac9c32ac7e2bcb741c6b",
+      "exact_range": "be522f545f380e9deeabfa3d06f315bc28163358..737fee2f8678bfc725b7ac9c32ac7e2bcb741c6b",
+      "source_artifact_sha256": "9bc565a438ae0fb7ccab5942bd0befe47de3b80dfc4b20e368dc755ae6309d4a"
+    },
+    "execution": {
+      "ocr_version": "v1.12.13",
+      "provider": "mygw",
+      "model": "deepseek-v4.1-flash",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "d5e28d02ed5cdf85b533907db24b47f1be02847db764a4ded208dbaf54380ae1",
+      "runtime_config_sha256": "a05454e452747c440609abde7697fb1532b4b416dd950d0d1ec2d4388ad23939"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "0074afd5c8058a2a001e1edcf1303fe6b47df86b06c9ba308e2b7c9f37c85408",
+          "path": "src/features/aiContentGenerator/modules/AIContentGenerator.ts",
+          "fingerprint": "daad111dc99c4f0a72dd9c27f6351c6a1b66995d970dbee8c477a6c82e8b2052"
+        },
+        {
+          "item_id": "0aefde3fe68e1b75174fd09a8e4bf2cd2444363f4f75c9589d30257c32a79005",
+          "path": "src/features/aiContentGenerator/components/styles/BottomInputArea.scss",
+          "fingerprint": "1ec6995a463859c5033d16cad067f572a19d8e300e40b0add43cdf18bf4a92fa"
+        },
+        {
+          "item_id": "151c4d083b52fb981aa0f0afea409246487df7493b14dd27b308ddef05004cf8",
+          "path": "src/i18n/en_US/wordQuery.json",
+          "fingerprint": "cedfa24e59b5f1e9f977e32dee4a4b2db419041db338d210ad6222b44574752f"
+        },
+        {
+          "item_id": "17e8d5912d22291f094fd03b7c6638c8b164743dda314520b242258c78c4db4c",
+          "path": "src/features/aiContentGenerator/styles/ContentAreaEmpty.scss",
+          "fingerprint": "3ab304de35c0bce13b88d13debf1f4b79d656783ec7be891218908bbfb3ca9ef"
+        },
+        {
+          "item_id": "2c648095736f7e9108f4590f9e76bc8c76902197be0e7a62c7ea4dbd5f96478c",
+          "path": "src/features/aiContentGenerator/index.vue",
+          "fingerprint": "e16340ea4ea051662d80645a1974ebafd910df4d77d8d42de6cf6ea6a89db609"
+        },
+        {
+          "item_id": "436e9d3b53496ac02ecd68dbdc495b914aef7ca7f01cb467ff4ad0851a049b2e",
+          "path": "src/features/aiContentGenerator/styles/index.scss",
+          "fingerprint": "43161c97b4b987143304156e872eeea64f1dfd2b78750979589ab5eda49a84fa"
+        },
+        {
+          "item_id": "448fa8409c5b6e982ce2ee78aa825ba8d94ea659655532f90e3bcfcc902db218",
+          "path": "src/i18n/zh_CN/wordQuery.json",
+          "fingerprint": "e3b0c3ba6363a02825c51e0f77c5da23d46136280842194c9b31a79b676b25b0"
+        },
+        {
+          "item_id": "5b0288a78e954ec12119bac782abcf9de2609af257102335f5f55c825354528c",
+          "path": "src/features/aiContentGenerator/styles/MainContentArea.scss",
+          "fingerprint": "c55b0830aabc06461ca091a144d87c52257cdcd420a176b5992bfcaa6588bf86"
+        },
+        {
+          "item_id": "6856e64ec48503c8be86bb477b99d8e7530944bda22644a0af1ad3632bd94ab2",
+          "path": "src/i18n/zh_CN.json",
+          "fingerprint": "ab7d9832df401204f583cee74e0b9647d3c00a571bb0aebf687cdc9bbc575435"
+        },
+        {
+          "item_id": "8da8722e8599507dc64f930660164e6371131fe1a4d96f45c5c5b15f51d47555",
+          "path": "src/features/aiContentGenerator/components/BottomInputArea.vue",
+          "fingerprint": "211e1c2c15f61c3d74db35d9995c830c448f0c85bc8d6b5003b267fce9d481b4"
+        },
+        {
+          "item_id": "91203b0bf15b7ff05dd031e3a45f7cee0a7b311540c47e147d201e2dd784e13e",
+          "path": "src/i18n/zh_CN/aiContentGenerator.json",
+          "fingerprint": "3faf835bccae036c4c4e3041e5dd15d1afd8171537bebe6018d98677826c4e28"
+        },
+        {
+          "item_id": "96440b69bcce067ac1b29e1101deccce0d7b64a118447565d62c6d7d101ec5b3",
+          "path": "src/features/aiContentGenerator/composables/useEditOperations.ts",
+          "fingerprint": "aec57f7bc51b9dddfcebaefe90948a25524305864b81a6d92e8037fc228657a3"
+        },
+        {
+          "item_id": "a46e94dea53823effc80c37b2bae6302696d746653d6d918de49a53d5dcc70c4",
+          "path": "src/features/aiContentGenerator/types/index.ts",
+          "fingerprint": "1084413595daad8d1d043435929c8f1d689891166d5c10a27d3bad16c2aecebc"
+        },
+        {
+          "item_id": "bf06d3d5ad7746d69ecccc2e9dde8884bdbc673c69030e0d9630bd9fd62b3f31",
+          "path": "src/features/aiContentGenerator/styles/DiffPreview.scss",
+          "fingerprint": "827204d109b40ec77efc6cfa6aa3656ce80128efc177bfe83e7aa9a79e384581"
+        },
+        {
+          "item_id": "c40904d0af77ef3d1e4608ac9b6a5c67e924579b955d7c27dd435d8e48e4b32c",
+          "path": "src/features/aiContentGenerator/components/DiffPreview.vue",
+          "fingerprint": "ff8699db252e1837b9e245eaca3472153ef9c218f9e6fad63654cf1af51897f1"
+        },
+        {
+          "item_id": "cb7aea731071cc9ce73b5c3ab6074538f3ac62a9a6ee40f35fc3194a4205c26f",
+          "path": "src/features/aiContentGenerator/utils.ts",
+          "fingerprint": "48ce2e2e7c16aafb277419d7832cd2920d5528ad61e48220ebd82a7505d8e569"
+        },
+        {
+          "item_id": "d4f42771cfff5bef24b4531831e5ef4724bbfd27067904057923fab40858528a",
+          "path": "src/i18n/en_US.json",
+          "fingerprint": "532070eb50b589b856779eaf0ef9a556e4e279cddc261b1a61a4392e2895e296"
+        },
+        {
+          "item_id": "d5bd2f1e023c4b019fc7665b3636fb13121f0f2e00f78a3ba7e5e207873a9d44",
+          "path": "src/i18n/en_US/aiContentGenerator.json",
+          "fingerprint": "389f59db2b3b43bce5a786aa25aa615041fdfccb40bd8981ed86a339148b6dec"
+        },
+        {
+          "item_id": "e62b08f0b6c90d4c5fde92d9054f2e515cfc3390d63a5e69fe91e89f577e5bcc",
+          "path": "src/features/aiContentGenerator/composables/useGeneration.ts",
+          "fingerprint": "dfa62b5bacd6ceef82a1a22e8c819c09f93a68fa267e03048a56787fde9ee139"
+        },
+        {
+          "item_id": "fdce9e8ade7ed8cd3c8945800317d5378f8880ec34617a026f2f108ef5a59089",
+          "path": "src/config/aiModels.ts",
+          "fingerprint": "09b446b786f78d98ee71e8c999ea9cf691274065a9eacd7777969b5d1f65898b"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "0074afd5c8058a2a001e1edcf1303fe6b47df86b06c9ba308e2b7c9f37c85408",
+          "path": "src/features/aiContentGenerator/modules/AIContentGenerator.ts",
+          "fingerprint": "daad111dc99c4f0a72dd9c27f6351c6a1b66995d970dbee8c477a6c82e8b2052"
+        },
+        {
+          "item_id": "0aefde3fe68e1b75174fd09a8e4bf2cd2444363f4f75c9589d30257c32a79005",
+          "path": "src/features/aiContentGenerator/components/styles/BottomInputArea.scss",
+          "fingerprint": "1ec6995a463859c5033d16cad067f572a19d8e300e40b0add43cdf18bf4a92fa"
+        },
+        {
+          "item_id": "151c4d083b52fb981aa0f0afea409246487df7493b14dd27b308ddef05004cf8",
+          "path": "src/i18n/en_US/wordQuery.json",
+          "fingerprint": "cedfa24e59b5f1e9f977e32dee4a4b2db419041db338d210ad6222b44574752f"
+        },
+        {
+          "item_id": "17e8d5912d22291f094fd03b7c6638c8b164743dda314520b242258c78c4db4c",
+          "path": "src/features/aiContentGenerator/styles/ContentAreaEmpty.scss",
+          "fingerprint": "3ab304de35c0bce13b88d13debf1f4b79d656783ec7be891218908bbfb3ca9ef"
+        },
+        {
+          "item_id": "2c648095736f7e9108f4590f9e76bc8c76902197be0e7a62c7ea4dbd5f96478c",
+          "path": "src/features/aiContentGenerator/index.vue",
+          "fingerprint": "e16340ea4ea051662d80645a1974ebafd910df4d77d8d42de6cf6ea6a89db609"
+        },
+        {
+          "item_id": "436e9d3b53496ac02ecd68dbdc495b914aef7ca7f01cb467ff4ad0851a049b2e",
+          "path": "src/features/aiContentGenerator/styles/index.scss",
+          "fingerprint": "43161c97b4b987143304156e872eeea64f1dfd2b78750979589ab5eda49a84fa"
+        },
+        {
+          "item_id": "448fa8409c5b6e982ce2ee78aa825ba8d94ea659655532f90e3bcfcc902db218",
+          "path": "src/i18n/zh_CN/wordQuery.json",
+          "fingerprint": "e3b0c3ba6363a02825c51e0f77c5da23d46136280842194c9b31a79b676b25b0"
+        },
+        {
+          "item_id": "5b0288a78e954ec12119bac782abcf9de2609af257102335f5f55c825354528c",
+          "path": "src/features/aiContentGenerator/styles/MainContentArea.scss",
+          "fingerprint": "c55b0830aabc06461ca091a144d87c52257cdcd420a176b5992bfcaa6588bf86"
+        },
+        {
+          "item_id": "6856e64ec48503c8be86bb477b99d8e7530944bda22644a0af1ad3632bd94ab2",
+          "path": "src/i18n/zh_CN.json",
+          "fingerprint": "ab7d9832df401204f583cee74e0b9647d3c00a571bb0aebf687cdc9bbc575435"
+        },
+        {
+          "item_id": "8da8722e8599507dc64f930660164e6371131fe1a4d96f45c5c5b15f51d47555",
+          "path": "src/features/aiContentGenerator/components/BottomInputArea.vue",
+          "fingerprint": "211e1c2c15f61c3d74db35d9995c830c448f0c85bc8d6b5003b267fce9d481b4"
+        },
+        {
+          "item_id": "91203b0bf15b7ff05dd031e3a45f7cee0a7b311540c47e147d201e2dd784e13e",
+          "path": "src/i18n/zh_CN/aiContentGenerator.json",
+          "fingerprint": "3faf835bccae036c4c4e3041e5dd15d1afd8171537bebe6018d98677826c4e28"
+        },
+        {
+          "item_id": "96440b69bcce067ac1b29e1101deccce0d7b64a118447565d62c6d7d101ec5b3",
+          "path": "src/features/aiContentGenerator/composables/useEditOperations.ts",
+          "fingerprint": "aec57f7bc51b9dddfcebaefe90948a25524305864b81a6d92e8037fc228657a3"
+        },
+        {
+          "item_id": "a46e94dea53823effc80c37b2bae6302696d746653d6d918de49a53d5dcc70c4",
+          "path": "src/features/aiContentGenerator/types/index.ts",
+          "fingerprint": "1084413595daad8d1d043435929c8f1d689891166d5c10a27d3bad16c2aecebc"
+        },
+        {
+          "item_id": "bf06d3d5ad7746d69ecccc2e9dde8884bdbc673c69030e0d9630bd9fd62b3f31",
+          "path": "src/features/aiContentGenerator/styles/DiffPreview.scss",
+          "fingerprint": "827204d109b40ec77efc6cfa6aa3656ce80128efc177bfe83e7aa9a79e384581"
+        },
+        {
+          "item_id": "c40904d0af77ef3d1e4608ac9b6a5c67e924579b955d7c27dd435d8e48e4b32c",
+          "path": "src/features/aiContentGenerator/components/DiffPreview.vue",
+          "fingerprint": "ff8699db252e1837b9e245eaca3472153ef9c218f9e6fad63654cf1af51897f1"
+        },
+        {
+          "item_id": "cb7aea731071cc9ce73b5c3ab6074538f3ac62a9a6ee40f35fc3194a4205c26f",
+          "path": "src/features/aiContentGenerator/utils.ts",
+          "fingerprint": "48ce2e2e7c16aafb277419d7832cd2920d5528ad61e48220ebd82a7505d8e569"
+        },
+        {
+          "item_id": "d4f42771cfff5bef24b4531831e5ef4724bbfd27067904057923fab40858528a",
+          "path": "src/i18n/en_US.json",
+          "fingerprint": "532070eb50b589b856779eaf0ef9a556e4e279cddc261b1a61a4392e2895e296"
+        },
+        {
+          "item_id": "d5bd2f1e023c4b019fc7665b3636fb13121f0f2e00f78a3ba7e5e207873a9d44",
+          "path": "src/i18n/en_US/aiContentGenerator.json",
+          "fingerprint": "389f59db2b3b43bce5a786aa25aa615041fdfccb40bd8981ed86a339148b6dec"
+        },
+        {
+          "item_id": "e62b08f0b6c90d4c5fde92d9054f2e515cfc3390d63a5e69fe91e89f577e5bcc",
+          "path": "src/features/aiContentGenerator/composables/useGeneration.ts",
+          "fingerprint": "dfa62b5bacd6ceef82a1a22e8c819c09f93a68fa267e03048a56787fde9ee139"
+        },
+        {
+          "item_id": "fdce9e8ade7ed8cd3c8945800317d5378f8880ec34617a026f2f108ef5a59089",
+          "path": "src/config/aiModels.ts",
+          "fingerprint": "09b446b786f78d98ee71e8c999ea9cf691274065a9eacd7777969b5d1f65898b"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 216559
+  }
+}

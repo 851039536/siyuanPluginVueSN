@@ -136,7 +136,7 @@ const MODULE_RULES = [
   },
   // 通用设置
   {
-    pattern: /^(font|heading|codeBlock|codePadding|expandCode|collapse|titleCenter|titleColor|titleFont|enableHeading|iconStyle|emojiStyle|symbolStyle|numberStyle|geometricStyle|arrowStyle|customIcon|iconPlaceholder|documentFont|tableStyle|tableBorder|tableCell|tableHeader|tableOdd|tableEven|tableText|tableBorderRadius|listStyle|orderedList|unorderedList|listSymbol|resetColor|resetToDefault|enableHighlight|highlightDescription|enableFloatingToolbar|floatingToolbarDescription|enableHeatmapMarker|heatmapMarkerDescription|enableCodeBlock|codeBlockBackground|codeBlockBorder|borderColor|borderWidth|borderRadius|codeBlockShadow|noneShadow|lightShadow|mediumShadow|heavyShadow|lineNumber|showLineNumber|hideLineNumber|codeFont|codeColor|textColor|keywordColor|stringColor|commentColor|functionColor|numberColor|colorPlaceholder|enableDocumentFont|enableTableStyle|enableListStyle|levelDisplay|levelDisplayHint|customLevelMarkers|generalSettings|enableGeneralSettings|generalSettingsDesc|commonSettings|githubStyle|rainbowStyle|monochromeStyle|warmStyle|coolStyle|gradientStyle|customStyle|defaultStyle|defaultStyleDesc|macStyle|macStyleDesc|githubStyleDesc|advancedSettings|heading1|heading2|heading3|heading4|heading5|heading6)/,
+    pattern: /^(font|heading|codeBlock|codePadding|expandCode|collapse|titleCenter|titleColor|titleFont|enableHeading|iconStyle|emojiStyle|symbolStyle|numberStyle|geometricStyle|arrowStyle|customIcon|iconPlaceholder|documentFont|tableStyle|tableBorder|tableCell|tableHeader|tableOdd|tableEven|tableText|listStyle|orderedList|unorderedList|listSymbol|resetColor|resetToDefault|enableHighlight|highlightDescription|enableFloatingToolbar|floatingToolbarDescription|enableHeatmapMarker|heatmapMarkerDescription|enableCodeBlock|borderColor|borderWidth|borderRadius|noneShadow|lightShadow|mediumShadow|heavyShadow|lineNumber|showLineNumber|hideLineNumber|codeFont|codeColor|textColor|keywordColor|stringColor|commentColor|functionColor|numberColor|colorPlaceholder|enableDocumentFont|enableTableStyle|enableListStyle|levelDisplay|customLevelMarkers|generalSettings|enableGeneralSettings|commonSettings|githubStyle|rainbowStyle|monochromeStyle|warmStyle|coolStyle|gradientStyle|customStyle|defaultStyle|macStyle|advancedSettings)/,
     module: 'generalSettings',
   },
   // 二维码
@@ -151,42 +151,42 @@ const MODULE_RULES = [
   },
   // AI 内容生成
   {
-    pattern: /^(ai|generate|generating|generatedContent|conversationSettings|systemPrompt|temperature|precise|creative|maxTokens|forceMarkdown|enableTypewriter|inputPlaceholder|retry|stop|stopGeneration|copyMarkdown|insert|insertToDoc|rawMarkdown|emptyHint|quickTemplates|article|summary|todoList|brainstorm|enterInput|selectPrompt|savedPrompts|noSavedPrompts|savePromptConfig|promptName|enterPrompt|confirmDelete|currentPrompt|referenceCurrentDoc|contextMessageLimit|minimal|maximum|editMode|editModeEnabled|editModeDisabled|targetDocument|selectDocument|editContent|viewDiff|hideDiff|applyEdit|undoEdit|insertSubDocument|insertSubDoc|subDocument|subDocumentName|aiSummary|editPlaceholder|polish|expand|condense|fix|analyze|rewrite|translate|undo|plagiarismCheck|riskLevel|similarityRate|suggestions|lowRisk|mediumRisk|highRisk|aiSuggestions|applySuggestions|documentTitle|editModeHint|insertToDocument|confirmInsert|undoInsert|presetTemplates|originalContent|newContent)/,
+    pattern: /^(ai|generate|generating|conversationSettings|systemPrompt|temperature|precise|creative|maxTokens|forceMarkdown|enableTypewriter|inputPlaceholder|retry|stop|copyMarkdown|insert|rawMarkdown|emptyHint|quickTemplates|article|summary|todoList|brainstorm|enterInput|selectPrompt|savedPrompts|noSavedPrompts|savePromptConfig|promptName|enterPrompt|confirmDelete|currentPrompt|referenceCurrentDoc|contextMessageLimit|minimal|maximum|editMode|targetDocument|selectDocument|editContent|viewDiff|hideDiff|applyEdit|undoEdit|subDocument|editPlaceholder|polish|expand|condense|fix|analyze|rewrite|translate|undo|plagiarismCheck|riskLevel|similarityRate|suggestions|lowRisk|mediumRisk|highRisk|applySuggestions|documentTitle|presetTemplates|originalContent|newContent)/,
     module: 'aiContentGenerator',
   },
   // 谐音翻译
   {
-    pattern: /^(pronunciation|enablePronunciation|pronunciationDesc|pronunciationPlaceholder|pronunciationHelp|pronunciationHint)/,
+    pattern: /^(pronunciation|enablePronunciation)/,
     module: 'pronunciation',
   },
   // 内容加密
   {
-    pattern: /^(encryption|encrypt|decrypt|invalidEncrypted|currentPassword|passwordNotSetYet|changePassword|encryptionTip|algorithmInfo|decryptPassword|decryptedContent|copyContent|copied|copySuccess|copyFailed|replaceEncrypted|replaceSuccess|replaceFailed|saveToArchive|savingToArchive)/,
+    pattern: /^(encryption|encrypt|decrypt|invalidEncrypted|currentPassword|passwordNotSetYet|changePassword|algorithmInfo|copyContent|copied|copySuccess|copyFailed|replaceEncrypted|replaceSuccess|replaceFailed|saveToArchive|savingToArchive)/,
     module: 'encryption',
   },
   // 数据备份
   {
-    pattern: /^(dataBackup|workspaceInfo|workspacePath|notSet|lastBackup|never|manualBackup|backup|autoBackup|disabled|enabled|backupFrequency|everyMinute|everyHour|everyDay|backupTime|keepBackups|backupHistory|noBackups|restore|restoreSuccess|restoreFailed|confirmRestore|restoring|delete|confirmDelete|deleteSuccess|deleteFailed|selectPath|selectWorkspace|enterWorkspacePath|workspacePathSet|selectPathFailed|pleaseSelectWorkspace|mobileBackupDisabled|pluginSettingsBackup|exportSettings|pluginSettingsBackupHint|exportSuccess|exportFailed)/,
+    pattern: /^(dataBackup|workspaceInfo|workspacePath|notSet|lastBackup|never|manualBackup|backup|autoBackup|disabled|enabled|everyMinute|everyHour|everyDay|keepBackups|noBackups|restore|confirmRestore|restoring|delete|confirmDelete|selectPath|selectWorkspace|enterWorkspacePath|pleaseSelectWorkspace|mobileBackupDisabled|pluginSettingsBackup|exportSettings|exportSuccess|exportFailed)/,
     module: 'dataBackup',
   },
   // 图片生成
   {
-    pattern: /^(enableImageCreation|enableImageCreationDesc)/,
+    pattern: /^(enableImageCreation)/,
     module: 'imageCreation',
   },
   // 数据快照
   {
-    pattern: /^(enableDataSnapshot|enableDataSnapshotDesc)/,
+    pattern: /^(enableDataSnapshot)/,
     module: 'dataSnapshot',
   },
   // Git 推送
   {
-    pattern: /^(enableGitPush|enableGitPushDesc)/,
+    pattern: /^(enableGitPush)/,
     module: 'gitPush',
   },
   // 脚本启动器
   {
-    pattern: /^(enableScriptLauncher|enableScriptLauncherDesc)/,
+    pattern: /^(enableScriptLauncher)/,
     module: 'scriptLauncher',
   },
   // 紧凑模式
@@ -196,7 +196,7 @@ const MODULE_RULES = [
   },
   // Skills 查看器
   {
-    pattern: /^(skillsViewer|skillsUnit|checking|noSkills|skillsPathHint|projectPath|projectPathPlaceholder|openDir|openDirFailed|scanning|scanComplete|scanFailed|expand|collapse|noSkillsFound|editSkill|saveSkill|cancelEdit|editSkillPlaceholder|editSkillHint|saveSkillSuccess|saveSkillFailed|deleteSkill|deleteSkillTitle|deleteSkillConfirm|deleteSkillSuccess|deleteSkillFailed)/,
+    pattern: /^(skillsViewer|skillsUnit|checking|noSkills|skillsPathHint|projectPath|openDir|scanning|scanComplete|scanFailed|expand|collapse|editSkill|saveSkill|cancelEdit|deleteSkill)/,
     module: 'skillsViewer',
   },
   // HTML 展示

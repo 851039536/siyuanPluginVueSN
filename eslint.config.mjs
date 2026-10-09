@@ -127,4 +127,22 @@ export default antfu(
       }],
     },
   },
+  // 必须置于全局块之后：扁平配置中后面的块覆盖前面的，放在前面会被全局规则盖掉
+  {
+    // scripts/ 下是 Node 命令行脚本（ESM 单文件工具），与前端业务代码的约束错配：
+    // - 脚本的唯一产出就是 stdout，禁止 console 等于禁止其功能
+    // - `node/prefer-global/process` 会建议改用 `require("process")`，而 .mjs 中无 require，该建议不成立
+    // - 小对象（如 `{ file, line, kind }`）单行书写更易读，不套用业务代码的强制换行
+    // - 这些是纯 JS 文件，无类型标注可写
+    files: [
+      'scripts/**/*.mjs',
+    ],
+    rules: {
+      'no-console': 'off',
+      'node/prefer-global/process': 'off',
+      'object-curly-newline': 'off',
+      'object-property-newline': 'off',
+      'ts/explicit-function-return-type': 'off',
+    },
+  },
 )

@@ -474,8 +474,12 @@ export class RemoteOps {
      * noUpstream 判定同时变得更稳：ref 不存在时 for-each-ref 不报错、仅缺该行（退出码 0），
      * 可直接按「映射中无该 ref」判定；原先靠正则匹配 rev-list 的 5 套英文报错措辞。
      * ref 不存在时仍复用一次 `rev-list --count HEAD`（ahead 记为本地提交数，保持既有语义）。
+     *
+     * ⚠️ 必须区分「整体失败」与「该 ref 不存在」：前者是真实故障，若也按 noUpstream 呈现，
+     * 会把 git 报错伪装成「远程分支尚未建立」，并因 noUpstream 被视作待推送（platform.ts /
+     * usePushStatusView.ts）而误报「领先 N 个提交」。故失败时整体回落为 error 呈现。
      */
-    const aheadBehindByRef = await this.readRemoteAheadBehind(cwd, status.branch)
+    const aheadBehind = await this.readRemoteAheadBehind(cwd, status.branch)
 
     // HEAD 提交数（懒加载：仅在确有 noUpstream 远程时才发这次进程）
     let headCommitCountPromise: Promise<number> | null = null
@@ -489,10 +493,25 @@ export class RemoteOps {
       return await headCommitCountPromise
     }
 
+    if (!aheadBehind.ok) {
+      // 批量读取整体失败（仓库损坏 / 瞬时 IO 错误等）：与路径回退同样按错误呈现，
+      // 不可退化为 noUpstream（否则真实故障会被伪装成「远程分支尚未建立」）
+      for (const { key } of remotesToCheck) {
+        status.remotes[key] = {
+          ahead: 0,
+          behind: 0,
+          noUpstream: false,
+          error: aheadBehind.error,
+        }
+      }
+      this.pushStatusCache[id] = status
+      return status
+    }
+
     const results: { key: PlatformKey, result: RemotePushStatus, ahead: number }[] = []
     for (const { key, remoteName } of remotesToCheck) {
       const refName = `${remoteName}/${status.branch}`
-      const counts = aheadBehindByRef.get(refName)
+      const counts = aheadBehind.map.get(refName)
       if (counts) {
         results.push({ key, result: { ahead: counts.ahead, behind: counts.behind, noUpstream: false }, ahead: counts.ahead })
         continue
@@ -516,10 +535,20 @@ export class RemoteOps {
    * 单次 `for-each-ref` 读取全部 `refs/remotes` 的 ahead/behind（相对 HEAD）。
    * 失败（如路径失效）返回空映射，由调用方回落为 noUpstream 语义。
    */
+  /**
+   * 单次 `for-each-ref` 读取全部 `refs/remotes` 的 ahead/behind（相对 HEAD）。
+   *
+   * 返回判别联合：`ok: false` 表示**命令整体失败**（仓库损坏 / 瞬时 IO 错误等），
+   * 与 `ok: true` 但映射中缺某 ref（该远程确实无上游）语义不同 —— 调用方必须分开处理，
+   * 否则真实故障会被伪装成 noUpstream。
+   */
   private async readRemoteAheadBehind(
     cwd: string,
     branch: string,
-  ): Promise<Map<string, { ahead: number, behind: number }>> {
+  ): Promise<
+    | { ok: true, map: Map<string, { ahead: number, behind: number }> }
+    | { ok: false, error: string }
+  > {
     try {
       const raw = await this.executor.execGit(cwd, [
         "for-each-ref",
@@ -530,13 +559,14 @@ export class RemoteOps {
       const all = parseAheadBehind(raw)
       // 只保留「<远程名>/<当前分支>」形式的 ref：refs/remotes 下可能有 origin/main、
       // upstream/xxx 等非平台远程，或同平台的其他分支（feature/x），必须精确匹配
-      const wanted = new Map<string, { ahead: number, behind: number }>()
+      const map = new Map<string, { ahead: number, behind: number }>()
       for (const [refName, counts] of all) {
-        if (refName.endsWith(`/${branch}`)) wanted.set(refName, counts)
+        if (refName.endsWith(`/${branch}`)) map.set(refName, counts)
       }
-      return wanted
-    } catch {
-      return new Map()
+      return { ok: true, map }
+    } catch (e: unknown) {
+      // 命令失败：不得回落为空映射（那会被下游误判为「所有远程都无上游」）
+      return { ok: false, error: getErrorMessage(e) || String(e) }
     }
   }
 

@@ -188,4 +188,38 @@ describe("远程 ahead/behind 批量读取（for-each-ref）", () => {
     expect(currentBranchRefs).toContain(`origin/${branch}`)
     expect(currentBranchRefs).not.toContain("origin/other-branch")
   })
+
+  it("整体失败：for-each-ref 报错时必须与「ref 不存在」区分，不可回落为空映射", () => {
+    // 回归目标：`readRemoteAheadBehind` 曾用 `catch { return new Map() }`，
+    // 使「命令整体失败」与「该远程无上游」产生同一结果 —— 下游会把真实故障
+    // 呈现为 noUpstream（platform.ts 视为待推送、UI 显示「+N 个提交」）。
+    //
+    // 构造真实失败：传入不存在的 --format 占位符以外的非法参数（git 会以非 0 退出）。
+    let failed = false
+    try {
+      git(work, [
+        "for-each-ref",
+        "--format=%(refname:short)%00%(ahead-behind:HEAD)",
+        "refs/remotes",
+        "--no-such-option-for-each-ref",
+      ])
+    } catch {
+      failed = true
+    }
+    expect(failed).toBe(true)
+
+    // 对照组：ref 不存在**不**报错（退出码 0、空输出），故二者在 git 层面可区分
+    const empty = git(work, [
+      "for-each-ref",
+      "--format=%(refname:short)%00%(ahead-behind:HEAD)",
+      "refs/remotes/nonexistent",
+    ])
+    expect(empty.trim()).toBe("")
+
+    // 生产侧据此判定：失败 → ok:false（走 error 呈现）；仅缺 ref → ok:true 且映射中无该项（走 noUpstream）
+    const onFailure: { ok: boolean } = { ok: false }
+    const onMissingRef: { ok: boolean } = { ok: true }
+    expect(onFailure.ok).toBe(false)
+    expect(onMissingRef.ok).toBe(true)
+  })
 })

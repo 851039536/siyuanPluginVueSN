@@ -47,46 +47,15 @@
 }
 
 // ── 工具栏 ──
+// 外壳改走共享 Toolbar（三段式 start/end + 恒定渲染），此处只补搜索框宽度与筛选组间距。
 .gp-log-toolbar {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
   margin-bottom: $s-2;
-  padding: 0 $s-2;
 }
 
-// 项目搜索框（icon + input 组合，定宽可收缩）
+// 项目搜索框容器（定宽可收缩；边框/焦点环由共享 Input 承担）
 .gp-log-search {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
   flex: 0 1 200px;
   min-width: 120px;
-  padding: $s-px2 $s-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  color: var(--b3-theme-on-surface-light);
-  transition: border-color 0.12s;
-
-  &:focus-within {
-    @include focus-ring;
-  }
-
-  input {
-    flex: 1;
-    min-width: 0;
-    padding: 0;
-    background: none;
-    border: none;
-    outline: none;
-    font-size: $t-2xs;
-    color: var(--b3-theme-on-background);
-
-    &::placeholder {
-      color: var(--b3-theme-on-surface-light);
-      opacity: 0.5;
-    }
-  }
 }
 
 .gp-log-count {
@@ -98,55 +67,12 @@
   letter-spacing: 0.06em;
 }
 
+// 操作类型筛选组（互斥选项：共享 Button + outlined/severity/aria-pressed 表达选中态）
 .gp-log-filters {
   display: flex;
   align-items: center;
   gap: $s-px3;
-  margin-left: auto;
-}
-
-.gp-log-filter-btn {
-  @include btn-reset;
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px2;
-  font-size: $t-2xs;
-  padding: $s-px2 $s-2;
-  border-radius: $r-sm;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  transition: opacity 0.12s, background 0.12s;
-
-  &:hover {
-    opacity: 0.8;
-    background: var(--b3-list-hover);
-  }
-
-  &.active {
-    opacity: 1;
-    background: var(--b3-theme-primary-lightest);
-    color: var(--b3-theme-primary);
-  }
-
-  // 仅失败快捷筛选：active 红色高亮
-  &--fail {
-    &.active {
-      background: var(--b3-theme-error-lightest);
-      color: var(--b3-theme-error);
-    }
-  }
-}
-
-.gp-log-clear-btn {
-  @include btn-reset;
-  opacity: 0.35;
-  padding: $s-px2;
-  border-radius: $r-sm;
-  transition: opacity 0.12s;
-
-  &:hover {
-    opacity: 0.7;
-  }
+  margin-right: $s-1;
 }
 
 // ════ 日志表格（div-based table，列宽定义见 .gp-log-tcol--*）════
@@ -328,39 +254,27 @@
   opacity: 0.35;
 }
 
-// ── 展开/收起按钮（图标化，hover 提升）──
-.gp-log-expand-btn {
-  @include btn-reset;
+// ── 展开/复制按钮（共享 Button 的 ghost/xsmall 承担几何与交互，
+//    此处只补「复制按钮默认隐藏、hover 数据行才显示」的降噪行为与紧凑尺寸）──
+.gp-log-icon-btn.si-button {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 18px;
+  min-width: 18px;
   height: 18px;
-  border-radius: $r-sm;
-  color: var(--b3-theme-on-surface);
+  min-height: 18px;
+  padding: 0;
   opacity: 0.4;
-  transition: opacity 0.12s, background 0.12s;
+  transition: opacity 0.12s;
 
   &:hover {
     opacity: 1;
-    background: var(--b3-list-hover);
   }
 }
 
-// ── 复制按钮（默认隐藏，hover 数据行时显示，降低视觉噪声）──
-.gp-log-copy-btn {
-  @include btn-reset;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: $r-sm;
-  color: var(--b3-theme-on-surface);
+// 复制按钮：默认隐藏，hover 数据行时浮现（与展开按钮同一 .gp-log-icon-btn 几何，
+// 故挂在 ops 列第二个按钮上；用 :last-child 区分，避免为非复制按钮引入额外类名）
+.gp-log-tcol--ops .gp-log-icon-btn.si-button:last-child {
   opacity: 0;
-  transition: opacity 0.12s, background 0.12s;
 
   .gp-log-trow:hover & {
     opacity: 0.45;
@@ -368,11 +282,10 @@
 
   &:hover {
     opacity: 1;
-    background: var(--b3-list-hover);
   }
 }
 
-// ── 平台明细（展开子行内，纵向排列）──
+// ── 平台明细（展开子行与详情弹窗共用 LogPlatformList）──
 .gp-log-platforms {
   display: flex;
   flex-direction: column;
@@ -386,7 +299,8 @@
   font-size: $t-2xs;
 }
 
-.gp-log-platform-ok {
+// 三态标记（✓ / — / ✗）：宽度固定保证各平台标签左对齐；配色由 gp-log-dot--* 语义色承担
+.gp-log-platform-mark {
   flex-shrink: 0;
   width: 14px;
   text-align: center;

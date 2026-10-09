@@ -183,48 +183,36 @@
 }
 
 // 平台明细（逐平台行：状态 + 平台名 + 跳过标记 + 摘要）
-.gp-logd-platforms {
-  display: flex;
-  flex-direction: column;
+// 结构走共享 LogPlatformList（.gp-log-platform-*），弹窗内在此叠加"卡片式"外观：
+// 详情弹窗空间宽裕，逐平台独立描边卡片比紧凑列表更易逐行阅读。
+.gp-logd-section .gp-log-platforms {
   gap: $s-1;
 }
 
-.gp-logd-platform {
-  display: flex;
-  align-items: center;
+.gp-logd-section .gp-log-platform-item {
   gap: $s-2;
-  font-size: $t-2xs;
   padding: $s-1 $s-2;
   border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;
   background: var(--b3-theme-surface);
 }
 
-.gp-logd-platform-ok {
-  flex-shrink: 0;
-  width: 14px;
-  text-align: center;
-  font-family: $ff-mono;
+.gp-logd-section .gp-log-platform-mark {
   font-weight: $fw-bold;
 }
 
-.gp-logd-platform-label {
-  flex-shrink: 0;
+.gp-logd-section .gp-log-platform-label {
   min-width: 48px;
   opacity: 0.6;
   font-weight: $fw-semibold;
 }
 
-.gp-logd-platform-skip {
-  flex-shrink: 0;
+.gp-logd-section .gp-log-platform-skip {
   opacity: 0.35;
 }
 
-.gp-logd-platform-summary {
-  flex: 1;
-  min-width: 0;
+.gp-logd-section .gp-log-platform-summary {
   opacity: 0.6;
-  @include text-ellipsis;
 }
 
 // 提交信息：等宽完整展示

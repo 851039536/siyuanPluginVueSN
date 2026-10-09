@@ -32,16 +32,14 @@
               >{{ entry.ok ? i18n.logStatusSuccess : i18n.logStatusFailed }}</span>
             </div>
             <!-- 关闭按钮（tooltip："关闭"） -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
+            <Button
+              variant="ghost"
+              size="xsmall"
+              icon="close"
               :title="i18n.close"
+              :aria-label="i18n.close"
               @click="$emit('close')"
-            >
-              <Icon
-                icon="mdi:close"
-                height="12"
-              />
-            </button>
+            />
           </div>
 
           <!-- 内容区 -->
@@ -80,24 +78,10 @@
               class="gp-logd-section"
             >
               <div class="gp-logd-section-title">{{ i18n.logDetailPlatforms }}</div>
-              <div class="gp-logd-platforms">
-                <div
-                  v-for="p in entry.platforms!"
-                  :key="p.key"
-                  class="gp-logd-platform"
-                >
-                  <span
-                    class="gp-logd-platform-ok"
-                    :class="p.ok ? 'gp-logd-text-ok' : p.skipped ? 'gp-logd-text-skip' : 'gp-logd-text-fail'"
-                  >{{ p.ok ? '✓' : p.skipped ? '—' : '✗' }}</span>
-                  <span class="gp-logd-platform-label">{{ p.label }}</span>
-                  <span
-                    v-if="p.skipped"
-                    class="gp-logd-platform-skip"
-                  >{{ i18n.opSkipped }}</span>
-                  <span class="gp-logd-platform-summary">{{ p.summary }}</span>
-                </div>
-              </div>
+              <LogPlatformList
+                :i18n="i18n"
+                :platforms="entry.platforms!"
+              />
             </div>
 
             <!-- 提交信息区（commit）："提交信息"（完整 message） -->
@@ -113,32 +97,27 @@
           <!-- 底部操作栏 -->
           <div class="gp-logd-footer">
             <!-- 复制条目（tooltip："复制条目"，成功后勾选 2s） -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
+            <Button
+              variant="ghost"
+              size="xsmall"
+              :icon="copied ? 'check' : 'contentCopy'"
               :title="i18n.logCopyEntry"
               @click="handleCopy"
-            >
-              <Icon
-                :icon="copied ? 'mdi:check' : 'mdi:content-copy'"
-                height="12"
-              />
-              <span>{{ i18n.logCopyEntry }}</span>
-            </button>
+            >{{ i18n.logCopyEntry }}</Button>
             <div class="gp-grow" />
             <!-- 查看项目（主操作，点击跳转列表视图） -->
-            <button
-              class="vp-btn vp-btn--primary vp-btn--sm"
+            <Button
+              size="xsmall"
+              variant="ghost"
+              severity="primary"
               @click="handleViewProject"
-            >
-              <span>{{ i18n.viewProject }}</span>
-            </button>
+            >{{ i18n.viewProject }}</Button>
             <!-- 关闭 -->
-            <button
-              class="vp-btn vp-btn--ghost vp-btn--sm"
+            <Button
+              variant="ghost"
+              size="xsmall"
               @click="$emit('close')"
-            >
-              <span>{{ i18n.close }}</span>
-            </button>
+            >{{ i18n.close }}</Button>
           </div>
         </div>
       </div>
@@ -148,15 +127,13 @@
 
 <script setup lang="ts">
 import type { GitOpLogEntry } from "../../types"
-import { Icon } from "@iconify/vue"
-import {
-  computed,
-  onUnmounted,
-  ref,
-} from "vue"
+import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import { formatLogEntryText, formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import LogPlatformList from "./LogPlatformList.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -169,9 +146,8 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 复制反馈（成功 2s 后还原） */
-const copied = ref(false)
-let copiedTimer: ReturnType<typeof setTimeout> | undefined
+/** 复制成功反馈（2s 自动还原；定时器清理由 composable 承担） */
+const { copied, notifyCopied } = useCopyFeedback()
 
 /** 键盘聚焦辅助：entry 变为非空时自动聚焦根节点，使 Esc 关闭可被捕获 */
 // ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
@@ -179,18 +155,11 @@ let copiedTimer: ReturnType<typeof setTimeout> | undefined
 const { rootRef } = useDialogKeyboard(computed(() => !!props.entry))
 void rootRef
 
-/** 复制条目（commit 含完整提交信息，其余为 "[时间] 项目名 — 摘要"） */
+/** 复制条目（文本构造走 utils.formatLogEntryText 单一真源，与表格行口径一致） */
 async function handleCopy() {
   if (!props.entry) return
-  const text = props.entry.message
-    ? `[${formatLogTime(props.entry.time)}] ${props.entry.projectName}\n${props.entry.message}`
-    : `[${formatLogTime(props.entry.time)}] ${props.entry.projectName} — ${props.entry.summary}`
-  const ok = await copyToClipboard(text)
-  if (ok) {
-    if (copiedTimer) clearTimeout(copiedTimer)
-    copied.value = true
-    copiedTimer = setTimeout(() => { copied.value = false }, 2000)
-  }
+  const ok = await copyToClipboard(formatLogEntryText(props.entry))
+  if (ok) notifyCopied()
 }
 
 /** 跳转列表视图（由 LogPanel 转发给主面板） */
@@ -198,10 +167,6 @@ function handleViewProject() {
   if (!props.entry) return
   emit("viewProject", props.entry.projectId)
 }
-
-onUnmounted(() => {
-  if (copiedTimer) clearTimeout(copiedTimer)
-})
 </script>
 
 <style lang="scss">

@@ -38,28 +38,27 @@
       </span>
       <!-- 操作列：展开平台明细 + 复制 -->
       <span class="gp-log-tcol gp-log-tcol--ops">
-        <button
+        <Button
           v-if="hasLogPlatforms(entry)"
-          class="gp-log-expand-btn"
+          variant="ghost"
+          size="xsmall"
+          class="gp-log-icon-btn"
+          :icon="expanded ? 'chevronUp' : 'chevronDown'"
           :title="expanded ? i18n.collapsePlatforms : i18n.expandPlatforms"
+          :aria-label="expanded ? i18n.collapsePlatforms : i18n.expandPlatforms"
+          :aria-expanded="expanded"
           @click.stop="expanded = !expanded"
-        >
-          <Icon
-            :icon="expanded ? 'mdi:chevron-up' : 'mdi:chevron-down'"
-            height="12"
-          />
-        </button>
+        />
         <!-- 复制条目（点击写入剪贴板，成功后切换勾选 2s） -->
-        <button
-          class="gp-log-copy-btn"
+        <Button
+          variant="ghost"
+          size="xsmall"
+          class="gp-log-icon-btn"
+          :icon="copied ? 'check' : 'contentCopy'"
           :title="i18n.logCopyEntry"
+          :aria-label="i18n.logCopyEntry"
           @click.stop="handleCopy"
-        >
-          <Icon
-            :icon="copied ? 'mdi:check' : 'mdi:content-copy'"
-            height="12"
-          />
-        </button>
+        />
       </span>
     </div>
 
@@ -72,24 +71,10 @@
       <span class="gp-log-tcol gp-log-tcol--status" />
       <span class="gp-log-tcol gp-log-tcol--project" />
       <div class="gp-log-tcol gp-log-tcol--summary">
-        <div class="gp-log-platforms">
-          <div
-            v-for="p in entry.platforms!"
-            :key="p.key"
-            class="gp-log-platform-item"
-          >
-            <span
-              class="gp-log-platform-ok"
-              :class="p.ok ? 'gp-log-dot--ok' : p.skipped ? 'gp-log-dot--skip' : 'gp-log-dot--fail'"
-            >{{ p.ok ? '✓' : p.skipped ? '—' : '✗' }}</span>
-            <span class="gp-log-platform-label">{{ p.label }}</span>
-            <span
-              v-if="p.skipped"
-              class="gp-log-platform-skip"
-            >{{ i18n.opSkipped }}</span>
-            <span class="gp-log-platform-summary">{{ p.summary }}</span>
-          </div>
-        </div>
+        <LogPlatformList
+          :i18n="i18n"
+          :platforms="entry.platforms!"
+        />
       </div>
     </div>
     <!-- commit 信息子行 -->
@@ -108,12 +93,14 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 操作日志表格行（数据行 + 平台/commit 子行，展开与复制状态自持）
+// gitPush 操作日志表格行（数据行 + 平台/commit 子行，展开与复制反馈状态自持）
 import type { GitOpLogEntry } from "../../types"
-import { Icon } from "@iconify/vue"
-import { onUnmounted, ref } from "vue"
+import { ref } from "vue"
+import Button from "@/components/Button.vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import { formatLogEntryText, formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
+import LogPlatformList from "./LogPlatformList.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -128,23 +115,15 @@ const emit = defineEmits<{
 /** 平台明细子行是否展开（行内自持状态，互不影响） */
 const expanded = ref(false)
 
-/** 复制反馈（成功 2s 后还原） */
-const copied = ref(false)
-let copyTimer: ReturnType<typeof setTimeout> | undefined
+/** 复制成功反馈（2s 自动还原；定时器清理由 composable 承担） */
+const { copied, notifyCopied } = useCopyFeedback()
 
-/** 复制条目为 "[HH:mm] 项目名 — 摘要"（成功切换勾选图标 2s 后还原） */
+/** 复制条目（文本构造走 utils.formatLogEntryText 单一真源，与详情弹窗口径一致） */
 async function handleCopy() {
-  const time = formatLogTime(props.entry.time).slice(11)
-  const ok = await copyToClipboard(`[${time}] ${props.entry.projectName} — ${props.entry.summary}`)
+  const ok = await copyToClipboard(formatLogEntryText(props.entry))
   if (!ok) return
-  if (copyTimer) clearTimeout(copyTimer)
-  copied.value = true
-  copyTimer = setTimeout(() => { copied.value = false }, 2000)
+  notifyCopied()
 }
-
-onUnmounted(() => {
-  if (copyTimer) clearTimeout(copyTimer)
-})
 </script>
 
 <style lang="scss">

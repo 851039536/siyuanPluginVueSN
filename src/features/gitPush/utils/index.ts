@@ -83,9 +83,12 @@ export {
   buildYearOptions,
   DEFAULT_LOG_LIMIT,
   formatDateTime,
+  formatLogEntryText,
   formatLogTime,
   hasLogPlatforms,
   logActionLabel,
+  logDateKey,
+  logDateLabel,
   relativeTime,
   statsStatusText,
 } from "./format"

@@ -1,5 +1,6 @@
 // gitPush 展示格式化（纯函数）：相对/绝对时间、年份选项、分析状态文案、活动分级、操作日志标签
 import type { GitOpLogEntry } from "../types"
+import { formatLocalDate } from "./analysis"
 
 /** LOG 默认显示条数（与 BranchCommitList.countOptions 首项保持一致） */
 export const DEFAULT_LOG_LIMIT = 200
@@ -117,4 +118,50 @@ export function logActionLabel(action: string, i18n: Record<string, any>): strin
     commit: i18n.opCommit,
   }
   return map[action] ?? action
+}
+
+/**
+ * 操作日志条目 → 复制到剪贴板的纯文本（**单一真源**，表格行与详情弹窗共用）。
+ *
+ * 历史问题：两处各自拼接过这段文本，且时间口径不一致 —— 表格行用
+ * `formatLogTime(time).slice(11)` 只保留了 `HH:mm`，弹窗用完整 `YYYY-MM-DD HH:mm`。
+ * 跨天日志从行内复制出来后无法分辨是哪天的操作，故统一为**完整日期时间**（信息更全）。
+ *
+ * commit 条目附带完整提交信息（换行分隔）；其余条目为「[时间] 项目名 — 摘要」。
+ */
+export function formatLogEntryText(entry: GitOpLogEntry): string {
+  const stamp = formatLogTime(entry.time)
+  if (entry.message) return `[${stamp}] ${entry.projectName}\n${entry.message}`
+  return `[${stamp}] ${entry.projectName} — ${entry.summary}`
+}
+
+/**
+ * ISO 时间戳 → 自然日键 `YYYY-MM-DD`（日志按日分组用；无法解析时降级返回原串）。
+ *
+ * ⚠️ 必须显式判 `Number.isNaN`：`new Date("garbage")` **不抛错**，而是得到 Invalid Date，
+ * 直接交给 formatLocalDate 会产出字面量 `"NaN-NaN-NaN"` 并成为分组键
+ * （原实现用 try/catch 兜底，该分支实际永不触发，属隐性的空兜底）。
+ */
+export function logDateKey(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return formatLocalDate(d)
+}
+
+/**
+ * ISO 时间戳 → 分组标题（"今天" / "昨天" / `YYYY-MM-DD`）。
+ *
+ * 按本地自然日比较（而非小时差），避免「今天 00:30」与「昨天 23:50」被算成同一天；
+ * 两侧都归零到 00:00 后再取整日差，故夏令时切换日也不会差一天。
+ */
+export function logDateLabel(iso: string, i18n: Record<string, any>): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const diff = Math.round((today.getTime() - target.getTime()) / 86400000)
+  if (diff === 0) return i18n.logDateToday
+  if (diff === 1) return i18n.logDateYesterday
+  return logDateKey(iso)
 }

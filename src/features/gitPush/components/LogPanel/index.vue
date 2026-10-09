@@ -71,7 +71,7 @@
 import type { GitOpLogEntry } from "../../types"
 import { computed, ref, watch } from "vue"
 import { usePagedList } from "../../composables/usePagedList"
-import { formatLocalDate, logActionLabel } from "../../utils"
+import { logActionLabel, logDateKey, logDateLabel } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 import LogDetailDialog from "./LogDetailDialog.vue"
@@ -139,17 +139,18 @@ watch([activeFilter, failOnly, searchQuery], () => pagedReset())
 
 /**
  * 日期分组：在分页结果之上按自然日聚合（pagedLogs 已按时间倒序，
- * 同一天条目必然连续，故单次遍历合并即可）
+ * 同一天条目必然连续，故单次遍历合并即可）。
+ * 日键与分组标题取 utils.logDateKey / logDateLabel（纯函数已移出组件，可单测）。
  */
 const groupedLogs = computed<LogDateGroup[]>(() => {
   const groups: LogDateGroup[] = []
   for (const e of pagedLogs.value) {
-    const key = dateKeyOf(e.time)
+    const key = logDateKey(e.time)
     const last = groups[groups.length - 1]
     if (last && last.dateKey === key) {
       last.entries.push(e)
     } else {
-      groups.push({ dateKey: key, dateLabel: dateLabelOf(e.time), entries: [e] })
+      groups.push({ dateKey: key, dateLabel: logDateLabel(e.time, props.i18n), entries: [e] })
     }
   }
   return groups
@@ -157,31 +158,6 @@ const groupedLogs = computed<LogDateGroup[]>(() => {
 
 /** 当前选中查看详情的日志条目（null 表示弹窗关闭） */
 const selectedEntry = ref<GitOpLogEntry | null>(null)
-
-/** 将 ISO 时间戳格式化为自然日键 YYYY-MM-DD */
-function dateKeyOf(iso: string): string {
-  try {
-    return formatLocalDate(new Date(iso))
-  } catch {
-    return iso
-  }
-}
-
-/** 分组标题：今天 / 昨天 / 完整日期（Date 对象比较，避免手动 pad 拼接） */
-function dateLabelOf(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const target = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-    const diff = Math.round((today.getTime() - target.getTime()) / 86400000)
-    if (diff === 0) return props.i18n.logDateToday
-    if (diff === 1) return props.i18n.logDateYesterday
-    return dateKeyOf(iso)
-  } catch {
-    return iso
-  }
-}
 </script>
 
 <style lang="scss">

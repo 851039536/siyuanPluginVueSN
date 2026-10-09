@@ -2,7 +2,6 @@
 @use "./mixins" as *;
 
 .bcl-panel {
-  border-top: 1px dashed var(--b3-border-color);
   margin-top: $s-px6;
   padding-top: $s-1;
 }

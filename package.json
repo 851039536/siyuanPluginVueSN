@@ -36,7 +36,8 @@
     "i18n:merge": "node scripts/merge-i18n.mjs",
     "i18n:verify": "node scripts/verify-i18n.mjs",
     "i18n:split": "node scripts/split-i18n.mjs",
-    "audit:tokens": "node scripts/audit-token-shorthand.mjs"
+    "audit:tokens": "node scripts/audit-token-shorthand.mjs",
+    "audit:encoding": "node scripts/audit-encoding.mjs"
   },
   "dependencies": {
     "@iconify-json/mdi": "^1.2.3",

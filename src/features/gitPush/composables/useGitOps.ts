@@ -8,7 +8,9 @@ import type {
 } from "../types"
 import { onUnmounted, ref } from "vue"
 import {
+  deriveOpOk,
   findProject,
+  opLogSummary,
   requireProject,
   resolveValidPath,
   acquireFlag,
@@ -19,7 +21,7 @@ import { useOpLog } from "./useOpLog"
 import { useProjectQueryScheduler } from "./useProjectQueryScheduler"
 export type { PushOutputEntry, ProgressStatus } from "./useRemoteProgress"
 
-export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) {
+export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, i18n: Record<string, any>) {
   /** 正在提交的项目 id → true */
   const committing = ref<Record<string, boolean>>({})
   /** Stash 操作加载中（引用计数防并发同类操作先完成者提前清除标志） */
@@ -143,24 +145,24 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
         reloadWorkingTreeAfterWrite(id),
         loadPushStatus(id, branch ? { branch, force: true } : { force: true }),
       ])
-      // 操作日志埋点
+      // 操作日志埋点（摘要经 opLogSummary 单一真源生成，与 push/pull 口径一致）
       void appendOpLog({
         projectId: id,
         projectName: project.name,
         action: "commit",
-        ok: true,
-        summary: result.split("\n")[0]?.trim() || "提交成功",
+        ok: deriveOpOk(undefined, true),
+        summary: opLogSummary({ action: "commit", ok: true, i18n, raw: result }),
         message,
       })
       return result
     } catch (e: any) {
-      // 操作日志埋点：提交失败
+      // 操作日志埋点：提交失败（ok 由「抛错即失败」的契约决定，与成功分支成对）
       void appendOpLog({
         projectId: id,
         projectName: project.name,
         action: "commit",
-        ok: false,
-        summary: String(e?.message || e).split("\n")[0]?.trim() || "提交失败",
+        ok: deriveOpOk(undefined, false),
+        summary: opLogSummary({ action: "commit", ok: false, i18n, raw: String(e?.message || e) }),
         message,
       })
       throw e // 原样 rethrow，保持 handleCommit 的现有错误处理不变
@@ -239,6 +241,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>) 
     loadPushStatus: (id: string) => loadPushStatus(id, { force: true }),
     safeTimeout,
     appendOpLog,
+    i18n,
   })
 
   onUnmounted(() => {

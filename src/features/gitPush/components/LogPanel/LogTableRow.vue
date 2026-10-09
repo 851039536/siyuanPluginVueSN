@@ -36,10 +36,10 @@
       <span class="gp-log-tcol gp-log-tcol--time">
         <span class="gp-log-time">{{ formatLogTime(entry.time) }}</span>
       </span>
-      <!-- 操作列：展开平台明细 + 复制 -->
+      <!-- 操作列：展开子行明细 + 复制 -->
       <span class="gp-log-tcol gp-log-tcol--ops">
         <Button
-          v-if="hasLogPlatforms(entry)"
+          v-if="hasLogDetail(entry)"
           variant="ghost"
           size="xsmall"
           class="gp-log-icon-btn"
@@ -62,30 +62,31 @@
       </span>
     </div>
 
-    <!-- 平台明细子行（占位列对齐摘要列） -->
+    <!-- 子行明细（占位列对齐摘要列）：push/pull 展示逐平台结果，commit 展示提交信息。
+         两者共用同一个「手动展开」范式（由 hasLogDetail 决定展开按钮显隐），
+         原实现 commit 的提交信息子行无条件渲染，与 push/pull 的可折叠子行并存两套模型。 -->
     <div
-      v-if="hasLogPlatforms(entry) && expanded"
+      v-if="hasLogDetail(entry) && expanded"
       class="gp-log-trow gp-log-trow--sub"
     >
       <span class="gp-log-tcol gp-log-tcol--action" />
       <span class="gp-log-tcol gp-log-tcol--status" />
       <span class="gp-log-tcol gp-log-tcol--project" />
-      <div class="gp-log-tcol gp-log-tcol--summary">
+      <!-- 逐平台结果（push/pull） -->
+      <div
+        v-if="hasLogPlatforms(entry)"
+        class="gp-log-tcol gp-log-tcol--summary"
+      >
         <LogPlatformList
           :i18n="i18n"
           :platforms="entry.platforms!"
         />
       </div>
-    </div>
-    <!-- commit 信息子行 -->
-    <div
-      v-if="entry.action === 'commit' && entry.message"
-      class="gp-log-trow gp-log-trow--sub"
-    >
-      <span class="gp-log-tcol gp-log-tcol--action" />
-      <span class="gp-log-tcol gp-log-tcol--status" />
-      <span class="gp-log-tcol gp-log-tcol--project" />
-      <div class="gp-log-tcol gp-log-tcol--summary gp-log-commit-msg">
+      <!-- 提交信息（commit） -->
+      <div
+        v-else
+        class="gp-log-tcol gp-log-tcol--summary gp-log-commit-msg"
+      >
         {{ entry.message }}
       </div>
     </div>
@@ -99,7 +100,7 @@ import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { useCopyFeedback } from "../../composables/useCopyFeedback"
-import { formatLogEntryText, formatLogTime, hasLogPlatforms, logActionLabel } from "../../utils"
+import { formatLogEntryText, formatLogTime, hasLogDetail, hasLogPlatforms, logActionLabel } from "../../utils"
 import LogPlatformList from "./LogPlatformList.vue"
 
 const props = defineProps<{

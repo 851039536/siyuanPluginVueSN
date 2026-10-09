@@ -3,7 +3,7 @@ import type { Ref } from "vue"
 import type { GitOpAction, GitProject, GitPushManager, PlatformKey, PushOutputEntry } from "../types"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
-import { findProject, platformLabel, pruneRecordCache, resolveValidPath } from "../utils"
+import { findProject, platformLabel, pruneRecordCache, resolveValidPath, deriveOpOk, opLogSummary } from "../utils"
 import type { AppendOpLogInput } from "./useOpLog"
 
 /** 推送/拉取单平台结构化输出（类型定义迁移至 types/storage.ts，此处 re-export 保持向后兼容） */
@@ -26,6 +26,8 @@ export function useRemoteProgress(
     safeTimeout: (fn: () => void, delay: number) => ReturnType<typeof setTimeout>
     /** 操作日志追加回调（fire-and-forget，失败不影响主流程） */
     appendOpLog?: (input: AppendOpLogInput) => void
+    /** i18n 文案表（埋点摘要兜底文案经 opLogSummary 取用，避免裸中英文字面量） */
+    i18n: Record<string, any>
   },
 ) {
   const pushProgress = ref<Record<string, Record<string, ProgressStatus>>>({})
@@ -51,9 +53,12 @@ export function useRemoteProgress(
         ok: r.ok ?? false,
         skipped: r.skipped ?? false,
         duration: durations[pm.key] ?? 0,
-        summary: r.ok
-          ? (r.stdout?.split("\n")?.[0]?.trim() || "OK")
-          : (r.stderr?.split("\n")?.[0]?.trim() || "失败"),
+        summary: opLogSummary({
+          action: "push",
+          ok: r.ok ?? false,
+          i18n: opts.i18n,
+          raw: r.ok ? r.stdout : r.stderr,
+        }),
         fullStdout: r.stdout ?? "",
         fullStderr: r.stderr ?? "",
       })
@@ -91,20 +96,27 @@ export function useRemoteProgress(
     action: string, id: string, projectName: string | undefined, entries?: PushOutputEntry[],
   ) {
     if (!opts.appendOpLog || !entries) return
+    const platforms = entries.map((e) => ({
+      key: e.platform,
+      label: e.label,
+      ok: e.ok,
+      skipped: e.skipped,
+      summary: e.summary,
+    }))
     const nonSkipped = entries.filter((e) => !e.skipped)
     opts.appendOpLog({
       projectId: id,
       projectName: projectName ?? id,
       action: action as GitOpAction,
-      ok: nonSkipped.length > 0 ? nonSkipped.every((e) => e.ok) : true,
-      summary: nonSkipped[0]?.summary ?? "操作完成",
-      platforms: entries.map((e) => ({
-        key: e.platform,
-        label: e.label,
-        ok: e.ok,
-        skipped: e.skipped,
-        summary: e.summary,
-      })),
+      // ok / summary 均走 utils 的单一真源，与 commit 埋点同口径
+      ok: deriveOpOk(platforms, true),
+      summary: opLogSummary({
+        action: action as GitOpAction,
+        ok: deriveOpOk(platforms, true),
+        i18n: opts.i18n,
+        raw: nonSkipped[0]?.summary,
+      }),
+      platforms,
     })
   }
 
@@ -137,15 +149,17 @@ export function useRemoteProgress(
       key = (project && PLATFORM_META.find((pm) => project[pm.remoteProp])?.key) || "github"
     }
     const label = platformLabel(key)
+    // i18n 缺失时兜底空串（而非 undefined 文本），避免把 "undefined" 渲染进控制台
+    const blocked = opts.i18n.opBlockedInProgress ?? ""
     return {
       platform: key,
       label,
       ok: false,
       skipped: false,
       duration: 0,
-      summary: "操作进行中，请稍候",
+      summary: blocked,
       fullStdout: "",
-      fullStderr: "操作进行中，请稍候",
+      fullStderr: blocked,
     }
   }
 
@@ -208,13 +222,13 @@ export function useRemoteProgress(
       const failProg: Record<string, ProgressStatus> = {}
       for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
       progressRef.value = { ...progressRef.value, [id]: failProg }
-      // 操作日志埋点：失败条目
+      // 操作日志埋点：失败条目（摘要走 opLogSummary，与成功路径同口径）
       void opts.appendOpLog?.({
         projectId: id,
         projectName: project?.name ?? id,
         action: action as GitOpAction,
-        ok: false,
-        summary: String(e).split("\n")[0]?.trim() || "操作失败",
+        ok: deriveOpOk(undefined, false),
+        summary: opLogSummary({ action: action as GitOpAction, ok: false, i18n: opts.i18n, raw: String(e) }),
       })
       return { success: false }
     } finally {
@@ -234,7 +248,7 @@ export function useRemoteProgress(
     if (isOpInProgress(progressRef, id, target) || (oppositeProgressRef && isOpInProgress(oppositeProgressRef, id))) {
       outputsRef.value[id] = [blockedEntry(id, target)]
       pruneRecordCache(outputsRef.value)
-      return { ok: false, stdout: "", stderr: "操作进行中，请稍候" }
+      return { ok: false, stdout: "", stderr: opts.i18n.opBlockedInProgress ?? "" }
     }
     const seq = nextOpSeq(id)
     progressRef.value = {
@@ -256,24 +270,33 @@ export function useRemoteProgress(
         ok: result.ok,
         skipped: false,
         duration,
-        summary: result.ok
-          ? (result.stdout?.split("\n")?.[0]?.trim() || "OK")
-          : (result.stderr?.split("\n")?.[0]?.trim() || "失败"),
+        summary: opLogSummary({
+          action: action as GitOpAction,
+          ok: result.ok,
+          i18n: opts.i18n,
+          raw: result.ok ? result.stdout : result.stderr,
+        }),
         fullStdout: result.stdout,
         fullStderr: result.stderr,
       }]
       outputsRef.value[id] = entries
       pruneRecordCache(outputsRef.value)
       opts.loadPushStatus(id).catch((e: any) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
-      // 操作日志埋点：单平台成功
+      // 操作日志埋点：单平台成功（逐平台结果与摘要均走单一真源）
       const project = findProject(projects, id)
+      const successPlatforms = entries.map((e) => ({ key: e.platform, label: e.label, ok: e.ok, skipped: e.skipped, summary: e.summary }))
       void opts.appendOpLog?.({
         projectId: id,
         projectName: project?.name ?? id,
         action: action as GitOpAction,
-        ok: result.ok,
-        summary: entries[0]?.summary ?? "操作完成",
-        platforms: entries.map((e) => ({ key: e.platform, label: e.label, ok: e.ok, skipped: e.skipped, summary: e.summary })),
+        ok: deriveOpOk(successPlatforms, true),
+        summary: opLogSummary({
+          action: action as GitOpAction,
+          ok: result.ok,
+          i18n: opts.i18n,
+          raw: result.ok ? result.stdout : result.stderr,
+        }),
+        platforms: successPlatforms,
       })
       return result
     } catch (e: any) {
@@ -289,20 +312,21 @@ export function useRemoteProgress(
         ok: false,
         skipped: false,
         duration,
-        summary: errMsg.split("\n")[0]?.trim() || "失败",
+        summary: opLogSummary({ action: action as GitOpAction, ok: false, i18n: opts.i18n, raw: errMsg }),
         fullStdout: "",
         fullStderr: errMsg,
       }]
       pruneRecordCache(outputsRef.value)
       // 操作日志埋点：单平台失败
       const project2 = findProject(projects, id)
+      const failPlatforms = [{ key: target, label: platformLabel(target), ok: false, skipped: false, summary: opLogSummary({ action: action as GitOpAction, ok: false, i18n: opts.i18n, raw: errMsg }) }]
       void opts.appendOpLog?.({
         projectId: id,
         projectName: project2?.name ?? id,
         action: action as GitOpAction,
-        ok: false,
-        summary: errMsg.split("\n")[0]?.trim() || "操作失败",
-        platforms: [{ key: target, label: platformLabel(target), ok: false, skipped: false, summary: errMsg.split("\n")[0]?.trim() || "失败" }],
+        ok: deriveOpOk(failPlatforms, false),
+        summary: opLogSummary({ action: action as GitOpAction, ok: false, i18n: opts.i18n, raw: errMsg }),
+        platforms: failPlatforms,
       })
       // 与 remoteOpAll 策略统一：不重抛（调用方为模板事件处理器，无 catch），返回结构化错误
       return { ok: false, stdout: "", stderr: errMsg }

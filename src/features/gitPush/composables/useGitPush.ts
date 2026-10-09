@@ -13,9 +13,9 @@ import { useGitStats } from "./useGitStats"
  *   useGitTagsConflicts — Tag 管理、冲突检测、提交模板、扫描导入
  *   useGitStats       — 统计视图 computed 属性
  */
-export function useGitPush(manager: GitPushManager) {
+export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
   const projectCrud = useProjectCrud(manager)
-  const gitOps = useGitOps(manager, projectCrud.projects)
+  const gitOps = useGitOps(manager, projectCrud.projects, i18n)
   const tagsConflicts = useGitTagsConflicts(manager, projectCrud.projects)
   const stats = useGitStats(
     manager,

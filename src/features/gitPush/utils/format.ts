@@ -1,5 +1,5 @@
 // gitPush 展示格式化（纯函数）：相对/绝对时间、年份选项、分析状态文案、活动分级、操作日志标签
-import type { GitOpLogEntry } from "../types"
+import type { GitOpAction, GitOpLogEntry } from "../types"
 import { formatLocalDate } from "./analysis"
 
 /** LOG 默认显示条数（与 BranchCommitList.countOptions 首项保持一致） */
@@ -110,6 +110,65 @@ export function hasLogPlatforms(entry: GitOpLogEntry): boolean {
   return (entry.action === "push" || entry.action === "pull") && !!entry.platforms?.length
 }
 
+/**
+ * 判断操作日志条目是否有「可展开的子行明细」。
+ *
+ * 表格行的子行范式由此**统一**：push/pull 的子行是逐平台结果，commit 的子行是提交信息。
+ * 原实现只认 platforms，导致 commit 行要么恒展开（message 子行无条件渲染）、
+ * 要么没有展开入口，与 push/pull 的手动展开交互并存两套模型。
+ */
+export function hasLogDetail(entry: GitOpLogEntry): boolean {
+  if (entry.action === "commit") return !!entry.message
+  return hasLogPlatforms(entry)
+}
+
+/**
+ * 操作日志摘要文案的**单一真源**（埋点侧唯一入口，消除三处各自 `split("\n")[0]`）。
+ *
+ * 现状问题：commit 埋点取 git 原始 stdout 首行（如 `[main 3f2a1b9] feat: xxx`，
+ * 与 message 字段内容重复），push 取首个非跳过平台的摘要，而 PushOutputEntry 的兜底
+ * 又是裸写的 `"OK"` / `"失败"` / `"操作完成"` —— 同一张日志表的「摘要」列因此出现
+ * git 原始输出、英文 `OK`、中文硬编码三类文本。
+ *
+ * 统一策略：**优先用 git 原始输出首行**（信息最真实），无输出时按 `action + ok`
+ * 走 i18n 模板键兜底（`opResultOk` / `opResultFail`），不再有裸中英文字面量。
+ *
+ * @param raw git 原始输出（commit 传完整 stdout，push 传条目摘要）——取首个非空行
+ */
+export function opLogSummary(opts: {
+  action: GitOpAction
+  ok: boolean
+  i18n: Record<string, any>
+  /** git 原始输出（可多行，取首个非空行） */
+  raw?: string
+}): string {
+  const { action, ok, i18n, raw } = opts
+  const first = (raw ?? "").split("\n").map((l) => l.trim()).find(Boolean)
+  if (first) return first
+  const actionText = logActionLabel(action, i18n)
+  // 键缺失时回落动作词本身，避免把 "undefined" 写进日志摘要
+  const template = (ok ? i18n.opResultOk : i18n.opResultFail) ?? "{0}"
+  return String(template).replace("{0}", actionText)
+}
+
+/**
+ * 操作日志整体成败的**单一真源**：由明细条目推导，条目为空时按调用方语义定夺。
+ *
+ * 与 push 侧原 `nonSkipped.every((e) => e.ok)` 口径一致（跳过项不参与判定）；
+ * commit 侧原先直接写死 `ok: true/false`，一旦 manager.commit 改为返回结构化结果
+ * 就会静默失真，故收敛到本函数。
+ *
+ * @param fallback 无明细条目时的结论（push 全跳过 = true；commit 无平台概念 = 由调用方给）
+ */
+export function deriveOpOk(
+  platforms: { ok: boolean, skipped: boolean }[] | undefined,
+  fallback: boolean,
+): boolean {
+  const nonSkipped = (platforms ?? []).filter((p) => !p.skipped)
+  if (nonSkipped.length === 0) return fallback
+  return nonSkipped.every((p) => p.ok)
+}
+
 /** 操作类型 → 中文标签（i18n 驱动，无匹配时降级返回原始 action） */
 export function logActionLabel(action: string, i18n: Record<string, any>): string {
   const map: Record<string, string> = {
@@ -128,10 +187,16 @@ export function logActionLabel(action: string, i18n: Record<string, any>): strin
  * 跨天日志从行内复制出来后无法分辨是哪天的操作，故统一为**完整日期时间**（信息更全）。
  *
  * commit 条目附带完整提交信息（换行分隔）；其余条目为「[时间] 项目名 — 摘要」。
+ *
+ * ⚠️ 分支判据必须是 `action === "commit"`，**不能用 `entry.message` 是否存在**：
+ * push 侧将来若也记录关联提交信息，用 message 判定会让复制格式从「一行摘要」
+ * 突然变成「多行 message」并静默丢掉摘要。
  */
 export function formatLogEntryText(entry: GitOpLogEntry): string {
   const stamp = formatLogTime(entry.time)
-  if (entry.message) return `[${stamp}] ${entry.projectName}\n${entry.message}`
+  if (entry.action === "commit" && entry.message) {
+    return `[${stamp}] ${entry.projectName}\n${entry.message}`
+  }
   return `[${stamp}] ${entry.projectName} — ${entry.summary}`
 }
 

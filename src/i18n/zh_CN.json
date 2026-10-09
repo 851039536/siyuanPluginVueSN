@@ -1787,6 +1787,7 @@
     "loadMoreLogs": "加载更多",
     "logFilterAll": "全部",
     "opSkipped": "已跳过",
+    "opBlockedInProgress": "操作进行中，请稍候",
     "logCount": "{0} 条记录",
     "expandPlatforms": "查看平台详情",
     "collapsePlatforms": "收起",

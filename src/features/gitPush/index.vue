@@ -411,7 +411,7 @@ const {
   starredProjects,
   updateProjectMeta,
   toggleStar,
-} = useGitPush(props.manager)
+} = useGitPush(props.manager, props.i18n)
 
 /** 卡片加载提交日志后回传最近活动时间（原 useGitOps.loadCommitLog 的副作用） */
 async function recordCommitActivity(id: string, isoTime: string) {

@@ -1787,6 +1787,7 @@
     "loadMoreLogs": "Load more",
     "logFilterAll": "All",
     "opSkipped": "Skipped",
+    "opBlockedInProgress": "Operation in progress, please wait",
     "logCount": "{0} entries",
     "expandPlatforms": "Platform details",
     "collapsePlatforms": "Collapse",

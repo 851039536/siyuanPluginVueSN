@@ -53,8 +53,8 @@ function detectDuplicateKeys(filePath) {
   const duplicates = []
   // 匹配 JSON 顶层键（紧跟在行首 2 空格缩进的双引号键名）
   const keyRegex = /^ {2}"([^"]+)":/gm
-  let match
-  while ((match = keyRegex.exec(text)) !== null) {
+  // 用 matchAll 迭代，避免 while 中的赋值表达式（no-cond-assign）
+  for (const match of text.matchAll(keyRegex)) {
     const key = match[1]
     if (seen.has(key)) {
       duplicates.push({
@@ -96,7 +96,9 @@ function main() {
 
   for (const lang of ['zh_CN', 'en_US']) {
     const dir = join(I18N_DIR, lang)
-    if (!existsSync(dir)) { continue }
+    if (!existsSync(dir)) {
+      continue
+    }
     const files = readdirSync(dir).filter((f) => f.endsWith('.json')).sort()
     /** @type {Map<string, { file: string, value: string }[]>} */
     const owners = new Map()
@@ -108,18 +110,28 @@ function main() {
         continue
       }
       for (const [key, value] of Object.entries(content)) {
-        if (!owners.has(key)) { owners.set(key, []) }
+        if (!owners.has(key)) {
+          owners.set(key, [])
+        }
         owners.get(key).push({ file, value: JSON.stringify(value) })
       }
     }
     const conflicts = []
     const baselined = []
     for (const [key, list] of owners) {
-      if (list.length < 2) { continue }
+      if (list.length < 2) {
+        continue
+      }
       const values = new Set(list.map((i) => i.value))
-      if (values.size <= 1) { continue }
+      if (values.size <= 1) {
+        continue
+      }
       const entry = { key, list }
-      if (KNOWN_CROSS_SHARD_CONFLICTS.has(`${lang}:${key}`)) { baselined.push(entry) } else { conflicts.push(entry) }
+      if (KNOWN_CROSS_SHARD_CONFLICTS.has(`${lang}:${key}`)) {
+        baselined.push(entry)
+      } else {
+        conflicts.push(entry)
+      }
     }
     if (baselined.length > 0) {
       console.warn(`\n⚠️  ${lang}: ${baselined.length} baselined cross-shard conflict(s) (pre-existing, fix separately): ${baselined.map((c) => c.key).join(', ')}`)

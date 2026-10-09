@@ -8,8 +8,8 @@
 // 需要改成「直连纯类型/纯函数模块」的 import。
 //
 // 用法：node scripts/check-module-purity.mjs <入口文件> [更多入口...]
-import { readFileSync, existsSync, statSync } from "node:fs"
-import { dirname, resolve, basename } from "node:path"
+import { existsSync, readFileSync, statSync } from "node:fs"
+import { basename, dirname, resolve } from "node:path"
 
 const SRC = resolve(import.meta.dirname, "..", "src")
 const entries = process.argv.slice(2)
@@ -40,7 +40,9 @@ const offenders = []
 function valueImportsSiyuan(src) {
   // 副作用导入：import "siyuan"
   if (/^\s*import\s+["']siyuan["']/m.test(src)) return true
-  for (const match of src.matchAll(/^\s*import\s+(type\s+)?([\s\S]*?)\s+from\s+["']siyuan["']/gm)) {
+  // clause 以非空白字符收尾（\S），避免 [\s\S]*? 与分隔用的 \s+ 重叠而产生回溯歧义。
+  // 注意：分隔符必须用 \s+ 而非 [ \t]+，否则「from 换行书写」的 import 会漏检。
+  for (const match of src.matchAll(/^\s*import\s+(type\s+)?([\s\S]*?\S)\s+from\s+["']siyuan["']/gm)) {
     if (match[1]) continue // import type ... —— 纯类型，构建时擦除
     const clause = match[2].trim()
     // `import { type A, type B }` 全部带 type 修饰符时同样会被擦除

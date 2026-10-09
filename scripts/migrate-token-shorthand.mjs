@@ -15,7 +15,7 @@ import { relative, resolve } from "node:path"
 const ROOT = resolve(import.meta.dirname, "..")
 const argv = process.argv.slice(2)
 const DRY = argv.includes("--dry")
-const groupArg = argv.find(a => a.startsWith("--group="))
+const groupArg = argv.find((a) => a.startsWith("--group="))
 const GROUP = groupArg ? groupArg.split("=")[1] : "all"
 
 /** 分组映射：旧长名 → 新短名。组顺序即迁移批次顺序（风险递增）。 */
@@ -188,7 +188,7 @@ async function main() {
       }
     }
     pending = failed
-    if (pending.length > 0) await new Promise(r => setTimeout(r, 500))
+    if (pending.length > 0) await new Promise((r) => setTimeout(r, 500))
   }
 
   console.log("=".repeat(60))
@@ -198,7 +198,7 @@ async function main() {
   if (pending.length > 0) {
     console.log("")
     console.log(`⚠️  ${pending.length} 个文件写入失败（被占用），请关闭占用后重跑本命令：`)
-    pending.slice(0, 10).forEach(f => console.log("    " + relative(ROOT, f).replaceAll("\\", "/")))
+    pending.slice(0, 10).forEach((f) => console.log(`    ${relative(ROOT, f).replaceAll("\\", "/")}`))
   }
   console.log("")
   const top = changed.sort((a, b) => b.count - a.count).slice(0, 15)

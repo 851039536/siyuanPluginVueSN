@@ -110,10 +110,9 @@ function scanFile(absPath) {
   lines.forEach((raw, i) => {
     // 剥离行内注释后再匹配，避免注释里的示例代码产生噪音
     const code = raw.replace(/\/\/.*$/, "")
-    TOKEN_RE.lastIndex = 0
     const seen = new Set()
-    let m
-    while ((m = TOKEN_RE.exec(code)) !== null) {
+    // 用 matchAll 迭代，避免 while 中的赋值表达式（no-cond-assign）
+    for (const m of code.matchAll(TOKEN_RE)) {
       const oldName = m[0]
       // 仅在映射表中精确存在时才算违规（TOKEN_RE 会切出前缀片段）
       if (!(oldName in TOKEN_MAP)) continue

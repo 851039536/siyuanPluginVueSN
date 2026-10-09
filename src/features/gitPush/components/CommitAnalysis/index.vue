@@ -219,7 +219,7 @@
             <LineRankingSection
               :i18n="i18n"
               :project-ranking="projectRanking"
-              @view-project="emit('viewProject', $event)"
+              @open-detail="emit('openLineDetail', $event)"
             />
           </div>
         </template>
@@ -366,6 +366,8 @@ const emit = defineEmits<{
   updateSelectedExtensions: [exts: string[]]
   updateProject: [projectId: string]
   viewProject: [projectId: string]
+  /** 打开某项目的行数详情弹窗（行数排行行点击；由 index.vue 设置 lineDetailProjectId） */
+  openLineDetail: [projectId: string]
   closeLineDetail: []
 }>()
 

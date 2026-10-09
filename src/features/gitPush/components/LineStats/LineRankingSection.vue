@@ -39,7 +39,9 @@
           :title="i18n.lineStatsTotalHint"
         >{{ i18n.analysisLineTotal }}</span>
       </div>
-      <!-- 数据行：共享 LineRankRow（clickable 时根为原生 button，Tab 聚焦 + Enter/Space 打开详情） -->
+      <!-- 数据行：共享 LineRankRow（clickable 时根为原生 button，Tab 聚焦 + Enter/Space 激活）。
+           点击打开该项目行数详情弹窗（与行 title「点击查看该项目的文件/作者行数明细」一致），
+           原实现误接 viewProject 导致点击跳到列表视图而非打开详情。 -->
       <LineRankRow
         v-for="(row, idx) in rows"
         :key="row.id"
@@ -52,7 +54,7 @@
         :total-lines="row.totalLines"
         clickable
         :i18n="i18n"
-        @select="emit('viewProject', row.id)"
+        @select="emit('openDetail', row.id)"
       />
     </div>
   </div>
@@ -72,7 +74,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  viewProject: [projectId: string]
+  /** 打开该项目行数详情弹窗（非 "看见项目列表" —— 后者是 viewProject 的语义） */
+  openDetail: [projectId: string]
 }>()
 
 /** 行视图（share=总行数占比，与「按总行数存量降序」排序同口径；行内无条形，故只预计算 share） */

@@ -75,6 +75,7 @@
       @update-selected-extensions="updateSelectedExtensions"
       @update-project="setRuleCheckProject"
       @view-project="onViewProject"
+      @open-line-detail="lineDetailProjectId = $event"
       @close-line-detail="lineDetailProjectId = ''"
     />
 

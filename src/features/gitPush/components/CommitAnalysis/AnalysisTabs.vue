@@ -38,7 +38,12 @@ export type AnalysisTabId = "overview" | "rulecheck" | "linestats"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 各视角的内容计数（仅 > 0 时显示为角标） */
+  /**
+   * 各视角的内容计数（仅 > 0 时显示为角标）。
+   * 传 0 即不显示角标 —— 概览视角刻意传 0：其「总提交次数」已由总览 KPI 卡片承担，
+   * 角标与之同屏重复（角标 / KPI 卡紧邻显示同一个数），故不重复渲染。
+   * 规则检查（违规数）与行数排行（项目数）的角标保留：它们提示「有多少待处理内容」，有行动价值。
+   */
   counts: Record<AnalysisTabId, number>
 }>()
 

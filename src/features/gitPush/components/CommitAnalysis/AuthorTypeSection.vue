@@ -4,9 +4,15 @@
   <div class="gpa-pair">
     <!-- 作者提交排行 -->
     <div class="gpa-section">
-      <!-- 区块标题："作者提交排行" -->
+      <!-- 区块标题："作者提交排行"（数据层按 AUTHOR_RANK_LIMIT 截断，截断时补一行说明） -->
       <div class="gpa-section-title">
         {{ i18n.analysisAuthorRanking }}
+        <!-- 截断提示：不加会让各行次数之和小于总提交次数，看起来像统计出错 -->
+        <span
+          v-if="authorTruncatedHint"
+          class="gpa-rank-hint"
+          :title="authorTruncatedHint"
+        >{{ authorTruncatedHint }}</span>
       </div>
       <div class="gpa-bar-list">
         <div
@@ -73,6 +79,16 @@ const typeRows = computed(() => withBarPct(props.stats.typeDistribution))
 
 /** 作者排行行视图 */
 const authorRows = computed(() => withBarPct(props.stats.authorRanking))
+
+/** 作者排行截断提示（未截断时为空串不渲染；与项目排行同一提示口径） */
+const authorTruncatedHint = computed(() => {
+  const shown = props.stats.authorRanking.length
+  const total = props.stats.authorRankingTotal
+  if (total <= shown) return ""
+  return String(props.i18n.analysisRankTruncated || "")
+    .replace("{0}", String(shown))
+    .replace("{1}", String(total))
+})
 </script>
 
 <style lang="scss">

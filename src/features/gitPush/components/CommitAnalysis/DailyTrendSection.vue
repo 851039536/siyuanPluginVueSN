@@ -1,9 +1,14 @@
 <!-- gitPush 提交分析最近 30 天提交趋势区块（每日柱状高度） -->
 <template>
   <div class="gpa-section">
-    <!-- 区块标题："最近 30 天提交趋势" -->
+    <!-- 区块标题："最近 30 天提交趋势"；范围固定 30 天，与上方热力图/日历的 viewSettings.range 无关，
+         故显式标注，避免两图并排却覆盖不同时间范围时被误读为数据矛盾 -->
     <div class="gpa-section-title">
       {{ i18n.analysisDailyTitle }}
+      <span
+        class="gpa-daily-range-hint"
+        :title="i18n.analysisDailyFixedRangeHint"
+      >{{ i18n.analysisDailyFixedRangeHint }}</span>
     </div>
     <div class="gpa-daily">
       <!-- 每日柱 -->

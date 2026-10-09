@@ -431,12 +431,16 @@ export interface CommitAnalysisStats {
   entries: CommitAnalysisEntry[]
   /** 最近 30 天每日提交数（缺天补 0，label 为 YYYY-MM-DD） */
   dailyCommits: { label: string, count: number }[]
-  /** 项目提交次数排行（降序） */
+  /** 项目提交次数排行（降序，已按 PROJECT_RANK_LIMIT 截断） */
   projectRanking: { id: string, name: string, count: number }[]
+  /** 项目排行的截断前项目总数（> projectRanking.length 时 UI 须提示「仅显示前 N 名」） */
+  projectRankingTotal: number
   /** 提交内容类型分布（降序，仅含非零类型） */
   typeDistribution: { type: CommitAnalysisType, count: number }[]
-  /** 作者提交排行（降序） */
+  /** 作者提交排行（降序，已按 AUTHOR_RANK_LIMIT 截断） */
   authorRanking: { author: string, count: number }[]
+  /** 作者排行的截断前作者总数（> authorRanking.length 时 UI 须提示） */
+  authorRankingTotal: number
 }
 
 /** 提交分析结果缓存（持久化到插件存储，进入视图直接复用上次结果，避免每次重跑 git log） */

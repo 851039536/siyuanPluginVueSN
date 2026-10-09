@@ -105,16 +105,31 @@ export function heatCellTooltip(i18n: Record<string, any>, date: string, count: 
 
 /** 通用计数排行：按 keyFn 分组计数，降序取前 limit 条（项目/作者/类型排行共用） */
 export function rankByCount<T>(items: T[], keyFn: (item: T) => string, limit: number): { key: string, count: number }[] {
+  return rankByCountWithTotal(items, keyFn, limit).rows
+}
+
+/**
+ * 同 rankByCount，但额外返回截断前的**完整分组数**（totalGroups）。
+ *
+ * 用途：排行区在截断时须向用户交代「仅显示前 N 名（共 M 名）」——否则各行次数之和会**小于**
+ * 顶部 KPI 卡的总提交数，看起来像统计出错（项目数 > PROJECT_RANK_LIMIT 时必然发生）。
+ * 返回 rows 的形状与 rankByCount 完全一致，故原调用方可按需改用本函数而不改渲染。
+ */
+export function rankByCountWithTotal<T>(
+  items: T[],
+  keyFn: (item: T) => string,
+  limit: number,
+): { rows: { key: string, count: number }[], totalGroups: number } {
   const map = new Map<string, number>()
   for (const item of items) {
     const key = keyFn(item)
     if (!key) continue
     map.set(key, (map.get(key) || 0) + 1)
   }
-  return [...map.entries()]
+  const sorted = [...map.entries()]
     .map(([key, count]) => ({ key, count }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, limit)
+  return { rows: sorted.slice(0, limit), totalGroups: sorted.length }
 }
 
 // ── 提交规则原因文案（元数据只存 i18n 键，文案由视图层经 i18n 解析；四处标签共用）──

@@ -71,6 +71,18 @@
   @include gp-section-title-base;
 }
 
+// 排行截断提示 / 固定范围说明（次级信息：弱化色 + 常规字重，紧贴区块标题，不争夺视觉权重）
+.gpa-rank-hint,
+.gpa-daily-range-hint {
+  margin-left: $s-2;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 // 标题计数徽章：底色/文字/几何由共享 Tag（primary + xsmall + square）承担，
 // 等宽数字沿用原徽章观感（4 类 = (0,4,0)，压过 Tag 的 xsmall/square 档位声明）
 .gpa-panel .gpa-section-title .gpa-section-count.si-tag {

@@ -23,6 +23,7 @@ import {
   parseCommitAnalysisType,
   ProjectFetchError,
   rankByCount,
+  rankByCountWithTotal,
   resolveValidPath,
 } from "../utils"
 import { analyzeCommitRuleCompliance } from "../commitRuleChecker"
@@ -604,6 +605,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     // 实时过滤已删除项目的条目（项目删除后缓存/内存中的残留数据不参与统计与展示）
     const list = entries.value.filter((e) => validProjectIds.value.has(e.projectId))
     const nameById = new Map(projects.value.map((p) => [p.id, p.name]))
+    // 排行取「截断后行 + 截断前分组数」：UI 据此在截断时提示「仅显示前 N 名（共 M 名）」，
+    // 避免各行次数之和小于 totalCommits 时被误读为统计错误
+    const projectRank = rankByCountWithTotal(list, (e) => e.projectId, PROJECT_RANK_LIMIT)
+    const authorRank = rankByCountWithTotal(list, (e) => e.author, AUTHOR_RANK_LIMIT)
     return {
       totalCommits: list.length,
       projectCount: projects.value.length,
@@ -611,19 +616,21 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       failedCount: failedCount.value,
       entries: list,
       dailyCommits: buildDailyCommitBuckets(list, 30),
-      projectRanking: rankByCount(list, (e) => e.projectId, PROJECT_RANK_LIMIT).map((r) => ({
+      projectRanking: projectRank.rows.map((r) => ({
         id: r.key,
         name: nameById.get(r.key) || r.key,
         count: r.count,
       })),
+      projectRankingTotal: projectRank.totalGroups,
       typeDistribution: rankByCount(list, (e) => parseCommitAnalysisType(e.message), 20).map((r) => ({
         type: r.key as CommitAnalysisType,
         count: r.count,
       })),
-      authorRanking: rankByCount(list, (e) => e.author, AUTHOR_RANK_LIMIT).map((r) => ({
+      authorRanking: authorRank.rows.map((r) => ({
         author: r.key,
         count: r.count,
       })),
+      authorRankingTotal: authorRank.totalGroups,
     }
   })
 

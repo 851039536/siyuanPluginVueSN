@@ -402,9 +402,15 @@ const tabRunning = computed(() =>
   activeTab.value === "linestats" ? props.lineAnalyzing : props.analyzing,
 )
 
-/** Tab 角标计数：概览=提交数，规则检查=违规数，行数排行=项目数 */
+/**
+ * Tab 角标计数：规则检查=违规数，行数排行=项目数。
+ *
+ * 概览视角刻意传 0（不显示角标）：其「总提交次数」已由总览 KPI 卡片承载，
+ * 角标与 KPI 卡在概览视角下紧邻同屏，是同一数字的重复渲染。
+ * 另两个角标保留 —— 它们提示「有多少待处理内容」，属行动信息而非纯计数。
+ */
 const tabCounts = computed(() => ({
-  overview: props.stats.totalCommits,
+  overview: 0,
   rulecheck: props.ruleCheckStats.violationCount,
   linestats: props.projectRanking.length,
 }))

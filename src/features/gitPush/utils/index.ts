@@ -69,6 +69,7 @@ export {
   heatLevel,
   parseCommitAnalysisType,
   rankByCount,
+  rankByCountWithTotal,
   resolveAnalysisRange,
   ruleReasonDesc,
   ruleReasonText,

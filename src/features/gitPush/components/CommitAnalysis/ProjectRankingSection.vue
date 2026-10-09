@@ -1,9 +1,15 @@
 <!-- gitPush 提交分析项目提交排行区块（徽章式排行行：名次 + 项目名 + 提交次数 + 占比，行可点击跳转） -->
 <template>
   <div class="gpa-section gpa-section--scroll">
-    <!-- 区块标题："项目提交排行" -->
+    <!-- 区块标题："项目提交排行"（数据层按 PROJECT_RANK_LIMIT 截断，截断时补一行说明） -->
     <div class="gpa-section-title">
       {{ i18n.analysisProjectRanking }}
+      <!-- 截断提示：不加会让各行次数之和小于顶部「总提交次数」，看起来像统计出错 -->
+      <span
+        v-if="truncatedHint"
+        class="gpa-rank-hint"
+        :title="truncatedHint"
+      >{{ truncatedHint }}</span>
     </div>
     <div class="gpa-rank-list">
       <Button
@@ -61,6 +67,19 @@ function formatShare(share: number): string {
   if (share > 0 && share < 0.1) return "<0.1%"
   return `${share.toFixed(1).replace(/\.0$/, "")}%`
 }
+
+/**
+ * 截断提示文案（未截断时为空串不渲染）。
+ * 数据层按 PROJECT_RANK_LIMIT 截断，若此处不交代，用户会看到「各行次数之和 < 总提交次数」而误以为统计错误。
+ */
+const truncatedHint = computed(() => {
+  const shown = props.stats.projectRanking.length
+  const total = props.stats.projectRankingTotal
+  if (total <= shown) return ""
+  return String(props.i18n.analysisRankTruncated || "")
+    .replace("{0}", String(shown))
+    .replace("{1}", String(total))
+})
 
 /** 排行行视图：提交次数 + 占总提交百分比（tooltip 保留"次数 + 占比"完整口径） */
 const rows = computed(() => {

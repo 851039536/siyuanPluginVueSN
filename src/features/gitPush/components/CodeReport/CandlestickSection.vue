@@ -1,13 +1,9 @@
 <!-- gitPush 代码统计报告：提交趋势分区（日期数超限时先分桶压缩，再渲染 chart.js 蜡烛图 + 7日均线 + 工作时间底色 + 日提交标注 + 迷你节奏图 + 6 张摘要卡片） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："提交趋势" + 活跃天数徽章（悬浮说明统计口径；用原始 dailyStats 保证与聚合无关） -->
+    <!-- 区块标题："提交趋势"（活跃天数由分区 Tab 角标承担，此处不重复渲染同一计数） -->
     <div class="gpr-section-title">
       {{ i18n.reportCandlestickTitle }}
-      <span
-        class="gpr-section-count"
-        :title="i18n.reportCandlestickTotalDays"
-      >{{ dailyStats.length }}</span>
     </div>
 
     <!-- 空状态：范围内无提交 -->

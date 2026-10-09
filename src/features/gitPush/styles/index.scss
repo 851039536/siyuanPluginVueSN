@@ -923,9 +923,10 @@
   @include gp-section-title-base;
 }
 
-.gpr-section-count {
-  @include gp-section-count-base;
-}
+// 注：.gpr-section-count（分区标题计数徽章）已移除 —— 报告页 4 个分区的条目数
+// 与分区 Tab 角标完全同源（authors/debt/hotspot/daily 同一计数），并排显示属重复渲染；
+// 现统一由 Tab 角标承担。热点分区原用的 analyzedFiles 因口径与 Tab 不同（全量 vs 截断后），
+// 已下移为表下方的分析口径提示（见 HotspotSection 的 analyzedText）。
 
 // 表格（技术债务/贡献度/热点汇总共用）：sticky 表头 + 行分割 + 等宽右对齐数字
 //

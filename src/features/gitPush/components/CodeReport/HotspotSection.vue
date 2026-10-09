@@ -1,14 +1,9 @@
 <!-- gitPush 代码统计报告：代码热点分区（第一行热点表格 + 第二行统计摘要） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："代码热点分析" + 文件数徽章（悬浮说明统计口径） -->
+    <!-- 区块标题："代码热点分析"（榜单条目数由分区 Tab 角标承担；全量分析文件数见下方截断提示） -->
     <div class="gpr-section-title">
       {{ i18n.reportHeatTitle }}
-      <!-- 文件数徽章 -->
-      <span
-        class="gpr-section-count"
-        :title="i18n.reportAnalyzedFilesTip"
-      >{{ report.analyzedFiles }}</span>
     </div>
 
     <!-- 空状态：范围内无文件 -->
@@ -80,16 +75,14 @@
           </tbody>
         </table>
 
-        <!-- 截断提示 -->
-        <div
-          v-if="truncatedText"
-          class="gpr-hot-truncated"
-        >
+        <!-- 分析口径提示：常态显示"共分析 N 个文件"（原由标题徽章承担，徽章已移除故在此保留该信息），
+             榜单被 HOTSPOT_LIMIT 截断时改显示"仅展示前 X 个，共分析 N 个" -->
+        <div class="gpr-hot-truncated">
           <Icon
             icon="mdi:information-outline"
             height="12"
           />
-          <span>{{ truncatedText }}</span>
+          <span>{{ analyzedText }}</span>
         </div>
       </div>
 
@@ -182,12 +175,27 @@ const preparedHotspots = computed(() =>
   }),
 )
 
-/** 截断提示文案（热点榜仅展示前 12 个；分析文件数不超过榜单上限时返回空串，隐藏提示） */
-const truncatedText = computed(() => {
-  if (props.report.analyzedFiles <= props.report.hotspots.length) return ""
+/**
+ * 分析口径提示文案。
+ *
+ * 三种情形：
+ *   - 榜单被 HOTSPOT_LIMIT 截断 → "仅展示热度前 12 个文件，共分析 200 个文件"
+ *   - 未截断且无文件             → 空串（下方整块已有空状态，不重复）
+ *   - 未截断且有文件             → "共分析 N 个文件（不含 .md 文档）"
+ *
+ * 注意：**不可**再用 `analyzedFiles` 作为标题徽章 —— 它与分区 Tab 角标（hotspots.length）
+ * 口径不同（全量 vs 截断后），并排显示会让用户看到两个矛盾的数（如 Tab=12、标题=200）。
+ */
+const analyzedText = computed(() => {
+  const analyzed = props.report.analyzedFiles
+  const shown = props.report.hotspots.length
+  if (analyzed <= shown) {
+    if (shown === 0) return ""
+    return props.i18n.reportAnalyzedFilesLine.replace("{0}", String(analyzed))
+  }
   return props.i18n.reportHotspotTruncated
-    .replace("{0}", String(props.report.hotspots.length))
-    .replace("{1}", String(props.report.analyzedFiles))
+    .replace("{0}", String(shown))
+    .replace("{1}", String(analyzed))
 })
 
 /** 点击文件路径：拼接项目根目录后经 shell.openPath 以默认应用打开（浏览器环境无能力打开本地文件，静默忽略） */

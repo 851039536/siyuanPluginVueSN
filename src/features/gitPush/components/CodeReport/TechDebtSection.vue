@@ -1,10 +1,9 @@
 <!-- gitPush 技术债务分区：汇总条（严重度分布+Top3治理）+ 严重度分组表（趋势徽章+最后修改+可展开详情） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："技术债务" + 问题总数徽章 -->
+    <!-- 区块标题："技术债务"（问题总数由分区 Tab 角标承担，此处不重复渲染同一计数） -->
     <div class="gpr-section-title">
       {{ i18n.reportDebtTitle }}
-      <span class="gpr-section-count">{{ totalCount }}</span>
     </div>
 
     <!-- 空状态：范围内无债务问题 -->

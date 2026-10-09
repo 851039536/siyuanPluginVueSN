@@ -1,10 +1,9 @@
 <!-- gitPush 代码统计报告：代码贡献度分区（作者排行表：排名/提交/新增/删除/净增bar/平均大小/频率/文件/活跃天数 + 点击行展开详情） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："代码贡献度" + 行数徽章 -->
+    <!-- 区块标题："代码贡献度"（条目数由分区 Tab 角标承担，此处不重复渲染同一计数） -->
     <div class="gpr-section-title">
       {{ i18n.reportAuthorsTitle }}
-      <span class="gpr-section-count">{{ authors.length }}</span>
     </div>
 
     <!-- 空状态：范围内无提交 -->
@@ -24,8 +23,8 @@
           <tr>
             <!-- 表头："排名" -->
             <th class="gpr-author-th gpr-author-th--rank">#</th>
-            <!-- 表头："作者" -->
-            <th class="gpr-author-th">{{ i18n.projectName }}</th>
+            <!-- 表头："作者"（此列为作者名，非项目名；原误用 i18n.projectName 显示"项目名称"） -->
+            <th class="gpr-author-th">{{ i18n.reportAuthorCol }}</th>
             <!-- 表头："提交次数" -->
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportCommitsCol }}</th>
             <!-- 表头："新增行数" -->

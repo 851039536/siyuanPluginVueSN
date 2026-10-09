@@ -19,13 +19,36 @@
   border-bottom: 2px solid var(--b3-border-color);
   flex-shrink: 0;
 
-  // 共享 Tabs：仅占内容宽，余量交给 spacer 把右侧动作按钮推到末端
+  // 共享 Tabs：仅占内容宽，余量交给 spacer 把右侧动作按钮推到末端。
+  // ⚠️ `.si-tabs` / `.si-tablist` 均为 `width: 100%`，若不覆写会吃掉整行宽度，
+  // 把右侧动作按钮（浮动窗口/设置/分析）挤出面板外 —— 分析按钮即被裁掉。
+  // 故此处收窄为内容宽（width: auto 抵消 100%）并允许收缩。
+  //
+  // ⚠️ 不要写 `flex: 0 1 auto` / `flex-grow/flex-shrink/flex-basis` 三件套：
+  // 构建期压缩器（lightningcss 1.33）会把 basis:auto + shrink:1 错误序列化成
+  // 无效的 `flex: 0 auto`，浏览器整条丢弃 ⇒ 收缩失效。只声明 flex-shrink
+  // （grow 与 basis 取默认 0 / auto，正是所需值），压缩后原样保留。
   .tab-bar__tabs {
-    flex: 0 0 auto;
+    flex-shrink: 1;
+    width: auto;
+    min-width: 0;
+
+    :deep(.si-tablist) {
+      width: auto;
+    }
   }
 
   .tab-bar-spacer {
     flex: 1;
+  }
+
+  // 极窄面板兜底：标签内部本就带图标，隐藏文字标签 + 去掉图标间距，
+  // 优先保证右侧「分析」主按钮完整可见（不被裁切）。
+  @media (max-width: 340px) {
+    .tab-bar__tabs :deep(.si-tab) {
+      gap: 0;
+      font-size: 0;
+    }
   }
 
   .analyze-btn {
@@ -33,12 +56,13 @@
     align-items: center;
     align-self: center;
     gap: $s-1;
-    padding: $s-px5 $s-3;
+    padding: $s-px5 $s-2;
     border: 1px solid var(--b3-theme-primary);
     border-radius: $r-base;
     background: var(--b3-theme-primary);
     color: var(--b3-theme-on-primary);
     font-size: $t-xs;
+    white-space: nowrap;
     cursor: pointer;
     flex-shrink: 0;
 
@@ -60,9 +84,12 @@
   .settings-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     align-self: center;
-    gap: $s-1;
-    padding: $s-px5 $s-2;
+    width: $s-6;
+    height: $s-6;
+    box-sizing: border-box;
+    padding: 0;
     border: 1px solid var(--b3-border-color);
     border-radius: $r-base;
     background: transparent;
@@ -70,8 +97,6 @@
     font-size: $t-xs;
     cursor: pointer;
     flex-shrink: 0;
-    // 与右侧主按钮拉开间距（tab-bar gap 2px 对实心按钮簇过挤）
-    margin-right: $s-1;
 
     &:hover {
       background: var(--b3-theme-surface-light);

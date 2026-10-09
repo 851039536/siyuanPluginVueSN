@@ -126,7 +126,9 @@
   opacity: 0.5;
 }
 
-// 锚定来源徽章（BFG 清理后残留诊断："远程引用"= 仅被 refs/remotes 锚定；"其他引用"= stash 等）
+// 锚定来源徽章（三态：本地可达 / 远程引用 / 其他引用）
+// 配色语义：本地可达=中性（正常态，无需动作）；远程引用=警示色（远端仍是旧历史，需强推/删远程分支）；
+// 其他引用=次要强调（stash 等，清理后可能残留）
 .grcp-item-anchor {
   flex: 0 0 auto;
   padding: 0 $s-1;
@@ -137,6 +139,21 @@
   color: var(--b3-theme-on-surface-light, var(--b3-theme-on-surface));
   opacity: 0.8;
   cursor: help;
+  white-space: nowrap;
+
+  &--local {
+    opacity: 0.5; // 正常态进一步弱化，让异常态在列表中凸显
+  }
+
+  &--remote {
+    border-color: var(--b3-theme-warning, $c-warning);
+    color: var(--b3-theme-warning, $c-warning);
+  }
+
+  &--other {
+    border-color: var(--b3-theme-primary-lighter, var(--b3-theme-primary));
+    color: var(--b3-theme-primary);
+  }
 }
 
 // 文件路径（超长省略，title 保留全文）

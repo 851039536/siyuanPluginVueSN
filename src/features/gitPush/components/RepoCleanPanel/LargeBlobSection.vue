@@ -24,12 +24,14 @@
             class="grcp-item-share"
             :title="`${i18n.repoCleanOfPackSize}`"
           >{{ row.shareText }}</span>
-          <!-- 锚定来源徽章（仅非本地引用锚定时显示："远程引用"/"其他引用"） -->
+          <!-- 来源徽章：三态全覆盖（本地可达 / 远程引用 / 其他引用）。
+               原实现仅在"非本地"时才渲染，导致最常见的"本地可达"反而无标注，
+               用户无法判断某个大文件是否已被本地分支锚定（决定能否清理的关键）。 -->
           <span
-            v-if="row.anchor"
             class="grcp-item-anchor"
-            :title="row.anchor === 'remote' ? i18n.repoCleanAnchorRemoteTip : i18n.repoCleanAnchorOtherTip"
-          >{{ row.anchor === "remote" ? i18n.repoCleanAnchorRemote : i18n.repoCleanAnchorOther }}</span>
+            :class="`grcp-item-anchor--${row.anchorKind}`"
+            :title="row.anchorTip"
+          >{{ row.anchorLabel }}</span>
           <!-- 路径（超长省略，title 保留全文） -->
           <span
             class="grcp-item-path"
@@ -70,6 +72,12 @@ interface BlobRow extends RepoBlobItem {
   pct: number
   /** 占 .git 打包体积的百分比文案（绝对口径，供右侧标注） */
   shareText: string
+  /** 来源样式修饰类后缀（local / remote / other，见 anchorKindOf） */
+  anchorKind: string
+  /** 来源标签文案（已渲染，缺失时为 "-" 而非 undefined） */
+  anchorLabel: string
+  /** 来源说明文案（悬停） */
+  anchorTip: string
 }
 
 const props = defineProps<{
@@ -108,13 +116,32 @@ const pagedRows = computed<BlobRow[]>(() => {
   const topSize = pagedBlobs.value.length > 0
     ? Math.max(...pagedBlobs.value.map((b) => b.size))
     : 0
-  return pagedBlobs.value.map((b) => ({
-    ...b,
-    // 最小值 2%：非零体积一定留可见残段，避免"有文件却看不到条"
-    pct: topSize > 0 && b.size > 0 ? Math.max(2, (b.size / topSize) * 100) : 0,
-    shareText: props.packSize > 0 ? `${((b.size / props.packSize) * 100).toFixed(1)}%` : "—",
-  }))
+  return pagedBlobs.value.map((b) => {
+    const kind = anchorKindOf(b)
+    const suffix = kind === "local" ? "Local" : kind === "remote" ? "Remote" : "Other"
+    return {
+      ...b,
+      // 最小值 2%：非零体积一定留可见残段，避免"有文件却看不到条"
+      pct: topSize > 0 && b.size > 0 ? Math.max(2, (b.size / topSize) * 100) : 0,
+      shareText: props.packSize > 0 ? `${((b.size / props.packSize) * 100).toFixed(1)}%` : "—",
+      anchorKind: kind,
+      // 在此渲染文案（而非在模板里按 key 查），i18n 缺键时降级为 "-" 而不是渲染出 undefined
+      anchorLabel: String(props.i18n[`repoCleanAnchor${suffix}`] ?? "-"),
+      anchorTip: String(props.i18n[`repoCleanAnchor${suffix}Tip`] ?? ""),
+    }
+  })
 })
+
+/**
+ * 锚定来源分类（与 RepoCleanOps 的赋值口径一一对应）。
+ *
+ * `anchor` 仅在**本地不可达**时才被赋值，故 `undefined` 本身即代表"本地分支/标签可达"。
+ * 这里补全为显式三态，让最常见的正常态也有标注（否则用户无法判断该文件是否已被本地分支锚定）。
+ */
+function anchorKindOf(b: RepoBlobItem): "local" | "remote" | "other" {
+  if (!b.anchor) return "local"
+  return b.anchor === "remote" ? "remote" : "other"
+}
 
 /** 数据源变化（重新扫描）时重置分页 */
 watch(pagedSource, () => {

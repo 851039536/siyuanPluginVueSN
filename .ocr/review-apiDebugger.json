@@ -1,0 +1,328 @@
+{
+  "status": "complete",
+  "llm": {
+    "provider": "mygw",
+    "model": "deepseek-v4.1-flash"
+  },
+  "message": "Review complete: 3 finding(s) across 20 selected item(s).",
+  "summary": {
+    "files_reviewed": 20,
+    "comments": 3,
+    "total_tokens": 470588,
+    "input_tokens": 458465,
+    "output_tokens": 12123,
+    "elapsed": "1m19s"
+  },
+  "tool_calls": {
+    "total": 63,
+    "by_tool": {
+      "code_comment": 1,
+      "code_search": 26,
+      "file_read": 36
+    },
+    "failure": 0,
+    "failure_by_tool": {},
+    "failure_details": []
+  },
+  "comments": [
+    {
+      "path": "src/features/diskBrowser/composables/useDiskBrowser.ts",
+      "content": "The implementation was changed to `async ...: Promise\u003cvoid\u003e`, but the exported return-type contract still declares `toggleFavorite: (folderPath: string) =\u003e void`. `toggleFavorite` is now invoked directly from Vue event handlers (`@toggle-favorite=\"toggleFavorite\"`, `@remove-favorite=\"toggleFavorite\"`) without `await`/`void`, so a rejected promise (e.g. an error thrown outside the internal try block, like the rollback assignment or showMessage) would surface as an unhandled rejection. Please update the declared type to `(folderPath: string) =\u003e Promise\u003cvoid\u003e` so the contract matches the implementation and callers are aware it is async.",
+      "suggestion_code": "  toggleFavorite: (folderPath: string) =\u003e Promise\u003cvoid\u003e",
+      "existing_code": "  toggleFavorite: (folderPath: string) =\u003e void",
+      "start_line": 48,
+      "end_line": 48,
+      "category": "maintainability",
+      "severity": "medium"
+    },
+    {
+      "path": "src/features/diskBrowser/composables/useDiskBrowser.ts",
+      "content": "`toggleFavorite` now does an optimistic in-place mutation then persists asynchronously. On save failure it rolls back with `favoriteFolders.value = previous`. Since `favoriteFolders` is a plain `ref`, reassignment works, but the rollback is not concurrency-safe: two rapid toggle clicks can interleave, so a failed save for the first click can clobber the second click's state (and vice versa), leaving the UI out of sync with storage. Consider serializing the saves (e.g. a simple in-flight guard) or disabling the toggle button while a save is pending.",
+      "existing_code": "    } catch (error) {\n      favoriteFolders.value = previous\n      console.error(\"保存收藏夹失败:\", error)\n      showMessage(i18n.favoriteSaveFailed!, 3000, \"error\")\n    }",
+      "start_line": 117,
+      "end_line": 121,
+      "category": "bug",
+      "severity": "medium"
+    },
+    {
+      "path": "src/features/diskBrowser/utils/index.ts",
+      "content": "The i18n-fallback removal was applied only partially. `formatDate` now uses non-null assertions (`i18n.today!`, `i18n.daysAgo!`), but `computeCacheStatus` a few lines above still uses hardcoded fallbacks (`i18n.cacheExpired || \"缓存已过期\"`, `i18n.minutesRemaining || \"分钟\"`, the `缓存有效期剩余 ...` template, etc.). This leaves the module with two contradictory i18n conventions after the refactor, which is confusing and defeats the goal of eliminating hardcoded fallbacks. Align the rest of the file to a single convention.",
+      "existing_code": "    text: labelType === \"full\" ? i18n.cacheExpired || \"缓存已过期\" : i18n.expired || \"已过期\",\n      isExpired: true,\n      tooltip: i18n.cacheExpiredTooltip || \"缓存已过期，点击刷新按钮获取最新数据\",",
+      "start_line": 133,
+      "end_line": 135,
+      "category": "maintainability",
+      "severity": "medium"
+    }
+  ],
+  "groups": [
+    {
+      "label": "apiDebugger feature changes",
+      "files": [
+        "src/features/apiDebugger/composables/useApiDebugger.ts",
+        "src/features/apiDebugger/index.ts",
+        "src/features/apiDebugger/index.vue",
+        "src/features/apiDebugger/styles/index.scss",
+        "src/features/apiDebugger/types/index.ts",
+        "src/features/apiDebugger/types/storage.ts"
+      ]
+    },
+    {
+      "label": "diskBrowser feature changes",
+      "files": [
+        "src/features/diskBrowser/components/AddressBar.vue",
+        "src/features/diskBrowser/components/FolderList.vue",
+        "src/features/diskBrowser/components/FolderListItem.vue",
+        "src/features/diskBrowser/components/Sidebar.vue",
+        "src/features/diskBrowser/composables/useDiskBrowser.ts",
+        "src/features/diskBrowser/index.vue",
+        "src/features/diskBrowser/types/index.ts",
+        "src/features/diskBrowser/utils/index.ts"
+      ]
+    },
+    {
+      "label": "i18n translations for features",
+      "files": [
+        "src/i18n/en_US.json",
+        "src/i18n/en_US/apiDebugger.json",
+        "src/i18n/en_US/diskBrowser.json",
+        "src/i18n/zh_CN.json",
+        "src/i18n/zh_CN/apiDebugger.json",
+        "src/i18n/zh_CN/diskBrowser.json"
+      ]
+    }
+  ],
+  "session_id": "832851de-e995-4c1a-98d8-920cc741c235",
+  "manifest": {
+    "schema_version": "ocr.run-manifest/v1",
+    "run_id": "832851de-e995-4c1a-98d8-920cc741c235",
+    "operation": "review",
+    "terminal_state": "complete",
+    "repository": {},
+    "input": {
+      "mode": "commit",
+      "requested_head": "f17af82d",
+      "resolved_base": "3346434a07c5683316525e080f43a866a1211e90",
+      "resolved_head": "f17af82d2025e66ffc332ced5bc69ee28e04f3da",
+      "exact_range": "3346434a07c5683316525e080f43a866a1211e90..f17af82d2025e66ffc332ced5bc69ee28e04f3da",
+      "source_artifact_sha256": "d5ce5323ed8fd22433e8f22b66ad556e7ae321b056527330a9e548e99b4652b0"
+    },
+    "execution": {
+      "ocr_version": "v1.12.13",
+      "provider": "mygw",
+      "model": "deepseek-v4.1-flash",
+      "configured_concurrency": 8,
+      "rule_config_sha256": "d5e28d02ed5cdf85b533907db24b47f1be02847db764a4ded208dbaf54380ae1",
+      "runtime_config_sha256": "a05454e452747c440609abde7697fb1532b4b416dd950d0d1ec2d4388ad23939"
+    },
+    "coverage": {
+      "selected": [
+        {
+          "item_id": "269191445d0f7c1ca32575b42508fdad77c4ae96d5df2feb9c493a86d48a3f52",
+          "path": "src/features/diskBrowser/composables/useDiskBrowser.ts",
+          "fingerprint": "8b27cbfd6669074c8c9cbdbcd8dad57116fb1ad5e37e2ccac12b86195df1f5df"
+        },
+        {
+          "item_id": "2e25c44f77f905e080004989f45a814ed8998d13503e36b9e8673e016a97ed0d",
+          "path": "src/features/apiDebugger/index.ts",
+          "fingerprint": "cd0705c4517d4d9877b402b2b64708abcd63bd37bc8f8a16beb1d745023a0721"
+        },
+        {
+          "item_id": "467e576315adfd616952a91755988cafc54708666f2e2d62d40b855d72be1880",
+          "path": "src/features/diskBrowser/utils/index.ts",
+          "fingerprint": "b58ee5302a93675850778e75da3ba8bbb7a8a195a6b4d67017267369f5eb8874"
+        },
+        {
+          "item_id": "563cce27059d08593e6f901f4f7ba5e29c6fa06ebd573c0f7910dd0547fb0c6d",
+          "path": "src/i18n/zh_CN/diskBrowser.json",
+          "fingerprint": "388db400c3dc68e56b25899f4700fed0284c7f0b6fcf63af81c6b9fa9d051389"
+        },
+        {
+          "item_id": "599b1812626ad86c8d3a05b1f26a426f221c34b85977fe3d5c3ece651a51f0d2",
+          "path": "src/features/apiDebugger/styles/index.scss",
+          "fingerprint": "fe342f1a2310b758795643ec48b93a43c3fb8d4358c559c00bfcc8ca89872e0d"
+        },
+        {
+          "item_id": "6856e64ec48503c8be86bb477b99d8e7530944bda22644a0af1ad3632bd94ab2",
+          "path": "src/i18n/zh_CN.json",
+          "fingerprint": "e6f30bffb3bbb7ae79936ffe4b4db0ad717f2b4f3db2b1cfdcfde2c1d19e259c"
+        },
+        {
+          "item_id": "735fd14fafe0db847ab01b61db494c53bbf41724c30ef33685cc721ac9e60ebe",
+          "path": "src/features/diskBrowser/index.vue",
+          "fingerprint": "4ea737eee5c3354fe65f4fad9e98d1b13e39c9c6f559d892a2bf4747e6ce00f0"
+        },
+        {
+          "item_id": "88d0aef59bacbd61c5649f55299bbc9685c8434bfaca111f34b182d7a9a7e850",
+          "path": "src/features/diskBrowser/components/FolderList.vue",
+          "fingerprint": "66a35f9651e68dfd38442491f58bb68837f71f83e2d237eeece48d4b764eef30"
+        },
+        {
+          "item_id": "89c9b222ad5cddcbe34ae25841159406b12cde529d4459d13a6d655ef4b0af73",
+          "path": "src/i18n/en_US/diskBrowser.json",
+          "fingerprint": "b6d5e47a6723620430e5d14451e2b95044801fd22d49953dadec40bcbc4f12ea"
+        },
+        {
+          "item_id": "8f35ada82bcde9ea41b85d919eea0de316fd90b447f18645f7908794b8237f84",
+          "path": "src/features/apiDebugger/index.vue",
+          "fingerprint": "96f1a34d04b17d200eb18b0c7e50ddf657432c911088ec0f5dd518d8d0c39557"
+        },
+        {
+          "item_id": "9ccbadb3b5dd48ec429fddf436ac239d004b7db387bfa3a654fad8e8dc2f2331",
+          "path": "src/features/diskBrowser/components/Sidebar.vue",
+          "fingerprint": "41c0cbbfa41af5b1f41ca84d850ef5aca1b4391243dc7f6e9b8907ea872226e8"
+        },
+        {
+          "item_id": "a42f5e03a75055deec02d47c35f3e77e25d7557346e5bcc51ab1ed8b1a548ce2",
+          "path": "src/features/diskBrowser/components/AddressBar.vue",
+          "fingerprint": "ea31b788630a3444f997c5fdd61bf3fd40e13b0a499c40eef4dfeec88af19683"
+        },
+        {
+          "item_id": "af3547c7966b6ff6192dba515903d88862d40eda978291a536ce7a7fa1755d09",
+          "path": "src/features/diskBrowser/components/FolderListItem.vue",
+          "fingerprint": "38d083374e0ca72a47ef8fac3d242a78c8b205cdd6f3449716c732cacea3bc01"
+        },
+        {
+          "item_id": "b2127914561cf5af6c63311f132eb8a7a345f0579ad2f14a705318b6fbd06b0f",
+          "path": "src/features/apiDebugger/composables/useApiDebugger.ts",
+          "fingerprint": "dfb82fb3116bcef84e69b55fc0df4ddc7673f17e10422351367f27fbec03db1b"
+        },
+        {
+          "item_id": "c7cf075198030759b9a1db7ca25d2d7552219523fdb768508257e7b740761166",
+          "path": "src/features/diskBrowser/types/index.ts",
+          "fingerprint": "049ac8962afec57735714aec353039d7d1463d96b1a534c49114885cca0186b5"
+        },
+        {
+          "item_id": "c81741f8f9a0bd35873530a5a32c76f53b4cda90847998ccaffac8db47541429",
+          "path": "src/i18n/en_US/apiDebugger.json",
+          "fingerprint": "08bcbbcbc9cabce4aeaf08c5077d09bb6e4882f4095837ce93285a51992b0b83"
+        },
+        {
+          "item_id": "d4f42771cfff5bef24b4531831e5ef4724bbfd27067904057923fab40858528a",
+          "path": "src/i18n/en_US.json",
+          "fingerprint": "02d05b8d66294e4787741f4a93521b4aa544d47accb3270f0e2c380317c4b109"
+        },
+        {
+          "item_id": "d72ea4547e0cb9d74edfba06d3e69d794af8ca578e24e5b58a7d8a61bc6409b3",
+          "path": "src/features/apiDebugger/types/index.ts",
+          "fingerprint": "aafc0436cc3cc1535fc40a9dbc906a3225eaf0dc1c01df79656ab152aadcbbf0"
+        },
+        {
+          "item_id": "dafa907c790a60dabc95bd2a9785e3905a6b688310501dbb82e54b26a4b0edb3",
+          "path": "src/features/apiDebugger/types/storage.ts",
+          "fingerprint": "2ce2a70cc2cd869e3cbdcffc581a48299b610c0be7899705cab04386ed0e11ac"
+        },
+        {
+          "item_id": "eaaf3b4ff3fc2c8e303ea05edc764d0f271d182035a4550e7c22072b5c64be2d",
+          "path": "src/i18n/zh_CN/apiDebugger.json",
+          "fingerprint": "8aca190408032682eff4c3567c30e8ac8ef9dd263bdf596f70c93fd8e2931684"
+        }
+      ],
+      "completed": [
+        {
+          "item_id": "269191445d0f7c1ca32575b42508fdad77c4ae96d5df2feb9c493a86d48a3f52",
+          "path": "src/features/diskBrowser/composables/useDiskBrowser.ts",
+          "fingerprint": "8b27cbfd6669074c8c9cbdbcd8dad57116fb1ad5e37e2ccac12b86195df1f5df"
+        },
+        {
+          "item_id": "2e25c44f77f905e080004989f45a814ed8998d13503e36b9e8673e016a97ed0d",
+          "path": "src/features/apiDebugger/index.ts",
+          "fingerprint": "cd0705c4517d4d9877b402b2b64708abcd63bd37bc8f8a16beb1d745023a0721"
+        },
+        {
+          "item_id": "467e576315adfd616952a91755988cafc54708666f2e2d62d40b855d72be1880",
+          "path": "src/features/diskBrowser/utils/index.ts",
+          "fingerprint": "b58ee5302a93675850778e75da3ba8bbb7a8a195a6b4d67017267369f5eb8874"
+        },
+        {
+          "item_id": "563cce27059d08593e6f901f4f7ba5e29c6fa06ebd573c0f7910dd0547fb0c6d",
+          "path": "src/i18n/zh_CN/diskBrowser.json",
+          "fingerprint": "388db400c3dc68e56b25899f4700fed0284c7f0b6fcf63af81c6b9fa9d051389"
+        },
+        {
+          "item_id": "599b1812626ad86c8d3a05b1f26a426f221c34b85977fe3d5c3ece651a51f0d2",
+          "path": "src/features/apiDebugger/styles/index.scss",
+          "fingerprint": "fe342f1a2310b758795643ec48b93a43c3fb8d4358c559c00bfcc8ca89872e0d"
+        },
+        {
+          "item_id": "6856e64ec48503c8be86bb477b99d8e7530944bda22644a0af1ad3632bd94ab2",
+          "path": "src/i18n/zh_CN.json",
+          "fingerprint": "e6f30bffb3bbb7ae79936ffe4b4db0ad717f2b4f3db2b1cfdcfde2c1d19e259c"
+        },
+        {
+          "item_id": "735fd14fafe0db847ab01b61db494c53bbf41724c30ef33685cc721ac9e60ebe",
+          "path": "src/features/diskBrowser/index.vue",
+          "fingerprint": "4ea737eee5c3354fe65f4fad9e98d1b13e39c9c6f559d892a2bf4747e6ce00f0"
+        },
+        {
+          "item_id": "88d0aef59bacbd61c5649f55299bbc9685c8434bfaca111f34b182d7a9a7e850",
+          "path": "src/features/diskBrowser/components/FolderList.vue",
+          "fingerprint": "66a35f9651e68dfd38442491f58bb68837f71f83e2d237eeece48d4b764eef30"
+        },
+        {
+          "item_id": "89c9b222ad5cddcbe34ae25841159406b12cde529d4459d13a6d655ef4b0af73",
+          "path": "src/i18n/en_US/diskBrowser.json",
+          "fingerprint": "b6d5e47a6723620430e5d14451e2b95044801fd22d49953dadec40bcbc4f12ea"
+        },
+        {
+          "item_id": "8f35ada82bcde9ea41b85d919eea0de316fd90b447f18645f7908794b8237f84",
+          "path": "src/features/apiDebugger/index.vue",
+          "fingerprint": "96f1a34d04b17d200eb18b0c7e50ddf657432c911088ec0f5dd518d8d0c39557"
+        },
+        {
+          "item_id": "9ccbadb3b5dd48ec429fddf436ac239d004b7db387bfa3a654fad8e8dc2f2331",
+          "path": "src/features/diskBrowser/components/Sidebar.vue",
+          "fingerprint": "41c0cbbfa41af5b1f41ca84d850ef5aca1b4391243dc7f6e9b8907ea872226e8"
+        },
+        {
+          "item_id": "a42f5e03a75055deec02d47c35f3e77e25d7557346e5bcc51ab1ed8b1a548ce2",
+          "path": "src/features/diskBrowser/components/AddressBar.vue",
+          "fingerprint": "ea31b788630a3444f997c5fdd61bf3fd40e13b0a499c40eef4dfeec88af19683"
+        },
+        {
+          "item_id": "af3547c7966b6ff6192dba515903d88862d40eda978291a536ce7a7fa1755d09",
+          "path": "src/features/diskBrowser/components/FolderListItem.vue",
+          "fingerprint": "38d083374e0ca72a47ef8fac3d242a78c8b205cdd6f3449716c732cacea3bc01"
+        },
+        {
+          "item_id": "b2127914561cf5af6c63311f132eb8a7a345f0579ad2f14a705318b6fbd06b0f",
+          "path": "src/features/apiDebugger/composables/useApiDebugger.ts",
+          "fingerprint": "dfb82fb3116bcef84e69b55fc0df4ddc7673f17e10422351367f27fbec03db1b"
+        },
+        {
+          "item_id": "c7cf075198030759b9a1db7ca25d2d7552219523fdb768508257e7b740761166",
+          "path": "src/features/diskBrowser/types/index.ts",
+          "fingerprint": "049ac8962afec57735714aec353039d7d1463d96b1a534c49114885cca0186b5"
+        },
+        {
+          "item_id": "c81741f8f9a0bd35873530a5a32c76f53b4cda90847998ccaffac8db47541429",
+          "path": "src/i18n/en_US/apiDebugger.json",
+          "fingerprint": "08bcbbcbc9cabce4aeaf08c5077d09bb6e4882f4095837ce93285a51992b0b83"
+        },
+        {
+          "item_id": "d4f42771cfff5bef24b4531831e5ef4724bbfd27067904057923fab40858528a",
+          "path": "src/i18n/en_US.json",
+          "fingerprint": "02d05b8d66294e4787741f4a93521b4aa544d47accb3270f0e2c380317c4b109"
+        },
+        {
+          "item_id": "d72ea4547e0cb9d74edfba06d3e69d794af8ca578e24e5b58a7d8a61bc6409b3",
+          "path": "src/features/apiDebugger/types/index.ts",
+          "fingerprint": "aafc0436cc3cc1535fc40a9dbc906a3225eaf0dc1c01df79656ab152aadcbbf0"
+        },
+        {
+          "item_id": "dafa907c790a60dabc95bd2a9785e3905a6b688310501dbb82e54b26a4b0edb3",
+          "path": "src/features/apiDebugger/types/storage.ts",
+          "fingerprint": "2ce2a70cc2cd869e3cbdcffc581a48299b610c0be7899705cab04386ed0e11ac"
+        },
+        {
+          "item_id": "eaaf3b4ff3fc2c8e303ea05edc764d0f271d182035a4550e7c22072b5c64be2d",
+          "path": "src/i18n/zh_CN/apiDebugger.json",
+          "fingerprint": "8aca190408032682eff4c3567c30e8ac8ef9dd263bdf596f70c93fd8e2931684"
+        }
+      ],
+      "reused": [],
+      "failed": [],
+      "waived": []
+    },
+    "elapsed_ms": 79374
+  }
+}

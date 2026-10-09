@@ -72,6 +72,8 @@ export function useApiDebugger(plugin: Plugin): {
   const history = shallowRef<ApiRequestRecord[]>([])
 
   let disposed = false
+  /** 在途请求的中止句柄：卸载时 abort，避免卸载后仍回调写状态 */
+  let abortController: AbortController | null = null
 
   onMounted(async () => {
     const data = await storage.settings.loadOrDefault()
@@ -81,6 +83,8 @@ export function useApiDebugger(plugin: Plugin): {
 
   onUnmounted(() => {
     disposed = true
+    abortController?.abort()
+    abortController = null
   })
 
   function selectEndpoint(preset: ApiEndpointPreset): void {
@@ -159,18 +163,26 @@ export function useApiDebugger(plugin: Plugin): {
     }
 
     const startTime = performance.now()
+    abortController = new AbortController()
+    const { signal } = abortController
 
     try {
       const response = await fetch(`${SIYUAN_API_BASE_URL}${path.value}`, {
         method: method.value,
         headers,
         body: method.value !== "GET" ? requestBody.value : undefined,
+        signal,
       })
+
+      // 卸载或已被新请求取代：丢弃本次结果，避免写入失效状态 / 追加历史
+      if (disposed || signal.aborted) return
 
       responseTime.value = Math.round(performance.now() - startTime)
       statusCode.value = response.status
 
       const text = await response.text()
+      if (disposed || signal.aborted) return
+
       try {
         responseBody.value = JSON.stringify(JSON.parse(text), null, 2)
       } catch {
@@ -184,18 +196,28 @@ export function useApiDebugger(plugin: Plugin): {
           success = json.code === 0
       } catch {}
 
-      history.value = await storage.addRecord(createRecord(success, response.status, responseBody.value))
+      const nextHistory = await storage.addRecord(createRecord(success, response.status, responseBody.value))
+      if (disposed) return
+      history.value = nextHistory
       activeTab.value = "response"
     } catch (err: unknown) {
-      responseTime.value = Math.round(performance.now() - startTime)
+      // 主动中止（卸载）不算请求失败：静默返回，不写状态、不记历史
+      if (signal.aborted) return
+
       const errMsg = getErrorMessage(err) || "请求失败"
+      if (disposed) return
+      responseTime.value = Math.round(performance.now() - startTime)
       errorMessage.value = errMsg
       statusCode.value = 0
 
-      history.value = await storage.addRecord(createRecord(false, 0, "", errMsg))
+      const nextHistory = await storage.addRecord(createRecord(false, 0, "", errMsg))
+      if (disposed) return
+      history.value = nextHistory
       activeTab.value = "response"
     } finally {
-      loading.value = false
+      // 仅当本次请求仍是当前在途请求时才复位，避免覆盖后续请求的 loading
+      if (abortController?.signal === signal) abortController = null
+      if (!disposed) loading.value = false
     }
   }
 

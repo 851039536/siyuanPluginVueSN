@@ -46,36 +46,12 @@
     gap: $s-2;
   }
 
-  // Tab bar
+  // Tab bar（分段切换用共享 Button，此容器仅负责布局与分隔线）
   &__tabs {
     display: flex;
+    align-items: center;
+    gap: $s-1;
     border-bottom: 1px solid var(--b3-border-color);
-    gap: 0;
-  }
-
-  &__tab {
-    padding: $s-2 $s-3;
-    font-size: $t-xs;
-    font-weight: $fw-medium;
-    color: var(--b3-theme-on-background);
-    opacity: 0.6;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-
-    &:hover {
-      opacity: 0.8;
-    }
-
-    &--active {
-      opacity: 1;
-      border-bottom-color: $c-primary;
-      color: $c-primary;
-    }
   }
 
   // Response area

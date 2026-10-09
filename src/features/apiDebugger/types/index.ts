@@ -13,7 +13,6 @@ export interface ApiEndpointPreset {
   path: string
   defaultBody: string
 }
-
 export interface CustomHeader {
   key: string
   value: string
@@ -40,6 +39,46 @@ export interface ApiDebuggerSettings {
 
 export const STORAGE_KEY = "api-debugger-settings"
 export const DEFAULT_MAX_HISTORY = 50
+
+/**
+ * 面板 i18n 文案契约（对应 src/i18n/{zh_CN,en_US}/apiDebugger.json）
+ * 字段与分片键一一对应；categories 的键取自预置端点的 category，
+ * 使 i18n.categories[...] 的访问路径受 TS 约束（拼错键名会编译报错）
+ */
+export interface ApiDebuggerI18n {
+  endpoint?: string
+  endpointPlaceholder?: string
+  method?: string
+  path?: string
+  pathPlaceholder?: string
+  requestBody?: string
+  requestBodyPlaceholder?: string
+  send?: string
+  clear?: string
+  response?: string
+  statusCode?: string
+  responseTime?: string
+  responseBody?: string
+  history?: string
+  clearHistory?: string
+  noHistory?: string
+  customHeaders?: string
+  addHeader?: string
+  removeHeader?: string
+  headerKey?: string
+  headerValue?: string
+  copyResponse?: string
+  loading?: string
+  error?: string
+  success?: string
+  ms?: string
+  /** 以下两项直接作为 showMessage 的文案参数（要求 string），故声明为必填 */
+  responseCopied: string
+  copyFailed: string
+  noEndpoint?: string
+  invalidJson?: string
+  categories: Record<ApiEndpointCategory, string>
+}
 
 export const API_ENDPOINT_PRESETS: ApiEndpointPreset[] = [
   // Notebook
@@ -357,3 +396,6 @@ export const API_ENDPOINT_PRESETS: ApiEndpointPreset[] = [
     defaultBody: "{}",
   },
 ]
+
+/** 预置端点分类（从 API_ENDPOINT_PRESETS 反推，新增分类时自动纳入，无需两处维护） */
+export type ApiEndpointCategory = (typeof API_ENDPOINT_PRESETS)[number]["category"]

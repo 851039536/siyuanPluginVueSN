@@ -86,9 +86,8 @@
       <div class="api-debugger__section-title">
         {{ i18n.requestBody }}
       </div>
-      <Input
+      <Textarea
         v-model="requestBody"
-        type="textarea"
         :placeholder="i18n.requestBodyPlaceholder"
         :rows="6"
         size="xsmall"
@@ -119,21 +118,18 @@
 
     <!-- Tabs -->
     <div class="api-debugger__tabs">
-      <button
-        class="api-debugger__tab"
-        :class="{ 'api-debugger__tab--active': activeTab === 'response' }"
-        @click="activeTab = 'response'"
+      <Button
+        v-for="tab in responseTabs"
+        :key="tab.id"
+        :variant="activeTab === tab.id ? 'primary' : 'ghost'"
+        text
+        size="xsmall"
+        :aria-pressed="activeTab === tab.id"
+        @click="activeTab = tab.id"
       >
-        {{ i18n.response }}
-      </button>
-      <button
-        class="api-debugger__tab"
-        :class="{ 'api-debugger__tab--active': activeTab === 'history' }"
-        @click="activeTab = 'history'"
-      >
-        {{ i18n.history }}
-        <span v-if="history.length">({{ history.length }})</span>
-      </button>
+        {{ tab.label }}
+        <span v-if="tab.id === 'history' && history.length">({{ history.length }})</span>
+      </Button>
     </div>
 
     <!-- Response Tab -->
@@ -241,7 +237,10 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { ApiEndpointPreset } from "./types"
+import type {
+  ApiDebuggerI18n,
+  ApiEndpointPreset,
+} from "./types"
 import type {
   SelectGroupOption,
   SelectOption,
@@ -251,6 +250,7 @@ import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
+import Textarea from "@/components/Textarea.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { useApiDebugger } from "./composables/useApiDebugger"
 import {
@@ -259,7 +259,7 @@ import {
 } from "./types"
 
 interface Props {
-  i18n: Record<string, any>
+  i18n: ApiDebuggerI18n
   plugin: Plugin
 }
 
@@ -291,6 +291,18 @@ const methodOptions: SelectOption[] = HTTP_METHODS.map((value) => ({
   value,
   label: value,
 }))
+
+/** 响应/历史分段切换（与 activeTab 同源的单一数据源） */
+const responseTabs = computed(() => [
+  {
+    id: "response" as const,
+    label: props.i18n.response,
+  },
+  {
+    id: "history" as const,
+    label: props.i18n.history,
+  },
+])
 
 const endpointPresetMap = new Map(
   API_ENDPOINT_PRESETS.map((preset) => [preset.path, preset]),

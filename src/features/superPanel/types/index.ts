@@ -80,7 +80,6 @@ const ACTION_EVENT_MAP: Record<
   string,
   { event: string, detail?: any }
 > = {
-  openCompressor: { event: "openImageCompressor" },
   openVideoManager: { event: "openVideoManager" },
   openEverythingSearch: { event: "openEverythingSearch" },
   openFlashcardReading: { event: "openFlashcardReading" },

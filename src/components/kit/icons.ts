@@ -38,12 +38,6 @@ export const FEATURE_ICONS = {
     color: "#10b981",
   },
 
-  // 图片压缩
-  imageCompressor: {
-    icon: "mdi:image",
-    color: "#f59e0b",
-  },
-
   // 文档导航
   docNavigation: {
     icon: "mdi:file-tree",

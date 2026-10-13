@@ -46,7 +46,7 @@
 本模块只声明「状态栏独有的增量信息」：收录白名单（`DRAWER_FEATURE_IDS`）、状态栏快捷图标覆盖（`SHORTCUT_ICONS`）、动作事件名（`FEATURE_EVENTS`）、监控项定义。
 
 > ⚠️ `FEATURE_EVENTS` 刻意不从 `FEATURE_CONFIG.actions[].key` 取：后者是「面板动作标识」而非 window 事件名
-> （如 `imageCompressor` 动作是 `openCompressor` 而事件是 `openImageCompressor`），且有 9 个功能在 `FEATURE_CONFIG` 中并无 `actions[]`。
+> （如 `globalRelations` 动作是 `openGlobalRelations` 而事件是 `toggleGlobalRelations`），且有多个功能在 `FEATURE_CONFIG` 中并无 `actions[]`。
 
 **新增可 pin 功能**：在 `DRAWER_FEATURE_IDS` 加一个 id（若事件名与常规不同则在 `FEATURE_EVENTS` 登记）。
 

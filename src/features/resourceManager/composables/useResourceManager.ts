@@ -38,6 +38,7 @@ import {
 import { useAssetActions } from "./useAssetActions"
 import { useAssetLocator } from "./useAssetLocator"
 import { useCategoryManager } from "./useCategoryManager"
+import { useImageCompress } from "./useImageCompress"
 
 /** 引用更新分批并发大小 */
 const UPDATE_BATCH_SIZE = 10
@@ -139,6 +140,50 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
 
   // 行内快捷操作（复制 MD 引用 / 文件管理器打开）抽离到独立 composable
   const { copyMarkdownRef, openAssetInExplorer } = useAssetActions(i18n, showMsg)
+
+  // ── 图片压缩（自 imageCompressor 功能块迁入「图片资源」页签）──
+
+  // 压缩目标为「当前页签已加载的图片资源」，故依赖 imageAssets 计算属性（而非全量路径）
+  const {
+    selectedPaths: selectedCompressPaths,
+    selectedCount: selectedCompressCount,
+    compressing,
+    replacing,
+    compressDialogOpen,
+    compressResults,
+    compressProgressText,
+    hasResult: hasCompressResult,
+    stats: compressStats,
+    toggleSelect: toggleCompressSelect,
+    selectAll: selectAllForCompress,
+    deselectAll: deselectAllForCompress,
+    runCompress,
+    replaceOriginals,
+    clearResults: clearCompressResults,
+  } = useImageCompress(imageAssets, i18n, showMsg)
+
+  /** 压缩写回成功后释放选中项，并清除结果面板中已失效的条目 */
+  function onCompressReplaced(paths: string[]) {
+    const replaced = new Set(paths)
+    selectedCompressPaths.value = new Set(
+      [...selectedCompressPaths.value].filter((p) => !replaced.has(p)),
+    )
+  }
+
+  /** 打开压缩参数弹窗（未选中时直接提示，不弹空弹窗） */
+  function openCompressDialog() {
+    if (selectedCompressCount.value === 0) {
+      showMsg(i18n.selectHint)
+      return
+    }
+    compressDialogOpen.value = true
+  }
+
+  /** 写回原图（覆盖前二次确认，操作不可撤销） */
+  async function handleReplaceOriginals() {
+    if (!window.confirm(i18n.replaceConfirmMessage)) return
+    await replaceOriginals(onCompressReplaced)
+  }
 
   // ── Data Loading ──
 
@@ -533,5 +578,22 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     applyCustomCategory,
     handleMoveAsset,
     handleRebuildIndex,
+    // 图片压缩（「图片资源」页签）
+    selectedCompressPaths,
+    selectedCompressCount,
+    compressing,
+    replacing,
+    compressDialogOpen,
+    compressResults,
+    compressProgressText,
+    hasCompressResult,
+    compressStats,
+    toggleCompressSelect,
+    selectAllForCompress,
+    deselectAllForCompress,
+    openCompressDialog,
+    runCompress,
+    handleReplaceOriginals,
+    clearCompressResults,
   }
 }

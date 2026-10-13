@@ -1,6 +1,6 @@
 # 资源管理
 
-管理思源笔记资源文件：图片/文件资源浏览与分类筛选、定位资源引用文档并跳转、移动资源并同步更新文档引用、检测丢失/未使用资源、批量清理与重建索引。
+管理思源笔记资源文件：图片/文件资源浏览与分类筛选、定位资源引用文档并跳转、移动资源并同步更新文档引用、批量压缩图片、检测丢失/未使用资源、批量清理与重建索引。
 
 行内快捷操作：复制路径 / 复制 Markdown 引用（空格编码形态，图片用 `![]()` 语法）/ 在系统文件管理器中打开资源目录（`resolveAssetPath` 解析 OS 绝对路径 + Electron shell，非桌面端静默跳过该操作）；丢失资源页签同样支持定位引用文档以修复断链。
 
@@ -9,6 +9,16 @@
 图片/文件页签资源以**卡片网格**展示（`AssetGridList`，图库式）：自适应列网格（列最小 104px），每张卡片 = 正方形媒体区（图片缩略图 cover、**点击弹出放大预览**；文件页/加载失败回退扩展名或文件图标占位）+ 底部单行路径名 + **hover 显现的图标操作条**（复制路径 / 复制MD / 打开目录 / 定位 / 移动置亮）。点击「移动」弹出**居中移动弹窗**（`MoveAssetDialog`）：当前/新路径、快捷分类 chips 与自定义输入分行。移动为**即时动作**——选择分类、自定义应用或输入新路径回车即执行并自动关闭（弹窗内说明提示避免误触），仅保留关闭/取消；失败时弹窗保留并提示原因。丢失/未使用/文档资源页签沿用行式列表（文档资源为两段式 `rm-asset-item--panel`）。空/加载占位统一 `EmptyState`（居中图标 + 文案，加载态图标旋转）。
 
 「文档资源」页签展示当前活动文档引用的全部资源（`getDocAssets`，含文件大小），支持定位/复制路径/复制 MD 引用。
+
+## 图片压缩（自 imageCompressor 功能块迁入）
+
+压缩不再是独立功能/独立弹窗，而是「图片资源」页签的批量操作（原有 `imageCompressor` 功能块、`enableImageCompressor` 开关、`Ctrl+Alt+C` 快捷键、`openImageCompressor` 事件与状态栏/超级面板入口均已移除）。
+
+- **入口**：图片资源页签的分类筛选栏下方「压缩操作条」——全选 / 取消全选 / 压缩 (N)。卡片左上角勾选框为多选控件（**仅图片页签渲染**，文件资源不参与图片压缩）。
+- **参数**：点击「压缩」弹出 `CompressDialog`，含质量（0.1–1，默认 0.8）、最大体积（0.1–10 MB，默认 1）、最大宽高（500–4000 px，默认 1920）三项滑块与 Web Worker 开关，并预览已选数量与预计耗时。参数即 `browser-image-compression` 的调用选项。
+- **流程**：压缩（逐张串行，避免多张图同时解码的内存峰值）→ 展示统计（总数/成功/失败/平均压缩率/共节省）→ 二次确认后「替换原图」写回磁盘。压缩与写回是**两个独立步骤**，未点替换前不动原文件。
+- **与独立功能块的差异**：目标列表直接取自页签已加载的资源路径，因此不再需要全盘扫描 `assets` 目录、分页与缩略图 blob URL 管理三块逻辑；缩略图沿用页签既有的 `/assets/` 相对 URL 直出。
+- **路径形态**：列表路径为 assets 表形态（URL 编码、无前导斜杠，如 `assets/a%20b.png`），而 `/api/file/getFile` 与 `/api/file/putFile` 要求 `/data/` 前缀的**解码**路径，统一经 `toDiskAssetPath` 归一（同时处理前缀补全与编码还原）。写回覆盖同名文件；`putFile` 第二参数是 `isDir` 而非「是否覆盖」，故传 `false`。
 
 定位查询三级兜底：assets 表 path 等值匹配（原文/仅空格编码/全量编码三形态）→ blocks 表全路径模糊匹配 → 文件名模糊匹配（覆盖移动后思源索引异步刷新的窗口期）。任一层查询失败（内核/数据库异常）即中止并提示定位失败，不再降级为「未找到引用该资源的文档」。
 
@@ -23,23 +33,27 @@
 ```
 resourceManager/
 ├── index.ts                          # registerResourceManager — 创建 Dock 面板
-├── index.vue                         # 主面板：页签切换、资源列表、移动表单、缩略图预览
-├── utils.ts                          # 纯函数与共享常量：SQL 转义、路径形态变换、目录扫描
-├── types/index.ts                    # ResourceManagerI18n 文案接口 + CategoryItem 分类条目类型
+├── index.vue                         # 主面板：页签切换、资源列表、压缩操作条、移动表单、缩略图预览
+├── utils.ts                          # 纯函数与共享常量：SQL 转义、路径形态变换、目录扫描、磁盘路径归一
+├── types/index.ts                    # ResourceManagerI18n 文案接口 + CategoryItem + 压缩相关类型
+├── services/
+│   └── compressor.ts                 # 图片压缩：单张/批量压缩、写回原图、统计汇总
 ├── components/
-│   ├── AssetGridList.vue             # 图片/文件页签资源卡片网格（缩略图/占位 + hover 操作条）
+│   ├── AssetGridList.vue             # 图片/文件页签资源卡片网格（缩略图/占位 + hover 操作条 + 压缩多选框）
 │   ├── CategoryFilterBar.vue         # 分类筛选栏：chip 切换 + 「分类设置」入口
 │   ├── CategorySettingsDialog.vue    # 分类设置弹窗：删除空分类、恢复隐藏的内置分类
+│   ├── CompressDialog.vue            # 压缩参数弹窗：质量/最大体积/最大宽高/Web Worker
 │   ├── EmptyState.vue                # 空/加载占位：居中图标 + 文案（加载态图标旋转）
 │   ├── MoveAssetDialog.vue           # 移动资源弹窗：当前/新路径、快捷分类、确认/取消
 │   └── DocAssetsSection.vue          # 「文档资源」页签（自包含加载活动文档资源）
 ├── composables/
-│   ├── useResourceManager.ts         # 资源加载与缓存、分类筛选、移动/删除/重建索引
+│   ├── useResourceManager.ts         # 资源加载与缓存、分类筛选、移动/删除/重建索引、压缩编排
 │   ├── useCategoryManager.ts         # 分类可见性组装、空分类删除、内置分类隐藏/恢复与持久化
 │   ├── useAssetLocator.ts            # 引用定位三级兜底（assets → blocks 全路径 → 文件名）
 │   ├── useAssetActions.ts            # 复制 MD 引用、文件管理器中打开目录
+│   ├── useImageCompress.ts           # 压缩选中集合、批量压缩、写回原图
 │   └── useDocAssets.ts               # 活动文档资源加载（含请求代际令牌）
-└── styles/                           # index.scss + AssetGridList.scss + MoveAssetDialog.scss + EmptyState.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
+└── styles/                           # index.scss + AssetGridList.scss + MoveAssetDialog.scss + CompressDialog.scss + EmptyState.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
 ```
 
 ## 关键实现说明

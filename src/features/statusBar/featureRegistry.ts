@@ -60,7 +60,6 @@ const DRAWER_FEATURE_IDS = [
   "s3FileManager",
   "globalRelations",
   "everythingSearch",
-  "imageCompressor",
   "toolCollection",
   "componentPreview",
   "bookmarkMarker",
@@ -80,7 +79,6 @@ const SHORTCUT_ICONS: Partial<Record<string, IconKey>> = {
   websiteNavigation: "linkOutline",
   imageCreation: "imageSquare",
   everythingSearch: "binoculars",
-  imageCompressor: "imageOutline",
   bookmarkMarker: "bookmarkOutline",
   quickNote: "notePencil",
 }
@@ -89,9 +87,8 @@ const SHORTCUT_ICONS: Partial<Record<string, IconKey>> = {
  * 点击动作事件名（**不能**取自 `FEATURE_CONFIG.actions[].key`）。
  *
  * 原因：`actions[].key` 是「面板动作标识」，与本模块需要派发的 window 事件名**并非同一套**——
- * - `imageCompressor`：action `openCompressor` vs 事件 `openImageCompressor`
  * - `globalRelations`：action `openGlobalRelations` vs 事件 `toggleGlobalRelations`
- * - 另有 9 个功能（superPanel/passwordVault/skillsViewer/htmlViewer/websiteNavigation/
+ * - 另有多个功能（superPanel/passwordVault/skillsViewer/htmlViewer/websiteNavigation/
  *   s3Backup/toolCollection/quickNote/imageCreation）在 FEATURE_CONFIG 中**无 actions[]**，
  *   但其事件名客观存在且被 App.vue / 各功能监听。
  *
@@ -112,7 +109,6 @@ const FEATURE_EVENTS: Record<string, string> = {
   s3FileManager: "openS3FileManager",
   globalRelations: "toggleGlobalRelations",
   everythingSearch: "openEverythingSearch",
-  imageCompressor: "openImageCompressor",
   toolCollection: "toggleToolCollection",
   componentPreview: "openComponentPreview",
   bookmarkMarker: "openBookmarkMarker",

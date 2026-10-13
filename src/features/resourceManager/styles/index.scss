@@ -261,6 +261,77 @@
 
   // 移动弹窗表单样式已随 MoveAssetDialog 子组件迁移至 MoveAssetDialog.scss
 
+  // ── 图片压缩操作条（仅图片页签）──
+  .rm-compress-bar {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+    margin-bottom: $s-2;
+    flex-wrap: wrap;
+
+    // 主操作（压缩）推到行尾，与全选/取消全选分组
+    .rm-btn.primary {
+      margin-left: auto;
+    }
+
+    .iconify {
+      flex-shrink: 0;
+    }
+  }
+
+  // 压缩/替换进度提示
+  .rm-compress-progress {
+    font-size: $t-2xs;
+    line-height: $lh-normal;
+    color: var(--b3-theme-primary);
+    padding: $s-1 $s-2;
+    margin-bottom: $s-2;
+    border-radius: $r-sm;
+    background: var(--b3-theme-surface-light);
+    @include text-ellipsis;
+  }
+
+  // 压缩结果统计面板
+  .rm-compress-result {
+    display: flex;
+    flex-direction: column;
+    gap: $s-2;
+    padding: $s-2;
+    margin-bottom: $s-2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-sm;
+    background: var(--b3-theme-surface-light);
+
+    &__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: $s-2;
+    }
+
+    &__title {
+      font-size: $t-xs;
+      font-weight: $fw-semibold;
+      color: var(--b3-theme-on-surface);
+    }
+
+    &__stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $s-1 $s-3;
+      font-size: $t-2xs;
+      color: var(--b3-theme-on-surface-light);
+
+      .success {
+        color: $c-success;
+      }
+
+      .failed {
+        color: $c-danger;
+      }
+    }
+  }
+
   // ── 按钮 ──
   .rm-btn {
     display: inline-flex;

@@ -1,0 +1,52 @@
+@use "@/variables.scss" as *;
+
+// 图片压缩弹窗（复用 MoveAssetDialog 的 .rm-move-* 外壳，此处仅补充压缩专属片段）
+.rm-compress-dialog {
+  // 压缩参数滑块较多，窄一点更聚焦
+  width: min(92vw, 460px);
+
+  // 背景线程说明（弱化小字，与 .rm-move-dialog__hint 同口径）
+  &__hint {
+    font-size: $t-2xs;
+    line-height: $lh-normal;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  // 选中数量 / 预计耗时预览块
+  &__stats {
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+    padding: $s-2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-sm;
+    background: var(--b3-theme-surface-light);
+  }
+
+  &__stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $s-2;
+    font-size: $t-xs;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  &__stat-value {
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-on-surface);
+    // 数值跳动时宽度不抖（与 ProgressBar 标签同法）
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// 弹窗内主操作按钮（与 MoveAssetDialog 的 .rm-move-btn 并列补充，避免在弹窗内依赖主面板 .rm-btn）
+.rm-move-btn.primary {
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  border-color: var(--b3-theme-primary);
+
+  &:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+}

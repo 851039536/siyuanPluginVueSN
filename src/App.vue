@@ -1,11 +1,5 @@
 <template>
   <div class="plugin-app-main">
-    <!-- 图片压缩器 -->
-    <ImageViewer
-      :visible="showImageViewer"
-      :i18n="(plugin.i18n as any).imageCompressor || {}"
-      @close="showImageViewer = false"
-    />
     <!-- 二维码对话框 -->
     <QRCodeDialog
       :visible="showQRCodeDialog"
@@ -111,7 +105,6 @@ import {
   QRCodeDialog,
 } from "@/features/floatingToolbar"
 import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
-import ImageViewer from "@/features/imageCompressor/index.vue"
 import ImageCreationDialog from "@/features/imageCreation/index.vue"
 import PasswordVaultDialog from "@/features/passwordVault/index.vue"
 import SkillsViewerDialog from "@/features/skillsViewer/index.vue"
@@ -121,7 +114,6 @@ import { usePlugin } from "@/main"
 const plugin = usePlugin() as PluginSample
 const skillsViewerEnabled = plugin.settings.enableSkillsViewer !== false
 const imageCreationEnabled = plugin.settings.enableImageCreation !== false
-const showImageViewer = ref(false)
 const showQRCodeDialog = ref(false)
 const showVideoManager = ref(false)
 const qrcodeContent = ref("")
@@ -179,11 +171,6 @@ onMounted(() => {
   addWindowListener("openPronunciationDialog", ((event: any) => {
     if (event.detail?.content) openPronunciationDialog(event.detail.content)
   }) as EventListener)
-
-  // 监听打开图片压缩器事件
-  addWindowListener("openImageCompressor", () => {
-    showImageViewer.value = true
-  })
 
   // 监听打开视频管理器事件
   addWindowListener("openVideoManager", () => {

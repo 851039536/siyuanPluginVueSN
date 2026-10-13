@@ -40,7 +40,6 @@ export {
   registerImageCreation,
   showImageCreation,
 } from "./imageCreation"
-export { registerImageCompressor } from "./imageCompressor"
 export { registerMinimalBrowser, showMinimalBrowser } from "./minimalBrowser"
 export {
   registerComponentPreview,
@@ -114,7 +113,7 @@ type _ConfigOnly = "qrCode" | "heatmapMarker"
  */
 type _Registered =
   | "imageCreation"
-  | "pageLock" | "tableOfContents" | "imageCompressor" | "docNavigation"
+  | "pageLock" | "tableOfContents" | "docNavigation"
   | "shortcuts" | "generalSettings"
   | "superPanel" | "diskBrowser" | "aiContentGenerator"
   | "statistics" | "encryption" | "video" | "everythingSearch"

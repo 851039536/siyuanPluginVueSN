@@ -7,8 +7,6 @@
     "noResults": "未找到匹配的功能",
     "tableOfContents": "目录索引",
     "tableOfContentsDesc": "快速生成文档目录和大纲",
-    "imageCompressor": "图片压缩",
-    "imageCompressorDesc": "批量压缩文档中的图片",
     "docNavigation": "文档导航",
     "docNavigationDesc": "显示父子文档导航链接",
     "everythingSearch": "Everything搜索",

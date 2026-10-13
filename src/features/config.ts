@@ -40,16 +40,6 @@ export const FEATURE_CONFIG = [
     defaultDesc: "快速生成文档目录和大纲",
   },
   {
-    id: "imageCompressor",
-    defaultTitle: "图片压缩",
-    defaultDesc: "批量压缩文档中的图片",
-    actions: [{
-      key: "openCompressor",
-      label: "打开",
-      hotkey: "Ctrl+Alt+C",
-    }],
-  },
-  {
     id: "docNavigation",
     defaultTitle: "文档导航",
     defaultDesc: "显示父子文档导航链接",

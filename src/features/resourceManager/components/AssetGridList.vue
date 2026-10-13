@@ -5,7 +5,21 @@
       v-for="path in items"
       :key="path"
       class="rm-asset-card"
+      :class="{ 'rm-asset-card--selected': selectable && selected.has(path) }"
     >
+      <!-- 选择框：仅图片页签开启压缩多选时渲染（文件页签不参与压缩） -->
+      <label
+        v-if="selectable"
+        class="rm-asset-card__check"
+        :title="i18n.compress"
+        @click.stop
+      >
+        <input
+          type="checkbox"
+          :checked="selected.has(path)"
+          @change="onToggleSelect(path)"
+        />
+      </label>
       <!-- 媒体区：图片页展示缩略图（可点击放大预览），文件页/加载失败展示扩展名占位 -->
       <div class="rm-asset-card__media">
         <img
@@ -119,6 +133,12 @@ interface Props {
   onMove: (path: string) => void
   /** 点击图片打开放大预览 */
   onPreview: (path: string) => void
+  /** 是否渲染选择框（图片页签压缩多选；文件页签恒为 false） */
+  selectable: boolean
+  /** 已选中的资源路径集合 */
+  selected: Set<string>
+  /** 切换单张资源的选中态 */
+  onToggleSelect: (path: string) => void
 }
 
 const props = defineProps<Props>()
@@ -131,6 +151,11 @@ watch(
   () => props.items,
   () => thumbErrors.clear(),
 )
+
+/** 选择框 change 事件：把 DOM 勾选态回传父层（父层持有唯一选中集合） */
+function onToggleSelect(path: string) {
+  props.onToggleSelect(path)
+}
 
 /** 提取路径扩展名（不含点，大写）；无扩展名返回空串，用于文件卡片媒体区占位文案 */
 function fileExtName(path: string): string {

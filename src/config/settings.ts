@@ -22,7 +22,6 @@ import {
 export interface PluginSettings {
   enablePageLock: boolean // 是否启用页面锁定功能
   enableTableOfContents: boolean // 是否启用目录插件功能
-  enableImageCompressor: boolean // 是否启用图片压缩功能
   enableDocNavigation: boolean // 是否启用文档层级导航功能
   enableGeneralSettings: boolean // 是否启用通用设置功能
   enableQRCode: boolean // 是否启用二维码生成功能
@@ -94,7 +93,6 @@ export interface PluginSettings {
 export const DEFAULT_SETTINGS: PluginSettings = {
   enablePageLock: true,
   enableTableOfContents: true,
-  enableImageCompressor: true,
   enableDocNavigation: true,
   enableGeneralSettings: true,
   enableQRCode: true,

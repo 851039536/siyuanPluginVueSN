@@ -39,7 +39,6 @@ import {
   registerGlobalRelations,
   registerHtmlViewer,
   registerIdeaGenerator,
-  registerImageCompressor,
   registerImageCreation,
   registerMinimalBrowser,
   registerPageLock,
@@ -214,7 +213,6 @@ export default class PluginSample extends Plugin {
 
     if (s.enablePageLock) registerPageLock(this)
     if (s.enableTableOfContents) registerTableOfContents(this)
-    if (s.enableImageCompressor) registerImageCompressor(this)
     if (s.enableDocNavigation) registerDocNavigation(this)
     // shortcut 已迁移至 toolCollection/tools/shortcut/
     // wordQuery 已迁移至 toolCollection/tools/wordQuery/

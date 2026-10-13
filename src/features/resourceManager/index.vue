@@ -60,6 +60,78 @@
           @select="categoryFilter = $event"
           @manage="settingsOpen = true"
         />
+        <!-- 压缩操作条：仅图片页签展示（文件资源不参与图片压缩） -->
+        <div
+          v-if="activeTab === 'imageAssets'"
+          class="rm-compress-bar"
+        >
+          <!-- 按钮："全选" / "取消全选" -->
+          <button
+            class="rm-btn small"
+            :disabled="currentAssetList.length === 0"
+            @click="selectAllForCompress"
+          >
+            {{ i18n.selectAll }}
+          </button>
+          <button
+            class="rm-btn small"
+            :disabled="selectedCompressCount === 0"
+            @click="deselectAllForCompress"
+          >
+            {{ i18n.deselectAll }}
+          </button>
+          <!-- 按钮："压缩 (N)" -->
+          <button
+            class="rm-btn small primary"
+            :disabled="selectedCompressCount === 0 || compressing"
+            @click="openCompressDialog"
+          >
+            <IconWrapper
+              name="imageOutline"
+              :size="13"
+            />
+            {{ compressing ? i18n.compressing : i18n.compress }}
+            <span v-if="selectedCompressCount > 0">({{ selectedCompressCount }})</span>
+          </button>
+        </div>
+        <!-- 压缩进度提示 -->
+        <div
+          v-if="compressProgressText"
+          class="rm-compress-progress"
+        >
+          {{ compressProgressText }}
+        </div>
+        <!-- 压缩结果统计与写回入口 -->
+        <div
+          v-if="hasCompressResult"
+          class="rm-compress-result"
+        >
+          <div class="rm-compress-result__header">
+            <!-- 标题："压缩统计" -->
+            <span class="rm-compress-result__title">{{ i18n.compressStats }}</span>
+            <button
+              class="rm-btn small"
+              @click="clearCompressResults"
+            >
+              {{ i18n.clearCompressResult }}
+            </button>
+          </div>
+          <div class="rm-compress-result__stats">
+            <span>{{ i18n.compressTotal }}: {{ compressStats.total }}</span>
+            <span class="success">{{ i18n.compressSuccess }}: {{ compressStats.success }}</span>
+            <span class="failed">{{ i18n.compressFailed }}: {{ compressStats.failed }}</span>
+            <span>{{ i18n.compressRatio }}: {{ compressStats.averageRatio }}%</span>
+            <span>{{ i18n.compressTotalSaved }}: {{ compressStats.totalSavedMB }} MB</span>
+          </div>
+          <!-- 按钮："替换原图"（不可撤销，点击后二次确认） -->
+          <button
+            class="rm-btn small danger"
+            :disabled="replacing || compressStats.success === 0"
+            @click="handleReplaceOriginals"
+          >
+            {{ replacing ? i18n.replacing : i18n.replaceOriginals }}
+          </button>
+        </div>
         <!-- 资源统计 -->
         <div
           v-if="!loading && totalAssetCount > 0"
@@ -94,6 +166,9 @@
           :on-locate="handleLocateAsset"
           :on-move="startMoveAsset"
           :on-preview="openAssetPreview"
+          :selectable="activeTab === 'imageAssets'"
+          :selected="selectedCompressPaths"
+          :on-toggle-select="toggleCompressSelect"
         />
       </div>
 
@@ -305,6 +380,14 @@
       @delete="handleDeleteCategory($event.key, $event.label)"
       @restore="handleRestoreBuiltIn"
     />
+    <!-- 压缩参数弹窗：质量 / 最大体积 / 最大宽高 / Web Worker（Teleport 至 body） -->
+    <CompressDialog
+      v-if="compressDialogOpen"
+      :i18n="i18n"
+      :selected-count="selectedCompressCount"
+      @confirm="runCompress"
+      @cancel="compressDialogOpen = false"
+    />
   </div>
 </template>
 
@@ -316,6 +399,7 @@ import IconWrapper from "@/components/IconWrapper.vue"
 import AssetGridList from "./components/AssetGridList.vue"
 import CategoryFilterBar from "./components/CategoryFilterBar.vue"
 import CategorySettingsDialog from "./components/CategorySettingsDialog.vue"
+import CompressDialog from "./components/CompressDialog.vue"
 import DocAssetsSection from "./components/DocAssetsSection.vue"
 import EmptyState from "./components/EmptyState.vue"
 import MoveAssetDialog from "./components/MoveAssetDialog.vue"
@@ -360,6 +444,22 @@ const {
   applyCustomCategory,
   handleMoveAsset,
   handleRebuildIndex,
+  // ── 图片压缩（「图片资源」页签）──
+  selectedCompressPaths,
+  selectedCompressCount,
+  compressing,
+  replacing,
+  compressDialogOpen,
+  compressProgressText,
+  hasCompressResult,
+  compressStats,
+  toggleCompressSelect,
+  selectAllForCompress,
+  deselectAllForCompress,
+  openCompressDialog,
+  runCompress,
+  handleReplaceOriginals,
+  clearCompressResults,
 } = useResourceManager(props.plugin, props.i18n)
 
 // 分类设置弹窗开合状态

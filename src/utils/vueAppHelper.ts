@@ -43,7 +43,7 @@ export interface DockAppOptions {
 /**
  * 创建并注册一个基于 Vue 组件的 Dock 侧边栏面板
  *
- * 消除 resourceManager / rssReader / wordQuery / unitConverter / statistics / imageCompressor
+ * 消除 resourceManager / rssReader / wordQuery / unitConverter / statistics
  * 中重复的 container + createApp + mount + appendChild 模式。
  */
 export function createVueDockApp(

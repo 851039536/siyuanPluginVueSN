@@ -96,6 +96,40 @@ export function safeDecodeURI(path: string): string {
   catch { return path }
 }
 
+/** 图片扩展名 → MIME 类型映射（未知扩展名回落 image/jpeg） */
+const IMAGE_MIME_BY_EXT: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  gif: "image/gif",
+  bmp: "image/bmp",
+  ico: "image/x-icon",
+  tiff: "image/tiff",
+  avif: "image/avif",
+  svg: "image/svg+xml",
+}
+
+/** 按文件名解析图片 MIME 类型（无扩展名或未知扩展名回落 image/jpeg） */
+export function getImageMimeType(fileName: string): string {
+  const dot = fileName.lastIndexOf(".")
+  const ext = dot > -1 ? fileName.slice(dot + 1).toLowerCase() : ""
+  return IMAGE_MIME_BY_EXT[ext] ?? "image/jpeg"
+}
+
+/**
+ * 将列表中的资源路径归一为文件 API 可用的磁盘路径。
+ *
+ * 两处形态差异需要同时处理：
+ * 1. **前缀**：列表路径为 `assets/xxx.png`（无前导斜杠），而 `/api/file/*` 要求
+ *    `/data/` 前缀的工作空间相对路径；
+ * 2. **编码**：assets 表存 URL 编码形态（`a%20b.png`），磁盘文件名为解码形态（`a b.png`）。
+ */
+export function toDiskAssetPath(path: string): string {
+  const decoded = safeDecodeURI(path.replace(/^\/data\//, ""))
+  return `/data/${decoded}`
+}
+
 /**
  * markdown 中资源路径的可能存储形态变换：
  * 原文 / 仅空格编码（思源链接中空格存为 %20、中文保留原文）/ 完整 URL 编码

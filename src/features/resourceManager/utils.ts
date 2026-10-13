@@ -123,11 +123,18 @@ export function getImageMimeType(fileName: string): string {
  * 两处形态差异需要同时处理：
  * 1. **前缀**：列表路径为 `assets/xxx.png`（无前导斜杠），而 `/api/file/*` 要求
  *    `/data/` 前缀的工作空间相对路径；
- * 2. **编码**：assets 表存 URL 编码形态（`a%20b.png`），磁盘文件名为解码形态（`a b.png`）。
+ * 2. **编码**：列表是 `sql(assets)` 路径与 `scanAssetDir` 磁盘名的**并集**——
+ *    前者为 URL 编码形态（`a%20b.png`），后者是磁盘原始文件名（`a b.png`）。
+ *
+ * ⚠️ 不能无条件解码：磁盘名本身可能**字面含 `%xx`**（如文件名 `report%20final.png`），
+ * 解码会把它错改成 `report final.png`（通常是另一个不存在的路径）。
+ * 故与 `resolveDiskPath` 同策略：先按原样探测磁盘，不存在再试解码形态；
+ * 两者都不存在时回落原样路径（交由文件 API 报真实错误，而非静默指向错误文件）。
  */
-export function toDiskAssetPath(path: string): string {
-  const decoded = safeDecodeURI(path.replace(/^\/data\//, ""))
-  return `/data/${decoded}`
+export async function toDiskAssetPath(path: string): Promise<string> {
+  const relative = path.replace(/^\/data\//, "")
+  const diskPath = await resolveDiskPath(relative)
+  return `/data/${diskPath ?? relative}`
 }
 
 /**

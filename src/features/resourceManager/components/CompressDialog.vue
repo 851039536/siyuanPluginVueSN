@@ -25,7 +25,7 @@
             </button>
           </div>
 
-          <!-- 弹窗内容：四档压缩参数 -->
+          <!-- 弹窗内容：四档压缩参数（Slider 的 model-value 可为 null，统一经 setOption 过滤） -->
           <div class="rm-move-dialog__body">
             <Slider
               :label="i18n.compressQuality"
@@ -37,7 +37,7 @@
               :format-value="formatQuality"
               :hint="i18n.compressQualityHint"
               size="small"
-              @update:model-value="(v) => { if (v !== null) options.quality = v }"
+              @update:model-value="(v) => setOption('quality', v)"
             />
             <Slider
               :label="i18n.compressMaxSize"
@@ -49,7 +49,7 @@
               :format-value="formatMaxSize"
               :hint="i18n.compressMaxSizeHint"
               size="small"
-              @update:model-value="(v) => { if (v !== null) options.maxSizeMB = v }"
+              @update:model-value="(v) => setOption('maxSizeMB', v)"
             />
             <Slider
               :label="i18n.compressMaxDimension"
@@ -61,7 +61,7 @@
               :format-value="formatMaxDimension"
               :hint="i18n.compressMaxDimensionHint"
               size="small"
-              @update:model-value="(v) => { if (v !== null) options.maxWidthOrHeight = v }"
+              @update:model-value="(v) => setOption('maxWidthOrHeight', v)"
             />
             <Switch
               v-model="options.useWebWorker"
@@ -138,6 +138,16 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const options = reactive<CompressOptions>({ ...DEFAULT_COMPRESS_OPTIONS })
+
+/**
+ * 写入单个数值参数。
+ * `Slider` 的 `update:model-value` 载荷可为 `null`（组件允许清空），
+ * 压缩参数不接受 null，故统一在此过滤，避免三处模板重复内联判空。
+ */
+function setOption(key: "quality" | "maxSizeMB" | "maxWidthOrHeight", value: number | null) {
+  if (value === null) return
+  options[key] = value
+}
 
 /** 估算耗时：按每张约 1.5 秒折算，超 60 秒改用分钟 */
 const estimatedTime = computed(() => {

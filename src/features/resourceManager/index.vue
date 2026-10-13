@@ -65,11 +65,11 @@
           v-if="activeTab === 'imageAssets'"
           class="rm-compress-bar"
         >
-          <!-- 按钮："全选" / "取消全选" -->
+          <!-- 按钮："全选"（仅选中当前可见列表）/ "取消全选" -->
           <button
             class="rm-btn small"
             :disabled="currentAssetList.length === 0"
-            @click="selectAllForCompress"
+            @click="selectAllVisibleForCompress"
           >
             {{ i18n.selectAll }}
           </button>
@@ -169,6 +169,7 @@
           :selectable="activeTab === 'imageAssets'"
           :selected="selectedCompressPaths"
           :on-toggle-select="toggleCompressSelect"
+          :src-versions="compressSrcVersions"
         />
       </div>
 
@@ -453,8 +454,9 @@ const {
   compressProgressText,
   hasCompressResult,
   compressStats,
+  compressSrcVersions,
   toggleCompressSelect,
-  selectAllForCompress,
+  selectAllVisibleForCompress,
   deselectAllForCompress,
   openCompressDialog,
   runCompress,

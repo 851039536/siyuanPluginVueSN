@@ -150,10 +150,10 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     compressing,
     replacing,
     compressDialogOpen,
-    compressResults,
     compressProgressText,
     hasResult: hasCompressResult,
     stats: compressStats,
+    srcVersions: compressSrcVersions,
     toggleSelect: toggleCompressSelect,
     selectAll: selectAllForCompress,
     deselectAll: deselectAllForCompress,
@@ -162,7 +162,15 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     clearResults: clearCompressResults,
   } = useImageCompress(imageAssets, i18n, showMsg)
 
-  /** 压缩写回成功后释放选中项，并清除结果面板中已失效的条目 */
+  /**
+   * 全选当前**可见**图片（已按分类筛选并受加载数量截断）。
+   * 不能直接用全量 `imageAssets`：那会选中屏幕上不存在的项并连带覆盖写回。
+   */
+  function selectAllVisibleForCompress() {
+    selectAllForCompress(currentAssetList.value)
+  }
+
+  /** 压缩写回成功后释放这些路径的选中态（缩略图缓存失效由 useImageCompress 内部处理） */
   function onCompressReplaced(paths: string[]) {
     const replaced = new Set(paths)
     selectedCompressPaths.value = new Set(
@@ -584,12 +592,12 @@ export function useResourceManager(plugin: Plugin, i18n: ResourceManagerI18n) {
     compressing,
     replacing,
     compressDialogOpen,
-    compressResults,
     compressProgressText,
     hasCompressResult,
     compressStats,
+    compressSrcVersions,
     toggleCompressSelect,
-    selectAllForCompress,
+    selectAllVisibleForCompress,
     deselectAllForCompress,
     openCompressDialog,
     runCompress,

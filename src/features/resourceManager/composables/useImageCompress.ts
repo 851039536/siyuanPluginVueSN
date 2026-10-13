@@ -17,18 +17,18 @@ import {
 import {
   batchCompressImages,
   batchReplaceImages,
-  DEFAULT_COMPRESS_OPTIONS,
   getCompressStats,
 } from "../services/compressor"
 
-/** 压缩结果统计的零值形态（结果为空时展示，避免面板渲染 NaN） */
-const EMPTY_STATS = {
-  total: 0,
-  success: 0,
-  failed: 0,
-  averageRatio: 0,
-  totalSavedMB: "0.00",
-}
+/**
+ * 压缩结果统计的零值形态（结果为空时展示，避免面板渲染 NaN）。
+ *
+ * 由 `getCompressStats([])` 派生而非手写：统计对象有 11 个字段，
+ * 手写子集会让 `stats` 的推断类型退化为两个分支的联合（消费方读非空分支独有字段即得 `undefined`）。
+ * 派生后两分支同型，且服务层新增字段时零值自动跟进。
+ * 冻结为只读；`stats` 的空分支返回其浅拷贝，避免消费方误改共享对象。
+ */
+const EMPTY_STATS = Object.freeze(getCompressStats([]))
 
 /** i18n 占位符替换（缺失文案时回退空串，调用方不再二次判空） */
 function fill(template: string | undefined, values: Record<string, string | number>): string {
@@ -54,13 +54,19 @@ export function useImageCompress(
   const compressDialogOpen = ref(false)
   const compressResults = shallowRef<CompressResult[]>([])
   const compressProgressText = ref("")
+  /**
+   * 缩略图缓存破坏版本表：路径 → 版本号。
+   * 覆盖写回后资源 URL 不变，浏览器会命中旧图缓存，故对已替换路径自增版本，
+   * 由 AssetGridList 附加为 `?v=N` 强制重取（未替换路径不追加，正常缓存不受影响）。
+   */
+  const srcVersions = ref<Map<string, number>>(new Map())
 
   const selectedCount = computed(() => selectedPaths.value.size)
 
   const hasResult = computed(() => compressResults.value.length > 0)
 
   const stats = computed(() =>
-    compressResults.value.length === 0 ? EMPTY_STATS : getCompressStats(compressResults.value),
+    compressResults.value.length === 0 ? { ...EMPTY_STATS } : getCompressStats(compressResults.value),
   )
 
   /**
@@ -80,10 +86,16 @@ export function useImageCompress(
     })
   }
 
-  /** 全选当前页签已加载的图片（受「加载数量」限制，不越过已加载范围） */
-  function selectAll() {
+  /**
+   * 全选**当前可见**的图片。
+   *
+   * ⚠️ 必须由调用方传入可见列表（`currentAssetList`：已按分类筛选并受「加载数量」截断），
+   * 不能遍历 `imagePaths`（全量图片）——否则分类筛选/加载数量生效时，
+   * 「全选」会选中屏幕上并不存在的项，压缩后连同写回一起覆盖用户没看到的图片。
+   */
+  function selectAll(visiblePaths: string[]) {
     mutateSelection((set) => {
-      imagePaths.value.forEach((path) => set.add(path))
+      visiblePaths.forEach((path) => set.add(path))
     })
   }
 
@@ -120,6 +132,14 @@ export function useImageCompress(
         ratio: next.averageRatio,
       }))
     }
+    catch (e: unknown) {
+      // 服务层已逐张兜底，此处捕获的是批次级意外异常（如回调抛错）；
+      // 不吞掉：明确提示并留痕，避免 Promise 拒绝无人接管
+      console.error("批量压缩失败:", e)
+      showMsg(fill(i18n.compressBatchFailed, {
+        error: e instanceof Error ? e.message : String(e),
+      }))
+    }
     finally {
       compressing.value = false
       compressProgressText.value = ""
@@ -128,7 +148,8 @@ export function useImageCompress(
 
   /**
    * 将压缩结果写回原路径（覆盖原图）。
-   * @param onReplaced 写回成功后回调（父层据此剔除列表中的失效缩略图缓存）
+   * @param onReplaced 写回成功后回调，入参为**成功写回的路径**，供父层释放这些路径的选中态。
+   *        缩略图缓存失效由本 composable 内部自增版本号完成（见 `bumpSrcVersions`）。
    */
   async function replaceOriginals(onReplaced: (paths: string[]) => void) {
     if (compressResults.value.length === 0) return
@@ -147,9 +168,18 @@ export function useImageCompress(
         .map((r) => r.originalPath)
 
       compressResults.value = []
-      if (replacedPaths.length > 0) onReplaced(replacedPaths)
+      if (replacedPaths.length > 0) {
+        // 磁盘内容已变但 URL 未变，须让缩略图绕过旧缓存
+        bumpSrcVersions(replacedPaths)
+        onReplaced(replacedPaths)
+      }
 
       showMsg(fill(i18n.replaceDoneDetail, { success, failed }))
+    }
+    catch (e: unknown) {
+      // 保留 compressResults 不清空：写回中途失败时用户可修复后重试
+      console.error("写回原图失败:", e)
+      showMsg(i18n.replaceFailed)
     }
     finally {
       replacing.value = false
@@ -162,17 +192,23 @@ export function useImageCompress(
     compressResults.value = []
   }
 
+  /** 自增指定路径的缩略图版本，强制浏览器重取被覆盖的图片 */
+  function bumpSrcVersions(paths: string[]) {
+    const next = new Map(srcVersions.value)
+    for (const path of paths) next.set(path, (next.get(path) ?? 0) + 1)
+    srcVersions.value = next
+  }
+
   return {
     selectedPaths,
     selectedCount,
     compressing,
     replacing,
     compressDialogOpen,
-    compressResults,
     compressProgressText,
     hasResult,
     stats,
-    defaultOptions: DEFAULT_COMPRESS_OPTIONS,
+    srcVersions,
     toggleSelect,
     selectAll,
     deselectAll,

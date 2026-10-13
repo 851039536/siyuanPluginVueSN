@@ -94,10 +94,11 @@ export interface ResourceManagerI18n {
   compressUnitMinute: string
   replaceOriginals: string
   replacing: string
+  replaceFailed: string
   replaceConfirmMessage: string
-  replaceComplete: string
   replaceDoneDetail: string
   compressDoneDetail: string
+  compressBatchFailed: string
   compressStats: string
   compressTotal: string
   compressSuccess: string

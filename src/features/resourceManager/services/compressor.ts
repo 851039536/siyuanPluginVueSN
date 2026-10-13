@@ -24,9 +24,9 @@ export const DEFAULT_COMPRESS_OPTIONS: CompressOptions = {
 /**
  * 压缩单张图片。
  *
- * 路径形态说明：列表中的路径为 assets 表形态（URL 编码、无前导斜杠），
- * 而 `/api/file/getFile` 与 `/api/file/putFile` 均要求 `/data/` 前缀的**解码**路径，
- * 故读写统一经 `toDiskAssetPath` 归一（该函数同时处理编码还原与前缀补全）。
+ * 路径形态说明：列表路径是 `sql(assets)` 编码形态与 `scanAssetDir` 磁盘名的并集，
+ * 而 `/api/file/getFile` 要求 `/data/` 前缀的**真实磁盘**路径，
+ * 故经 `toDiskAssetPath` 归一（先按原样探测、再试解码形态）。
  */
 export async function compressImage(
   target: CompressTarget,
@@ -35,7 +35,7 @@ export async function compressImage(
   const startTime = Date.now()
 
   try {
-    const diskPath = toDiskAssetPath(target.path)
+    const diskPath = await toDiskAssetPath(target.path)
     const fileData = await getFile(diskPath)
 
     if (!fileData || !(fileData instanceof Blob)) {
@@ -107,14 +107,14 @@ export async function batchCompressImages(
  *
  * ⚠️ `putFile(path, isDir, file)` 的第二个参数是 **isDir（是否为创建文件夹）**，不是「是否覆盖」；
  * 写回已存在的资源路径即覆盖（内核按同名落盘覆盖），故此处传 `false`。
- * 路径统一经 `toDiskAssetPath` 归一为 `/data/` 前缀的解码形态。
+ * 路径同样经 `toDiskAssetPath` 归一为真实磁盘路径。
  */
 export async function replaceImage(
   assetPath: string,
   compressedBlob: Blob,
 ): Promise<boolean> {
   try {
-    await putFile(toDiskAssetPath(assetPath), false, compressedBlob)
+    await putFile(await toDiskAssetPath(assetPath), false, compressedBlob)
     return true
   }
   catch (error) {

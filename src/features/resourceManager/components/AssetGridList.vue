@@ -24,7 +24,7 @@
       <div class="rm-asset-card__media">
         <img
           v-if="imageTab && !thumbErrors.has(path)"
-          :src="buildSrc(path)"
+          :src="buildSrc(path) + srcVersion(path)"
           alt=""
           loading="lazy"
           @error="thumbErrors.add(path)"
@@ -139,6 +139,11 @@ interface Props {
   selected: Set<string>
   /** 切换单张资源的选中态 */
   onToggleSelect: (path: string) => void
+  /**
+   * 缩略图缓存破坏版本：路径 → 版本串（父层在覆盖写回后自增）。
+   * 资源被替换后 URL 不变，浏览器会命中旧缓存，需附加版本查询串强制重取。
+   */
+  srcVersions: Map<string, number>
 }
 
 const props = defineProps<Props>()
@@ -151,6 +156,25 @@ watch(
   () => props.items,
   () => thumbErrors.clear(),
 )
+
+// 版本号变化（该路径刚被覆盖写回）时清除其失败标记：
+// 否则「此前加载失败 → 卡片显示占位」的路径即便换了新版本也不会重新拉取，?v=N 形同失效。
+// ⚠️ 只清除**版本确实变化**的路径：srcVersions 只增不删，若整表遍历会把此前替换过的
+// 路径一并重试（包括与本次替换无关者），与「该路径刚被写回」的本意不符。
+watch(
+  () => props.srcVersions,
+  (versions, prevVersions) => {
+    for (const [path, version] of versions) {
+      if (prevVersions?.get(path) !== version) thumbErrors.delete(path)
+    }
+  },
+)
+
+/** 该路径的重取版本查询串（无版本时为常规 URL，不影响首次加载与缓存命中） */
+function srcVersion(path: string): string {
+  const version = props.srcVersions.get(path)
+  return version ? `?v=${version}` : ""
+}
 
 /** 选择框 change 事件：把 DOM 勾选态回传父层（父层持有唯一选中集合） */
 function onToggleSelect(path: string) {

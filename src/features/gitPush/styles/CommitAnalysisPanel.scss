@@ -41,9 +41,8 @@
     flex-shrink: 0; // 标题不随滚动区压缩
   }
 
-  // 滚动内容容器：条形列表（作者/类型分布）/ 提交列表（最近提交）/ 徽章排行列表（项目排行）
+  // 滚动内容容器：条形列表（作者/类型分布）/ 徽章排行列表（项目排行）
   > .gpa-bar-list,
-  > .gpa-commit-list,
   > .gpa-rank-list {
     flex: 1;
     min-height: 0; // 允许 flex 子项收缩，触发内部滚动
@@ -265,66 +264,5 @@
   }
 }
 
-// ── 最近提交记录列表 ──
-.gpa-commit-list {
-  display: flex;
-  flex-direction: column;
-  gap: $s-px3;
-}
-
-.gpa-commit-item {
-  display: flex;
-  flex-direction: column;
-  gap: $s-px3;
-  padding: $s-1 0;
-  @include row-divider;
-}
-
-.gpa-commit-hash {
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  opacity: 0.45;
-}
-
-.gpa-commit-msg {
-  font-size: $t-xs;
-  @include text-ellipsis;
-}
-
-.gpa-commit-meta {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  flex-wrap: wrap; // 宽面板仍单行，窄列自动折行
-  font-size: $t-2xs;
-  opacity: 0.6;
-}
-
-// 项目名快捷跳转：共享 Button（ghost + text 变体）承担交互与键盘可达性，
-// 此处还原「行内链接式」观感：4 类 = (0,4,0) 压 dense 几何，悬停 6 类 = (0,6,0) 压 text 变体底色
-.gpa-panel .gpa-commit-meta .gpa-commit-project.si-button {
-  padding: 0;
-  min-width: 0;
-  max-width: 40%;
-  font-size: $t-2xs;
-  color: var(--b3-theme-primary);
-  @include text-ellipsis;
-
-  &:hover:not(:disabled) {
-    background: transparent;
-    color: var(--b3-theme-primary);
-    text-decoration: underline;
-  }
-}
-
-.gpa-commit-author {
-  @include text-ellipsis;
-  max-width: 30%;
-}
-
-.gpa-commit-date {
-  margin-left: auto;
-  white-space: nowrap;
-}
-
+// ── 最近提交记录列表样式已随 RecentCommitsSection 移除 ──
 

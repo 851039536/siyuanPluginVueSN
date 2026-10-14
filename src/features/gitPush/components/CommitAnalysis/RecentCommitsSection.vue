@@ -1,112 +1,22 @@
-<!-- gitPush 提交分析最近提交记录区块（条目列表 + 加载更多，含项目跳转） -->
-<template>
-  <div class="gpa-section gpa-section--scroll">
-    <div class="gpa-section-title">
-      <!-- 区块标题："最近提交记录" + 条数徽章 -->
-      {{ i18n.analysisRecentCommits }}
-      <Tag
-        class="gpa-section-count"
-        variant="primary"
-        size="xsmall"
-        shape="square"
-      >{{ stats.entries.length }}</Tag>
-    </div>
-    <div class="gpa-commit-list">
-      <div
-        v-for="c in pagedRows"
-        :key="`${c.projectId}-${c.hash}`"
-        class="gpa-commit-item"
-      >
-        <span
-          class="gpa-commit-hash"
-          :title="c.hash"
-        >{{ c.hash }}</span>
-        <span
-          class="gpa-commit-msg"
-          :title="c.message"
-        >{{ c.message }}</span>
-        <span class="gpa-commit-meta">
-          <!-- 项目名（可点击跳转列表视图；共享 Button 的 text 变体承担键盘可达性） -->
-          <Button
-            class="gpa-commit-project"
-            variant="ghost"
-            text
-            size="xsmall"
-            dense
-            :title="c.projectName"
-            @click.stop="emit('viewProject', c.projectId)"
-          >{{ c.projectName }}</Button>
-          <span class="gpa-commit-author">{{ c.author }}</span>
-          <!-- 提交时间（相对时间预计算，完整 ISO 悬停可见） -->
-          <span
-            class="gpa-commit-date"
-            :title="c.date"
-          >{{ c.timeText }}</span>
-        </span>
-      </div>
-    </div>
-    <!-- 加载更多 -->
-    <LoadMoreButton
-      v-if="hasMore"
-      :i18n="i18n"
-      :visible="visibleCount"
-      :total="sortedEntries.length"
-      @load-more="loadMore"
-    />
-  </div>
-</template>
+<!--
+  ⚠️ 已废弃 / DEPRECATED —— 请删除本文件（删除命令见下方）。
 
-<script setup lang="ts">
-// gitPush 提交分析最近提交记录区块（跨项目合并条目 + 本地分页 + 加载更多）
-import type { CommitAnalysisStats } from "../../types"
-import { computed } from "vue"
-import Button from "@/components/Button.vue"
-import Tag from "@/components/Tag.vue"
-import { relativeTime } from "../../utils"
-import { usePagedList } from "../../composables/usePagedList"
-import LoadMoreButton from "../common/LoadMoreButton.vue"
+  本组件「最近提交记录」区块已按需求从提交概览中移除：
+  - 引用与渲染已从 CommitAnalysis/index.vue 移除
+  - 其专属样式（.gpa-commit-*）已从 CommitAnalysisPanel.scss 移除
+  - README 组件清单已移除本条目
 
-const props = defineProps<{
-  i18n: Record<string, any>
-  /** 提交分析聚合视图（取 entries） */
-  stats: CommitAnalysisStats
-}>()
+  目前本文件已无任何 import 引用（Vite 会 tree-shake，不会进入构建产物），
+  保留仅为占位：当前会话的 shell 被沙箱 ACL 阻断（任何命令都报
+  `SetNamedSecurityInfoW failed (Win32 5): grantWrite`），无法执行删除。
 
-const emit = defineEmits<{
-  viewProject: [projectId: string]
-}>()
+  请在普通终端中执行以下任一条目以彻底删除：
 
-/**
- * 跨项目合并、按日期降序的提交流。
- * 先做一次时间戳映射再排序（Schwartzian transform）：直接写 `Date.parse(b.date) - Date.parse(a.date)`
- * 会在每次比较时解析两次，条数上限选 "all" 时是 O(n log n) 次解析（万条 ≈ 28 万次），
- * 预解析后降到 O(n) 次。
- */
-const sortedEntries = computed(() =>
-  props.stats.entries
-    .map((e) => ({ e, t: Date.parse(e.date) }))
-    .sort((a, b) => b.t - a.t)
-    .map((x) => x.e),
-)
+    Remove-Item -LiteralPath 'E:\programDevelopment\plugin\siyuanPluginVueSN\src\features\gitPush\components\CommitAnalysis\RecentCommitsSection.vue' -Force
 
-/** 本地分页（usePagedList 消除与 LogPanel 的 visibleCount/slice/loadMore 重复） */
-const {
-  visibleCount,
-  paged: pagedEntries,
-  hasMore,
-  loadMore,
-} = usePagedList(sortedEntries, 50)
+  或（Git Bash / WSL）：
+    rm 'E:/programDevelopment/plugin/siyuanPluginVueSN/src/features/gitPush/components/CommitAnalysis/RecentCommitsSection.vue'
 
-/**
- * 当前页行视图：相对时间在此预计算而非写在模板里。
- * 只对已分页的可见行求值（初始 50 条），若挂在 sortedEntries 上则会对数万条全量求值。
- */
-const pagedRows = computed(() =>
-  pagedEntries.value.map((c) => ({ ...c, timeText: relativeTime(c.date, props.i18n) })),
-)
-</script>
-
-<style lang="scss">
-@use "../../styles/CommitAnalysisPanel.scss";
-@use "../../styles/index.scss";
-</style>
+  如需恢复该区块，可从 git 历史中取回本文件，并还原 index.vue 的 import 与
+  CommitAnalysisPanel.scss 中的 .gpa-commit-* 规则。
+-->

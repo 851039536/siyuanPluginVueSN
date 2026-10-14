@@ -119,19 +119,12 @@
           />
 
           <template v-else>
-            <!-- 双栏：项目提交排行 | 最近提交记录 -->
-            <div class="gpa-pair">
-              <ProjectRankingSection
-                :i18n="i18n"
-                :stats="stats"
-                @view-project="emit('viewProject', $event)"
-              />
-              <RecentCommitsSection
-                :i18n="i18n"
-                :stats="stats"
-                @view-project="emit('viewProject', $event)"
-              />
-            </div>
+            <!-- 项目提交排行（原与「最近提交记录」同排双栏，后者已移除 ⇒ 改为全宽独占一行） -->
+            <ProjectRankingSection
+              :i18n="i18n"
+              :stats="stats"
+              @view-project="emit('viewProject', $event)"
+            />
 
             <!-- 提交热力图 / 日历 -->
             <HeatmapCalendarSection
@@ -315,7 +308,6 @@ import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import DailyTrendSection from "./DailyTrendSection.vue"
 import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"
 import ProjectRankingSection from "./ProjectRankingSection.vue"
-import RecentCommitsSection from "./RecentCommitsSection.vue"
 import ExtFilterDialog from "../LineStats/ExtFilterDialog.vue"
 import FetchFailuresDialog from "../LineStats/FetchFailuresDialog.vue"
 import LineRankingSection from "../LineStats/LineRankingSection.vue"

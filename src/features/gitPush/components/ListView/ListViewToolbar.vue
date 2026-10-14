@@ -52,9 +52,10 @@
     </div>
   </div>
 
-  <!-- 分类 TAB 导航（仅 all 模式显示） -->
+  <!-- 分类 TAB 导航（仅 all 模式显示；宽度不足时用鼠标滚轮横滑） -->
   <div
     v-if="viewMode === 'all' && groupedProjects.length > 0"
+    ref="tabsRef"
     class="gp-tabs"
   >
     <Button
@@ -81,6 +82,7 @@
 <script setup lang="ts">
 import type { GitProject, ProjectCategory, ViewMode } from "../../types"
 import { VIEW_MODE_META, VIEW_MODES } from "../../types"
+import { onBeforeUnmount, ref, watch } from "vue"
 import type { IconKey } from "@/components/kit/icons"
 import Button from "@/components/Button.vue"
 import ToggleButton from "@/components/ToggleButton.vue"
@@ -105,6 +107,52 @@ const viewMode = defineModel<ViewMode>("viewMode", { required: true })
 const activeCategory = defineModel<string>("activeCategory", { required: true })
 const showArchived = defineModel<boolean>("showArchived", { required: true })
 const gitOpsPaused = defineModel<boolean>("gitOpsPaused", { required: true })
+
+/**
+ * TAB 栏滚轮横滑。
+ * 垂直滚轮（deltaY）转发为横向滚动，使普通鼠标无需按 Shift 即可横向浏览分类；
+ * 触控板/Shift+滚轮本身已产生 deltaX，此时不再重复叠加，避免滚动速度翻倍。
+ * 仅在容器确实可横向滚动、且该方向仍有剩余行程时 preventDefault，
+ * 否则把纵向滚动交还页面，避免"滚到尽头仍被吞掉"的死区。
+ */
+function onTabsWheel(e: WheelEvent) {
+  const el = e.currentTarget as HTMLElement
+  if (!el) return
+
+  const maxScroll = el.scrollWidth - el.clientWidth
+  // 无横向溢出：完全交给页面纵向滚动
+  if (maxScroll <= 0) return
+
+  // 有横向分量时（触控板横滑 / Shift+滚轮）用浏览器默认行为即可
+  if (e.deltaX !== 0 && Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return
+
+  const delta = e.deltaY
+  if (delta === 0) return
+
+  const atStart = el.scrollLeft <= 0 && delta < 0
+  const atEnd = el.scrollLeft >= maxScroll && delta > 0
+  // 已到尽头：不拦截，让页面继续滚动（避免滚动被吞）
+  if (atStart || atEnd) return
+
+  e.preventDefault()
+  // 夹取到有效范围：deltaY 可能很大（鼠标滚轮一格 100+），直接相加会越界
+  el.scrollLeft = Math.min(Math.max(el.scrollLeft + delta, 0), maxScroll)
+}
+
+const tabsRef = ref<HTMLElement | null>(null)
+
+// 手动注册 wheel 监听：必须以 { passive: false } 注册才能 preventDefault（拦截纵向滚动）。
+// 模板上的 @wheel 在部分运行时被当作 passive 处理，届时 preventDefault 会静默失效，
+// 表现为"横滑的同时页面也一起纵向滚动"。此处显式声明避免该不确定性。
+// TAB 容器为 v-if（随视图模式/分类数量创建销毁），故用 watch 跟随元素挂载变化绑定/解绑。
+watch(tabsRef, (el, prevEl) => {
+  if (prevEl) prevEl.removeEventListener("wheel", onTabsWheel)
+  if (el) el.addEventListener("wheel", onTabsWheel, { passive: false })
+})
+
+onBeforeUnmount(() => {
+  tabsRef.value?.removeEventListener("wheel", onTabsWheel)
+})
 </script>
 
 <style lang="scss">

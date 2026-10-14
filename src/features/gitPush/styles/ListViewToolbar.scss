@@ -8,6 +8,12 @@
   justify-content: space-between;
   gap: $s-px6;
   margin-bottom: $s-px6;
+  // min-width:0：同为 .git-push-panel 的 flex 子项，避免按钮组把面板撑得比视口还宽
+  // （撑宽面板会让 .gp-tabs 也跟着变宽，横向滚动范围被"放大"到看起来不需要滚动）
+  min-width: 0;
+  // 视图模式较多时允许横向滚动，而不是溢出裁切
+  overflow-x: auto;
+  @include hide-h-scrollbar;
 }
 
 // 智能视图分段容器（外框由容器提供，段内按钮去边框去圆角 ⇒ 视觉上仍是一整条分段控件）
@@ -17,6 +23,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 // 段内按钮：共享 Button（variant=ghost + size=xsmall + dense）承担交互、尺寸与无障碍，
@@ -51,11 +58,27 @@
 }
 
 // ========== 分类 TAB 导航栏 ==========
+// 宽度不足时横向滚动：滚动条隐藏，用鼠标滚轮横滑（见 ListViewToolbar 的 onTabsWheel）。
 .gp-tabs {
   display: flex;
   gap: $s-px2;
   overflow-x: auto;
-  padding: 0 0 $s-1;
+  // ⚠️ min-width:0 是横向滚动生效的前提：.gp-tabs 是 .git-push-panel（flex column）的子项，
+  // flex 子项默认 min-width:auto，会被内容撑到"所有 TAB 的总宽"，导致 clientWidth≈scrollWidth、
+  // maxScroll≈0 —— 此时滚轮横滑与滚动都无行程可用。
+  min-width: 0;
+  // align-self:stretch 让滚动区在交叉轴上撑满面板内容宽度（不依赖内容宽度）
+  align-self: stretch;
+  // 负外边距抵消 .git-push-panel 的 3px 横向 padding：让滚动区贴到面板左右边缘，
+  // 否则滚动范围比可视宽度窄 6px，最右侧 TAB 无法完全滚入视野。
+  margin-left: calc(-1 * #{$s-px3});
+  margin-right: calc(-1 * #{$s-px3});
+  // 内边距补回同样的 3px：内容视觉位置不变，但滚动区已扩展到面板边缘。
+  // 右侧略多留（$s-1）作为末项的安全区，避免贴边被裁。
+  padding: 0 $s-1 $s-1 $s-px3;
+  // ⚠️ 禁用 scroll-behavior:smooth：滚轮横滑是逐个 wheel 事件直接赋值 scrollLeft，
+  // smooth 会让每次赋值都启动动画并相互打断，表现为滚动迟滞、跟不上滚轮。
+  scroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
   @include hide-h-scrollbar;
 }

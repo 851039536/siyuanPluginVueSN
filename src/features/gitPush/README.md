@@ -311,6 +311,7 @@ GitPushManager (facade)
 - `git-push-index-meta`：本地提交索引元数据（每项目的仓库身份/HEAD 判据、截断游标、覆盖范围）
 - `git-push-index-enabled`：提交索引总开关（默认开启；关闭后统计路径全部回退直接跑 git）
 - `git-push-index-max-commits`：单项目索引提交上限（默认 20000，钳位 1000~100000）
+- `git-push-scan-dir`：上次「导入」使用的扫描目录（下次打开弹窗预填，仅在扫描成功后写入）
 
 > **索引数据本体不走 `loadData`**：提交与文件变更存在插件数据目录
 > `<workspace>/data/storage/petal/<plugin.name>/git-push-index/` 下的 NDJSON 追加日志中，

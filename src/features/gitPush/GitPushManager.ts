@@ -380,6 +380,12 @@ export class GitPushManager {
   /** 设置网络命令超时（秒）并持久化 */
   async setNetworkTimeout(n: number): Promise<void> { return this.executor.setNetworkTimeout(n) }
 
+  /** 上次扫描导入使用的目录（空串 = 从未扫描过，弹窗保持占位符提示） */
+  async getScanDir(): Promise<string> { return this.storage.scanDir.loadOrDefault() }
+
+  /** 记录本次扫描目录并持久化，供下次打开导入弹窗预填 */
+  async setScanDir(dir: string): Promise<void> { return this.storage.scanDir.save(dir) }
+
   cancelOp(id: string, action?: "push" | "pull"): void { return this.executor.cancelOp(id, action) }
 
   // ── 项目 / 分类 / 标签 CRUD（ProjectStore）──

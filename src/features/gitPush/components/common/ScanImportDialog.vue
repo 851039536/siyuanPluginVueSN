@@ -25,12 +25,12 @@
           <!-- 标签："扫描目录" -->
           <label class="gp-label">{{ i18n.scanDir }}</label>
           <div class="gp-path-row">
-            <!-- 占位符："选择要递归扫描的目录..." -->
+            <!-- 占位符："选择要递归扫描的目录..."；内容由父级 v-model 提供（上次扫描目录持久化预填） -->
             <Input
-              v-model="localScanDir"
+              v-model="scanDir"
               size="xsmall"
               :placeholder="i18n.scanDirPlaceholder"
-              @keydown="$event.key === 'Enter' && $emit('startScan', localScanDir)"
+              @keydown="$event.key === 'Enter' && $emit('startScan', scanDir)"
             />
             <button
               class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -44,8 +44,8 @@
           <!-- 按钮："扫描中..." / "开始扫描" -->
           <button
             class="vp-btn vp-btn--primary"
-            :disabled="scanning || !localScanDir.trim()"
-            @click="$emit('startScan', localScanDir)"
+            :disabled="scanning || !scanDir.trim()"
+            @click="$emit('startScan', scanDir)"
           >
             <Icon
               v-if="scanning"
@@ -106,7 +106,7 @@
         </div>
         <!-- 空结果提示："未找到 Git 仓库" -->
         <EmptyState
-          v-else-if="!scanning && localScanDir.trim() && results.length === 0"
+          v-else-if="!scanning && scanDir.trim() && results.length === 0"
           icon="mdi:folder-search-outline"
           :text="i18n.noScanResults"
           icon-size="36"
@@ -143,7 +143,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { computed, ref } from "vue"
+import { computed } from "vue"
 import EmptyState from "./EmptyState.vue"
 import Input from "@/components/Input.vue"
 import { pickDirectory } from "@/utils/electronDialog"
@@ -165,18 +165,19 @@ const emit = defineEmits<{
   "importSelected": []
 }>()
 
+/** 扫描目录：父级持有（持久化预填 + 扫描成功回写），本组件仅双向绑定 */
+const scanDir = defineModel<string>("scanDir", { required: true })
+
 // 弹窗打开时自动聚焦遮罩，使 Esc 关闭生效
 // ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
 // TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各弹窗）。
 const { rootRef } = useDialogKeyboard()
 void rootRef
 
-const localScanDir = ref("")
-
-// 目录选择器直接写入扫描目录输入框
+// 目录选择器直接写入扫描目录（经 v-model 回传父级，下次扫描成功后一并持久化）
 async function pickScanDir() {
   const dir = await pickDirectory(props.i18n.selectScanDirTitle)
-  if (dir) { localScanDir.value = dir }
+  if (dir) { scanDir.value = dir }
 }
 
 const selectedCount = computed(() =>

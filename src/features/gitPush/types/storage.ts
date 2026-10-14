@@ -487,6 +487,8 @@ export class GitPushStorage {
   readonly indexEnabled: TypedStorage<boolean>
   /** 单项目索引提交条数上限（超出即标记截断并提示重建） */
   readonly indexMaxCommits: TypedStorage<number>
+  /** 上次扫描导入使用的目录（下次打开弹窗预填，避免重复选择同一根目录） */
+  readonly scanDir: TypedStorage<string>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -514,6 +516,7 @@ export class GitPushStorage {
     this.indexMeta = new TypedStorage(storage, "git-push-index-meta", DEFAULT_INDEX_META)
     this.indexEnabled = new TypedStorage(storage, "git-push-index-enabled", true)
     this.indexMaxCommits = new TypedStorage(storage, "git-push-index-max-commits", DEFAULT_INDEX_MAX_COMMITS)
+    this.scanDir = new TypedStorage(storage, "git-push-scan-dir", "")
   }
 
   async init(): Promise<void> {

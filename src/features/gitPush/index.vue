@@ -186,6 +186,7 @@
     <Transition name="gp-dialog-fade">
       <ScanImportDialog
         v-if="showScanDialog"
+        v-model:scan-dir="scanDir"
         :i18n="i18n"
         :scanning="scanning"
         :error="scanError"
@@ -673,6 +674,7 @@ const {
   showScanDialog,
   scanError,
   scanSelection,
+  scanDir,
   handleOpenScan,
   handleCloseScan,
   handleStartScan,
@@ -680,7 +682,14 @@ const {
   toggleScanItem,
   handleImportSelected,
 } = useScanImport({
-  scanResults, activeCategory, startScan, importScanResults, loadProjects, tf,
+  scanResults,
+  activeCategory,
+  startScan,
+  importScanResults,
+  loadProjects,
+  getScanDir: () => props.manager.getScanDir(),
+  setScanDir: (dir: string) => props.manager.setScanDir(dir),
+  tf,
 })
 
 // ── Git 配置弹窗（项目级入口；全局配置走设置弹窗 GitConfigSection 分区）──

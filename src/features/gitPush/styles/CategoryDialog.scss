@@ -1,0 +1,179 @@
+// 分类管理弹窗样式：列表区滚动 + 底部添加行固定（grid 三列，根治宽控件撑爆弹窗）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 双类选择器提优先级：组件专属 SCSS 按规范先于 index.scss 加载，单类会被基础 .gp-dialog 的 420px 同优先级覆盖
+.gp-dialog.gp-cat-dialog {
+  width: 520px;
+  max-width: 90vw;
+}
+
+// ── 主体：列表区 + 底部添加行 ──
+// 用 flex 列 + min-height:0 让列表区成为唯一滚动容器，添加行始终贴在弹窗底部
+// （原先列表直接铺进 body 且无高度约束，分类变多会把添加行顶出视口，表现为"加不了"）
+.gp-cat-body {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  min-height: 0;
+  padding: $s-4;
+}
+
+// ── 分类列表 ──
+.gp-cat-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  // 上限 46vh：分类很多时弹窗不超出视口，列表内部滚动
+  max-height: min(46vh, 340px);
+  overflow-y: auto;
+  // 行 hover 底色轻微外扩，视觉上不贴滚动条
+  margin: 0 calc(-1 * #{$s-1});
+  padding: 0 $s-1;
+}
+
+.gp-cat-row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-1 $s-2;
+  border-radius: $r-sm;
+  @include row-divider;
+
+  &:hover {
+    background: var(--b3-list-hover);
+
+    // 删除按钮随行 hover 显现，常态隐藏以减少视觉噪音
+    .gp-cat-row-actions {
+      opacity: 1;
+    }
+  }
+}
+
+// 分类色点：略放大以与行高协调
+.gp-cat-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+// 分类名：占满剩余宽度并允许省略，长分类名不撑破行
+.gp-cat-name {
+  flex: 1;
+  min-width: 0;
+  font-size: $t-xs;
+  @include text-ellipsis;
+}
+
+// 行内操作区（编辑/删除）：固定尺寸点击热区，hover 行时显现
+.gp-cat-row-actions {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+
+  // 键盘可达：聚焦到按钮时同样显现，避免仅靠 hover 而键盘用户看不到
+  &:focus-within {
+    opacity: 1;
+  }
+}
+
+// 编辑态操作区：编辑时行内元素增多，操作区常显（否则鼠标移出即消失，无法点保存）
+.gp-cat-row-actions--editing {
+  opacity: 1;
+}
+
+// 编辑态名称输入：占据剩余宽度且可收缩，避免把颜色字段与按钮挤出
+.gp-cat-edit-name.si-input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+// 操作按钮统一为方块热区（覆盖 vp-btn--sm 的横向内边距，避免图标按钮被拉成长条）
+.gp-cat-icon-btn.vp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+// ── 未分组行：不可删除，操作区留白保持列对齐 ──
+.gp-cat-row--locked .gp-cat-name {
+  opacity: 0.7;
+}
+
+// ── 空态 ──
+.gp-cat-empty {
+  padding: $s-4 0;
+  text-align: center;
+  font-size: $t-2xs;
+  opacity: 0.45;
+}
+
+// ── 底部添加区：与列表以分隔线区隔，独立成区不随列表滚动 ──
+.gp-cat-add {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  padding-top: $s-3;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+// 添加行：grid 三列（名称自适应 / 颜色定宽 / 按钮定宽）
+// ⚠️ 关键：名称列必须用 minmax(0,1fr) 而非 1fr。共享 Input 根类 .si-input 为 width:100%，
+// 在 grid/flex 中按自动最小尺寸参与计算时会撑爆轨道，导致颜色字段与加号按钮被挤出弹窗
+// ——这正是此前"添加行错乱、无法添加"的直接原因。
+.gp-cat-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px auto;
+  align-items: center;
+  gap: $s-2;
+
+  // 覆盖共享 Input 的 width:100%：交由 grid 轨道控制宽度
+  > .si-input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+// 颜色字段：限定在轨道/行内宽度，并压掉 ColorField 内部色块的固定高度以与 Input 对齐
+// :deep() 必需——ColorField 是子组件，其内部元素不带本组件的 scoped 属性
+.gp-cat-color {
+  width: 100%;
+  min-width: 0;
+  // 编辑态与添加行均直接作为 flex/grid 子项：固定 132px 轨道，避免 width:100% 撑爆
+  flex: 0 0 132px;
+
+  :deep(.color-swatch-btn) {
+    width: 28px;
+    height: 24px;
+  }
+
+  :deep(.color-input) {
+    min-width: 0;
+    padding: $s-px3 $s-2;
+  }
+
+  // 调色板弹层：抬到弹窗内容之上，避免被列表区/滚动容器裁剪
+  :deep(.color-popover) {
+    z-index: 20;
+  }
+}
+
+// 添加按钮：与输入行等高，方形热区
+.gp-cat-add-btn.vp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  flex-shrink: 0;
+}

@@ -101,6 +101,14 @@ export function useProjectCrud(manager: GitPushManager) {
     )
   }
 
+  /** 更新分类名称/颜色：就地替换保持列表顺序，避免整表重取 */
+  async function updateCategory(id: string, name: string, color: string) {
+    await manager.updateCategory(id, { name, color })
+    categories.value = categories.value.map((c) =>
+      c.id === id ? { ...c, name, color } : c,
+    )
+  }
+
   async function moveProject(projectId: string, categoryId: string) {
     await manager.moveProject(projectId, categoryId)
     projects.value = projects.value.map((p) =>
@@ -120,6 +128,7 @@ export function useProjectCrud(manager: GitPushManager) {
     refreshRemotes,
     addCategory,
     deleteCategory,
+    updateCategory,
     moveProject,
   }
 }

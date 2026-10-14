@@ -138,6 +138,7 @@
         :categories="categories"
         @close="showCatDialog = false"
         @add-category="handleAddCategory"
+        @update-category="handleUpdateCategory"
         @delete-category="handleDeleteCategory"
       />
     </Transition>
@@ -363,6 +364,7 @@ const {
   clearRemoteOutput,
   addCategory: addCategoryFn,
   deleteCategory: deleteCategoryFn,
+  updateCategory: updateCategoryFn,
   moveProject,
   switchBranch,
   startScan,
@@ -978,6 +980,12 @@ async function safeGitOp(label: string, fn: () => Promise<void>) {
 async function handleAddCategory(name: string, color: string) {
   if (!name) return
   await addCategoryFn(name, color)
+}
+
+/** 分类行内编辑提交：改名/改色后由 useProjectCrud 就地更新 categories，TAB 与卡片下拉同步刷新 */
+async function handleUpdateCategory(id: string, name: string, color: string) {
+  if (!id || !name) return
+  await updateCategoryFn(id, name, color)
 }
 
 async function handleDeleteCategory(id: string) {

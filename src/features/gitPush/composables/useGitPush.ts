@@ -44,6 +44,7 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     refreshRemotes: projectCrud.refreshRemotes,
     addCategory: projectCrud.addCategory,
     deleteCategory: projectCrud.deleteCategory,
+    updateCategory: projectCrud.updateCategory,
     moveProject: projectCrud.moveProject,
 
     // ── Git 操作 ──

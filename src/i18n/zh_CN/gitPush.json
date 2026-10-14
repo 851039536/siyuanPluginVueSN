@@ -43,6 +43,7 @@
     "moveCategory": "移动分类",
     "catNamePlaceholder": "分类名称",
     "catColorTitle": "颜色",
+    "noCategories": "暂无分类",
     "generateMsg": "生成",
     "deepGenerateMsg": "深度生成",
     "deepGenerateMsgTip": "读取暂存区完整 diff，基于实际改动生成多行提交信息（标题行 + 改动要点），比常规生成更耗时",

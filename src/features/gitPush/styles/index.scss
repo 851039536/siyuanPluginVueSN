@@ -385,7 +385,7 @@
 
 // dialog/form styles → Dialog.scss / Form.scss
 
-// 分类管理弹窗
+// 设置弹窗内设置行
 .gp-set-row {
   display: flex;
   align-items: center;
@@ -432,41 +432,7 @@
   @include text-ellipsis;
 }
 
-.gp-cat-row {
-  display: flex;
-  align-items: center;
-  gap: $s-px6;
-  padding: $s-1 0;
-  border-bottom: 1px solid var(--b3-border-color);
-
-  &:last-of-type {
-    border-bottom: none;
-  }
-}
-
-.gp-cat-dot-sm {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.gp-cat-name-sm {
-  flex: 1;
-  font-size: $t-xs;
-}
-
-.gp-cat-add-row {
-  display: flex;
-  gap: $s-1;
-  margin-top: $s-2;
-}
-
-// 分类颜色字段（共享 ColorField 根为 width:100% ⇒ 行内限宽，避免撑满添加行）
-.gp-cat-color-field {
-  flex: 0 0 auto;
-  width: 150px;
-}
+// 分类管理弹窗（列表/添加行/颜色字段）→ CategoryDialog.scss
 
 // 卡片内联分类下拉样式 → CardHeader.scss
 

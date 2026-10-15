@@ -2,6 +2,7 @@
 <template>
   <div class="heatmap-tab">
     <HeatmapCard
+      ref="cardRef"
       :on-get-activity-data="queries?.getHeatmapActivityData"
       :on-get-daily-detail="queries?.getHeatmapDailyDetail"
       :notebooks="heatmapNotebooks"
@@ -13,9 +14,10 @@
 </template>
 
 <script setup lang="ts">
-// 热力图 Tab 入口容器：挂载时加载笔记本筛选列表
+// 热力图 Tab 入口容器：挂载时加载笔记本筛选列表，并订阅顶层总刷新自更新
 import {
   computed,
+  onBeforeUnmount,
   onMounted,
   ref,
 } from "vue"
@@ -24,6 +26,7 @@ import type {
   getHeatmapDailyDetail,
 } from "../../queries/heatmapStats"
 import type { StatisticsData } from "../../types"
+import { onStatisticsRefresh } from "../../composables/useStatisticsRefresh"
 import { getHeatmapNotebooks } from "../../queries/heatmapStats"
 import HeatmapCard from "./HeatmapCard.vue"
 
@@ -47,9 +50,28 @@ const props = withDefaults(defineProps<Props>(), {
 const i18n = computed(() => props.i18n || {})
 
 const heatmapNotebooks = ref<Array<{ id: string, name: string }>>([])
+// 卡片暴露的 reload：让容器驱动的刷新能重查日历网格数据
+const cardRef = ref<InstanceType<typeof HeatmapCard> | null>(null)
+
+async function loadNotebooks(): Promise<void> {
+  heatmapNotebooks.value = await getHeatmapNotebooks()
+}
+
+// 订阅顶层总刷新：重载笔记本筛选列表 + 让卡片重查日历数据。
+// 摘要卡（writingStreak/activeDays）来自 stats prop，由顶层刷新后自动跟随。
+let stopRefresh: (() => void) | null = null
 
 onMounted(async () => {
-  heatmapNotebooks.value = await getHeatmapNotebooks()
+  await loadNotebooks()
+  stopRefresh = onStatisticsRefresh(async () => {
+    await loadNotebooks()
+    cardRef.value?.reload()
+  })
+})
+
+onBeforeUnmount(() => {
+  stopRefresh?.()
+  stopRefresh = null
 })
 </script>
 

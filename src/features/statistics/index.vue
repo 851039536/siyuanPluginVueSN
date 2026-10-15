@@ -125,6 +125,7 @@ import StatisticsHeader from "./components/common/StatisticsHeader.vue"
 import { useHistoryData } from "./composables/useHistoryData"
 import { useMilestoneStorage } from "./composables/useMilestoneStorage"
 import { useStatistics } from "./composables/useStatistics"
+import { notifyStatisticsRefresh } from "./composables/useStatisticsRefresh"
 import {
   getDateChangedDocs,
   getDateRangeChangeStats,
@@ -309,7 +310,7 @@ watch([viewMode, dayRange, monthYearRange, selectedYear], async () => {
 
 let refreshSeq = 0
 
-/** 手动/兜底全量刷新：核心统计（模块级，含状态栏提示）+ 历史数据 */
+/** 手动/兜底全量刷新：核心统计（模块级，含状态栏提示）+ 历史数据 + 自加载子 Tab */
 async function refreshData(): Promise<void> {
   const seq = ++refreshSeq
   loading.value = true
@@ -317,6 +318,9 @@ async function refreshData(): Promise<void> {
     await refreshCore()
     if (seq !== refreshSeq) return
     await loadHistoricalData()
+    if (seq !== refreshSeq) return
+    // 广播刷新：热力图等自加载 Tab 据此重查自身数据（否则点刷新后其内容仍为陈旧值）
+    notifyStatisticsRefresh()
   } catch (error) {
     console.error("刷新统计数据失败:", error)
   } finally {

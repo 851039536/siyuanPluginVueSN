@@ -464,6 +464,9 @@ const weekdayDistribution = computed(() => {
 
 // 初始加载
 loadData()
+
+// 暴露给入口容器：顶层总刷新时重查日历数据（保留当前筛选条件）
+defineExpose({ reload: loadData })
 </script>
 
 <style lang="scss" scoped>

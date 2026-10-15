@@ -243,7 +243,6 @@ const statCounts = computed<Record<string, number>>(() => {
     tags: s?.totalTags ?? 0,
     backlinks: s?.totalBacklinks ?? 0,
     assets: s?.totalAssets ?? 0,
-    images: s?.totalImages ?? 0,
     blocks: s?.totalBlocks ?? 0,
     streak: s?.writingStreak ?? 0,
     activeDays: s?.activeDays ?? 0,

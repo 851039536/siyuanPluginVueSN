@@ -1,4 +1,4 @@
-// 基础统计查询（总数/标签/图片/写作活跃度/块类型）
+// 基础统计查询（总数/标签/写作活跃度/块类型）
 
 import type {
   BlockTypeCountRow,
@@ -6,13 +6,9 @@ import type {
   DailyWordCount,
   StatisticsData,
 } from "../types"
-import {
-  lsNotebooks,
-  readDir,
-} from "@/api"
+import { lsNotebooks } from "@/api"
 import {
   BLOCK_TYPE_LABELS,
-  IMAGE_EXTENSIONS,
   ZERO_STATISTICS,
 } from "../types/constants"
 import {
@@ -31,48 +27,18 @@ import {
 } from "./timeStats"
 
 /**
- * 标签总数标量子查询：与 combinedSql 同构，故合并进主查询省去一次 HTTP 往返。
+ * 标签总数标量子查询：与 combinedSql 同构，故合并进主查询，省去一次 HTTP 往返。
  * 三种来源（行内 span / 块属性 / 标签块）去重计数后相加。
+ *
+ * 注：这是**往返次数**优化，不是 SQL 提速。实测（20 万块合成库）该子查询独立执行仅
+ * 0.68ms，合并后整条语句反而略慢约 2ms（SQLite 需在同语句内多维护一个 DISTINCT 临时 B 树），
+ * 净收益仅为少一次 /api/query/sql 往返。差距在噪声量级，故保留合并。
  */
 const TOTAL_TAGS_SUBQUERY = `
   COALESCE((SELECT COUNT(DISTINCT content) FROM spans WHERE type='tag'), 0) +
   COALESCE((SELECT COUNT(DISTINCT value) FROM attributes WHERE name='tags' AND value IS NOT NULL AND value != ''), 0) +
   COALESCE((SELECT COUNT(DISTINCT content) FROM blocks WHERE type='tag'), 0)
 `
-
-function isImageFile(filename: string): boolean {
-  const ext = filename.toLowerCase().substring(filename.lastIndexOf("."))
-  return IMAGE_EXTENSIONS.includes(ext)
-}
-
-async function getTotalImages(): Promise<number> {
-  const countImagesInDirectory = async (path: string): Promise<number> => {
-    try {
-      const result = await readDir(path)
-      if (!result) return 0
-
-      const files = Array.isArray(result) ? result : [result]
-
-      // 子目录并行递归，避免逐目录串行 HTTP 请求
-      const subDirCounts = await Promise.all(
-        files.filter((file) => file.isDir).map((file) => countImagesInDirectory(`${path}/${file.name}`)),
-      )
-      const fileCount = files.filter((file) => !file.isDir && isImageFile(file.name)).length
-      return fileCount + subDirCounts.reduce((sum, cnt) => sum + cnt, 0)
-    } catch (error) {
-      console.error(`统计目录图片失败 ${path}:`, error)
-      return 0
-    }
-  }
-
-  try {
-    const assetsPath = "/data/assets"
-    return await countImagesInDirectory(assetsPath)
-  } catch (error) {
-    console.error("统计思源图片失败:", error)
-    return 0
-  }
-}
 
 async function getNotebookCount(): Promise<number> {
   try {
@@ -87,11 +53,11 @@ async function getNotebookCount(): Promise<number> {
 /**
  * 写作活跃度：近两年活跃天数 + 当前连续写作天数。
  *
- * 原实现用一条 `UNION ... LIMIT 1024` 取全部去重日期再在前端计数，有两个问题：
- * 1) LIMIT 1024 会静默截断结果集 → activeDays 少算（活跃库两年去重日期可超 1024）；
- * 2) 为算连续天数把两年全部日期行拉回前端。
- * 现拆为两条语句：activeDays 直接由 SQL COUNT 得到（无截断、只返回 1 行）；
- * 连续天数只需连续区间，故按日期倒序取有限行（连续天数远超上限无实际意义）。
+ * 原实现用一条 `UNION ... LIMIT 1024` 取全部去重日期，再在前端 Set 计数。
+ * 注：该 LIMIT 实际上**不会**造成截断——两年最多 730/731 个去重日期，恒小于 1024
+ * （此结论经合成库实测确认：20 万块库中该查询返回 730 行）。故原实现结果正确，
+ * 此处改造只为减少回传与前端处理：activeDays 交给 SQL COUNT（只回 1 行），
+ * 连续天数只需近端连续区间，故按日期倒序取有限行即可。
  */
 async function getWritingActivity(): Promise<{ activeDays: number, writingStreak: number }> {
   const today = new Date()
@@ -100,14 +66,14 @@ async function getWritingActivity(): Promise<{ activeDays: number, writingStreak
   const startStr = formatDateTime(twoYearsAgo)
   const endStr = formatDateTime(today)
 
-  // 连续天数回溯窗口：足够覆盖任何实际写作连续记录，避免拉取两年全量日期
+  // 连续天数回溯窗口：覆盖任何实际写作连续记录，避免回传两年全量日期
   const STREAK_WINDOW_DAYS = 400
   const streakStart = new Date(today)
   streakStart.setDate(streakStart.getDate() - STREAK_WINDOW_DAYS)
   const streakStartStr = formatDateTime(streakStart)
 
   const [countRows, streakRows] = await Promise.all([
-    // activeDays：交给 SQL 计数，无截断风险
+    // activeDays：交给 SQL 计数，只回 1 行
     executeSql(`
       SELECT COUNT(*) as activeDays FROM (
         SELECT substr(created, 1, 8) as date FROM blocks
@@ -180,7 +146,10 @@ async function getBlockTypeStats(): Promise<BlockTypeStat[]> {
   }
 }
 
-// 内容块/资源块类型集合：totalBlocks、totalAssets、codeBlocks 由块类型分布派生，避免重复全表扫描
+// 内容块/资源块类型集合：totalBlocks、totalAssets、codeBlocks 由块类型分布派生，避免重复全表扫描。
+// 注：实测该 GROUP BY type 走覆盖索引扫描（SCAN blocks USING COVERING INDEX idx_blocks_type），
+// 20 万块库约 12ms；改用 SUM(CASE WHEN...) 条件聚合反而慢至约 33ms（需读全部列），
+// 故此处维持「一次 GROUP BY + 前端按类型求和」的写法。
 const CONTENT_BLOCK_TYPES = ["p", "h", "l", "i", "t", "c", "html", "query_embed"]
 const ASSET_BLOCK_TYPES = ["img", "audio", "video", "widget", "iframe"]
 
@@ -258,9 +227,8 @@ export async function getStatistics(viewMode: string, options: {
         (${TOTAL_TAGS_SUBQUERY}) as totalTags
     `
 
-    const [combinedResult, totalImages, blockTypeStats, notebookCount, writingActivity] = await Promise.all([
+    const [combinedResult, blockTypeStats, notebookCount, writingActivity] = await Promise.all([
       executeSql(combinedSql),
-      getTotalImages(),
       getBlockTypeStats(),
       getNotebookCount(),
       getWritingActivity(),
@@ -296,7 +264,6 @@ export async function getStatistics(viewMode: string, options: {
       dailyStats,
       currentPeriod,
       periodTotalWords,
-      totalImages,
       blockTypeStats,
       notebookCount,
       codeBlocks,

@@ -41,8 +41,6 @@ export const BLOCK_TYPE_LABELS: Record<string, string> = {
   tag: "blockTypeTag",
 }
 
-export const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"]
-
 export const ZERO_STATISTICS: StatisticsData = {
   totalNotes: 0,
   totalWords: 0,
@@ -56,7 +54,6 @@ export const ZERO_STATISTICS: StatisticsData = {
   dailyStats: [],
   currentPeriod: "",
   periodTotalWords: 0,
-  totalImages: 0,
   blockTypeStats: [],
   notebookCount: 0,
   codeBlocks: 0,

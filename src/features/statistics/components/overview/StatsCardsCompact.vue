@@ -46,7 +46,6 @@ interface Props {
   totalWords?: number
   totalBlocks?: number
   totalAssets?: number
-  totalImages?: number
   totalTags?: number
   totalBacklinks?: number
   todayCreated?: number
@@ -64,7 +63,6 @@ const props = withDefaults(defineProps<Props>(), {
   totalWords: 0,
   totalBlocks: 0,
   totalAssets: 0,
-  totalImages: 0,
   totalTags: 0,
   totalBacklinks: 0,
   todayCreated: 0,
@@ -116,10 +114,6 @@ const secondaryItems = computed(() => [
   {
     value: formatShortNumber(props.totalAssets),
     label: props.i18n.totalAssets,
-  },
-  {
-    value: formatShortNumber(props.totalImages),
-    label: props.i18n.totalImages,
   },
   {
     value: formatShortNumber(props.totalTags),

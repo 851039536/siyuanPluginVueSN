@@ -7,7 +7,6 @@
       :total-words="stats?.totalWords ?? 0"
       :total-blocks="stats?.totalBlocks ?? 0"
       :total-assets="stats?.totalAssets ?? 0"
-      :total-images="stats?.totalImages ?? 0"
       :total-tags="stats?.totalTags ?? 0"
       :total-backlinks="stats?.totalBacklinks ?? 0"
       :today-created="stats?.todayCreated ?? 0"

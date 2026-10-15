@@ -83,7 +83,6 @@ export interface StatisticsData {
   totalWords: number
   totalBlocks: number
   totalAssets: number
-  totalImages: number
   totalTags: number
   totalBacklinks: number
   todayCreated: number

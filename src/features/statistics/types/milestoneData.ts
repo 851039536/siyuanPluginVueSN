@@ -191,14 +191,6 @@ export const THRESHOLD_ACHIEVEMENTS: ThresholdGroup[] = [
     ],
   },
   {
-    type: "images",
-    items: [
-      { v: 50, icon: "image", tier: "common" },
-      { v: 200, icon: "image", tier: "rare" },
-      { v: 1000, icon: "image", tier: "epic" },
-    ],
-  },
-  {
     type: "code",
     items: [
       { v: 1, icon: "code", tier: "common" },
@@ -223,7 +215,7 @@ export const ACH_CATEGORIES: AchCategory[] = [
   { id: "all", icon: "star", i18nKey: "catAll" },
   { id: "writing", icon: "edit", i18nKey: "catWriting", types: ["notes", "words", "notebooks"] },
   { id: "knowledge", icon: "lightbulb", i18nKey: "catKnowledge", types: ["tags", "backlinks"] },
-  { id: "rich", icon: "folder", i18nKey: "catRich", types: ["blocks", "assets", "images", "code"] },
+  { id: "rich", icon: "folder", i18nKey: "catRich", types: ["blocks", "assets", "code"] },
   { id: "persistence", icon: "star", i18nKey: "catPersistence", types: ["streak", "activeDays"] },
   { id: "meta", icon: "star", i18nKey: "catMeta", types: ["meta", "custom"] },
 ]

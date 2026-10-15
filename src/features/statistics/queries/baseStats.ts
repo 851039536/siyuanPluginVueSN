@@ -30,16 +30,15 @@ import {
   getYearlyStats,
 } from "./timeStats"
 
-async function getTotalTags(): Promise<number> {
-  const sql = `
-    SELECT
-      COALESCE((SELECT COUNT(DISTINCT content) FROM spans WHERE type='tag'), 0) +
-      COALESCE((SELECT COUNT(DISTINCT value) FROM attributes WHERE name='tags' AND value IS NOT NULL AND value != ''), 0) +
-      COALESCE((SELECT COUNT(DISTINCT content) FROM blocks WHERE type='tag'), 0) as totalTags
-  `
-  const result = await executeSql(sql)
-  return Number(result[0]?.totalTags || 0)
-}
+/**
+ * 标签总数标量子查询：与 combinedSql 同构，故合并进主查询省去一次 HTTP 往返。
+ * 三种来源（行内 span / 块属性 / 标签块）去重计数后相加。
+ */
+const TOTAL_TAGS_SUBQUERY = `
+  COALESCE((SELECT COUNT(DISTINCT content) FROM spans WHERE type='tag'), 0) +
+  COALESCE((SELECT COUNT(DISTINCT value) FROM attributes WHERE name='tags' AND value IS NOT NULL AND value != ''), 0) +
+  COALESCE((SELECT COUNT(DISTINCT content) FROM blocks WHERE type='tag'), 0)
+`
 
 function isImageFile(filename: string): boolean {
   const ext = filename.toLowerCase().substring(filename.lastIndexOf("."))
@@ -85,36 +84,60 @@ async function getNotebookCount(): Promise<number> {
   }
 }
 
+/**
+ * 写作活跃度：近两年活跃天数 + 当前连续写作天数。
+ *
+ * 原实现用一条 `UNION ... LIMIT 1024` 取全部去重日期再在前端计数，有两个问题：
+ * 1) LIMIT 1024 会静默截断结果集 → activeDays 少算（活跃库两年去重日期可超 1024）；
+ * 2) 为算连续天数把两年全部日期行拉回前端。
+ * 现拆为两条语句：activeDays 直接由 SQL COUNT 得到（无截断、只返回 1 行）；
+ * 连续天数只需连续区间，故按日期倒序取有限行（连续天数远超上限无实际意义）。
+ */
 async function getWritingActivity(): Promise<{ activeDays: number, writingStreak: number }> {
-  // Get distinct dates with any create/update activity in the last 2 years
   const today = new Date()
   const twoYearsAgo = new Date(today)
   twoYearsAgo.setFullYear(today.getFullYear() - 2)
   const startStr = formatDateTime(twoYearsAgo)
   const endStr = formatDateTime(today)
 
-  const rows = await executeSql(`
-    SELECT DISTINCT substr(created, 1, 8) as date FROM blocks
-    WHERE type = 'd' AND created >= '${startStr}' AND created <= '${endStr}'
-    UNION
-    SELECT DISTINCT substr(updated, 1, 8) as date FROM blocks
-    WHERE type = 'd' AND updated >= '${startStr}' AND updated <= '${endStr}'
-    LIMIT 1024
-  `)
+  // 连续天数回溯窗口：足够覆盖任何实际写作连续记录，避免拉取两年全量日期
+  const STREAK_WINDOW_DAYS = 400
+  const streakStart = new Date(today)
+  streakStart.setDate(streakStart.getDate() - STREAK_WINDOW_DAYS)
+  const streakStartStr = formatDateTime(streakStart)
 
-  if (!rows || rows.length === 0) { return {
-    activeDays: 0,
-    writingStreak: 0,
-  }
-  }
+  const [countRows, streakRows] = await Promise.all([
+    // activeDays：交给 SQL 计数，无截断风险
+    executeSql(`
+      SELECT COUNT(*) as activeDays FROM (
+        SELECT substr(created, 1, 8) as date FROM blocks
+        WHERE type = 'd' AND created >= '${startStr}' AND created <= '${endStr}'
+        UNION
+        SELECT substr(updated, 1, 8) as date FROM blocks
+        WHERE type = 'd' AND updated >= '${startStr}' AND updated <= '${endStr}'
+      )
+    `),
+    // 连续天数：仅需近端日期，按倒序取有限行
+    executeSql(`
+      SELECT date FROM (
+        SELECT substr(created, 1, 8) as date FROM blocks
+        WHERE type = 'd' AND created >= '${streakStartStr}' AND created <= '${endStr}'
+        UNION
+        SELECT substr(updated, 1, 8) as date FROM blocks
+        WHERE type = 'd' AND updated >= '${streakStartStr}' AND updated <= '${endStr}'
+      )
+      ORDER BY date DESC
+      LIMIT ${STREAK_WINDOW_DAYS}
+    `),
+  ])
+
+  const activeDays = Number(countRows[0]?.activeDays || 0)
 
   const activeDateSet = new Set<string>()
-  for (const row of rows) {
+  for (const row of streakRows) {
     const d = String(row.date || "")
     if (d.length >= 8) activeDateSet.add(d.substring(0, 8))
   }
-
-  const activeDays = activeDateSet.size
 
   // Calculate streak: count consecutive days ending today
   let streak = 0
@@ -224,18 +247,19 @@ export async function getStatistics(viewMode: string, options: {
     const todayStr = formatYmd(new Date())
 
     // 今日统计使用范围比较（而非 substr 包裹列），保持 sargable；字数口径统一为思源预计算的 length 列
+    // totalTags 由 3 个标量子查询组成，与其余标量同构，合并进本条语句（原为独立请求）
     const combinedSql = `
       SELECT
         (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d') as totalNotes,
         (SELECT SUM(length) FROM blocks WHERE type = 'p' AND length > 0) as totalWords,
         (SELECT COUNT(DISTINCT block_id) FROM refs) as totalBacklinks,
         (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND created >= '${todayStr}000000' AND created <= '${todayStr}235959') as todayCreated,
-        (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND updated >= '${todayStr}000000' AND updated <= '${todayStr}235959') as todayModified
+        (SELECT COUNT(DISTINCT root_id) FROM blocks WHERE type='d' AND updated >= '${todayStr}000000' AND updated <= '${todayStr}235959') as todayModified,
+        (${TOTAL_TAGS_SUBQUERY}) as totalTags
     `
 
-    const [combinedResult, totalTags, totalImages, blockTypeStats, notebookCount, writingActivity] = await Promise.all([
+    const [combinedResult, totalImages, blockTypeStats, notebookCount, writingActivity] = await Promise.all([
       executeSql(combinedSql),
-      getTotalTags(),
       getTotalImages(),
       getBlockTypeStats(),
       getNotebookCount(),
@@ -248,6 +272,7 @@ export async function getStatistics(viewMode: string, options: {
     const totalBacklinks = Number(baseStats.totalBacklinks || 0)
     const todayCreated = Number(baseStats.todayCreated || 0)
     const todayModified = Number(baseStats.todayModified || 0)
+    const totalTags = Number(baseStats.totalTags || 0)
 
     // 块数量指标统一由块类型分布派生，省去 3 次 blocks 全表扫描
     const totalBlocks = sumCountByTypes(blockTypeStats, CONTENT_BLOCK_TYPES)

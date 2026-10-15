@@ -58,12 +58,27 @@ export function useHistoryData(storage: StatisticsStorage, stats: Ref<Statistics
   let previousLoaded = false
   const MAX_BACKTRACK_DAYS = 7
 
-  async function ensurePreviousActiveDayLoaded(): Promise<void> {
-    if (previousLoaded) return
+  /** 回溯日列表（今天往前 1..MAX_BACKTRACK_DAYS），并行查询共用 */
+  function backtrackDates(): Date[] {
+    const dates: Date[] = []
     for (let i = 1; i <= MAX_BACKTRACK_DAYS; i++) {
       const date = new Date()
       date.setDate(date.getDate() - i)
-      const counts = await getDayCounts(date)
+      dates.push(date)
+    }
+    return dates
+  }
+
+  /**
+   * 回溯最近一个活跃日。
+   * 原实现逐日串行 await（最坏 7 次连续 HTTP 往返）；各日查询相互独立，
+   * 改为一次并行发出后按日期就近（i 小者优先）挑选首个活跃日，往返耗时从 O(7) 降为 O(1)。
+   */
+  async function ensurePreviousActiveDayLoaded(): Promise<void> {
+    if (previousLoaded) return
+    const dates = backtrackDates()
+    const countsList = await Promise.all(dates.map((d) => getDayCounts(d)))
+    for (const counts of countsList) {
       if (counts.created > 0 || counts.modified > 0) {
         previousCounts.value = counts
         previousLoaded = true
@@ -78,10 +93,14 @@ export function useHistoryData(storage: StatisticsStorage, stats: Ref<Statistics
   const previousSnapshot = ref<{ totalNotes: number, totalWords: number } | null>(null)
   let previousSnapshotLoaded = false
 
-  async function ensurePreviousSnapshotLoaded(): Promise<void> {
+  /**
+   * 回溯最近一个历史快照（totalNotes / totalWords），最多 7 天。
+   * @param preloaded 调用方已读取的历史数据；传入则复用，避免重复读存储
+   */
+  async function ensurePreviousSnapshotLoaded(preloaded?: Record<string, any>): Promise<void> {
     if (previousSnapshotLoaded) return
     try {
-      const historyData = await storage.loadHistory()
+      const historyData = preloaded ?? await storage.loadHistory()
       for (let i = 1; i <= MAX_BACKTRACK_DAYS; i++) {
         const date = new Date()
         date.setDate(date.getDate() - i)
@@ -142,23 +161,28 @@ export function useHistoryData(storage: StatisticsStorage, stats: Ref<Statistics
    * 将当前 stats 快照写入本地 JSON，供趋势/热力图使用
    * 替代原来的 60 秒定时采集，改为用户主动刷新时写入
    * @param seq 发起时的请求序号，写回前比对，过期则放弃（避免并发读改写相互覆盖）
+   * @param preloaded 调用方已读取的历史数据；传入则复用，避免重复读存储
    */
-  async function saveTodaySnapshot(seq: number): Promise<void> {
+  async function saveTodaySnapshot(seq: number, preloaded?: Record<string, any>): Promise<void> {
     const s = stats.value
     if (!s) return
     try {
       const today = new Date()
       const dateKey = formatDate(today)
-      const existingData = await storage.loadHistory()
+      const existingData = preloaded ?? await storage.loadHistory()
       // 时序控制：已有更新的加载发起，放弃本次写入
       if (seq !== loadSeq) return
+      // 复用调用方读到的快照对象时不得原地改写：saveTodaySnapshot 的写入对象
+      // 同时被 getHistoricalStatistics 读取，原地改写会让"今日"条目既是旧值又是新值。
+      // 故浅拷贝一份再合并，保证读侧看到的是刷新前的稳定视图。
+      const nextData = preloaded ? { ...preloaded } : existingData
       // 合并当日旧条目的日内采样（首次写入时旧条目为空 → 采样以当前值为起点）
       const prevOhlc = existingData[dateKey]?.ohlc
       const currentOhlcValues: Record<KLineMetric, number> = {
         totalWords: s.totalWords,
         totalNotes: s.totalNotes,
       }
-      existingData[dateKey] = {
+      nextData[dateKey] = {
         date: dateKey,
         dateLabel: `${today.getMonth() + 1}/${today.getDate()}`,
         totalNotes: s.totalNotes,
@@ -168,7 +192,7 @@ export function useHistoryData(storage: StatisticsStorage, stats: Ref<Statistics
         todayModified: s.todayModified,
         ohlc: mergeOhlcSamples(prevOhlc, currentOhlcValues),
       }
-      await storage.saveHistory(existingData)
+      await storage.saveHistory(nextData)
     } catch (error) {
       console.error("保存今日快照失败:", error)
     }
@@ -182,15 +206,29 @@ export function useHistoryData(storage: StatisticsStorage, stats: Ref<Statistics
     // 每次刷新时重置缓存，获取最新数据
     previousLoaded = false
     previousSnapshotLoaded = false
-    await ensurePreviousActiveDayLoaded()
-    await ensurePreviousSnapshotLoaded()
+
+    // 单次读取历史数据并在三个消费点间复用（原实现读 3 次存储）
+    let snapshot: Record<string, any>
+    try {
+      snapshot = await storage.loadHistory()
+    } catch (error) {
+      console.error("加载历史数据失败:", error)
+      snapshot = {}
+    }
+    if (seq !== loadSeq) return
+
+    // 回溯最近活跃日（SQL）与回溯最近快照（本地存储）互不依赖，并行执行
+    await Promise.all([
+      ensurePreviousActiveDayLoaded(),
+      ensurePreviousSnapshotLoaded(snapshot),
+    ])
 
     // 先写入当天快照，确保趋势/热力图数据是最新的
-    await saveTodaySnapshot(seq)
+    await saveTodaySnapshot(seq, snapshot)
     if (seq !== loadSeq) return
 
     try {
-      const data = await getHistoricalStatistics(days)
+      const data = await getHistoricalStatistics(days, snapshot)
       if (seq !== loadSeq) return
       historicalData.value = [...data].reverse()
     } catch (error) {
@@ -198,9 +236,12 @@ export function useHistoryData(storage: StatisticsStorage, stats: Ref<Statistics
     }
   }
 
-  async function getHistoricalStatistics(days?: number): Promise<HistoricalDataItem[]> {
+  async function getHistoricalStatistics(
+    days?: number,
+    preloaded?: Record<string, any>,
+  ): Promise<HistoricalDataItem[]> {
     try {
-      const historyData = await storage.loadHistory()
+      const historyData = preloaded ?? await storage.loadHistory()
       const today = new Date()
       const result: HistoricalDataItem[] = []
       let lastKnownStats: Pick<HistoricalDataItem, "totalNotes" | "totalWords" | "totalBlocks"> | null = null

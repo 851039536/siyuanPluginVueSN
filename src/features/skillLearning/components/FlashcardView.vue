@@ -192,6 +192,7 @@ import {
   computed,
   onActivated,
   onDeactivated,
+  onMounted,
   onUnmounted,
   ref,
   watch,
@@ -283,7 +284,19 @@ function optionLetter(i: number): string {
 }
 
 // --- 键盘快捷键 ---
+/**
+ * 焦点在可编辑元素内时不劫持按键：
+ * 监听挂在 window 上，若不判断来源，弹窗输入框里的 A/B/C/D 与空格会被吞掉。
+ */
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  if (!el || !el.tagName) return false
+  const tag = el.tagName.toUpperCase()
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable
+}
+
 function onKeydown(e: KeyboardEvent) {
+  if (isEditableTarget(e.target)) return
   if (e.key === " " || e.key === "Enter") {
     e.preventDefault()
     if (phase.value === "feedback") {
@@ -305,9 +318,18 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 const cleanup = () => window.removeEventListener("keydown", onKeydown)
-onActivated(() => window.addEventListener("keydown", onKeydown))
+// 先 cleanup 再注册，保证重复 activated 不会叠加监听（KeepAlive 缓存命中时会再次触发）
+onActivated(() => {
+  cleanup()
+  window.addEventListener("keydown", onKeydown)
+})
 onDeactivated(cleanup)
 onUnmounted(cleanup)
+// KeepAlive 下 onActivated 未必覆盖首次显示路径，挂载时兜底注册（cleanup 保证幂等）
+onMounted(() => {
+  cleanup()
+  window.addEventListener("keydown", onKeydown)
+})
 
 </script>
 

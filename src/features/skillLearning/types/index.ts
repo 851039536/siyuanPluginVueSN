@@ -25,6 +25,12 @@ export const DIFFICULTY_I18N_KEYS: Record<Difficulty, keyof SkillI18n> = {
 /** 视图模式 */
 export type ViewMode = "list" | "flashcard" | "review" | "stats"
 
+/**
+ * 未填写分类时的兜底分类名（数据层默认值）。
+ * ⚠️ 数据层无法访问 i18n：此处仅作为落库兜底，UI 侧应优先传 `SkillI18n.defaultCategory`。
+ */
+export const DEFAULT_CATEGORY = "默认"
+
 /** 代码片段练习卡片 */
 export interface SkillCard {
   id: string
@@ -152,4 +158,10 @@ export interface SkillI18n {
   quizScore?: string
   showDetails?: string
   hideDetails?: string
+  /** 下次复习间隔文案模板，含 {n} 占位符（如 "{n}天后"） */
+  intervalDays?: string
+  /** 下次复习间隔文案模板（月），含 {n} 占位符 */
+  intervalMonths?: string
+  /** 未填写分类时的默认分类名 */
+  defaultCategory?: string
 }

@@ -76,6 +76,9 @@ export const DEFAULT_I18N: Required<SkillI18n> = {
   correctCountLabel: "正确",
   wrongCountLabel: "错误",
   notPracticed: "未练习",
+  intervalDays: "{n}天后",
+  intervalMonths: "{n}个月后",
+  defaultCategory: "默认",
 }
 
 export function useI18n(i18n: SkillI18n | undefined) {

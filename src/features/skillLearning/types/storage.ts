@@ -9,6 +9,7 @@ import type {
 } from "./index"
 import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
+import { DEFAULT_CATEGORY } from "./index"
 
 export const STORAGE_KEY = "skill-learning-cards"
 const PRESET_FLAG_KEY = "skill-learning-preset-loaded"
@@ -43,7 +44,7 @@ export class SkillStorage {
       distractors: dto.distractors || [],
       codeSnippet: dto.codeSnippet || "",
       language: dto.language || "other",
-      category: dto.category || "默认",
+      category: dto.category || DEFAULT_CATEGORY,
       difficulty: dto.difficulty || "beginner",
       tags: dto.tags || [],
       practiceCount: 0,
@@ -101,7 +102,7 @@ export class SkillStorage {
       distractors: dto.distractors || [],
       codeSnippet: dto.codeSnippet || "",
       language: dto.language || "other",
-      category: dto.category || "默认",
+      category: dto.category || DEFAULT_CATEGORY,
       difficulty: dto.difficulty || "beginner",
       tags: dto.tags || [],
       practiceCount: 0,

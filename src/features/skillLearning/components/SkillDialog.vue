@@ -270,7 +270,7 @@ function handleSave() {
     distractors: distractors.length > 0 ? distractors : undefined,
     codeSnippet: form.codeSnippet.trim(),
     language: form.language,
-    category: form.category.trim() || "默认",
+    category: form.category.trim() || t.value.defaultCategory,
     difficulty: form.difficulty,
     tags: tagsInput.value.split(",").map((t) => t.trim()).filter(Boolean),
   }

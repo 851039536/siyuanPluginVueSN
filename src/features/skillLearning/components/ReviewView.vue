@@ -136,6 +136,7 @@ import {
   computed,
   onActivated,
   onDeactivated,
+  onMounted,
   onUnmounted,
   ref,
 } from "vue"
@@ -184,11 +185,14 @@ const rememberedHint = computed(() => {
   return formatInterval(d.interval)
 })
 
+/**
+ * 格式化下次复习间隔文案（走 i18n，英文环境不再显示中文）。
+ * 文案模板含 {n} 占位符，如 zh「{n}天后」/ en "In {n} days"。
+ */
 function formatInterval(days: number): string {
-  if (days === 1) return "1天后"
-  if (days < 30) return `${days}天后`
+  if (days < 30) return t.value.intervalDays.replace("{n}", String(days))
   const months = Math.round(days / 30)
-  return `${months}个月后`
+  return t.value.intervalMonths.replace("{n}", String(months))
 }
 
 function flip() {
@@ -207,7 +211,19 @@ function rate(rating: ReviewRating) {
 }
 
 // --- 键盘快捷键 ---
+/**
+ * 焦点在可编辑元素内时不劫持按键：
+ * 监听挂在 window 上，若不判断来源，弹窗输入框里的空格/Enter 会被吞掉。
+ */
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  if (!el || !el.tagName) return false
+  const tag = el.tagName.toUpperCase()
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable
+}
+
 function onKeydown(e: KeyboardEvent) {
+  if (isEditableTarget(e.target)) return
   if (e.key === " " || e.key === "Enter") {
     e.preventDefault()
     if (!flipped.value) {
@@ -222,9 +238,18 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 const cleanup = () => window.removeEventListener("keydown", onKeydown)
-onActivated(() => window.addEventListener("keydown", onKeydown))
+// 先 cleanup 再注册，保证重复 activated 不会叠加监听（KeepAlive 缓存命中时会再次触发）
+onActivated(() => {
+  cleanup()
+  window.addEventListener("keydown", onKeydown)
+})
 onDeactivated(cleanup)
 onUnmounted(cleanup)
+// KeepAlive 下 onActivated 未必覆盖首次显示路径，挂载时兜底注册（cleanup 保证幂等）
+onMounted(() => {
+  cleanup()
+  window.addEventListener("keydown", onKeydown)
+})
 </script>
 
 <style lang="scss" scoped>

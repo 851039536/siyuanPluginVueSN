@@ -604,6 +604,12 @@ D17（z-index）、D18（过渡动效）本轮不做 —— 这三项在迁移�
 | `websiteNavigation` | `websiteNavigation.title` | `websiteNavigation.panelTitle` | 该分片实际键为 `panelTitle` |
 
 > 另 `floatingToolbar.title` 与 `skillLearning.title` 同样解析失败，但这二者**不在状态栏抽屉白名单**内、与本次整改无关，**未改动**（避免越界），已在下方「遗留待办」登记。
+>
+> **后续（技能学习审查轮）**：`skillLearning.title` 已修复。根因是该分片为**扁平结构**（74 个顶层键），
+> 而 `scripts/merge-i18n.mjs` 用 `Object.assign` 在**顶层**合并 ⇒ 键被摊平到 i18n 根、`plugin.i18n.skillLearning`
+> **根本不存在**（其余功能分片均以自身名为外层键包裹，故正常）。已将该分片改为 `{ "skillLearning": { ... } }`
+> 嵌套结构并补 `title` / `description` 键，`skillLearning.title` 现解析为「技能学习」。
+> `floatingToolbar.title` **仍未修复**（`floatingToolbar.json` 已是嵌套结构，属**另一类**问题：缺 `title` 键）。
 
 ### 遗留待办
 
@@ -611,7 +617,7 @@ D17（z-index）、D18（过渡动效）本轮不做 —— 这三项在迁移�
 |---|---|---|
 | 1 | D5 / D16 / D17 / D18 | 待抽屉形态决策后一并处理 |
 | 2 | `FeatureDrawer` 的 Esc / 焦点接管 / `role="dialog"` | 属 D5 的自建外壳能力补齐；若最终选「保持自建」，需单独补（约 +40 行） |
-| 3 | `floatingToolbar.title` / `skillLearning.title` | 同类 i18n 键失效（不在本模块范围），建议在 superPanel 专项中一并处理 |
+| 3 | `floatingToolbar.title` | 同类 i18n 键失效（不在本模块范围），建议在 superPanel 专项中一并处理。~~`skillLearning.title`~~ 已于技能学习审查轮修复（分片扁平结构 ⇒ 改为嵌套并补 `title`/`description`） |
 | 4 | `useStatusBarTask` 的 `icon: string` | 跨功能入口接收任意 iconify 名，未收窄为 `IconKey`；`MonitorItem` 已按「含冒号」判别分流渲染 |
 
 ### 验证（整改轮，AI 可执行的既有入口）

@@ -30,6 +30,7 @@
               <Input
                 v-model="form.name"
                 type="text"
+                size="small"
                 :placeholder="i18n.namePlaceholder"
                 required
               />
@@ -40,6 +41,7 @@
               <Input
                 v-model="form.url"
                 type="text"
+                size="small"
                 :placeholder="i18n.urlPlaceholder"
                 required
               />
@@ -49,6 +51,7 @@
               <label class="wn-label">{{ i18n.category }}</label>
               <Select
                 v-model="form.category"
+                size="small"
                 :options="categoryOptions"
               />
             </div>
@@ -58,6 +61,7 @@
               <Input
                 v-model="form.description"
                 type="text"
+                size="small"
                 :placeholder="i18n.descriptionPlaceholder"
               />
             </div>

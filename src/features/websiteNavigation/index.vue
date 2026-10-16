@@ -167,7 +167,7 @@ const copyUrl = async (url: string) => {
     await copyToClipboard(url)
     showMessage(props.i18n.urlCopied ?? "", 2000, "info")
   } catch {
-    showMessage(props.i18n.copyUrl ?? "", 2000, "error")
+    showMessage(props.i18n.copyFailed ?? "", 2000, "error")
   }
 }
 </script>

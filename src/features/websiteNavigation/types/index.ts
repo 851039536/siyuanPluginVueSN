@@ -40,6 +40,7 @@ export interface I18n {
   saveFailed?: string
   deleteFailed?: string
   urlCopied?: string
+  copyFailed?: string
   uncategorized?: string
 }
 
@@ -56,6 +57,10 @@ export class WebsiteNavigation {
   }
 
   public showModal() {
+    // 实例仍在（面板处于打开状态）时仅复用，避免重复创建遮罩
+    // —— 状态栏派发的是 toggle 事件，可能被重复触发。
+    // 非持久 Modal 关闭即销毁并置空 this.modal，故正常关闭后再打开会走下方
+    // 重建路径，由 onMounted 重新加载数据，不会读到陈旧数据。
     if (this.modal?.app) {
       this.modal.open()
       return

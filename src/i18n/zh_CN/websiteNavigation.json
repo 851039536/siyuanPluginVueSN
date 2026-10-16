@@ -31,6 +31,7 @@
     "saveFailed": "保存失败",
     "deleteFailed": "删除失败",
     "urlCopied": "网址已复制",
+    "copyFailed": "复制失败",
     "defaultBadge": "默认",
     "uncategorized": "未分类"
   },

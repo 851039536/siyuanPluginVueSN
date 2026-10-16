@@ -4582,6 +4582,7 @@
     "saveFailed": "Save failed",
     "deleteFailed": "Delete failed",
     "urlCopied": "URL copied",
+    "copyFailed": "Copy failed",
     "defaultBadge": "Default",
     "uncategorized": "Uncategorized"
   },

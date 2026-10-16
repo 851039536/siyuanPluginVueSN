@@ -1,6 +1,7 @@
 {
   "superPanel": {
     "title": "超级面板",
+    "description": "统一的插件功能入口面板，集中展示与管理所有功能",
     "close": "关闭",
     "saveFailed": "保存失败",
     "searchPlaceholder": "搜索功能...",

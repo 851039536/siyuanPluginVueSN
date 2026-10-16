@@ -610,6 +610,24 @@ D17（z-index）、D18（过渡动效）本轮不做 —— 这三项在迁移�
 > **根本不存在**（其余功能分片均以自身名为外层键包裹，故正常）。已将该分片改为 `{ "skillLearning": { ... } }`
 > 嵌套结构并补 `title` / `description` 键，`skillLearning.title` 现解析为「技能学习」。
 > `floatingToolbar.title` **仍未修复**（`floatingToolbar.json` 已是嵌套结构，属**另一类**问题：缺 `title` 键）。
+>
+> **续（同轮）**：`floatingToolbar.title` 也已修复。该分片本已嵌套，但 `floatingToolbar` 子对象下**只有 23 个
+> action 标签、无 `title` / `description` 键**，而 `config.ts` 却写了 `titleI18nKey: "floatingToolbar.title"`
+> 与 `descI18nKey: "floatingToolbarDescription"`。后者是**跨分片引用** —— `floatingToolbarDescription` 实际
+> 定义在 `generalSettings.json`（根级扁平键），属职责错位。已改为在 `floatingToolbar` 分片内补
+> `title` / `description`，`config.ts` 的 `descI18nKey` 指向 `floatingToolbar.description`，并删除
+> `generalSettings.json` 中的孤立键 `floatingToolbarDescription`。
+> ⚠️ 注：该键失效**不影响用户可见文案** —— `buildFeatureEntry`（`featureRegistry.ts:133-134`）在
+> `resolveI18nText` 返回 `undefined` 时回落 `meta.defaultTitle`，故仅表现为「i18n 键形同虚设」。
+>
+> **收口（同轮）**：上述三例（`skillLearning.title` / `floatingToolbar.title` / `superPanel.description`）
+> 说明这是**一类**问题而非孤立个案，故已在 `scripts/verify-i18n.mjs` 中固化为
+> **FEATURE_CONFIG i18n 键契约校验**（`checkFeatureConfigI18nKeys`）：扫描 `config.ts` 的全部
+> `titleI18nKey` / `descI18nKey` / `labelI18nKey`，断言其在 `zh_CN.json` 中可解析为**非空字符串**，
+> 失败即 `exit 1` 并回报「归属功能 → 键名」。
+> 该检查**已实证有效**：首次运行即发现此前未察觉的第 3 例 `superPanel.description`（`superPanel` 分片
+> 有 `title` 无 `description`），并已补键修复；另经「人为删键 → 校验失败(exit 1) → 还原 → 通过」的
+> 反向验证，确认守卫不会空转。
 
 ### 遗留待办
 
@@ -617,7 +635,7 @@ D17（z-index）、D18（过渡动效）本轮不做 —— 这三项在迁移�
 |---|---|---|
 | 1 | D5 / D16 / D17 / D18 | 待抽屉形态决策后一并处理 |
 | 2 | `FeatureDrawer` 的 Esc / 焦点接管 / `role="dialog"` | 属 D5 的自建外壳能力补齐；若最终选「保持自建」，需单独补（约 +40 行） |
-| 3 | `floatingToolbar.title` | 同类 i18n 键失效（不在本模块范围），建议在 superPanel 专项中一并处理。~~`skillLearning.title`~~ 已于技能学习审查轮修复（分片扁平结构 ⇒ 改为嵌套并补 `title`/`description`） |
+| 3 | ~~`floatingToolbar.title`~~ / ~~`skillLearning.title`~~ / ~~`superPanel.description`~~ | **全部已修复**（技能学习审查轮）：补键 + 消除跨分片引用，并新增 `scripts/verify-i18n.mjs` 的 FEATURE_CONFIG 键契约校验防回归 |
 | 4 | `useStatusBarTask` 的 `icon: string` | 跨功能入口接收任意 iconify 名，未收窄为 `IconKey`；`MonitorItem` 已按「含冒号」判别分流渲染 |
 
 ### 验证（整改轮，AI 可执行的既有入口）

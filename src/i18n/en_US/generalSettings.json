@@ -179,7 +179,6 @@
   "highlightPlayAction": "Play",
   "highlightCopied": "Copied",
   "enableFloatingToolbar": "Floating Toolbar",
-  "floatingToolbarDescription": "Show toolbar with various actions when text is selected",
   "collapse": "Collapse",
   "enableHeatmapMarker": "Heatmap Marker",
   "heatmapMarkerDescription": "Automatically mark English words from the wordbook in the document, displaying a heatmap gradient based on practice count",

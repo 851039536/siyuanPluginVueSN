@@ -1,5 +1,7 @@
 {
   "floatingToolbar": {
+    "title": "浮动工具栏",
+    "description": "选中文字时显示包含多种操作的工具栏",
     "copy": "复制",
     "qrcode": "生成二维码",
     "pronunciation": "谐音翻译",

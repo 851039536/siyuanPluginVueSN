@@ -907,6 +907,8 @@
     "refreshTagDone": "标签树已刷新"
   },
   "floatingToolbar": {
+    "title": "浮动工具栏",
+    "description": "选中文字时显示包含多种操作的工具栏",
     "copy": "复制",
     "qrcode": "生成二维码",
     "pronunciation": "谐音翻译",
@@ -1129,7 +1131,6 @@
   "highlightPlayAction": "朗读",
   "highlightCopied": "已复制",
   "enableFloatingToolbar": "浮动工具栏功能",
-  "floatingToolbarDescription": "选中文字时显示包含多种操作的工具栏",
   "enableHeatmapMarker": "热力图标记",
   "heatmapMarkerDescription": "自动标记文档中来自单词本的英文词汇，根据练习次数显示热力渐变",
   "collapse": "收起",
@@ -4163,6 +4164,7 @@
   },
   "superPanel": {
     "title": "超级面板",
+    "description": "统一的插件功能入口面板，集中展示与管理所有功能",
     "close": "关闭",
     "saveFailed": "保存失败",
     "searchPlaceholder": "搜索功能...",

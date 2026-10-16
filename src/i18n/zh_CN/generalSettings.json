@@ -179,7 +179,6 @@
   "highlightPlayAction": "朗读",
   "highlightCopied": "已复制",
   "enableFloatingToolbar": "浮动工具栏功能",
-  "floatingToolbarDescription": "选中文字时显示包含多种操作的工具栏",
   "enableHeatmapMarker": "热力图标记",
   "heatmapMarkerDescription": "自动标记文档中来自单词本的英文词汇，根据练习次数显示热力渐变",
   "collapse": "收起",

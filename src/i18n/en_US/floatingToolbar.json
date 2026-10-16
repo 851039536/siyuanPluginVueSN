@@ -1,5 +1,7 @@
 {
   "floatingToolbar": {
+    "title": "Floating Toolbar",
+    "description": "Show toolbar with various actions when text is selected",
     "copy": "Copy",
     "qrcode": "Generate QR Code",
     "pronunciation": "Pronunciation Helper",

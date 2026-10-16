@@ -117,7 +117,7 @@ export const FEATURE_CONFIG = [
     defaultTitle: "浮动工具栏",
     defaultDesc: "选中文字时显示包含多种操作的工具栏",
     titleI18nKey: "floatingToolbar.title",
-    descI18nKey: "floatingToolbarDescription",
+    descI18nKey: "floatingToolbar.description",
     subFeatures: [
       {
         id: "translate",

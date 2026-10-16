@@ -1,6 +1,7 @@
 {
   "superPanel": {
     "title": "Super Panel",
+    "description": "Unified entry panel for plugin features, showing and managing all features in one place",
     "close": "Close",
     "saveFailed": "Save failed",
     "searchPlaceholder": "Search features...",

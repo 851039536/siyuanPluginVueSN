@@ -74,6 +74,59 @@ function loadI18n(lang) {
   return JSON.parse(readFileSync(file, 'utf-8'))
 }
 
+/**
+ * 按点号路径取值（与 featureRegistry.resolveI18nText 同语义）
+ * @param {Record<string, unknown>} obj
+ * @param {string} path
+ * @returns {unknown}
+ */
+function resolveByPath(obj, path) {
+  return path
+    .split('.')
+    .reduce((acc, key) => (acc && typeof acc === 'object' ? acc[key] : undefined), obj)
+}
+
+/**
+ * 校验 FEATURE_CONFIG 中声明的 i18n 键真实存在（titleI18nKey / descI18nKey / labelI18nKey）。
+ *
+ * 为什么需要：这些键解析失败时会被 `defaultTitle` / `defaultDesc` / `defaultLabel` 静默兜底
+ * （见 featureRegistry.ts 的 `?? meta.defaultTitle`），界面上看不出异常，只表现为
+ * 「i18n 键形同虚设」—— 英文环境拿到的仍是中文兜底值。历史上 skillLearning.title
+ * （扁平分片导致 plugin.i18n.skillLearning 不存在）与 floatingToolbar.title
+ * （分片缺该键）都属于此类，靠人工比对才发现，故固化为契约校验。
+ *
+ * @returns {{ kind: string, key: string, featureId: string }[]} 未解析的键
+ */
+function checkFeatureConfigI18nKeys(zhCN) {
+  const configPath = join(__dirname, '..', 'src', 'features', 'config.ts')
+  if (!existsSync(configPath)) {
+    console.warn('⚠️  src/features/config.ts not found, skipping FEATURE_CONFIG key check')
+    return []
+  }
+  const source = readFileSync(configPath, 'utf-8')
+
+  // 逐条匹配 i18n 键声明，并回溯最近的 `id: "xxx"` 作为归属功能（便于定位）
+  const unresolved = []
+  const keyRegex = /(titleI18nKey|descI18nKey|labelI18nKey):\s*"([^"]+)"/g
+  const idRegex = /id:\s*"([^"]+)"/g
+  for (const match of source.matchAll(keyRegex)) {
+    const [, kind, key] = match
+    let featureId = '?'
+    idRegex.lastIndex = 0
+    for (const idMatch of source.matchAll(idRegex)) {
+      if (idMatch.index > match.index) {
+        break
+      }
+      featureId = idMatch[1]
+    }
+    const value = resolveByPath(zhCN, key)
+    if (typeof value !== 'string' || !value) {
+      unresolved.push({ kind, key, featureId })
+    }
+  }
+  return unresolved
+}
+
 function main() {
   let errors = 0
 
@@ -219,6 +272,21 @@ function main() {
 
     if (missingInEN.length === 0 && missingInZH.length === 0) {
       console.log(`✅ All ${zhLeaves.length} leaf keys are synchronized between zh_CN and en_US`)
+    }
+
+    // 3. FEATURE_CONFIG 声明的 i18n 键必须真实可解析
+    console.log('\n--- FEATURE_CONFIG i18n Key Contract ---')
+    const unresolvedKeys = checkFeatureConfigI18nKeys(zhCN)
+    if (unresolvedKeys.length > 0) {
+      console.error(`❌ ${unresolvedKeys.length} FEATURE_CONFIG i18n key(s) do not resolve to a string:`)
+      for (const { kind, key, featureId } of unresolvedKeys) {
+        console.error(`   - ${featureId} → ${kind}: "${key}"`)
+      }
+      console.error('   这些键会被 defaultTitle/defaultDesc/defaultLabel 静默兜底，')
+      console.error('   英文环境下将显示中文兜底值。请检查分片是否为嵌套结构、键是否存在。')
+      errors++
+    } else {
+      console.log('✅ All FEATURE_CONFIG i18n keys resolve to a string')
     }
   }
 

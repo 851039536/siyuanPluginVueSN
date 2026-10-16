@@ -907,6 +907,8 @@
     "refreshTagDone": "Tag tree reloaded"
   },
   "floatingToolbar": {
+    "title": "Floating Toolbar",
+    "description": "Show toolbar with various actions when text is selected",
     "copy": "Copy",
     "qrcode": "Generate QR Code",
     "pronunciation": "Pronunciation Helper",
@@ -1129,7 +1131,6 @@
   "highlightPlayAction": "Play",
   "highlightCopied": "Copied",
   "enableFloatingToolbar": "Floating Toolbar",
-  "floatingToolbarDescription": "Show toolbar with various actions when text is selected",
   "collapse": "Collapse",
   "enableHeatmapMarker": "Heatmap Marker",
   "heatmapMarkerDescription": "Automatically mark English words from the wordbook in the document, displaying a heatmap gradient based on practice count",
@@ -4163,6 +4164,7 @@
   },
   "superPanel": {
     "title": "Super Panel",
+    "description": "Unified entry panel for plugin features, showing and managing all features in one place",
     "close": "Close",
     "saveFailed": "Save failed",
     "searchPlaceholder": "Search features...",

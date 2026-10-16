@@ -1,29 +1,27 @@
 /**
  * 速记功能 — 待办列表 composable
  * 承载待办条目的响应式列表与 CRUD、逾期检测、一键顺延、按日期分组，
- * 并在 load 时执行每日自动顺延（昨日未完成逾期任务自动挪到今天）
+ * 并在 load 时执行每日自动顺延（昨日未完成逾期任务自动挪到今天）。
+ * 日期基准经 now ref 统一持有（refreshNow 校准），面板常驻跨天后自动重算分组与逾期状态
  */
 import type { Ref } from "vue"
-import type { QuickNoteStorage } from "../types/storage"
 import type { TodoItem } from "../types"
-import { computed, ref } from "vue"
-import { createPersistLock, generateId } from "../utils"
+import type { QuickNoteStorage } from "../types/storage"
+import {
+  computed,
+  ref,
+} from "vue"
+import {
+  isOverdueAgainst,
+  parseDateStr,
+  rolloverOverdue,
+  toDateStr,
+} from "../pureUtils"
 import { PRIORITY_META } from "../types"
-
-/** 毫秒时间戳 → 本地日期 YYYY-MM-DD（自动顺延与分组比较用） */
-function toDateStr(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
-}
-
-/** 字符串 YYYY-MM-DD → Date（当天零点），解析失败返回 null */
-function parseDateStr(str: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str)
-  if (!match) return null
-  return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-}
+import {
+  createPersistLock,
+  generateId,
+} from "../utils"
 
 /** 日期分组标签：今天 / 明天 / 本周 / 更远 */
 export type DateGroup = "today" | "tomorrow" | "week" | "future"
@@ -34,10 +32,29 @@ export type TodoFocusItem = TodoItem & { overdue: boolean }
 export function useTodoList(storage: QuickNoteStorage) {
   const todos: Ref<TodoItem[]> = ref([])
 
+  /**
+   * 当前时刻基准（分组与逾期状态派生依赖）。
+   * 面板为 persistent Modal 常驻不销毁，computed 仅在 todos 变化时重算；
+   * 跨天后需 refreshNow() 触发重算，否则「今天/明天」分组与逾期红字会停留在昨天
+   */
+  const now = ref(Date.now())
+
+  /** 校准当前时刻基准（进入面板/切回待办 Tab 时调用，防止常驻跨天后日期基准过期） */
+  const refreshNow = (): void => {
+    now.value = Date.now()
+  }
+
+  /** 今天零点（所有日期比较共用的单次解析结果） */
+  const todayStart = computed(() => parseDateStr(toDateStr(new Date(now.value))))
+
+  /** 今天日期串（YYYY-MM-DD） */
+  const todayStr = computed(() => toDateStr(new Date(now.value)))
+
   /** 从存储加载全部待办，并执行每日自动顺延 */
   const load = async () => {
+    refreshNow()
     const data = await storage.data.loadOrDefault()
-    const rolled = rolloverOverdue(data.todos, data.lastRolloverDate)
+    const rolled = rolloverOverdue(data.todos, data.lastRolloverDate, now.value)
     todos.value = rolled.list
     if (rolled.changed) {
       await storage.data.save({
@@ -49,40 +66,10 @@ export function useTodoList(storage: QuickNoteStorage) {
   }
 
   /** 持久化当前待办列表（串行锁防止快速连续操作时 read-modify-write 读到旧数据） */
-  const persist = createPersistLock(storage.data, (data) => ({ ...data, todos: todos.value }))
-
-  /**
-   * 每日自动顺延：若上次顺延日期非今天，将已过期未完成的任务截止日期顺延到今天，
-   * 并累计顺延次数。返回是否变更以决定是否需要持久化
-   */
-  const rolloverOverdue = (
-    list: TodoItem[],
-    lastRolloverDate: string | null,
-  ): { list: TodoItem[], lastRolloverDate: string, changed: boolean } => {
-    const today = toDateStr(new Date())
-    if (lastRolloverDate === today) {
-      return { list, lastRolloverDate: today, changed: false }
-    }
-    const todayStart = parseDateStr(today)
-    let changed = false
-    const next = list.map((t) => {
-      // 已逾期（截止日期早于今天）且未完成 → 顺延到今天
-      if (!t.done && t.dueDate) {
-        const due = parseDateStr(t.dueDate)
-        if (due && todayStart && due < todayStart) {
-          changed = true
-          return {
-            ...t,
-            dueDate: today,
-            rolloverCount: t.rolloverCount + 1,
-            updatedAt: Date.now(),
-          }
-        }
-      }
-      return t
-    })
-    return { list: next, lastRolloverDate: today, changed }
-  }
+  const persist = createPersistLock(storage.data, (data) => ({
+    ...data,
+    todos: todos.value,
+  }))
 
   /** 新增待办（空内容忽略） */
   const add = async (partial: {
@@ -115,7 +102,10 @@ export function useTodoList(storage: QuickNoteStorage) {
     const todo = todos.value.find((t) => t.id === id)
     if (!todo) return
     const normalized = patch.content !== undefined
-      ? { ...patch, content: patch.content.trim() }
+      ? {
+          ...patch,
+          content: patch.content.trim(),
+        }
       : patch
     Object.assign(todo, normalized, { updatedAt: Date.now() })
     await persist()
@@ -150,24 +140,30 @@ export function useTodoList(storage: QuickNoteStorage) {
   }
 
   /** 是否已逾期：未完成且截止日期严格早于今天 */
-  const isOverdue = (t: TodoItem): boolean => {
-    if (t.done || !t.dueDate?.trim()) return false
-    const due = parseDateStr(t.dueDate)
-    if (!due) return false
-    const todayStart = parseDateStr(toDateStr(new Date()))
-    return todayStart ? due < todayStart : false
-  }
+  const isOverdue = (t: TodoItem): boolean => isOverdueAgainst(t, todayStart.value)
 
-  /** 「今天要处理的」聚焦区条目：今日到期 + 逾期未完成（自动顺延会把逾期项截止日期改为今天，故按 dueDate <= today 合并筛选），逾期项排前 */
+  /**
+   * 「今天要处理的」聚焦区条目：今日到期 + 逾期未完成
+   * （自动顺延会把逾期项截止日期改为今天，故按 dueDate <= today 合并筛选），逾期项排前。
+   * 每条只解析一次截止日期，overdue 结果在 filter/map 间复用
+   */
   const todayFocus = computed<TodoFocusItem[]>(() => {
-    const today = toDateStr(new Date())
-    return todos.value
-      .filter((t) => !t.done && t.dueDate?.trim() && (isOverdue(t) || t.dueDate === today))
-      .map((t) => ({ ...t, overdue: isOverdue(t) }))
-      .sort((a, b) => {
-        if (a.overdue !== b.overdue) return a.overdue ? -1 : 1
-        return PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank
+    const today = todayStr.value
+    const start = todayStart.value
+    const focus: TodoFocusItem[] = []
+    for (const t of todos.value) {
+      if (t.done || !t.dueDate?.trim()) continue
+      const overdue = isOverdueAgainst(t, start)
+      if (!overdue && t.dueDate !== today) continue
+      focus.push({
+        ...t,
+        overdue,
       })
+    }
+    return focus.sort((a, b) => {
+      if (a.overdue !== b.overdue) return a.overdue ? -1 : 1
+      return PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank
+    })
   })
 
   /** 未完成待办计数（最小化条徽标用） */
@@ -177,9 +173,9 @@ export function useTodoList(storage: QuickNoteStorage) {
   const groupOf = (t: TodoItem): DateGroup => {
     if (!t.dueDate?.trim()) return "future"
     const due = parseDateStr(t.dueDate)
-    const todayStart = parseDateStr(toDateStr(new Date()))
-    if (!due || !todayStart) return "future"
-    const diffDays = Math.round((due.getTime() - todayStart.getTime()) / 86400000)
+    const start = todayStart.value
+    if (!due || !start) return "future"
+    const diffDays = Math.round((due.getTime() - start.getTime()) / 86400000)
     if (diffDays <= 0) return "today"
     if (diffDays === 1) return "tomorrow"
     if (diffDays <= 7) return "week"
@@ -229,5 +225,6 @@ export function useTodoList(storage: QuickNoteStorage) {
     rolloverToTomorrow,
     remove,
     isOverdue,
+    refreshNow,
   }
 }

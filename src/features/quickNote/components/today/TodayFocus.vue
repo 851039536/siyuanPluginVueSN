@@ -68,13 +68,13 @@
 </template>
 
 <script setup lang="ts">
+import type { TodoFocusItem } from "../../composables/useTodoList"
 /**
  * 速记功能 — 「今天要处理的」聚焦区
  * 顶部固定展示今日到期/逾期未完成任务与卡住项目，逾期项红色警示；
  * 数据由父层经 props 注入（todayFocus 条目 + 卡住项目），无紧急事项时显示绿色柔和提示
  */
 import type { ProjectItem } from "../../types"
-import type { TodoFocusItem } from "../../composables/useTodoList"
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 

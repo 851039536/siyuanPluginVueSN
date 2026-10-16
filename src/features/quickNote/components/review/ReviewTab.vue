@@ -9,12 +9,12 @@
 </template>
 
 <script setup lang="ts">
+import { useWeeklyReview } from "../../composables/useWeeklyReview"
 /**
  * 速记功能 — 每周复盘 Tab
  * 纯展示壳：透传 useWeeklyReview 周切换派生数据给 WeeklyReview 子组件
  */
 import WeeklyReview from "./WeeklyReview.vue"
-import { useWeeklyReview } from "../../composables/useWeeklyReview"
 
 type ReviewApi = ReturnType<typeof useWeeklyReview>
 

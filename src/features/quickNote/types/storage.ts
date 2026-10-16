@@ -2,8 +2,11 @@
  * 速记功能 — 存储层
  * 基于 TypedStorage 定义统一数据槽（AppData：待办/灵感/项目）与功能设置两个类型安全存储槽
  */
-import type { AppData, QuickNoteSettings } from "./index"
-import { Plugin } from "siyuan"
+import type { Plugin } from "siyuan"
+import type {
+  AppData,
+  QuickNoteSettings,
+} from "./index"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 

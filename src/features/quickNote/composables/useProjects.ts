@@ -3,10 +3,20 @@
  * 承载项目条目的响应式列表与 CRUD、关联待办进度计算（已完成数/总数）、卡住项目筛选
  */
 import type { Ref } from "vue"
-import type { AppData, ProjectItem, TodoItem } from "../types"
+import type {
+  AppData,
+  ProjectItem,
+  TodoItem,
+} from "../types"
 import type { QuickNoteStorage } from "../types/storage"
-import { computed, ref } from "vue"
-import { createPersistLock, generateId } from "../utils"
+import {
+  computed,
+  ref,
+} from "vue"
+import {
+  createPersistLock,
+  generateId,
+} from "../utils"
 
 export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]>) {
   const projects: Ref<ProjectItem[]> = ref([])
@@ -22,7 +32,10 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
    * todos 参数用于跨槽写入：删除项目时需同时落盘待办的 projectId 置空，缺省仅写 projects
    */
   const persist = createPersistLock(storage.data, (data, todos?: TodoItem[]) => {
-    const payload: AppData = { ...data, projects: projects.value }
+    const payload: AppData = {
+      ...data,
+      projects: projects.value,
+    }
     if (todos !== undefined) {
       payload.todos = todos
     }
@@ -52,7 +65,13 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
   const update = async (id: string, patch: Partial<Omit<ProjectItem, "id" | "createdAt">>) => {
     const project = projects.value.find((p) => p.id === id)
     if (!project) return
-    const { name, currentStep, nextStep, blockers, ...rest } = patch
+    const {
+      name,
+      currentStep,
+      nextStep,
+      blockers,
+      ...rest
+    } = patch
     const normalized = {
       ...rest,
       ...(name !== undefined ? { name: name.trim() } : {}),
@@ -70,22 +89,50 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
     // 解除关联：待办仍保留但 projectId 置空（同步更新内存 ref 与存储）
     if (todosRef) {
       todosRef.value = todosRef.value.map((t) =>
-        t.projectId === id ? { ...t, projectId: null, updatedAt: Date.now() } : t,
+        t.projectId === id
+          ? {
+              ...t,
+              projectId: null,
+              updatedAt: Date.now(),
+            }
+          : t,
       )
     }
     // 跨槽持久化：projects 与待办两个槽位同时落盘，与 add/update 共用同一把串行锁
     await persist(todosRef?.value)
   }
 
-  /** 某项目关联的待办列表 */
-  const todosOf = (projectId: string): TodoItem[] =>
-    (todosRef?.value ?? []).filter((t) => t.projectId === projectId)
+  /**
+   * 按 projectId 分组的待办索引（单次遍历构建，供 todosOf / progressOf 共用）
+   * v-for 中逐个 filter 全量待办会退化为 O(项目数 × 待办数)，且每次渲染产生新数组引用，
+   * 导致 ProjectItem 的 linkedTodos prop 无法命中缓存 —— 故预处理为 Map 一次算好
+   */
+  const todosByProject = computed(() => {
+    const map = new Map<string, TodoItem[]>()
+    for (const t of todosRef?.value ?? []) {
+      if (!t.projectId) continue
+      const bucket = map.get(t.projectId)
+      if (bucket) {
+        bucket.push(t)
+      } else {
+        map.set(t.projectId, [t])
+      }
+    }
+    return map
+  })
 
-  /** 某项目关联待办的完成进度（已完成数 / 总数） */
+  /** 某项目关联的待办列表 */
+  const todosOf = (projectId: string): TodoItem[] => todosByProject.value.get(projectId) ?? []
+
+  /** 某项目关联待办的完成进度（已完成数 / 总数），复用同一份分组结果 */
   const progressOf = (projectId: string): { done: number, total: number } => {
     const list = todosOf(projectId)
+    let done = 0
+    for (const t of list) {
+      if (t.done) done++
+    }
     return {
-      done: list.filter((t) => t.done).length,
+      done,
       total: list.length,
     }
   }

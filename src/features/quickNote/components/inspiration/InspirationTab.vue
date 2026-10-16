@@ -2,10 +2,11 @@
   <section class="panel-section">
     <!-- 灵感新增表单 + 标签筛选栏 -->
     <InspirationForm
-      :plugin="plugin"
       :all-tags="allTags"
       :active-tag="activeTag"
       :i18n="i18n"
+      :polishing="polishing"
+      :polish="polish"
       @add="inspirations.add"
       @select-tag="handleSelectTag"
     />
@@ -19,8 +20,9 @@
         v-for="item in filteredInspirations"
         :key="item.id"
         :item="item"
-        :plugin="plugin"
         :i18n="i18n"
+        :polishing="polishing"
+        :polish="polish"
         @update="(c, t) => inspirations.update(item.id, c, t)"
         @remove="handleInspRemove(item.id)"
         @filter-tag="handleSelectTag"
@@ -33,19 +35,23 @@
 /**
  * 速记功能 — 灵感 Tab
  * 灵感新增表单 + 标签筛选栏 + 灵感列表；标签筛选状态由 inspirations composable 持有，
- * 删除/更新直达 composable，编辑态由 InspirationItem 自管理
+ * 删除/更新直达 composable，编辑态由 InspirationItem 自管理；
+ * AI 润色函数由父层注入并透传给表单与各条目（子组件不自行创建 composable）
  */
-import type { Plugin } from "siyuan"
+import type { PolishFn } from "../../composables/useAiPolish"
+import { useInspirations } from "../../composables/useInspirations"
 import InspirationForm from "./InspirationForm.vue"
 import InspirationItem from "./InspirationItem.vue"
-import { useInspirations } from "../../composables/useInspirations"
 
 type InspirationsApi = ReturnType<typeof useInspirations>
 
 const props = defineProps<{
-  plugin: Plugin
   i18n: Record<string, string>
   inspirations: InspirationsApi
+  /** AI 润色进行中（透传表单与条目） */
+  polishing: boolean
+  /** AI 润色函数（透传表单与条目） */
+  polish: PolishFn
 }>()
 
 const inspirations = props.inspirations

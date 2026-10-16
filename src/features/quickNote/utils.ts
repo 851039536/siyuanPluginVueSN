@@ -2,9 +2,10 @@
  * 速记功能 — 共享工具函数
  * 提供条目 ID 生成、串行持久化锁与 AI 润色流式回填辅助，供多个 composable / 组件复用，避免复制粘贴
  */
-import { pushMsg } from "@/api"
-import type { TypedStorage } from "@/utils/typedStorage"
+import type { PolishFn } from "./composables/useAiPolish"
 import type { AppData } from "./types"
+import type { TypedStorage } from "@/utils/typedStorage"
+import { pushMsg } from "@/api"
 import { PolishError } from "./composables/useAiPolish"
 
 /** 生成条目唯一 ID（时间戳 + 随机串） */
@@ -40,12 +41,12 @@ export function createPersistLock<TArgs extends unknown[]>(
  * AI 润色流式回填辅助：缓存原稿 → 清空目标 → 流式回填 → 空结果/异常时恢复原稿并提示
  * 新增表单与编辑态共用，消除两处视图的 try-catch 重复代码
  * @param polish 润色函数（useAiPolish().polish）
- * @param target 目标文本 ref（新增表单 content 或编辑态 editDraft）
+ * @param target 目标文本 ref（传入 ref 对象，经其 value 读写）
  * @param original 润色前的原稿文本
  * @param i18n 功能文案（NO_API_KEY / 调用失败的提示键）
  */
 export async function polishText(
-  polish: (text: string, onChunk?: (chunk: string) => void) => Promise<string>,
+  polish: PolishFn,
   target: { value: string },
   original: string,
   i18n: Record<string, string>,

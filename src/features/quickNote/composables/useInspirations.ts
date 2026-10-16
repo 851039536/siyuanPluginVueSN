@@ -3,21 +3,17 @@
  * 承载灵感条目的响应式列表与 CRUD、标签提取/筛选，支持按标签过滤灵感列表
  */
 import type { Ref } from "vue"
-import type { QuickNoteStorage } from "../types/storage"
 import type { InspirationItem } from "../types"
-import { computed, ref } from "vue"
-import { createPersistLock, generateId } from "../utils"
-
-/** 标签输入：按逗号/顿号/空格拆分并去重去空 */
-export function splitTags(input: string): string[] {
-  const set = new Set<string>()
-  input
-    .split(/[,，、\s]+/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .forEach((s) => set.add(s))
-  return Array.from(set)
-}
+import type { QuickNoteStorage } from "../types/storage"
+import {
+  computed,
+  ref,
+} from "vue"
+import { splitTags } from "../pureUtils"
+import {
+  createPersistLock,
+  generateId,
+} from "../utils"
 
 export function useInspirations(storage: QuickNoteStorage) {
   const inspirations: Ref<InspirationItem[]> = ref([])
@@ -31,7 +27,10 @@ export function useInspirations(storage: QuickNoteStorage) {
   }
 
   /** 持久化当前灵感列表（串行锁防止快速连续操作时 read-modify-write 读到旧数据） */
-  const persist = createPersistLock(storage.data, (data) => ({ ...data, inspirations: inspirations.value }))
+  const persist = createPersistLock(storage.data, (data) => ({
+    ...data,
+    inspirations: inspirations.value,
+  }))
 
   /** 新增灵感（空内容忽略），tags 为原始字符串（自动拆分） */
   const add = async (content: string, tagsInput: string = "") => {

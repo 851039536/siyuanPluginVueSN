@@ -128,18 +128,20 @@
         <!-- 今天待办 Tab -->
         <TodoTab
           v-if="activeTab === 'todo'"
-          :plugin="plugin"
           :i18n="i18n"
           :todo-list="todoList"
           :projects-api="projectsApi"
+          :polishing="polishing"
+          :polish="polish"
         />
 
         <!-- 灵感速记 Tab -->
         <InspirationTab
           v-else-if="activeTab === 'inspiration'"
-          :plugin="plugin"
           :i18n="i18n"
           :inspirations="inspirations"
+          :polishing="polishing"
+          :polish="polish"
         />
 
         <!-- 项目跟进 Tab -->
@@ -169,19 +171,32 @@
  */
 import type { Plugin } from "siyuan"
 import type { QuickNoteManager } from "./index"
-import type { QuickNotePlacement, QuickNotePosition } from "./types"
-import { computed, onMounted, onUnmounted, ref, watch } from "vue"
+import type {
+  QuickNotePlacement,
+  QuickNotePosition,
+} from "./types"
+import {
+  computed,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import TodayFocus from "./components/today/TodayFocus.vue"
-import TodoTab from "./components/todo/TodoTab.vue"
 import InspirationTab from "./components/inspiration/InspirationTab.vue"
 import ProjectTab from "./components/project/ProjectTab.vue"
 import ReviewTab from "./components/review/ReviewTab.vue"
-import { useTodoList } from "./composables/useTodoList"
+import TodayFocus from "./components/today/TodayFocus.vue"
+import TodoTab from "./components/todo/TodoTab.vue"
+import { useAiPolish } from "./composables/useAiPolish"
 import { useInspirations } from "./composables/useInspirations"
 import { useProjects } from "./composables/useProjects"
+import { useTodoList } from "./composables/useTodoList"
 import { useWeeklyReview } from "./composables/useWeeklyReview"
-import { POSITION_MINIMIZE_META, QUICK_NOTE_POSITIONS } from "./types"
+import {
+  POSITION_MINIMIZE_META,
+  QUICK_NOTE_POSITIONS,
+} from "./types"
 
 const props = defineProps<{
   plugin: Plugin
@@ -200,14 +215,32 @@ const inspirations = useInspirations(props.manager.storage)
 const projectsApi = useProjects(props.manager.storage, todoList.todos)
 // 复盘为纯计算派生
 const review = useWeeklyReview(todoList.todos, projectsApi.projects)
+// AI 润色：此处唯一实例，经 props 下传三个使用点（待办表单/灵感表单/灵感编辑态），
+// 保证 polishing 并发锁跨入口生效（子组件各自实例会导致锁失效，见 AGENTS_ARCH.md § 禁止将逻辑下放给子组件）
+const {
+  polishing,
+  polish,
+} = useAiPolish(props.plugin)
 
 // ==================== Tab 导航 ====================
 /** Tab 定义：key + i18n 标签键（<3 个 Tab 时平铺，此处 4 个按语义建 components 子目录） */
 const TABS = [
-  { key: "todo", labelKey: "tabTodo" },
-  { key: "inspiration", labelKey: "tabInspiration" },
-  { key: "project", labelKey: "tabProject" },
-  { key: "review", labelKey: "tabReview" },
+  {
+    key: "todo",
+    labelKey: "tabTodo",
+  },
+  {
+    key: "inspiration",
+    labelKey: "tabInspiration",
+  },
+  {
+    key: "project",
+    labelKey: "tabProject",
+  },
+  {
+    key: "review",
+    labelKey: "tabReview",
+  },
 ] as const
 
 const activeTab = ref<(typeof TABS)[number]["key"]>("todo")
@@ -275,6 +308,8 @@ onMounted(async () => {
 // 进入复盘 Tab 时校准周界基准（纯派生无定时器，防止面板常驻跨天后周界过期）
 watch(activeTab, (tab) => {
   if (tab === "review") review.refreshNow()
+  // 待办 Tab 同样校准日期基准，否则跨天后「今天/明天」分组与逾期红字停留在昨天
+  if (tab === "todo") todoList.refreshNow()
 })
 
 onUnmounted(() => {

@@ -10,7 +10,10 @@
         <!-- 状态徽章 -->
         <span
           class="qn-proj-item__status"
-          :style="{ color: statusMeta.color, borderColor: statusMeta.color }"
+          :style="{
+            color: statusMeta.color,
+            borderColor: statusMeta.color,
+          }"
         >{{ i18n[statusMeta.labelKey] }}</span>
       </div>
       <div class="qn-proj-item__actions">
@@ -123,8 +126,14 @@
  * 展示项目状态徽章、进度流程、卡点警示、关联待办进度条与折叠列表；
  * 删除仅 emit 事件，关联待办与进度由父层经 props 注入
  */
-import type { ProjectItem, TodoItem } from "../../types"
-import { computed, ref } from "vue"
+import type {
+  ProjectItem,
+  TodoItem,
+} from "../../types"
+import {
+  computed,
+  ref,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { STATUS_META } from "../../types"
 

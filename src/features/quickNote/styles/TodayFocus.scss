@@ -73,11 +73,6 @@
   font-size: $t-2xs;
   color: var(--b3-card-error-color);
   line-height: $lh-tight;
-
-  // 卡住项目用红色虚线前缀区分
-  &--project {
-    color: var(--b3-card-error-color);
-  }
 }
 
 .qn-today-focus__text {

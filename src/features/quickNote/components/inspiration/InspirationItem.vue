@@ -11,7 +11,9 @@
           @click="emit('filterTag', tag)"
         >#{{ tag }}</span>
       </div>
-      <div class="qn-insp-item__content">{{ item.content }}</div>
+      <div class="qn-insp-item__content">
+        {{ item.content }}
+      </div>
       <!-- 元信息 + 操作 -->
       <div class="qn-insp-item__footer">
         <!-- 创建时间 -->
@@ -104,22 +106,27 @@
 </template>
 
 <script setup lang="ts">
+import type { PolishFn } from "../../composables/useAiPolish"
 /**
  * 速记功能 — 灵感单条目组件
- * 展示标签与内容；编辑态持有 plugin 自行完成 AI 润色并回填编辑框，
+ * 展示标签与内容；编辑态持有草稿并完成 AI 润色回填（润色函数由父层注入），
  * 勾选/更新/删除仅 emit 事件（存储由父 composable 统一处理）
  */
-import type { Plugin } from "siyuan"
 import type { InspirationItem } from "../../types"
-import { nextTick, ref } from "vue"
+import {
+  nextTick,
+  ref,
+} from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { useAiPolish } from "../../composables/useAiPolish"
 import { polishText } from "../../utils"
 
 const props = defineProps<{
   item: InspirationItem
-  plugin: Plugin
   i18n: Record<string, string>
+  /** AI 润色进行中（父层唯一实例的并发锁状态，供按钮 disabled） */
+  polishing: boolean
+  /** AI 润色函数（父层唯一实例注入） */
+  polish: PolishFn
 }>()
 
 const emit = defineEmits<{
@@ -133,12 +140,12 @@ const editDraft = ref("")
 const editTags = ref("")
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
-// AI 润色：编辑态本地实例，润色结果流式回填 editDraft（保存仍由用户触发）
-const { polishing, polish } = useAiPolish(props.plugin)
+// AI 润色：调用父层注入的 polish，润色结果流式回填 editDraft（保存仍由用户触发）
+const { polish } = props
 
 // AI 润色编辑内容：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示（复用共享辅助函数）
 const handlePolishEdit = async () => {
-  if (polishing.value) return
+  if (props.polishing) return
   if (!editDraft.value.trim()) return
   await polishText(polish, editDraft, editDraft.value, props.i18n)
 }

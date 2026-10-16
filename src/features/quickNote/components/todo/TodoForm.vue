@@ -92,13 +92,13 @@
 </template>
 
 <script setup lang="ts">
+import type { PolishFn } from "../../composables/useAiPolish"
 /**
  * 速记功能 — 待办新增/编辑表单（共用组件）
  * 自包含表单状态：优先级（紧急/高/中/低）、截止日期、关联项目下拉；
  * 编辑模式通过 editingTodo prop 回填，保存 emit(submit + id)、取消 emit(cancel)；
- * AI 润色走 useAiPolish 流式回填内容，新增/编辑模式均可使用
+ * AI 润色函数由父层注入（polish prop），本组件仅负责调用与流式回填，不自行创建 composable
  */
-import type { Plugin } from "siyuan"
 import type {
   ProjectItem,
   TodoItem,
@@ -111,7 +111,6 @@ import {
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
-import { useAiPolish } from "../../composables/useAiPolish"
 import {
   PRIORITY_META,
   TODO_PRIORITIES,
@@ -119,12 +118,15 @@ import {
 import { polishText } from "../../utils"
 
 const props = defineProps<{
-  plugin: Plugin
   /** 可关联的项目列表（供下拉选择，空则不显示可选项目） */
   projects: ProjectItem[]
   /** 编辑中的待办（非 null 时为编辑模式，null/undefined 为新增模式） */
   editingTodo?: TodoItem | null
   i18n: Record<string, string>
+  /** AI 润色进行中（父层唯一实例的并发锁状态，供按钮 disabled） */
+  polishing: boolean
+  /** AI 润色函数（父层唯一实例注入） */
+  polish: PolishFn
 }>()
 
 const emit = defineEmits<{
@@ -169,15 +171,12 @@ watch(
   { immediate: true },
 )
 
-// AI 润色：新增/编辑共用实例，润色结果流式回填内容草稿（由用户确认后保存）
-const {
-  polishing,
-  polish,
-} = useAiPolish(props.plugin)
+// AI 润色：调用父层注入的 polish，润色结果流式回填内容草稿（由用户确认后保存）
+const { polish } = props
 
 /** AI 润色草稿：缓存原稿 → 清空后流式回填 → 失败恢复原稿并提示（复用共享辅助函数） */
 const handlePolish = async () => {
-  if (polishing.value) return
+  if (props.polishing) return
   if (!content.value.trim()) return
   await polishText(polish, content, content.value, props.i18n)
 }

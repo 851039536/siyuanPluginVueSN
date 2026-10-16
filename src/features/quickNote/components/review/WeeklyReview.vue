@@ -129,14 +129,17 @@
 </template>
 
 <script setup lang="ts">
+import type { useWeeklyReview } from "../../composables/useWeeklyReview"
 /**
  * 速记功能 — 每周复盘面板（完整重构版）
  * 顶部周切换头（本周/上周/…最近 7 周，纯派生回溯）；统计卡片行（本期完成/环比上周/日均完成）；
  * 中部优先级分布环形图 + 项目精力分布条形图（随周切换）；底部卡点汇总（实时状态快照）；
  * 数据由 useWeeklyReview 从待办 doneAt 实时派生，经 props 注入
  */
-import type { ChartData, ChartOptions } from "@/components/chart.types"
-import type { useWeeklyReview } from "../../composables/useWeeklyReview"
+import type {
+  ChartData,
+  ChartOptions,
+} from "@/components/chart.types"
 import { computed } from "vue"
 import Chart from "@/components/Chart.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -151,7 +154,18 @@ const props = defineProps<{
 }>()
 
 // 解构出响应式引用（模板中顶层 ref 自动解包，可直接 weekOffset++ 切换周）
-const { weekOffset, maxWeekOffset, weekStart, weekEnd, weekTotal, trend, weekAvg, priorityDistribution, projectEffort, blockSummary } = props.review
+const {
+  weekOffset,
+  maxWeekOffset,
+  weekStart,
+  weekEnd,
+  weekTotal,
+  trend,
+  weekAvg,
+  priorityDistribution,
+  projectEffort,
+  blockSummary,
+} = props.review
 
 // ==================== 周切换文案 ====================
 

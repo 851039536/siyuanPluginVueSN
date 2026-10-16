@@ -26,7 +26,9 @@
 
     <div class="qn-todo-item__body">
       <!-- 待办内容 -->
-      <div class="qn-todo-item__content">{{ todo.content }}</div>
+      <div class="qn-todo-item__content">
+        {{ todo.content }}
+      </div>
       <!-- 元信息行：截止日期 + 优先级标签 + 关联项目 + 顺延次数 -->
       <div class="qn-todo-item__meta">
         <!-- 截止日期（逾期红色警示，无日期不显示） -->

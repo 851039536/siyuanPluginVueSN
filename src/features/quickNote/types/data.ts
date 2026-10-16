@@ -111,10 +111,26 @@ export const PRIORITY_META: Record<
   TodoPriority,
   { rank: number, labelKey: string, color: string }
 > = {
-  urgent: { rank: 0, labelKey: "priorityUrgent", color: "#ef4444" },
-  high: { rank: 1, labelKey: "priorityHigh", color: "#f59e0b" },
-  medium: { rank: 2, labelKey: "priorityMedium", color: "#3b82f6" },
-  low: { rank: 3, labelKey: "priorityLow", color: "#94a3b8" },
+  urgent: {
+    rank: 0,
+    labelKey: "priorityUrgent",
+    color: "#ef4444",
+  },
+  high: {
+    rank: 1,
+    labelKey: "priorityHigh",
+    color: "#f59e0b",
+  },
+  medium: {
+    rank: 2,
+    labelKey: "priorityMedium",
+    color: "#3b82f6",
+  },
+  low: {
+    rank: 3,
+    labelKey: "priorityLow",
+    color: "#94a3b8",
+  },
 }
 
 /** 项目状态元数据（标签文案 i18n 键 + 语义色 CSS 变量） */
@@ -122,7 +138,16 @@ export const STATUS_META: Record<
   ProjectStatus,
   { labelKey: string, color: string }
 > = {
-  active: { labelKey: "statusActive", color: "#3b82f6" },
-  completed: { labelKey: "statusCompleted", color: "#22c55e" },
-  blocked: { labelKey: "statusBlocked", color: "#ef4444" },
+  active: {
+    labelKey: "statusActive",
+    color: "#3b82f6",
+  },
+  completed: {
+    labelKey: "statusCompleted",
+    color: "#22c55e",
+  },
+  blocked: {
+    labelKey: "statusBlocked",
+    color: "#ef4444",
+  },
 }

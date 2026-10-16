@@ -18,6 +18,9 @@
 - 未来任务按日期分组（今天/明天/本周/更远）
 - 昨天未完成任务启动时自动顺延到今天（每日一次，`lastRolloverDate` 防重复）
 
+> **注意**：每日自动顺延会把逾期项的截止日期改写为今天，因此**次日打开时该任务通常已不再标红**（仅保留「已顺延 N」计数）。
+> 逾期红字与「顺延到明天」按钮只在守卫窗口内可见：即当天已过期、但尚未被自动顺延的任务（同一会话内跨天亦可触发，见下）。
+
 ### 灵感速记
 
 - 随手记录想法（保留 AI 润色能力，流式回填）
@@ -39,6 +42,9 @@
 - 项目精力分布条形图（所选周各项目关联待办完成数）
 - 卡点汇总清单（实时状态快照，带「当前」徽章标注，非所选周历史）
 
+> `weekOffset` 语义：**0 = 本周，递增 = 更早**。周界由 `getWeekStart(offset, now)` 按 offset 向前减 7 天求得，
+> 结果恒为周一零点；周日归入其所在周的末尾（`day === 0` 归一化为 7）。该函数在 `pureUtils.spec.ts` 有边界用例覆盖。
+
 ## 视觉风格
 
 白底简洁商务风格，蓝绿色主色调（`$color-info` 蓝 + `$color-success` 绿），页头使用克制 CSS 渐变配图（蓝→绿 135° 对角，叠加半透明白），不喧宾夺主。数据可视化使用项目通用 `Chart.vue` 组件（Chart.js 内核）。
@@ -48,25 +54,27 @@
 ```
 quickNote/
 ├── index.ts                    # QuickNoteManager（persistent Modal 生命周期 + 位置/拖拽/最小化应用）+ registerQuickNote
-├── index.vue                   # 弹窗主面板壳层（TodayFocus 聚焦区 + 四大 Tab 导航 + 定位/最小化逻辑）
+├── index.vue                   # 弹窗主面板壳层（TodayFocus 聚焦区 + 四大 Tab 导航 + 定位/最小化逻辑 + composable 编排）
+├── pureUtils.ts                # 无依赖纯函数（日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日顺延），可直接单测
+├── pureUtils.spec.ts           # 上述纯函数的单元测试（45 例）
 ├── utils.ts                    # generateId / createPersistLock 串行锁 / polishText 润色回填辅助
 ├── components/
 │   ├── today/TodayFocus.vue    # 「今天要处理的」今日到期/逾期任务 + 卡住项目标红列表
 │   ├── todo/TodoTab.vue        # 待办 Tab（表单 + 分组列表 + 已完成列表，持有编辑中状态）
 │   ├── todo/TodoItem.vue       # 待办单条目（优先级色条/逾期标红/顺延按钮）
-│   ├── todo/TodoForm.vue       # 待办新增表单（优先级/截止日期/关联项目）
+│   ├── todo/TodoForm.vue       # 待办新增/编辑表单（优先级/截止日期/关联项目，编辑态由 editingTodo prop 切换）
 │   ├── inspiration/InspirationTab.vue  # 灵感 Tab（表单 + 筛选栏 + 列表，标签筛选状态在此）
 │   ├── inspiration/InspirationItem.vue  # 灵感单条目（标签/编辑态 AI 润色）
 │   ├── inspiration/InspirationForm.vue  # 灵感新增表单 + 标签筛选栏
 │   ├── project/ProjectTab.vue  # 项目 Tab（表单 + 卡片列表，持有编辑中状态）
 │   ├── project/ProjectItem.vue # 项目卡片（状态徽章/进度条/关联待办折叠）
-│   ├── project/ProjectForm.vue # 项目新增表单
+│   ├── project/ProjectForm.vue # 项目新增/编辑表单
 │   ├── review/ReviewTab.vue    # 复盘 Tab（透传 useWeeklyReview 周切换派生数据）
 │   └── review/WeeklyReview.vue # 每周复盘（周切换头 + 统计卡片行 + 环形图 + 条形图 + 卡点清单）
 ├── composables/
-│   ├── useAiPolish.ts          # AI 润色：并发锁 + API Key 校验 + callAISmart 流式 + 错误码
-│   ├── useTodoList.ts          # 待办 CRUD + 每日自动顺延 + 逾期检测 + 日期分组
-│   ├── useInspirations.ts      # 灵感 CRUD + 标签提取/筛选
+│   ├── useAiPolish.ts          # AI 润色：并发锁 + API Key 校验 + callAISmart 流式 + 错误码（**仅在 index.vue 实例化一次**）
+│   ├── useTodoList.ts          # 待办 CRUD + 每日自动顺延 + 逾期检测 + 日期分组 + 日期基准校准
+│   ├── useInspirations.ts      # 灵感 CRUD + 标签筛选
 │   ├── useProjects.ts          # 项目 CRUD + 关联待办进度计算 + 卡住筛选（todosRef 构造参数注入）
 │   └── useWeeklyReview.ts      # 复盘周切换纯派生（weekOffset 回溯任意周统计 + 卡点汇总）
 ├── types/
@@ -82,6 +90,28 @@ quickNote/
     ├── ProjectItem.scss / ProjectForm.scss
     └── WeeklyReview.scss
 ```
+
+## 分层约定
+
+子组件**不得**自行导入 composable 编排业务逻辑（见 `AGENTS_ARCH.md § 禁止将逻辑下放给子组件`）。
+AI 润色是本模块唯一的跨组件逻辑，按此约定处理：
+
+```
+index.vue  useAiPolish(plugin)  →  { polishing, polish }
+   ├─→ TodoTab  → TodoForm                              （props 透传）
+   └─→ InspirationTab → InspirationForm / InspirationItem（props 透传）
+```
+
+单实例的收益：`polishing` 并发锁跨入口生效。若各子组件各自 `useAiPolish`，会得到多个互不相知的
+`polishing` ref，用户可在润色进行中从另一入口再次发起请求，锁形同虚设。
+
+## 日期基准与跨天刷新
+
+`useTodoList` 的「今天/明天」分组、逾期红字均派生自内部 `now` ref（而非在 computed 里直接
+`new Date()`），并导出 `refreshNow()` 校准。这是因为弹窗为 persistent Modal 常驻不销毁，
+而 `computed` 只在依赖的响应式数据变化时重算——若不加校准，面板跨过午夜后分组与逾期状态会停留在前一天。
+
+当前校准时机：`load()` 与切入「待办」Tab 时。`useWeeklyReview` 用同样的 `refreshNow()` 模式处理周界。
 
 ## 数据模型与自动顺延
 

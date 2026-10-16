@@ -5,7 +5,10 @@
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
 import { ref } from "vue"
-import { callAISmart, getApiConfigFromPlugin } from "@/utils/aiApi"
+import {
+  callAISmart,
+  getApiConfigFromPlugin,
+} from "@/utils/aiApi"
 
 /** 润色错误码：未配置 API Key / 调用失败 */
 export type PolishErrorCode = "NO_API_KEY" | "CALL_FAILED"
@@ -20,19 +23,22 @@ export class PolishError extends Error {
   }
 }
 
+/** 润色函数签名（父层唯一实例经 props 下传子组件的类型） */
+export type PolishFn = (text: string, onChunk?: (chunk: string) => void) => Promise<string>
+
 /** useAiPolish 返回结构 */
 export interface AiPolishApi {
   /** 润色进行中（并发锁，供按钮 loading/disabled） */
   polishing: Ref<boolean>
   /** 润色文本；未配置 API Key 抛 NO_API_KEY；onChunk 提供流式增量 */
-  polish: (text: string, onChunk?: (chunk: string) => void) => Promise<string>
+  polish: PolishFn
 }
 
 /** 润色系统提示词：保持原意与结构，只输出结果，不添加解释/前后缀 */
 const POLISH_SYSTEM_PROMPT =
-  "你是一个专业的中文文本润色助手。请优化措辞、修正语病、理顺表达，" +
-  "保持原文含义与换行/列表结构不变，只输出润色后的文本，" +
-  "不要添加任何解释、前后缀或 Markdown 格式。"
+  "你是一个专业的中文文本润色助手。请优化措辞、修正语病、理顺表达，"
+  + "保持原文含义与换行/列表结构不变，只输出润色后的文本，"
+  + "不要添加任何解释、前后缀或 Markdown 格式。"
 /** 润色温度：文本改写任务，偏低保证输出稳定 */
 const POLISH_TEMPERATURE = 0.5
 /** 润色最大输出长度：速记为短文本，1000 token 足够 */
@@ -76,5 +82,8 @@ export function useAiPolish(plugin: Plugin): AiPolishApi {
     }
   }
 
-  return { polishing, polish }
+  return {
+    polishing,
+    polish,
+  }
 }

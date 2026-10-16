@@ -5,10 +5,23 @@
  * 卡点汇总为实时状态（blockers 无历史时间线），仅展示当前快照
  */
 import type { Ref } from "vue"
+import type {
+  ProjectItem,
+  TodoItem,
+} from "../types"
 import type { ChartData } from "@/components/chart.types"
-import type { ProjectItem, TodoItem } from "../types"
-import { computed, ref } from "vue"
-import { PRIORITY_META, STATUS_META } from "../types"
+import {
+  computed,
+  ref,
+} from "vue"
+import {
+  getWeekStart,
+  WEEK_MS,
+} from "../pureUtils"
+import {
+  PRIORITY_META,
+  STATUS_META,
+} from "../types"
 
 /** 卡点汇总条目 */
 export interface BlockSummary {
@@ -19,18 +32,6 @@ export interface BlockSummary {
 
 /** 历史回溯周数上限（weekOffset 最大值：本周 + 最多回溯 7 周） */
 const MAX_HISTORY_WEEKS = 7
-
-const WEEK_MS = 7 * 86_400_000
-
-/** 指定周偏移的周一零点时间戳（offset=0 本周，1 上周…）；now 为当前时刻基准 */
-function getWeekStart(offset: number, now: number): number {
-  const date = new Date(now)
-  const day = date.getDay() === 0 ? 7 : date.getDay() // 周一为 1，周日为 7
-  const monday = new Date(date)
-  monday.setDate(date.getDate() - (day - 1) + offset * 7)
-  monday.setHours(0, 0, 0, 0)
-  return monday.getTime()
-}
 
 export function useWeeklyReview(
   todosRef: Ref<TodoItem[]>,
@@ -78,7 +79,7 @@ export function useWeeklyReview(
 
   /** 优先级分布（环形图数据）：选中周各优先级完成数 */
   const priorityDistribution = computed<ChartData[]>(() => {
-    const priorities = (Object.keys(PRIORITY_META) as Array<keyof typeof PRIORITY_META>)
+    const priorities = Object.keys(PRIORITY_META) as Array<keyof typeof PRIORITY_META>
     return priorities.map((p) => ({
       label: p, // 由图表层经 i18n 转文案
       value: completedInRange.value.filter((t) => t.priority === p).length,

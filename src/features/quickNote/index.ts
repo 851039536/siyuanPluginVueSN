@@ -4,16 +4,25 @@
  * registerQuickNote 供插件注册链调用，toggle 由 App.vue 中心调度触发
  */
 import type { Plugin } from "siyuan"
+import type {
+  QuickNotePlacement,
+  QuickNotePosition,
+} from "./types"
 import type { TimerHandle } from "@/utils/timerRegistry"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
-import type { QuickNotePlacement, QuickNotePosition } from "./types"
-import { injectStyle, removeStyle } from "@/utils/domUtils"
+import {
+  injectStyle,
+  removeStyle,
+} from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import { createModalVueApp } from "@/utils/vueAppHelper"
-import { POSITION_ALIGN_MAP } from "./types"
-import { DEFAULT_QUICK_NOTE_SETTINGS, QuickNoteStorage } from "./types/storage"
 import QuickNotePanel from "./index.vue"
+import { POSITION_ALIGN_MAP } from "./types"
+import {
+  DEFAULT_QUICK_NOTE_SETTINGS,
+  QuickNoteStorage,
+} from "./types/storage"
 
 /** 贴边档位与屏幕边缘的间距 */
 const EDGE_PADDING = "8px"

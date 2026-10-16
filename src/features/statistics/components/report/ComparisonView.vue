@@ -141,8 +141,14 @@ const now = new Date()
 const curYear = now.getFullYear()
 const curMonth = now.getMonth() + 1
 
-const yearA = ref(curYear)
-const monthA = ref(curMonth === 1 ? 12 : curMonth - 1)
+// 默认对比：上一个自然月(A) vs 当月(B)。
+// 月份回退到 12 时必须同时把年份回退一年，否则 1 月会拿「同年 12 月」（未来期间、
+// 无数据 → 全部为 0）当基准，使 deltas 显示为虚假暴涨。
+const prevMonth = curMonth === 1 ? 12 : curMonth - 1
+const prevMonthYear = curMonth === 1 ? curYear - 1 : curYear
+
+const yearA = ref(prevMonthYear)
+const monthA = ref(prevMonth)
 const yearB = ref(curYear)
 const monthB = ref(curMonth)
 

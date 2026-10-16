@@ -210,11 +210,18 @@ export async function getReportData(year?: number, month?: number): Promise<Repo
         }
       })
 
+      // 日均分母：当月（未过完）按已过天数，其余月份按整月天数。
+      // 原实现恒用整月天数（lastDay），导致当月报告的日均被低估——
+      // 实测 2026-10-16：整月 31 天 vs 已过 16 天，日均 1451 vs 2810（差 1.94 倍）。
+      // 年度报告对「当年」已按已过天数计算，此处对齐同一口径。
+      const isCurrentMonth = today.getFullYear() === reportYear && today.getMonth() + 1 === reportMonth
+      const daysInPeriod = isCurrentMonth ? today.getDate() : lastDay
+
       return {
         period: { kind: "month", year: reportYear, month: reportMonth },
         totalWords: core.totalWords,
         totalNotesCreated: core.totalNotesCreated,
-        avgDailyWords: lastDay > 0 ? Math.round(core.totalWords / lastDay) : 0,
+        avgDailyWords: daysInPeriod > 0 ? Math.round(core.totalWords / daysInPeriod) : 0,
         activeDays: core.activeDays,
         maxWordsDay: core.maxWordsDay,
         mostProductiveNotebook: core.mostProductiveNotebook,
@@ -332,9 +339,16 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
     }
 
     const weeklyProjection = predicted.reduce((s, p) => s + p.words, 0)
-    const monthlyProjection = Math.round(
-      slope > 0 ? (slope * (n + 30) + intercept) * 30 : (meanY * 30),
-    )
+    // 下月预计 = 未来 30 天逐日预测求和，与 weeklyProjection 口径一致。
+    // 原实现为 `(slope*(n+30)+intercept)*30`：取「第 n+30 天」这**一天**的预测值再乘 30，
+    // 相当于假设未来每天都写到第 30 天的水平；上升趋势下会显著高估
+    // （实测：222,049 vs 正确的 170,339，高估 30%）。下降趋势时原代码走 meanY*30 分支
+    // 反而接近合理，故该错误只在增长期显现。
+    let monthlySum = 0
+    for (let i = 0; i < 30; i++) {
+      monthlySum += Math.max(0, slope * (n + i) + intercept)
+    }
+    const monthlyProjection = Math.round(monthlySum)
 
     return {
       historical,

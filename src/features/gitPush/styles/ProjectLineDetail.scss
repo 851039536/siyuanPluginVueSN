@@ -76,9 +76,29 @@
 }
 
 // ── 标签页容器：占满标题栏与底栏之间的剩余高度（面板区独立滚动）──
+// min-width: 0 让本容器可被压缩：表格固定列合计约 340px，窄视口下需由内容区横向滚动承接，
+// 而不是把弹窗（及共享 Tabs 的 width: 100%）撑破后溢出遮挡。
 .pld-tabs {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+
+  // 面板容器（.si-tabpanels）是 .si-tabs 的 flex 子项，须同样传递「占满剩余高度 + 可压缩」，
+  // 否则 flex 链在此断掉：下面的 .pld-body 高度退化为内容高度，overflow-y 永不生效，
+  // 弹窗被 max-height 裁切且无滚动条（原「高度过高没有滑动框」的根因）。
+  // ⚠️ 非 scoped 样式禁用 :deep()（见 MarkdownPreviewDialog.scss 的同款注释），此处用普通后代选择器。
+  .si-tabpanels {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  // 单个面板同理向下传递，并把横向溢出交给内容区处理
+  .si-tabpanel {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+  }
 }
 
 // 标签栏内缩对齐弹窗内边距（下边线由共享 TabList 自带）
@@ -87,9 +107,13 @@
 }
 
 // ── 内容区（滚动容器：吸顶表头以此为滚动祖先；上间距由 TabPanel 自带）──
+// 纵向滚动承接超长文件列表；横向滚动承接窄视口下固定列（约 340px）的溢出，
+// 二者都内聚于此容器，避免内容顶破弹窗被遮挡。
 .pld-body {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
   padding: 0 $s-4 $s-3;
 }
 

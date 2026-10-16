@@ -4,7 +4,7 @@
 // ── 项目行数详情弹窗：双 Tab（文件明细表格 / 作者行数排行）
 // 遮罩、层级与基准字号取自共享基座 .gp-mask，本地只留弹窗尺寸与进出场缩放 ──
 .pld-dialog {
-  width: 720px;
+  width: 770px; // 720 + 50：加宽以容纳文件明细表格的固定列，减少窄视口下的横向滚动
   max-width: 92vw;
   max-height: 82vh;
   background: var(--b3-theme-background);
@@ -83,18 +83,26 @@
   min-height: 0;
   min-width: 0;
 
-  // 面板容器（.si-tabpanels）是 .si-tabs 的 flex 子项，须同样传递「占满剩余高度 + 可压缩」，
-  // 否则 flex 链在此断掉：下面的 .pld-body 高度退化为内容高度，overflow-y 永不生效，
-  // 弹窗被 max-height 裁切且无滚动条（原「高度过高没有滑动框」的根因）。
-  // ⚠️ 非 scoped 样式禁用 :deep()（见 MarkdownPreviewDialog.scss 的同款注释），此处用普通后代选择器。
+  // 面板容器与面板本体默认「不参与 flex 伸展」：共享 Tabs 只给 .si-tabs 设了纵向 flex，
+  // 中间两层（.si-tabpanels / .si-tabpanel）仍是普通块盒。必须同时补
+  // display:flex + flex-direction:column + flex:1 + min-height:0 ——
+  // 只补 flex:1 是空操作（非 flex 容器上没有主轴可言），下方 .pld-body 仍按内容高度撑开，
+  // overflow 永不生效，这正是「高度过高没有滑动框」的真正根因。
+  // 参考同一范式的既有实现：src/features/s3Backup/styles/TabsShell.scss。
+  // ⚠️ 非 scoped 样式禁用 :deep()（见 MarkdownPreviewDialog.scss 的同款注释），此处用普通后代选择器；
+  // 嵌套在 .pld-tabs 下同时抬升特异性，避免与组件自身 scoped 样式（同为 (0,2,0)）靠注入顺序决胜。
   .si-tabpanels {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-height: 0;
     min-width: 0;
   }
 
-  // 单个面板同理向下传递，并把横向溢出交给内容区处理
+  // 单个面板同理向下传递；自带的上内边距保留（本弹窗没有外层统一内边距，去掉会与标签栏贴死）
   .si-tabpanel {
+    display: flex;
+    flex-direction: column;
     flex: 1;
     min-height: 0;
     min-width: 0;

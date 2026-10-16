@@ -198,6 +198,107 @@
                 {{ i18n.indexChecking }}
               </template>
             </div>
+            <!-- ── 实时探测（三层：文件监听 → 工作区轮询 → 网络轮询）── -->
+            <div class="gp-set-section-title">
+              {{ i18n.probeTitle }}
+            </div>
+            <!-- 第 1 层：.git 文件监听（0 次 git 子进程，捕获提交/切分支/fetch） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <label class="gp-set-label">{{ i18n.probeWatchLabel }}</label>
+              <div class="gp-set-input-row">
+                <ToggleButton
+                  :model-value="localProbe.watch.enabled"
+                  size="xsmall"
+                  dense
+                  :on-label="i18n.probeOn"
+                  :off-label="i18n.probeOff"
+                  :aria-label="i18n.probeWatchLabel"
+                  :title="i18n.probeWatchHint"
+                  @update:model-value="patchProbe({ watch: { enabled: $event } })"
+                />
+              </div>
+            </div>
+            <div class="gp-set-hint">
+              {{ i18n.probeWatchHint }}
+              <!-- 已建立监听的项目数：0 且开关为开 = 环境不支持，已自动降级到轮询层 -->
+              <span v-if="localProbe.watch.enabled">
+                {{ i18n.probeWatchedCount.replace("{0}", String(probeWatchedCount)) }}
+              </span>
+            </div>
+            <!-- 第 2 层：工作区轮询（stat 预筛 + 指数退避） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <label class="gp-set-label">{{ i18n.probePollLabel }}</label>
+              <div class="gp-set-input-row">
+                <ToggleButton
+                  :model-value="localProbe.poll.enabled"
+                  size="xsmall"
+                  dense
+                  :on-label="i18n.probeOn"
+                  :off-label="i18n.probeOff"
+                  :aria-label="i18n.probePollLabel"
+                  :title="i18n.probePollHint"
+                  @update:model-value="patchProbe({ poll: { enabled: $event } })"
+                />
+                <Input
+                  :model-value="localProbe.poll.intervalMs"
+                  type="number"
+                  size="xsmall"
+                  class="gp-set-concurrency-input"
+                  :disabled="!localProbe.poll.enabled"
+                  @update:model-value="patchProbe({ poll: { intervalMs: Number($event) } })"
+                />
+              </div>
+            </div>
+            <div class="gp-set-hint">
+              {{ i18n.probePollHint }}
+            </div>
+            <!-- stat 预筛：零子进程判断「值不值得跑 git」，是减少 git 进程数的关键 -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <label class="gp-set-label">{{ i18n.probePrefilterLabel }}</label>
+              <div class="gp-set-input-row">
+                <ToggleButton
+                  :model-value="localProbe.poll.statPrefilter"
+                  size="xsmall"
+                  dense
+                  :on-label="i18n.probeOn"
+                  :off-label="i18n.probeOff"
+                  :aria-label="i18n.probePrefilterLabel"
+                  :title="i18n.probePrefilterHint"
+                  :disabled="!localProbe.poll.enabled"
+                  @update:model-value="patchProbe({ poll: { statPrefilter: $event } })"
+                />
+              </div>
+            </div>
+            <div class="gp-set-hint">
+              {{ i18n.probePrefilterHint }}
+            </div>
+            <!-- 第 3 层：网络轮询（唯一能发现「需拉取」的层，默认关闭） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <label class="gp-set-label">{{ i18n.probeNetworkLabel }}</label>
+              <div class="gp-set-input-row">
+                <ToggleButton
+                  :model-value="localProbe.network.enabled"
+                  size="xsmall"
+                  dense
+                  :on-label="i18n.probeOn"
+                  :off-label="i18n.probeOff"
+                  :aria-label="i18n.probeNetworkLabel"
+                  :title="i18n.probeNetworkHint"
+                  @update:model-value="patchProbe({ network: { enabled: $event } })"
+                />
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="!localProbe.poll.enabled"
+                  :title="i18n.probeNowHint"
+                  @click="emit('probeNow')"
+                >
+                  {{ i18n.probeNow }}
+                </button>
+              </div>
+            </div>
+            <div class="gp-set-hint">
+              {{ i18n.probeNetworkHint }}
+            </div>
             <!-- 描述最短字数设置行（提交规则检查"描述过短"阈值） -->
             <div class="gp-set-row gp-set-row--spaced">
               <!-- 设置项标签："描述最短字数" -->
@@ -366,6 +467,7 @@ import type {
   CommitAnalysisViewSettings,
   CommitRuleConfig,
   GitPushManager,
+  ProbeConfig,
 } from "../../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
@@ -386,6 +488,7 @@ import {
   clampMinSubjectLength,
   clampNetworkTimeout,
 } from "../../types"
+import { clampProbeConfig } from "../../types/probeConfig"
 import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
 import GitConfigSection from "./GitConfigSection.vue"
 
@@ -404,6 +507,10 @@ const props = defineProps<{
   viewSettings: CommitAnalysisViewSettings
   /** 显示设置年份选项（数据年份 ∪ 今年 ∪ 已保存年份） */
   yearOptions: number[]
+  /** 实时探测配置（三层：文件监听 / 工作区轮询 / 网络轮询） */
+  probeConfig: ProbeConfig
+  /** 已建立 .git 文件监听的项目数（0 = 环境不支持或监听关闭，已降级到轮询层） */
+  probeWatchedCount: number
 }>()
 
 const emit = defineEmits<{
@@ -414,6 +521,10 @@ const emit = defineEmits<{
   saveRuleConfig: [patch: Partial<CommitRuleConfig>]
   saveBranchMode: [mode: "all" | "head"]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
+  /** 实时探测配置变更（即时保存并让运行中的探测按新配置重排） */
+  saveProbeConfig: [config: ProbeConfig]
+  /** 立即探测一次（清空预筛基准强制真查） */
+  probeNow: []
   /** 底部「管理分类」操作：由父级关闭设置弹窗并打开分类弹窗 */
   openCategory: []
 }>()
@@ -443,6 +554,34 @@ const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubj
 const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBodyLineLength))
 const localDiffContextBudget = ref(clampDiffContextBudget(props.ruleConfig.diffContextBudget))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
+
+// ── 实时探测（三层）本地编辑态：改动即时保存并下发父级重排运行中的探测 ──
+
+/** 探测配置本地副本（父级 probeConfig 为权威值，此处仅承载编辑态） */
+const localProbe = ref<ProbeConfig>(clampProbeConfig(props.probeConfig))
+
+// 父级配置变化（如首次异步加载完成）时同步下来，避免弹窗停留在默认值
+watch(() => props.probeConfig, (cfg) => {
+  localProbe.value = clampProbeConfig(cfg)
+}, { deep: true })
+
+/**
+ * 提交探测配置变更（归一化后下发）。
+ * 逐字段合并而非整体替换：调用方只改一个开关时不必构造完整对象。
+ */
+function patchProbe(patch: {
+  watch?: Partial<ProbeConfig["watch"]>
+  poll?: Partial<ProbeConfig["poll"]>
+  network?: Partial<ProbeConfig["network"]>
+}) {
+  const next = clampProbeConfig({
+    watch: { ...localProbe.value.watch, ...patch.watch },
+    poll: { ...localProbe.value.poll, ...patch.poll },
+    network: { ...localProbe.value.network, ...patch.network },
+  })
+  localProbe.value = next
+  emit("saveProbeConfig", next)
+}
 
 /** Select/RadioButton 载荷收窄为分支模式：非枚举值回退 "head"（与默认行为一致） */
 function toBranchMode(value: unknown): "all" | "head" {

@@ -90,6 +90,19 @@ export type {
   RunQueryOptions,
 } from "./queryScheduler"
 
+// ── 重导出实时探测配置（probeConfig.ts）──
+export {
+  clampProbeConfig,
+  DEFAULT_PROBE_CONFIG,
+  nextProbeInterval,
+} from "./probeConfig"
+export type {
+  ProbeConfig,
+  ProbeNetworkConfig,
+  ProbePollConfig,
+  ProbeWatchConfig,
+} from "./probeConfig"
+
 // ── 重导出本地提交索引类型与常量（来自 indexCache.ts）──
 export {
   clampIndexMaxCommits,

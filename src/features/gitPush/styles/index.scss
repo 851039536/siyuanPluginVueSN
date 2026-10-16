@@ -398,6 +398,17 @@
   margin-top: $s-3;
 }
 
+// 设置弹窗分组小标题（如「实时探测」）：与上方设置项拉开距离并加分隔线，
+// 使同一分区内的多组设置仍有视觉层次
+.gp-set-section-title {
+  margin-top: $s-4;
+  padding-top: $s-3;
+  border-top: 1px solid var(--b3-border-color);
+  font-size: $t-xs;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
 .gp-set-label {
   font-size: $t-xs;
   white-space: nowrap;

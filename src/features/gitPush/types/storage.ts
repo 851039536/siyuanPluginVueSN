@@ -8,6 +8,8 @@ import type { ConsistencyCache } from "./consistency"
 import { EMPTY_CONSISTENCY_CACHE } from "./consistency"
 import type { CodeReportData, CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
+import type { ProbeConfig } from "./probeConfig"
+import { DEFAULT_PROBE_CONFIG } from "./probeConfig"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -489,6 +491,8 @@ export class GitPushStorage {
   readonly indexMaxCommits: TypedStorage<number>
   /** 上次扫描导入使用的目录（下次打开弹窗预填，避免重复选择同一根目录） */
   readonly scanDir: TypedStorage<string>
+  /** 实时探测配置（文件监听 / 工作区轮询 / 网络轮询三层，持久化） */
+  readonly probeConfig: TypedStorage<ProbeConfig>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -517,6 +521,7 @@ export class GitPushStorage {
     this.indexEnabled = new TypedStorage(storage, "git-push-index-enabled", true)
     this.indexMaxCommits = new TypedStorage(storage, "git-push-index-max-commits", DEFAULT_INDEX_MAX_COMMITS)
     this.scanDir = new TypedStorage(storage, "git-push-scan-dir", "")
+    this.probeConfig = new TypedStorage(storage, "git-push-probe-config", DEFAULT_PROBE_CONFIG)
   }
 
   async init(): Promise<void> {

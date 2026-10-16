@@ -354,6 +354,22 @@ export class WorktreeOps {
   }
 
   /**
+   * 解析 gitdir 绝对路径（供 .git 文件监听定位目标）。
+   *
+   * 用 `--absolute-git-dir` 而非拼接 `${projectPath}/.git`：worktree / submodule / 分离式
+   * gitdir（`.git` 是文件而非目录）下拼接结果错误，监听会全部落空且静默无效。
+   * 单次 git 调用（~250ms），仅在建监听与周期性重建时发生，不进轮询热路径。
+   * 失败（非仓库 / git 不可用）返回空串，调用方据此跳过监听并降级到轮询层。
+   */
+  async getGitDir(projectPath: string): Promise<string> {
+    try {
+      return (await this.executor.execGit(projectPath, ["rev-parse", "--absolute-git-dir"])).trim()
+    } catch {
+      return ""
+    }
+  }
+
+  /**
    * 获取暂存区完整 diff 补丁（供 AI 深度生成理解实际改动），失败返回空串。
    * 与 getCommitDeepContext 配对：一个面向历史提交（git show），一个面向暂存区（git diff --cached）；
    * 输出已是纯 diff（无提交信息头），调用方直接交给 buildDiffContext 分块分配预算。

@@ -65,6 +65,8 @@ import {
   clampIndexMaxCommits,
   INDEX_META_VERSION,
 } from "./types/indexCache"
+import { clampProbeConfig } from "./types/probeConfig"
+import type { ProbeConfig } from "./types/probeConfig"
 import { GitPushStorage } from "./types/storage"
 import {
   DEFAULT_LOG_LIMIT,
@@ -383,9 +385,24 @@ export class GitPushManager {
   /** 上次扫描导入使用的目录（空串 = 从未扫描过，弹窗保持占位符提示） */
   async getScanDir(): Promise<string> { return this.storage.scanDir.loadOrDefault() }
 
-  /** 记录本次扫描目录并持久化，供下次打开导入弹窗预填 */
-  async setScanDir(dir: string): Promise<void> { return this.storage.scanDir.save(dir) }
+  /**
+   * 记录本次扫描目录并持久化，供下次打开导入弹窗预填。
+   * 注意是 `await` 而非 `return`：`TypedStorage.save` 返回 `Promise<boolean>`，
+   * 直接 return 会让返回类型 `Promise<void>` 不匹配（保存失败无需向上传播）。
+   */
+  async setScanDir(dir: string): Promise<void> { await this.storage.scanDir.save(dir) }
 
+  // ── 实时探测配置（三层：文件监听 / 工作区轮询 / 网络轮询）──
+
+  /** 读取实时探测配置（逐字段钳位兜底，容忍旧版本或手改的存储内容） */
+  async getProbeConfig(): Promise<ProbeConfig> {
+    return clampProbeConfig(await this.storage.probeConfig.loadOrDefault())
+  }
+
+  /** 保存实时探测配置（归一化后落盘，保证内存与磁盘口径一致） */
+  async setProbeConfig(config: Partial<ProbeConfig>): Promise<void> {
+    await this.storage.probeConfig.save(clampProbeConfig(config))
+  }
   cancelOp(id: string, action?: "push" | "pull"): void { return this.executor.cancelOp(id, action) }
 
   // ── 项目 / 分类 / 标签 CRUD（ProjectStore）──
@@ -587,6 +604,9 @@ export class GitPushManager {
   async getHeadHash(projectPath: string): Promise<string> { return this.worktreeOps.getHeadHash(projectPath) }
 
   async checkIsGitRepo(projectPath: string): Promise<boolean> { return this.worktreeOps.checkIsGitRepo(projectPath) }
+
+  /** 解析 gitdir 绝对路径（.git 文件监听定位用；失败返回空串） */
+  async getGitDir(projectPath: string): Promise<string> { return this.worktreeOps.getGitDir(projectPath) }
 
   /** 仓库是否处于 rebase 中断状态（上次重写失败残留等，供修正弹窗给出准确提示） */
   async isInRebaseState(projectPath: string): Promise<boolean> { return this.worktreeOps.isInRebaseState(projectPath) }

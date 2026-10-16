@@ -153,12 +153,16 @@
         :push-branch-mode="pushBranchMode"
         :view-settings="analysisViewSettings"
         :year-options="settingsYearOptions"
+        :probe-config="probeConfig"
+        :probe-watched-count="probeWatchedCount"
         @close="showSettings = false"
         @save="setGitConcurrency"
         @save-network-timeout="setNetworkTimeout"
         @save-rule-config="updateCommitRuleConfig"
         @save-branch-mode="handleSaveBranchMode"
         @update-view-settings="updateViewSettings"
+        @save-probe-config="saveProbeConfig"
+        @probe-now="handleProbeNow"
         @open-category="openCategoryFromSettings"
       />
     </Transition>
@@ -249,6 +253,7 @@ import type {
   GitPushManager,
   PanelView,
   PlatformKey,
+  ProbeConfig,
   ProjectPathExtras,
 } from "./types"
 import type { Plugin } from "siyuan"
@@ -284,6 +289,7 @@ import CodeReportPanel from "./components/CodeReport/index.vue"
 import RepoCleanPanel from "./components/RepoCleanPanel/index.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
 import { useGitPush } from "./composables/useGitPush"
+import { useGitProbe } from "./composables/useGitProbe"
 import { useBatchProgress } from "./composables/useBatchProgress"
 import { usePushStatusView } from "./composables/usePushStatusView"
 import { useIdeManagement } from "./composables/useIdeManagement"
@@ -299,6 +305,7 @@ import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { useCodeReport } from "./composables/useCodeReport"
 import { useReportExport } from "./composables/useReportExport"
 import { CARD_SERVICES_KEY, PLATFORM_META } from "./types"
+import { clampProbeConfig, DEFAULT_PROBE_CONFIG } from "./types/probeConfig"
 import {
   openLocalPath,
   openRepoWebUrl,
@@ -434,6 +441,8 @@ const showSettings = ref(false)
 function openSettings() {
   showSettings.value = true
   void loadViewSettings()
+  // 同步监听状态：该值仅用于弹窗内解释「文件监听是否真的生效」，按需刷新即可
+  probeWatchedCount.value = gitProbe.getWatchedCount()
 }
 
 /** 设置弹窗内「管理分类」入口：关闭设置并打开分类弹窗（避免弹窗叠放） */
@@ -749,6 +758,49 @@ const {
   scheduler,
   bumpCardRefresh,
 })
+
+// ── 实时探测（三层：.git 文件监听 → 工作区轮询 → 网络慢轮询）──
+// 只负责决定「何时」调用既有 scheduler 入口，去重/单飞/新鲜度仍归调度器，不新增派发路径。
+const probeConfig = ref<ProbeConfig>(DEFAULT_PROBE_CONFIG)
+
+/** 读取并归一化探测配置（逐字段钳位兜底） */
+async function loadProbeConfig() {
+  probeConfig.value = await props.manager.getProbeConfig()
+}
+
+/** 保存探测配置并让运行中的探测立即按新配置重排（无需重启面板） */
+async function saveProbeConfig(next: ProbeConfig) {
+  probeConfig.value = clampProbeConfig(next)
+  await props.manager.setProbeConfig(probeConfig.value)
+  gitProbe.applyConfig()
+}
+
+/**
+ * 已建立 .git 文件监听的项目数。
+ * 设置弹窗打开时刷新一次即可——该值仅用于解释「监听是否真的生效」，
+ * 不需要实时跟随（每秒轮询一次反而增加无谓开销）。
+ */
+const probeWatchedCount = ref(0)
+
+/** 视图是否在前台：独立窗口页签模式下由文档可见性决定 */
+function isProbeActive(): boolean {
+  return typeof document === "undefined" || document.visibilityState !== "hidden"
+}
+
+const gitProbe = useGitProbe({
+  manager: props.manager,
+  projects,
+  scheduler,
+  getConfig: () => probeConfig.value,
+  isPaused: () => gitOpsPaused.value,
+  isActive: isProbeActive,
+})
+
+/** 手动「立即检测」：清空预筛基准强制真查一轮 */
+async function handleProbeNow() {
+  probeWatchedCount.value = gitProbe.getWatchedCount()
+  await gitProbe.probeNow()
+}
 /** 项目编辑弹窗状态 */
 const editDialogProjectId = ref("")
 /** Markdown 文档预览弹窗状态 */
@@ -779,12 +831,25 @@ onMounted(async () => {
   loadNetworkTimeout()
   // 预载提交规则检查偏好（含描述最短字数阈值），保证设置弹窗打开即显示已保存值
   void loadRuleCheckPrefs()
+  // 实时探测配置：必须在 start() 之前加载，否则会按默认值建立监听与定时器
+  await loadProbeConfig()
+  gitProbe.start()
   // 不自动选择分类、不预加载任何项目：等用户点选分类 TAB 后由 watch(activeCategory) 按需加载该分类。
   // 故此处无需首屏批量加载（原 200ms initTimer 已随之移除）。
 })
 
 onUnmounted(() => {
   document.removeEventListener("click", closeIdeMenuOnOutside)
+  // 探测持有 fs.watch 句柄与定时器，必须随组件卸载释放（否则多窗口/反复开关面板会累积泄漏）
+  gitProbe.destroy()
+})
+
+/** 项目集合变化时同步探测（新增项目补建监听与轮询状态；删除由探测层周期性清理） */
+watch(() => projects.value.length, () => gitProbe.syncProjects())
+
+/** 暂停期间探测不执行（isPaused 已由 getConfig/isPaused 注入），恢复时立即补一轮并重排定时器 */
+watch(gitOpsPaused, (paused) => {
+  if (!paused) void gitProbe.probeNow()
 })
 
 /** 点击外部关闭顶栏菜单（添加/平台过滤；卡片内菜单由 ProjectCard 自行管理） */

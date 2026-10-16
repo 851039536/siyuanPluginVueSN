@@ -669,7 +669,7 @@
     "probeNetworkLabel": "网络轮询",
     "probeNetworkHint": "定时 fetch 以发现远程新提交（唯一能判断「需拉取」的方式）。默认关闭：fetch 是网络往返，频率过低无意义、过高会拖慢仓库与网络。",
     "probeNow": "立即检测",
-    "probeNowHint": "立即强制检测一轮全部项目（忽略 mtime 预筛）",
+    "probeNowHint": "立即强制检测一轮全部项目（忽略 mtime 预筛与退避，不受面板可见性限制）。仅刷新本地状态；不会发起网络 fetch。",
     "pushBranchModeLabel": "推送分支模式",
     "pushBranchAllOpt": "全部分支 (--all)",
     "pushBranchHeadOpt": "仅当前分支 (HEAD)",

@@ -1874,7 +1874,7 @@
     "probeNetworkLabel": "Network polling",
     "probeNetworkHint": "Periodic fetch to discover new remote commits (the only way to detect \"needs pull\"). Off by default: a fetch is a network round trip, so too-frequent is wasteful and too-rare is useless.",
     "probeNow": "Check now",
-    "probeNowHint": "Force one immediate detection round across all projects (ignoring the mtime prefilter)",
+    "probeNowHint": "Force one immediate detection round across all projects (ignoring the mtime prefilter and backoff, and not gated by panel visibility). Refreshes local state only; does not fetch from the network.",
     "pushBranchModeLabel": "Push Branch Mode",
     "pushBranchAllOpt": "All branches (--all)",
     "pushBranchHeadOpt": "Current branch only (HEAD)",

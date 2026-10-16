@@ -25,6 +25,8 @@ interface PollEntry {
   lastIndexMtime?: number
   /** 上次观察到的 HEAD oid（预筛第二判据，覆盖不动 index 的场景） */
   lastHead?: string
+  /** 真实 gitdir 绝对路径缓存（供 stat 预筛定位 index；空串 = 解析失败，预筛不生效） */
+  gitDir?: string
 }
 
 /** 探测依赖 */
@@ -44,8 +46,6 @@ export interface GitProbeDeps {
   isActive: () => boolean
   /** 每轮探测结果回调（供 UI 展示「刚刚检测过」状态） */
   onProbeResult?: (changed: boolean, at: number) => void
-  /** 受控周期：可由调用方注入以便单测；默认 window.setTimeout */
-  schedule?: (fn: () => void, ms: number) => TimerHandle
 }
 
 /** 监听重建间隔：git gc / 项目增删可能使 watcher 失效，周期重建（5 分钟） */
@@ -145,6 +145,29 @@ export function useGitProbe(deps: GitProbeDeps) {
     return entry
   }
 
+  /** gitdir 解析结果缓存（避免每轮 stat 预筛都付一次 rev-parse；失败也缓存空串以免反复重试） */
+  const gitDirCache = new Map<string, string>()
+
+  /**
+   * 解析并缓存项目 gitdir（stat 预筛定位 .git/index 用）。
+   * 失败缓存空串：预筛对该项目永久走「总是查询」的保守路径，不会每轮重试打转。
+   * `syncProjects` / 周期性 rebuild 时会清缓存，使路径修正后能重新解析。
+   */
+  async function resolveGitDirCached(projectId: string): Promise<string> {
+    const cached = gitDirCache.get(projectId)
+    if (cached !== undefined) return cached
+    const project = projects.value.find((p) => p.id === projectId)
+    if (!project) return ""
+    let dir = ""
+    try {
+      dir = await manager.getGitDir(resolveValidPath(project))
+    } catch {
+      dir = ""
+    }
+    if (!destroyed) gitDirCache.set(projectId, dir)
+    return dir
+  }
+
   /**
    * stat 预筛：用一次 `fs.stat`（微秒级、**零子进程**）判断值不值得跑 git。
    *
@@ -153,7 +176,7 @@ export function useGitProbe(deps: GitProbeDeps) {
    *
    * ⚠️ 判据含两项：index mtime（暂存/提交/checkout）+ HEAD oid（reset --soft、detached 切换
    *    等不动 index 的场景）。任一变化即需查询。
-   * ⚠️ 预筛是**保守**设计：宁可多查，不可漏报。任何不确定路径（.git 非目录、index 不存在、
+   * ⚠️ 预筛是**保守**设计：宁可多查，不可漏报。任何不确定路径（gitdir 未解析出、index 不存在、
    *    stat 抛错、无 HEAD 基准）一律返回 true 交给 git 定夺，正确性不依赖预筛。
    */
   async function needStatusQuery(project: GitProject, entry: PollEntry): Promise<boolean> {
@@ -162,24 +185,38 @@ export function useGitProbe(deps: GitProbeDeps) {
     const node = getNodeModules()
     if (!node) return true
     const { fs, path } = node
-    const projectPath = resolveValidPath(project)
 
-    // ① index mtime 判据
+    // ① index mtime 判据。必须用真实 gitdir 而非拼接 `${projectPath}/.git`：
+    //    worktree / submodule / 分离式 gitdir 下 `.git` 可能是文件或指向别处，
+    //    拼接路径会 stat 失败 → 永久回退「总是查询」→ 该用户的预筛优化静默失效。
+    //    gitdir 解析结果缓存进 entry，避免每轮多付一次 rev-parse。
+    let gitDir = entry.gitDir
+    if (gitDir === undefined) {
+      gitDir = await resolveGitDirCached(project.id)
+      entry.gitDir = gitDir
+    }
+    if (!gitDir) return true
     try {
-      // 用 --absolute-git-dir 的结果更准，但为省一次 spawn 此处按常规布局拼 .git；
-      // 非常规布局（worktree/分离 gitdir）下 .git 可能是文件，statSync 的 index 路径会失败 → 下方 catch 回退「总是查询」
-      const indexStat = fs.statSync(path.join(projectPath, ".git", "index"))
+      const indexStat = fs.statSync(path.join(gitDir, "index"))
       const mtime = indexStat.mtimeMs
       const firstRun = entry.lastIndexMtime === undefined
       const indexChanged = !firstRun && mtime !== entry.lastIndexMtime
       entry.lastIndexMtime = mtime
-      if (firstRun || indexChanged) return true
+      if (firstRun || indexChanged) {
+        // index 变了说明工作区/暂存动过：顺带刷新 HEAD 基准，
+        // 否则下一轮会因 lastHead 滞后而多发一次 getHeadHash（rev-parse）进程
+        await refreshHeadBaseline(project, entry)
+        return true
+      }
     } catch {
       return true
     }
 
     // ② HEAD oid 判据（index 未变时才需要；无基准则先建立基准）
-    if (entry.lastHead === undefined) return true
+    if (entry.lastHead === undefined) {
+      await refreshHeadBaseline(project, entry)
+      return true
+    }
     try {
       const head = await manager.getHeadHash(resolveValidPath(project))
       if (!head) return true
@@ -193,6 +230,16 @@ export function useGitProbe(deps: GitProbeDeps) {
     return false
   }
 
+  /** 刷新 HEAD 基准（失败静默：基准缺失只是让后续多查一轮，不影响正确性） */
+  async function refreshHeadBaseline(project: GitProject, entry: PollEntry): Promise<void> {
+    try {
+      const head = await manager.getHeadHash(resolveValidPath(project))
+      if (head && !destroyed) entry.lastHead = head
+    } catch {
+      // 忽略：下轮会重试建立基准
+    }
+  }
+
   /** 单项目一轮轮询；返回「本轮是否探测到变化」（供退避判定） */
   async function pollOnce(project: GitProject): Promise<boolean> {
     const entry = ensurePollEntry(project.id)
@@ -202,14 +249,18 @@ export function useGitProbe(deps: GitProbeDeps) {
         const before = scheduler.workingTrees.value[project.id]
         await scheduler.loadStatus(project.id, { mode: "refresh" })
         const after = scheduler.workingTrees.value[project.id]
-        // 变化判定：任一计数或清单长度不同即视为「有变化」。
-        // 只比较对用户可见的维度，避免把无关字段抖动当成变化而破坏退避
+        // 变化判定：任一计数 / 清单长度 / 分支名不同即视为「有变化」。
+        // 只比较对用户可见的维度，避免把无关字段抖动当成变化而破坏退避。
+        // ⚠️ 必须含 branch：`loadStatus` 的 refresh 模式复用缓存分支名而非强制 rev-parse，
+        //    故「外部切了分支但 index 未变」（HEAD 被非 checkout 方式改写，或文件监听不可用时）
+        //    单凭计数无法察觉，卡片会一直停留在旧分支的数据上。
         changed = !before
           || before.files.length !== after?.files.length
           || before.hasChanges !== after?.hasChanges
           || before.stagedCount !== after?.stagedCount
           || before.unstagedCount !== after?.unstagedCount
           || before.untrackedCount !== after?.untrackedCount
+          || before.branch !== after?.branch
         if (changed) {
           // 工作区变了 → 提交历史/分支也可能变（用户在终端提交过），标脏让卡片按需重载
           scheduler.invalidate(project.id, "log", "branches", "stash")
@@ -226,18 +277,28 @@ export function useGitProbe(deps: GitProbeDeps) {
   /** 一轮全量轮询（暂停 / 非前台时跳过，但保持调度链不断） */
   async function pollRound(): Promise<void> {
     if (destroyed) return
+    // 定时器已触发，句柄自然失效，只需清记账（此处不经 timers.clear——它已从注册表移除）
     pollTimer = null
     if (isPaused() || !isActive()) {
       schedulePollRound()
       return
     }
-    let anyChanged = false
-    for (const project of projects.value) {
-      if (destroyed) return
-      if (await pollOnce(project)) anyChanged = true
+    await runPollRoundNow()
+  }
+
+  /**
+   * 取消待发的轮询定时器。
+   *
+   * ⚠️ 必须在**直接调用 `pollRound()` 之前**调用：`pollRound` 自身只是把 `pollTimer` 置 null，
+   * 并不取消已注册到 TimerRegistry 的真实句柄。若不清句柄就再跑一轮，那个待发定时器稍后仍会
+   * 触发并开启**第二条并发的轮询链**——每轮都会对全部项目跑一次 git status（每次约 210ms 进程费），
+   * 正是本特性要消除的开销。并发链还会让 `pollTimer` 的记账（以及「取最小间隔」的节奏）失真。
+   */
+  function cancelPollTimer(): void {
+    if (pollTimer !== null) {
+      timers.clear(pollTimer)
+      pollTimer = null
     }
-    onProbeResult?.(anyChanged, Date.now())
-    schedulePollRound()
   }
 
   /**
@@ -302,9 +363,15 @@ export function useGitProbe(deps: GitProbeDeps) {
     const cfg = getConfig()
     const away = blurredAt > 0 ? Date.now() - blurredAt : 0
     blurredAt = 0
+    // 先取消待发定时器再直接跑一轮：否则待发定时器稍后仍会触发，形成第二条并发轮询链
+    cancelPollTimer()
     void pollRound()
     if (!cfg.network.enabled || cfg.network.fetchOnRefocusAfterMs <= 0) return
-    if (away >= cfg.network.fetchOnRefocusAfterMs) void networkRound()
+    if (away >= cfg.network.fetchOnRefocusAfterMs) {
+      // 网络层同理：取消待发 fetch 再立即补一次，避免同一时刻两轮 fetch
+      if (networkTimer !== null) { timers.clear(networkTimer); networkTimer = null }
+      void networkRound()
+    }
   }
 
   function handleBlur(): void {
@@ -343,8 +410,12 @@ export function useGitProbe(deps: GitProbeDeps) {
         if (alive.has(id)) continue
         watcher?.unwatch(id)
         pollEntries.delete(id)
+        gitDirCache.delete(id)
         scheduler.clearProject(id)
       }
+      // 周期性失效 gitdir 缓存：项目路径可能被编辑（换目录），缓存会指向旧 gitdir
+      gitDirCache.clear()
+      for (const entry of pollEntries.values()) entry.gitDir = undefined
       void ensureWatch()
       scheduleRebuild()
     }, REBUILD_INTERVAL_MS)
@@ -353,6 +424,13 @@ export function useGitProbe(deps: GitProbeDeps) {
   /** 项目集合变化时重排（新增补监听与轮询状态；删除由下轮 rebuild 清理） */
   function syncProjects(): void {
     if (destroyed) return
+    // 项目集合变了，gitdir 缓存可能对应已删除/改路径的项目，整体失效重解析
+    gitDirCache.clear()
+    for (const entry of pollEntries.values()) {
+      entry.gitDir = undefined
+      entry.lastIndexMtime = undefined
+      entry.lastHead = undefined
+    }
     const cfg = getConfig()
     if (cfg.watch.enabled) void ensureWatch()
     if (cfg.poll.enabled) {
@@ -381,8 +459,14 @@ export function useGitProbe(deps: GitProbeDeps) {
   }
 
   /**
-   * 立即探测一次（用户点「立即检测」/ 面板重新可见时调用）。
+   * 立即探测一次（用户点「立即检测」/ 解除暂停时调用）。
+   *
    * 清零预筛基准：用户主动要求，不能因「看起来没变化」被跳过。
+   * 同时取消待发定时器，保证这次主动探测与既有调度链**合并为一轮**而非并发两轮。
+   *
+   * ⚠️ 与 `pollRound` 的可见性门控不同：这是**显式用户动作**，即便此刻
+   * `isActive()` 为假（如独立窗口切到后台再点按钮）也应给出反馈而非静默无操作。
+   * 故此处不经 `pollRound` 的早退分支，改为无条件执行一轮本地状态查询。
    */
   async function probeNow(): Promise<void> {
     if (destroyed || isPaused()) return
@@ -391,8 +475,26 @@ export function useGitProbe(deps: GitProbeDeps) {
       entry.interval = cfg.poll.intervalMs
       entry.lastIndexMtime = undefined
       entry.lastHead = undefined
+      // 路径可能在面板外被改过：一并失效 gitdir 缓存，让本轮重新解析
+      entry.gitDir = undefined
     }
-    await pollRound()
+    gitDirCache.clear()
+    cancelPollTimer()
+    await runPollRoundNow()
+  }
+
+  /**
+   * 无条件跑一轮（不做可见性/暂停门控——调用方负责判定）。
+   * `pollRound` 保留门控语义供自动调度使用，此处供显式动作使用。
+   */
+  async function runPollRoundNow(): Promise<void> {
+    let anyChanged = false
+    for (const project of projects.value) {
+      if (destroyed) return
+      if (await pollOnce(project)) anyChanged = true
+    }
+    onProbeResult?.(anyChanged, Date.now())
+    schedulePollRound()
   }
 
   function destroy(): void {
@@ -402,6 +504,7 @@ export function useGitProbe(deps: GitProbeDeps) {
     watcher?.destroy()
     watcher = null
     pollEntries.clear()
+    gitDirCache.clear()
     timers.clearAll()
     pollTimer = null
     networkTimer = null

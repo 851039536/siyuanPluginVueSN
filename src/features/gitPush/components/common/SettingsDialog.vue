@@ -240,13 +240,25 @@
                   @update:model-value="patchProbe({ poll: { enabled: $event } })"
                 />
                 <Input
-                  :model-value="localProbe.poll.intervalMs"
+                  :model-value="localPollIntervalDraft"
                   type="number"
                   size="xsmall"
                   class="gp-set-concurrency-input"
                   :disabled="!localProbe.poll.enabled"
-                  @update:model-value="patchProbe({ poll: { intervalMs: Number($event) } })"
+                  @update:model-value="onPollIntervalInput"
+                  @change="commitPollInterval"
+                  @blur="commitPollInterval"
                 />
+                <!-- 立即检测：动作是「跑一轮本地状态查询」，故放在轮询分区且跟随轮询开关，
+                     而非网络分区（否则语义与开关都错位） -->
+                <button
+                  class="vp-btn vp-btn--ghost vp-btn--sm"
+                  :disabled="!localProbe.poll.enabled"
+                  :title="i18n.probeNowHint"
+                  @click="emit('probeNow')"
+                >
+                  {{ i18n.probeNow }}
+                </button>
               </div>
             </div>
             <div class="gp-set-hint">
@@ -286,14 +298,6 @@
                   :title="i18n.probeNetworkHint"
                   @update:model-value="patchProbe({ network: { enabled: $event } })"
                 />
-                <button
-                  class="vp-btn vp-btn--ghost vp-btn--sm"
-                  :disabled="!localProbe.poll.enabled"
-                  :title="i18n.probeNowHint"
-                  @click="emit('probeNow')"
-                >
-                  {{ i18n.probeNow }}
-                </button>
               </div>
             </div>
             <div class="gp-set-hint">
@@ -595,6 +599,39 @@ void rootRef
 
 // 分支模式即时保存（radio 切换立即持久化，无需保存按钮）
 watch(localBranchMode, (mode) => emit("saveBranchMode", mode))
+
+/**
+ * 轮询间隔输入的**未钳位草稿**（字符串）。
+ *
+ * 为什么不直接把 `localProbe.poll.intervalMs` 绑给 Input：
+ *   该 Input 是受控字段，而 `patchProbe` 每次都会走 `clampProbeConfig` 钳位（下限 5000）。
+ *   于是清空输入框 → `Number("") === 0` → 立即被抬回 5000 写回，DOM 重渲染成 "5000"，
+ *   用户**根本无法键入多位数**（输 "3" 就被抬成 5000）。故用草稿串承接键入过程，
+ *   只在 change/blur 时钳位并提交。
+ */
+const localPollIntervalDraft = ref(String(props.probeConfig.poll.intervalMs))
+
+/** 键入过程中只更新草稿，不做钳位（允许出现暂时越界或空串） */
+function onPollIntervalInput(value: unknown) {
+  localPollIntervalDraft.value = String(value ?? "")
+}
+
+/** 失焦/提交时钳位并下发；空串或非法值回退到当前生效值，避免误清成下限 */
+function commitPollInterval() {
+  const parsed = Number(localPollIntervalDraft.value)
+  if (!Number.isFinite(parsed) || localPollIntervalDraft.value.trim() === "") {
+    localPollIntervalDraft.value = String(localProbe.value.poll.intervalMs)
+    return
+  }
+  patchProbe({ poll: { intervalMs: parsed } })
+  // 以钳位后的权威值回填草稿（用户输入越界时立刻看到被纠正为合法值）
+  localPollIntervalDraft.value = String(localProbe.value.poll.intervalMs)
+}
+
+// 父级配置变化时同步草稿（如首次异步加载完成、或钳位后回填）
+watch(() => localProbe.value.poll.intervalMs, (ms) => {
+  localPollIntervalDraft.value = String(ms)
+})
 
 // ── 本地提交索引状态（确认索引是否生效的可视入口）──
 

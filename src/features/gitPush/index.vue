@@ -765,14 +765,29 @@ const probeConfig = ref<ProbeConfig>(DEFAULT_PROBE_CONFIG)
 
 /** 读取并归一化探测配置（逐字段钳位兜底） */
 async function loadProbeConfig() {
-  probeConfig.value = await props.manager.getProbeConfig()
+  try {
+    probeConfig.value = await props.manager.getProbeConfig()
+  } catch {
+    // 存储读取失败时回落到默认配置：探测是增强能力，
+    // 不能因一次读取失败中断 onMounted 后续流程（否则 start() 永不执行，探测整体静默失效）
+    probeConfig.value = DEFAULT_PROBE_CONFIG
+  }
 }
 
-/** 保存探测配置并让运行中的探测立即按新配置重排（无需重启面板） */
+/**
+ * 保存探测配置并让运行中的探测立即按新配置重排（无需重启面板）。
+ * 用 try/finally 保证即使持久化失败也把新配置应用到运行中的探测，
+ * 避免出现「内存已改、实际仍在按旧配置跑」的不一致。
+ */
 async function saveProbeConfig(next: ProbeConfig) {
   probeConfig.value = clampProbeConfig(next)
-  await props.manager.setProbeConfig(probeConfig.value)
-  gitProbe.applyConfig()
+  try {
+    await props.manager.setProbeConfig(probeConfig.value)
+  } catch {
+    // 落盘失败不回滚内存值：本次会话仍按用户选择生效，下次启动回落到已持久化的旧值
+  } finally {
+    gitProbe.applyConfig()
+  }
 }
 
 /**
@@ -844,8 +859,17 @@ onUnmounted(() => {
   gitProbe.destroy()
 })
 
-/** 项目集合变化时同步探测（新增项目补建监听与轮询状态；删除由探测层周期性清理） */
-watch(() => projects.value.length, () => gitProbe.syncProjects())
+/**
+ * 项目集合变化时同步探测。
+ *
+ * ⚠️ 用 `id:path` 签名而非 `projects.length`：只比长度会漏掉「删除一个又新增一个」
+ *    （长度不变）与「项目改了路径」（长度不变）这两类集合变更，探测会继续监听旧 gitdir
+ *    直到 5 分钟后的周期性重建。签名同时含 path，故改路径也能立即重解析。
+ */
+const projectProbeSignature = computed(() =>
+  projects.value.map((p) => `${p.id}:${p.path}`).join("|"),
+)
+watch(projectProbeSignature, () => gitProbe.syncProjects())
 
 /** 暂停期间探测不执行（isPaused 已由 getConfig/isPaused 注入），恢复时立即补一轮并重排定时器 */
 watch(gitOpsPaused, (paused) => {

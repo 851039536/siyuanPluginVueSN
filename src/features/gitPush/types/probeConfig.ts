@@ -46,7 +46,7 @@ export interface ProbePollConfig {
 export interface ProbeNetworkConfig {
   /** 总开关（默认关闭：fetch 是网络往返，不该默认骚扰远程） */
   enabled: boolean
-  /** 轮询间隔（ms）。下限由 clampProbeInterval 强制 ≥ 5 分钟 */
+  /** 轮询间隔（ms）。下限由 clampProbeConfig 强制 ≥ 5 分钟（PROBE_NETWORK_INTERVAL_MIN） */
   intervalMs: number
   /** 窗口离开超过该时长后重新聚焦时，立即补一次 fetch（0 = 禁用该行为） */
   fetchOnRefocusAfterMs: number

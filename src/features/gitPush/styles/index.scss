@@ -399,14 +399,16 @@
 }
 
 // 设置弹窗分组小标题（如「实时探测」）：与上方设置项拉开距离并加分隔线，
-// 使同一分区内的多组设置仍有视觉层次
+// 使同一分区内的多组设置仍有视觉层次。
+// ⚠️ 不用 opacity 做弱化——opacity 会连 border-top 一起变淡，使该分隔线比其他分隔线更浅。
+// 改为显式降低文字色，分隔线保持与其他分隔线一致
 .gp-set-section-title {
   margin-top: $s-4;
   padding-top: $s-3;
   border-top: 1px solid var(--b3-border-color);
+  color: var(--b3-theme-on-surface);
   font-size: $t-xs;
   font-weight: 600;
-  opacity: 0.75;
 }
 
 .gp-set-label {

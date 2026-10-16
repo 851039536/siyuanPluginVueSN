@@ -46,8 +46,33 @@
 // ========== Summary ==========
 @include stats.summary-cards-base;
 
+// 无界化覆盖：摘要卡去卡片盒子，改为列间竖线 + 底部横线分隔
+// （与热力图/概览统一；mixin 默认为「有界盒子」，此处必须覆盖）
+.summary-cards {
+  gap: 0;
+  border-bottom: 1px solid var(--b3-border-color);
+  padding-bottom: $s-px6;
+}
+
+.summary-card {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: $s-px6 $s-1;
+  border-left: 1px solid var(--b3-border-color);
+
+  &:first-child {
+    border-left: none;
+  }
+
+  &:hover {
+    border-color: transparent;
+  }
+}
+
 .summary-card .summary-value {
-  font-size: $t-lg; // 数据突出展示（摘要卡数值）
+  font-size: $t-lg; // 数据突出展示（摘要卡数值，与热力图对齐）
+  font-family: stats.$font-mono;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

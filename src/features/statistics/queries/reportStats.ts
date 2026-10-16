@@ -13,78 +13,26 @@ import {
   formatDate,
   formatYmd,
   padZero,
-  parseYmd,
-  toDashedYmd,
 } from "../utils"
 import {
   executeSql,
   formatDateTime,
 } from "./executeSql"
 import { getMostProductiveNotebook } from "./notebookStats"
+import {
+  derivePeriodStatsFromDaily as derivePeriodStatsCore,
+  linearFit,
+  projectSum,
+} from "./reportMath"
 
 /**
  * 由「按日聚合」结果派生时段核心指标。
- *
- * 原实现对同一批 `type='p' AND length>0` 行扫描 4 次（SUM / COUNT DISTINCT / GROUP BY / DISTINCT），
- * 每次都要重建临时 B 树。现改为一次 GROUP BY 取回（日期, 字数），其余指标在前端派生：
- * - totalWords    = Σ words
- * - activeDays    = 行数（GROUP BY 日期后每行即一个活跃日）
- * - maxWordsDay   = 取 words 最大行
- * - longestStreak = 对日期序列求最长连续段
- * 实测（33 万块真实库）并行 4 条 1234ms → 单条 688ms，且 5 组用例结果逐字段一致。
- *
- * LIMIT 1024 说明：按日分组，一年最多 366 行，结构上不可能触及上限；
- * 原 `SELECT DISTINCT ... LIMIT 1024` 与本查询行数相同（均为活跃天数），故语义等价。
+ * 实现已抽至 reportMath.ts（与思源 API 解耦，便于离线单测），此处仅作类型适配转发。
  */
 export function derivePeriodStatsFromDaily(
   rows: DateWordsRow[],
 ): Pick<PeriodCore, "totalWords" | "activeDays" | "maxWordsDay" | "longestStreak"> {
-  if (!rows || rows.length === 0) {
-    return {
-      totalWords: 0,
-      activeDays: 0,
-      maxWordsDay: {
-        date: "",
-        words: 0,
-      },
-      longestStreak: 0,
-    }
-  }
-
-  let totalWords = 0
-  let maxRow: DateWordsRow | null = null
-  const dates: string[] = []
-
-  for (const row of rows) {
-    const words = Number(row.words || 0)
-    totalWords += words
-    if (!maxRow || words > Number(maxRow.words || 0)) maxRow = row
-    dates.push(String(row.date))
-  }
-
-  // 最长连续段：按日期升序逐日比较（与 calcLongestStreak 原算法一致）
-  const sorted = [...new Set(dates)].sort()
-  let longest = 1
-  let current = 1
-  for (let i = 1; i < sorted.length; i++) {
-    const diff = (parseYmd(sorted[i]).getTime() - parseYmd(sorted[i - 1]).getTime()) / 86400000
-    if (diff === 1) {
-      current++
-      longest = Math.max(longest, current)
-    } else {
-      current = 1
-    }
-  }
-
-  return {
-    totalWords,
-    activeDays: rows.length,
-    maxWordsDay: {
-      date: toDashedYmd(String(maxRow!.date)),
-      words: Number(maxRow!.words || 0),
-    },
-    longestStreak: longest,
-  }
+  return derivePeriodStatsCore(rows)
 }
 
 /** 时段核心指标（年度/月度报告共用） */
@@ -302,27 +250,13 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
       }
     }
 
-    // 简单线性回归：y = mx + b
-    const xs = historical.map((_, i) => i)
+    // 简单线性回归：y = mx + b（实现见 reportMath.linearFit）
     const ys = historical.map((h) => h.words)
-    const meanX = xs.reduce((a, b) => a + b, 0) / n
-    const meanY = ys.reduce((a, b) => a + b, 0) / n
-
-    let numerator = 0
-    let denominator = 0
-    for (let i = 0; i < n; i++) {
-      const dx = xs[i] - meanX
-      numerator += dx * (ys[i] - meanY)
-      denominator += dx * dx
-    }
-
-    const slope = denominator !== 0 ? numerator / denominator : 0
-    const intercept = meanY - slope * meanX
-
-    const yPred = xs.map((x) => slope * x + intercept)
-    const ssRes = ys.reduce((sum, y, i) => sum + (y - yPred[i]) ** 2, 0)
-    const ssTot = ys.reduce((sum, y) => sum + (y - meanY) ** 2, 0)
-    const rSquared = ssTot !== 0 ? Math.max(0, Math.min(1, 1 - ssRes / ssTot)) : 0
+    const {
+      slope,
+      intercept,
+      rSquared,
+    } = linearFit(ys)
 
     const predicted: DailyWordCount[] = []
     for (let i = 0; i < 7; i++) {
@@ -339,16 +273,8 @@ export async function getTrendPrediction(): Promise<TrendPrediction> {
     }
 
     const weeklyProjection = predicted.reduce((s, p) => s + p.words, 0)
-    // 下月预计 = 未来 30 天逐日预测求和，与 weeklyProjection 口径一致。
-    // 原实现为 `(slope*(n+30)+intercept)*30`：取「第 n+30 天」这**一天**的预测值再乘 30，
-    // 相当于假设未来每天都写到第 30 天的水平；上升趋势下会显著高估
-    // （实测：222,049 vs 正确的 170,339，高估 30%）。下降趋势时原代码走 meanY*30 分支
-    // 反而接近合理，故该错误只在增长期显现。
-    let monthlySum = 0
-    for (let i = 0; i < 30; i++) {
-      monthlySum += Math.max(0, slope * (n + i) + intercept)
-    }
-    const monthlyProjection = Math.round(monthlySum)
+    // 下月预计 = 未来 30 天逐日预测求和，与 weeklyProjection 口径一致（详见 reportMath.projectSum）
+    const monthlyProjection = projectSum(slope, intercept, n, 30)
 
     return {
       historical,

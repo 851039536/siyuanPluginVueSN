@@ -2,6 +2,7 @@
 import type { GitExecutor } from "./GitExecutor"
 import type { IndexedFileLines } from "../types/indexCache"
 import { parseNumstatBlock, parseNumstatBlocks, type NumstatCommit } from "../reportMetrics"
+import { classifyFetchFailure, fetchFailureReason, ProjectFetchError } from "../utils/errors"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** diff 补丁截断上限（约 5KB 文本，防止巨型文件撑爆弹窗） */
@@ -249,51 +250,86 @@ export class ReportOps {
   }
 
   /**
-   * 一次拿齐行数统计所需的「仓库生命周期」快照（HEAD + 末次提交 + 根提交）。
+   * 一次拿齐行数统计所需的「仓库生命周期」快照（HEAD + 末次提交时间 + 根提交时间）。
    *
-   * 为什么合并：本机实测单次 git 调用约 300–500ms，且**几乎全是 Windows 进程创建开销**，
-   * 与原命令的数据量无关。原实现每个项目要跑 3 次（`log -n1` + `rev-parse --absolute-git-dir`
-   * + `log --reverse -1`），几十个项目时进程启动费就是几十秒——这是"行数分析特别久"的主因。
+   * 为什么合并调用：本机实测单次 git 调用约 300–500ms，且**几乎全是 Windows
+   * 进程创建开销**，与原命令的数据量无关。原实现每项目跑 3 次
+   * （`log -n1` + `rev-parse --absolute-git-dir` + `log --reverse -1`），
+   * 几十个项目时仅进程启动费就是几十秒——这是「行数分析特别久」的主因。
    *
-   * 现改为 **2 次调用**：
-   * 1. `rev-parse HEAD`：HEAD oid（空仓库时失败 → 返回空快照）
-   * 2. `rev-list --max-parents=0 --format=... HEAD`：根提交 oid + 其提交时间
+   * 现为 **2 次调用**（并发发起）：
+   * 1. `log -n 1 --pretty=format:%H%x1f%aI` → HEAD oid + 末次提交时间
+   * 2. `rev-list --max-parents=0 --format=%H%x1f%aI HEAD` → 根提交时间
    *
-   * **刻意不再取 `gitdir`**：它原本用于「换仓库指向同一路径」的判据，但
-   * `project.id + 项目路径 + HEAD oid` 已足以识别仓库状态；而同一个 project 的路径变更
-   * 会走 `resolveValidPath` 且实际指向不同仓库时 HEAD oid 几乎不可能相同。
-   * 省掉这一次调用是纯收益（每项目 -1 次进程启动）。
+   * 仓库身份不再由 `rev-parse --absolute-git-dir` 提供：改由纯 fs 探测的
+   * `resolveRepoIdentity()` 给出（见 lineScan.ts），零 git 调用。
    *
-   * 末次提交时间直接取 HEAD 提交时间（`rev-parse` 给不出时间，故如需 lastDate 时
-   * 由调用方传入的既有快照复用，见 LineStatsStore 的缓存路径）。
+   * **错误语义（关键）**：本方法**只把「空仓库」当作正常空结果**，
+   * 其余任何 git 故障（非仓库、超时、index.lock、git 不可用、权限）都**抛出**，
+   * 由调用方计入失败项目。
+   * 为什么必须区分：早期实现用 `.catch(() => "")` 把两类都压成空快照，
+   * 下游据此返回「0 行 0 文件」并计为成功 —— 一次瞬时 git 故障会被
+   * 静默展示成「这个项目没有代码」，既不报错也无从排查。
+   *
+   * 区分方式**零额外调用**：`GitExecutor` 已把 stderr 拼进错误 message，
+   * 复用既有的 `classifyFetchFailure` 判定 `noCommits` 即可。
    */
   async getRepoLifecycle(projectPath: string): Promise<RepoLifecycle> {
-    const empty: RepoLifecycle = { head: "", lastDate: "", rootDate: "" }
-    // 两次调用并发发起（互不依赖）：
-    // - log -n1：HEAD oid + HEAD 提交时间（空仓库时退出码非 0 → catch 成空串）
-    // - rev-list --max-parents=0：根提交时间
-    const [headRaw, rootRaw] = await Promise.all([
-      this.executor.execGit(projectPath, ["log", "-n", "1", "--pretty=format:%H%x1f%aI"]).catch(() => ""),
-      // --format 会额外输出 "commit <oid>" 行，故只取含 \x1f 的行
+    // 两次调用并发发起（互不依赖），任一失败都进入下方统一判定
+    const [headResult, rootResult] = await Promise.allSettled([
+      this.executor.execGit(projectPath, ["log", "-n", "1", "--pretty=format:%H%x1f%aI"]),
       this.executor.execGit(projectPath, [
         "-c", "core.quotepath=false",
         "rev-list", "--max-parents=0", "--format=%H%x1f%aI", "HEAD",
-      ]).catch(() => ""),
+      ]),
     ])
-    const headParts = headRaw.trim().split("\x1f")
-    const head = (headParts[0] || "").trim()
-    if (!head) return empty
-    const lastDate = (headParts[1] || "").trim()
-    let rootDate = ""
-    for (const line of rootRaw.split("\n")) {
-      if (!line.includes("\x1f")) continue
-      const date = line.split("\x1f")[1]
-      if (date) {
-        rootDate = date.trim()
-        break
+
+    // HEAD 取不到：要么空仓库（正常），要么真实故障（必须抛出）
+    if (headResult.status === "rejected") {
+      const reason = headResult.reason
+      if (classifyFetchFailure(reason) === "noCommits") {
+        // 空仓库：无提交、无文件，属合法的空数据
+        return {
+          head: "",
+          lastDate: "",
+          rootDate: "",
+        }
       }
+      throw reason
     }
-    return { head, lastDate, rootDate }
+
+    const headParts = headResult.value.trim().split("\x1f")
+    const head = (headParts[0] || "").trim()
+    // 命令成功却无输出：极端异常，按故障处理而非谎报 0 行
+    if (!head) {
+      throw new ProjectFetchError("other", `git log 未返回 HEAD（${projectPath}）`)
+    }
+    const lastDate = (headParts[1] || "").trim()
+
+    // 根提交时间：失败不致命（HEAD 已拿到，行数仍可统计），
+    // 但需区分「无提交」与「真实故障」—— 后者记 warn 便于排查
+    let rootDate = ""
+    if (rootResult.status === "fulfilled") {
+      for (const line of rootResult.value.split("\n")) {
+        if (!line.includes("\x1f")) continue
+        const date = line.split("\x1f")[1]
+        if (date) {
+          rootDate = date.trim()
+          break
+        }
+      }
+    } else if (classifyFetchFailure(rootResult.reason) !== "noCommits") {
+      console.warn(
+        `[gitPush] 读取根提交时间失败（${projectPath}）:`
+        + fetchFailureReason(rootResult.reason),
+      )
+    }
+
+    return {
+      head,
+      lastDate,
+      rootDate,
+    }
   }
 
   /**

@@ -421,7 +421,7 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 
 ## 性能优化
 
-- **并发信号量**：git 命令并发上限可配置（默认 3，范围 1~10，设置页修改），本地命令与网络命令独立双池且各自受该上限约束（双池分离使本地命令洪流不挤占 push/fetch 通道），批量加载/刷新的批内并发跟随该设置
+- **并发信号量**：git 命令并发上限可配置（**默认 10**，范围 1~10，设置页修改；实测 10 是拐点，12/16 反而回落，详见「行数统计的增量刷新」），本地命令与网络命令独立双池且各自受该上限约束（双池分离使本地命令洪流不挤占 push/fetch 通道），批量加载/刷新的批内并发跟随该设置
 - **批次加载**：打开列表视图不加载任何项目（未选择分类 = 零 git 调用），点选分类后仅加载该分类的项目状态；提交日志/分支/Stash 按展开懒加载
 - **查询调度器**（`useProjectQueryScheduler`，查询调度的唯一权威，三档职责互不重叠）：
   - **单飞**：同 `(项目, 查询域)` 在飞时共享同一 Promise，任何入口的并发调用都不产生额外 git 子进程；失败不缓存，允许立即重试
@@ -462,8 +462,16 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 
 1. **生命周期快照只用 2 次 git**：`getRepoLifecycle` 用 `log -n1`（HEAD oid + 末次提交时间）与 `rev-list --max-parents=0 --format`（根提交时间）**并发**拿齐三项信息。原实现需 3 次（多一次 `rev-parse --absolute-git-dir`）。
 2. `HEAD oid` 未变 → **直接读 `gp_project_stats` 汇总行返回**，不再 `ls-files`、不再 `statSync`。
-3. `HEAD` 变了 → `git ls-files` + 按仓库规模自适应选判据（见下），只对变化的文件读内容。
+3. `HEAD` 变了 → `git ls-files` + 逐文件 `statSync`，只对 `(mtime, size)` 变化的文件读内容（**刻意不用 `git status` 变更集**，原因见下）。
 4. 数据库不可用（旧版思源 / 打开失败）→ 全量扫，**功能不降级**，只是回到改造前的速度。
+
+**错误语义：只有「空仓库」算正常空结果**
+
+`getRepoLifecycle` **只把「空仓库」当作合法的空数据**，其余任何 git 故障（非仓库、超时、`index.lock`、git 不可用、权限）都**抛出**，由调用方计入失败项目。
+
+早期实现用 `.catch(() => "")` 把两类都压成空快照，下游据此返回「0 行 0 文件」并**计为成功**——一次瞬时 git 故障就被静默展示成「这个项目没有代码」，既不报错也无从排查。
+
+区分**零额外调用**：`GitExecutor` 已把 stderr 拼进错误 message，复用既有的 `classifyFetchFailure` 判定 `noCommits`（匹配 `does not have any commits yet` / `no commits yet`）即可，不需要 `rev-parse --verify HEAD` 那种多一次进程启动的做法。该语义由 `managers/ReportOps.lifecycle.spec.ts` 用真实 git 仓库锁定（空仓库→正常返回；非仓库/路径不存在→抛错）。
 
 **失效判据：`HEAD oid` + 仓库身份 `repoId`（均为零额外 git 调用）**
 
@@ -481,16 +489,21 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 
 新旧库兼容：`gp_project_stats` 新增 `repo_id` 列，`prepare()` 用 `PRAGMA table_info` 判定后 `ALTER TABLE` 补列（幂等，不破坏既有数据）。补列后旧行 `repo_id` 为空串 → 判据不匹配 → 该项目重算一次并回填。
 
-**为什么不是无脑用 `git status`（实测数据）**：
+**为什么最终不用 `git status` 变更集**（有过一版自适应方案，已回退）：
 
 | 判据 | 成本 |
 |------|------|
-| `git status --porcelain -uno` | 固定 ≈ 220 ms（进程启动）+ 扫描，一次搞定 |
+| `git status --porcelain -z -uno` | 固定 ≈ 220 ms（进程启动）+ 扫描，一次搞定 |
 | 逐文件 `statSync` | ≈ 93 µs/文件（2000 文件 ≈ 190 ms，2 万文件 ≈ 2 s） |
 
-⇒ 盈亏平衡点约 **2400 文件**。故 `GIT_STATUS_CHANGE_THRESHOLD = 2500`：**小于阈值**逐文件 `statSync`（省掉一次 git 进程更快）；**大于阈值**用 `git status` 的变更集（省掉数万次系统调用）。变更集模式下未列出的文件直接复用缓存、完全不做 `stat`。
+纯**性能**上看，约 2400 文件是盈亏平衡点。但**正确性上它不可用**：本方法只在「HEAD 已变化」时进入，而 `git status` 比较的是「工作区 vs index」，**看不见 index 自身的变化**：
 
-**正确性论证**：`(mtimeMs, size)` 相同即视为文件未变。这是 git 自身（index 的 stat 信息）与 rsync / make 采用的同一判据；唯一已知例外是「内容变了但 mtime 与大小被刻意还原」，正常开发/构建流程不会出现。该判据由 `managers/lineScan.spec.ts` 用真实临时目录 + 真实 fs 逐条验证（含等长内容替换、子目录、超限文件、缺失文件、变更集两模式）。
+- **切分支**（`checkout` / `switch` / `restore`）：文件内容变了、index 同步更新 → `git status` 报「干净」→ 变更集为空 → 全部文件沿用旧行数
+- 外部 `git add` / `git reset --hard` / `stash`：同理
+
+切分支是日常操作，且正好全部落在「HEAD 变了」这条路径上。故这里**一律逐文件 `statSync`**——它本身就能发现内容变化。该风险由 `managers/lineScan.spec.ts` 的「切分支后内容变化必须被 stat 判据发现」用例锁定（并保留一条对照用例，演示空变更集会如何沿用旧行数）。`GIT_STATUS_CHANGE_THRESHOLD` 与变更集分支保留但**生产路径不使用**，供将来在「确认 index 未动」的场景复用。
+
+**正确性论证**：`(mtimeMs, size)` 相同即视为文件未变。这是 git 自身（index 的 stat 信息）与 rsync / make 采用的同一判据；唯一已知例外是「内容变了但 mtime 与大小被刻意还原」，正常开发/构建流程不会出现。该判据由 `managers/lineScan.spec.ts` 用真实临时目录 + 真实 fs 逐条验证（含等长内容替换、子目录、超限文件、缺失文件、符号链接、变更集两模式）。
 
 ### 批量分析的并发调度（`useCommitAnalysis.runCore` + `GitExecutor`）
 

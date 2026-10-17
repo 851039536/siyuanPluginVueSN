@@ -28,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ConfirmDialogApi } from "../../composables/useConfirmDialog"
 /**
  * 速记功能 — 项目 Tab
  * 项目新增/编辑表单 + 项目卡片列表；持有编辑中项目状态，
@@ -47,6 +48,8 @@ type ProjectsApi = ReturnType<typeof useProjects>
 const props = defineProps<{
   i18n: Record<string, string>
   projectsApi: ProjectsApi
+  /** 删除确认弹窗（父层单实例，本组件只调用 open） */
+  confirm: ConfirmDialogApi
 }>()
 
 const projectsApi = props.projectsApi
@@ -63,10 +66,16 @@ const linkedTodosOf = (id: string) => projectsApi.todosOf(id)
 /** 某项目关联待办的完成进度 */
 const projectProgressOf = (id: string) => projectsApi.progressOf(id)
 
-/** 删除项目（带确认） */
+/** 删除项目（经父层确认弹窗二次确认） */
 const handleProjectRemove = (id: string) => {
-  if (!window.confirm(props.i18n.deleteConfirm)) return
-  projectsApi.remove(id)
+  props.confirm.open({
+    header: props.i18n.deleteConfirm,
+    acceptLabel: props.i18n.delete,
+    rejectLabel: props.i18n.cancel,
+    onConfirm: () => {
+      projectsApi.remove(id)
+    },
+  })
 }
 
 /** 开始编辑项目（回填表单） */

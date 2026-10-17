@@ -133,6 +133,7 @@
           :projects-api="projectsApi"
           :polishing="polishing"
           :polish="polish"
+          :confirm="confirmDialog"
         />
 
         <!-- 灵感速记 Tab -->
@@ -142,6 +143,7 @@
           :inspirations="inspirations"
           :polishing="polishing"
           :polish="polish"
+          :confirm="confirmDialog"
         />
 
         <!-- 项目跟进 Tab -->
@@ -149,6 +151,7 @@
           v-else-if="activeTab === 'project'"
           :i18n="i18n"
           :projects-api="projectsApi"
+          :confirm="confirmDialog"
         />
 
         <!-- 每周复盘 Tab -->
@@ -158,6 +161,18 @@
           :review="review"
         />
       </div>
+
+      <!-- 删除二次确认弹窗（三个 Tab 共用，状态由 index.vue 单实例持有） -->
+      <ConfirmDialog
+        :visible="confirmDialog.state.value.visible"
+        :header="confirmDialog.state.value.header"
+        :accept-label="confirmDialog.state.value.acceptLabel"
+        :reject-label="confirmDialog.state.value.rejectLabel"
+        accept-severity="danger"
+        @confirm="confirmDialog.confirm"
+        @cancel="confirmDialog.cancel"
+        @update:visible="(v) => !v && confirmDialog.cancel()"
+      />
     </template>
   </div>
 </template>
@@ -182,6 +197,7 @@ import {
   ref,
   watch,
 } from "vue"
+import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import InspirationTab from "./components/inspiration/InspirationTab.vue"
 import ProjectTab from "./components/project/ProjectTab.vue"
@@ -189,6 +205,7 @@ import ReviewTab from "./components/review/ReviewTab.vue"
 import TodayFocus from "./components/today/TodayFocus.vue"
 import TodoTab from "./components/todo/TodoTab.vue"
 import { useAiPolish } from "./composables/useAiPolish"
+import { useConfirmDialog } from "./composables/useConfirmDialog"
 import { useInspirations } from "./composables/useInspirations"
 import { useProjects } from "./composables/useProjects"
 import { useTodoList } from "./composables/useTodoList"
@@ -221,6 +238,8 @@ const {
   polishing,
   polish,
 } = useAiPolish(props.plugin)
+// 删除二次确认：单实例持有，经 props 下传三个 Tab（替代各 Tab 的 window.confirm + 原生弹窗样式）
+const confirmDialog = useConfirmDialog()
 
 // ==================== Tab 导航 ====================
 /** Tab 定义：key + i18n 标签键（<3 个 Tab 时平铺，此处 4 个按语义建 components 子目录） */

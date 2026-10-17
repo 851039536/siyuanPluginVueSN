@@ -39,6 +39,7 @@
  * AI 润色函数由父层注入并透传给表单与各条目（子组件不自行创建 composable）
  */
 import type { PolishFn } from "../../composables/useAiPolish"
+import type { ConfirmDialogApi } from "../../composables/useConfirmDialog"
 import { useInspirations } from "../../composables/useInspirations"
 import InspirationForm from "./InspirationForm.vue"
 import InspirationItem from "./InspirationItem.vue"
@@ -52,6 +53,8 @@ const props = defineProps<{
   polishing: boolean
   /** AI 润色函数（透传表单与条目） */
   polish: PolishFn
+  /** 删除确认弹窗（父层单实例，本组件只调用 open） */
+  confirm: ConfirmDialogApi
 }>()
 
 const inspirations = props.inspirations
@@ -63,10 +66,16 @@ const activeTag = inspirations.activeTag
 /** 当前筛选结果 */
 const filteredInspirations = inspirations.filteredInspirations
 
-/** 删除灵感（带确认） */
+/** 删除灵感（经父层确认弹窗二次确认） */
 const handleInspRemove = (id: string) => {
-  if (!window.confirm(props.i18n.deleteConfirm)) return
-  inspirations.remove(id)
+  props.confirm.open({
+    header: props.i18n.deleteConfirm,
+    acceptLabel: props.i18n.delete,
+    rejectLabel: props.i18n.cancel,
+    onConfirm: () => {
+      inspirations.remove(id)
+    },
+  })
 }
 
 /** 切换筛选标签 */

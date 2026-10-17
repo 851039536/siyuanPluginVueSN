@@ -66,6 +66,7 @@
 
 <script setup lang="ts">
 import type { PolishFn } from "../../composables/useAiPolish"
+import type { ConfirmDialogApi } from "../../composables/useConfirmDialog"
 /**
  * 速记功能 — 待办 Tab
  * 待办新增/编辑表单 + 按日期分组列表 + 已完成列表；持有编辑中待办状态，
@@ -96,6 +97,8 @@ const props = defineProps<{
   polishing: boolean
   /** AI 润色函数（透传 TodoForm） */
   polish: PolishFn
+  /** 删除确认弹窗（父层单实例，本组件只调用 open） */
+  confirm: ConfirmDialogApi
 }>()
 
 const todoList = props.todoList
@@ -137,10 +140,16 @@ const doneTodos = todoList.doneTodos
 const projectNameOf = (todo: TodoItemType) =>
   projectsApi.projects.value.find((p) => p.id === todo.projectId)?.name ?? ""
 
-/** 删除待办（带确认） */
+/** 删除待办（经父层确认弹窗二次确认） */
 const handleTodoRemove = (id: string) => {
-  if (!window.confirm(props.i18n.deleteConfirm)) return
-  todoList.remove(id)
+  props.confirm.open({
+    header: props.i18n.deleteConfirm,
+    acceptLabel: props.i18n.delete,
+    rejectLabel: props.i18n.cancel,
+    onConfirm: () => {
+      todoList.remove(id)
+    },
+  })
 }
 
 /** 开始编辑待办（回填表单） */

@@ -641,7 +641,7 @@
     "noCustomIde": "No custom IDEs, add below",
     "confirmShort": "Confirm?",
     "gitConcurrency": "Git Concurrency",
-    "concurrencyHint": "Max concurrent git subprocesses per pool, local & network (1-10)",
+    "concurrencyHint": "Max concurrent git subprocesses per pool, local & network (1-16)",
     "networkTimeout": "Network timeout (s)",
     "networkTimeoutHint": "Timeout for network git commands (30-600 s). Increase it when pushing large repos on a slow network",
     "indexTitle": "Local commit index",

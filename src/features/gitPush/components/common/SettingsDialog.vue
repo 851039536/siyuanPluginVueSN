@@ -82,7 +82,7 @@
                 </button>
               </div>
             </div>
-            <!-- 提示文案："同时执行的 git 子进程数上限（1~10）" -->
+            <!-- 提示文案："同时执行的 git 子进程数上限（1~16）"（范围由 GIT_CONCURRENCY_MAX 决定） -->
             <div class="gp-set-hint">
               {{ i18n.concurrencyHint }}
             </div>

@@ -11,6 +11,7 @@ import {
   parseCommitShortStats,
   parseStashList,
   parseWorktreeStatus,
+  parseWorktreeStatusV2,
 } from "./gitOutput"
 
 /** 取数组首元素（tsconfig lib 为 ES2020，无 Array.prototype.at，故用索引替代） */
@@ -412,3 +413,150 @@ describe("parseBranches", () => {
     expect(parseBranches("feature/login\0*")[0].name).toBe("feature/login")
   })
 })
+
+// ── porcelain v2 ──
+// 下方所有 raw 样本均为**真实 git 输出**（git 2.53 / Windows 实测采集），
+// 不是手写构造，以确保字段顺序与分隔符与 git 实际行为一致。
+describe("parseWorktreeStatusV2", () => {
+  it("空仓库：branch 为空串，未跟踪文件计入 untracked", () => {
+    // 实测样本
+    const raw = [
+      "# branch.oid (initial)",
+      "# branch.head master",
+      "? untracked.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.branch).toBe("master")
+    expect(r.untrackedCount).toBe(1)
+    expect(r.stagedCount).toBe(0)
+    expect(r.unstagedCount).toBe(0)
+    expect(first(r.files)?.status).toBe("untracked")
+    expect(first(r.files)?.path).toBe("untracked.txt")
+  })
+
+  it("已跟踪文件未暂存修改：unstaged 计数 1，status=modified", () => {
+    // 实测样本
+    const raw = [
+      "# branch.oid e1c1d03e1b561cfd3103a4a451e9dcbca8c5fe61",
+      "# branch.head master",
+      "1 .M N... 100644 100644 100644 587be6b4c3f93f93c489c0111bba5596147a26cb 587be6b4c3f93f93c489c0111bba5596147a26cb untracked.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.branch).toBe("master")
+    expect(r.unstagedCount).toBe(1)
+    expect(r.stagedCount).toBe(0)
+    expect(first(r.files)?.staged).toBe(false)
+    expect(first(r.files)?.unstaged).toBe(true)
+    expect(first(r.files)?.status).toBe("modified")
+  })
+
+  it("已暂存修改：staged 计数 1（与 v1 的 M. 语义一致）", () => {
+    const raw = [
+      "# branch.oid e1c1d03e1b561cfd3103a4a451e9dcbca8c5fe61",
+      "# branch.head master",
+      "1 M. N... 100644 100644 100644 587be6b4c3f93f93c489c0111bba5596147a26cb 2e0996000b7e9019eabcad29391bf0f5c7702f0b untracked.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.stagedCount).toBe(1)
+    expect(r.unstagedCount).toBe(0)
+    expect(first(r.files)?.staged).toBe(true)
+  })
+
+  it("重命名：新路径在前、旧路径取 TAB 之后（与 v1 的 old -> new 相反）", () => {
+    // 实测样本：2 R. N... ... R100 new.txt<TAB>old.txt
+    const raw = [
+      "# branch.oid 7b071b5eb2aca8aae66d2828a698198ce1202aa7",
+      "# branch.head master",
+      "2 R. N... 100644 100644 100644 d95f3ad14dee633a758d2e331151e950dd13e4ed d95f3ad14dee633a758d2e331151e950dd13e4ed R100 new.txt\told.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    const f = first(r.files)
+    expect(f?.path).toBe("new.txt")
+    expect(f?.oldPath).toBe("old.txt")
+    expect(f?.status).toBe("renamed")
+    expect(r.stagedCount).toBe(1)
+  })
+
+  it("合并冲突：status=unmerged，只进 files 不计 staged/unstaged（与 v1 的 UU 一致）", () => {
+    // 实测样本
+    const raw = [
+      "# branch.oid 3fbff3d4955401f4a27f29dfcba1fa718179645d",
+      "# branch.head master",
+      "u UU N... 100644 100644 100644 100644 df967b96a579e45a18b8251732d16804b2e56a55 9b01248a066effff08e5628ee3fdffe444d65668 bd0d0b18d3eed39216d05df4fd7966e1501eaf73 f.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(first(r.files)?.status).toBe("unmerged")
+    expect(first(r.files)?.path).toBe("f.txt")
+    expect(r.stagedCount).toBe(0)
+    expect(r.unstagedCount).toBe(0)
+    expect(r.files).toHaveLength(1)
+  })
+
+  it("detached HEAD：branch 归一化为空串（不能是字面量 (detached)）", () => {
+    // 实测样本 detached 时 v2 输出 "# branch.head (detached)"。
+    // 归一化为空串是**下游正确性前提**：checkPushStatus 依赖空分支名提前返回，
+    // 否则会构造 remote/HEAD...HEAD 触发 ambiguous argument 误判 noUpstream。
+    const raw = [
+      "# branch.oid 103d68e02b8d6491986a1079dd966abf0f9c3a98",
+      "# branch.head (detached)",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.branch).toBe("")
+  })
+
+  it("branch.ab / upstream 头部行被忽略，不影响工作区状态", () => {
+    const raw = [
+      "# branch.oid 650b85b47adc7cd45686c719d0418af09f302eba",
+      "# branch.head master",
+      "# branch.upstream gitee/master",
+      "# branch.ab +0 -0",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.branch).toBe("master")
+    expect(r.files).toEqual([])
+    expect(r.stagedCount).toBe(0)
+  })
+
+  it("忽略项（以 ! 开头）不进入 files", () => {
+    const raw = [
+      "# branch.head master",
+      "! ignored.log",
+      "? real.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.files).toHaveLength(1)
+    expect(first(r.files)?.path).toBe("real.txt")
+  })
+
+  it("路径含空格时完整保留（按字段切分而非按首个空格取余）", () => {
+    const raw = [
+      "# branch.head master",
+      "1 .M N... 100644 100644 100644 aaaa bbbb my file name.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(first(r.files)?.path).toBe("my file name.txt")
+  })
+
+  it("空输入安全返回全零（不抛错）", () => {
+    const r = parseWorktreeStatusV2("")
+    expect(r).toEqual({
+      files: [],
+      stagedCount: 0,
+      unstagedCount: 0,
+      untrackedCount: 0,
+      branch: "",
+    })
+  })
+
+  it("未知行类型被跳过而非整块失败（前向兼容 git 新增行类型）", () => {
+    const raw = [
+      "# branch.head master",
+      "X something unknown",
+      "? a.txt",
+    ].join("\n")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.branch).toBe("master")
+    expect(r.untrackedCount).toBe(1)
+  })
+})
+

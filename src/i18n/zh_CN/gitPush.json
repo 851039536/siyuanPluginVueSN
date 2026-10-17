@@ -641,7 +641,7 @@
     "noCustomIde": "暂无自定义 IDE，在下方添加",
     "confirmShort": "确认?",
     "gitConcurrency": "Git 并发数",
-    "concurrencyHint": "本地与网络命令各自的 git 子进程并发上限（1~10）",
+    "concurrencyHint": "本地与网络命令各自的 git 子进程并发上限（1~16）",
     "networkTimeout": "网络超时（秒）",
     "networkTimeoutHint": "网络/推送命令超时上限（30~600 秒），推送大仓库时网络较慢可将值调大",
     "indexTitle": "本地提交索引",

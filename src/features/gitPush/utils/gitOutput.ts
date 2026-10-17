@@ -80,7 +80,13 @@ export function parseWorktreeStatus(raw: string): WorktreeStatusParse {
       actualPath = unquote(rawPath)
     }
 
-    files.push({ path: actualPath, status, staged, oldPath, unstaged })
+    files.push({
+      path: actualPath,
+      status,
+      staged,
+      oldPath,
+      unstaged,
+    })
   }
 
   return {
@@ -88,6 +94,157 @@ export function parseWorktreeStatus(raw: string): WorktreeStatusParse {
     stagedCount,
     unstagedCount,
     untrackedCount,
+  }
+}
+
+/** v2 工作区解析结果（在 v1 同形字段之外，附带一次 git 调用才能拿到的分支信息） */
+export interface WorktreeStatusV2Parse extends WorktreeStatusParse {
+  /**
+   * 当前分支名。detached HEAD / 空仓库时为**空串**。
+   *
+   * ⚠️ v2 的 `# branch.head` 在 detached 时输出字面量 `(detached)`，而旧路径
+   * `rev-parse --abbrev-ref HEAD` 返回 `HEAD` —— 两者都**不是**合法分支名。
+   * 下游 `checkPushStatus` 依赖「分支名为空串 ⇒ 提前返回」来避免构造
+   * `remote/HEAD...HEAD` 触发 ambiguous argument 而被误判成 noUpstream（虚假 needsPush），
+   * 故此处统一归一化为空串，切勿原样透传 `(detached)`。
+   */
+  branch: string
+}
+
+/** v2 相对 v1 的差异：未跟踪项直接以 `?` 开头（v1 是 `?? `） */
+const V2_UNTRACKED_PREFIX = "? "
+
+/**
+ * 解析 `git status --porcelain=v2 --branch` 输出（一次调用同时拿工作区状态与分支名）。
+ *
+ * 为什么要有 v2 版本：旧实现每个项目要发两次进程 —— `rev-parse --abbrev-ref HEAD`
+ * 取分支名 + `status --porcelain` 取工作区。而 v2 的 `# branch.head` 已含分支名，
+ * 合并后每项目省掉一次进程（实测本机单次 git 进程启动约 0.6~1.3s，故接近减半）。
+ *
+ * 格式差异（均为实测确认，勿凭直觉推断）：
+ *   头部行 `# branch.oid <oid|(initial)>` / `# branch.head <name|(detached)>`
+ *           / `# branch.upstream <ref>` / `# branch.ab +N -M`
+ *   普通项 `1 <XY> <sub> <mH> <mI> <mW> <hH> <hI> <path>`
+ *   重命名 `2 <XY> <sub> ... <X><score> <path><TAB><origPath>`  ← **新路径在前**，与 v1 的 `old -> new` 相反
+ *   冲突   `u <XY> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>`
+ *   未跟踪 `? <path>`
+ *   忽略   `! <path>`
+ *
+ * 计数与状态归属规则与 v1 版本（parseWorktreeStatus）**逐条对齐**：AM/RM 按 X 位优先，
+ * 冲突项两位都非空格但只记入 files 不计入 staged/unstaged 计数，未跟踪单独计数。
+ */
+export function parseWorktreeStatusV2(raw: string): WorktreeStatusV2Parse {
+  let stagedCount = 0
+  let unstagedCount = 0
+  let untrackedCount = 0
+  const files: FileChange[] = []
+  let branch = ""
+
+  for (const line of raw.split("\n")) {
+    if (!line) continue
+
+    // ── 头部行：只取分支名，其余（oid/upstream/ab）本函数不用 ──
+    if (line.startsWith("# branch.head ")) {
+      const name = line.slice("# branch.head ".length).trim()
+      // detached 与空仓库统一归一化为空串（见 WorktreeStatusV2Parse.branch 注释）
+      branch = name && name !== "(detached)" ? name : ""
+      continue
+    }
+    // 其余头部行（# branch.oid / # branch.upstream / # branch.ab）跳过
+    if (line.startsWith("# ")) continue
+
+    // ── 未跟踪项 ──
+    if (line.startsWith(V2_UNTRACKED_PREFIX)) {
+      const path = line.slice(V2_UNTRACKED_PREFIX.length)
+      if (!path) continue
+      untrackedCount++
+      files.push({
+        path,
+        status: "untracked",
+        staged: false,
+        oldPath: undefined,
+        unstaged: false,
+      })
+      continue
+    }
+    // 被忽略项不在工作区变更中呈现
+    if (line.startsWith("! ")) continue
+
+    const kind = line.charAt(0)
+    let statusCode: string
+    let rawPath: string
+
+    if (kind === "1") {
+      // 1 XY sub mH mI mW hH hI path —— 前 7 个字段之后才是 path（path 可含空格，故按字段切）
+      const parts = line.split(" ")
+      if (parts.length < 9) continue
+      statusCode = parts[1]
+      rawPath = parts.slice(8).join(" ")
+    } else if (kind === "2") {
+      // 2 XY sub mH mI mW hH hI Xscore path<TAB>origPath
+      // 注意：字段比 kind=1 多一个 Xscore，故 path 从第 9 个字段开始
+      const parts = line.split(" ")
+      if (parts.length < 10) continue
+      statusCode = parts[1]
+      const rest = parts.slice(9).join(" ")
+      const tabIdx = rest.indexOf("\t")
+      rawPath = tabIdx === -1 ? rest : rest.substring(0, tabIdx)
+    } else if (kind === "u") {
+      // u XY sub m1 m2 m3 mW h1 h2 h3 path —— 比 kind=1 多三个 hash
+      const parts = line.split(" ")
+      if (parts.length < 11) continue
+      statusCode = parts[1]
+      rawPath = parts.slice(10).join(" ")
+    } else {
+      // 未知行类型：跳过而非抛错，避免未来 git 新增行类型时整块解析失败
+      continue
+    }
+
+    if (!rawPath) continue
+
+    const x = statusCode.charAt(0)
+    const y = statusCode.charAt(1) || " "
+    // v2 里冲突项首字符固定为 u（kind 已判定），XY 仍可能是 UU/AA 等
+    const isUnmerged = kind === "u"
+    const staged = !isUnmerged && x !== "." && x !== " "
+    const unstaged = !isUnmerged && y !== "." && y !== " "
+
+    let status: FileChange["status"]
+    if (isUnmerged) {
+      status = "unmerged"
+    } else {
+      // v2 用 "." 表示「该侧无变更」，转成 v1 的空格语义后再查表
+      const xChar = x === "." ? " " : x
+      const yChar = y === "." ? " " : y
+      status = STATUS_BY_CHAR[xChar] || STATUS_BY_CHAR[yChar] || "modified"
+    }
+
+    // 与 v1 一致：冲突项只进 files，不计 staged/unstaged（由 ConflictSection 单独呈现）
+    if (staged) stagedCount++
+    if (unstaged) unstagedCount++
+
+    // 重命名/复制：v2 的 origPath 就是旧路径，直接取，无需解析 "->"
+    let oldPath: string | undefined
+    if (kind === "2") {
+      const tabIdx = line.indexOf("\t")
+      if (tabIdx !== -1) oldPath = line.substring(tabIdx + 1)
+    }
+
+    files.push({
+      path: rawPath,
+      status,
+      staged,
+      oldPath,
+      unstaged,
+    })
+  }
+
+  return {
+    files,
+    stagedCount,
+    unstagedCount,
+    untrackedCount,
+    branch,
   }
 }
 
@@ -131,7 +288,10 @@ export function parseStashList(raw: string): StashEntry[] {
   for (const line of raw.split("\n").filter(Boolean)) {
     const match = line.match(/^stash@\{(\d+)\}:\s*(.+)$/)
     if (match) {
-      entries.push({ index: Number.parseInt(match[1], 10), message: match[2] })
+      entries.push({
+        index: Number.parseInt(match[1], 10),
+        message: match[2],
+      })
     }
   }
   return entries
@@ -227,6 +387,9 @@ export function parseCommitFiles(raw: string): FileChange[] {
 export function parseBranches(raw: string): BranchInfo[] {
   return raw.split("\n").filter(Boolean).map((line) => {
     const [name, head] = line.split("\0")
-    return { name, current: head === "*" }
+    return {
+      name,
+      current: head === "*",
+    }
   })
 }

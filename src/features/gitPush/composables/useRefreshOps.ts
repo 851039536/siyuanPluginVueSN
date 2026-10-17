@@ -138,9 +138,11 @@ export function useRefreshOps(deps: {
     const project = findProject(projects, id)
     if (!project) return
     await withRecordLoading(refreshingWorkingTree, id, async () => {
-      // 分支名经调度器缓存复用，避免每次刷新都重新 rev-parse
-      const branch = await scheduler.resolveBranch(id)
-      await scheduler.loadWorkingTree(id, { branch, force: true })
+      // 不预先 resolveBranch：交给 loadWorkingTree 走 v2 单调用路径
+      // （一次 git status --porcelain=v2 --branch 同时拿到分支名与工作区状态）。
+      // 旧写法在这里先 await resolveBranch 会多付一次 rev-parse 进程，
+      // 而 loadWorkingTree 随后又会用同一个分支名再查一次工作区。
+      await scheduler.loadWorkingTree(id, { force: true })
     })
   }
 

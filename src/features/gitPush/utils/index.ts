@@ -56,8 +56,9 @@ export {
   parseCommitShortStats,
   parseStashList,
   parseWorktreeStatus,
+  parseWorktreeStatusV2,
 } from "./gitOutput"
-export type { WorktreeStatusParse } from "./gitOutput"
+export type { WorktreeStatusParse, WorktreeStatusV2Parse } from "./gitOutput"
 export type { DayCellView } from "./analysis"
 
 export {

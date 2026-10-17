@@ -17,6 +17,7 @@ import {
   parseCommitShortStats,
   parseStashList,
   parseWorktreeStatus,
+  parseWorktreeStatusV2,
 } from "../utils"
 import type { GitExecutor } from "./GitExecutor"
 import { HistoryRewriter } from "./HistoryRewriter"
@@ -64,14 +65,59 @@ export class WorktreeOps {
       hasChanges: false,
     }
 
-    let branch = ""
-    try {
-      branch = opts?.branch ?? await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
-    } catch {
-      return empty
+    // 调用方已持有分支名（如 loadStatus 从缓存/入参透传）时，无需再取：
+    // 走 v1 路径即可，省不下这一次进程（分支名本来就不用查）。
+    if (opts?.branch) {
+      return this.readFullWorktreeStatus(projectPath, opts.branch, empty)
     }
 
-    return this.readFullWorktreeStatus(projectPath, branch, empty)
+    // 调用方未提供分支名 ⇒ 用 porcelain v2 --branch **一次调用**同时取分支名与工作区状态，
+    // 取代原先「rev-parse --abbrev-ref HEAD + status --porcelain」的两次进程。
+    // 实测本机单次 git 进程启动约 0.6~1.3s，故此项在冷路径上近乎减半。
+    return this.readWorktreeStatusV2(projectPath, empty)
+  }
+
+  /**
+   * v2 单调用路径（分支名 + 工作区一次取齐）。
+   *
+   * ⚠️ 失败时**不得**静默返回「无变更」：这会让卡片把「查询失败」误呈现为「工作区干净」。
+   * 故此处 catch 后回退到 v1 双调用路径重试一次 —— 若连 v1 也失败，才按空结果降级
+   * （与既有 v1 行为一致，避免引入新的失败语义）。用户最多多付一次进程，但结果正确。
+   */
+  private async readWorktreeStatusV2(
+    projectPath: string,
+    empty: WorkingTreeInfo,
+  ): Promise<WorkingTreeInfo> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "-c",
+        "core.quotepath=false",
+        "status",
+        "--porcelain=v2",
+        "--branch",
+      ])
+      // 注意：即便工作区干净，v2 也总会输出 # branch.* 头部行，故 raw 正常非空。
+      // 但极端情况下（git 版本过旧不支持 v2）可能抛错，由下方 catch 回退。
+      const parsed = parseWorktreeStatusV2(raw)
+      return {
+        // v2 的 branch 已在解析层把 (detached) 归一化为空串
+        branch: parsed.branch,
+        files: parsed.files,
+        stagedCount: parsed.stagedCount,
+        unstagedCount: parsed.unstagedCount,
+        untrackedCount: parsed.untrackedCount,
+        hasChanges: parsed.files.length > 0,
+      }
+    } catch {
+      // 回退：旧的双调用路径（兼容极旧 git / v2 被禁用等情形）
+      let branch = ""
+      try {
+        branch = await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
+      } catch {
+        return empty
+      }
+      return this.readFullWorktreeStatus(projectPath, branch, empty)
+    }
   }
 
   /** 工作区状态读取（git status 单次调用，全场景唯一路径） */

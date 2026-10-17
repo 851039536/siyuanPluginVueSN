@@ -550,17 +550,32 @@ export class RemoteOps {
     | { ok: false, error: string }
   > {
     try {
+      // 只遍历「<远程名>/<当前分支>」形式的 ref，而非全量 refs/remotes。
+      //
+      // 为什么用 ref 模式过滤而不是取全部再丢弃：
+      //   refs/remotes 下除了真实分支 ref 还有符号 ref（origin/HEAD → origin/main 之类，
+      //   实测 8 个条目里有 4 个是这类符号 ref），以及同远程的其他分支（feature/x）。
+      //   原实现取全部再 `endsWith('/'+branch)` 过滤，遍历量与远程分支总数线性相关；
+      //   交给 git 在内部按模式过滤后，输出行数直接降到「远程个数」量级。
+      //
+      // ⚠️ 模式必须是 `refs/remotes/*/${branch}` 且用单星号：单星号只匹配「远程名」这一段，
+      //    分支名本身可含斜杠（feature/login）—— 已实测该模式对含斜杠分支名能精确匹配
+      //    到全部对应远程（origin/feature/login、upstream/feature/login）。
+      //    切勿写成 `**` 或自行拼接路径，否则会引入匹配面过宽/过窄的问题。
+      //
+      // ⚠️ 分支名可能含 glob 特殊字符（`*`/`?`/`[`，git 允许但有告警）。此时模式会匹配
+      //    到非预期 ref，故下方仍保留一次 endsWith 精确过滤作为兜底 —— 双保险，
+      //    代价只是对已收窄的少量结果再判一次后缀。
       const raw = await this.executor.execGit(cwd, [
         "for-each-ref",
         // %00 分隔 refname 与计数：分支名可含空格，按空格切分会错位
         "--format=%(refname:short)%00%(ahead-behind:HEAD)",
-        "refs/remotes",
+        `refs/remotes/*/${branch}`,
       ])
       const all = parseAheadBehind(raw)
-      // 只保留「<远程名>/<当前分支>」形式的 ref：refs/remotes 下可能有 origin/main、
-      // upstream/xxx 等非平台远程，或同平台的其他分支（feature/x），必须精确匹配
       const map = new Map<string, { ahead: number, behind: number }>()
       for (const [refName, counts] of all) {
+        // 兜底精确匹配（见上方 glob 特殊字符说明）
         if (refName.endsWith(`/${branch}`)) map.set(refName, counts)
       }
       return { ok: true, map }

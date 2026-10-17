@@ -150,11 +150,21 @@ export function useProjectQueryScheduler(
     await run(id, "workingTree", async () => {
       const project = findProject(projects, id)
       if (!project) return
-      const branch = opts?.branch ?? (await resolveBranch(id))
+      // ⚠️ 只有在**调用方显式给了分支名**时才这里解析；否则一律留空交给
+      //    WorktreeOps.getWorkingTreeStatus 走 v2 单调用路径（一次 git 同时拿分支+工作区）。
+      //
+      //    历史写法是 `opts?.branch ?? (await resolveBranch(id))` —— 这会让每次
+      //    独立调用 loadWorkingTree（卡片工作区刷新、handleRefresh 等）都先付一次
+      //    rev-parse，v2 合并省下的进程又被赔回去。缓存命中时看似免费，但
+      //    缓存未命中/被 clearProject 后就是一次白跑的进程。
+      const branch = opts?.branch
       workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), {
         branch,
         fastWhenClean: opts?.fastWhenClean,
       })
+      // 回填分支别名缓存：v2 产出的分支名对后续 pushStatus 查询有用
+      const settled = workingTrees.value[id]?.branch
+      if (settled) setBranch(id, settled)
     }, { force: opts?.force })
   }
 
@@ -171,18 +181,64 @@ export function useProjectQueryScheduler(
 
     const project = findProject(projects, id)
     if (!project) return
-    // 单次解析分支名分发给两个查询：优先调用方显式传入 → 复用工作区缓存的 branch → 解析并缓存
-    const branch = opts?.branch || workingTrees.value[id]?.branch || (await resolveBranch(id))
-    if (!branch) return
-    await Promise.all([
-      // ensure 模式下已有结果的域不重复查询
-      mode === "ensure" && has(id, "pushStatus")
-        ? Promise.resolve()
-        : loadPushStatus(id, { branch }),
-      mode === "ensure" && has(id, "workingTree")
-        ? Promise.resolve()
-        : loadWorkingTree(id, { branch, fastWhenClean: opts?.fastWhenClean }),
-    ])
+
+    // ── 分支名来源（决定能否省掉一次 git 进程）──
+    // 目标：让 loadWorkingTree 走 WorktreeOps 的 v2 单调用路径（一次 git 同时返回
+    // 分支名与工作区），因此这里**尽量不预先 resolveBranch**（那会多付一次进程）。
+    //
+    // 优先级：
+    //  ① 调用方显式传入（refreshRemote / handleRefreshWorkingTree 已解析过，白得）
+    //  ② 工作区缓存里的 branch（上一次查询的产物，零成本）
+    //  ③ 两者都没有 ⇒ **留空**交给 loadWorkingTree 用 v2 自己取，取回后再回填别名缓存
+    //
+    // ⚠️ 为什么不再无条件 `await resolveBranch(id)`：那样每个首次加载的项目都会
+    //    先付一次 rev-parse（本机实测 0.6~1.3s），v2 合并的意义就没了。
+    //    代价是 pushStatus 需要等 branch 确定后才能发起 —— 见下方 Promise.all 编排。
+    const knownBranch = opts?.branch || workingTrees.value[id]?.branch || ""
+
+    const needPushStatus = !(mode === "ensure" && has(id, "pushStatus"))
+    const needWorkingTree = !(mode === "ensure" && has(id, "workingTree"))
+
+    // 工作区查询：不传 branch ⇒ 走 v2 单调用；传 branch ⇒ 走 v1（省不下进程，但调用方已知）
+    const workingTreeTask = needWorkingTree
+      ? loadWorkingTree(id, { branch: knownBranch || undefined, fastWhenClean: opts?.fastWhenClean })
+      : Promise.resolve()
+
+    /**
+     * pushStatus 需要一个分支名才能算 ahead/behind。
+     *
+     * 取法按「是否已经有分支名」分两种，**关键是绝不与 v2 重复解析**：
+     *   · 已有（入参/缓存）⇒ 立即并行发起，与工作区查询重叠
+     *   · 没有 ⇒ 等工作区查询的 v2 结果把 branch 写进 workingTrees，再从这里取。
+     *     此时**不能**再调 resolveBranch —— 那会额外发一次 rev-parse，
+     *     与 v2 的 status 构成「2 次进程」，把 P0 省下的那一次又赔回去。
+     *     只有在 v2 也没拿到分支（查询失败/空仓库）时，才回退 resolveBranch 兜底。
+     */
+    const pushStatusTask = (async () => {
+      if (!needPushStatus) return
+
+      let branch = knownBranch
+      if (!branch) {
+        // 等 v2 结果落地（workingTreeTask 已完成 or 未发起），再从缓存读
+        await workingTreeTask
+        branch = workingTrees.value[id]?.branch || ""
+      }
+      if (!branch) {
+        // v2 未产出分支名（空仓库 / detached / 查询失败）：兜底走一次解析。
+        // 此路径下 v2 本就未多付进程（它已失败或确实无分支），故不算重复。
+        branch = await resolveBranch(id)
+      }
+      if (!branch) return
+      await loadPushStatus(id, { branch })
+    })()
+
+    await Promise.all([workingTreeTask, pushStatusTask])
+
+    // 回填分支别名缓存：任何一次查询拿到的分支名都对后续调用有用，
+    // 可省掉下次的 resolveBranch。仅在非空时写（空串代表 detached/空仓/路径失效，
+    // 缓存会让项目修复后永远拿不到分支名）。
+    const settled = workingTrees.value[id]?.branch
+    if (settled && !opts?.branch) setBranch(id, settled)
   }
 
   /**
@@ -199,6 +255,10 @@ export function useProjectQueryScheduler(
       await manager.refreshRemotes(id)
       // 强制重解析分支名（fetch 后缓存分支名可能已变）
       const branch = await resolveBranch(id, { force: true })
+      // 把刚解析出的分支名写回缓存：紧随其后的 loadWorkingTree（如 handleRefresh 的
+      // 「全部刷新」会先 refreshRemote 再刷工作区）可直接复用，省掉一次 rev-parse。
+      // resolveBranch 内部已对非空分支写缓存，此处显式再写一次是防御性冗余（幂等）。
+      if (branch) setBranch(id, branch)
       // 一次网络 fetch 更新跟踪分支
       await manager.fetchAllForProject(id)
       // 状态重查必须 force：若加入别处在飞的状态查询，会拿到 fetch 之前的旧 ahead/behind

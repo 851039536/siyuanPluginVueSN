@@ -33,11 +33,28 @@ export interface ProjectScanResult {
 }
 
 /**
+ * 走 `git status` 变更集判据的文件数阈值（方案 B 的盈亏平衡点）。
+ *
+ * 实测（Windows / 本机，见 README「为什么不是无脑用 git status」）：
+ * - `git status --porcelain -uno` 固定成本 ≈ 220 ms（几乎全是进程启动）
+ * - 逐文件 `statSync` 边际成本 ≈ 93 µs/文件
+ * ⇒ 平衡点 ≈ 220ms / 93µs ≈ 2400 文件，留余量取 2500。
+ *
+ * 小于阈值时逐文件 statSync 更快（省掉一次 git 进程）；大于阈值时
+ * git status 一次扫描即给出变更集合，比逐文件 stat 快得多。
+ */
+export const GIT_STATUS_CHANGE_THRESHOLD = 2500
+
+/**
  * 扫描单项目已跟踪文件的存量行数（增量）。
  *
  * @param projectPath 仓库根绝对路径
  * @param trackedFiles 已跟踪文件相对路径清单（git ls-files 结果，应按扩展名过滤**之前**传入）
  * @param cached 上次落库的文件记录（Map<path, record>）；空 Map = 首次全量
+ * @param changedPaths 可选的「已知变更文件」集合（来自 `git status --porcelain`）。
+ *   传入时：集合内文件强制重读、集合外文件**直接复用缓存**（不再逐文件 statSync）；
+ *   不传时：逐文件 statSync 比对 (mtime, size)。
+ *   — 前者适合超大仓库（省掉数万次系统调用），后者适合中小仓库（省掉一次 git 进程）。
  * @note 扩展名过滤**不在本函数内生效**：被过滤掉的文件同样扫描并缓存，
  *   否则用户切换过滤条件时未缓存的文件必须重读一遍，过滤开关就成了性能陷阱。
  *   过滤只影响 {@link sumScannedLines} 的合计，不影响缓存内容。
@@ -47,6 +64,7 @@ export function scanProjectFileLines(
   projectPath: string,
   trackedFiles: string[],
   cached: Map<string, FileLinesRecord>,
+  changedPaths?: ReadonlySet<string>,
 ): ProjectScanResult {
   const modules = getNodeFsPathOs()
   const {
@@ -71,6 +89,21 @@ export function scanProjectFileLines(
         reused: false,
       })
       readCount++
+      continue
+    }
+
+    // ── 分支 A（方案 B）：已知变更集，未变更且已缓存 → 直接复用，**不 statSync** ──
+    // 这在超大仓库上把「N 次系统调用」降成「集合查找」，是本分支的全部收益。
+    // 只有 git 报告为变更的文件才继续往下走（statSync + 必要时读内容）。
+    if (changedPaths && prev && !changedPaths.has(file)) {
+      files.push({
+        path: file,
+        lines: prev.lines,
+        mtimeMs: prev.mtimeMs,
+        size: prev.size,
+        reused: true,
+      })
+      reusedCount++
       continue
     }
 

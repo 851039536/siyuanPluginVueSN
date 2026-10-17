@@ -55,6 +55,7 @@ import {
 } from "./managers/indexCoverage"
 import { createIndexIo } from "./managers/indexDir"
 import {
+  GIT_STATUS_CHANGE_THRESHOLD,
   scanProjectFileLines,
   sumScannedLines,
 } from "./managers/lineScan"
@@ -251,15 +252,20 @@ export class GitPushManager {
   /**
    * 扫描单项目的存量行数（增量）与生命周期时间。
    *
-   * 三层快路径，逐级降低开销：
-   * 1. `HEAD oid + gitdir` 都未变 → **直接返回上次汇总**（零 git、零读盘）；
-   * 2. HEAD 变了 → 逐文件 `statSync` 与缓存比对 (mtime, size)，只对变化的文件读内容；
-   * 3. 数据库不可用 → 全量扫（与改造前行为一致，功能不降级）。
+   * 性能设计（本机实测单次 git 调用 ≈ 300–500ms，几乎全是进程创建开销，
+   * 故**减少调用次数**比减少数据量更有效）：
+   * - 生命周期快照：`getRepoLifecycle` 用 **2 次** git 调用拿齐 HEAD oid / 末次提交 / 根提交
+   *   （原实现为 3 次：log -n1 + rev-parse --absolute-git-dir + log --reverse -1）；
+   * - `HEAD oid` 未变 → **直接读 SQLite 汇总行返回**，不再跑 ls-files、不再 statSync；
+   * - HEAD 变了 → `git ls-files`（1 次）+ 逐文件 statSync 比对，只重读变化文件。
+   *
+   * 失效判据只用 `project.id + HEAD oid`（不再比较 gitdir）：正是为了省掉
+   * `rev-parse --absolute-git-dir` 这次调用。
    *
    * 生命周期时间：
-   * - `firstCommit`（仓库新建）：首次算得后永久复用——历史根不会因为新提交而改变；
-   *   仅当历史被重写（HEAD 变了且缓存无值）时才重新取。用 `git log --reverse -1` 单次调用。
-   * - `lastCommit`（最后修改）：直接取 HEAD 提交时间，即快照里的 `lastDate`，零额外调用。
+   * - `firstCommit`（新建日期）：历史根时间，`rev-list --max-parents=0` 一次拿到；
+   *   只要非空就永久复用（根提交不会因新提交改变）。
+   * - `lastCommit`（最后修改）：HEAD 提交时间，随 `log -n1` 一并返回，零额外调用。
    *
    * @param project 目标项目（取其 id / name / 路径）
    * @param shouldInclude 扩展名过滤谓词（只影响 totalLines 合计，不影响缓存内容）
@@ -279,11 +285,12 @@ export class GitPushManager {
   }> {
     const projectPath = resolveValidPath(project)
     const store = await this.getLineStatsStore()
-    const snapshot = await this.reportOps.getHeadSnapshot(projectPath)
+    // 2 次 git 调用拿齐生命周期（原 3 次）
+    const lifecycle = await this.reportOps.getRepoLifecycle(projectPath)
     const nowIso = new Date().toISOString()
 
     // 空仓库（无 HEAD）：无文件、无提交，直接给出空结果（不必读写缓存）
-    if (!snapshot.head) {
+    if (!lifecycle.head) {
       return {
         totalLines: 0,
         fileCount: 0,
@@ -295,11 +302,10 @@ export class GitPushManager {
     }
 
     const cached: ProjectStatsRecord | null = store ? store.getProjectStats(project.id) : null
-    const identityMatch = !!cached
-      && cached.headOid === snapshot.head
-      && cached.gitDir === snapshot.gitDir
+    // 判据只用 HEAD oid（不再比 gitdir，以省掉一次 git 调用）
+    const identityMatch = !!cached && cached.headOid === lifecycle.head
 
-    // ── 快路径 1：HEAD 与仓库身份都未变 → 直接复用（零 git 扫描、零读盘）──
+    // ── 快路径 1：HEAD 未变 → 直接复用（零 ls-files、零 statSync、零读盘）──
     if (identityMatch && !forceRescan) {
       const files = store!.getFileLines(project.id)
       let totalLines = 0
@@ -309,10 +315,10 @@ export class GitPushManager {
         totalLines += rec.lines
         fileCount++
       }
-      // 瞬时收窄：缓存里可能缺 firstCommit（早期版本写入的行），补一次零成本 git
-      const firstCommit = cached.firstCommit || await this.reportOps.getFirstCommitDate(projectPath)
-      const lastCommit = snapshot.lastDate
-      if (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit) {
+      // 历史根时间：有值复用；无值但已尝试过（timesProbed）也不再重取，避免每次分析都跑一次 rev-list
+      const firstCommit = cached.firstCommit || (cached.timesProbed ? "" : lifecycle.rootDate)
+      const lastCommit = lifecycle.lastDate
+      if (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit || !cached.timesProbed) {
         try {
           store!.updateCommitTimes(project.id, firstCommit, lastCommit, cached.analyzedAt)
         } catch {
@@ -332,9 +338,17 @@ export class GitPushManager {
     }
 
     // ── 路径 2/3：增量扫描（store 可用）或全量扫描（store 不可用）──
+    // 这 1 次 ls-files 只在 HEAD 变化时发生
     const trackedFiles = await this.reportOps.getTrackedFiles(projectPath)
     const cachedFiles = store ? store.getFileLines(project.id) : new Map()
-    const scan = scanProjectFileLines(projectPath, trackedFiles, cachedFiles)
+    // 按仓库规模自适应选判据（实测盈亏平衡点见 GIT_STATUS_CHANGE_THRESHOLD）：
+    // - 大仓库：git status 一次扫描给出变更集，省掉数万次 statSync
+    // - 中小仓库：git status 的进程启动费反而更贵，直接逐文件 statSync
+    let changedPaths: Set<string> | null = null
+    if (cachedFiles.size > 0 && trackedFiles.length >= GIT_STATUS_CHANGE_THRESHOLD) {
+      changedPaths = await this.reportOps.getChangedTrackedFiles(projectPath)
+    }
+    const scan = scanProjectFileLines(projectPath, trackedFiles, cachedFiles, changedPaths ?? undefined)
     const totalLines = sumScannedLines(scan.files, shouldInclude)
     let fileCount = 0
     const fileLines = new Map<string, number | null>()
@@ -343,9 +357,9 @@ export class GitPushManager {
       if (f.lines !== null && shouldInclude(f.path)) fileCount++
     }
 
-    // 首次提交：缓存有值就复用（历史根不因新提交改变）；否则单次 git log --reverse -1
-    const firstCommit = cached?.firstCommit || await this.reportOps.getFirstCommitDate(projectPath)
-    const lastCommit = snapshot.lastDate
+    // 历史根时间：缓存有值就复用；否则用本次 rev-list 结果
+    const firstCommit = cached?.firstCommit || lifecycle.rootDate
+    const lastCommit = lifecycle.lastDate
 
     if (store) {
       try {
@@ -356,8 +370,9 @@ export class GitPushManager {
           fileCount,
           firstCommit,
           lastCommit,
-          headOid: snapshot.head,
-          gitDir: snapshot.gitDir,
+          headOid: lifecycle.head,
+          // 标记「时间已尝试」：即使首末提交为空（空仓库/git 异常）也不在下次重取
+          timesProbed: "1",
           analyzedAt: nowIso,
         }, scan.files)
       } catch (e) {

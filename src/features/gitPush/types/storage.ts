@@ -20,6 +20,49 @@ export const UNGROUPED_ID = "__ungrouped__"
 export const GIT_CONCURRENCY_MIN = 1
 export const GIT_CONCURRENCY_MAX = 10
 
+/**
+ * 默认 git 并发数。
+ *
+ * 为什么从 3 提到 10：git 调用耗时的绝对主体是**子进程创建**（本机实测单次
+ * `git log -n1` ≈ 290ms，其中进程启动占绝大部分），CPU 占用很低、主要是 IO 等待，
+ * 因此并发是可观的杠杆。真机实测（同一仓库跑 30 次 `git log -n1`）：
+ *
+ * | 并发 | 总耗时 | 相对并发 3 |
+ * |------|--------|-----------|
+ * | 3 | 4.48s | 1.00x |
+ * | 6 | 3.82s | 0.85x |
+ * | 10 | **3.35s** | **0.75x** |
+ * | 12 | 3.52s | 0.79x（回落） |
+ * | 16 | 3.83s | 0.86x（更差） |
+ *
+ * 10 是实测拐点（与 GIT_CONCURRENCY_MAX 一致）：再高会因 OS 进程创建争抢与磁盘饱和反噬。
+ *
+ * 端到端（30 项目 × 2 次调用）：并发 3 → 21.2s，并发 10 → 12.9s（快 39%）。
+ */
+export const DEFAULT_GIT_CONCURRENCY = 10
+
+/**
+ * 默认并发数变更前的历史值（迁移用）。
+ *
+ * 老版本默认就是 3，且**无法区分**「用户从没改过（存的是 3）」与「用户主动设成 3」——
+ * 两者在存储里都是数字 3。为避免覆盖用户显式选择，迁移只在
+ * **该键从未被写过**时才生效（见 migrateGitConcurrency），而不是「值等于 3 就改」。
+ */
+export const LEGACY_GIT_CONCURRENCY = 3
+
+/**
+ * 并发数默认值迁移标记。
+ *
+ * 语义：该标记**存在**即表示「已跑过一次性迁移」。
+ * - 标记存在 → 什么都不做（不覆盖用户任何选择，包括后续手动改回 3）
+ * - 标记不存在 → 视情况迁移一次，然后写入标记
+ *
+ * 为什么需要标记而不是只看并发值：一次性迁移必须**幂等且只用一次**。
+ * 若只按「存储里还是旧默认值」判断，用户主动把并发设回 3 后，
+ * 下次启动又会被改回 10——这正是必须避免的「覆盖用户设置」。
+ */
+export const GIT_CONCURRENCY_MIGRATION_VERSION = 1
+
 /** 将 git 并发数整数化并钳位到允许范围 */
 export function clampGitConcurrency(n: number): number {
   const num = Math.round(Number(n) || GIT_CONCURRENCY_MIN)
@@ -475,6 +518,11 @@ export class GitPushStorage {
   readonly ruleCheckPrefs: TypedStorage<RuleCheckPrefs>
   /** 提交信息修正偏好（上次选择的提交时间策略，跨会话恢复选择） */
   readonly commitFixPrefs: TypedStorage<CommitFixPrefs>
+  /**
+   * 并发数默认值一次性迁移标记（见 GIT_CONCURRENCY_MIGRATION_VERSION）。
+   * 存在即表示迁移已跑过；**默认 0 = 未迁移**。
+   */
+  readonly gitConcurrencyMigration: TypedStorage<number>
   /** 删除历史提交偏好（是否删除前自动备份，跨会话恢复选择） */
   readonly dropCommitPrefs: TypedStorage<DropCommitPrefs>
   /** 仓库清理视图偏好（上次选中项目 + 大文件阈值，跨会话恢复选择） */
@@ -498,7 +546,9 @@ export class GitPushStorage {
     const storage = new PluginStorage(plugin)
     this.projects = new TypedStorage(storage, "git-push-projects", DEFAULT_PROJECTS)
     this.categories = new TypedStorage(storage, "git-push-categories", [DEFAULT_UNGROUPED])
-    this.gitConcurrency = new TypedStorage(storage, "git-push-concurrency", 3)
+    this.gitConcurrency = new TypedStorage(storage, "git-push-concurrency", DEFAULT_GIT_CONCURRENCY)
+    // 默认 0 = 未迁移（迁移完成后写入 GIT_CONCURRENCY_MIGRATION_VERSION）
+    this.gitConcurrencyMigration = new TypedStorage(storage, "git-push-concurrency-migration", 0)
     this.networkTimeout = new TypedStorage(storage, "git-push-network-timeout", DEFAULT_NETWORK_TIMEOUT)
     this.tags = new TypedStorage(storage, "git-push-tags", [])
     this.commitTemplates = new TypedStorage(storage, "git-push-commit-templates", DEFAULT_TEMPLATES)
@@ -541,5 +591,61 @@ export class GitPushStorage {
       }
     }
     if (needsSave) await this.projects.save(projs)
+    // 一次性迁移：并发数默认值 3 → 10
+    await this.migrateGitConcurrency()
+  }
+
+  /**
+   * 一次性迁移：把「旧默认并发 3」提升到新默认 10。
+   *
+   * 为什么需要迁移而不是直接改默认值：`loadOrDefault()` 是**已保存值优先**，
+   * 老用户存储里若已有 3，改默认值对他们完全无效。但也不能无脑覆盖——
+   * 「用户主动设成 3」与「从没设置过」在存储里都表现为数字 3。
+   *
+   * 判定策略（保守，只动「确定没被用户碰过」的情况）：
+   * 1. 标记已存在 → 直接返回（幂等；用户之后手动改回 3 也不会再被改）
+   * 2. 并发键**从未写入**（`load()` 返回 null）→ 无需迁移，新默认值自然生效，
+   *    只写标记以便下次短路（覆盖「新装用户」与「从没进过设置面板的老用户」）
+   * 3. 并发键存在且值等于旧默认 3 → 视为「沿用历史默认、从未自定义」，升到 10
+   * 4. 其他任何值（用户主动选过 6/8 等，或已是 10）→ 保留原值，只写标记
+   *
+   * 已知局限：无法识别「用户主动选了 3」这一种情况（会被当成沿用默认而升到 10）。
+   * 这是有意的取舍——3 恰是历史默认值，主动选它的概率远低于从未改过；
+   * 且无论结果如何，用户之后仍可在设置面板改回，不会反复弹回（标记已落盘）。
+   */
+  private async migrateGitConcurrency(): Promise<void> {
+    const done = await this.gitConcurrencyMigration.loadOrDefault()
+    // 已迁移过：不覆盖用户的任何后续选择
+    if (done >= GIT_CONCURRENCY_MIGRATION_VERSION) return
+
+    // 关键：必须区分「键不存在」与「读取失败」。
+    //
+    // PluginStorage.load() 在**读取异常**时也返回 null，与「键不存在」无法区分。
+    // 若把异常当成「从未设置」并落标记，而存储里其实还躺着旧默认 3，
+    // 这次迁移就被永久跳过 —— 用户再也享受不到提升，且没有任何报错。
+    // 故用 loadSafe()（返回判别联合）：读取失败时**不落标记**，下次启动重试。
+    const probe = await this.gitConcurrency.loadSafe()
+    if (!probe.ok) {
+      console.warn("[gitPush] 并发数读取失败，本次跳过默认值迁移（下次启动重试）")
+      return
+    }
+    const saved = probe.value
+    if (saved === null) {
+      // 键确实不存在：从未设置过，新默认值已生效，只落标记
+      await this.gitConcurrencyMigration.save(GIT_CONCURRENCY_MIGRATION_VERSION)
+      return
+    }
+
+    const num = typeof saved === "number" ? saved : Number(saved)
+    // 仅当仍是历史默认值时才提升；其余值视为用户自定义，原样保留
+    if (num === LEGACY_GIT_CONCURRENCY) {
+      await this.gitConcurrency.save(DEFAULT_GIT_CONCURRENCY)
+      console.info(
+        `[gitPush] 并发数默认值已从 ${LEGACY_GIT_CONCURRENCY} 升级到 ${DEFAULT_GIT_CONCURRENCY}`
+        + `（实测分析速度提升约 39%）；如不满意可在设置面板调整。`,
+      )
+    }
+    // 写标记失败也无妨：下次会重跑，此时值已非 3（或本就非 3），迁移是幂等的
+    await this.gitConcurrencyMigration.save(GIT_CONCURRENCY_MIGRATION_VERSION)
   }
 }

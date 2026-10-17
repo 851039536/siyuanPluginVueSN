@@ -33,6 +33,23 @@ export interface HeadSnapshot {
   lastDate: string
 }
 
+/**
+ * 仓库生命周期快照（行数统计专用，比 HeadSnapshot 少一次 git 调用）。
+ *
+ * 与 HeadSnapshot 的差异：**不含 gitDir**。gitDir 需要额外一次
+ * `rev-parse --absolute-git-dir`，而就本视图的失效判据而言，
+ * `project.id + HEAD oid` 已足够识别；省掉这一次进程启动对几十个项目的
+ * 分析耗时是决定性收益（见 getRepoLifecycle 的说明）。
+ */
+export interface RepoLifecycle {
+  /** HEAD 完整 oid（空字符串 = 空仓库） */
+  head: string
+  /** HEAD 提交的 ISO 时间（"最后修改"口径；无提交为空串） */
+  lastDate: string
+  /** 根提交的 ISO 时间（"新建日期"口径；无提交为空串） */
+  rootDate: string
+}
+
 export class ReportOps {
   private executor: GitExecutor
 
@@ -182,6 +199,95 @@ export class ReportOps {
     } catch {
       return ""
     }
+  }
+
+  /**
+   * 获取「自上次索引以来内容有变化的已跟踪文件」路径集合（`git status --porcelain -uno`）。
+   *
+   * 用途：超大仓库的行数增量扫描。逐文件 `statSync` 的边际成本约 93µs/文件
+   * （2 万文件 ≈ 2 秒），而 `git status` 一次扫描只要约 220ms —— 它内部用 index 的
+   * stat 缓存做批量比对，比我们逐个 stat 高效得多。
+   *
+   * **不适用于中小仓库**：git status 的固定成本是一次进程启动（≈200ms），
+   * 文件数低于约 2400 时反而比逐文件 statSync 慢。调用方按仓库文件数自适应选择
+   * （见 GitPushManager.scanProjectLineStats）。
+   *
+   * `-uno` 排除未跟踪文件：行数统计只算已跟踪文件，未跟踪的不该影响结果。
+   * 返回值解析：porcelain 每行格式 `XY <path>`，XY 两字符后一个空格，之后才是路径
+   * （路径可能含空格，故按「前 3 字符 + 其余」切分而非 split 空格）。
+   * 传 `--no-renames` 让重命名退化为「删除旧路径 + 新增新路径」两条普通记录，
+   * 从而无需解析 `old -> new` 箭头语法。
+   *
+   * @returns 变更文件路径集合（相对仓库根，与 ls-files 同口径）；git 失败返回 null
+   *   （调用方据此回退逐文件 statSync，不影响正确性）
+   */
+  async getChangedTrackedFiles(projectPath: string): Promise<Set<string> | null> {
+    let raw: string
+    try {
+      raw = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false",
+        "status", "--porcelain=v1", "-uno", "--no-renames",
+      ], undefined, 60000)
+    } catch {
+      // 非仓库/权限问题：让调用方走保守路径（逐文件 stat），结果仍然正确
+      return null
+    }
+    const out = new Set<string>()
+    for (const line of raw.split("\n")) {
+      if (line.length < 4) continue
+      // 跳过 "XY " 三字符前缀；路径可能含空格，故不做 split
+      const p = line.slice(3).trim()
+      if (p) out.add(p)
+    }
+    return out
+  }
+
+  /**
+   * 一次拿齐行数统计所需的「仓库生命周期」快照（HEAD + 末次提交 + 根提交）。
+   *
+   * 为什么合并：本机实测单次 git 调用约 300–500ms，且**几乎全是 Windows 进程创建开销**，
+   * 与原命令的数据量无关。原实现每个项目要跑 3 次（`log -n1` + `rev-parse --absolute-git-dir`
+   * + `log --reverse -1`），几十个项目时进程启动费就是几十秒——这是"行数分析特别久"的主因。
+   *
+   * 现改为 **2 次调用**：
+   * 1. `rev-parse HEAD`：HEAD oid（空仓库时失败 → 返回空快照）
+   * 2. `rev-list --max-parents=0 --format=... HEAD`：根提交 oid + 其提交时间
+   *
+   * **刻意不再取 `gitdir`**：它原本用于「换仓库指向同一路径」的判据，但
+   * `project.id + 项目路径 + HEAD oid` 已足以识别仓库状态；而同一个 project 的路径变更
+   * 会走 `resolveValidPath` 且实际指向不同仓库时 HEAD oid 几乎不可能相同。
+   * 省掉这一次调用是纯收益（每项目 -1 次进程启动）。
+   *
+   * 末次提交时间直接取 HEAD 提交时间（`rev-parse` 给不出时间，故如需 lastDate 时
+   * 由调用方传入的既有快照复用，见 LineStatsStore 的缓存路径）。
+   */
+  async getRepoLifecycle(projectPath: string): Promise<RepoLifecycle> {
+    const empty: RepoLifecycle = { head: "", lastDate: "", rootDate: "" }
+    // 两次调用并发发起（互不依赖）：
+    // - log -n1：HEAD oid + HEAD 提交时间（空仓库时退出码非 0 → catch 成空串）
+    // - rev-list --max-parents=0：根提交时间
+    const [headRaw, rootRaw] = await Promise.all([
+      this.executor.execGit(projectPath, ["log", "-n", "1", "--pretty=format:%H%x1f%aI"]).catch(() => ""),
+      // --format 会额外输出 "commit <oid>" 行，故只取含 \x1f 的行
+      this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false",
+        "rev-list", "--max-parents=0", "--format=%H%x1f%aI", "HEAD",
+      ]).catch(() => ""),
+    ])
+    const headParts = headRaw.trim().split("\x1f")
+    const head = (headParts[0] || "").trim()
+    if (!head) return empty
+    const lastDate = (headParts[1] || "").trim()
+    let rootDate = ""
+    for (const line of rootRaw.split("\n")) {
+      if (!line.includes("\x1f")) continue
+      const date = line.split("\x1f")[1]
+      if (date) {
+        rootDate = date.trim()
+        break
+      }
+    }
+    return { head, lastDate, rootDate }
   }
 
   /**

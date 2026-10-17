@@ -31,6 +31,14 @@ export class TypedStorage<T> {
   }
 
   /**
+   * 加载数据并**区分「键不存在」与「读取失败」**（见 PluginStorage.loadSafe）。
+   * 供一次性迁移等「错判代价高」的场景使用；普通读取用 {@link loadOrDefault} 即可。
+   */
+  async loadSafe(): Promise<{ ok: true, value: T | null } | { ok: false, error: unknown }> {
+    return this._storage.loadSafe<T>(this._key)
+  }
+
+  /**
    * 加载数据，若不存在则返回默认值
    * 对象类型会与默认值进行浅合并（{ ...defaultValue, ...saved }），
    * 确保新增字段有默认值兜底

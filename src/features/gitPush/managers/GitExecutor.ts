@@ -2,7 +2,7 @@
 import type { ChildProcess } from "node:child_process"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
-import { clampGitConcurrency, clampNetworkTimeout, DEFAULT_NETWORK_TIMEOUT } from "../types/storage"
+import { clampGitConcurrency, clampNetworkTimeout, DEFAULT_GIT_CONCURRENCY, DEFAULT_NETWORK_TIMEOUT } from "../types/storage"
 
 /** 等待队列条目（本地池/网络池共用结构） */
 interface WaitQueueItem {
@@ -16,7 +16,7 @@ export class GitExecutor {
   /** 当前正在执行的 git 子进程数 */
   private gitRunning = 0
   /** 最大并发 git 子进程数（从存储加载，可通过 setGitConcurrency 修改） */
-  private gitMaxConcurrent = 3
+  private gitMaxConcurrent = DEFAULT_GIT_CONCURRENCY
   /** 网络命令超时（ms，从存储加载，可通过 setNetworkTimeout 修改；默认 240s） */
   private networkTimeoutMs = DEFAULT_NETWORK_TIMEOUT * 1000
   /** 等待队列（关联 signal + reject 以便 abort/destroy 时精准拒绝） */

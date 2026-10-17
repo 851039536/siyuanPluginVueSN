@@ -55,6 +55,39 @@ export class PluginStorage {
   }
 
   /**
+   * 加载数据（**区分「键不存在」与「读取失败」**）。
+   *
+   * 为什么不直接用 {@link load}：`load()` 在读取异常时也返回 null，
+   * 调用方无法分辨「这个键从没写过」与「这次读取失败了」。
+   * 对于**一次性数据迁移**这是危险的——把读取失败当成「从未设置」并落迁移标记，
+   * 会让迁移永久跳过；反之把「从未设置」当成失败则会每次启动重试。
+   *
+   * @returns `{ ok: true, value }`（value 为 null 表示键确实不存在）；
+   *          `{ ok: false, error }` 读取异常，调用方应跳过本次并稍后重试
+   */
+  async loadSafe<T>(key: string): Promise<{ ok: true, value: T | null } | { ok: false, error: unknown }> {
+    try {
+      const data = await this.plugin.loadData(key)
+      if (data === "" || data === undefined) {
+        return {
+          ok: true,
+          value: null,
+        }
+      }
+      return {
+        ok: true,
+        value: data as T,
+      }
+    } catch (error) {
+      console.error(`加载数据失败 [${key}]:`, error)
+      return {
+        ok: false,
+        error,
+      }
+    }
+  }
+
+  /**
    * 删除数据（通过保存空字符串实现）
    * @param key 存储键名
    * @returns 是否删除成功

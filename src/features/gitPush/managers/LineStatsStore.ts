@@ -42,10 +42,21 @@ export interface ProjectStatsRecord {
   firstCommit: string
   /** 最后一次提交 ISO（%aI，numstat 首条；空串 = 无提交） */
   lastCommit: string
-  /** HEAD oid（与 gitDir 一起构成缓存失效判据） */
+  /** HEAD oid（缓存失效判据，唯一比较字段） */
   headOid: string
-  /** gitdir 绝对路径（换仓库指向同路径时失效，避免误用他仓库数据） */
-  gitDir: string
+  /**
+   * 生命周期时间的「已尝试」标记（如 `"1"`）。
+   *
+   * 为什么需要：`firstCommit`/`lastCommit` 在空仓库或 git 异常时会取到空串。
+   * 若只用「缓存值为空」判断是否需要重取，这些项目**每次分析都会再跑一次
+   * rev-list / log**，几十个项目时又变成几十次进程启动。
+   * 记下标记后，空值也算「已知结果」，不再重试。
+   *
+   * 该列历史上是 `git_dir`（仓库身份判据），因判据已收敛为 `headOid` 而闲置，
+   * 故复用它存标记，无需 schema 迁移（旧行里是路径字符串 → 非 "1"，会被当作
+   * 「未尝试」，只是让老数据多取一次，随后写回标记）。
+   */
+  timesProbed: string
   /** 本次统计完成时间（ISO） */
   analyzedAt: string
 }
@@ -93,7 +104,8 @@ function toProjectStats(row: ProjectStatsRow): ProjectStatsRecord {
     firstCommit: row.first_commit ?? "",
     lastCommit: row.last_commit ?? "",
     headOid: row.head_oid ?? "",
-    gitDir: row.git_dir ?? "",
+    // 复用闲置的 git_dir 列存「时间已尝试」标记（详见 ProjectStatsRecord.timesProbed）
+    timesProbed: row.git_dir ?? "",
     analyzedAt: row.analyzed_at ?? "",
   }
 }
@@ -191,7 +203,8 @@ export class LineStatsStore {
         record.firstCommit,
         record.lastCommit,
         record.headOid,
-        record.gitDir,
+        // git_dir 列存「时间已尝试」标记（列名保留以免 schema 迁移）
+        record.timesProbed,
         record.analyzedAt,
       )
       // 先清后写：保证文件集合与磁盘现状严格一致（不残留已删除文件）
@@ -210,12 +223,13 @@ export class LineStatsStore {
   }
 
   /**
-   * 仅更新汇总行的生命周期字段（首/末次提交）。
+   * 仅更新汇总行的生命周期字段（首/末次提交）+「已尝试」标记。
    * 供「HEAD 未变、只需补首末提交时间」的快路径使用，避免读一遍文件明细。
+   * 标记一并写入，使「取到空值」也算已知结果，不再每次重试。
    */
   updateCommitTimes(projectId: string, firstCommit: string, lastCommit: string, analyzedAt: string): void {
     this.db.run(
-      `UPDATE ${TABLE.project_stats} SET first_commit = ?, last_commit = ?, analyzed_at = ?
+      `UPDATE ${TABLE.project_stats} SET first_commit = ?, last_commit = ?, analyzed_at = ?, git_dir = '1'
         WHERE project_id = ?`,
       firstCommit,
       lastCommit,

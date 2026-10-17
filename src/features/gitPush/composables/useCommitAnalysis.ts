@@ -36,6 +36,7 @@ import {
   compareProjectLineRank,
   fetchFailureReason,
   parseCommitAnalysisType,
+  poolProcess,
   ProjectFetchError,
   rankByCount,
   rankByCountWithTotal,
@@ -183,7 +184,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   function buildLineRankings(
     settled: PromiseSettledResult<{
       projectId: string
-      projectName: string
       totalLines: number
       fileCount: number
       firstCommit: string
@@ -241,9 +241,29 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   }
 
   /**
-   * 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时扫描存量行数生成行数排行。
-   * 两个域（提交分析 / 行数统计）共用同一把运行锁 runBusy（避免并发触发 git 子进程风暴），
-   * 但进度与结果状态各自写入对应槽位（analyzing+failedCount+analyzedAt 与 lineAnalyzing+lineFailedCount+lineAnalyzedAt）。
+   * 批量分析全部项目核心；needNumstat 时扫描存量行数生成行数排行。
+   *
+   * 并发策略（本轮优化重点，依据真机实测）：
+   *
+   * 1. **项目级并发池**而非 `Promise.allSettled` 一把梭。
+   *    每个项目要串行发 2~3 次 git，若 N 个项目同时起跑，瞬时排队 = 2N，
+   *    而 executor 池只有 GIT_CONCURRENCY_MAX 路 → 队列深、长尾明显。
+   *    改为 `poolProcess` 限流：同时在飞的项目数 ≤ executor 容量，
+   *    使每个项目的 git 调用几乎立即得到槽位，避免排队放大延迟。
+   *
+   * 2. **失败隔离**：poolProcess 里单个项目抛错不能中断整轮
+   *    （原 allSettled 天然具备该语义），故每个项目内部 catch 后记录失败明细。
+   *
+   * 3. 结果按 targets 顺序回填（poolProcess 是乱序完成的），保证排行与
+   *    `projects.value` 配置顺序一致，展示稳定不抖动。
+   *
+   * 注：**不把项目内并发压成串行**——`getRepoLifecycle` 内部那 2 次调用
+   * 互相独立，并发发出去能省下一个进程启动的等待，实测优于串行。
+   *
+   * 两个域（提交分析 / 行数统计）共用同一把运行锁 runBusy（避免并发触发
+   * git 子进程风暴），但进度与结果状态各自写入对应槽位
+   * （analyzing+failedCount+analyzedAt 与 lineAnalyzing+lineFailedCount+lineAnalyzedAt）。
+   *
    * @returns 是否实际执行（false = 分析进行中被拒绝，调用方据此决定是否需后续重试）
    */
   async function runCore(needNumstat: boolean, projectIds?: string[]): Promise<boolean> {
@@ -261,16 +281,27 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       if (projectIds?.length && !needNumstat && targets.length === 0) {
         return true
       }
-      const settled = await Promise.allSettled(targets.map(async (p) => {
+
+      /** 单项目抓取结果（含失败标记，供池外统一归类） */
+      type ProjectResult =
+        | { ok: true, projectId: string, entries: CommitAnalysisEntry[], totalLines: number, fileCount: number, firstCommit: string, lastCommit: string, fileLines: Map<string, number | null> }
+        | { ok: false, reason: unknown }
+
+      // 结果按 targets 下标写入（poolProcess 乱序完成，不能用 push）
+      const results: ProjectResult[] = new Array(targets.length)
+
+      const modules = getNodeFsPathOs()
+      /** 单项目抓取（路径预检 + 按域取数据），失败抛出由调用方捕获 */
+      const fetchOne = async (p: GitProject) => {
         const path = resolveValidPath(p)
-        // B 修复：路径无效的项目直接 throw 计入 failedCount（预检绕过 getCommitLog 内部吞错的语义，避免静默缺席）
-        const modules = getNodeFsPathOs()
+        // 路径无效的项目直接 throw 计入失败
+        // （预检绕过 getCommitLog 内部吞错的语义，避免静默缺席）
         if (modules && !modules.fs.existsSync(path)) {
           throw new ProjectFetchError("pathMissing", `Path not found: ${path}`)
         }
         // 行数统计：只扫存量（已跟踪文件行数 + 首/末次提交），不再抓全历史 numstat——
-        // 列表已移除增删净列，numstat 抓取是最慢的一环且无消费方（详见 README「行数统计口径」）。
-        // git 失败直接抛错计入 failedCount（不再本地 try-catch 降级为空数据）
+        // 列表已移除增删净列，numstat 抓取是最慢的一环且无消费方。
+        // git 失败直接抛错计入 failedCount（不本地 try-catch 降级为空数据）
         if (needNumstat) {
           const {
             totalLines,
@@ -280,8 +311,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             fileLines,
           } = await fetchProjectLineStats(p, path)
           return {
-            projectId: p.id,
-            projectName: p.name,
             entries: [] as CommitAnalysisEntry[],
             totalLines,
             fileCount,
@@ -291,13 +320,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           }
         }
         // 提交分析：保持 getCommitLog 链路（内部吞错返回 []，路径预检已在上方兜底）。
-        // 刻意不接本地索引：该分支需要 isMerge（规则检查豁免 merge 提交、修正/删除历史弹窗据此阻断），
-        // 而 numstat 索引不携带父提交信息；且此分支只取提交元信息（无 --numstat），本身已是廉价命令，
-        // 接入索引需额外存父提交数而收益有限，性价比不足。
+        // 刻意不接本地索引：该分支需要 isMerge（规则检查豁免 merge 提交、
+        // 修正/删除历史弹窗据此阻断），而 numstat 索引不携带父提交信息；
+        // 且此分支只取提交元信息（无 --numstat），本身已是廉价命令。
         const log = await manager.getCommitLog(path, commitCount.value)
         return {
-          projectId: p.id,
-          projectName: p.name,
           entries: log.map((c) => ({
             projectId: p.id,
             projectName: p.name,
@@ -313,19 +340,39 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           lastCommit: "",
           fileLines: new Map<string, number | null>(),
         }
-      }))
+      }
+
+      // 项目级并发池：并发度取 git 并发设置（executor 本地池容量），
+      // 使每个项目内部的 git 调用都能立刻拿到槽位，避免 2N 深队列放大尾部延迟
+      await poolProcess(targets, manager.getGitConcurrency(), async (p, i) => {
+        try {
+          const r = await fetchOne(p)
+          results[i] = {
+            ok: true,
+            projectId: p.id,
+            ...r,
+          }
+        } catch (e) {
+          // 失败隔离：单项目异常不得中断整轮（等价原 allSettled 语义）
+          results[i] = {
+            ok: false,
+            reason: e,
+          }
+        }
+      })
+
       let fail = 0
       const flat: CommitAnalysisEntry[] = []
-      // 本次运行的失败明细：settled 下标与 targets 一一对应，失败项据此回填项目名与本次实际使用的路径
+      // 本次运行的失败明细：与 targets 下标一一对应，失败项据此回填项目名与本次实际使用的路径
       const runFailures: ProjectFetchFailure[] = []
-      settled.forEach((r, i) => {
-        if (r.status === "fulfilled") {
-          flat.push(...r.value.entries)
+      results.forEach((r, i) => {
+        const target = targets[i]
+        if (!target) return
+        if (!r || r.ok) {
+          if (r?.ok) flat.push(...r.entries)
           return
         }
         fail++
-        const target = targets[i]
-        if (!target) return
         runFailures.push({
           projectId: target.id,
           projectName: target.name,
@@ -334,6 +381,32 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           kind: r.reason instanceof ProjectFetchError ? r.reason.kind : classifyFetchFailure(r.reason),
           reason: fetchFailureReason(r.reason),
         })
+      })
+      // 供 buildLineRankings 消费的 settled 视图：把池结果映射成原 PromiseSettledResult 形状，
+      // 使下游聚合逻辑零改动（保持「按 targets 顺序」的语义）
+      const settled = results.map((r): PromiseSettledResult<{
+        projectId: string
+        totalLines: number
+        fileCount: number
+        firstCommit: string
+        lastCommit: string
+      }> => {
+        if (r?.ok) {
+          return {
+            status: "fulfilled",
+            value: {
+              projectId: r.projectId,
+              totalLines: r.totalLines,
+              fileCount: r.fileCount,
+              firstCommit: r.firstCommit,
+              lastCommit: r.lastCommit,
+            },
+          }
+        }
+        return {
+          status: "rejected",
+          reason: r?.reason ?? new Error("未执行"),
+        }
       })
       // 写回结果：提交分析与行数统计各自的状态槽位（互不覆盖对方的「上次分析」时间与失败数）
       const stamp = new Date().toISOString()
@@ -350,14 +423,14 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         } = buildLineRankings(settled, nameById)
         projectLineRanking.value = projectRanking
         lineStatsSummary.value = summary
-        // per-project 已跟踪文件存量行数（供详情弹窗文件明细列查存量；numstat 已不再抓取，故作者明细为空）
+        // per-project 已跟踪文件存量行数（供详情弹窗文件明细列查存量；numstat 已不再抓取，故作者明细为空）。
+        // 直接从 results 取而非 settled：settled 是为聚合层构造的精简视图，不含 fileLines。
         const fileLinesMap = new Map<string, Map<string, number | null>>()
-        settled.forEach((r) => {
-          if (r.status !== "fulfilled") return
-          if (r.value.fileLines.size > 0) {
-            fileLinesMap.set(r.value.projectId, r.value.fileLines)
+        for (const r of results) {
+          if (r?.ok && r.fileLines.size > 0) {
+            fileLinesMap.set(r.projectId, r.fileLines)
           }
-        })
+        }
         perProjectNumstat.value = new Map()
         perProjectFileLines.value = fileLinesMap
         // 清理已删除项目的残留统计数据（防 SQLite 表随项目增减无界增长）

@@ -116,6 +116,52 @@ describe("scanProjectFileLines（增量扫描）", () => {
     expect(r.files[0].mtimeMs).toBe(rec.mtimeMs)
     expect(r.files[0].size).toBe(rec.size)
   })
+
+  // ── 方案 B：传入 changedPaths（git status 变更集）时，未变更文件不再 statSync ──
+  it("变更集内未列出的文件直接复用缓存，即使磁盘 mtime 已变也不重读", () => {
+    const rec = write("a.ts", "1\n2\n3\n")
+    // 模拟「文件其实被改过，但 git status 说没变」——此时应完全信任变更集
+    writeFileSync(join(dir, "a.ts"), "1\n2\n3\n4\n5\n6\n7\n", "utf8")
+    const future = new Date(Date.now() + 5000)
+    utimesSync(join(dir, "a.ts"), future, future)
+
+    const r = scanProjectFileLines(dir, ["a.ts"], new Map([["a.ts", rec]]), new Set<string>())
+    expect(r.files[0].lines).toBe(3) // 沿用缓存
+    expect(r.files[0].reused).toBe(true)
+    expect(r.readCount).toBe(0)
+  })
+
+  it("变更集内列出的文件强制重读并得到新行数", () => {
+    const rec = write("a.ts", "1\n")
+    writeFileSync(join(dir, "a.ts"), "1\n2\n3\n4\n", "utf8")
+
+    const r = scanProjectFileLines(dir, ["a.ts"], new Map([["a.ts", rec]]), new Set(["a.ts"]))
+    expect(r.files[0].lines).toBe(4)
+    expect(r.files[0].reused).toBe(false)
+    expect(r.readCount).toBe(1)
+  })
+
+  it("变更集里未缓存的文件仍会被读取（新增文件不会被漏掉）", () => {
+    writeFileSync(join(dir, "new.ts"), "1\n2\n", "utf8")
+    // 变更集没列出 new.ts，但缓存里也没有 → 必须读
+    const r = scanProjectFileLines(dir, ["new.ts"], new Map(), new Set<string>())
+    expect(r.files[0].lines).toBe(2)
+    expect(r.readCount).toBe(1)
+  })
+
+  it("变更集模式下混合场景：复用/重读各自计数正确", () => {
+    const a = write("a.ts", "1\n")
+    const b = write("b.ts", "1\n2\n")
+    writeFileSync(join(dir, "c.ts"), "1\n2\n3\n", "utf8")
+    const cache = new Map([["a.ts", a], ["b.ts", b]])
+    const r = scanProjectFileLines(dir, ["a.ts", "b.ts", "c.ts"], cache, new Set(["b.ts"]))
+
+    expect(r.reusedCount).toBe(2) // a 不在变更集 → 复用；b 在变更集但内容未变 → 也复用
+    expect(r.readCount).toBe(1) // 仅 c 真正读内容
+    expect(r.files.find((f) => f.path === "a.ts")?.lines).toBe(1)
+    expect(r.files.find((f) => f.path === "b.ts")?.lines).toBe(2)
+    expect(r.files.find((f) => f.path === "c.ts")?.lines).toBe(3)
+  })
 })
 
 describe("sumScannedLines（合计）", () => {

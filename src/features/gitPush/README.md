@@ -398,33 +398,79 @@ GitPushManager (facade)
 
 ### 行数统计的增量刷新（`managers/LineStatsStore.ts` + `managers/lineScan.ts`）
 
-行数排行刷新慢的根因有两个，都在这一层解决：
+行数排行刷新慢的根因有三个，都在这一层解决：
 
-1. **逐文件 `readFileSync` 全文只为数 `\n`** —— 只为了得到「这个文件有多少行」，却把整个文件内容读进内存。`node_modules` 虽被 `.gitignore` 排除，但 `.git` 中已跟踪的构建产物、`dist/`、`*.min.js`、lock 文件、2MB 以下的图片都会走这条路。几十个项目 × 数千文件时是**几十万次全文件读取**。
-2. **判据是 `rootHash`（HEAD 一变即全部作废）** —— 只要有一次提交，整仓库的行数缓存就全部失效重读。
+1. **每项目 3~4 次 git 调用** —— 实测单次 `git` 调用 **300–500 ms，几乎全是 Windows 进程创建开销**，与数据量无关。原实现每项目跑 `log -n1` + `rev-parse --absolute-git-dir` + `ls-files` + `log --reverse -1`，几十个项目时仅进程启动费就是几十秒。**这是最要命的一环。**
+2. **逐文件 `readFileSync` 全文只为数 `\n`** —— 已跟踪的 `dist/`、`*.min.js`、lock、2MB 以下的图片都会走这条路，几十个项目 × 数千文件 = 几十万次全文件读取。
+3. **判据是 `rootHash`（HEAD 一变即全部作废）** —— 一次提交就让整仓库重读。
 
 本层把逐文件行数连同 `(mtimeMs, size)` 一起落 `plugin.db`：
 
 | 表 | 用途 |
 |----|------|
-| `gp_project_stats` | 每项目一行：存量总行数 / 文件数 / 首末次提交 / `HEAD oid` + `gitdir` 判据 / 分析时间 |
+| `gp_project_stats` | 每项目一行：存量总行数 / 文件数 / 首末次提交 / `HEAD oid` 判据 / 分析时间 |
 | `gp_file_lines` | `(project_id, path)` 主键：行数（`NULL` = 二进制/超 2MB/读失败）+ `mtime_ms` + `size` |
 
-**三层快路径**（`GitPushManager.scanProjectLineStats`，逐级降低开销）：
+**快路径**（`GitPushManager.scanProjectLineStats`，逐级降低开销）：
 
-1. `HEAD oid` 与 `gitdir` 都未变 → **直接读 `gp_project_stats` 汇总行返回**，零 git、零读盘；
-2. `HEAD` 变了 → `git ls-files` + 逐文件 `statSync`，只对 `(mtimeMs, size)` 不一致的文件读内容计数；
-3. 数据库不可用（旧版思源 / 打开失败）→ 全量扫，**功能不降级**，只是回到改造前的速度。
+1. **生命周期快照只用 2 次 git**：`getRepoLifecycle` 用 `log -n1`（HEAD oid + 末次提交时间）与 `rev-list --max-parents=0 --format`（根提交时间）**并发**拿齐三项信息。原实现需 3 次（多一次 `rev-parse --absolute-git-dir`）。
+2. `HEAD oid` 未变 → **直接读 `gp_project_stats` 汇总行返回**，不再 `ls-files`、不再 `statSync`。
+3. `HEAD` 变了 → `git ls-files` + 按仓库规模自适应选判据（见下），只对变化的文件读内容。
+4. 数据库不可用（旧版思源 / 打开失败）→ 全量扫，**功能不降级**，只是回到改造前的速度。
 
-**正确性论证**：`(mtimeMs, size)` 相同即视为文件未变。这是 git 自身（index 的 stat 信息）与 rsync / make 采用的同一判据；唯一已知例外是「内容变了但 mtime 与大小被刻意还原」，正常开发/构建流程不会出现。该判据由 `managers/lineScan.spec.ts` 用真实临时目录 + 真实 fs 逐条验证（含等长内容替换、子目录、超限文件、缺失文件）。
+**为什么失效判据只用 `HEAD oid` 而不再比较 `gitdir`**：`gitdir` 需要额外一次 `rev-parse --absolute-git-dir`。就「换仓库指向同一路径」这一极端场景而言，`project.id + HEAD oid` 已足够识别（不同仓库的 HEAD oid 几乎不可能相同）。省掉这次进程启动，对几十个项目的分析耗时是决定性收益。
+
+**为什么不是无脑用 `git status`（实测数据）**：
+
+| 判据 | 成本 |
+|------|------|
+| `git status --porcelain -uno` | 固定 ≈ 220 ms（进程启动）+ 扫描，一次搞定 |
+| 逐文件 `statSync` | ≈ 93 µs/文件（2000 文件 ≈ 190 ms，2 万文件 ≈ 2 s） |
+
+⇒ 盈亏平衡点约 **2400 文件**。故 `GIT_STATUS_CHANGE_THRESHOLD = 2500`：**小于阈值**逐文件 `statSync`（省掉一次 git 进程更快）；**大于阈值**用 `git status` 的变更集（省掉数万次系统调用）。变更集模式下未列出的文件直接复用缓存、完全不做 `stat`。
+
+**正确性论证**：`(mtimeMs, size)` 相同即视为文件未变。这是 git 自身（index 的 stat 信息）与 rsync / make 采用的同一判据；唯一已知例外是「内容变了但 mtime 与大小被刻意还原」，正常开发/构建流程不会出现。该判据由 `managers/lineScan.spec.ts` 用真实临时目录 + 真实 fs 逐条验证（含等长内容替换、子目录、超限文件、缺失文件、变更集两模式）。
+
+### 批量分析的并发调度（`useCommitAnalysis.runCore` + `GitExecutor`）
+
+`runCore` 对全部项目抓取数据，原先用 `Promise.allSettled` 一把梭。三处调整：
+
+1. **默认并发 3 → 10**（`DEFAULT_GIT_CONCURRENCY`）。git 调用耗时的绝对主体是子进程创建，CPU 占用低、以 IO 等待为主，故并发是直接杠杆。真机实测（同仓库跑 30 次 `git log -n1`）：并发 3 → 4.48s，6 → 3.82s，**10 → 3.35s（0.75x）**，12 → 3.52s，16 → 3.83s。**10 是拐点**，故新默认值取 10（与 `GIT_CONCURRENCY_MAX` 一致）。
+2. **项目级并发池**（`poolProcess`，并发度 = `getGitConcurrency()`）替代 `Promise.allSettled`。原写法下 N 个项目同时起跑、每项目内部再串行发 2~3 次 git，瞬时排队可达 2N，而 executor 池只有 10 路 → 队列过深、长尾明显。限流后每个项目的 git 调用几乎立即拿到槽位。
+3. **失败隔离保持在项目级**：`poolProcess` 里单项目 `try/catch` 后记录失败明细，等价原 `allSettled` 语义；结果按 `targets` 下标回填（池是乱序完成的），保证排行顺序与项目配置一致、不抖动。
+
+> **老用户如何拿到新默认值**：`loadOrDefault()` 是「已保存值优先」，故仅改默认值对已有存储的 3 无效。为此加了**一次性迁移**（`GitPushStorage.migrateGitConcurrency`，在 `init()` 中执行）：
+>
+> | 存储状态 | 迁移行为 |
+> |----------|----------|
+> | 标记已存在 | 什么都不做（幂等；用户后续手动改回 3 也不会被覆盖） |
+> | 并发键从未写入 | 不写键（新默认 10 自然生效），只落标记 |
+> | 值为旧默认 `3` | 提升到 10 并打印提示 |
+> | 任意其他值（1/2/4/6/8/10） | 原样保留，只落标记 |
+> | **读取失败** | **不落标记**，下次启动重试 |
+>
+> 最后一行是刻意的：`PluginStorage.load()` 在读取异常时也返回 null，与「键不存在」无法区分。若把异常当成「从未设置」并落标记，迁移会永久跳过且无报错。故新增 `PluginStorage.loadSafe()` 返回判别联合，让迁移能区分两者。
+>
+> **已知局限**：无法识别「用户主动选了 3」这一种情况（会被当成沿用默认而升到 10）。这是有意的取舍——3 恰是历史默认值，主动选它的概率远低于从未改过；且结果可逆（用户之后在设置面板改回即可，不会反复弹回）。
+
+**并发不是越高越好**：实测 12/16 反而回落（OS 进程创建争抢 + 磁盘饱和）。`GIT_CONCURRENCY_MAX = 10` 即该拐点，设置面板可调范围与之对齐。
 
 **几个刻意的设计选择**：
 
 - **扩展名过滤不参与扫描**：被过滤掉的文件同样扫描并缓存，过滤只在 `sumScannedLines` 合计时生效。否则用户切换过滤条件时，未缓存的文件必须重读一遍——过滤开关就成了性能陷阱。
 - **整体覆盖写而非逐条 upsert**（`saveProjectStats` 单事务内 `DELETE` + 批量 `INSERT`）：仓库文件可能被删除，逐条 upsert 会让已删除文件的旧记录永久残留并计入合计，数字虚高。
-- **`firstCommit` 永久复用**：历史根不会因为新提交而改变，故首次算得后直接缓存，之后即使 `HEAD` 变化也不再调用 `git log --reverse -1`。`lastCommit` 直接取 HEAD 快照里的 `lastDate`，**零额外 git 调用**。
+- **首末提交时间带「已尝试」标记**：`firstCommit`/`lastCommit` 在空仓库或 git 异常时为空串。若只按「值为空 ⇒ 重取」判断，这些项目**每次分析都会再跑一次 git**。故 `gp_project_stats.git_dir` 列（判据收敛后闲置，列名保留以免 schema 迁移）复用存 `"1"` 标记，空值也算已知结果，不再重试。
+- **符号链接记 `null`**：`statSync` 会跟随链接，若跟踪路径指向 `/dev/zero` 或巨大文件，会把靶内容当源码行数读入。故先用 `lstatSync` 判链接，链接不读靶文件（与 `reportMetrics.countFileLines` 刻意不同，后者跟随链接）。
 - **项目删除后清理**：`runCore` 末尾调用 `pruneLineStats(当前项目 id 列表)`，删除不在保留集合中的行，防数据无界增长。
 - **降级不静默**：数据库不可用时 `getLineStatsStore()` 打 warn 并返回 `null`，`scanProjectLineStats` 立刻走全量路径；参数 `source` 字段（`cache` / `incremental` / `full`）可用于排障。
+
+**性能对比**（30 个项目、每项目数千文件的估算）：
+
+| 阶段 | git 调用/项目 | 30 项目总耗时 |
+|------|---------------|---------------|
+| 改造前（每次读全部文件 + 4 次 git） | 4 | 数十秒 |
+| 本轮优化后（HEAD 未变） | **2** | **≈ 2 × 300ms × 30 / 并发 ≈ 2–4 s** |
+| 本轮优化后（HEAD 变了，中小仓库） | 3（+ls-files） | 略高，且只重读变化文件 |
 
 > 表命名遵循 [AGENTS.md § SQLite 存储规范](../../../AGENTS.md#sqlite-存储规范强制2026-10-17)：统一单库 `plugin.db`、功能前缀 `gp_`、运行时只 `CREATE TABLE IF NOT EXISTS` 不做数据迁移。
 

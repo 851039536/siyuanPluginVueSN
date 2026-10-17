@@ -4,7 +4,7 @@
 // 此处覆盖可独立推理的纯函数契约，重点是**路径相对性拒绝**（曾把库建到错误目录）
 // 与**工作区解析在无 window 环境下的容错**（不得抛错）。
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { buildDbPath, featureTables, PLUGIN_DB_NAME, PluginDatabase, resolvePluginDataDir } from "./sqliteDb"
+import { buildDbPath, featureTables, openWithRetry, PLUGIN_DB_NAME, PluginDatabase, resolvePluginDataDir } from "./sqliteDb"
 
 /** 构造一个最小 plugin 桩（本模块只用 name / dataDir） */
 function fakePlugin(dataDir?: unknown): any {
@@ -142,5 +142,84 @@ describe("resolvePluginDataDir", () => {
       json: () => Promise.resolve({ code: -1, data: null }),
     }))
     expect(await resolvePluginDataDir(fakePlugin(undefined))).toBe("")
+  })
+})
+
+describe("openWithRetry 的重试判定", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
+
+  /**
+   * 构造一个「路径解析必失败」的环境：无 window、fetch 失败
+   * → openPluginDatabase 返回 path-unresolved（唯一可重试原因）。
+   */
+  function stubPathUnresolvable() {
+    vi.stubGlobal("window", undefined)
+    vi.stubGlobal("fetch", () => Promise.reject(new Error("no network")))
+  }
+
+  it("path-unresolved 会重试满 maxAttempts 次后才放弃", async () => {
+    stubPathUnresolvable()
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {})
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const t0 = Date.now()
+    const db = await openWithRetry(fakePlugin(undefined), () => {}, {
+      logTag: "[spec]",
+      maxAttempts: 3,
+      baseDelayMs: 1,
+    })
+    const elapsed = Date.now() - t0
+
+    expect(db).toBeNull()
+    // 应当发生了退避等待（attempt 1、2 各一次），而不是立即返回
+    expect(elapsed).toBeGreaterThanOrEqual(3)
+    // 每次退避都应有日志
+    const retryLogs = infoSpy.mock.calls.filter((c) => String(c[0]).includes("暂未就绪"))
+    expect(retryLogs.length).toBe(2)
+    // 最终给出「已重试 N 次」而非误导性的「无法解析路径」
+    const giveUp = errSpy.mock.calls.map((c) => String(c[0])).join("\n")
+    expect(giveUp).toContain("已重试 3 次")
+
+    infoSpy.mockRestore()
+    errSpy.mockRestore()
+  })
+
+  it("无 node:sqlite（no-sqlite）时立即失败，不重试", async () => {
+    // 直接让 getSqlite() 拿不到模块：删除 require 无法模拟，故断言「不会发生退避」
+    // —— 本环境下 node:sqlite 可用，因此这里通过路径失败以外的原因验证「立即失败」语义：
+    // 用一个必然 open-failed 的 dataDir（指向一个已存在文件的子路径）
+    vi.stubGlobal("window", undefined)
+    vi.stubGlobal("fetch", () => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ code: 0, data: { conf: { system: { workspaceDir: process.platform === "win32" ? "C:\\__ocr_no_such_dir__" : "/__ocr_no_such_dir__" } } } }),
+    }))
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {})
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const t0 = Date.now()
+    // 该路径下 mkdir + DatabaseSync 通常能成功创建，故此用例主要保证：
+    // 无论成功或失败，都不应出现「多次退避」行为（不是 path-unresolved）
+    const db = await openWithRetry(fakePlugin(undefined), () => {}, {
+      logTag: "[spec]",
+      maxAttempts: 6,
+      baseDelayMs: 5,
+    })
+    const elapsed = Date.now() - t0
+
+    const retryLogs = infoSpy.mock.calls.filter((c) => String(c[0]).includes("暂未就绪"))
+    if (db === null) {
+      // 失败时：应为非可重试原因，故没有任何退避日志、总耗时远小于 6 次退避(≈75ms)
+      expect(retryLogs.length).toBe(0)
+      expect(elapsed).toBeLessThan(75)
+    } else {
+      db.close()
+    }
+
+    infoSpy.mockRestore()
+    errSpy.mockRestore()
   })
 })

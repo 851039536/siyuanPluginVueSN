@@ -202,7 +202,7 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 用 `featureTables("<前缀>", ["实体A","实体B"])` 生成，禁止手写裸表名：
 
 ```ts
-import { featureTables, openPluginDatabase, type PluginDatabase } from "@/utils/sqliteDb"
+import { featureTables, openWithRetry, type PluginDatabase } from "@/utils/sqliteDb"
 
 /** 表命名空间前缀：统一单库下按功能隔离（websiteNavigation → wn） */
 const TABLE = featureTables("wn", ["entries", "categories"] as const)
@@ -248,9 +248,21 @@ db.run(`INSERT INTO ${TABLE.items} (id, name, created_at) VALUES (?, ?, ?)`, id,
 db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
 ```
 
-**`openWithRetry(plugin, migrateFn, { logTag })` 已封装**：打开库、启动早期 6 次退避重试、
-区分「环境不支持 node:sqlite」（立即放弃）与「路径暂未就绪」（重试）、
-建表失败时关闭句柄防泄漏、成功时打印库路径。**新功能不要再自己写这套循环。**
+**`openWithRetry(plugin, migrateFn, { logTag })` 已封装**：打开库、启动早期退避重试、
+按失败原因分流、建表失败时关闭句柄防泄漏、成功时打印库路径。**新功能不要再自己写这套循环。**
+
+失败原因由 `openPluginDatabase()` 以判别联合返回（`OpenResult`），**只有 `path-unresolved` 会重试**：
+
+| `reason` | 含义 | 是否重试 |
+|----------|------|---------|
+| `no-sqlite` | 环境无 node:sqlite（旧思源/浏览器） | ❌ 永久 |
+| `no-node` | 无 Node fs/path 能力 | ❌ 永久 |
+| `path-unresolved` | 工作区路径暂未就绪（启动早期） | ✅ **唯一重试项** |
+| `open-failed` | 打开失败：文件被独占 / 库损坏 / 磁盘只读（携带原始 `error`） | ❌ 需人工介入 |
+
+> 历史教训：早期实现把所有失败压成同一个 `null`，导致 `SQLITE_CANTOPEN` 这类**永久性错误**
+> 也被当成「路径未就绪」退避重试，白等约 10.5s 并刷出误导性的「插件数据目录暂未就绪」日志。
+> 新增失败场景时**必须**在 `OpenFailureReason` 中加分支，不要复用一个笼统的 null。
 
 ### 实现要点（均为踩过的坑，勿省）
 

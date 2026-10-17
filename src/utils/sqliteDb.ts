@@ -5,11 +5,12 @@
  * 无需原生编译，随思源升级自动可用。
  *
  * 设计契约（调用方必须遵守）：
- * - `openPluginDatabase()` 返回 null 表示当前环境不支持 SQLite，调用方**必须回退**
- *   到既有的 PluginStorage/TypedStorage 路径，功能不得因此不可用；
- * - 所有方法失败时抛出，由调用方统一降级；
- * - 库文件位于 `{dataDir}/storage/petal/{pluginName}/{name}.db`（与 saveData 同目录，见
- *   docs/sqlite-persistence-review.md §0.9）。
+ * - `openPluginDatabase()` 返回**判别联合**：成功 `{ ok: true, db }`，失败 `{ ok: false, reason }`。
+ *   `reason` 区分「永久性失败」（no-sqlite / no-node / open-failed）与「暂未就绪」
+ *   （path-unresolved）。**只有 path-unresolved 值得重试**，`openWithRetry()` 已按此实现；
+ * - 数据库**不可用即功能不可用**（纯 SQLite，无 JSON 回退），失败必须让用户可感知，
+ *   禁止静默吞掉；
+ * - 库文件位于 `<插件数据目录>/plugin.db`（全插件唯一，见 `PLUGIN_DB_NAME`）。
  *
  * WAL 注意事项（关键，勿删）：
  * 启用 WAL 后，已提交数据可能仍留在 `-wal` 附属文件中（实测：主库 4KB / wal 48KB），
@@ -158,6 +159,28 @@ export async function resolveDbPath(plugin: Plugin, name = PLUGIN_DB_NAME): Prom
 }
 
 /**
+ * 打开数据库的失败原因。
+ *
+ * 为什么要区分：`openWithRetry` 只应对「路径暂未就绪」退避重试；
+ * 其余原因重试**不可能成功**，应立即失败并保留真实错误，
+ * 否则会白等 10.5s 并刷出误导性的「插件数据目录暂未就绪」日志。
+ */
+export type OpenFailureReason =
+  /** 当前环境没有 node:sqlite（旧版思源 / 纯浏览器）——永久性 */
+  | "no-sqlite"
+  /** 拿不到 node 的 fs/path——永久性 */
+  | "no-node"
+  /** 工作区路径解析不出来（启动早期内核未就绪）——**唯一可重试** */
+  | "path-unresolved"
+  /** 打开/建目录/PRAGMA 失败，如 SQLITE_CANTOPEN / EBUSY / 库损坏——需人工介入 */
+  | "open-failed"
+
+/** 打开数据库的结果（判别联合，避免把不同失败压成同一个 null） */
+export type OpenResult =
+  | { ok: true, db: PluginDatabase }
+  | { ok: false, reason: OpenFailureReason, error?: unknown }
+
+/**
  * 打开（必要时创建）插件数据库。
  *
  * **统一单库**：全插件共用一个 `plugin.db`，而不是每个功能一个库文件。
@@ -167,21 +190,21 @@ export async function resolveDbPath(plugin: Plugin, name = PLUGIN_DB_NAME): Prom
  *
  * @param plugin 思源插件实例
  * @param name 库文件名（不含扩展名）；默认即是唯一的那一个，**不要按功能传不同值**
- * @returns 句柄；环境不支持或路径不可解析时返回 null
+ * @returns 成功时带句柄，失败时带**具体原因**（调用方据此决定是否重试）
  */
 export async function openPluginDatabase(
   plugin: Plugin,
   name = PLUGIN_DB_NAME,
-): Promise<PluginDatabase | null> {
+): Promise<OpenResult> {
   const sqlite = getSqlite()
-  if (!sqlite) return null
+  if (!sqlite) return { ok: false, reason: "no-sqlite" }
   const node = getNodeFsPathOs()
-  if (!node) return null
+  if (!node) return { ok: false, reason: "no-node" }
 
   const dbPath = await resolveDbPath(plugin, name)
   if (!dbPath) {
-    // 路径无法解析（通常是启动早期内核未就绪）——由调用方决定是否重试
-    return null
+    // 路径无法解析（通常是启动早期内核未就绪）——唯一值得重试的情况
+    return { ok: false, reason: "path-unresolved" }
   }
 
   try {
@@ -191,10 +214,10 @@ export async function openPluginDatabase(
     // WAL：读写并发更好，且崩溃不损坏主库。注意其副作用见文件头「WAL 注意事项」
     db.exec("PRAGMA journal_mode=WAL")
     db.exec("PRAGMA foreign_keys=ON")
-    return new PluginDatabase(sqlite, db, dbPath)
+    return { ok: true, db: new PluginDatabase(sqlite, db, dbPath) }
   } catch (error) {
     console.error(`[sqlite] 打开数据库失败 [${dbPath}]:`, error)
-    return null
+    return { ok: false, reason: "open-failed", error }
   }
 }
 
@@ -234,12 +257,11 @@ export interface OpenWithRetryOptions {
  * 打开插件数据库，并在**启动早期内核未就绪**时自动退避重试。
  *
  * 为什么需要重试：`openPluginDatabase()` 解析路径依赖工作区目录，
- * 而 `onload` 阶段（registerFeature 预热）内核可能尚未就绪，`getConf` 会失败。
+ * 而 `onload` 阶段（registerFeature 预热）内核可能尚未就绪。
  * 若不重试，一次瞬时失败就会让本进程整个生命周期都用不了数据库。
  *
- * 同时区分两类失败，避免无谓重试：
- * - **环境不支持**（无 `node:sqlite`）→ 立即放弃，重试无意义；
- * - **路径暂未就绪** → 退避重试，耗尽后放弃。
+ * **只对 `path-unresolved` 重试**。其余失败（无 node:sqlite / 打开失败 / 库损坏）
+ * 重试不可能成功，立即返回并保留真实错误 —— 避免白等 10.5s 与误导性日志。
  *
  * 成功后调用 `migrateFn(db)` 建表/播种；若 `migrateFn` 抛错，会关闭连接并返回 null
  * （避免半初始化的句柄泄漏）。
@@ -259,45 +281,65 @@ export async function openWithRetry(
   const { logTag, maxAttempts = 6, baseDelayMs = 500 } = options
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const db = await openPluginDatabase(plugin)
-      if (db) {
-        try {
-          migrateFn(db)
-        } catch (error) {
-          // 建表/播种失败：关掉句柄，避免半初始化连接泄漏
-          console.error(`${logTag} 数据库初始化（建表/播种）失败:`, error)
-          db.close()
-          return null
-        }
-        console.info(`${logTag} SQLite 已启用: ${db.getPath()}`)
-        return db
-      }
+    const result = await openPluginDatabase(plugin)
 
-      // 环境不支持 → 重试无意义
-      if (!isSqliteAvailable()) {
-        console.error(
-          `${logTag} 当前环境不支持 node:sqlite（需思源 Electron 44+ / Node 24+），该功能不可用。`,
-        )
+    if (result.ok) {
+      const db = result.db
+      try {
+        migrateFn(db)
+      } catch (error) {
+        // 建表/播种失败：关掉句柄，避免半初始化连接泄漏
+        console.error(`${logTag} 数据库初始化（建表/播种）失败:`, error)
+        db.close()
         return null
       }
+      console.info(`${logTag} SQLite 已启用: ${db.getPath()}`)
+      return db
+    }
 
-      // 路径暂未就绪 → 退避重试
-      if (attempt < maxAttempts) {
-        const waitMs = baseDelayMs * attempt
-        console.info(`${logTag} 插件数据目录暂未就绪，${waitMs}ms 后重试 (${attempt}/${maxAttempts})`)
-        await new Promise<void>((resolve) => setTimeout(resolve, waitMs))
-      }
-    } catch (error) {
-      console.error(`${logTag} SQLite 初始化异常:`, error)
+    // 非「路径未就绪」的失败：重试无意义，立即失败并说清真实原因
+    if (result.reason !== "path-unresolved") {
+      logOpenFailure(logTag, result.reason, result.error)
       return null
+    }
+
+    // 路径未就绪 → 退避重试
+    if (attempt < maxAttempts) {
+      const waitMs = baseDelayMs * attempt
+      console.info(`${logTag} 插件数据目录暂未就绪，${waitMs}ms 后重试 (${attempt}/${maxAttempts})`)
+      await new Promise<void>((resolve) => setTimeout(resolve, waitMs))
     }
   }
 
   console.error(
-    `${logTag} 多次重试仍无法解析插件数据目录（工作区路径未就绪），该功能数据不可用。`,
+    `${logTag} 已重试 ${maxAttempts} 次，工作区路径仍未就绪，该功能数据不可用`
+    + `（总耗时约 ${(baseDelayMs * (maxAttempts - 1) * maxAttempts) / 2}ms）。`,
   )
   return null
+}
+
+/** 按失败原因输出对应的、可诊断的日志 */
+function logOpenFailure(logTag: string, reason: OpenFailureReason, error?: unknown): void {
+  switch (reason) {
+    case "no-sqlite":
+      console.error(
+        `${logTag} 当前环境不支持 node:sqlite（需思源 Electron 44+ / Node 24+），该功能不可用。`,
+      )
+      break
+    case "no-node":
+      console.error(`${logTag} 当前环境无 Node 文件系统能力（非 Electron 渲染进程），该功能不可用。`)
+      break
+    case "open-failed": {
+      const detail = error instanceof Error ? error.message : String(error ?? "未知错误")
+      console.error(
+        `${logTag} 数据库打开失败（不可重试）：${detail}。`
+        + `常见原因：plugin.db 被其它进程独占、文件损坏或磁盘只读；详见上方 [sqlite] 日志。`,
+      )
+      break
+    }
+    default:
+      console.error(`${logTag} 数据库不可用（${reason}）。`)
+  }
 }
 
 /**

@@ -418,8 +418,9 @@ describe("parseBranches", () => {
 // 下方所有 raw 样本均为**真实 git 输出**（git 2.53 / Windows 实测采集），
 // 不是手写构造，以确保字段顺序与分隔符与 git 实际行为一致。
 describe("parseWorktreeStatusV2", () => {
-  it("空仓库：branch 为空串，未跟踪文件计入 untracked", () => {
-    // 实测样本
+  it("空仓库：branch 仍为 master（尚无提交≠detached），未跟踪文件计入 untracked", () => {
+    // 实测样本：空仓库时 git 输出 "# branch.oid (initial)" 但 "# branch.head master"，
+    // 即**分支名正常存在**，只是尚无任何提交。`(initial)` 只出现在 oid 行，不影响分支名。
     const raw = [
       "# branch.oid (initial)",
       "# branch.head master",

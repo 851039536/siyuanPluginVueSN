@@ -124,8 +124,12 @@ export function useWebsiteNavigation(plugin: Plugin) {
 /**
  * 释放存储（关闭 SQLite 连接）。插件卸载时调用，避免连接泄漏。
  * 走共享单例，与 minimalBrowser 使用同一实例。
+ *
+ * 同时清空模块级 refs：否则连接已断但界面仍会渲染来自已关闭库的陈旧数据。
  */
 export function closeWebsiteStorage(): void {
   closeSharedWebsiteStorage()
   storage = null
+  entries.value = []
+  categories.value = []
 }

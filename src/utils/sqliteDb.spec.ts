@@ -4,7 +4,7 @@
 // 此处覆盖可独立推理的纯函数契约，重点是**路径相对性拒绝**（曾把库建到错误目录）
 // 与**工作区解析在无 window 环境下的容错**（不得抛错）。
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { buildDbPath, featureTables, resolvePluginDataDir } from "./sqliteDb"
+import { buildDbPath, featureTables, PLUGIN_DB_NAME, PluginDatabase, resolvePluginDataDir } from "./sqliteDb"
 
 /** 构造一个最小 plugin 桩（本模块只用 name / dataDir） */
 function fakePlugin(dataDir?: unknown): any {
@@ -60,6 +60,35 @@ describe("buildDbPath", () => {
     const dataDir = process.platform === "win32" ? "C:\\ws" : "/ws"
     expect(buildDbPath(dataDir, "cache")).toContain("cache.db")
     expect(buildDbPath(dataDir)).toContain("plugin.db")
+  })
+
+  it("默认库名来自 PLUGIN_DB_NAME，与 resolveDbPath 保持一致", () => {
+    const dataDir = process.platform === "win32" ? "C:\\ws" : "/ws"
+    expect(buildDbPath(dataDir)).toBe(buildDbPath(dataDir, PLUGIN_DB_NAME))
+  })
+})
+
+describe("snapshotTo 语义", () => {
+  it("是同步方法（不返回 Promise）：失败同步抛出，不会变成无人 await 的 rejection", () => {
+    // 用最小桩验证签名契约，不依赖真实数据库
+    const failingBackup = {
+      backup: () => {
+        throw new Error("driver boom")
+      },
+    }
+    const fakeDb: any = { close: () => {}, exec: () => {}, prepare: () => ({}) }
+    const pdb = new PluginDatabase(failingBackup as any, fakeDb, "/tmp/x.db")
+
+    let thrown: unknown = null
+    try {
+      // 不加 await：若实现是 async，异常会变成 rejected Promise 而此处捕不到
+      pdb.snapshotTo("/tmp/snap.db")
+    } catch (e) {
+      thrown = e
+    }
+    expect(thrown).toBeInstanceOf(Error)
+    expect(String((thrown as Error).message)).toContain("/tmp/snap.db")
+    expect(String((thrown as Error).message)).toContain("driver boom")
   })
 })
 

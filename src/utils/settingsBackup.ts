@@ -13,6 +13,7 @@
 import JSZip from "jszip"
 import { Plugin } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
+import { getSqlite } from "@/utils/sqliteDb"
 
 /** 备份结果 */
 export interface BackupResult {
@@ -32,13 +33,8 @@ const SQLITE_SIDECAR_SUFFIXES = ["-wal", "-shm"] as const
  * 本函数仅处理「备份时无人持有」的库，失败静默（不影响其余文件备份）。
  */
 function checkpointDatabasesInDir(dirPath: string, fs: any, path: any): void {
-  const sqlite = (() => {
-    try {
-      return require("node:sqlite")
-    } catch {
-      return null
-    }
-  })()
+  // 走统一入口（@/utils/sqliteDb），避免在本文件重复 require 与类型推导
+  const sqlite = getSqlite()
   if (!sqlite) return
 
   const walk = (dir: string): void => {

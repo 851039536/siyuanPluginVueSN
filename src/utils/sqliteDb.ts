@@ -77,7 +77,7 @@ export function isSqliteAvailable(): boolean {
  * （实测落到 `E:\siyuan2\storage\...` 或开发目录），而不是工作区的
  * `data/storage/petal/...`。相对路径一律拒绝。
  */
-export function buildDbPath(dataDir: string, name = "plugin"): string {
+export function buildDbPath(dataDir: string, name = PLUGIN_DB_NAME): string {
   const node = getNodeFsPathOs()
   if (!node || !dataDir) return ""
   const { path } = node
@@ -387,8 +387,15 @@ export class PluginDatabase {
    *
    * @param destPath 目标文件路径（同目录下的临时名即可，调用方可再改名/打包）
    */
-  async snapshotTo(destPath: string): Promise<void> {
-    this.sqlite.backup(this.db, destPath)
+  snapshotTo(destPath: string): void {
+    // node:sqlite 的 backup() 是同步的：这里不声明 async，
+    // 让失败同步抛出（带 destPath 上下文），而不是变成一个无人 await 的 rejected Promise
+    try {
+      this.sqlite.backup(this.db, destPath)
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      throw new Error(`[sqlite] 生成快照失败 [${destPath}]: ${reason}`)
+    }
   }
 
   /**

@@ -158,6 +158,8 @@ export class WebsiteNavigationStorage {
   private db: PluginDatabase | null = null
   /** 初始化 Promise（并发调用只初始化一次） */
   private initPromise: Promise<PluginDatabase | null> | null = null
+  /** 已关闭标记：防止 close() 后仍被初始化回调重新赋值而泄漏连接 */
+  private closed = false
 
   constructor(plugin: Plugin) {
     this.initPromise = this._init(plugin)
@@ -172,6 +174,12 @@ export class WebsiteNavigationStorage {
    */
   private async _init(plugin: Plugin): Promise<PluginDatabase | null> {
     const db = await openWithRetry(plugin, (d) => this._prepare(d), { logTag: LOG_TAG })
+    // 关闭可能发生在初始化期间（500ms~10.5s 的重试窗口里插件被卸载）。
+    // 此时必须立即关掉刚拿到的句柄，否则它会泄漏 —— 单例已被清空，再没人能关它。
+    if (this.closed) {
+      db?.close()
+      return null
+    }
     this.db = db
     return db
   }
@@ -261,13 +269,21 @@ export class WebsiteNavigationStorage {
   }
 
   /** 关闭数据库连接（插件卸载时调用） */
+  /** 关闭连接（幂等）。关闭后本实例不再可用，所有读写抛「数据库不可用」 */
   close(): void {
+    if (this.closed) return
+    this.closed = true
     this.db?.close()
     this.db = null
+    // 清掉在途/已完成的初始化 Promise：否则 _ready() 仍会返回已关闭的句柄
+    this.initPromise = Promise.resolve(null)
   }
 
-  /** 取可用句柄；未就绪时抛错（调用方在 UI 层兜底提示） */
+  /** 取可用句柄；未就绪或已关闭时抛错（调用方在 UI 层兜底提示） */
   private async _require(): Promise<PluginDatabase> {
+    if (this.closed) {
+      throw new Error("[websiteNavigation] 存储已关闭")
+    }
     const db = await this._ready()
     if (!db) {
       throw new Error("[websiteNavigation] 数据库不可用（node:sqlite 缺失或工作区路径未就绪）")
@@ -295,7 +311,9 @@ export class WebsiteNavigationStorage {
     const db = await this._require()
     const now = Date.now()
     const entry: WebsiteEntry = {
-      id: `ws-${now}`,
+      // 必须用碰撞抗性 ID：毫秒时间戳在同一 tick 内会重复（批量收藏/双击），
+      // 而 id 是主键，重复会抛 SQLITE_CONSTRAINT_UNIQUE（旧数组存储是静默容忍的）
+      id: `ws-${crypto.randomUUID()}`,
       name: data.name,
       url: data.url,
       category: data.category || DEFAULT_CATEGORY_ID,
@@ -323,9 +341,16 @@ export class WebsiteNavigationStorage {
     const existing = db.get<EntryRow>(`SELECT * FROM ${TABLE.entries} WHERE id = ?`, id)
     if (!existing) return null
 
+    const current = rowToEntry(existing)
+    // 逐字段取值：显式 undefined 回落到原值，避免把 NOT NULL 列写成 NULL；
+    // 同时保证返回值与真正写入的列完全一致（不再整体 spread 可能含额外键的 data）
     const updated: WebsiteEntry = {
-      ...rowToEntry(existing),
-      ...data,
+      id: current.id,
+      name: data.name ?? current.name,
+      url: data.url ?? current.url,
+      category: data.category ?? current.category,
+      description: data.description ?? current.description,
+      createdAt: current.createdAt,
       updatedAt: Date.now(),
     }
     db.run(
@@ -383,6 +408,9 @@ export function getSharedWebsiteStorage(plugin: Plugin): WebsiteNavigationStorag
   return sharedStorage
 }
 
+/** 预热进行中的 Promise：让两个 register 的重复调用合并成一次（幂等） */
+let warmupPromise: Promise<boolean> | null = null
+
 /**
  * 预热共享存储：在 registerFeature 阶段调用，提前建库建表，
  * 而不必等用户首次打开面板。
@@ -390,16 +418,26 @@ export function getSharedWebsiteStorage(plugin: Plugin): WebsiteNavigationStorag
  * 为什么需要：存储只在面板挂载时构造（懒初始化），用户若从未打开
  * 网站导航/极简浏览器面板，数据库就永远不会被创建。
  *
- * 注意：这里不做任何数据导入。历史迁移已完成并下线，运行时只保证「表存在」。
+ * 幂等：websiteNavigation 与 minimalBrowser 各调一次是常态（两个功能开关独立），
+ * 这里合并成同一 Promise，避免重复初始化与重复退避重试。
+ *
+ * 注意：不做任何数据导入。历史迁移已完成并下线，运行时只保证「表存在」。
  * 非阻塞：失败仅记录日志，不影响插件其余功能。
  */
 export function warmupSharedWebsiteStorage(plugin: Plugin): void {
-  void (async () => {
+  if (warmupPromise) return
+  warmupPromise = (async () => {
     try {
       const storage = getSharedWebsiteStorage(plugin)
-      await storage.warmup()
+      const ok = await storage.warmup()
+      // 失败时明确留痕：否则降级状态在 websiteNavigation 侧毫无可诊断信息
+      if (!ok) {
+        console.error(`${LOG_TAG} 数据库预热失败，该功能数据不可用（详见上方 sqlite 日志）`)
+      }
+      return ok
     } catch (error) {
-      console.error("[websiteNavigation] SQLite 预热失败:", error)
+      console.error(`${LOG_TAG} SQLite 预热失败:`, error)
+      return false
     }
   })()
 }
@@ -408,4 +446,6 @@ export function warmupSharedWebsiteStorage(plugin: Plugin): void {
 export function closeSharedWebsiteStorage(): void {
   sharedStorage?.close()
   sharedStorage = null
+  // 允许卸载后重新加载插件时再次预热
+  warmupPromise = null
 }

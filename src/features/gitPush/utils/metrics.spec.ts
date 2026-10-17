@@ -54,4 +54,37 @@ describe("compareProjectLineRank", () => {
     const smallNew = row({ id: "smallNew", name: "smallNew", totalLines: 1, lastCommit: "2026-01-01T00:00:00+08:00" })
     expect([smallNew, bigOld].sort(compareProjectLineRank).map((r) => r.id)).toEqual(["bigOld", "smallNew"])
   })
+
+  // 回归：Date.parse 对损坏日期返回 NaN，而 NaN !== NaN 恒为真。
+  // 原写法 `if (bt !== at) return (bt||0)-(at||0)` 会让两个损坏条目「判定为不等却返回 0」，
+  // 从而跳过名称兜底 —— 比较器不满足传递性，sort 结果随引擎实现抖动。
+  it("日期损坏时仍走名称兜底（比较器必须满足反称性）", () => {
+    const a = row({ id: "a", name: "alpha", totalLines: 10, lastCommit: "not-a-date" })
+    const b = row({ id: "b", name: "beta", totalLines: 10, lastCommit: "also-bad" })
+    expect(compareProjectLineRank(a, b)).toBeLessThan(0)
+    expect(compareProjectLineRank(b, a)).toBeGreaterThan(0)
+    // 反称性：cmp(x,y) === -cmp(y,x)
+    expect(Math.sign(compareProjectLineRank(a, b))).toBe(-Math.sign(compareProjectLineRank(b, a)))
+  })
+
+  it("一个日期损坏、另一个有效时按时间降序（损坏视为无时间）", () => {
+    const broken = row({ id: "broken", name: "broken", totalLines: 10, lastCommit: "garbage" })
+    const valid = row({ id: "valid", name: "valid", totalLines: 10, lastCommit: "2024-01-01T00:00:00Z" })
+    expect([broken, valid].sort(compareProjectLineRank).map((r) => r.id)).toEqual(["valid", "broken"])
+  })
+
+  it("排序结果稳定：多次打乱输入后结果一致", () => {
+    const rows = [
+      row({ id: "1", name: "z", totalLines: 10, lastCommit: "garbage" }),
+      row({ id: "2", name: "y", totalLines: 10, lastCommit: "garbage" }),
+      row({ id: "3", name: "x", totalLines: 10, lastCommit: "garbage" }),
+      row({ id: "4", name: "w", totalLines: 10, lastCommit: "garbage" }),
+      row({ id: "5", name: "v", totalLines: 10, lastCommit: "garbage" }),
+    ]
+    const expected = [...rows].sort(compareProjectLineRank).map((r) => r.id)
+    for (let i = 0; i < 20; i++) {
+      const shuffled = [...rows].sort(() => Math.random() - 0.5)
+      expect(shuffled.sort(compareProjectLineRank).map((r) => r.id)).toEqual(expected)
+    }
+  })
 })

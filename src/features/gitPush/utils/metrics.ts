@@ -46,7 +46,7 @@ export function maxOf(list: ReadonlyArray<number>, min: number): number {
 
 /**
  * 行数排行占比预计算（按 pick 指定的行数指标取绝对值，负值安全）：share=占总和的百分比（total=0 兜底防除零）。
- * 项目排行传 totalLines（存量口径，与「按总行数降序」一致）；详情弹窗作者明细传 net（净增口径）。
+ * 项目排行传 totalLines（存量口径，与「按总行数降序」一致）。
  * 行内无条形（LineRankRow 已移除条形）时用本函数，避免预计算用不到的 pct。
  */
 export function withLineShare<T>(rows: T[], pick: (r: T) => number): (T & { share: string })[] {
@@ -57,17 +57,11 @@ export function withLineShare<T>(rows: T[], pick: (r: T) => number): (T & { shar
   }))
 }
 
-/**
- * 行数排行占比 + 条形宽度预计算（口径同 withLineShare，额外给出相对最大值的 pct）。
- * 供仍渲染条形（LineShareBar）的场景使用：详情弹窗文件明细行的迷你占比条。
- */
-export function withLineBarPct<T>(rows: T[], pick: (r: T) => number): (T & { pct: string, share: string })[] {
-  const max = maxOf(rows.map((r) => Math.abs(pick(r))), 1)
-  return withLineShare(rows, pick).map((r, i) => ({
-    ...r,
-    // 下标回取原始行：withLineShare 已展平 share，此处只需补 pct
-    pct: `${Math.round((Math.abs(pick(rows[i])) / max) * 100)}%`,
-  }))
+/** ISO 时间 → 毫秒时间戳；空值/无法解析一律归 0（保证比较器满足反称性与传递性） */
+function toTimestamp(iso?: string): number {
+  if (!iso) return 0
+  const t = Date.parse(iso)
+  return Number.isNaN(t) ? 0 : t
 }
 
 /**
@@ -75,12 +69,15 @@ export function withLineBarPct<T>(rows: T[], pick: (r: T) => number): (T & { pct
  * （活跃的在前），再按名称升序兜底，保证同规模项目顺序稳定不抖动。
  *
  * 注：列表已移除新增/删除/净增，故不再以 net/added 作为次级排序键。
+ *
+ * 时间必须先归一化再比较：`Date.parse` 对损坏日期返回 `NaN`，而 `NaN !== NaN` 恒为真，
+ * 原写法 `if (bt !== at) return (bt || 0) - (at || 0)` 会让「两个都损坏」的条目返回 0
+ * 却跳过了名称兜底 —— 比较器因此不满足传递性，Array#sort 结果随引擎实现抖动。
  */
 export function compareProjectLineRank(a: ProjectLineRankItem, b: ProjectLineRankItem): number {
   const byLines = (b.totalLines ?? 0) - (a.totalLines ?? 0)
   if (byLines !== 0) return byLines
-  const at = a.lastCommit ? Date.parse(a.lastCommit) : 0
-  const bt = b.lastCommit ? Date.parse(b.lastCommit) : 0
-  if (bt !== at) return (bt || 0) - (at || 0)
+  const byTime = toTimestamp(b.lastCommit) - toTimestamp(a.lastCommit)
+  if (byTime !== 0) return byTime
   return a.name.localeCompare(b.name)
 }

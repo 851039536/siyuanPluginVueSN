@@ -103,7 +103,6 @@ export {
   netClass,
   ratioPct,
   withBarPct,
-  withLineBarPct,
   withLineShare,
 } from "./metrics"
 

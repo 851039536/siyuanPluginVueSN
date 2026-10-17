@@ -144,27 +144,6 @@ export class LineStatsStore {
     return row ? toProjectStats(row) : null
   }
 
-  /** 批量读取汇总行（返回以 projectId 为键的 Map，缺项不出现） */
-  getProjectStatsMany(projectIds: string[]): Map<string, ProjectStatsRecord> {
-    const out = new Map<string, ProjectStatsRecord>()
-    if (projectIds.length === 0) return out
-    // 分批 IN 查询：SQLite 变量上限默认 999，几十个项目远低于上限，但保持代码对未来批量安全
-    const CHUNK = 500
-    for (let i = 0; i < projectIds.length; i += CHUNK) {
-      const chunk = projectIds.slice(i, i + CHUNK)
-      const placeholders = chunk.map(() => "?").join(", ")
-      const rows = this.db.all<ProjectStatsRow>(
-        `SELECT * FROM ${TABLE.project_stats} WHERE project_id IN (${placeholders})`,
-        ...chunk,
-      )
-      for (const row of rows) {
-        const rec = toProjectStats(row)
-        out.set(rec.projectId, rec)
-      }
-    }
-    return out
-  }
-
   /** 读取单项目全部文件行数（返回 Map<path, record>） */
   getFileLines(projectId: string): Map<string, FileLinesRecord> {
     const rows = this.db.all<FileLinesRow>(
@@ -245,17 +224,10 @@ export class LineStatsStore {
     )
   }
 
-  /** 删除单项目全部数据（项目被移除时调用，防数据无界增长） */
-  removeProject(projectId: string): void {
-    this.db.withTransaction(() => {
-      this.db.run(`DELETE FROM ${TABLE.project_stats} WHERE project_id = ?`, projectId)
-      this.db.run(`DELETE FROM ${TABLE.file_lines} WHERE project_id = ?`, projectId)
-    })
-  }
-
   /**
    * 淘汰不在保留集合中的项目（项目列表变化后调用）。
    * 与 IndexMeta 的「淘汰最旧项目」同一目的：防止删除项目后数据无限堆积。
+   * 单项目删除也走本方法（传不含该 id 的集合），故不再单独提供 removeProject。
    */
   pruneProjects(keepIds: string[]): number {
     const existing = this.db.all<{ project_id: string }>(

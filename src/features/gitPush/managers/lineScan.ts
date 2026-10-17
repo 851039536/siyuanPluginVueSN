@@ -78,6 +78,23 @@ export function scanProjectFileLines(
     let size = 0
     let isFile = false
     try {
+      // 先用 lstat 判断链接身份，再 stat 取靶文件尺寸：
+      // statSync 会**跟随**符号链接，若仓库里跟踪的路径是个指向 /dev/zero 或
+      // 巨大文件的链接，会把靶文件内容当成源码行数读进来（可能是数百万行）。
+      // 与 reportMetrics.countFileLines 的口径差异：那里用 statSync 跟随链接并读内容，
+      // 这里对链接一律记 null（不读靶文件），避免大文件/特殊设备造成的统计噪音与卡顿。
+      const lstat = fs.lstatSync(abs)
+      if (lstat.isSymbolicLink()) {
+        files.push({
+          path: file,
+          lines: null,
+          mtimeMs: Math.round(lstat.mtimeMs),
+          size: lstat.size,
+          reused: false,
+        })
+        readCount++
+        continue
+      }
       const stat = fs.statSync(abs)
       isFile = stat.isFile()
       mtimeMs = Math.round(stat.mtimeMs)

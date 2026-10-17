@@ -1,10 +1,10 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 项目行数详情弹窗：双 Tab（文件明细表格 / 作者行数排行）
+// ── 项目行数详情弹窗：单表（文件存量行数明细）
 // 遮罩、层级与基准字号取自共享基座 .gp-mask，本地只留弹窗尺寸与进出场缩放 ──
 .pld-dialog {
-  width: 770px; // 720 + 50：加宽以容纳文件明细表格的固定列，减少窄视口下的横向滚动
+  width: 620px; // 单表只有 4 列（排名/路径/行数/占比），无需原先容纳增删净的 770px
   max-width: 92vw;
   max-height: 82vh;
   background: var(--b3-theme-background);
@@ -75,54 +75,20 @@
   font-weight: $fw-semibold;
 }
 
-// ── 标签页容器：占满标题栏与底栏之间的剩余高度（面板区独立滚动）──
-// min-width: 0 让本容器可被压缩：表格固定列合计约 340px，窄视口下需由内容区横向滚动承接，
-// 而不是把弹窗（及共享 Tabs 的 width: 100%）撑破后溢出遮挡。
-.pld-tabs {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-
-  // 面板容器与面板本体默认「不参与 flex 伸展」：共享 Tabs 只给 .si-tabs 设了纵向 flex，
-  // 中间两层（.si-tabpanels / .si-tabpanel）仍是普通块盒。必须同时补
-  // display:flex + flex-direction:column + flex:1 + min-height:0 ——
-  // 只补 flex:1 是空操作（非 flex 容器上没有主轴可言），下方 .pld-body 仍按内容高度撑开，
-  // overflow 永不生效，这正是「高度过高没有滑动框」的真正根因。
-  // 参考同一范式的既有实现：src/features/s3Backup/styles/TabsShell.scss。
-  // ⚠️ 非 scoped 样式禁用 :deep()（见 MarkdownPreviewDialog.scss 的同款注释），此处用普通后代选择器；
-  // 嵌套在 .pld-tabs 下同时抬升特异性，避免与组件自身 scoped 样式（同为 (0,2,0)）靠注入顺序决胜。
-  .si-tabpanels {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    min-width: 0;
-  }
-
-  // 单个面板同理向下传递；自带的上内边距保留（本弹窗没有外层统一内边距，去掉会与标签栏贴死）
-  .si-tabpanel {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    min-width: 0;
-  }
-}
-
-// 标签栏内缩对齐弹窗内边距（下边线由共享 TabList 自带）
-.pld-tabs-bar {
-  padding: $s-2 $s-4 0;
-}
-
-// ── 内容区（滚动容器：吸顶表头以此为滚动祖先；上间距由 TabPanel 自带）──
-// 纵向滚动承接超长文件列表；横向滚动承接窄视口下固定列（约 340px）的溢出，
-// 二者都内聚于此容器，避免内容顶破弹窗被遮挡。
+// ── 内容区（滚动容器：吸顶表头以此为滚动祖先）──
+// 原「双 Tab」布局已随作者明细（依赖 numstat 增删聚合）一并移除，现为单表直挂：
+// 用 flex:1 + min-height:0 让它吃掉标题栏与底栏之间的剩余高度并独立滚动。
 .pld-body {
   flex: 1;
   min-height: 0;
   min-width: 0;
   overflow: auto;
-  padding: 0 $s-4 $s-3;
+  padding: $s-2 $s-4 $s-3;
+}
+
+// 单表变体：无需为 Tab 内容让位，上内边距略收
+.pld-body--single {
+  padding-top: $s-3;
 }
 
 // ── 文件明细表格 ──
@@ -145,6 +111,12 @@
   letter-spacing: 0.06em;
   color: var(--b3-theme-on-surface-light);
   background: var(--b3-theme-background);
+}
+
+// 单表变体：吸顶偏移需吃掉 .pld-body--single 的上内边距，否则表头下方会透出滚过的行
+.pld-table-head--simple {
+  top: -$s-3;
+  padding-top: $s-3;
 }
 
 .pld-file-row {
@@ -175,25 +147,6 @@
     @include text-ellipsis;
   }
 
-  // 数字列（修改/作者/新增/删除）右对齐等宽
-  &--num {
-    width: 40px;
-    text-align: right;
-    font-family: $ff-mono;
-    font-size: $t-2xs;
-    font-variant-numeric: tabular-nums;
-    color: var(--b3-theme-on-surface);
-  }
-
-  // 净增列（正绿负红）
-  &--net {
-    width: 52px;
-    text-align: right;
-    font-family: $ff-mono;
-    font-size: $t-2xs;
-    font-variant-numeric: tabular-nums;
-  }
-
   // 占比列：迷你条形 + 文本
   &--share {
     width: 84px;
@@ -202,28 +155,19 @@
     gap: $s-1;
   }
 
-  // 总行数列（该文件当前存量行数，等宽右对齐中性色；与增量数字列区分）
+  // 行数列（该文件当前存量行数，等宽右对齐中性色，作为表内主数值）
   &--total {
-    min-width: 44px;
+    min-width: 52px;
     text-align: right;
     font-family: $ff-mono;
     font-size: $t-2xs;
     font-variant-numeric: tabular-nums;
     color: var(--b3-theme-on-surface);
-    opacity: 0.7;
+    opacity: 0.8;
   }
 }
 
 // ── 作者行数排行行与文件占比迷你条已迁移至 LineRankRow.scss（.lrr-*）与 LineShareBar.scss（.lsb-*）──
-
-// ── 数字着色（文件明细表格数字列专用）──
-.pld-num--add {
-  color: var(--b3-theme-success);
-}
-
-.pld-num--del {
-  color: var(--b3-theme-error);
-}
 
 // ── 底部操作栏 ──
 .pld-footer {

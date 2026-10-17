@@ -377,22 +377,22 @@ export interface DropCommitPrefs {
   autoBackup: boolean
 }
 
-/** 行数排行基础字段（新增/删除/净增三要素） */
-interface LineRankBase {
-  /** 新增行数（numstat 聚合） */
-  added: number
-  /** 删除行数（numstat 聚合） */
-  deleted: number
-  /** 净增行数 = added - deleted */
-  net: number
-}
-
-/** 项目代码行数排行条目 */
-export interface ProjectLineRankItem extends LineRankBase {
+/**
+ * 项目代码行数排行条目。
+ *
+ * 口径说明：本项目排行已从「增删增量排行」调整为「存量规模 + 生命周期」视图
+ * （列表不再展示新增/删除/净增），故不再继承 LineRankBase。
+ * 排序与占比一律以 totalLines（存量）为准。
+ */
+export interface ProjectLineRankItem {
   id: string
   name: string
-  /** 当前项目实际总行数（存量，git ls-files 统计；旧缓存无此字段时为 undefined，渲染时降级 0） */
+  /** 当前项目实际总行数（存量，git ls-files + 逐文件行数统计；旧缓存无此字段时为 undefined，渲染时降级 0） */
   totalLines?: number
+  /** 仓库首次提交时间（ISO %aI，历史根；"项目新建日期"口径；空串 = 空仓库/未取到） */
+  firstCommit?: string
+  /** 最后一次提交时间（ISO %aI，HEAD 提交时间；"最后修改"口径；空串 = 无提交） */
+  lastCommit?: string
 }
 
 /** 项目行数详情 — 文件明细行（弹窗内由 aggregateFileStats 即时聚合，不持久化） */
@@ -457,15 +457,18 @@ export interface CommitAnalysisCache {
   projectLineRanking: ProjectLineRankItem[]
 }
 
-/** 行数统计全量汇总（基于全量项目数据独立累加，供顶部汇总卡片展示） */
+/**
+ * 行数统计全量汇总（基于全量项目数据独立累加，供顶部汇总卡片展示）。
+ *
+ * 只保留存量口径：列表已移除新增/删除/净增，汇总卡片同步移除「总新增/总删除/总净增」，
+ * 改为「项目数 / 文件数 / 当前总行数」三个存量指标。
+ */
 export interface LineStatsSummary {
-  /** 总新增行数 */
-  added: number
-  /** 总删除行数 */
-  deleted: number
-  /** 总净增行数（added − deleted） */
-  net: number
-  /** 当前工作区已跟踪文件总行数（存量口径，所有项目合计，与增删增量解耦） */
+  /** 纳入统计的项目数 */
+  projectCount: number
+  /** 纳入统计的已跟踪文件数（所有项目合计） */
+  fileCount: number
+  /** 当前工作区已跟踪文件总行数（存量口径，所有项目合计） */
   totalLines: number
 }
 

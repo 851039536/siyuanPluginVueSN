@@ -54,6 +54,12 @@ import {
   nextCoveredDays,
 } from "./managers/indexCoverage"
 import { createIndexIo } from "./managers/indexDir"
+import {
+  scanProjectFileLines,
+  sumScannedLines,
+} from "./managers/lineScan"
+import type { LineStatsStore, ProjectStatsRecord } from "./managers/LineStatsStore"
+import { openLineStatsStore } from "./managers/LineStatsStore"
 import { ProjectStore } from "./managers/ProjectStore"
 import { ProjectWriteLock } from "./managers/ProjectWriteLock"
 import { RemoteOps } from "./managers/RemoteOps"
@@ -115,6 +121,13 @@ export class GitPushManager {
   /** 索引初始化 Promise（并发调用共享同一次初始化，失败只告警一次） */
   private indexInit: Promise<CommitIndex | null> | null = null
 
+  /**
+   * 行数统计 SQLite 存储（延迟构造，理由同 commitIndex）。
+   * 只经 getLineStatsStore() 访问；初始化 Promise 缓存见 lineStatsStoreInit。
+   */
+  /** 行数存储初始化 Promise（并发调用共享同一次初始化） */
+  private lineStatsStoreInit: Promise<LineStatsStore | null> | null = null
+
   constructor(plugin: Plugin) {
     this.plugin = plugin
     this.storage = new GitPushStorage(plugin)
@@ -165,6 +178,33 @@ export class GitPushManager {
     return index
   }
 
+  /**
+   * 获取行数统计 SQLite 存储（首次调用构造；不可用返回 null 且只告警一次）。
+   *
+   * 失败时**清空缓存的初始化 Promise**：与 getIndex 同理，一次瞬时失败
+   * （启动期工作区路径未就绪）不应把 `lineStatsStoreInit` 永久钉死为 null。
+   */
+  async getLineStatsStore(): Promise<LineStatsStore | null> {
+    if (this.lineStatsStoreInit) return this.lineStatsStoreInit
+    const init = (async () => {
+      try {
+        const store = await openLineStatsStore(this.plugin)
+        if (!store) {
+          console.warn("[gitPush] 行数统计数据库不可用，行数扫描将每次全量重算（功能不受影响，仅较慢）")
+        }
+        return store
+      } catch (e) {
+        console.warn("[gitPush] 行数统计存储初始化失败，已回退全量重算", e)
+        return null
+      }
+    })()
+    this.lineStatsStoreInit = init
+    const store = await init
+    // 失败不保留缓存，允许后续调用重新尝试；成功则保持复用
+    if (!store && this.lineStatsStoreInit === init) this.lineStatsStoreInit = null
+    return store
+  }
+
   /** 索引元数据持久化（索引写盘后由调用方触发；失败仅告警，不影响本次统计结果） */
   async persistIndexMeta(): Promise<void> {
     if (!this.commitIndex) return
@@ -204,6 +244,158 @@ export class GitPushManager {
   /** 设置单项目索引提交上限（钳位后持久化；下次扫描生效） */
   async setIndexMaxCommits(n: number): Promise<void> {
     await this.storage.indexMaxCommits.save(clampIndexMaxCommits(n))
+  }
+
+  // ── 行数统计（存量行数 + 仓库生命周期，增量扫描 + SQLite 复用）──
+
+  /**
+   * 扫描单项目的存量行数（增量）与生命周期时间。
+   *
+   * 三层快路径，逐级降低开销：
+   * 1. `HEAD oid + gitdir` 都未变 → **直接返回上次汇总**（零 git、零读盘）；
+   * 2. HEAD 变了 → 逐文件 `statSync` 与缓存比对 (mtime, size)，只对变化的文件读内容；
+   * 3. 数据库不可用 → 全量扫（与改造前行为一致，功能不降级）。
+   *
+   * 生命周期时间：
+   * - `firstCommit`（仓库新建）：首次算得后永久复用——历史根不会因为新提交而改变；
+   *   仅当历史被重写（HEAD 变了且缓存无值）时才重新取。用 `git log --reverse -1` 单次调用。
+   * - `lastCommit`（最后修改）：直接取 HEAD 提交时间，即快照里的 `lastDate`，零额外调用。
+   *
+   * @param project 目标项目（取其 id / name / 路径）
+   * @param shouldInclude 扩展名过滤谓词（只影响 totalLines 合计，不影响缓存内容）
+   * @param forceRescan 忽略缓存强制重算（详情弹窗「刷新」用）
+   */
+  async scanProjectLineStats(
+    project: GitProject,
+    shouldInclude: (path: string) => boolean,
+    forceRescan = false,
+  ): Promise<{
+    totalLines: number
+    fileCount: number
+    firstCommit: string
+    lastCommit: string
+    fileLines: Map<string, number | null>
+    source: "cache" | "incremental" | "full"
+  }> {
+    const projectPath = resolveValidPath(project)
+    const store = await this.getLineStatsStore()
+    const snapshot = await this.reportOps.getHeadSnapshot(projectPath)
+    const nowIso = new Date().toISOString()
+
+    // 空仓库（无 HEAD）：无文件、无提交，直接给出空结果（不必读写缓存）
+    if (!snapshot.head) {
+      return {
+        totalLines: 0,
+        fileCount: 0,
+        firstCommit: "",
+        lastCommit: "",
+        fileLines: new Map<string, number | null>(),
+        source: "cache",
+      }
+    }
+
+    const cached: ProjectStatsRecord | null = store ? store.getProjectStats(project.id) : null
+    const identityMatch = !!cached
+      && cached.headOid === snapshot.head
+      && cached.gitDir === snapshot.gitDir
+
+    // ── 快路径 1：HEAD 与仓库身份都未变 → 直接复用（零 git 扫描、零读盘）──
+    if (identityMatch && !forceRescan) {
+      const files = store!.getFileLines(project.id)
+      let totalLines = 0
+      let fileCount = 0
+      for (const [p, rec] of files) {
+        if (rec.lines === null || !shouldInclude(p)) continue
+        totalLines += rec.lines
+        fileCount++
+      }
+      // 瞬时收窄：缓存里可能缺 firstCommit（早期版本写入的行），补一次零成本 git
+      const firstCommit = cached.firstCommit || await this.reportOps.getFirstCommitDate(projectPath)
+      const lastCommit = snapshot.lastDate
+      if (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit) {
+        try {
+          store!.updateCommitTimes(project.id, firstCommit, lastCommit, cached.analyzedAt)
+        } catch {
+          // 补写失败不影响返回（下次仍会尝试）
+        }
+      }
+      const fileLines = new Map<string, number | null>()
+      for (const [p, rec] of files) fileLines.set(p, rec.lines)
+      return {
+        totalLines,
+        fileCount,
+        firstCommit,
+        lastCommit,
+        fileLines,
+        source: "cache",
+      }
+    }
+
+    // ── 路径 2/3：增量扫描（store 可用）或全量扫描（store 不可用）──
+    const trackedFiles = await this.reportOps.getTrackedFiles(projectPath)
+    const cachedFiles = store ? store.getFileLines(project.id) : new Map()
+    const scan = scanProjectFileLines(projectPath, trackedFiles, cachedFiles)
+    const totalLines = sumScannedLines(scan.files, shouldInclude)
+    let fileCount = 0
+    const fileLines = new Map<string, number | null>()
+    for (const f of scan.files) {
+      fileLines.set(f.path, f.lines)
+      if (f.lines !== null && shouldInclude(f.path)) fileCount++
+    }
+
+    // 首次提交：缓存有值就复用（历史根不因新提交改变）；否则单次 git log --reverse -1
+    const firstCommit = cached?.firstCommit || await this.reportOps.getFirstCommitDate(projectPath)
+    const lastCommit = snapshot.lastDate
+
+    if (store) {
+      try {
+        store.saveProjectStats({
+          projectId: project.id,
+          name: project.name,
+          totalLines,
+          fileCount,
+          firstCommit,
+          lastCommit,
+          headOid: snapshot.head,
+          gitDir: snapshot.gitDir,
+          analyzedAt: nowIso,
+        }, scan.files)
+      } catch (e) {
+        // 落库失败不影响本次结果：下次分析只是又走一遍增量扫描
+        console.warn(`[gitPush] 行数统计落库失败（项目 ${project.name}）`, e)
+      }
+    }
+
+    return {
+      totalLines,
+      fileCount,
+      firstCommit,
+      lastCommit,
+      fileLines,
+      source: store ? "incremental" : "full",
+    }
+  }
+
+  /** 清理已删除项目的行数统计数据（项目列表变化后调用，防数据无界增长） */
+  async pruneLineStats(keepIds: string[]): Promise<void> {
+    const store = await this.getLineStatsStore()
+    if (!store) return
+    try {
+      store.pruneProjects(keepIds)
+    } catch (e) {
+      console.warn("[gitPush] 清理行数统计数据失败", e)
+    }
+  }
+
+  /** 清空全部行数统计缓存（设置面板「重建索引」/ 排障用；下次分析全量重算） */
+  async clearLineStats(): Promise<void> {
+    const store = await this.getLineStatsStore()
+    if (!store) return
+    try {
+      store.pruneProjects([])
+    } catch (e) {
+      console.warn("[gitPush] 清空行数统计缓存失败", e)
+    }
   }
 
   /**

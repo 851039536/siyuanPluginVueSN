@@ -1,13 +1,19 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 行数排行行（项目排行 + 详情弹窗作者排行共用）
+// ── 行数排行行（项目排行 + 详情弹窗作者/文件明细共用）
 // 列模板单点定义：数据行（.lrr-row）与表头（.lrr-head）必须共用同一模板，
 // 否则各列起止点错位（这是排行可读性的硬约束）──
-// 排名 | 名称（自适应）| 三列数字 | 占比 | 总行数
-$_lrr-cols: 18px minmax(64px, 1.1fr) auto 40px minmax(40px, auto);
-// 无总行数列（作者明细场景）：占比列对齐到末列
-$_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
+//
+// 项目排行：排名 | 名称（自适应）| 新建日期 | 最后修改 | 占比 | 总行数
+// 日期列固定窄宽：YYYY-MM-DD 在 $t-2xs 等宽字体下约 58px，取 60px 留 2px 呼吸；
+// 名称列吃到剩余空间（minmax 下限 56px，保证极窄面板下也不会把名称压成不可读）。
+$_lrr-cols: 16px minmax(56px, 1fr) 60px 60px 40px minmax(40px, auto);
+// 无总行数列（详情弹窗场景）：去掉末列
+$_lrr-cols-no-total: 16px minmax(56px, 1fr) 60px 60px 42px;
+// 无日期列（详情弹窗作者/文件明细）：名称 | 占比 [| 总行数]
+$_lrr-cols-no-date: 16px minmax(64px, 1.1fr) 42px;
+$_lrr-cols-no-date-no-total: 16px minmax(64px, 1.1fr) 40px;
 
 // 排行列表容器（两处共用：面板项目排行 + 弹窗作者排行）
 .lrr-list {
@@ -35,17 +41,14 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
 
   // 表头数字与占比文字不弱化（覆盖数据行的 opacity 弱化）
   .lrr-num,
+  .lrr-date,
   .lrr-share,
   .lrr-total {
     opacity: 1;
   }
 }
 
-// 净增表头："实际行数"主角，主题色强调（区别于新增绿/删除红）
-.lrr-head-net {
-  color: var(--b3-theme-primary);
-}
-
+// 净增表头：已随增删净三列一并移除（保留注释说明，避免后来者以为遗漏）
 // 数据行：clickable 时根为原生 button（重置自带外观），整行可点击 + 可键盘聚焦激活；
 // 非交互场景根为 div，天然不进入 Tab 序列
 .lrr-row {
@@ -66,9 +69,19 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
   }
 }
 
-// 无总行数列变体（作者明细）
+// 无总行数列变体（详情弹窗场景）
 .lrr-row--no-total {
   grid-template-columns: $_lrr-cols-no-total;
+}
+
+// 无日期列变体（详情弹窗作者/文件明细）
+.lrr-row--no-date {
+  grid-template-columns: $_lrr-cols-no-date;
+}
+
+// 日期与总行数同时缺省（弹窗内最简行）
+.lrr-row--no-date.lrr-row--no-total {
+  grid-template-columns: $_lrr-cols-no-date-no-total;
 }
 
 // 可点击行：hover 时名称变主题色，提示可打开详情（与 CommitAnalysisPanel 交互模式一致）
@@ -100,37 +113,16 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
   opacity: 0.75;
 }
 
-// ── 行数排行数字列（+新增 / −删除 / 净增 三列等宽数字，整块右对齐）──
-// 靠右对齐让三列数字尾部跨行对齐；相邻数字用 margin 保证间距（不依赖 flex gap 支持，根除粘连）
-.lrr-nums {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+// ── 日期列（新建 / 最后修改）：等宽数字、固定宽、右对齐，保证跨行严格对齐 ──
+// 用 tabular-nums 让 YYYY-MM-DD 的每个数字等宽，避免不同数字组合导致列内轻微错位
+.lrr-date {
   font-family: $ff-mono;
   font-size: $t-2xs;
-  font-variant-numeric: tabular-nums; // 等宽数字：数字变化时列宽不抖动
-}
-
-// 数字单元格：自适应数字宽度（含千位分隔符），禁止换行挤压
-.lrr-num {
-  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   text-align: right;
+  white-space: nowrap;
   color: var(--b3-theme-on-surface);
-  opacity: 0.7;
-}
-
-.lrr-num + .lrr-num {
-  margin-left: $s-2;
-}
-
-// 新增行 → 绿（success）
-.lrr-num--add {
-  color: var(--b3-theme-success);
-}
-
-// 删除行 → 红（error）
-.lrr-num--del {
-  color: var(--b3-theme-error);
+  opacity: 0.6;
 }
 
 // 占比列（占总和的百分比，等宽右对齐弱化展示）
@@ -144,7 +136,7 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
   opacity: 0.5;
 }
 
-// 总行数列（当前工作区实际行数，存量口径，等宽右对齐中性色；与增量数字列区分）
+// 总行数列（当前工作区实际行数，存量口径，等宽右对齐；视觉上略强于日期/占比，作为主数值）
 .lrr-total {
   font-family: $ff-mono;
   font-size: $t-2xs;
@@ -152,10 +144,12 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
   text-align: right;
   white-space: nowrap;
   color: var(--b3-theme-on-surface);
-  opacity: 0.7;
+  opacity: 0.8;
 }
 
-// ── 净增语义色（全 gitPush 行数统计统一前缀：正→绿 / 负→红 / 零→灰）──
+// ── 净增语义色（前缀 lrr-net）──
+// 项目排行已不再展示净增，但详情弹窗与占比条仍在用（LineShareBar 的 fill 着色、
+// ProjectLineDetail 的作者明细），故保留这组 class。
 .lrr-net--pos {
   color: var(--b3-theme-success);
 }
@@ -167,4 +161,3 @@ $_lrr-cols-no-total: 18px minmax(64px, 1.1fr) auto 42px;
 .lrr-net--zero {
   opacity: 0.5;
 }
-

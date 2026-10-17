@@ -70,8 +70,17 @@ export function withLineBarPct<T>(rows: T[], pick: (r: T) => number): (T & { pct
   }))
 }
 
-/** 项目行数排行排序比较器（单一来源）：按总行数（存量）降序，同存量再按净增、新增降序。
- * buildLineRankings（全量分析）与 refreshLineStatsProject（单项目刷新 upsert 重排）共用，保证两处口径一致。 */
+/**
+ * 项目行数排行排序比较器（单一来源）：按总行数（存量）降序，同存量再按最后提交时间降序
+ * （活跃的在前），再按名称升序兜底，保证同规模项目顺序稳定不抖动。
+ *
+ * 注：列表已移除新增/删除/净增，故不再以 net/added 作为次级排序键。
+ */
 export function compareProjectLineRank(a: ProjectLineRankItem, b: ProjectLineRankItem): number {
-  return (b.totalLines ?? 0) - (a.totalLines ?? 0) || b.net - a.net || b.added - a.added
+  const byLines = (b.totalLines ?? 0) - (a.totalLines ?? 0)
+  if (byLines !== 0) return byLines
+  const at = a.lastCommit ? Date.parse(a.lastCommit) : 0
+  const bt = b.lastCommit ? Date.parse(b.lastCommit) : 0
+  if (bt !== at) return (bt || 0) - (at || 0)
+  return a.name.localeCompare(b.name)
 }

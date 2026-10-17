@@ -205,7 +205,7 @@
             class="gls-pair"
           >
             <StatCardGrid
-              :min-width="78"
+              :min-width="96"
               :cards="summaryCards"
             />
 
@@ -228,14 +228,13 @@
       @apply="onApplyExt"
     />
 
-    <!-- 项目行数详情弹窗（点击项目行打开，展示该项目的文件/作者行数明细） -->
+    <!-- 项目行数详情弹窗（点击项目行打开，展示该项目的文件存量行数明细） -->
     <ProjectLineDetail
       v-if="lineDetailProjectId"
       :i18n="i18n"
       :project-id="lineDetailProjectId"
       :project-name="lineDetailProjectName"
       :total-lines="lineDetailTotalLines"
-      :get-numstat="getProjectNumstat"
       :get-file-lines="getProjectFileLines"
       :extensions="selectedExtensions"
       :refresh-project="refreshProject"
@@ -286,7 +285,6 @@
 // 故合并为一个视图 + 内部 Tab：运行按钮只有一个，Tab 切换只切视角不重跑 git。
 import type { AnalysisTabId } from "./AnalysisTabs.vue"
 import type { CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
-import type { NumstatCommit } from "../../reportMetrics"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
 import type { StatCardItem } from "../common/StatCardGrid.vue"
 import { computed, ref } from "vue"
@@ -345,7 +343,6 @@ const props = defineProps<{
   selectedExtensions: string[]
   lineDetailProjectId: string
   lineDetailRefreshing: boolean
-  getProjectNumstat: (projectId: string) => NumstatCommit[]
   getProjectFileLines: (projectId: string) => Map<string, number | null>
   refreshProject: (projectId: string) => void
 }>()
@@ -424,14 +421,12 @@ const overviewCards = computed<StatCardItem[]>(() => [
   { key: "covered", value: `${props.stats.analyzedCount} / ${props.stats.projectCount}`, label: props.i18n.analysisCoveredProjects },
 ])
 
-/** 行数汇总卡片：总新增 / 总删除 / 总净增 / 当前总行数 */
+/** 行数汇总卡片：项目数 / 文件数 / 当前总行数（全部为存量口径；增删净已随列表列一并移除） */
 const summaryCards = computed<StatCardItem[]>(() => {
-  const { added, deleted, net, totalLines } = props.lineStatsSummary
-  const netSuffix = net > 0 ? "pos" : net < 0 ? "neg" : "zero"
+  const { projectCount, fileCount, totalLines } = props.lineStatsSummary
   return [
-    { key: "added", value: `+${added.toLocaleString()}`, label: props.i18n.lineStatsTotalAdded, valueCls: "gp-statgrid-value--add" },
-    { key: "deleted", value: `−${deleted.toLocaleString()}`, label: props.i18n.lineStatsTotalDeleted, valueCls: "gp-statgrid-value--del" },
-    { key: "net", value: net.toLocaleString(), label: props.i18n.lineStatsTotalNet, valueCls: `gp-statgrid-value--net-${netSuffix}` },
+    { key: "projects", value: projectCount.toLocaleString(), label: props.i18n.lineStatsTotalProjects },
+    { key: "files", value: fileCount.toLocaleString(), label: props.i18n.lineStatsTotalFiles },
     { key: "totalLines", value: totalLines.toLocaleString(), label: props.i18n.lineStatsTotalLines, valueCls: "gp-statgrid-value--total", hint: props.i18n.lineStatsTotalHint },
   ]
 })

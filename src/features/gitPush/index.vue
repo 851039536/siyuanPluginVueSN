@@ -65,7 +65,6 @@
       :selected-extensions="selectedExtensions"
       :line-detail-project-id="lineDetailProjectId"
       :line-detail-refreshing="lineDetailRefreshing"
-      :get-project-numstat="getProjectNumstat"
       :get-project-file-lines="getProjectFileLines"
       :refresh-project="refreshLineStatsProject"
       @run-analysis="runAnalysis"
@@ -621,7 +620,6 @@ const {
   lineStatsSummary,
   selectedExtensions,
   updateSelectedExtensions,
-  getProjectNumstat,
   getProjectFileLines,
   refreshLineStatsProject,
   lineDetailRefreshing,

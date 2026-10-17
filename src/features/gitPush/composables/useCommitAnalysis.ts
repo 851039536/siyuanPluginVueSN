@@ -1,5 +1,7 @@
-// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行；行数统计视图单命令抓取 numstat 生成代码行数排行
+// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行；
+// 行数排行改为「存量规模 + 生命周期」视图，只扫已跟踪文件行数与首/末次提交（不再抓全历史 numstat）
 import type { Ref } from "vue"
+import type { NumstatCommit } from "../reportMetrics"
 import type {
   CommitAnalysisEntry,
   CommitAnalysisStats,
@@ -13,8 +15,21 @@ import type {
   ProjectFetchFailure,
   ProjectLineRankItem,
 } from "../types"
-import { computed, ref } from "vue"
-import { clampDiffContextBudget, clampMaxBodyLineLength, clampMinSubjectLength, DEFAULT_ANALYSIS_VIEW_SETTINGS, DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "../types"
+import {
+  computed,
+  ref,
+} from "vue"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { analyzeCommitRuleCompliance } from "../commitRuleChecker"
+import { shouldIncludeFile } from "../reportMetrics"
+import {
+  clampDiffContextBudget,
+  clampMaxBodyLineLength,
+  clampMinSubjectLength,
+  DEFAULT_ANALYSIS_VIEW_SETTINGS,
+  DEFAULT_COMMIT_RULE_CONFIG,
+  readCommitRuleConfig,
+} from "../types"
 import {
   buildDailyCommitBuckets,
   classifyFetchFailure,
@@ -26,9 +41,6 @@ import {
   rankByCountWithTotal,
   resolveValidPath,
 } from "../utils"
-import { analyzeCommitRuleCompliance } from "../commitRuleChecker"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { countTrackedFileLinesMap, shouldIncludeFile, sumProjectLines, type NumstatCommit } from "../reportMetrics"
 
 /** 每项目抓取条数选项（"all" = 全部提交，省略 git log -n 限制；仿 BranchCommitList.countOptions） */
 export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200, 300, 500, "all"] as const
@@ -41,19 +53,41 @@ const AUTHOR_RANK_LIMIT = 10
 
 /** 行数统计可选的常见文件扩展名（配置弹窗多选排除列表，空数组 = 不过滤） */
 export const LINE_STATS_EXTENSIONS = [
-  ".ts", ".vue", ".js", ".jsx", ".tsx",
-  ".css", ".scss", ".json", ".md", ".html",
-  ".cs", ".xaml", ".py", ".go",
-  ".dll", ".sdb", ".pdb", ".ini", ".xml", ".log", ".txt", ".zip", ".7z", ".xuv",
+  ".ts",
+  ".vue",
+  ".js",
+  ".jsx",
+  ".tsx",
+  ".css",
+  ".scss",
+  ".json",
+  ".md",
+  ".html",
+  ".cs",
+  ".xaml",
+  ".py",
+  ".go",
+  ".dll",
+  ".sdb",
+  ".pdb",
+  ".ini",
+  ".xml",
+  ".log",
+  ".txt",
+  ".zip",
+  ".7z",
+  ".xuv",
 ] as const
 
-/** 从项目排行累加全量合计（旧缓存无 summary 字段时的兼容兜底；更早版本缓存排行可能只含前 20，重新分析后为全量） */
+/** 从项目排行累加全量合计（旧缓存无 summary 字段时的兼容兜底） */
 function deriveSummary(ranking: ProjectLineRankItem[]): LineStatsSummary {
-  const added = ranking.reduce((s, r) => s + r.added, 0)
-  const deleted = ranking.reduce((s, r) => s + r.deleted, 0)
   // 旧缓存条目无 totalLines 字段时按 0 计入（存量降级兜底）
   const totalLines = ranking.reduce((s, r) => s + (r.totalLines ?? 0), 0)
-  return { added, deleted, net: added - deleted, totalLines }
+  return {
+    projectCount: ranking.length,
+    fileCount: 0,
+    totalLines,
+  }
 }
 
 export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProject[]>) {
@@ -97,7 +131,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /** 项目代码行数排行（按总行数降序，行数统计视图分析后填充） */
   const projectLineRanking = ref<ProjectLineRankItem[]>([])
   /** 全量行数合计（基于全量项目数据独立累加，供顶部汇总卡片展示） */
-  const lineStatsSummary = ref<LineStatsSummary>({ added: 0, deleted: 0, net: 0, totalLines: 0 })
+  const lineStatsSummary = ref<LineStatsSummary>({
+    projectCount: 0,
+    fileCount: 0,
+    totalLines: 0,
+  })
   /** 行数详情弹窗单项目刷新中标记（防并发点击） */
   const lineDetailRefreshing = ref(false)
   /** per-project 原始 numstat 数据（仅内存不持久化；行数统计分析后填充，供项目详情弹窗消费，下次分析覆盖） */
@@ -120,97 +158,94 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /** 从存储载入显示设置（与默认值逐字段合并，防旧数据缺字段导致渲染异常） */
   async function loadViewSettings() {
     const saved = await manager.storage.commitAnalysisView.loadOrDefault()
-    viewSettings.value = { ...viewSettings.value, ...saved }
+    viewSettings.value = {
+      ...viewSettings.value,
+      ...saved,
+    }
   }
 
   /** 更新显示设置并持久化（面板每项改动即时调用） */
   async function updateViewSettings(patch: Partial<CommitAnalysisViewSettings>) {
-    viewSettings.value = { ...viewSettings.value, ...patch }
+    viewSettings.value = {
+      ...viewSettings.value,
+      ...patch,
+    }
     await manager.storage.commitAnalysisView.save(viewSettings.value)
   }
 
-  /** 由各项目的 settled 结果聚合项目行数排行与全量合计（仅统计含 numstat 的 fulfilled 结果；extensions 可选黑名单排除过滤；totalLines 为存量，缺失按 0 计入）。
-   * 注：不再产出跨项目作者行数排行（原 authorLineRanking 无任何消费方——详情弹窗的作者明细由 ProjectLineDetail 按项目现场聚合 numstat 得出），
-   * 故此处也不再构建 authorLines 分组，省去一次全量遍历。 */
-  function buildLineRankings(
-    settled: PromiseSettledResult<{ projectId: string, projectName: string, entries: CommitAnalysisEntry[], numstat: NumstatCommit[], totalLines?: number }>[],
-    nameById: Map<string, string>,
-    extensions?: string[],
-  ): { projectRanking: ProjectLineRankItem[], summary: LineStatsSummary } {
-    const projectLines = new Map<string, { added: number, deleted: number }>()
-    // 项目当前总行数（存量，git ls-files 统计；仅行数统计分支填充，缺失的项目按 0 计入）
-    const projectTotalLines = new Map<string, number>()
-    settled.forEach((r) => {
-      if (r.status !== "fulfilled") return
-      const { projectId, numstat, totalLines } = r.value
-      if (typeof totalLines === "number") {
-        projectTotalLines.set(projectId, (projectTotalLines.get(projectId) ?? 0) + totalLines)
-      }
-      // 仅取项目维度合计（作者维度无消费方，不再分组）
-      const psum = sumProjectLines(numstat, extensions)
-      const prevP = projectLines.get(projectId)
-      projectLines.set(projectId, {
-        added: (prevP?.added ?? 0) + psum.added,
-        deleted: (prevP?.deleted ?? 0) + psum.deleted,
-      })
-    })
-    // 全量合计基于 projectLines 全量累加（与排行展示无关，避免项目数变化时「总」数字失真）
-    let summaryAdded = 0
-    let summaryDeleted = 0
-    for (const agg of projectLines.values()) {
-      summaryAdded += agg.added
-      summaryDeleted += agg.deleted
-    }
-    let summaryTotalLines = 0
-    for (const t of projectTotalLines.values()) summaryTotalLines += t
-    const summary: LineStatsSummary = { added: summaryAdded, deleted: summaryDeleted, net: summaryAdded - summaryDeleted, totalLines: summaryTotalLines }
-    // 按总行数（存量）降序，同存量再按净增、新增降序；totalLines 缺失（旧缓存）按 0 计入（项目排行不截断，全部展示）
-    const all = [...projectLines.entries()].map(([id, agg]) => ({
-      id,
-      name: nameById.get(id) || id,
-      added: agg.added,
-      deleted: agg.deleted,
-      net: agg.added - agg.deleted,
-      totalLines: projectTotalLines.get(id),
-    }))
-    // 全部成功抓取的项目都进榜单（含新增+删除=0 的项目，它们显示 0/0/0 与真实总行数）。
-    // 为什么不再过滤：早期版本剔除「无行数变化」的项目，导致用户看到「62 个项目只剩 2 个」
-    // 却无从得知其余项目去哪了；且这类项目本身有真实的存量总行数，理应可见可比。
-    // 排序仍按总行数（存量）降序，故无变更项目会自然沉到榜单末尾，不会淹没头部真实排行。
-    const projectRanking = [...all].sort(compareProjectLineRank)
-    return { projectRanking, summary }
-  }
-
-  /** 抓取单项目行数数据：numstat（提交增量）与已跟踪文件存量行数（全量分析与详情弹窗单项目刷新共用）。
-   * 行数统计固定统计全部提交历史（不传 maxCount）—— 与「当前总行数=工作区存量全量」保持同一口径，不受条数选择影响。
+  /**
+   * 由各项目的 settled 扫描结果聚合项目行数排行与全量合计（仅统计 fulfilled 结果；totalLines/fileCount 为存量口径）。
    *
-   * 索引优先：两条数据都走本地提交索引——HEAD 未变的项目零 git 调用、零 statSync
-   * （git ls-files + 逐文件读盘是行数统计最慢的一环，索引按 rootHash 复用其缓存）。
-   * 索引不可用时 getIndexed* 返回回退结果/空值，此处退回原有的直接扫描路径。 */
-  async function fetchProjectLineStats(p: GitProject, path: string) {
-    const numstatResult = await manager.getIndexedCommitLog(p, {})
-    const numstat = numstatResult.commits
-    // 存量行数：索引命中直接给 Map；未命中返回 null → 回退逐文件读取
-    const indexed = await manager.getIndexedFileLines(p)
-    let fileLines: Map<string, number | null>
-    if (indexed) {
-      fileLines = indexed.lines
-    } else {
-      const trackedFiles = await manager.getTrackedFiles(path)
-      fileLines = countTrackedFileLinesMap(p, trackedFiles)
+   * 口径变更说明：本视图已从「增删增量排行」调整为「存量规模 + 生命周期」视图，
+   * 不再抓取全历史 numstat（列表不再展示新增/删除/净增），因此聚合只做三件事：
+   * 汇总存量行数与文件数、按存量降序排序、携带首/末次提交时间。
+   */
+  function buildLineRankings(
+    settled: PromiseSettledResult<{
+      projectId: string
+      projectName: string
+      totalLines: number
+      fileCount: number
+      firstCommit: string
+      lastCommit: string
+    }>[],
+    nameById: Map<string, string>,
+  ): { projectRanking: ProjectLineRankItem[], summary: LineStatsSummary } {
+    let summaryTotalLines = 0
+    let summaryFileCount = 0
+    const all: ProjectLineRankItem[] = []
+    for (const r of settled) {
+      if (r.status !== "fulfilled") continue
+      const {
+        projectId,
+        totalLines,
+        fileCount,
+        firstCommit,
+        lastCommit,
+      } = r.value
+      summaryTotalLines += totalLines
+      summaryFileCount += fileCount
+      all.push({
+        id: projectId,
+        name: nameById.get(projectId) || projectId,
+        totalLines,
+        firstCommit,
+        lastCommit,
+      })
     }
-    // 单次遍历统计项目总行数（复用 countFileLines 口径，避免重复读文件）
-    let totalLines = 0
-    fileLines.forEach((lines, f) => {
-      if (lines !== null && shouldIncludeFile(f, selectedExtensions.value)) totalLines += lines
-    })
-    return { numstat, fileLines, totalLines }
+    // 全部成功抓取的项目都进榜单（含 0 行项目，它们本身是真实的存量可比对象）。
+    // 排序按总行数降序，故小项目自然沉到末尾，不会淹没头部。
+    const projectRanking = all.sort(compareProjectLineRank)
+    const summary: LineStatsSummary = {
+      projectCount: projectRanking.length,
+      fileCount: summaryFileCount,
+      totalLines: summaryTotalLines,
+    }
+    return {
+      projectRanking,
+      summary,
+    }
   }
 
-  /** 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时单命令抓取 numstat 生成行数排行，成功后持久化结果供下次复用。
+  /**
+   * 抓取单项目行数数据（全量分析与详情弹窗单项目刷新共用）。
+   *
+   * 只统计存量：已跟踪文件的实际行数 + 仓库首/末次提交时间。
+   * 不再抓 numstat —— 列表已移除增删净列，全历史 numstat 抓取是行数统计最慢的一环且已无消费方。
+   *
+   * 增量复用由 manager.scanProjectLineStats 承担：HEAD 与 gitdir 未变时零 git、零读盘；
+   * HEAD 变化时逐文件 statSync 比对 mtime/size，只重读变化的文件（详见 managers/lineScan.ts）。
+   */
+  async function fetchProjectLineStats(p: GitProject, _path: string) {
+    return manager.scanProjectLineStats(p, (f) => shouldIncludeFile(f, selectedExtensions.value))
+  }
+
+  /**
+   * 批量分析全部项目核心（GitExecutor 自带并发限流，无需额外节流）；needNumstat 时扫描存量行数生成行数排行。
    * 两个域（提交分析 / 行数统计）共用同一把运行锁 runBusy（避免并发触发 git 子进程风暴），
    * 但进度与结果状态各自写入对应槽位（analyzing+failedCount+analyzedAt 与 lineAnalyzing+lineFailedCount+lineAnalyzedAt）。
-   * @returns 是否实际执行（false = 分析进行中被拒绝，调用方据此决定是否需后续重试） */
+   * @returns 是否实际执行（false = 分析进行中被拒绝，调用方据此决定是否需后续重试）
+   */
   async function runCore(needNumstat: boolean, projectIds?: string[]): Promise<boolean> {
     if (runBusy) return false
     runBusy = true
@@ -233,23 +268,25 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         if (modules && !modules.fs.existsSync(path)) {
           throw new ProjectFetchError("pathMissing", `Path not found: ${path}`)
         }
-        // 行数统计：单命令抓取（getCommitStatsLog 自带 hash/message/author/date + 每文件增删行），
+        // 行数统计：只扫存量（已跟踪文件行数 + 首/末次提交），不再抓全历史 numstat——
+        // 列表已移除增删净列，numstat 抓取是最慢的一环且无消费方（详见 README「行数统计口径」）。
         // git 失败直接抛错计入 failedCount（不再本地 try-catch 降级为空数据）
         if (needNumstat) {
-          const { numstat, fileLines, totalLines } = await fetchProjectLineStats(p, path)
+          const {
+            totalLines,
+            fileCount,
+            firstCommit,
+            lastCommit,
+            fileLines,
+          } = await fetchProjectLineStats(p, path)
           return {
             projectId: p.id,
             projectName: p.name,
-            entries: numstat.map((c) => ({
-              projectId: p.id,
-              projectName: p.name,
-              hash: c.hash ?? "",
-              message: c.message ?? "",
-              author: c.author,
-              date: c.date,
-            })),
-            numstat,
+            entries: [] as CommitAnalysisEntry[],
             totalLines,
+            fileCount,
+            firstCommit,
+            lastCommit,
             fileLines,
           }
         }
@@ -269,8 +306,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             author: c.author,
             date: c.date,
             isMerge: c.isMerge,
-          })),
-          numstat: [],
+          })) as CommitAnalysisEntry[],
+          totalLines: 0,
+          fileCount: 0,
+          firstCommit: "",
+          lastCommit: "",
+          fileLines: new Map<string, number | null>(),
         }
       }))
       let fail = 0
@@ -301,26 +342,26 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         fetchFailures.value = runFailures
         lineAnalyzedAt.value = stamp
         lineAnalyzed.value = true
-        // 行数统计重算项目/作者排行
+        // 行数统计重算项目排行（存量口径，无增删净聚合）
         const nameById = new Map(projects.value.map((p) => [p.id, p.name]))
-        const { projectRanking, summary } = buildLineRankings(settled, nameById, selectedExtensions.value)
+        const {
+          projectRanking,
+          summary,
+        } = buildLineRankings(settled, nameById)
         projectLineRanking.value = projectRanking
         lineStatsSummary.value = summary
-        // 保留 per-project 原始 numstat（仅 fulfilled 且有文件变更数据的项目），供项目详情弹窗按 projectId 即时聚合文件/作者明细
-        const numstatMap = new Map<string, NumstatCommit[]>()
-        // per-project 已跟踪文件存量行数（仅行数统计分支携带 fileLines；有文件列表即存，供详情弹窗文件明细列查存量）
+        // per-project 已跟踪文件存量行数（供详情弹窗文件明细列查存量；numstat 已不再抓取，故作者明细为空）
         const fileLinesMap = new Map<string, Map<string, number | null>>()
         settled.forEach((r) => {
           if (r.status !== "fulfilled") return
-          if (r.value.numstat.length > 0) {
-            numstatMap.set(r.value.projectId, r.value.numstat)
-          }
-          if ("fileLines" in r.value && r.value.fileLines) {
+          if (r.value.fileLines.size > 0) {
             fileLinesMap.set(r.value.projectId, r.value.fileLines)
           }
         })
-        perProjectNumstat.value = numstatMap
+        perProjectNumstat.value = new Map()
         perProjectFileLines.value = fileLinesMap
+        // 清理已删除项目的残留统计数据（防 SQLite 表随项目增减无界增长）
+        await manager.pruneLineStats(projects.value.map((p) => p.id))
       } else {
         // 子集局部刷新（保存修正后）：按项目合并——移除目标项目旧条目（amend/rebase 后 hash 已变，整体替换）+ 追加新数据，其他项目保留
         const idSet = projectIds?.length ? new Set(projectIds) : new Set<string>()
@@ -403,8 +444,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     }
   }
 
-  /** 从存储载入上次提交分析结果（有有效条目时直接复用，不再重新分析）。
-   * 旧版把行数排行一起存在此缓存里，故同时回填行数域（lineAnalyzed/lineAnalyzedAt），供升级用户的行数视图直接复用。 */
+  /**
+   * 从存储载入上次提交分析结果（有有效条目时直接复用，不再重新分析）。
+   * 旧版把行数排行一起存在此缓存里，故同时回填行数域（lineAnalyzed/lineAnalyzedAt），供升级用户的行数视图直接复用。
+   */
   async function loadCachedAnalysis() {
     if (cacheLoaded) return
     cacheLoaded = true
@@ -458,7 +501,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       projectLineRanking.value = cache.projectLineRanking.filter((r) => validProjectIds.value.has(r.id))
       // 旧缓存无 summary / totalLines 字段时降级：summary 缺失从排行累加，totalLines 缺失补 0
       lineStatsSummary.value = cache.summary
-        ? { ...cache.summary, totalLines: cache.summary.totalLines ?? 0 }
+        ? {
+            ...cache.summary,
+            totalLines: cache.summary.totalLines ?? 0,
+          }
         : deriveSummary(projectLineRanking.value)
       lineAnalyzed.value = true
       return
@@ -489,12 +535,18 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   async function updateSelectedExtensions(exts: string[]) {
     selectedExtensions.value = exts
     const cache = await manager.storage.lineStatsCache.loadOrDefault()
-    await manager.storage.lineStatsCache.save({ ...cache, selectedExtensions: exts })
+    await manager.storage.lineStatsCache.save({
+      ...cache,
+      selectedExtensions: exts,
+    })
   }
 
-  /** 单项目行数刷新（详情弹窗刷新按钮）：重抓该项目 numstat + 存量行数，更新 per-project 内存缓存、
-   * 项目排行对应条目（upsert 重排）与汇总增量；作者排行为跨项目聚合，单项目刷新不重算（完整重算走「重新分析」）。
-   * 结果持久化到行数统计缓存供下次复用；analyzedAt 语义为全量分析完成时间，不因单项目刷新改动。 */
+  /**
+   * 单项目行数刷新（详情弹窗刷新按钮）：重扫该项目存量行数与首/末次提交，更新 per-project 内存缓存、
+   * 项目排行对应条目（upsert 重排）与汇总合计。
+   * 结果由 manager.scanProjectLineStats 直接落 SQLite，并同步写行数统计快照缓存供下次复用；
+   * analyzedAt 语义为全量分析完成时间，不因单项目刷新改动。
+   */
   async function refreshLineStatsProject(projectId: string) {
     if (lineDetailRefreshing.value || runBusy) return
     const p = projects.value.find((x) => x.id === projectId)
@@ -506,37 +558,39 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       if (modules && !modules.fs.existsSync(path)) {
         throw new ProjectFetchError("pathMissing", `Path not found: ${path}`)
       }
-      const { numstat, fileLines, totalLines } = await fetchProjectLineStats(p, path)
-      // 更新 per-project 内存缓存（numstat 为空时移除键，与全量分析「仅存有变更数据项目」口径一致）
-      if (numstat.length > 0) perProjectNumstat.value.set(projectId, numstat)
-      else perProjectNumstat.value.delete(projectId)
+      // 强制重扫该项目（忽略 HEAD 未变的快路径），保证「刷新」按钮总能反映磁盘最新状态
+      const {
+        fileLines,
+        totalLines,
+        firstCommit,
+        lastCommit,
+      } = await manager.scanProjectLineStats(
+        p,
+        (f) => shouldIncludeFile(f, selectedExtensions.value),
+        true,
+      )
       perProjectFileLines.value.set(projectId, fileLines)
-      // 项目排行 upsert：剔除旧条目后重插并按总行数降序重排（与 buildLineRankings 同口径），弹窗「当前总行数」chip 随之更新。
-      // 与全量分析同判据：不按有无变更过滤，全部项目都在榜单（无变更者显示 0/0/0 与真实总行数）
-      const agg = sumProjectLines(numstat, selectedExtensions.value)
+      perProjectNumstat.value.delete(projectId)
+      // 项目排行 upsert：剔除旧条目后重插并按总行数降序重排（与 buildLineRankings 同口径），
+      // 弹窗「当前总行数」chip 随之更新
       const old = projectLineRanking.value.find((r) => r.id === projectId)
       const entry: ProjectLineRankItem = {
         id: projectId,
         name: p.name,
-        added: agg.added,
-        deleted: agg.deleted,
-        net: agg.added - agg.deleted,
         totalLines,
+        firstCommit,
+        lastCommit,
       }
       projectLineRanking.value = [
         ...projectLineRanking.value.filter((r) => r.id !== projectId),
         entry,
       ].sort(compareProjectLineRank)
-      // 汇总增量校正（旧条目缺席视为 0 贡献）
-      const added = lineStatsSummary.value.added + agg.added - (old?.added ?? 0)
-      const deleted = lineStatsSummary.value.deleted + agg.deleted - (old?.deleted ?? 0)
+      // 汇总合计校正（旧条目缺席视为 0 贡献）
       lineStatsSummary.value = {
-        added,
-        deleted,
-        net: added - deleted,
+        ...lineStatsSummary.value,
         totalLines: lineStatsSummary.value.totalLines + totalLines - (old?.totalLines ?? 0),
       }
-      // 持久化到独立行数统计缓存（analyzedAt/扩展名沿用现有缓存值）
+      // 持久化到独立行数统计快照缓存（analyzedAt/扩展名沿用现有缓存值）
       const cache = await manager.storage.lineStatsCache.loadOrDefault()
       await manager.storage.lineStatsCache.save({
         ...cache,
@@ -572,7 +626,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     if (ruleCheckProjectId.value === id) return
     ruleCheckProjectId.value = id
     const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
-    await manager.storage.ruleCheckPrefs.save({ ...saved, projectId: id })
+    await manager.storage.ruleCheckPrefs.save({
+      ...saved,
+      projectId: id,
+    })
   }
 
   /** 更新提交规则配置（patch 局部合并，阈值整数化钳位；load-merge-save 保留 projectId；下次规则检查按新配置判定） */
@@ -587,12 +644,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     if (JSON.stringify(merged) === JSON.stringify(ruleConfig.value)) return
     ruleConfig.value = merged
     const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
-    await manager.storage.ruleCheckPrefs.save({ ...saved, ...merged })
-  }
-
-  /** 按 projectId 获取该项目的原始 numstat 数据（仅内存，未找到或项目无变更时返回空数组） */
-  function getProjectNumstat(projectId: string): NumstatCommit[] {
-    return perProjectNumstat.value.get(projectId) ?? []
+    await manager.storage.ruleCheckPrefs.save({
+      ...saved,
+      ...merged,
+    })
   }
 
   /** 按 projectId 获取该项目的已跟踪文件存量行数 Map（仅内存，未分析或项目无文件时返回空 Map；值 null=2MB/二进制/读失败/已删除） */
@@ -674,7 +729,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     lineStatsSummary,
     selectedExtensions,
     updateSelectedExtensions,
-    getProjectNumstat,
     getProjectFileLines,
     refreshLineStatsProject,
     lineDetailRefreshing,

@@ -1,4 +1,4 @@
-<!-- gitPush 项目行数详情弹窗：点击项目行弹出，双 Tab（文件明细表格 + 作者行数排行），数据由 getNumstat 即时聚合 -->
+<!-- gitPush 项目行数详情弹窗：点击项目行弹出，展示该项目的文件存量行数明细（数据由 getFileLines 提供） -->
 <template>
   <Transition name="gp-dialog-fade">
     <!-- 遮罩/层级/基准字号取自共享基座 .gp-mask，本地仅保留弹窗尺寸与进出场缩放 -->
@@ -24,7 +24,7 @@
               <span class="pld-total-value">{{ totalLines?.toLocaleString() ?? "—" }}</span>
             </span>
           </div>
-          <!-- 刷新按钮：重抓该项目行数数据（刷新中转为 loading 占位） -->
+          <!-- 刷新按钮：重扫该项目存量行数（刷新中转为 loading 占位） -->
           <Button
             icon="refresh"
             size="xsmall"
@@ -44,145 +44,51 @@
           />
         </div>
 
-        <!-- Tab 切换：文件明细 / 作者明细（共享 Tabs 五件套，含方向键漫游与 aria 关联） -->
-        <Tabs
-          v-model:value="activeTab"
-          class="pld-tabs"
-          size="xsmall"
-        >
-          <TabList
-            class="pld-tabs-bar"
-            :aria-label="i18n.lineDetailTabsLabel"
-          >
-            <Tab value="file">
-              <IconWrapper
-                name="fileOutline"
-                :size="12"
-              />
-              {{ i18n.lineDetailFileTab }}
-              <Tag
-                size="xsmall"
-                variant="primary"
-                shape="rounded"
-              >{{ fileRows.length }}</Tag>
-            </Tab>
-            <Tab value="author">
-              <IconWrapper
-                name="accountGroup"
-                :size="12"
-              />
-              {{ i18n.lineDetailAuthorTab }}
-              <Tag
-                size="xsmall"
-                variant="primary"
-                shape="rounded"
-              >{{ authorRows.length }}</Tag>
-            </Tab>
-          </TabList>
-
-          <!-- 内容区（滚动容器：吸顶表头以本容器为滚动祖先） -->
-          <TabPanels class="pld-body">
-            <!-- 文件明细 Tab：表头 + 文件行（路径/修改/作者/增删净/占比/总行数） -->
-            <TabPanel value="file">
-              <EmptyState
-                v-if="fileRows.length === 0"
-                icon="mdi:file-document-outline"
-                :text="i18n.lineDetailFileEmpty"
-              />
-              <template v-else>
-                <!-- 表头 -->
-                <div class="pld-table-head">
-                  <span class="pld-cell pld-cell--rank">#</span>
-                  <span class="pld-cell pld-cell--file">{{ i18n.lineDetailFileColumn }}</span>
-                  <span class="pld-cell pld-cell--num">{{ i18n.lineDetailMods }}</span>
-                  <span class="pld-cell pld-cell--num">{{ i18n.lineDetailAuthors }}</span>
-                  <!-- 表头列："新增"（tooltip 说明为全历史累计增量口径，与排行页同口径） -->
-                  <span
-                    class="pld-cell pld-cell--num"
-                    :title="i18n.lineStatsAddedHint"
-                  >{{ i18n.analysisLineAdded }}</span>
-                  <!-- 表头列："删除"（tooltip 说明为全历史累计增量口径，与排行页同口径） -->
-                  <span
-                    class="pld-cell pld-cell--num"
-                    :title="i18n.lineStatsDeletedHint"
-                  >{{ i18n.analysisLineDeleted }}</span>
-                  <!-- 表头列："净增"（tooltip 说明增量口径，与总行数存量口径不同） -->
-                  <span
-                    class="pld-cell pld-cell--net"
-                    :title="i18n.lineStatsNetHint"
-                  >{{ i18n.analysisLineNet }}</span>
-                  <!-- 表头列："占比"（净增绝对值占比，tooltip 说明口径） -->
-                  <span
-                    class="pld-cell pld-cell--share"
-                    :title="i18n.lineStatsShareHint"
-                  >{{ i18n.lineDetailShare }}</span>
-                  <!-- 表头列："总行数"（存量，等宽右对齐，tooltip 说明口径） -->
-                  <span
-                    class="pld-cell pld-cell--total"
-                    :title="i18n.lineStatsTotalHint"
-                  >{{ i18n.analysisLineTotal }}</span>
-                </div>
-                <!-- 文件行 -->
-                <div
-                  v-for="(row, idx) in fileRows"
-                  :key="row.path"
-                  class="pld-file-row"
-                >
-                  <span class="pld-cell pld-cell--rank">{{ idx + 1 }}</span>
-                  <span
-                    class="pld-cell pld-cell--file"
-                    :title="`${row.path}\n${i18n.lineDetailModsCount.replace('{0}', String(row.modCount))} · ${i18n.lineDetailAuthorCount.replace('{0}', String(row.authorCount))}`"
-                  >{{ row.path }}</span>
-                  <span class="pld-cell pld-cell--num">{{ row.modCount }}</span>
-                  <span class="pld-cell pld-cell--num">{{ row.authorCount }}</span>
-                  <span class="pld-cell pld-cell--num pld-num--add">{{ row.added.toLocaleString() }}</span>
-                  <span class="pld-cell pld-cell--num pld-num--del">{{ row.deleted.toLocaleString() }}</span>
-                  <span
-                    class="pld-cell pld-cell--net"
-                    :class="netClass(row.net)"
-                  >{{ row.net.toLocaleString() }}</span>
-                  <span class="pld-cell pld-cell--share">
-                    <LineShareBar
-                      :pct="row.pct"
-                      :share="row.share"
-                      :net="row.net"
-                    />
-                  </span>
-                  <!-- 总行数列：该文件当前存量行数（等宽右对齐中性色；2MB/二进制/已删除或旧数据缺失显示 —） -->
-                  <span
-                    class="pld-cell pld-cell--total"
-                    :title="`${i18n.analysisLineTotal} ${row.totalLines?.toLocaleString() ?? '—'}`"
-                  >{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
-                </div>
-              </template>
-            </TabPanel>
-
-            <!-- 作者明细 Tab：共享 LineRankRow（非交互，无总行数列；净增数字按正负着色） -->
-            <TabPanel value="author">
-              <EmptyState
-                v-if="authorRows.length === 0"
-                icon="mdi:account-group-outline"
-                :text="i18n.lineDetailAuthorEmpty"
-              />
-              <div
-                v-else
-                class="lrr-list"
-              >
-                <LineRankRow
-                  v-for="(row, idx) in authorRows"
-                  :key="row.author"
-                  :rank="idx + 1"
-                  :label="row.author"
+        <!-- 内容区（滚动容器：吸顶表头以本容器为滚动祖先） -->
+        <div class="pld-body pld-body--single">
+          <EmptyState
+            v-if="fileRows.length === 0"
+            icon="mdi:file-document-outline"
+            :text="i18n.lineDetailFileEmpty"
+          />
+          <template v-else>
+            <!-- 表头：路径 / 行数 / 占比（存量口径，全部来自 getFileLines） -->
+            <div class="pld-table-head pld-table-head--simple">
+              <span class="pld-cell pld-cell--rank">#</span>
+              <span class="pld-cell pld-cell--file">{{ i18n.lineDetailFileColumn }}</span>
+              <!-- 表头列："总行数"（该文件当前存量行数，tooltip 说明口径） -->
+              <span
+                class="pld-cell pld-cell--total"
+                :title="i18n.lineStatsTotalHint"
+              >{{ i18n.analysisLineTotal }}</span>
+              <!-- 表头列："占比"（该文件行数占项目总行数的百分比） -->
+              <span
+                class="pld-cell pld-cell--share"
+                :title="i18n.lineStatsTotalShareHint"
+              >{{ i18n.lineDetailShare }}</span>
+            </div>
+            <!-- 文件行（按存量行数降序；不可读文件行数为 — 并排在末尾） -->
+            <div
+              v-for="(row, idx) in fileRows"
+              :key="row.path"
+              class="pld-file-row pld-file-row--simple"
+            >
+              <span class="pld-cell pld-cell--rank">{{ idx + 1 }}</span>
+              <span
+                class="pld-cell pld-cell--file"
+                :title="row.path"
+              >{{ row.path }}</span>
+              <span class="pld-cell pld-cell--total">{{ row.totalLines?.toLocaleString() ?? "—" }}</span>
+              <span class="pld-cell pld-cell--share">
+                <LineShareBar
+                  :pct="row.pct"
                   :share="row.share"
-                  :added="row.added"
-                  :deleted="row.deleted"
-                  :net="row.net"
-                  :i18n="i18n"
+                  :net="row.totalLines ?? 0"
                 />
-              </div>
-            </TabPanel>
-          </TabPanels>
-        </Tabs>
+              </span>
+            </div>
+          </template>
+        </div>
 
         <!-- 底部操作栏：关闭 -->
         <div class="pld-footer">
@@ -199,40 +105,28 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 项目行数详情弹窗（双 Tab：文件明细表格 + 作者行数排行，数据由 getNumstat 即时聚合）
-import type { NumstatCommit } from "../../reportMetrics"
-import type { FileLineDetailRow } from "../../types"
-import { computed, ref } from "vue"
+// gitPush 项目行数详情弹窗（文件存量行数明细；原「作者明细」Tab 依赖 numstat 增删聚合，已随口径调整移除）
+import { computed } from "vue"
 import Button from "@/components/Button.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
-import Tab from "@/components/Tab.vue"
-import TabList from "@/components/TabList.vue"
-import TabPanel from "@/components/TabPanel.vue"
-import TabPanels from "@/components/TabPanels.vue"
-import Tabs from "@/components/Tabs.vue"
-import Tag from "@/components/Tag.vue"
-import LineRankRow from "../common/LineRankRow.vue"
-import LineShareBar from "../common/LineShareBar.vue"
-import { aggregateFileStats, shouldIncludeFile, sumAuthorLines } from "../../reportMetrics"
-import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
-import { netClass as sharedNetClass, withLineBarPct, withLineShare } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
+import LineShareBar from "../common/LineShareBar.vue"
+import { shouldIncludeFile } from "../../reportMetrics"
+import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
+import { maxOf } from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 目标项目 id（按此从 getNumstat 取该项目 numstat） */
+  /** 目标项目 id（按此从 getFileLines 取该项目文件存量） */
   projectId: string
   /** 目标项目名（弹窗标题展示） */
   projectName: string
-  /** 当前项目实际总行数（存量，git ls-files 统计；项目已删除或旧缓存缺失时为 undefined） */
+  /** 当前项目实际总行数（存量；项目已删除或旧缓存缺失时为 undefined） */
   totalLines?: number
-  /** 按 projectId 获取该项目原始 numstat（来自 useCommitAnalysis 内存缓存） */
-  getNumstat: (projectId: string) => NumstatCommit[]
-  /** 按 projectId 获取该项目已跟踪文件的存量行数 Map（来自 useCommitAnalysis 内存缓存，值 null=不可读；未传时文件行总行数列降级 —） */
+  /** 按 projectId 获取该项目已跟踪文件的存量行数 Map（值 null=2MB/二进制/读失败/已删除） */
   getFileLines?: (projectId: string) => Map<string, number | null>
   /** 扩展名排除过滤（与项目排行一致，保证明细与排行口径统一） */
   extensions: string[]
-  /** 单项目行数刷新（重抓该项目 numstat + 存量行数，由父级 composable 处理） */
+  /** 单项目行数刷新（重扫该项目存量行数，由父级 composable 处理） */
   refreshProject: (projectId: string) => void
   /** 刷新进行中（按钮 loading 占位） */
   refreshing: boolean
@@ -240,51 +134,37 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [] }>()
 
-/** 当前激活 Tab：file=文件明细 / author=作者明细（与 TabPanel 的 value 对应） */
-const activeTab = ref<string | number>("file")
-
-/** 该项目的原始 numstat 提交列表（projectId 无数据时为空数组，展示空态） */
-const commits = computed(() => props.getNumstat(props.projectId))
-
-/** 该项目已跟踪文件的存量行数 Map（路径→行数|null，null=2MB/二进制/读失败/已删除；未提供 getFileLines 时为空 Map） */
-const fileLinesMap = computed(() => props.getFileLines?.(props.projectId) ?? new Map<string, number | null>())
-
-/** 文件明细行：按文件聚合增删行 + 修改次数/参与作者，按净增降序（同净增量再按新增降序，与全局排行同口径）；pct/share 由共享 withLineBarPct 按净增绝对值预计算（该行渲染 LineShareBar 迷你占比条，故需 pct）；totalLines 为该文件存量行数 */
-const fileRows = computed<FileLineDetailRow[]>(() => {
-  const raw = [...aggregateFileStats(commits.value).entries()]
-    .filter(([path]) => shouldIncludeFile(path, props.extensions))
-    .map(([path, agg]) => ({
-      path,
-      added: agg.added,
-      deleted: agg.deleted,
-      net: agg.added - agg.deleted,
-      modCount: agg.modCount,
-      authorCount: agg.authors.size,
-      totalLines: fileLinesMap.value.get(path) ?? null,
-    }))
-    .sort((a, b) => b.net - a.net || b.added - a.added)
-  return withLineBarPct(raw, (r) => r.net)
-})
-
-/** 作者明细行：按作者聚合增删行，按净增降序（与全局作者排行同模式；行内无条形，故只预计算 share） */
-const authorRows = computed(() => {
-  const lines = sumAuthorLines(commits.value, props.extensions)
-  const raw = [...lines.entries()]
-    .filter(([, agg]) => agg.added + agg.deleted > 0)
-    .map(([author, agg]) => ({
-      author,
-      added: agg.added,
-      deleted: agg.deleted,
-      net: agg.added - agg.deleted,
-    }))
-    .sort((a, b) => b.net - a.net || b.added - a.added)
-  return withLineShare(raw, (r) => r.net)
-})
-
-/** 净增行语义色（统一前缀 lrr-net，与共享排行行/占比条同一套样式） */
-function netClass(net: number): string {
-  return sharedNetClass(net, "lrr-net")
+/** 文件明细行（已按扩展名过滤 + 按存量行数降序） */
+interface FileRow {
+  path: string
+  /** 该文件存量行数（null = 不可读） */
+  totalLines: number | null
+  /** 相对最大文件的条形宽度（LineShareBar 填充比例） */
+  pct: string
+  /** 占项目总行数百分比 */
+  share: string
 }
+
+/**
+ * 文件明细行：直接由存量行数 Map 派生（不再需要 numstat 聚合）。
+ *
+ * 排序把不可读文件（null）排到末尾：它们既无行数也无占比，
+ * 混在降序序列中会让「前 N 个最大文件」失真。
+ */
+const fileRows = computed<FileRow[]>(() => {
+  const map = props.getFileLines?.(props.projectId) ?? new Map<string, number | null>()
+  const entries = [...map.entries()].filter(([path]) => shouldIncludeFile(path, props.extensions))
+  const maxLines = maxOf(entries.map(([, n]) => n ?? 0), 1)
+  const totalLines = entries.reduce((s, [, n]) => s + (n ?? 0), 0) || 1
+  return entries
+    .map(([path, totalLinesForFile]) => ({
+      path,
+      totalLines: totalLinesForFile,
+      pct: `${Math.round(((totalLinesForFile ?? 0) / maxLines) * 100)}%`,
+      share: `${((((totalLinesForFile ?? 0) / totalLines) * 100)).toFixed(1)}%`,
+    }))
+    .sort((a, b) => (b.totalLines ?? -1) - (a.totalLines ?? -1) || a.path.localeCompare(b.path))
+})
 
 // ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
 // TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各弹窗）。
@@ -294,6 +174,6 @@ void rootRef
 
 <style lang="scss">
 @use "../../styles/ProjectLineDetail.scss";
-@use "../../styles/LineRankRow.scss";
+@use "../../styles/LineShareBar.scss";
 @use "../../styles/index.scss";
 </style>

@@ -8,14 +8,21 @@
 //   第 1 层 GitDirWatcher  —— fs.watch，0 次 spawn，捕获 commit/fetch/切分支/merge/stash
 //   第 2 层 本模块 poll    —— stat 预筛（0 spawn）→ 未变则跳过；变了才跑一次 git status
 //   第 3 层 本模块 network —— fetch，绝不进短定时器，默认关闭
-import type { TimerHandle } from "@/utils/timerRegistry"
 import type { Ref } from "vue"
-import type { GitProject, ProbeConfig, ProjectQueryScheduler } from "../types"
+import type { ProbeConfig } from "../types/probeConfig"
+import type { ProjectQueryScheduler } from "../types/queryScheduler"
+import type { GitProject } from "../types/storage"
+import type { TimerHandle } from "@/utils/timerRegistry"
+// ⚠️ 上面三个类型与下方 resolveValidPath 直连 types/utils 下的**纯模块**，不走 "../types"
+//    与 "../utils" 桶：桶里有 `export { GitPushManager } from "../GitPushManager"`、
+//    `PLATFORM_META` 这类**值**导出，Vite/Rollup 在转译期即需解析该模块图 ⇒ 拉进运行时
+//    "siyuan" 依赖 ⇒ 本模块无法在 Node 单测环境加载（useGitProbe.spec.ts 会直接报
+//    siyuan 包导出错误）。probeConfig / queryScheduler / storage / project.ts 均无运行时依赖。
 import { getNodeModules } from "@/utils/nodeModules"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import { GitDirWatcher } from "../managers/GitDirWatcher"
 import { nextProbeInterval } from "../types/probeConfig"
-import { resolveValidPath } from "../utils"
+import { resolveValidPath } from "../utils/project"
 
 /** 单项目轮询运行态 */
 interface PollEntry {
@@ -27,6 +34,12 @@ interface PollEntry {
   lastHead?: string
   /** 真实 gitdir 绝对路径缓存（供 stat 预筛定位 index；空串 = 解析失败，预筛不生效） */
   gitDir?: string
+  /**
+   * 连续被预筛跳过的轮数（预筛判定「无变化」而省掉 git status 的次数）。
+   * 达到 `MAX_SKIPPED_ROUNDS` 后强制真查一次，用于兜住「改了已跟踪文件但没 git add」
+   * 这类 index/HEAD 均不变、预筛无法察觉的改动。undefined = 0。
+   */
+  skippedRounds?: number
 }
 
 /** 探测依赖 */
@@ -50,6 +63,22 @@ export interface GitProbeDeps {
 
 /** 监听重建间隔：git gc / 项目增删可能使 watcher 失效，周期重建（5 分钟） */
 const REBUILD_INTERVAL_MS = 5 * 60 * 1000
+
+/**
+ * 预筛允许连续跳过的轮数上限（达到即强制真跑一次 `git status`）。
+ *
+ * 存在的唯一理由：「在编辑器里改了已跟踪文件的内容、但还没 `git add`」这种改动
+ * **不会改动 `.git/index` 的 mtime，也不改 HEAD**，两项预筛判据全部命中「无变化」。
+ * 而第 1 层 GitDirWatcher 只监听 `.git` 下的文件（工作区改动不写 .git 任何文件），
+ * 轮询层是唯一能发现它的信号源 —— 若这里无限期跳过，该项目的未提交改动将永远不显示。
+ *
+ * 取值 2 是在「兜底时效」与「空转成本」之间的折中：
+ *   - 空闲项目退避到上限 120s 时，最坏 3 轮 ≈ 6 分钟内必然真查一次；
+ *   - 而每 3 轮才多付一次 `git status`，对干净项目的影响可忽略。
+ * 注意：本上限与退避相互独立 —— 即便退避把间隔拉长，跳过计数仍按「轮」累积，
+ * 不会因为间隔变长而让兜底检查被无限推迟。
+ */
+const MAX_SKIPPED_ROUNDS = 2
 
 export function useGitProbe(deps: GitProbeDeps) {
   const {
@@ -172,19 +201,47 @@ export function useGitProbe(deps: GitProbeDeps) {
    * stat 预筛：用一次 `fs.stat`（微秒级、**零子进程**）判断值不值得跑 git。
    *
    * 这是本方案减少 spawn 的核心手段——工作区干净且无 git 操作时 `.git/index` 的 mtime 不变，
-   * 直接跳过本轮 `git status`，省下 ~250ms 进程费。空闲时轮询成本 ≈ 一次 stat。
+   * 直接跳过本轮 `git status`，省下一次进程费。空闲时轮询成本 ≈ 一次 stat。
    *
    * ⚠️ 判据含两项：index mtime（暂存/提交/checkout）+ HEAD oid（reset --soft、detached 切换
    *    等不动 index 的场景）。任一变化即需查询。
-   * ⚠️ 预筛是**保守**设计：宁可多查，不可漏报。任何不确定路径（gitdir 未解析出、index 不存在、
-   *    stat 抛错、无 HEAD 基准）一律返回 true 交给 git 定夺，正确性不依赖预筛。
+   *
+   * ⚠️ **预筛命中「无变化」不能无限期跳过查询**（曾经的历史缺陷，勿回退）：
+   *    在编辑器里修改**已跟踪文件的内容而未 `git add`** 时，`.git/index` 的 mtime 毫秒级完全不变
+   *    （实测确认，git status 的回写也不改动它），HEAD oid 自然也不变 —— 两项判据同时命中
+   *    「无变化」。若此时直接返回 false 且**永不**强制查询，该项目的未提交改动就**永远**发现不了：
+   *    轮询层是唯一能感知「工作区内容变化」的信号源（GitDirWatcher 监听的是 .git 下的文件，
+   *    工作区改动不写 .git 任何文件，见该类顶部注释的「覆盖边界」），一旦这里漏报即彻底失效。
+   *    故引入 `MAX_SKIPPED_ROUNDS` 上限：连续跳过的轮数达到上限后**强制真跑一次 status**。
+   *
+   * ⚠️ 预筛的其余部分仍是**保守**设计：宁可多查，不可漏报。任何不确定路径（gitdir 未解析出、
+   *    index 不存在、stat 抛错、无 HEAD 基准）一律返回 true 交给 git 定夺。
    */
   async function needStatusQuery(project: GitProject, entry: PollEntry): Promise<boolean> {
     const cfg = getConfig()
     if (!cfg.poll.statPrefilter) return true
     const node = getNodeModules()
     if (!node) return true
-    const { fs, path } = node
+    const {
+      fs,
+      path,
+    } = node
+
+    // ③ 跳过轮数上限（见上方注释）。放在最前：即便 index/HEAD 判据都判定「无变化」，
+    //    到达上限也必须真查一次，否则未提交的工作区改动永远发现不了。
+    const skipped = entry.skippedRounds ?? 0
+    if (skipped >= MAX_SKIPPED_ROUNDS) return true
+
+    /** 判定本轮需要查询；重跳过计数（下轮重新累积上限额度） */
+    const query = (): boolean => {
+      entry.skippedRounds = 0
+      return true
+    }
+    /** 判定本轮可安全跳过；累加跳过计数 */
+    const skip = (): boolean => {
+      entry.skippedRounds = skipped + 1
+      return false
+    }
 
     // ① index mtime 判据。必须用真实 gitdir 而非拼接 `${projectPath}/.git`：
     //    worktree / submodule / 分离式 gitdir 下 `.git` 可能是文件或指向别处，
@@ -195,7 +252,7 @@ export function useGitProbe(deps: GitProbeDeps) {
       gitDir = await resolveGitDirCached(project.id)
       entry.gitDir = gitDir
     }
-    if (!gitDir) return true
+    if (!gitDir) return query()
     try {
       const indexStat = fs.statSync(path.join(gitDir, "index"))
       const mtime = indexStat.mtimeMs
@@ -206,28 +263,28 @@ export function useGitProbe(deps: GitProbeDeps) {
         // index 变了说明工作区/暂存动过：顺带刷新 HEAD 基准，
         // 否则下一轮会因 lastHead 滞后而多发一次 getHeadHash（rev-parse）进程
         await refreshHeadBaseline(project, entry)
-        return true
+        return query()
       }
     } catch {
-      return true
+      return query()
     }
 
     // ② HEAD oid 判据（index 未变时才需要；无基准则先建立基准）
     if (entry.lastHead === undefined) {
       await refreshHeadBaseline(project, entry)
-      return true
+      return query()
     }
     try {
       const head = await manager.getHeadHash(resolveValidPath(project))
-      if (!head) return true
+      if (!head) return query()
       if (head !== entry.lastHead) {
         entry.lastHead = head
-        return true
+        return query()
       }
     } catch {
-      return true
+      return query()
     }
-    return false
+    return skip()
   }
 
   /** 刷新 HEAD 基准（失败静默：基准缺失只是让后续多查一轮，不影响正确性） */
@@ -244,8 +301,11 @@ export function useGitProbe(deps: GitProbeDeps) {
   async function pollOnce(project: GitProject): Promise<boolean> {
     const entry = ensurePollEntry(project.id)
     let changed = false
+    /** 本轮是否真的跑了 git status（决定退避资格，见下方注释） */
+    let queried = false
     try {
       if (await needStatusQuery(project, entry)) {
+        queried = true
         const before = scheduler.workingTrees.value[project.id]
         await scheduler.loadStatus(project.id, { mode: "refresh" })
         const after = scheduler.workingTrees.value[project.id]
@@ -262,15 +322,23 @@ export function useGitProbe(deps: GitProbeDeps) {
           || before.untrackedCount !== after?.untrackedCount
           || before.branch !== after?.branch
         if (changed) {
-          // 工作区变了 → 提交历史/分支也可能变（用户在终端提交过），标脏让卡片按需重载
-          scheduler.invalidate(project.id, "log", "branches", "stash")
+          // 工作区变了 → 提交历史/分支也可能变（用户在终端提交过），标脏让卡片按需重载。
+          // workingTree 也一并标脏：loadStatus 虽已写入新值，但脏标记是卡片重载的权威信号，
+          // 补上可覆盖「写入成功却没触发视图更新」的边角情况（代价仅一次幂等重载）。
+          scheduler.invalidate(project.id, "workingTree", "log", "branches", "stash")
         }
       }
     } catch {
       // 探测失败静默：下一轮重试。探测是后台增强，失败不得打扰用户
     }
-    const cfg = getConfig()
-    entry.interval = nextProbeInterval(entry.interval, changed, cfg.poll.intervalMs, cfg.poll.maxIntervalMs)
+    // 退避资格：**只有真的查过**才允许翻倍。
+    // 被预筛跳过（queried === false）时「无变化」是预筛的猜测而非 git 的结论，
+    // 若据此翻倍会形成「跳过 → 间隔变长 → 更久才发现」的恶性循环。此处不推进退避。
+    // 同理，本轮出错（changed 仍为 false 但 queried 可能为 true/未完成）也不惩罚。
+    if (queried) {
+      const cfg = getConfig()
+      entry.interval = nextProbeInterval(entry.interval, changed, cfg.poll.intervalMs, cfg.poll.maxIntervalMs)
+    }
     return changed
   }
 
@@ -430,6 +498,7 @@ export function useGitProbe(deps: GitProbeDeps) {
       entry.gitDir = undefined
       entry.lastIndexMtime = undefined
       entry.lastHead = undefined
+      entry.skippedRounds = undefined
     }
     const cfg = getConfig()
     if (cfg.watch.enabled) void ensureWatch()
@@ -475,6 +544,8 @@ export function useGitProbe(deps: GitProbeDeps) {
       entry.interval = cfg.poll.intervalMs
       entry.lastIndexMtime = undefined
       entry.lastHead = undefined
+      // 清空跳过计数：用户主动要求，不能因「看起来没变化」被预筛跳过或提前触发兜底
+      entry.skippedRounds = undefined
       // 路径可能在面板外被改过：一并失效 gitdir 缓存，让本轮重新解析
       entry.gitDir = undefined
     }
@@ -522,5 +593,20 @@ export function useGitProbe(deps: GitProbeDeps) {
     syncProjects,
     applyConfig,
     getWatchedCount,
+    /**
+     * 仅测试用：直接跑一轮并返回本轮状态快照（各项目退避间隔 / 跳过计数）。
+     *
+     * 生产代码不应调用 —— 正常的轮询触发路径是定时器与 focus 事件。
+     * 存在的理由：预筛行为（跳过 / 强制查询 / 退避推进）只能通过「连续跑多轮」
+     * 才能断言，而 probeNow 每轮都会清空基准（等于永远走首轮），无法复现连续跳过。
+     * 以显式测试入口替代 `(probe as any).__private` 反射访问，避免测试与内部实现名耦合。
+     */
+    __testRunRound: async (): Promise<{ interval: number, skippedRounds: number }[]> => {
+      await runPollRoundNow()
+      return [...pollEntries.values()].map((e) => ({
+        interval: e.interval,
+        skippedRounds: e.skippedRounds ?? 0,
+      }))
+    },
   }
 }

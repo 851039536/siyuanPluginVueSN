@@ -637,15 +637,29 @@ export class GitPushStorage {
     }
 
     const num = typeof saved === "number" ? saved : Number(saved)
+    // 非有限数（NaN/Infinity）视为数据损坏：既不提升也不落标记，下次启动重试。
+    // 为什么必须拦：`Number({})` / `Number("abc")` 得到 NaN，若直接落标记，
+    // 这个项目就永久停在「已迁移」状态且值从未被修正。
+    if (!Number.isFinite(num)) {
+      console.warn("[gitPush] 并发数存储值无效，本次跳过默认值迁移（下次启动重试）")
+      return
+    }
     // 仅当仍是历史默认值时才提升；其余值视为用户自定义，原样保留
     if (num === LEGACY_GIT_CONCURRENCY) {
-      await this.gitConcurrency.save(DEFAULT_GIT_CONCURRENCY)
+      // 必须检查写入结果：PluginStorage.save() **失败时不抛错、只返回 false**。
+      // 若忽略返回值继续落标记，会出现「值为 3 + 标记说已迁移」的永久不一致——
+      // 正是本迁移要避免的失效模式。
+      const written = await this.gitConcurrency.save(DEFAULT_GIT_CONCURRENCY)
+      if (!written) {
+        console.warn("[gitPush] 并发数升级写入失败，本次不落迁移标记（下次启动重试）")
+        return
+      }
       console.info(
         `[gitPush] 并发数默认值已从 ${LEGACY_GIT_CONCURRENCY} 升级到 ${DEFAULT_GIT_CONCURRENCY}`
         + `（实测分析速度提升约 39%）；如不满意可在设置面板调整。`,
       )
     }
-    // 写标记失败也无妨：下次会重跑，此时值已非 3（或本就非 3），迁移是幂等的
+    // 标记写入失败无妨：下次会重跑，此时值已非 3（或本就非 3），迁移天然幂等
     await this.gitConcurrencyMigration.save(GIT_CONCURRENCY_MIGRATION_VERSION)
   }
 }

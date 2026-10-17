@@ -35,13 +35,16 @@ export interface ProjectScanResult {
 /**
  * 走 `git status` 变更集判据的文件数阈值（方案 B 的盈亏平衡点）。
  *
- * 实测（Windows / 本机，见 README「为什么不是无脑用 git status」）：
+ * ⚠️ **当前生产路径不使用变更集模式**（`GitPushManager` 一律走逐文件 statSync）：
+ * 该模式在「HEAD 已变化」时不可靠——`git status` 只比较工作区与 index，
+ * 看不见切分支 / git add / reset 造成的 index 自身变化，会漏报变更并沿用旧行数。
+ * 详见 lineScan 的 `changedPaths` 参数说明。
+ *
+ * 此常量与变更集分支保留，供将来在「确认 index 未动」的场景复用（例如
+ * 仅刷新某项目的详情弹窗时）。实测盈亏平衡：
  * - `git status --porcelain -uno` 固定成本 ≈ 220 ms（几乎全是进程启动）
  * - 逐文件 `statSync` 边际成本 ≈ 93 µs/文件
- * ⇒ 平衡点 ≈ 220ms / 93µs ≈ 2400 文件，留余量取 2500。
- *
- * 小于阈值时逐文件 statSync 更快（省掉一次 git 进程）；大于阈值时
- * git status 一次扫描即给出变更集合，比逐文件 stat 快得多。
+ * ⇒ 平衡点 ≈ 2400 文件，留余量取 2500。
  */
 export const GIT_STATUS_CHANGE_THRESHOLD = 2500
 
@@ -51,10 +54,18 @@ export const GIT_STATUS_CHANGE_THRESHOLD = 2500
  * @param projectPath 仓库根绝对路径
  * @param trackedFiles 已跟踪文件相对路径清单（git ls-files 结果，应按扩展名过滤**之前**传入）
  * @param cached 上次落库的文件记录（Map<path, record>）；空 Map = 首次全量
- * @param changedPaths 可选的「已知变更文件」集合（来自 `git status --porcelain`）。
- *   传入时：集合内文件强制重读、集合外文件**直接复用缓存**（不再逐文件 statSync）；
- *   不传时：逐文件 statSync 比对 (mtime, size)。
- *   — 前者适合超大仓库（省掉数万次系统调用），后者适合中小仓库（省掉一次 git 进程）。
+ * @param changedPaths 可选的「已知变更文件」集合（来自 `git status --porcelain -z`）。
+ *   传入时：集合内文件强制重读、集合外文件**直接复用缓存**（不再逐文件 statSync）。
+ *   不传时（**生产默认**）：逐文件 statSync 比对 (mtime, size)。
+ *
+ *   ⚠️ 变更集模式的三条已知局限，使用前必须确认场景安全：
+ *   1. **看不见 index 自身变化**：切分支（checkout/switch/restore）、`git add`、
+ *      `git reset --hard` 都会让工作区与 index 同步更新，`git status` 报「干净」，
+ *      但文件内容其实变了 → 漏报 → 沿用旧行数。这正是生产路径不用它的原因。
+ *   2. **assume-unchanged / skip-worktree** 的文件被 git 刻意忽略，永不出现在集合中。
+ *   3. **文件类型变化**（符号链接 ↔ 普通文件）只被报为内容变化，缓存里的
+ *      `lines: null`（链接/二进制）需要一次真实 stat 才能刷新。
+ *      故调用方可对 `prev.lines === null` 的条目自行兜底 stat。
  * @note 扩展名过滤**不在本函数内生效**：被过滤掉的文件同样扫描并缓存，
  *   否则用户切换过滤条件时未缓存的文件必须重读一遍，过滤开关就成了性能陷阱。
  *   过滤只影响 {@link sumScannedLines} 的合计，不影响缓存内容。

@@ -147,6 +147,44 @@ describe("并发数默认值迁移", () => {
     expect(loadCalls).toBeGreaterThan(0)
   })
 
+  it("提升写入失败（save 返回 false）时不落标记，下次启动重试", async () => {
+    // PluginStorage.save() 失败时**不抛错、只返回 false**。
+    // 若忽略返回值继续落标记，会留下「值仍是 3 + 标记说已迁移」的永久不一致 ——
+    // 正是本迁移要避免的失效模式。
+    let saveCalls = 0
+    const plugin = {
+      name: "fake-plugin",
+      loadData: async (key: string) => {
+        if (key === CONCURRENCY_KEY) return LEGACY_GIT_CONCURRENCY
+        return ""
+      },
+      saveData: async (key: string) => {
+        if (key === CONCURRENCY_KEY) {
+          saveCalls++
+          throw new Error("disk full")
+        }
+        return true
+      },
+    } as unknown as Plugin
+
+    const storage = new GitPushStorage(plugin)
+    await expect(storage.init()).resolves.toBeUndefined()
+
+    expect(saveCalls).toBeGreaterThan(0)
+    // 核心断言：标记没有被写入 → 下次启动会重试
+    expect(await storage.gitConcurrencyMigration.load()).toBeNull()
+  })
+
+  it("并发值损坏为 NaN 时不落标记（下次重试），也不误判为用户自定义", async () => {
+    const { plugin, data } = createFakePlugin({ [CONCURRENCY_KEY]: "not-a-number" })
+    const storage = new GitPushStorage(plugin)
+    await storage.init()
+
+    // 损坏值既不提升也不落标记
+    expect(data[CONCURRENCY_KEY]).toBe("not-a-number")
+    expect(await storage.gitConcurrencyMigration.load()).toBeNull()
+  })
+
   it("不干扰既有的默认分类与项目 categoryId 迁移", async () => {
     const {
       plugin,

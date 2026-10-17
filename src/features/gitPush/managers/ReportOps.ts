@@ -213,8 +213,13 @@ export class ReportOps {
    * （见 GitPushManager.scanProjectLineStats）。
    *
    * `-uno` 排除未跟踪文件：行数统计只算已跟踪文件，未跟踪的不该影响结果。
-   * 返回值解析：porcelain 每行格式 `XY <path>`，XY 两字符后一个空格，之后才是路径
-   * （路径可能含空格，故按「前 3 字符 + 其余」切分而非 split 空格）。
+   *
+   * **必须用 `-z`（NUL 分隔）**：默认的换行分隔输出会对含特殊字符的路径做 C 风格
+   * 引号转义（空格两侧加引号、`\\`/`"`/换行转义），且换行会让一条记录拆成多行。
+   * 一旦解析结果与 `git ls-files` 的路径**不能逐字符对上**，该文件就会被当作
+   * 「未变更」而永久沿用旧的行数缓存 —— 这是静默的数据错误，故 `-z` 不是可选项。
+   * `-z` 模式无引号无转义，路径原样输出，故**不做 trim**（路径可以合法地以空格结尾）。
+   *
    * 传 `--no-renames` 让重命名退化为「删除旧路径 + 新增新路径」两条普通记录，
    * 从而无需解析 `old -> new` 箭头语法。
    *
@@ -226,17 +231,18 @@ export class ReportOps {
     try {
       raw = await this.executor.execGit(projectPath, [
         "-c", "core.quotepath=false",
-        "status", "--porcelain=v1", "-uno", "--no-renames",
+        "status", "--porcelain=v1", "-z", "-uno", "--no-renames",
       ], undefined, 60000)
     } catch {
       // 非仓库/权限问题：让调用方走保守路径（逐文件 stat），结果仍然正确
       return null
     }
     const out = new Set<string>()
-    for (const line of raw.split("\n")) {
-      if (line.length < 4) continue
-      // 跳过 "XY " 三字符前缀；路径可能含空格，故不做 split
-      const p = line.slice(3).trim()
+    // -z 模式：每条记录以 NUL 结尾，格式 "XY<space>path"
+    for (const entry of raw.split("\0")) {
+      if (entry.length < 4) continue
+      // 跳过 "XY " 三字符前缀；不 trim —— 保留路径原始形态才能与 ls-files 精确匹配
+      const p = entry.slice(3)
       if (p) out.add(p)
     }
     return out

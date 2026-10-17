@@ -16,6 +16,37 @@ describe("scanProjectFileLines（增量扫描）", () => {
     dir = mkdtempSync(join(tmpdir(), "gpush-linescan-"))
   })
 
+  // ── 回归：切分支场景下 git status 变更集不可靠 ──
+  //
+  // 这是曾经的真实 bug：GitPushManager 在「HEAD 已变化」时用
+  // `git status --porcelain` 的变更集决定哪些文件重算，但 git status 只比较
+  // 「工作区 vs index」。切分支时 index 同步更新，于是它报「干净」（变更集为空），
+  // 所有文件沿用旧行数 —— 行数从此永久错误，且没有任何报错。
+  // 生产路径已改为一律逐文件 statSync，本用例锁住 stat 判据的正确性。
+  it("切分支后内容变化必须被 stat 判据发现（变更集为空也不能沿用旧行数）", () => {
+    // 模拟：旧缓存记录 a.ts 为 3 行
+    const old = write("a.ts", "1\n2\n3\n")
+    // 模拟切分支：内容变为 7 行（size 与 mtime 都变）
+    writeFileSync(join(dir, "a.ts"), "1\n2\n3\n4\n5\n6\n7\n", "utf8")
+
+    // 逐文件 stat 判据（生产路径）：必须发现变化
+    const r = scanProjectFileLines(dir, ["a.ts"], new Map([["a.ts", old]]))
+    expect(r.files[0].lines).toBe(7)
+    expect(r.files[0].reused).toBe(false)
+  })
+
+  it("对照：若误用空变更集，该文件会被错误复用为旧行数（说明该模式在此场景不可靠）", () => {
+    const old = write("a.ts", "1\n2\n3\n")
+    writeFileSync(join(dir, "a.ts"), "1\n2\n3\n4\n5\n6\n7\n", "utf8")
+
+    // 变更集为空 = git status 报「干净」时的真实返回
+    const r = scanProjectFileLines(dir, ["a.ts"], new Map([["a.ts", old]]), new Set<string>())
+    // 这就是 bug 的表现：内容已变 7 行，却沿用 3 行
+    expect(r.files[0].lines).toBe(3)
+    expect(r.files[0].reused).toBe(true)
+    // 注释保留此用例是为了说明「为什么生产路径不用变更集模式」
+  })
+
   afterEach(() => {
     rmSync(dir, { recursive: true, force: true })
   })
@@ -26,6 +57,36 @@ describe("scanProjectFileLines（增量扫描）", () => {
     const st = scanProjectFileLines(dir, [file], new Map())
     return st.files[0]
   }
+
+  // ── 回归：切分支场景下 git status 变更集不可靠 ──
+  //
+  // 这是曾经的真实 bug：GitPushManager 在「HEAD 已变化」时用
+  // `git status --porcelain` 的变更集决定哪些文件重算，但 git status 只比较
+  // 「工作区 vs index」。切分支时 index 同步更新，于是它报「干净」（变更集为空），
+  // 所有文件沿用旧行数 —— 行数从此永久错误，且没有任何报错。
+  // 生产路径已改为一律逐文件 statSync，本用例锁住 stat 判据的正确性。
+  it("切分支后内容变化必须被 stat 判据发现（变更集为空也不能沿用旧行数）", () => {
+    const old = write("a.ts", "1\n2\n3\n")
+    // 模拟切分支：内容变为 7 行（size 与 mtime 都变）
+    writeFileSync(join(dir, "a.ts"), "1\n2\n3\n4\n5\n6\n7\n", "utf8")
+
+    // 逐文件 stat 判据（生产路径）：必须发现变化
+    const r = scanProjectFileLines(dir, ["a.ts"], new Map([["a.ts", old]]))
+    expect(r.files[0].lines).toBe(7)
+    expect(r.files[0].reused).toBe(false)
+  })
+
+  it("对照：若误用空变更集，该文件会被错误复用为旧行数（说明该模式在此场景不可靠）", () => {
+    const old = write("a.ts", "1\n2\n3\n")
+    writeFileSync(join(dir, "a.ts"), "1\n2\n3\n4\n5\n6\n7\n", "utf8")
+
+    // 空 Set = git status 报「干净」时的真实返回
+    const r = scanProjectFileLines(dir, ["a.ts"], new Map([["a.ts", old]]), new Set<string>())
+    // 这就是 bug 的表现：内容已变 7 行，却沿用 3 行
+    expect(r.files[0].lines).toBe(3)
+    expect(r.files[0].reused).toBe(true)
+    // 保留此用例是为了说明「为什么生产路径不用变更集模式」
+  })
 
   it("首次扫描（空缓存）读取全部文件并给出正确行数", () => {
     writeFileSync(join(dir, "a.ts"), "1\n2\n3\n", "utf8")

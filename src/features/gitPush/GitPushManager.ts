@@ -55,12 +55,11 @@ import {
 } from "./managers/indexCoverage"
 import { createIndexIo } from "./managers/indexDir"
 import {
-  GIT_STATUS_CHANGE_THRESHOLD,
   scanProjectFileLines,
   sumScannedLines,
 } from "./managers/lineScan"
 import type { LineStatsStore, ProjectStatsRecord } from "./managers/LineStatsStore"
-import { openLineStatsStore } from "./managers/LineStatsStore"
+import { openLineStatsStore, TIMES_PROBED_MARK } from "./managers/LineStatsStore"
 import { ProjectStore } from "./managers/ProjectStore"
 import { ProjectWriteLock } from "./managers/ProjectWriteLock"
 import { RemoteOps } from "./managers/RemoteOps"
@@ -315,10 +314,18 @@ export class GitPushManager {
         totalLines += rec.lines
         fileCount++
       }
-      // 历史根时间：有值复用；无值但已尝试过（timesProbed）也不再重取，避免每次分析都跑一次 rev-list
-      const firstCommit = cached.firstCommit || (cached.timesProbed ? "" : lifecycle.rootDate)
+      // 历史根时间：有值复用；无值但**确已成功探过**（精确匹配标记）也不再重取。
+      // 注意必须用 === TIMES_PROBED_MARK 精确比较：旧行该列存的是 gitdir 路径字符串
+      // （truthy），按真值判断会把老数据全部误认成「已探过」，其中的空 firstCommit 永不修复。
+      const probed = cached.timesProbed === TIMES_PROBED_MARK
+      const firstCommit = cached.firstCommit || (probed ? "" : lifecycle.rootDate)
       const lastCommit = lifecycle.lastDate
-      if (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit || !cached.timesProbed) {
+      // 只有「确实探到了根提交时间」或「旧缓存已有值」才落「已探」标记。
+      // lifecycle.rootDate 为空 ⇒ 本次探测失败（git 抖动/超时/shallow 未就绪），
+      // 此时落标记会让该项目的「新建日期」永久为空、再也不重试。
+      const canMarkProbed = !!lifecycle.rootDate || !!cached.firstCommit
+      if (canMarkProbed
+        && (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit || !probed)) {
         try {
           store!.updateCommitTimes(project.id, firstCommit, lastCommit, cached.analyzedAt)
         } catch {
@@ -341,14 +348,21 @@ export class GitPushManager {
     // 这 1 次 ls-files 只在 HEAD 变化时发生
     const trackedFiles = await this.reportOps.getTrackedFiles(projectPath)
     const cachedFiles = store ? store.getFileLines(project.id) : new Map()
-    // 按仓库规模自适应选判据（实测盈亏平衡点见 GIT_STATUS_CHANGE_THRESHOLD）：
-    // - 大仓库：git status 一次扫描给出变更集，省掉数万次 statSync
-    // - 中小仓库：git status 的进程启动费反而更贵，直接逐文件 statSync
-    let changedPaths: Set<string> | null = null
-    if (cachedFiles.size > 0 && trackedFiles.length >= GIT_STATUS_CHANGE_THRESHOLD) {
-      changedPaths = await this.reportOps.getChangedTrackedFiles(projectPath)
-    }
-    const scan = scanProjectFileLines(projectPath, trackedFiles, cachedFiles, changedPaths ?? undefined)
+    // 判据选择：**这里刻意不用 git status 变更集，一律逐文件 statSync**。
+    //
+    // 本函数走到这里的前提是「HEAD 已经变了」。而 git status 描述的是
+    // 「工作区相对 index 的差异」——它**看不见 index 自身的变化**：
+    //   ① 切分支（git checkout/worktree switch）：文件内容变了，index 同步更新，
+    //      于是 git status 报「干净」，变更集为空 → 全部文件沿用旧行数 → **行数错误**；
+    //   ② 外部执行 git add / git reset --hard / stash：同理。
+    // 这类场景在实际使用中非常常见（切分支是日常操作），而它们正好全部落在
+    // 「HEAD 变了」这条路径上，因此 git status 变更集在这里不但省不了多少，
+    // 还会引入静默的数据错误。
+    //
+    // statSync 本身就能发现内容变化（按 mtime+size 比对），故这里是正确解；
+    // 大仓库的 stat 成本（约 93µs/文件）已由「只对变化文件读内容」抵消，
+    // 且 git status 自身也要付出一次 220ms 级进程启动，收益本就有限。
+    const scan = scanProjectFileLines(projectPath, trackedFiles, cachedFiles)
     const totalLines = sumScannedLines(scan.files, shouldInclude)
     let fileCount = 0
     const fileLines = new Map<string, number | null>()
@@ -371,8 +385,9 @@ export class GitPushManager {
           firstCommit,
           lastCommit,
           headOid: lifecycle.head,
-          // 标记「时间已尝试」：即使首末提交为空（空仓库/git 异常）也不在下次重取
-          timesProbed: "1",
+          // 标记「时间已尝试」：仅当确实取到根提交时间（或已有旧值）时才标记，
+          // 避免把一次 git 抖动固化成「永不重试」的空新建日期
+          timesProbed: (lifecycle.rootDate || firstCommit) ? TIMES_PROBED_MARK : "",
           analyzedAt: nowIso,
         }, scan.files)
       } catch (e) {

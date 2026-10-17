@@ -61,6 +61,18 @@ export interface ProjectStatsRecord {
   analyzedAt: string
 }
 
+/**
+ * 「生命周期时间已尝试获取」的标记值。
+ *
+ * 存放在 `gp_project_stats.git_dir` 列（该列在判据收敛为 headOid 后闲置，
+ * 复用它可避免 schema 迁移）。语义：**该列的精确值等于本常量**才算「已尝试」。
+ *
+ * 为什么必须用精确比较而非真值判断：旧版本该列存的是 git 目录**路径字符串**
+ * （同样 truthy），若按真值判断会把所有老数据误认成「已尝试」，
+ * 使其中的空 firstCommit 永不被修复。
+ */
+export const TIMES_PROBED_MARK = "1"
+
 /** 单文件存量行数记录 */
 export interface FileLinesRecord {
   /** 文件路径（相对仓库根） */
@@ -229,11 +241,12 @@ export class LineStatsStore {
    */
   updateCommitTimes(projectId: string, firstCommit: string, lastCommit: string, analyzedAt: string): void {
     this.db.run(
-      `UPDATE ${TABLE.project_stats} SET first_commit = ?, last_commit = ?, analyzed_at = ?, git_dir = '1'
+      `UPDATE ${TABLE.project_stats} SET first_commit = ?, last_commit = ?, analyzed_at = ?, git_dir = ?
         WHERE project_id = ?`,
       firstCommit,
       lastCommit,
       analyzedAt,
+      TIMES_PROBED_MARK,
       projectId,
     )
   }

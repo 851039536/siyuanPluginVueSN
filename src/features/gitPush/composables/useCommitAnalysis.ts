@@ -365,23 +365,29 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       const flat: CommitAnalysisEntry[] = []
       // 本次运行的失败明细：与 targets 下标一一对应，失败项据此回填项目名与本次实际使用的路径
       const runFailures: ProjectFetchFailure[] = []
-      results.forEach((r, i) => {
+      // 用下标 for 循环而非 forEach：forEach 会**跳过稀疏数组的空洞**，
+      // 若某个槽位没被写入（任务被跳过/异常逃逸），该项目会同时消失在
+      // flat 与 runFailures 里且 fail 不变 —— 静默缺席是最难排查的一类 bug。
+      for (let i = 0; i < targets.length; i++) {
         const target = targets[i]
-        if (!target) return
-        if (!r || r.ok) {
-          if (r?.ok) flat.push(...r.entries)
-          return
+        if (!target) continue
+        const r = results[i]
+        if (r?.ok) {
+          flat.push(...r.entries)
+          continue
         }
+        // 未写入结果与显式失败同样计入失败，绝不静默跳过
         fail++
+        const reason = r ? r.reason : new Error(`结果未写入（下标 ${i}）`)
         runFailures.push({
           projectId: target.id,
           projectName: target.name,
           path: resolveValidPath(target),
           // 路径预检失败自带分类（不经文案反推）；git 命令失败按其 stderr 关键字归类
-          kind: r.reason instanceof ProjectFetchError ? r.reason.kind : classifyFetchFailure(r.reason),
-          reason: fetchFailureReason(r.reason),
+          kind: reason instanceof ProjectFetchError ? reason.kind : classifyFetchFailure(reason),
+          reason: fetchFailureReason(reason),
         })
-      })
+      }
       // 供 buildLineRankings 消费的 settled 视图：把池结果映射成原 PromiseSettledResult 形状，
       // 使下游聚合逻辑零改动（保持「按 targets 顺序」的语义）
       const settled = results.map((r): PromiseSettledResult<{
@@ -407,8 +413,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           status: "rejected",
           reason: r?.reason ?? new Error("未执行"),
         }
-      })
-      // 写回结果：提交分析与行数统计各自的状态槽位（互不覆盖对方的「上次分析」时间与失败数）
+      })      // 写回结果：提交分析与行数统计各自的状态槽位（互不覆盖对方的「上次分析」时间与失败数）
       const stamp = new Date().toISOString()
       if (needNumstat) {
         lineFailedCount.value = fail

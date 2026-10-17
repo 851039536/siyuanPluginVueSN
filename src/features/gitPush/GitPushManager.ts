@@ -55,6 +55,7 @@ import {
 } from "./managers/indexCoverage"
 import { createIndexIo } from "./managers/indexDir"
 import {
+  resolveRepoIdentity,
   scanProjectFileLines,
   sumScannedLines,
 } from "./managers/lineScan"
@@ -301,8 +302,14 @@ export class GitPushManager {
     }
 
     const cached: ProjectStatsRecord | null = store ? store.getProjectStats(project.id) : null
-    // 判据只用 HEAD oid（不再比 gitdir，以省掉一次 git 调用）
-    const identityMatch = !!cached && cached.headOid === lifecycle.head
+    // 仓库身份（零 git 调用，仅 fs 探测 .git 路径）。
+    // 必须参与判定：clone / 模板复制出的两个仓库初始 HEAD 完全相同，
+    // 只比 headOid 会让「项目路径改指向另一份克隆」命中缓存、返回旧仓库行数。
+    const repoId = resolveRepoIdentity(projectPath)
+    const identityMatch = !!cached
+      && cached.headOid === lifecycle.head
+      && !!repoId
+      && cached.repoId === repoId
 
     // ── 快路径 1：HEAD 未变 → 直接复用（零 ls-files、零 statSync、零读盘）──
     if (identityMatch && !forceRescan) {
@@ -385,6 +392,8 @@ export class GitPushManager {
           firstCommit,
           lastCommit,
           headOid: lifecycle.head,
+          // 仓库身份（.git 规范化路径）：使「改指向另一份 clone」正确失效
+          repoId,
           // 标记「时间已尝试」：仅当确实取到根提交时间（或已有旧值）时才标记，
           // 避免把一次 git 抖动固化成「永不重试」的空新建日期
           timesProbed: (lifecycle.rootDate || firstCommit) ? TIMES_PROBED_MARK : "",

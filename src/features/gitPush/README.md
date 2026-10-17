@@ -418,7 +418,21 @@ GitPushManager (facade)
 3. `HEAD` 变了 → `git ls-files` + 按仓库规模自适应选判据（见下），只对变化的文件读内容。
 4. 数据库不可用（旧版思源 / 打开失败）→ 全量扫，**功能不降级**，只是回到改造前的速度。
 
-**为什么失效判据只用 `HEAD oid` 而不再比较 `gitdir`**：`gitdir` 需要额外一次 `rev-parse --absolute-git-dir`。就「换仓库指向同一路径」这一极端场景而言，`project.id + HEAD oid` 已足够识别（不同仓库的 HEAD oid 几乎不可能相同）。省掉这次进程启动，对几十个项目的分析耗时是决定性收益。
+**失效判据：`HEAD oid` + 仓库身份 `repoId`（均为零额外 git 调用）**
+
+早期版本用 `git rev-parse --absolute-git-dir` 拿 gitdir 作判据，每项目多一次 ~300ms 的进程启动——这正是本轮优化要去掉的开销。但**只用 `HEAD oid` 是不安全的**：
+
+> clone / 模板复制出的两个仓库**初始 commit 完全相同**。此时把项目路径改指向另一份克隆，`headOid` 一致会命中缓存，返回**旧仓库的行数**（文件集合与行数都可能不同）——一个静默的数据错误。
+
+故补一个**纯 fs 探测**的仓库身份 `repoId`（`resolveRepoIdentity`）：比较 `.git` 的规范化绝对路径，不需要任何 git 进程。
+
+| 布局 | 身份取值 |
+|------|----------|
+| 普通仓库 | `git:<root>/.git` |
+| worktree / submodule（`.git` 是文件） | `git:<解析后的 gitdir>`（各 worktree 路径不同，故正确区分） |
+| 无 `.git` | `dir:<root>`（仍能区分不同目录） |
+
+新旧库兼容：`gp_project_stats` 新增 `repo_id` 列，`prepare()` 用 `PRAGMA table_info` 判定后 `ALTER TABLE` 补列（幂等，不破坏既有数据）。补列后旧行 `repo_id` 为空串 → 判据不匹配 → 该项目重算一次并回填。
 
 **为什么不是无脑用 `git status`（实测数据）**：
 

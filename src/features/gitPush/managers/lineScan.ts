@@ -49,6 +49,63 @@ export interface ProjectScanResult {
 export const GIT_STATUS_CHANGE_THRESHOLD = 2500
 
 /**
+ * 计算仓库身份标识（零 git 调用，仅 fs 探测）。
+ *
+ * 为什么需要：缓存失效判据原先只有 `HEAD oid`。但 clone / 模板复制出的两个仓库
+ * 初始 commit 完全相同，此时把项目路径改指向另一份克隆，`headOid` 一致会命中缓存，
+ * 返回**旧仓库的行数**（文件集合与行数都可能不同）—— 一个静默的数据错误。
+ *
+ * 为什么不用 `git rev-parse --absolute-git-dir`：那需要每项目多一次 ~300ms 的
+ * git 进程启动，正是本轮优化专门去掉的开销。而「是不是同一个仓库」只需比较
+ * `.git` 的规范化绝对路径即可，纯 fs 即可获得。
+ *
+ * 处理三种布局：
+ * - 普通仓库：`<root>/.git` 是目录
+ * - worktree / submodule：`<root>/.git` 是**文件**，内容形如 `gitdir: <path>`，
+ *   真实库在 `<主仓库>/.git/worktrees/<name>`。worktree 之间共享对象库但工作区不同，
+ *   行数统计对象是工作区，故**必须按 worktree 路径区分**（用其 gitdir 路径本身）。
+ * - 无 `.git`（非仓库/尚未 init）：回退到工作区根路径，仍能区分不同目录。
+ *
+ * @returns 规范化的身份字符串（比较用）；无法解析时返回空串（调用方据此保守失效）
+ */
+export function resolveRepoIdentity(projectPath: string): string {
+  const modules = getNodeFsPathOs()
+  const { fs, path } = modules || {}
+  if (!fs || !path || !projectPath) return ""
+  try {
+    // 先规范化根路径（统一分隔符与大小写不敏感平台的差异交给 resolve/normalize）
+    const root = path.resolve(projectPath)
+    const gitEntry = path.join(root, ".git")
+    let stat: import("node:fs").Stats
+    try {
+      stat = fs.lstatSync(gitEntry)
+    } catch {
+      // 没有 .git：非仓库或尚未 init，用根目录本身作身份
+      return `dir:${path.normalize(root)}`
+    }
+    if (stat.isDirectory()) {
+      return `git:${path.normalize(gitEntry)}`
+    }
+    // .git 是文件（worktree / submodule）：解析 `gitdir: <abs path>`
+    try {
+      const content = fs.readFileSync(gitEntry, "utf8") as string
+      const m = /^gitdir:\s*(.+)$/m.exec(content)
+      if (m?.[1]) {
+        const target = m[1].trim()
+        // gitdir 可能是相对路径（相对于工作区根解析）
+        const abs = path.isAbsolute(target) ? target : path.resolve(root, target)
+        return `git:${path.normalize(abs)}`
+      }
+    } catch {
+      // 读取失败：退化为 .git 文件路径本身（仍能区分不同工作区）
+    }
+    return `git:${path.normalize(gitEntry)}`
+  } catch {
+    return ""
+  }
+}
+
+/**
  * 扫描单项目已跟踪文件的存量行数（增量）。
  *
  * @param projectPath 仓库根绝对路径

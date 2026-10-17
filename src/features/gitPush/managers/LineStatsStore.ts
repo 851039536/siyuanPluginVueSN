@@ -42,8 +42,23 @@ export interface ProjectStatsRecord {
   firstCommit: string
   /** 最后一次提交 ISO（%aI，numstat 首条；空串 = 无提交） */
   lastCommit: string
-  /** HEAD oid（缓存失效判据，唯一比较字段） */
+  /** HEAD oid（缓存失效判据之一） */
   headOid: string
+  /**
+   * 仓库身份标识（`.git` 目录的规范化绝对路径，零 git 调用即可获得）。
+   *
+   * 为什么需要：只用 `headOid` 无法区分「同一个 commit 出现在两个不同仓库里」——
+   * 而 clone / 模板复制极常见。此时把项目路径改指向另一份克隆，
+   * `headOid` 相同会命中缓存，返回**旧仓库的行数**（文件集合与行数都可能不同）。
+   *
+   * 为什么选 `.git` 路径而非 gitdir 原值：判定只需要「是不是同一个仓库」，
+   * 而 `.git` 的规范化绝对路径可由 `fs` 直接得到（`path.resolve` + 处理
+   * worktree 的 `commondir`），**不需要任何 git 子进程**——
+   * 这正是原实现（`rev-parse --absolute-git-dir`，每项目多一次 ~300ms 调用）被去掉的原因。
+   *
+   * 空串 = 旧数据行（升级前写入，未记录身份）→ 视为不匹配，触发一次重算并补写。
+   */
+  repoId: string
   /**
    * 生命周期时间的「已尝试」标记（如 `"1"`）。
    *
@@ -94,7 +109,10 @@ interface ProjectStatsRow {
   first_commit: string
   last_commit: string
   head_oid: string
+  /** 「时间已尝试」标记（历史上是 gitdir，现复用；详见 timesProbed） */
   git_dir: string
+  /** 仓库身份（.git 规范化路径）；旧库经 ALTER 补列后为空串 */
+  repo_id?: string
   analyzed_at: string
 }
 
@@ -116,6 +134,8 @@ function toProjectStats(row: ProjectStatsRow): ProjectStatsRecord {
     firstCommit: row.first_commit ?? "",
     lastCommit: row.last_commit ?? "",
     headOid: row.head_oid ?? "",
+    // 旧库（ALTER 前写入）无此列 → 空串 → 视为不匹配，触发一次重算并补写
+    repoId: row.repo_id ?? "",
     // 复用闲置的 git_dir 列存「时间已尝试」标记（详见 ProjectStatsRecord.timesProbed）
     timesProbed: row.git_dir ?? "",
     analyzedAt: row.analyzed_at ?? "",
@@ -135,7 +155,7 @@ export class LineStatsStore {
     this.db = db
   }
 
-  /** 建表（幂等；运行时只建表，不做数据迁移） */
+  /** 建表（幂等；运行时只建表/补列，不做数据迁移） */
   static prepare(db: PluginDatabase): void {
     db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.project_stats} (
       project_id TEXT PRIMARY KEY,
@@ -146,8 +166,16 @@ export class LineStatsStore {
       last_commit TEXT NOT NULL DEFAULT '',
       head_oid TEXT NOT NULL DEFAULT '',
       git_dir TEXT NOT NULL DEFAULT '',
+      repo_id TEXT NOT NULL DEFAULT '',
       analyzed_at TEXT NOT NULL DEFAULT ''
     )`)
+    // 旧库补列：早期版本的 gp_project_stats 没有 repo_id。
+    // PRAGMA table_info 判定后 ALTER，幂等且不破坏既有数据；
+    // 补列后旧行 repo_id 为空串 → 判据视为不匹配 → 各自重算一次并回填。
+    const cols = db.all<{ name: string }>(`PRAGMA table_info(${TABLE.project_stats})`)
+    if (!cols.some((c) => c.name === "repo_id")) {
+      db.exec(`ALTER TABLE ${TABLE.project_stats} ADD COLUMN repo_id TEXT NOT NULL DEFAULT ''`)
+    }
     // (project_id, path) 复合主键即天然索引；无需额外建 project_id 单列索引
     db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.file_lines} (
       project_id TEXT NOT NULL,
@@ -197,8 +225,8 @@ export class LineStatsStore {
     this.db.withTransaction(() => {
       this.db.run(
         `INSERT INTO ${TABLE.project_stats}
-          (project_id, name, total_lines, file_count, first_commit, last_commit, head_oid, git_dir, analyzed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (project_id, name, total_lines, file_count, first_commit, last_commit, head_oid, git_dir, repo_id, analyzed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(project_id) DO UPDATE SET
            name = excluded.name,
            total_lines = excluded.total_lines,
@@ -207,6 +235,7 @@ export class LineStatsStore {
            last_commit = excluded.last_commit,
            head_oid = excluded.head_oid,
            git_dir = excluded.git_dir,
+           repo_id = excluded.repo_id,
            analyzed_at = excluded.analyzed_at`,
         record.projectId,
         record.name,
@@ -217,6 +246,7 @@ export class LineStatsStore {
         record.headOid,
         // git_dir 列存「时间已尝试」标记（列名保留以免 schema 迁移）
         record.timesProbed,
+        record.repoId,
         record.analyzedAt,
       )
       // 先清后写：保证文件集合与磁盘现状严格一致（不残留已删除文件）

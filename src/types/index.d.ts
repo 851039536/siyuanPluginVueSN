@@ -122,6 +122,12 @@ interface Window {
     user: any
     ws: any
     languages: any
+    /** 内核配置（读工作区路径等用；并非所有时机都可用，调用方必须容错） */
+    config?: {
+      system?: {
+        workspaceDir?: string
+      }
+    }
   }
   _sy_plugin_sample: {
     [key: string]: any

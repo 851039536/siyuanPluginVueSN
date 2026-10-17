@@ -13,8 +13,10 @@ import type {
   WebsiteEntry,
 } from "@/utils/sharedStorage/websiteStorage"
 import {
+  closeSharedWebsiteStorage,
   DEFAULT_CATEGORY_ID,
-  WebsiteNavigationStorage,
+  getSharedWebsiteStorage,
+  type WebsiteNavigationStorage,
 } from "@/utils/sharedStorage/websiteStorage"
 
 let storage: WebsiteNavigationStorage | null = null
@@ -111,10 +113,19 @@ export async function removeCategory(id: string): Promise<boolean> {
  */
 export function useWebsiteNavigation(plugin: Plugin) {
   if (!storage) {
-    storage = new WebsiteNavigationStorage(plugin)
+    storage = getSharedWebsiteStorage(plugin)
   }
 
   onMounted(async () => {
     await loadData()
   })
+}
+
+/**
+ * 释放存储（关闭 SQLite 连接）。插件卸载时调用，避免连接泄漏。
+ * 走共享单例，与 minimalBrowser 使用同一实例。
+ */
+export function closeWebsiteStorage(): void {
+  closeSharedWebsiteStorage()
+  storage = null
 }

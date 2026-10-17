@@ -1,11 +1,17 @@
 /**
  * 网站条目数据模型与存储层（共享模块）
- * 从 websiteNavigation 提取，供 websiteNavigation 与 minimalBrowser 共用，
- * 保证两个功能读写同一份书签数据（存储键不变，旧数据无感迁移）
+ * 供 websiteNavigation 与 minimalBrowser 共用同一份书签数据。
+ *
+ * 存储：**纯 SQLite**（统一单库 `plugin.db` 的 `wn_entries` / `wn_categories` 表）。
+ * 表命名约定见 @/utils/sqliteDb 的 featureTables()。
+ *
+ * ⚠️ 本模块**不含**任何旧格式兼容/迁移分支；新增功能请照此模式只加表、不建库。
  */
 import type { Plugin } from "siyuan"
-import { PluginStorage } from "@/utils/pluginStorage"
-import { TypedStorage } from "@/utils/typedStorage"
+import { featureTables, openWithRetry, type PluginDatabase } from "@/utils/sqliteDb"
+
+/** 日志前缀（便于在多功能日志中区分） */
+const LOG_TAG = "[websiteNavigation]"
 
 // ========================================
 // 数据模型
@@ -69,13 +75,14 @@ export const PRESET_CATEGORY_COLORS = [
 ] as const
 
 // ========================================
-// 存储层
+// 存储层（统一单库 plugin.db）
 // ========================================
 
-export const STORAGE_KEYS = {
-  ENTRIES: "website-navigation-entries",
-  CATEGORIES: "website-navigation-categories",
-} as const
+/** 表命名空间前缀：统一单库下按功能隔离表名（websiteNavigation → wn） */
+const TABLE = featureTables("wn", ["entries", "categories"] as const)
+
+/** 表结构版本（结构变更时递增，见 _migrate） */
+const DB_SCHEMA_VERSION = 2
 
 const DEFAULT_CATEGORIES: WebsiteCategory[] = [
   {
@@ -105,27 +112,187 @@ const DEFAULT_CATEGORIES: WebsiteCategory[] = [
   },
 ]
 
-export class WebsiteNavigationStorage {
-  readonly entries: TypedStorage<WebsiteEntry[]>
-  readonly categories: TypedStorage<WebsiteCategory[]>
+/** 数据库行形状（列名与 WebsiteEntry 字段一一对应） */
+interface EntryRow {
+  id: string
+  name: string
+  url: string
+  category: string
+  description: string
+  created_at: number
+  updated_at: number
+}
 
-  private storage: PluginStorage
+/** categories 表行形状 */
+interface CategoryRow {
+  id: string
+  name: string
+  color: string
+  sort: number
+}
+
+/** 行 → 领域对象 */
+function rowToEntry(row: EntryRow): WebsiteEntry {
+  return {
+    id: row.id,
+    name: row.name,
+    url: row.url,
+    category: row.category,
+    description: row.description ?? "",
+    createdAt: Number(row.created_at),
+    updatedAt: Number(row.updated_at),
+  }
+}
+
+/** categories 行 → 领域对象 */
+function rowToCategory(row: CategoryRow): WebsiteCategory {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+  }
+}
+
+export class WebsiteNavigationStorage {
+  /** SQLite 句柄；null = 尚未就绪或不可用 */
+  private db: PluginDatabase | null = null
+  /** 初始化 Promise（并发调用只初始化一次） */
+  private initPromise: Promise<PluginDatabase | null> | null = null
 
   constructor(plugin: Plugin) {
-    this.storage = new PluginStorage(plugin)
-    this.entries = new TypedStorage(this.storage, STORAGE_KEYS.ENTRIES, [] as WebsiteEntry[])
-    this.categories = new TypedStorage(this.storage, STORAGE_KEYS.CATEGORIES, DEFAULT_CATEGORIES)
+    this.initPromise = this._init(plugin)
   }
 
+  /**
+   * 初始化数据库：打开（含启动早期重试）→ 建表 → 播种默认分类。
+   *
+   * 通用重试逻辑在 `openWithRetry`，本类只提供「建表 + 播种」这一功能特有部分。
+   * 历史数据迁移已由一次性脚本完成并下线，此处**只保证表存在**，
+   * 因此每次启动都是 O(1)，不存在「反复侦测并导入」的开销。
+   */
+  private async _init(plugin: Plugin): Promise<PluginDatabase | null> {
+    const db = await openWithRetry(plugin, (d) => this._prepare(d), { logTag: LOG_TAG })
+    this.db = db
+    return db
+  }
+
+  /** 建表 + 版本迁移（幂等） */
+  private _migrate(db: PluginDatabase): void {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS ${TABLE.entries} (
+        id          TEXT PRIMARY KEY,
+        name        TEXT NOT NULL,
+        url         TEXT NOT NULL,
+        category    TEXT NOT NULL DEFAULT 'default',
+        description TEXT NOT NULL DEFAULT '',
+        created_at  INTEGER NOT NULL,
+        updated_at  INTEGER NOT NULL
+      )
+    `)
+    // 按分类筛选是主要查询路径（面板/侧栏均按分类分组）
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_${TABLE.entries}_category ON ${TABLE.entries}(category)`)
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS ${TABLE.categories} (
+        id    TEXT PRIMARY KEY,
+        name  TEXT NOT NULL,
+        color TEXT NOT NULL,
+        sort  INTEGER NOT NULL DEFAULT 0
+      )
+    `)
+
+    db.setUserVersion(DB_SCHEMA_VERSION)
+  }
+
+  /**
+   * 建表 + 播种默认分类（由 openWithRetry 在打开成功后调用一次）。
+   *
+   * 只负责「表存在且可用」，不含任何格式兼容/迁移分支。
+   */
+  private _prepare(db: PluginDatabase): void {
+    this._migrate(db)
+
+    // 全新库（首次安装）时播种默认分类，避免界面空分类。
+    // 已有数据时 count > 0，不会覆盖。
+    const catCount = db.get<{ c: number }>(`SELECT COUNT(*) AS c FROM ${TABLE.categories}`)?.c ?? 0
+    if (catCount === 0) {
+      db.withTransaction(() => {
+        DEFAULT_CATEGORIES.forEach((cItem, index) => {
+          db.run(
+            `INSERT OR REPLACE INTO ${TABLE.categories} (id, name, color, sort) VALUES (?, ?, ?, ?)`,
+            cItem.id,
+            cItem.name,
+            cItem.color,
+            index,
+          )
+        })
+      })
+    }
+
+    // 自愈：把指向「不存在分类」的书签归入默认分类（历史脏数据兜底）。
+    const orphanFixed = db.run(
+      `UPDATE ${TABLE.entries}
+          SET category = ?
+        WHERE category <> ?
+          AND category NOT IN (SELECT id FROM ${TABLE.categories})`,
+      DEFAULT_CATEGORY_ID,
+      DEFAULT_CATEGORY_ID,
+    )
+    if (orphanFixed > 0) {
+      console.info(`${LOG_TAG} 已将 ${orphanFixed} 条指向已删除分类的书签归入默认分类`)
+    }
+  }
+
+  /** 等待初始化完成，返回可用句柄（不可用时为 null） */
+  private async _ready(): Promise<PluginDatabase | null> {
+    if (this.db) return this.db
+    const db = await this.initPromise
+    return db
+  }
+
+  /**
+   * 等待初始化完成（打开库 + 建表 + 播种默认分类）。
+   * 供 registerFeature 阶段预热调用，使数据库不依赖「用户是否打开面板」。
+   *
+   * @returns 数据库是否可用
+   */
+  async warmup(): Promise<boolean> {
+    return (await this._ready()) !== null
+  }
+
+  /** 关闭数据库连接（插件卸载时调用） */
+  close(): void {
+    this.db?.close()
+    this.db = null
+  }
+
+  /** 取可用句柄；未就绪时抛错（调用方在 UI 层兜底提示） */
+  private async _require(): Promise<PluginDatabase> {
+    const db = await this._ready()
+    if (!db) {
+      throw new Error("[websiteNavigation] 数据库不可用（node:sqlite 缺失或工作区路径未就绪）")
+    }
+    return db
+  }
+
+  // ========================================
+  // 条目读写（纯 SQLite）
+  // ========================================
+
   async getAllEntries(): Promise<WebsiteEntry[]> {
-    return this.entries.loadOrDefault()
+    const db = await this._require()
+    const rows = db.all<EntryRow>(`SELECT * FROM ${TABLE.entries} ORDER BY created_at ASC`)
+    return rows.map(rowToEntry)
   }
 
   async getCategories(): Promise<WebsiteCategory[]> {
-    return this.categories.loadOrDefault()
+    const db = await this._require()
+    const rows = db.all<CategoryRow>(`SELECT * FROM ${TABLE.categories} ORDER BY sort ASC, id ASC`)
+    return rows.map(rowToCategory)
   }
 
   async createEntry(data: CreateWebsiteDTO): Promise<WebsiteEntry> {
+    const db = await this._require()
     const now = Date.now()
     const entry: WebsiteEntry = {
       id: `ws-${now}`,
@@ -137,52 +304,108 @@ export class WebsiteNavigationStorage {
       updatedAt: now,
     }
 
-    const entries = await this.getAllEntries()
-    entries.push(entry)
-    const saved = await this.entries.save(entries)
-    if (!saved) {
-      throw new Error("Failed to save website entries")
-    }
-
+    db.run(
+      `INSERT INTO ${TABLE.entries} (id, name, url, category, description, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      entry.id,
+      entry.name,
+      entry.url,
+      entry.category,
+      entry.description,
+      entry.createdAt,
+      entry.updatedAt,
+    )
     return entry
   }
 
   async updateEntry(id: string, data: UpdateWebsiteDTO): Promise<WebsiteEntry | null> {
-    const entries = await this.getAllEntries()
-    const index = entries.findIndex((e) => e.id === id)
-
-    if (index === -1) return null
+    const db = await this._require()
+    const existing = db.get<EntryRow>(`SELECT * FROM ${TABLE.entries} WHERE id = ?`, id)
+    if (!existing) return null
 
     const updated: WebsiteEntry = {
-      ...entries[index],
+      ...rowToEntry(existing),
       ...data,
       updatedAt: Date.now(),
     }
-    entries[index] = updated
-
-    const saved = await this.entries.save(entries)
-    if (!saved) {
-      throw new Error("Failed to save website entries")
-    }
-
+    db.run(
+      `UPDATE ${TABLE.entries}
+          SET name = ?, url = ?, category = ?, description = ?, updated_at = ?
+        WHERE id = ?`,
+      updated.name,
+      updated.url,
+      updated.category,
+      updated.description,
+      updated.updatedAt,
+      id,
+    )
     return updated
   }
 
   async deleteEntry(id: string): Promise<boolean> {
-    const entries = await this.getAllEntries()
-    const filtered = entries.filter((e) => e.id !== id)
+    const db = await this._require()
+    return db.run(`DELETE FROM ${TABLE.entries} WHERE id = ?`, id) > 0
+  }
 
-    if (filtered.length === entries.length) return false
-
-    const saved = await this.entries.save(filtered)
-    if (!saved) {
-      throw new Error("Failed to save website entries")
-    }
-
+  /**
+   * 整体覆盖分类（调用方总是传完整列表）。
+   * 单事务内「清空 + 重插」，保证顺序与集合完全一致、无中间态。
+   */
+  async saveCategories(categories: WebsiteCategory[]): Promise<boolean> {
+    const db = await this._require()
+    db.withTransaction(() => {
+      db.run(`DELETE FROM ${TABLE.categories}`)
+      categories.forEach((cItem, index) => {
+        db.run(
+          `INSERT OR REPLACE INTO ${TABLE.categories} (id, name, color, sort) VALUES (?, ?, ?, ?)`,
+          cItem.id,
+          cItem.name,
+          cItem.color,
+          index,
+        )
+      })
+    })
     return true
   }
+}
 
-  async saveCategories(categories: WebsiteCategory[]): Promise<boolean> {
-    return this.categories.save(categories)
+/**
+ * 模块级单例：与两个消费方（websiteNavigation / minimalBrowser）共用同一实例，
+ * 避免各自构造导致重复打开数据库。
+ */
+let sharedStorage: WebsiteNavigationStorage | null = null
+
+/** 获取（必要时创建）共享存储实例 */
+export function getSharedWebsiteStorage(plugin: Plugin): WebsiteNavigationStorage {
+  if (!sharedStorage) {
+    sharedStorage = new WebsiteNavigationStorage(plugin)
   }
+  return sharedStorage
+}
+
+/**
+ * 预热共享存储：在 registerFeature 阶段调用，提前建库建表，
+ * 而不必等用户首次打开面板。
+ *
+ * 为什么需要：存储只在面板挂载时构造（懒初始化），用户若从未打开
+ * 网站导航/极简浏览器面板，数据库就永远不会被创建。
+ *
+ * 注意：这里不做任何数据导入。历史迁移已完成并下线，运行时只保证「表存在」。
+ * 非阻塞：失败仅记录日志，不影响插件其余功能。
+ */
+export function warmupSharedWebsiteStorage(plugin: Plugin): void {
+  void (async () => {
+    try {
+      const storage = getSharedWebsiteStorage(plugin)
+      await storage.warmup()
+    } catch (error) {
+      console.error("[websiteNavigation] SQLite 预热失败:", error)
+    }
+  })()
+}
+
+/** 关闭并释放共享存储（插件卸载时调用） */
+export function closeSharedWebsiteStorage(): void {
+  sharedStorage?.close()
+  sharedStorage = null
 }

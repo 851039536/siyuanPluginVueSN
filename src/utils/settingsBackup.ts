@@ -3,6 +3,12 @@
  *
  * 将插件数据目录整体打包为 zip 备份到 workspace/data-backup/，
  * 恢复时解压回原目录。
+ *
+ * ⚠️ SQLite/WAL 一致性（关键）：
+ * 备份目录中可能含 SQLite 库（见 @/utils/sqliteDb）。WAL 模式下已提交数据可能仍在
+ * `-wal` 附属文件里（实测主库 4KB / wal 48KB），若逐个 readFileSync 三个文件，
+ * 可能抓到「新 .db + 旧 -wal」的错配组合，恢复出损坏库；而用户只取 .db 时更会得到空库。
+ * 因此备份前必须先对每个库做 checkpoint（把 WAL 并回主库），使 .db 自包含。
  */
 import JSZip from "jszip"
 import { Plugin } from "siyuan"
@@ -14,6 +20,51 @@ export interface BackupResult {
   filePath: string
   size: number
   fileCount: number
+}
+
+/** SQLite 附属文件名后缀（WAL 模式产物） */
+const SQLITE_SIDECAR_SUFFIXES = ["-wal", "-shm"] as const
+
+/**
+ * 把目录内所有 SQLite 库的 WAL 内容并回主库（best-effort）。
+ *
+ * 库正被插件持有时无法再开第二个连接，此时由持有方自行 checkpoint；
+ * 本函数仅处理「备份时无人持有」的库，失败静默（不影响其余文件备份）。
+ */
+function checkpointDatabasesInDir(dirPath: string, fs: any, path: any): void {
+  const sqlite = (() => {
+    try {
+      return require("node:sqlite")
+    } catch {
+      return null
+    }
+  })()
+  if (!sqlite) return
+
+  const walk = (dir: string): void => {
+    let entries: any[]
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        walk(full)
+        continue
+      }
+      if (!entry.name.endsWith(".db")) continue
+      try {
+        const db = new sqlite.DatabaseSync(full)
+        db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
+        db.close()
+      } catch {
+        // 库被占用或损坏：跳过，后续仍按原样打包
+      }
+    }
+  }
+  walk(dirPath)
 }
 
 /** 递归添加目录到 zip */
@@ -30,7 +81,12 @@ function addDirToZip(zip: JSZip, dirPath: string, relativePath: string, fs: any,
   }
 }
 
-/** 将 zip 内容解压到目标目录 */
+/**
+ * 将 zip 内容解压到目标目录。
+ *
+ * SQLite 三件套处理：解压回 .db 时若同时存在 -wal/-shm，交由 SQLite 自行完成 WAL 恢复，
+ * **禁止**手动删除 -wal（那会丢掉尚未归并的数据）。
+ */
 async function extractZipToDir(zip: JSZip, targetDir: string, fs: any, path: any): Promise<number> {
   let count = 0
   for (const [relativePath, zipEntry] of Object.entries(zip.files) as [string, any][]) {
@@ -57,6 +113,9 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
   if (!node.fs.existsSync(pluginDataDir)) {
     throw new Error(`插件数据目录不存在: ${pluginDataDir}`)
   }
+
+  // 先归并 WAL，确保 .db 自包含（否则单独取 .db 会得到空库）
+  checkpointDatabasesInDir(pluginDataDir, node.fs, node.path)
 
   const zip = new JSZip()
   addDirToZip(zip, pluginDataDir, "", node.fs, node.path)
@@ -92,6 +151,24 @@ export async function restoreFromUpload(file: File, plugin: Plugin, workspaceRoo
   const pluginDataDir = `${workspaceRoot}/data/storage/petal/${plugin.name}`
   const buffer = Buffer.from(await file.arrayBuffer())
   const zip = await JSZip.loadAsync(buffer)
+
+  // 恢复前清掉现存库的 WAL 附属文件：旧的 -wal 若与备份中的新 .db 混搭会损坏数据。
+  // （备份内自带的 -wal/-shm 会在下面正常解压回来，由 SQLite 自行恢复。）
+  const zipHasWal = Object.keys(zip.files).some((p) =>
+    SQLITE_SIDECAR_SUFFIXES.some((s) => p.endsWith(s)))
+  if (!zipHasWal) {
+    for (const rel of Object.keys(zip.files)) {
+      if (!rel.endsWith(".db")) continue
+      for (const suffix of SQLITE_SIDECAR_SUFFIXES) {
+        try {
+          node.fs.rmSync(node.path.join(pluginDataDir, rel + suffix), { force: true })
+        } catch {
+          // 忽略
+        }
+      }
+    }
+  }
+
   const restored = await extractZipToDir(zip, pluginDataDir, node.fs, node.path)
 
   return { restored }

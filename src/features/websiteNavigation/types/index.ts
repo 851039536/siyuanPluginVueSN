@@ -5,6 +5,7 @@
 import type { Plugin } from "siyuan"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { createModalVueApp } from "@/utils/vueAppHelper"
+import { closeWebsiteStorage } from "../composables/useWebsiteNavigation"
 import WebsiteNavigationPanel from "../index.vue"
 
 export interface I18n {
@@ -86,6 +87,8 @@ export class WebsiteNavigation {
   public destroy() {
     this.modal?.destroy()
     this.modal = null
+    // 释放 SQLite 连接（含 WAL 归并），避免插件卸载后句柄残留
+    closeWebsiteStorage()
   }
 }
 

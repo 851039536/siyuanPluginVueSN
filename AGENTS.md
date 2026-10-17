@@ -153,6 +153,7 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 | 场景 | 必须使用的 API | 位置 |
 |------|-------------|----------|
 | 存储 | `PluginStorage` / `TypedStorage<T>` | `@/utils/pluginStorage` / `@/utils/typedStorage` |
+| **结构化数据存储** | `openPluginDatabase()` / `featureTables()` | `@/utils/sqliteDb`（见 § SQLite 存储规范） |
 | AI 调用 | `callAI` / `callAIStream` / `callAISmart` / `callAIChat` / `getApiConfigFromPlugin` | `@/utils/aiApi` |
 | 自定义事件 | `emitCustomEvent` | `@/utils/eventBus` |
 | Dock 面板 | `createVueDockApp` | `@/utils/vueAppHelper` |
@@ -173,6 +174,108 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 唯一例外：`src/config/settings.ts` 允许直接调用 `plugin.loadData/saveData`，仅用于单一的 `plugin-settings` 键。
 
 > 上述各 API 的详细代码示例见 [AGENTS_API.md § API 参考](./AGENTS_API.md#api-参考)
+
+---
+
+## SQLite 存储规范（强制，2026-10-17）
+
+结构化数据（列表、日志、缓存、索引等**会增长的记录集合**）统一存入 **全插件唯一的 `plugin.db`**，
+按表名前缀隔离。参考实现：**`src/utils/sharedStorage/websiteStorage.ts`（websiteNavigation）**。
+
+### 何时用 SQLite / 何时用 JSON
+
+| 数据形态 | 方案 | 理由 |
+|---------|------|------|
+| 设置项、开关、小对象（< 20 KB，整体读写） | `PluginStorage` / `TypedStorage`（JSON） | 无性能问题；保持同步可读与简单 |
+| 记录集合（≥ 数百条，或需按条增删改） | **SQLite** | 行级写入，避免整份 JSON 重写（实测 13x） |
+| 需按条件查询/排序/聚合 | **SQLite** | 索引 + SQL |
+
+判据是**写放大**而非绝对体积：单条改动要重写整个数组时，就该上 SQLite。
+
+### 三条强制规则
+
+**1. 绝不按功能新建库文件。**
+全插件只有 `plugin.db`（`PLUGIN_DB_NAME`，位于 `<插件数据目录>/plugin.db`）。
+每个功能一个 `.db` 会让文件数 ×3（`-wal`/`-shm`），与"减少散落文件"的初衷相悖。
+
+**2. 表名必须带功能前缀。**
+用 `featureTables("<前缀>", ["实体A","实体B"])` 生成，禁止手写裸表名：
+
+```ts
+import { featureTables, openPluginDatabase, type PluginDatabase } from "@/utils/sqliteDb"
+
+/** 表命名空间前缀：统一单库下按功能隔离（websiteNavigation → wn） */
+const TABLE = featureTables("wn", ["entries", "categories"] as const)
+// TABLE.entries === "wn_entries"，TABLE.categories === "wn_categories"
+```
+
+前缀取功能缩写，不得与已有冲突（现有：`wn_`）。
+
+**3. 运行时只建表，不做数据迁移。**
+历史数据迁移是一次性脚本行为，**不得**写进运行时的 `_prepare()`：
+否则每次启动都要侦测/判断/导入，既慢又容易反复触发。运行时职责仅为
+`CREATE TABLE IF NOT EXISTS` + 空库时播种默认行。
+
+### 标准写法（照 websiteStorage.ts 抄）
+
+```ts
+import { featureTables, openWithRetry, type PluginDatabase } from "@/utils/sqliteDb"
+
+// 1) 表命名空间 + 日志前缀
+const TABLE = featureTables("xx", ["items"] as const)   // → { items: "xx_items" }
+const LOG_TAG = "[myFeature]"
+
+// 2) 初始化：打开（含重试）→ 建表 → 播种。通用逻辑已由 openWithRetry 封装
+private async _init(plugin: Plugin): Promise<PluginDatabase | null> {
+  const db = await openWithRetry(plugin, (d) => this._prepare(d), { logTag: LOG_TAG })
+  this.db = db
+  return db
+}
+
+// 3) 建表 + 播种（幂等，只做 CREATE TABLE IF NOT EXISTS，不含数据迁移）
+private _prepare(db: PluginDatabase): void {
+  db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.items} (
+    id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL
+  )`)
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_${TABLE.items}_name ON ${TABLE.items}(name)`)
+}
+
+// 4) 读写：全部用 prepared statement 传参，禁止拼接
+const rows = db.all<Row>(`SELECT * FROM ${TABLE.items} ORDER BY created_at ASC`)
+db.run(`INSERT INTO ${TABLE.items} (id, name, created_at) VALUES (?, ?, ?)`, id, name, now)
+
+// 5) 批量覆盖用事务
+db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
+```
+
+**`openWithRetry(plugin, migrateFn, { logTag })` 已封装**：打开库、启动早期 6 次退避重试、
+区分「环境不支持 node:sqlite」（立即放弃）与「路径暂未就绪」（重试）、
+建表失败时关闭句柄防泄漏、成功时打印库路径。**新功能不要再自己写这套循环。**
+
+### 实现要点（均为踩过的坑，勿省）
+
+| 要点 | 说明 |
+|------|------|
+| **路径必须绝对** | `plugin.dataDir` 在思源运行时是 `undefined`；拼出相对路径会把库建到渲染进程 CWD（实测落到 `E:\siyuan2\storage\...`）。统一走 `openWithRetry()` / `resolvePluginDataDir()`，勿自行拼路径；`buildDbPath()` 对相对路径一律返回空串 |
+| **启动早期要重试** | 已由 `openWithRetry()` 内置（6 次退避），**不要**再手写循环 |
+| **预热交给 registerFeature** | 存储只在面板挂载时构造会导致"用户不开面板→库永不创建"。在 `registerFeature()` 里调 `warmupSharedWebsiteStorage(plugin)`（非阻塞） |
+| **单例共享** | 多入口共用一份数据时用 `getSharedWebsiteStorage()` 模块级单例，避免重复打开库 |
+| **WAL 三件套** | 启用 `journal_mode=WAL` 后生成 `.db`/`-wal`/`-shm`。**单独复制 `.db` 会得到空库**（实测 `no such table`）。备份走 `snapshotTo()` 或先 `checkpoint()` |
+| **卸载要 close** | 实例 `destroy()` 里调 `closeSharedWebsiteStorage()`，让 WAL 归并、释放句柄 |
+| **`node:sqlite` 已外部化** | `vite.config.ts` 的 `external` 已含 `node:sqlite`，无需再改 |
+| **模块保持可测试** | `sqliteDb.ts` **不得 import `@/api`**（它对 `siyuan` 是值导入，会毒化模块图使纯 Node 测试无法加载）。**也不要**用 `await import("@/api")` 绕开——`@/api` 已被其它 feature 静态导入，动态 import 只会产生 `INEFFECTIVE_DYNAMIC_IMPORT` 警告且不分包。取工作区路径请用模块内自带的 `readWorkspaceDir()`（读 `window.siyuan.config`，回退原生 `fetch('/api/system/getConf')`） |
+| **环境门槛** | 思源 Electron 44+ / Node 24+ 才有 `node:sqlite`（实测 3.8.7 可用，SQLite 3.53.4） |
+
+### 当前状态
+
+| 项目 | 值 |
+|------|-----|
+| 库文件 | `plugin.db`（唯一） |
+| 已迁移功能 | `websiteNavigation`（`wn_entries` / `wn_categories`）——书签与分类，与 minimalBrowser 共享 |
+| 存储模式 | **纯 SQLite**，无 JSON 回退分支 |
+| 迁移脚本 | 已完成使命并删除；新功能不需要它 |
+
+> 迁移背景与实测数据见 [docs/sqlite-persistence-review.md](./docs/sqlite-persistence-review.md)。
 
 ---
 

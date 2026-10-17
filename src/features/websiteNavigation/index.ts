@@ -2,6 +2,7 @@
  * 网站导航 — 功能注册入口 + 公开 API
  */
 import type { Plugin } from "siyuan"
+import { warmupSharedWebsiteStorage } from "@/utils/sharedStorage/websiteStorage"
 import { WebsiteNavigation } from "./types"
 
 export { showWebsiteNavigation } from "./types"
@@ -10,4 +11,6 @@ export { showWebsiteNavigation } from "./types"
 export function registerWebsiteNavigation(plugin: Plugin) {
   const instance = new WebsiteNavigation(plugin)
   ;(plugin as any).__websiteNavigation = instance
+  // 预热 SQLite（非阻塞）：避免数据库创建依赖「用户是否打开过面板」
+  warmupSharedWebsiteStorage(plugin)
 }

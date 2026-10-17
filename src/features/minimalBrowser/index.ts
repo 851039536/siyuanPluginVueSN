@@ -2,6 +2,7 @@
  * 极简浏览器 — 功能注册入口 + 公开 API
  */
 import type { Plugin } from "siyuan"
+import { warmupSharedWebsiteStorage } from "@/utils/sharedStorage/websiteStorage"
 import { BrowserManager } from "./types"
 
 export { showMinimalBrowser } from "./types"
@@ -10,6 +11,9 @@ export { showMinimalBrowser } from "./types"
 export function registerMinimalBrowser(plugin: Plugin) {
   const instance = new BrowserManager(plugin)
   ;(plugin as any).__minimalBrowser = instance
+
+  // 预热共享书签存储的 SQLite（非阻塞）：与网站导航共用同一实例，幂等
+  warmupSharedWebsiteStorage(plugin)
 
   // 注册快捷键命令（⌃⌥B：Mac 为 Ctrl+Alt+B，Windows 自动转换）
   plugin.addCommand({

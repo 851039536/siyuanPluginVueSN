@@ -3,11 +3,12 @@
  * 维护地址栏/历史栈/收藏数据/主页设置，供 Toolbar/FavoritesSidebar/SettingsDialog 共享
  */
 import type { Plugin } from "siyuan"
+import { getSharedWebsiteStorage } from "@/utils/sharedStorage/websiteStorage"
 import type {
   WebsiteCategory,
   WebsiteEntry,
+  WebsiteNavigationStorage,
 } from "@/utils/sharedStorage/websiteStorage"
-import { WebsiteNavigationStorage } from "@/utils/sharedStorage/websiteStorage"
 import {
   ref,
   shallowRef,
@@ -57,7 +58,7 @@ export const sidebarResizing = ref(false)
  */
 export function useBrowserState(plugin: Plugin) {
   if (!storage) {
-    storage = new WebsiteNavigationStorage(plugin)
+    storage = getSharedWebsiteStorage(plugin)
   }
   if (!settingsStorage) {
     settingsStorage = new BrowserSettingsStorage(plugin)

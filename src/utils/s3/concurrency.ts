@@ -6,6 +6,7 @@
  */
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { TRANSFER_MAX_RETRIES } from "./types"
+import { S3HttpError } from "./s3Protocol"
 
 /** 缓存的主机名（进程生命周期内不变，避免重复 require os 模块） */
 let _hostname: string | null = null
@@ -40,21 +41,52 @@ export interface RetryResult {
   error?: unknown
 }
 
+/** 重试退避策略：首次延迟与抖动幅度 */
+const RETRY_BASE_DELAY_MS = 300
+const RETRY_MAX_DELAY_MS = 3000
+
+/**
+ * 默认可重试判定。
+ *
+ * - 无 status 的错误 = 网络层异常（断网/超时/DNS），可重试；
+ * - `S3HttpError` 携带 HTTP 状态码：5xx / 429 服务端侧可重试，403/404 等 4xx 重试不可能成功；
+ * - 其余（编程错误等）不重试。
+ */
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof S3HttpError) {
+    return err.status >= 500 || err.status === 429
+  }
+  // 网络层错误没有 status；S3HttpError 之外的 Error 一律视为传输层可重试
+  return true
+}
+
 /**
  * 带重试执行单个传输任务（上传/下载/删除共用）。
  * 出口语义由调用方决定：s3Backup 记警告并返回 false，s3FileManager 抛出 `error`。
+ *
+ * 仅对「可重试错误」重试（默认判定见 isRetryableError，可用 `isRetryable` 覆盖）：
+ * 403/404/签名错误等永久性失败立即返回，不再盲试拉长反馈；
+ * 重试间按指数退避 + 抖动等待，避免对过载的服务端雪上加霜。
  */
 export async function runWithRetries(
   task: () => Promise<void>,
   maxRetries: number = TRANSFER_MAX_RETRIES,
+  isRetryable: (err: unknown) => boolean = isRetryableError,
 ): Promise<RetryResult> {
   let lastError: unknown
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      // 指数退避 + 抖动：防止同批失败任务同步重试打到已过载的服务端
+      const backoff = Math.min(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1), RETRY_MAX_DELAY_MS)
+      const delay = backoff + Math.floor(Math.random() * RETRY_BASE_DELAY_MS)
+      await new Promise<void>((resolve) => setTimeout(resolve, delay))
+    }
     try {
       await task()
       return { ok: true }
     } catch (err) {
       lastError = err
+      if (!isRetryable(err)) { return { ok: false, error: err } }
     }
   }
   return { ok: false, error: lastError }

@@ -10,7 +10,7 @@
         icon="back"
         :icon-size="14"
         :title="i18n.up"
-        @click="$emit('navigateUp')"
+        @click="emit('navigateUp')"
       />
       <div class="fm-breadcrumb">
         <!-- 根节点：bucket 名（悬停提示"返回根目录"） -->
@@ -21,7 +21,7 @@
           icon="s3FileManager"
           :icon-size="11"
           :title="i18n.backToRoot"
-          @click="$emit('navigateSegment', -1)"
+          @click="emit('navigateSegment', -1)"
         >
           {{ bucketLabel }}
         </Button>
@@ -39,7 +39,7 @@
             text
             size="xsmall"
             :title="segment"
-            @click="$emit('navigateSegment', index)"
+            @click="emit('navigateSegment', index)"
           >
             {{ segment }}
           </Button>
@@ -61,7 +61,7 @@
         :icon-size="13"
         :loading="loading"
         :title="i18n.refresh"
-        @click="$emit('refresh')"
+        @click="emit('refresh')"
       />
     </div>
   </div>
@@ -82,7 +82,8 @@ interface Props {
 }
 
 defineProps<Props>()
-defineEmits<{
+
+const emit = defineEmits<{
   navigateUp: []
   navigateSegment: [index: number]
   refresh: []

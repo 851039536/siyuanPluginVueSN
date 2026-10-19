@@ -8,7 +8,7 @@ import type { S3Client } from "./s3Client"
 import { MAX_LIST_PAGES } from "./s3Client"
 import type { NodeResponse } from "./s3Protocol"
 import type { S3FileInfo } from "./types"
-import { parseListDirXml, formatS3Error } from "./s3Protocol"
+import { parseListDirXml, formatS3Error, S3HttpError } from "./s3Protocol"
 
 // ========== 目录式列举 ==========
 
@@ -61,7 +61,7 @@ export async function listDir(client: S3Client, prefix: string): Promise<S3DirLi
       // 只有「明确不支持 delimiter」才升级为专用错误，供调用方降级；其余错误原样抛出
       throw isDelimiterUnsupported(response, body)
         ? new DelimiterUnsupportedError(message)
-        : new Error(message)
+        : new S3HttpError(message, response.status)
     }
 
     const { files: pageFiles, folders, isTruncated, nextMarker } = parseListDirXml(await response.text())

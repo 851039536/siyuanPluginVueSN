@@ -17,3 +17,13 @@
   color: var(--b3-theme-on-surface-light);
   margin-left: $s-1;
 }
+
+// 搜索框：固定宽度避免随内容伸缩挤压工具栏按钮组
+.fm-toolbar-search {
+  width: 160px;
+
+  // 输入框本体铺满容器（共享 Input 默认块级随父宽）
+  :deep(.si-input__inner) {
+    width: 100%;
+  }
+}

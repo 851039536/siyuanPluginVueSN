@@ -16,6 +16,7 @@ import { getErrorMessage } from "@/utils/stringUtils"
 import {
   sha256Hex, amzDate, dateStamp, sortQueryString, signRequest,
   parseListObjectsXml, parseS3Error, formatS3Error, writeBodyInChunks,
+  S3HttpError,
 } from "./s3Protocol"
 import type { NodeResponse } from "./s3Protocol"
 
@@ -131,7 +132,7 @@ export class S3Client {
 
     if (!response.ok) {
       const body = await response.text()
-      throw new Error(formatS3Error(response, body, "S3 上传失败"))
+      throw new S3HttpError(formatS3Error(response, body, "S3 上传失败"), response.status)
     }
   }
 
@@ -152,7 +153,7 @@ export class S3Client {
 
     if (!response.ok) {
       const body = await response.text()
-      throw new Error(formatS3Error(response, body, "S3 下载失败"))
+      throw new S3HttpError(formatS3Error(response, body, "S3 下载失败"), response.status)
     }
   }
 
@@ -164,7 +165,7 @@ export class S3Client {
     if (response.status === 404) { return null }
     if (!response.ok) {
       const body = await response.text()
-      throw new Error(formatS3Error(response, body, "S3 读取对象失败"))
+      throw new S3HttpError(formatS3Error(response, body, "S3 读取对象失败"), response.status)
     }
 
     return response.text()
@@ -184,7 +185,7 @@ export class S3Client {
       const response = await this.request("GET", this.buildUri(""), query, this.buildUrl(""), null)
       if (!response.ok) {
         const body = await response.text()
-        throw new Error(formatS3Error(response, body, "S3 列举文件失败"))
+        throw new S3HttpError(formatS3Error(response, body, "S3 列举文件失败"), response.status)
       }
 
       const { files, isTruncated, nextMarker } = parseListObjectsXml(await response.text())
@@ -207,7 +208,7 @@ export class S3Client {
 
     if (!response.ok && response.status !== 204) {
       const body = await response.text()
-      throw new Error(formatS3Error(response, body, "S3 删除失败"))
+      throw new S3HttpError(formatS3Error(response, body, "S3 删除失败"), response.status)
     }
   }
 

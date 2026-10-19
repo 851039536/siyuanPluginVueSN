@@ -38,54 +38,22 @@
         class="fm-column-headers"
         role="row"
       >
+        <!-- 三段列头仅字段不同，抽 v-for 去重；label 映射到对应 i18n 键 -->
         <div
-          class="fm-col fm-col-name"
+          v-for="col in columns"
+          :key="col.field"
+          class="fm-col"
+          :class="`fm-col-${col.field === 'time' ? 'date' : col.field}`"
           role="columnheader"
-          :aria-sort="ariaSort('name')"
+          :aria-sort="ariaSort(col.field)"
         >
           <button
             class="fm-col-btn"
-            @click="$emit('sort', 'name')"
+            @click="emit('sort', col.field)"
           >
-            {{ i18n.colName }}
+            {{ colLabels[col.field] }}
             <IconWrapper
-              v-if="sortField === 'name'"
-              class="fm-sort-arrow"
-              :name="sortAsc ? 'chevronUp' : 'chevronDown'"
-              :size="10"
-            />
-          </button>
-        </div>
-        <div
-          class="fm-col fm-col-size"
-          role="columnheader"
-          :aria-sort="ariaSort('size')"
-        >
-          <button
-            class="fm-col-btn"
-            @click="$emit('sort', 'size')"
-          >
-            {{ i18n.colSize }}
-            <IconWrapper
-              v-if="sortField === 'size'"
-              class="fm-sort-arrow"
-              :name="sortAsc ? 'chevronUp' : 'chevronDown'"
-              :size="10"
-            />
-          </button>
-        </div>
-        <div
-          class="fm-col fm-col-date"
-          role="columnheader"
-          :aria-sort="ariaSort('time')"
-        >
-          <button
-            class="fm-col-btn"
-            @click="$emit('sort', 'time')"
-          >
-            {{ i18n.colDate }}
-            <IconWrapper
-              v-if="sortField === 'time'"
+              v-if="sortField === col.field"
               class="fm-sort-arrow"
               :name="sortAsc ? 'chevronUp' : 'chevronDown'"
               :size="10"
@@ -99,8 +67,16 @@
           v-for="entry in entries"
           :key="entry.key"
           class="fm-detail-row"
-          :class="itemClasses(entry)"
-          v-bind="itemInteractionProps(entry)"
+          :class="{ selected: isSelected(entry.key), 'drag-over': dragOverKey === entry.key }"
+          draggable="true"
+          @click="emit('itemClick', entry, $event)"
+          @dblclick="emit('itemDblclick', entry)"
+          @contextmenu.prevent="emit('itemContextmenu', entry, $event)"
+          @dragstart="onDragStart(entry, $event)"
+          @dragend="onDragEnd()"
+          @dragover="onFolderDragOver(entry, $event)"
+          @dragleave="onFolderDragLeave(entry)"
+          @drop="onFolderDrop(entry, $event)"
         >
           <span class="fm-col-name">
             <IconWrapper
@@ -125,9 +101,17 @@
           v-for="entry in entries"
           :key="entry.key"
           class="fm-icon-item"
-          :class="itemClasses(entry)"
+          :class="{ selected: isSelected(entry.key), 'drag-over': dragOverKey === entry.key }"
           :title="entry.name"
-          v-bind="itemInteractionProps(entry)"
+          draggable="true"
+          @click="emit('itemClick', entry, $event)"
+          @dblclick="emit('itemDblclick', entry)"
+          @contextmenu.prevent="emit('itemContextmenu', entry, $event)"
+          @dragstart="onDragStart(entry, $event)"
+          @dragend="onDragEnd()"
+          @dragover="onFolderDragOver(entry, $event)"
+          @dragleave="onFolderDragLeave(entry)"
+          @drop="onFolderDrop(entry, $event)"
         >
           <IconWrapper
             :name="entryIconKey(entry)"
@@ -156,7 +140,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import type { S3Entry, S3FileManagerI18n, SortField, ViewMode } from "../types"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -187,6 +171,20 @@ const emit = defineEmits<{
   entryDropToFolder: [entry: S3Entry]
 }>()
 
+/** 详细视图列头定义：三列仅排序字段不同，模板按此 v-for 渲染 */
+const columns: ReadonlyArray<{ field: SortField }> = [
+  { field: "name" },
+  { field: "size" },
+  { field: "time" },
+]
+
+/** 列头文案映射：field → 对应 i18n 键 */
+const colLabels = computed<Record<SortField, string>>(() => ({
+  name: props.i18n.colName,
+  size: props.i18n.colSize,
+  time: props.i18n.colDate,
+}))
+
 /** 列头排序态：仅当前排序列报方向，其余为 none（读屏可感知排序依据） */
 function ariaSort(field: SortField): "ascending" | "descending" | "none" {
   if (props.sortField !== field) { return "none" }
@@ -199,35 +197,6 @@ function ariaSort(field: SortField): "ascending" | "descending" | "none" {
 const draggingKey = ref<string | null>(null)
 /** 当前作为放置目标高亮的文件夹 key */
 const dragOverKey = ref<string | null>(null)
-
-/** 条目状态类：详细信息行与图标网格项共用同一套选中/拖拽悬停语义 */
-function itemClasses(entry: S3Entry): Record<string, boolean> {
-  return {
-    "selected": props.isSelected(entry.key),
-    "drag-over": dragOverKey.value === entry.key,
-  }
-}
-
-/**
- * 条目交互属性（点击/双击/右键/拖拽全流程）：两种视图逐字相同，抽此一处避免双份实现漂移。
- * 以 v-bind 绑定，故用普通 DOM 属性名；v-for 中每项各调一次，开销可忽略。
- */
-function itemInteractionProps(entry: S3Entry): Record<string, unknown> {
-  return {
-    draggable: true,
-    onClick: (ev: MouseEvent) => emit("itemClick", entry, ev),
-    onDblclick: () => emit("itemDblclick", entry),
-    onContextmenu: (ev: MouseEvent) => {
-      ev.preventDefault()
-      emit("itemContextmenu", entry, ev)
-    },
-    onDragstart: (ev: DragEvent) => onDragStart(entry, ev),
-    onDragend: () => onDragEnd(),
-    onDragover: (ev: DragEvent) => onFolderDragOver(entry, ev),
-    onDragleave: () => onFolderDragLeave(entry),
-    onDrop: (ev: DragEvent) => onFolderDrop(entry, ev),
-  }
-}
 
 /** 目标是否可放置：内部拖动中 + 目标为文件夹 + 非自身 */
 function isDropTarget(entry: S3Entry): boolean {

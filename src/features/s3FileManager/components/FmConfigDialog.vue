@@ -131,7 +131,7 @@ import { showMessage } from "siyuan"
 import type { S3Config } from "@/utils/s3/types"
 import { DEFAULT_S3_CONFIG } from "@/utils/s3/types"
 import { S3Client } from "@/utils/s3/s3Client"
-import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
+import { encryptSettingStrict, decryptSetting } from "@/utils/settingsCrypto"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
@@ -219,10 +219,12 @@ async function handleSave(): Promise<void> {
   saving.value = true
   try {
     const config = snapshot()
+    // 凭证类数据用严格版加密：加密失败直接走 catch 提示保存失败，
+    // 绝不静默回退明文落盘（encryptSetting 的明文回退只适合普通设置项）
     const encrypted: S3Config = {
       ...config,
-      accessKey: await encryptSetting(config.accessKey),
-      secretKey: await encryptSetting(config.secretKey),
+      accessKey: await encryptSettingStrict(config.accessKey),
+      secretKey: await encryptSettingStrict(config.secretKey),
     }
     // PluginStorage.save 失败时返回 false 而不抛，必须显式转成异常，
     // 否则落盘失败仍会提示"配置已保存"并把未保存的配置应用到运行时

@@ -42,6 +42,7 @@
         :busy="busy"
         :selected-count="selectedCount"
         :view-mode="prefs.viewMode"
+        :search-query="searchQuery"
         :i18n="i18n"
         @upload="handleUpload"
         @new-folder="showNewFolder = true"
@@ -53,6 +54,7 @@
         @set-view="setViewMode"
         @open-log="showLog = true"
         @open-config="showConfig = true"
+        @update:search-query="searchQuery = $event"
       />
 
       <FmBreadcrumb
@@ -82,6 +84,7 @@
         >
           <ProgressBar
             :value="progressInfo.percent"
+            :mode="progressInfo.indeterminate ? 'indeterminate' : 'determinate'"
             size="xsmall"
             :show-value="false"
           />
@@ -92,6 +95,18 @@
               class="fm-progress-file"
             >{{ progressInfo.currentFile }}</span>
             <span class="fm-progress-count">{{ progressInfo.done }} / {{ progressInfo.total }}</span>
+            <!-- 传输取消（软取消：停止后续任务，在途文件传完后收尾） -->
+            <Button
+              v-if="transferring"
+              variant="ghost"
+              size="xsmall"
+              dense
+              icon="close"
+              :icon-size="12"
+              :title="i18n.cancelTransfer"
+              :aria-label="i18n.cancelTransfer"
+              @click="cancelTransfers"
+            />
           </div>
         </div>
 
@@ -219,6 +234,7 @@ import { useExternalDrop } from "./composables/useExternalDrop"
 import { useFmConfirm } from "./composables/useFmConfirm"
 import { useFmPrefs } from "./composables/useFmPrefs"
 import FmToolbar from "./components/FmToolbar.vue"
+import { S3_FM_FIRST_OPEN_EVENT } from "./types"
 import FmBreadcrumb from "./components/FmBreadcrumb.vue"
 import FmEntryList from "./components/FmEntryList.vue"
 import FmContextMenu from "./components/FmContextMenu.vue"
@@ -244,6 +260,7 @@ const {
   currentPrefix, entries, loading, loadError, sortField, sortAsc, sortedEntries, visibleEntries,
   hasMore, pathSegments, isAtRoot, loadDir, navigateUp,
   navigateToSegment, refresh, invalidateCache, resetCapabilityProbe, loadMore, toggleSort,
+  searchQuery,
 } = useS3Entries({ requireClient, getRootPrefix })
 
 const { selectedEntries, selectedCount, isSelected, handleItemClick: selectItemClick, ensureSelected, clearSelection } = useS3Selection({ orderedEntries: sortedEntries })
@@ -286,7 +303,7 @@ const { opBusy, opProgress, createNewFolder, renameEntry, copyEntries, moveEntri
 let disposed = false
 onUnmounted(() => { disposed = true })
 
-const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntries } = useS3Transfer({
+const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntries, cancelTransfers } = useS3Transfer({
   requireClient, i18n,
   currentPrefix,
   getEntries: () => entries.value,
@@ -312,26 +329,32 @@ const contextMenu = ref<{ visible: boolean; x: number; y: number; entry: S3Entry
 
 const busy = computed(() => opBusy.value || transferring.value)
 
-/** 统一进度视图模型：传输优先（含当前文件名），否则为批量操作进度 */
+/**
+ * 统一进度视图模型：传输优先（含当前文件名），否则为批量操作进度。
+ * `indeterminate`：进行中任务的字节数未知（存储端未回 Content-Length）且只有
+ * 单个任务时，百分比无法计算 → 进度条切不定态（共享 ProgressBar 已支持）。
+ */
 const progressInfo = computed(() => {
   const transfer = transferProgress.value
   if (transfer) {
     return {
       label: transfer.label,
-      currentFile: transfer.currentFile,
+      currentFile: transfer.currentFile || undefined,
       done: transfer.done,
       total: transfer.total,
       percent: transfer.percent,
+      indeterminate: transfer.indeterminate,
     }
   }
   const op = opProgress.value
   if (!op) { return null }
   return {
     label: op.label,
-    currentFile: "",
+    currentFile: undefined,
     done: op.done,
     total: op.total,
     percent: Math.round((op.done / Math.max(op.total, 1)) * 100),
+    indeterminate: false,
   }
 })
 
@@ -427,14 +450,27 @@ function openRename(): void {
 function handleRenameConfirm(newName: string): void {
   const target = renameTarget.value
   renameTarget.value = null
+  const trimmed = newName.trim()
   // 名称未变更时直接关闭：同名复制+删源会误删文件
-  if (!target || newName.trim() === target.name) { return }
-  void renameEntry(target, newName)
+  if (!target || trimmed === target.name) { return }
+  // 撞名预检：S3 的 CopyObject 对已存在目标静默覆盖，重命名必须先拦
+  if (sortedEntries.value.some((e) => e.name === trimmed && e.key !== target.key)) {
+    showMessage(`${i18n.nameExists}: ${trimmed}`, 4000, "error")
+    return
+  }
+  void renameEntry(target, trimmed)
 }
 
 function handleNewFolderConfirm(name: string): void {
+  const trimmed = name.trim()
+  // 撞名预检：PUT 0 字节占位是幂等操作，撞名不报错但会复用旧文件夹，
+  // 提前拦截避免"新建成功"的误导
+  if (sortedEntries.value.some((e) => e.name === trimmed)) {
+    showMessage(`${i18n.nameExists}: ${trimmed}`, 4000, "error")
+    return
+  }
   showNewFolder.value = false
-  void createNewFolder(currentPrefix.value, name)
+  void createNewFolder(currentPrefix.value, trimmed)
 }
 
 function handleDelete(): void {
@@ -466,12 +502,29 @@ function handleClose(): void {
 
 // ========== 初始化 ==========
 
+/**
+ * 首次打开才发起目录列举：persistent Modal 在插件启动时预热挂载（index.ts
+ * 的 open+close），onMounted 只加载配置/日志/偏好这些纯本地数据；
+ * 目录列举是真实网络请求，延迟到 S3FileManager.open() 发出首次打开事件。
+ */
+let firstOpenLoaded = false
+function loadDirOnFirstOpen(): void {
+  if (firstOpenLoaded || !isConfigured.value) { return }
+  firstOpenLoaded = true
+  void loadDir(getRootPrefix())
+}
+window.addEventListener(S3_FM_FIRST_OPEN_EVENT, loadDirOnFirstOpen)
+onUnmounted(() => {
+  window.removeEventListener(S3_FM_FIRST_OPEN_EVENT, loadDirOnFirstOpen)
+})
+
 onMounted(async () => {
   await Promise.all([loadConfig(), loadLogs()])
   await loadPrefs()
-  if (isConfigured.value) {
-    await loadDir(getRootPrefix())
-  }
+  // 预热挂载期间用户可能已经点开了面板（事件先于本监听注册的场景不存在——
+  // 事件在 open() 同步派发，而本监听在 onMounted 注册，之后才可能收到）；
+  // 兜底检查当前面板可见性：open 状态下直接加载
+  loadDirOnFirstOpen()
 })
 </script>
 

@@ -55,9 +55,22 @@ export function useS3Entries(deps: {
     [...entries.value].sort((a, b) => compareEntries(a, b, sortField.value, sortAsc.value)),
   )
 
-  const visibleEntries = computed(() => sortedEntries.value.slice(0, renderLimit.value))
+  /**
+   * 名称子串过滤（大小写不敏感）。空查询原样通过；
+   * 过滤作用在排序之后、增量切片之前——搜索结果仍受"加载更多"批大小约束。
+   */
+  const filteredEntries = computed<S3Entry[]>(() => {
+    const q = searchQuery.value.trim().toLowerCase()
+    if (!q) { return sortedEntries.value }
+    return sortedEntries.value.filter((e) => e.name.toLowerCase().includes(q))
+  })
 
-  const hasMore = computed(() => sortedEntries.value.length > renderLimit.value)
+  const visibleEntries = computed(() => filteredEntries.value.slice(0, renderLimit.value))
+
+  const hasMore = computed(() => filteredEntries.value.length > renderLimit.value)
+
+  /** 搜索过滤词（工具栏输入框绑定；仅作用于当前目录展示，不影响加载） */
+  const searchQuery = ref("")
 
   /** 面包屑段（相对浏览根前缀） */
   const pathSegments = computed(() => relativeSegments(currentPrefix.value, deps.getRootPrefix()))
@@ -205,8 +218,10 @@ export function useS3Entries(deps: {
     sortField,
     sortAsc,
     sortedEntries,
+    filteredEntries,
     visibleEntries,
     hasMore,
+    searchQuery,
     pathSegments,
     isAtRoot,
     loadDir,

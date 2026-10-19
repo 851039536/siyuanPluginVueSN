@@ -70,6 +70,8 @@ export interface FileOpLog {
   success: boolean
   /** 附加消息 */
   message?: string
+  /** 操作涉及的本地路径（如下载目标目录）——日志面板据此渲染"打开文件夹"按钮 */
+  localPath?: string
   /** 操作来源设备名 */
   hostname?: string
   /** 失败文件清单（批量操作部分失败时展开展示） */
@@ -100,6 +102,9 @@ export const RENDER_BATCH_SIZE = 200
  * persistent Modal 不随面板关闭卸载，无上限缓存会在长会话遍历大量目录后持续驻留。
  */
 export const MAX_CACHE_DIRS = 30
+
+/** 面板首次打开事件名：persistent Modal 预热挂载后，首次目录列举延迟到此刻（index.ts → index.vue） */
+export const S3_FM_FIRST_OPEN_EVENT = "s3FileManagerFirstOpen"
 
 // ========== 共享工具类型 ==========
 

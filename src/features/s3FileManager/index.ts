@@ -8,7 +8,9 @@
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { Plugin } from "siyuan"
 import { createModalVueApp } from "@/utils/vueAppHelper"
+import { emitCustomEvent } from "@/utils/eventBus"
 import S3FileManagerPanel from "./index.vue"
+import { S3_FM_FIRST_OPEN_EVENT } from "./types"
 import { S3FileManagerStorage } from "./types/storage"
 
 let instance: S3FileManager | null = null
@@ -18,6 +20,8 @@ export class S3FileManager {
   private storage: S3FileManagerStorage
   private modal: ModalAppInstance
   private _openHandler: (() => void) | null = null
+  /** 是否已发过首次打开事件（只发一次） */
+  private _firstOpenNotified = false
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -42,13 +46,20 @@ export class S3FileManager {
     if (this._openHandler) { return }
     this._openHandler = () => this.open()
     window.addEventListener("openS3FileManager", this._openHandler)
-    // 触发 Vue 组件 mount 后立即隐藏（persistent 模式保留内部状态）
+    // 触发 Vue 组件 mount 后立即隐藏（persistent 模式保留内部状态）；
+    // 预热挂载只做配置/日志/偏好的加载，首次目录列举延迟到用户真正打开面板
     this.modal.open()
     this.modal.close()
   }
 
   open(): void {
     this.modal.open()
+    // 通知面板「此刻才真正可见」：首次打开时才发起目录列举（经统一事件入口，
+    // 与 window 级 openS3FileManager 监听同源）
+    if (!this._firstOpenNotified) {
+      this._firstOpenNotified = true
+      emitCustomEvent(S3_FM_FIRST_OPEN_EVENT)
+    }
   }
 
   close = (): void => {
@@ -61,6 +72,8 @@ export class S3FileManager {
       this._openHandler = null
     }
     this.modal.destroy()
+    // 关闭 SQLite 日志仓库（幂等；初始化窗口期内到达的句柄也会被立即关闭）
+    this.storage.logs.close()
     // 清除 plugin 上的挂载点，避免卸载后留下悬挂引用
     if ((this.plugin as any).__s3FileManager === this) {
       delete (this.plugin as any).__s3FileManager

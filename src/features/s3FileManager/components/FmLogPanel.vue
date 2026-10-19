@@ -5,7 +5,7 @@
     size="large"
     :header="i18n.logTitle"
     :dismissable-mask="true"
-    @update:visible="$emit('close')"
+    @update:visible="emit('close')"
   >
     <template #header="{ headerId }">
       <span
@@ -50,12 +50,25 @@
         <span class="fm-log-name">{{ log.fileName }}</span>
         <span class="fm-log-time">{{ formatRelativeTime(log.time) }}</span>
       </div>
-      <!-- 附加消息 -->
+      <!-- 附加消息；携带本地路径（下载目标目录）时附"打开文件夹"按钮 -->
       <div
-        v-if="log.message"
+        v-if="log.message || log.localPath"
         class="fm-log-message"
       >
-        {{ log.message }}
+        <span class="fm-log-message-text">{{ log.message }}</span>
+        <Button
+          v-if="log.localPath"
+          class="fm-log-open-folder"
+          variant="ghost"
+          text
+          size="xsmall"
+          icon="folder"
+          :icon-size="12"
+          :title="log.localPath"
+          @click="openLocalFolder(log)"
+        >
+          {{ i18n.openFolder }}
+        </Button>
       </div>
       <!-- 失败清单展开（复用共享 Panel 的可折叠能力；默认收起，按需展开控制 DOM 量）
            头部经 header 插槽保留语义错误色，与原 <summary> 观感一致 -->
@@ -71,8 +84,8 @@
           <span class="fm-log-detail-title">{{ i18n.failedList }} ({{ log.detail.failed.length }})</span>
         </template>
         <div
-          v-for="(key, idx) in log.detail.failed"
-          :key="idx"
+          v-for="key in log.detail.failed"
+          :key="key"
           class="fm-log-detail-line"
         >
           {{ key }}
@@ -91,7 +104,9 @@
 
 <script setup lang="ts">
 import { reactive, watch } from "vue"
+import { showMessage } from "siyuan"
 import { formatRelativeTime } from "@/utils/format"
+import { openFolderInExplorer } from "@/utils/electronDialog"
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
 import Panel from "@/components/Panel.vue"
@@ -105,7 +120,7 @@ const props = defineProps<{
   requestClearConfirm: () => void
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   close: []
 }>()
 
@@ -134,6 +149,16 @@ function toggleExpanded(id: string, collapsed: boolean): void {
 /** 清空确认：统一委托父组件的共享确认框（不再回退原生 confirm） */
 function handleClear(): void {
   props.requestClearConfirm()
+}
+
+/** 在系统文件管理器中打开日志记录的本地目录（下载目标等） */
+async function openLocalFolder(log: FileOpLog): Promise<void> {
+  if (!log.localPath) { return }
+  const ok = await openFolderInExplorer(log.localPath)
+  if (!ok) {
+    // 路径已被移动/删除或无 Electron shell：明确失败而非静默无反应
+    showMessage(`${props.i18n.openFolderFailed}: ${log.localPath}`, 4000, "error")
+  }
 }
 </script>
 

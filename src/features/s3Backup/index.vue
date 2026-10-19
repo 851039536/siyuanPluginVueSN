@@ -113,7 +113,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue"
 import { showMessage } from "siyuan"
-import { encryptSetting, decryptSetting } from "@/utils/settingsCrypto"
+import { encryptSettingStrict, decryptSetting } from "@/utils/settingsCrypto"
 import { useBackupLogs } from "./composables/useBackupLogs"
 import { useChecksums } from "./composables/useChecksums"
 import { useBackupOrchestrator } from "./composables/useBackupOrchestrator"
@@ -192,11 +192,12 @@ async function handleConfigSaved(config: S3Config): Promise<void> {
 
   const instance = getS3BackupInstance()
   if (instance) {
-    // S3 凭证加密存储，防止 accessKey/secretKey 明文暴露
+    // S3 凭证加密存储，防止 accessKey/secretKey 明文暴露；
+    // 用严格版：加密失败显式报错，绝不静默回退明文落盘
     const encrypted: S3Config = {
       ...config,
-      accessKey: await encryptSetting(config.accessKey),
-      secretKey: await encryptSetting(config.secretKey),
+      accessKey: await encryptSettingStrict(config.accessKey),
+      secretKey: await encryptSettingStrict(config.secretKey),
     }
     await instance.getStorage().s3Config.save(encrypted)
   }

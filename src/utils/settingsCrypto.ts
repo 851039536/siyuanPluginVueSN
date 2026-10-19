@@ -75,6 +75,28 @@ export async function encryptSetting(value: string): Promise<string> {
 }
 
 /**
+ * 严格版加密：失败时抛出异常而不是回退明文。
+ *
+ * `encryptSetting` 的静默明文回退对「API Key 填写顺手保存」类场景是合理的降级
+ * （加密不可用总比保存失败好），但对**凭证类**数据（S3 Access Key/Secret Key），
+ * 明文落盘比保存失败严重得多 —— 调用方应显式失败让用户重试，而不是假报成功。
+ */
+export async function encryptSettingStrict(value: string): Promise<string> {
+  if (!value) return ""
+
+  const key = await getEncryptionKey()
+  const {
+    iv,
+    ciphertext,
+  } = await aesGcmEncrypt(
+    new TextEncoder().encode(value),
+    key,
+  )
+
+  return `${ENC_PREFIX + arrayBufferToBase64(iv)}.${arrayBufferToBase64(ciphertext)}`
+}
+
+/**
  * 解密敏感设置值
  * @param encryptedValue 加密字符串（enc:base64IV.base64Ciphertext 格式）或明文
  * @returns 明文字符串

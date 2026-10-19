@@ -243,6 +243,66 @@ const p = (s3Config.value.prefix || "").replace(/^\/+/, "").trim()
 - `FmConfigDialog` 加密失败回退明文写盘（`encryptSetting` 共享层行为）：正确修法是让共享层提供可判别错误，影响面超出本模块，建议单独立项。
 - `FmToolbar`/`FmBreadcrumb` 的 `defineEmits` 返回值丢弃（模板 `$emit` 不受编译期校验）：纯类型增强，未动。
 
+### 7.8 实施后追加修复（2026-10-19，用户实测反馈）
+
+**下载进度条不动**：`downloadEntries` 从未把 `onProgress` 传给 `client.download`（共享层 [s3Client.ts:444-453](../src/utils/s3/s3Client.ts) 一直支持流式字节回调），进度仅按"完成文件数"计算——单文件下载全程 0%、完成瞬间 100% 后消失，用户误以为卡死。
+修复：下载侧接入与上传同款的 `fractions` 字节分数模型（[useS3Transfer.ts](../src/features/s3FileManager/composables/useS3Transfer.ts) `downloadEntries`），并发分数求和参与百分比；代理未返回 Content-Length（total=0）时分数保持 0，由文件完成数兜底。验证：`pnpm typecheck` 0 error。
+
+---
+
+## 8. 功能与架构扩展（2026-10-19 第二轮，用户选定 10 项）
+
+基线：§7 验证全绿后继续。改动 27 文件（+614/−336），**新增 2 个 spec 文件**。
+
+### 8.1 共享层
+
+| 项 | 实现 |
+|---|---|
+| `S3HttpError` | [s3Protocol.ts](../src/utils/s3/s3Protocol.ts) 新增携带 `status` 的错误类；s3Client 5 处 + s3ObjectOps 3 处抛错点替换（message 不变，`getErrorMessage`/日志零影响） |
+| 重试分类 + 退避 | [concurrency.ts](../src/utils/s3/concurrency.ts) `runWithRetries` 新增可选 `isRetryable` 参数与内置默认判定（`S3HttpError` 5xx/429 重试；403/404 等 4xx 立即失败；无 status 的网络层错误重试），指数退避 300ms×2^n 上限 3s + 抖动。s3Backup / s3FileManager 双消费方零改动受益 |
+| `encryptSettingStrict` | [settingsCrypto.ts](../src/utils/settingsCrypto.ts) 新增严格版加密（失败抛错不回退明文）；s3FileManager 与 s3Backup 的凭证保存路径已切换，原 `encryptSetting` 保留给普通设置项 |
+
+### 8.2 s3FileManager 功能
+
+| 项 | 实现 |
+|---|---|
+| 操作日志迁 SQLite | [storage.ts](../src/features/s3FileManager/types/storage.ts) 新增 `S3FmLogStore`（表 `s3fm_logs`，`openWithRetry` 建表，rowid 倒序 = 插入序，追加后裁剪 200 条上限）；[useFileOpLogs.ts](../src/features/s3FileManager/composables/useFileOpLogs.ts) 改按条写入，串行化/快照逻辑随之删除（SQLite 单条 INSERT 天然规避写放大与并发乱序）。SQLite 不可用时仓库为禁用态（append 空操作/load 空列表），内存态日志不受影响；destroy 时关句柄。**旧 JSON 键 `s3-file-manager-log` 按规范弃置（禁止运行时迁移）** |
+| 启动请求延后 | [index.ts](../src/features/s3FileManager/index.ts) 预热挂载不再触发列举；`open()` 经 `emitCustomEvent(S3_FM_FIRST_OPEN_EVENT)` 通知面板，[index.vue](../src/features/s3FileManager/index.vue) 首次收到才 `loadDir`（常量置于 types/index.ts 避免循环导入；监听随 onUnmounted 移除；配置加载完成后再补检一次防时序缝隙）。插件启动不再发真实网络请求 |
+| 传输软取消 | `useS3Transfer` 新增 `cancelTransfers()`：并发池 worker 在**下一个任务开始前**退出（在途文件不硬中断——共享层无 abort 通道，`req.destroy` 透出影响 s3Backup，已注明限制）；进度区加取消按钮；取消批次不计失败，独立提示 `uploadCancelled`/`downloadCancelled` |
+| 下载覆盖确认 | 下载前逐个 stat 目标路径，已存在才弹确认（复用 `overwriteConfirm` 文案）——对齐上传侧行为，消除 `createWriteStream 'w'` 静默截断 |
+| 不定量进度 | `TransferProgress.indeterminate`：单文件下载且 Content-Length 缺失时进度条切 `mode="indeterminate"`（共享 ProgressBar 既有能力），`currentFile` 空串哨兵一并改为 `undefined` |
+| 撞名预检 | 新建文件夹/重命名确认时在当前目录 entries 内预检同名（S3 PUT 幂等不报错、CopyObject 静默覆盖），命中即 `nameExists` 提示中止 |
+| 空文件夹保真 | 上传：拖入目录递归收集空目录（含嵌套），经 `createFolder` 补 0 字节占位；下载：空文件夹照常 mkdir 本地目录 |
+| 列表搜索 | `useS3Entries` 新增 `searchQuery` + `filteredEntries`（名称子串、大小写不敏感，排序后切片前过滤）；FmToolbar 加共享 Input（clearable，宽 160px），`update:searchQuery` 受控回传 |
+
+### 8.3 UI 收尾（task-6）
+
+- [FmEntryList.vue](../src/features/s3FileManager/components/FmEntryList.vue)：删除 `itemInteractionProps`/`itemClasses` 工厂（每项每渲染 9 闭包 + 对象分配），模板内联事件（`emit` 局部绑定，事件载荷进入编译期校验）；三段列头抽 `v-for`（约 -60 行模板）。
+- FmToolbar / FmBreadcrumb / FmLogPanel：`defineEmits` 绑定局部 `emit`，模板 `$emit` 全部替换（编译期载荷校验生效）。
+- FmLogPanel 失败清单 `:key` 由索引改为内容本身。
+- 删除模块内过时的 `CODE_REVIEW.md`（描述的 H1/H2/H3 均已修复，被本报告取代）。
+
+### 8.4 测试（task-7，模块从 0 → 30 用例）
+
+- [utils.spec.ts](../src/features/s3FileManager/utils.spec.ts)（22 用例）：前缀/名称运算、`isValidEntryName`、`aggregateEntries`（占位跳过/双斜杠/结构断言无 conflicts）、`normalizeListing`（短路零拷贝引用断言/正常并集/静默忽略折叠）、`buildEntries`、`buildFailDetail`、`compareEntries`（置顶/翻转/timestamp 缺省/numeric 回退）。
+- [useS3Selection.spec.ts](../src/features/s3FileManager/composables/useS3Selection.spec.ts)（8 用例）：单击/Ctrl 切换/Shift 双向范围/锚点失效退化/跨目录残留不计数/插入序契约/isSelected。
+
+### 8.5 验证
+
+| 检查 | 结果 |
+|---|---|
+| `pnpm typecheck` | ✅ 0 error |
+| `pnpm test` | ✅ **39 文件 669 用例全绿**（含新增 30；此前抖动的 gitPush 计时 spec 本轮亦通过） |
+| `pnpm i18n:verify` | ✅ 4625 键对齐（+6：cancelTransfer/uploadCancelled/downloadCancelled/nameExists/searchPlaceholder/overwriteConfirm 措辞调整） |
+| `pnpm validate:icons` | ✅ 全部有效 |
+| `pnpm lint` / `vite build` | 由用户执行 |
+
+### 8.6 已知限制（记录在案）
+
+- 软取消不中断在途文件：共享层 `request` 无 abort/`req.destroy` 透出，硬中断影响 s3Backup，需单独立项。
+- `uploadFiles`（文件选择对话框路径）不含空文件夹语义（对话框只选文件）；空文件夹保真仅覆盖拖入上传与下载两条路径。
+- SQLite 日志在旧版思源（无 node:sqlite）下为禁用态：日志仅内存态、重启即失。规范原文允许（websiteNavigation 同款先例为"纯 SQLite 无回退分支"）。
+
 ### 7.7 验证
 
 | 检查 | 结果 |

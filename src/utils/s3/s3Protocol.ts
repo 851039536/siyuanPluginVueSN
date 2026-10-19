@@ -209,6 +209,24 @@ export function formatS3Error(response: NodeResponse, body: string, operation: s
   return `${operation}: ${errMsg}${extra}`
 }
 
+/**
+ * 携带 HTTP 状态码的 S3 错误。
+ *
+ * 供传输重试器做「可重试判定」：5xx/429 与网络层错误可重试，明确 4xx（403 签名错、
+ * 404 对象不存在等）重试不可能成功，应立即失败。仅替代裸 `new Error(formatS3Error(...))`，
+ * message 不变，既有 `getErrorMessage` / 日志展示零影响。
+ */
+export class S3HttpError extends Error {
+  /** HTTP 状态码（2xx 之外） */
+  readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = "S3HttpError"
+    this.status = status
+  }
+}
+
 // ========== 查询串 ==========
 
 /** 对 query string 参数按字母序排序（SigV4 canonical request 强制要求） */

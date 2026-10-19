@@ -62,6 +62,21 @@
   font-size: $t-2xs; // 附加消息为辅助文字
   color: var(--b3-theme-on-surface-light);
   word-break: break-all;
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  min-width: 0;
+}
+
+// 消息文本：占满剩余宽度并截断，长路径不撑开行
+.fm-log-message-text {
+  flex: 1;
+  min-width: 0;
+}
+
+// "打开文件夹"按钮：不随长路径换行，收缩为图标+短文案
+.fm-log-open-folder {
+  flex: none;
 }
 
 // 失败清单：折叠与头部由共享 Panel 承担，此处只保留标题配色与条目排版

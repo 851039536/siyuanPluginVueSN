@@ -76,7 +76,7 @@
             block
             @click="navigate(folder)"
           >
-            {{ folderName(folder) }}
+            {{ nameFromKey(folder) }}
           </Button>
         </template>
       </div>
@@ -127,11 +127,10 @@ const props = defineProps<{
   i18n: S3FileManagerI18n
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   confirm: [destPrefix: string]
   close: []
 }>()
-
 const currentPrefix = ref(props.rootPrefix)
 const folders = ref<string[]>([])
 const loading = ref(false)
@@ -141,10 +140,6 @@ let requestSeq = 0
 
 /** 面包屑段：与主列表共用 relativeSegments（同一口径，此前为逐字重复的第二份实现） */
 const segments = computed(() => relativeSegments(currentPrefix.value, props.rootPrefix))
-
-function folderName(prefix: string): string {
-  return nameFromKey(prefix)
-}
 
 async function navigate(prefix: string): Promise<void> {
   // 请求令牌：快速连点 A→B 时 A 的慢响应不得覆盖 B 的列表；卸载后也一并丢弃
@@ -160,8 +155,7 @@ async function navigate(prefix: string): Promise<void> {
     folders.value = normalizeListing(listing, prefix).folders
   } catch (err) {
     if (seq !== requestSeq) { return }
-    // 列举失败显示错误态，与“无子目录”空态区分
-    console.error("[S3文件管理] 目标目录列举失败:", getErrorMessage(err))
+    // 列举失败显示错误态，与“无子目录”空态区分（失败原因已在此处落地为用户可见文案）
     loadError.value = getErrorMessage(err)
     folders.value = []
   } finally {

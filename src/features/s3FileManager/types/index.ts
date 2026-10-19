@@ -95,6 +95,12 @@ export const TRANSFER_CONCURRENCY = 2
 /** 大目录增量渲染批大小（超出后显示"加载更多"） */
 export const RENDER_BATCH_SIZE = 200
 
+/**
+ * 目录缓存最多保留的目录数（近期最少使用淘汰）。
+ * persistent Modal 不随面板关闭卸载，无上限缓存会在长会话遍历大量目录后持续驻留。
+ */
+export const MAX_CACHE_DIRS = 30
+
 // ========== 共享工具类型 ==========
 
 /** i18n 文案对象（键定义见 src/i18n/zh_CN/s3FileManager.json，值均为字符串） */

@@ -27,7 +27,7 @@ export function useS3FileOps(deps: {
   /** 写操作完成后回调：失效全部缓存 + 刷新当前目录 */
   afterMutation: () => Promise<void>
   /** 其他长任务是否进行中（如上传/下载），冲突时拒绝启动本操作 */
-  isTransferring?: () => boolean
+  isTransferring: () => boolean
 }) {
   const { i18n } = deps
 
@@ -68,47 +68,12 @@ export function useS3FileOps(deps: {
     return keys.map((src) => ({ src, dest: destBase + src.slice(entry.key.length) }))
   }
 
-  /** 并发执行复制任务对，返回失败的源 key 列表 */
-  async function runCopies(pairs: CopyPair[], label: string): Promise<string[]> {
-    const client = deps.requireClient()
-    const failed: string[] = []
-    let done = 0
-    opProgress.value = { label, done, total: pairs.length }
-    await runWithConcurrency(pairs, FILE_OP_CONCURRENCY, async (pair) => {
-      try {
-        await copyObject(client, pair.src, pair.dest)
-      } catch (err) {
-        console.warn("[S3文件管理] 复制失败:", pair.src, getErrorMessage(err))
-        failed.push(pair.src)
-      }
-      done++
-      opProgress.value = { label, done, total: pairs.length }
-    })
-    return failed
-  }
-
-  /** 并发删除 key 列表，返回失败的 key 列表 */
-  async function runDeletes(keys: string[], label: string): Promise<string[]> {
-    const client = deps.requireClient()
-    const failed: string[] = []
-    let done = 0
-    opProgress.value = { label, done, total: keys.length }
-    await runWithConcurrency(keys, FILE_OP_CONCURRENCY, async (key) => {
-      try {
-        await client.delete(key)
-      } catch (err) {
-        console.warn("[S3文件管理] 删除失败:", key, getErrorMessage(err))
-        failed.push(key)
-      }
-      done++
-      opProgress.value = { label, done, total: keys.length }
-    })
-    return failed
-  }
-
-  /** 操作骨架：busy 状态、统一错误提示、日志与刷新 */
+  /**
+   * 操作骨架：busy 状态、统一错误提示、日志与刷新。
+   * fn 内已自行写日志的失败经 LoggedError 标记，避免 catch 中重复记录。
+   */
   async function runOp(fn: () => Promise<void>): Promise<void> {
-    if (opBusy.value || deps.isTransferring?.()) { return }
+    if (opBusy.value || deps.isTransferring()) { return }
     opBusy.value = true
     try {
       await fn()
@@ -119,6 +84,57 @@ export function useS3FileOps(deps: {
       opProgress.value = null
       await deps.afterMutation()
     }
+  }
+
+  /** fn 内已记录过失败日志的错误标记：跳过 runOp 外层重复记账 */
+  class LoggedError extends Error {
+    constructor(message: string) {
+      super(message)
+      this.name = "LoggedError"
+    }
+  }
+
+  /** 并发执行批量任务并收集失败项（复制/删除共用：失败计入清单但继续处理其余项） */
+  async function runBatch<T extends CopyPair | string>(items: T[], label: string, run: (item: T) => Promise<void>): Promise<string[]> {
+    const failed: string[] = []
+    let done = 0
+    opProgress.value = { label, done, total: items.length }
+    await runWithConcurrency(items, FILE_OP_CONCURRENCY, async (item) => {
+      try {
+        await run(item)
+      } catch (err) {
+        failed.push(typeof item === "string" ? item : item.src)
+      }
+      done++
+      opProgress.value = { label, done, total: items.length }
+    })
+    return failed
+  }
+
+  /** 并发执行复制任务对，返回失败的源 key 列表 */
+  async function runCopies(pairs: CopyPair[], label: string): Promise<string[]> {
+    const client = deps.requireClient()
+    return runBatch(pairs, label, async (pair) => {
+      try {
+        await copyObject(client, pair.src, pair.dest)
+      } catch (err) {
+        console.warn("[S3文件管理] 复制失败:", pair.src, getErrorMessage(err))
+        throw err
+      }
+    })
+  }
+
+  /** 并发删除 key 列表，返回失败的 key 列表 */
+  async function runDeletes(keys: string[], label: string): Promise<string[]> {
+    const client = deps.requireClient()
+    return runBatch(keys, label, async (key) => {
+      try {
+        await client.delete(key)
+      } catch (err) {
+        console.warn("[S3文件管理] 删除失败:", key, getErrorMessage(err))
+        throw err
+      }
+    })
   }
 
   /** 批量条目名摘要（单条用名称，多条用数量） */
@@ -165,7 +181,7 @@ export function useS3FileOps(deps: {
         const copyFailed = await runCopies(pairs, i18n.statusCopying)
         if (copyFailed.length > 0) {
           deps.addLog({ type: "rename", action: i18n.actionRename, fileName: entry.name, success: false, message: i18n.renameFailed, detail: buildFailDetail(copyFailed) })
-          throw new Error(i18n.renameFailed)
+          throw new LoggedError(i18n.renameFailed)
         }
         const deleteFailed = await runDeletes(pairs.map((p) => p.src), i18n.statusDeleting)
         deps.addLog({
@@ -177,7 +193,8 @@ export function useS3FileOps(deps: {
         })
         showMessage(deleteFailed.length === 0 ? i18n.renameSuccess : i18n.moveDeleteFailed, 3000, deleteFailed.length === 0 ? "info" : "error")
       } catch (err) {
-        if (getErrorMessage(err) !== i18n.renameFailed) {
+        // 其余异常（buildCopyPairs 守卫 / 列举失败）在此补记失败日志；已记账的经 LoggedError 跳过
+        if (!(err instanceof LoggedError)) {
           deps.addLog({ type: "rename", action: i18n.actionRename, fileName: entry.name, success: false, message: getErrorMessage(err) })
         }
         throw err
@@ -202,7 +219,7 @@ export function useS3FileOps(deps: {
         message: failed.length > 0 ? `${failed.length} ${i18n.logFailed}` : undefined,
         detail: buildFailDetail(failed),
       })
-      if (failed.length > 0) { throw new Error(i18n.copyFailed) }
+      if (failed.length > 0) { throw new LoggedError(i18n.copyFailed) }
       showMessage(i18n.copySuccess, 2000, "info")
     })
   }
@@ -223,7 +240,7 @@ export function useS3FileOps(deps: {
           fileName: summarizeNames(movable), itemCount: pairs.length,
           success: false, message: i18n.moveFailed, detail: buildFailDetail(copyFailed),
         })
-        throw new Error(i18n.moveFailed)
+        throw new LoggedError(i18n.moveFailed)
       }
       const deleteFailed = await runDeletes(pairs.map((p) => p.src), i18n.statusDeleting)
       deps.addLog({
@@ -252,7 +269,7 @@ export function useS3FileOps(deps: {
         message: failed.length > 0 ? `${failed.length} ${i18n.logFailed}` : undefined,
         detail: buildFailDetail(failed),
       })
-      if (failed.length > 0) { throw new Error(i18n.deleteFailed) }
+      if (failed.length > 0) { throw new LoggedError(i18n.deleteFailed) }
       showMessage(i18n.deleteSuccess, 2000, "info")
     })
   }

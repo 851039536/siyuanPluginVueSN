@@ -36,7 +36,8 @@ export function useFmConfirm() {
     const resolve = resolver
     resolver = null
     confirmState.value = null
-    resolve?.(true)
+    // 确认框由 confirmState 的 v-if 挂载，此刻 resolver 必非空
+    resolve!(true)
   }
 
   /** 取消 / 关闭：按未确认结算 */
@@ -44,7 +45,7 @@ export function useFmConfirm() {
     const resolve = resolver
     resolver = null
     confirmState.value = null
-    resolve?.(false)
+    resolve!(false)
   }
 
   return { confirmState, requestConfirm, handleConfirmAccept, handleConfirmCancel }

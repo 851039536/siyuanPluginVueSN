@@ -38,6 +38,8 @@ export class S3FileManager {
   }
 
   init(): void {
+    // 幂等：重复 init 会叠加同名监听，且旧 handler 引用被覆盖后无法移除
+    if (this._openHandler) { return }
     this._openHandler = () => this.open()
     window.addEventListener("openS3FileManager", this._openHandler)
     // 触发 Vue 组件 mount 后立即隐藏（persistent 模式保留内部状态）
@@ -59,6 +61,10 @@ export class S3FileManager {
       this._openHandler = null
     }
     this.modal.destroy()
+    // 清除 plugin 上的挂载点，避免卸载后留下悬挂引用
+    if ((this.plugin as any).__s3FileManager === this) {
+      delete (this.plugin as any).__s3FileManager
+    }
     if (instance === this) {
       instance = null
     }

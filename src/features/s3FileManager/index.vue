@@ -74,7 +74,6 @@
         @dragover="externalDrop.onDragOver"
         @dragleave="externalDrop.onDragLeave"
         @drop="externalDrop.onDrop"
-        @dragend="externalDrop.onDragEnd"
       >
         <!-- 进度条：传输与批量操作共用一段（共享 ProgressBar） -->
         <div
@@ -106,12 +105,12 @@
           :sort-asc="sortAsc"
           :is-selected="isSelected"
           :i18n="i18n"
-          @item-click="handleItemClick"
+          @item-click="selectItemClick"
           @item-dblclick="handleItemDblclick"
           @item-contextmenu="handleContextmenu"
           @sort="toggleSort"
           @load-more="loadMore"
-          @entry-drag-start="handleEntryDragStart"
+          @entry-drag-start="ensureSelected"
           @entry-drop-to-folder="handleEntryDropToFolder"
         />
 
@@ -201,7 +200,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, onMounted, onUnmounted, ref, watch } from "vue"
+import { showMessage } from "siyuan"
 import Button from "@/components/Button.vue"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -230,7 +230,8 @@ import FmLogPanel from "./components/FmLogPanel.vue"
 const props = defineProps<{
   storage: S3FileManagerStorage
   i18n: S3FileManagerI18n
-  onClose?: () => void
+  /** 关闭回调（由 createModalVueApp 的 buildProps 注入） */
+  onClose: () => void
 }>()
 
 const { storage, i18n } = props
@@ -241,7 +242,7 @@ const { s3Config, isConfigured, applyConfig, requireClient, loadConfig, getRootP
 
 const {
   currentPrefix, entries, loading, loadError, sortField, sortAsc, sortedEntries, visibleEntries,
-  hasMore, pathSegments, isAtRoot, loadDir, navigateTo, navigateUp,
+  hasMore, pathSegments, isAtRoot, loadDir, navigateUp,
   navigateToSegment, refresh, invalidateCache, resetCapabilityProbe, loadMore, toggleSort,
 } = useS3Entries({ requireClient, getRootPrefix })
 
@@ -260,7 +261,9 @@ function requestClearLogsConfirm(): void {
     i18n.confirmClearLogs,
     { confirmText: i18n.clearLogs, danger: true },
   ).then((ok) => {
-    if (ok) { void clearLogs() }
+    if (!ok) { return }
+    void clearLogs()
+    showMessage(i18n.logsCleared, 2000, "info")
   })
 }
 
@@ -276,12 +279,20 @@ const { opBusy, opProgress, createNewFolder, renameEntry, copyEntries, moveEntri
   isTransferring: () => transferring.value,
 })
 
+/**
+ * 面板是否已卸载：卸载后在途传输/批量操作的收尾副作用（刷新列表等）不再触发，
+ * 避免 persistent Modal 关闭后仍向后端发请求。
+ */
+let disposed = false
+onUnmounted(() => { disposed = true })
+
 const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntries } = useS3Transfer({
   requireClient, i18n,
   currentPrefix,
   getEntries: () => entries.value,
   addLog, afterMutation,
   confirmAction: requestConfirm,
+  isDisposed: () => disposed,
 })
 
 // 外部文件/文件夹拖入浏览区 → 上传到当前目录
@@ -347,13 +358,9 @@ const contextMenuItems = computed<TieredMenuItem[]>(() => {
 
 // ========== 列表交互 ==========
 
-function handleItemClick(entry: S3Entry, ev: MouseEvent): void {
-  selectItemClick(entry, ev)
-}
-
 function handleItemDblclick(entry: S3Entry): void {
   if (entry.isFolder) {
-    void navigateTo(entry.key)
+    void loadDir(entry.key)
   }
 }
 
@@ -363,11 +370,6 @@ function handleContextmenu(entry: S3Entry, ev: MouseEvent): void {
 }
 
 // ========== 内部拖拽移动 ==========
-
-function handleEntryDragStart(entry: S3Entry): void {
-  // 拖动未选中条目时改为单选它；已在选中集则保持多选整批拖动
-  ensureSelected(entry)
-}
 
 function handleEntryDropToFolder(folder: S3Entry): void {
   // 排除目标文件夹自身（moveEntries 内部另有 destInsideSelf 守卫）
@@ -379,7 +381,7 @@ function handleMenuSelect(action: string): void {
   const entry = contextMenu.value.entry
   switch (action) {
     case "open":
-      if (entry?.isFolder) { void navigateTo(entry.key) }
+      if (entry?.isFolder) { void loadDir(entry.key) }
       break
     case "download": handleDownload(); break
     case "copy": openMoveCopy("copy"); break
@@ -398,12 +400,10 @@ function handleUpload(): void {
 }
 
 function handleDownload(): void {
-  if (selectedEntries.value.length === 0) { return }
   void downloadEntries(selectedEntries.value)
 }
 
 function openMoveCopy(mode: "move" | "copy"): void {
-  if (selectedEntries.value.length === 0) { return }
   moveCopyMode.value = mode
 }
 
@@ -411,17 +411,17 @@ function handleMoveCopyConfirm(destPrefix: string): void {
   const mode = moveCopyMode.value
   const entries = selectedEntries.value
   moveCopyMode.value = null
+  // 弹窗仅由 openMoveCopy 打开（mode 恒非 null），非 copy 即 move
   if (mode === "copy") {
     void copyEntries(entries, destPrefix)
-  } else if (mode === "move") {
+  } else {
     void moveEntries(entries, destPrefix)
   }
 }
 
 function openRename(): void {
-  if (selectedEntries.value.length === 1) {
-    renameTarget.value = selectedEntries.value[0]
-  }
+  // 重命名按钮仅单选可用（FmToolbar 以 selectedCount !== 1 禁用）
+  renameTarget.value = selectedEntries.value[0]!
 }
 
 function handleRenameConfirm(newName: string): void {
@@ -438,7 +438,6 @@ function handleNewFolderConfirm(name: string): void {
 }
 
 function handleDelete(): void {
-  if (selectedEntries.value.length === 0) { return }
   // 删除确认："确定删除选中的 N 项？文件夹将递归删除，此操作不可撤销"
   void requestConfirm(
     i18n.delete,
@@ -462,7 +461,7 @@ function handleConfigSaved(config: typeof s3Config.value): void {
 }
 
 function handleClose(): void {
-  props.onClose?.()
+  props.onClose()
 }
 
 // ========== 初始化 ==========

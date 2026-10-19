@@ -9,7 +9,6 @@ import type { S3Config } from "@/utils/s3/types"
 import { DEFAULT_S3_CONFIG } from "@/utils/s3/types"
 import { S3Client } from "@/utils/s3/s3Client"
 import { decryptSetting } from "@/utils/settingsCrypto"
-import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3FileManagerI18n } from "../types"
 import type { S3FileManagerStorage } from "../types/storage"
 
@@ -32,30 +31,30 @@ export function useS3FmClient(deps: { storage: S3FileManagerStorage; i18n: S3Fil
     return client
   }
 
-  /** 启动加载持久化配置（凭证解密；关键字段齐备才应用） */
+  /**
+   * 启动加载持久化配置（凭证解密；关键字段齐备才应用）。
+   * 存储读取与解密均在各自实现内收敛失败（返回 null / 原值），无异常路径可捕获。
+   */
   async function loadConfig(): Promise<void> {
-    try {
-      const saved = await deps.storage.config.loadOrDefault()
-      const decrypted: S3Config = {
-        ...saved,
-        accessKey: await decryptSetting(saved.accessKey),
-        secretKey: await decryptSetting(saved.secretKey),
-      }
-      if (decrypted.endpoint && decrypted.bucket && decrypted.accessKey && decrypted.secretKey) {
-        applyConfig(decrypted)
-      } else {
-        s3Config.value = decrypted
-        isConfigured.value = false
-        client = null
-      }
-    } catch (err) {
-      console.error("[S3文件管理] 加载配置失败:", getErrorMessage(err))
+    const saved = await deps.storage.config.loadOrDefault()
+    const decrypted: S3Config = {
+      ...saved,
+      accessKey: await decryptSetting(saved.accessKey),
+      secretKey: await decryptSetting(saved.secretKey),
+    }
+    if (decrypted.endpoint && decrypted.bucket && decrypted.accessKey && decrypted.secretKey) {
+      applyConfig(decrypted)
+    } else {
+      s3Config.value = decrypted
+      isConfigured.value = false
+      client = null
     }
   }
 
   /** 归一化的根前缀（空串或以 / 结尾），作为文件管理器的浏览根 */
   function getRootPrefix(): string {
-    const p = (s3Config.value.prefix || "").replace(/^\/+/, "").trim()
+    // 先 trim 再去前导斜杠：粘贴 " /a/ " 这类带空格的值时，先 replace 会因首字符是空格而不命中
+    const p = s3Config.value.prefix.trim().replace(/^\/+/, "")
     if (!p) { return "" }
     return p.endsWith("/") ? p : `${p}/`
   }

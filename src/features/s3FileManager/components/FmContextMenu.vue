@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue"
+import { ref, watch } from "vue"
 import type { TieredMenuItem } from "@/components/TieredMenu.vue"
 import TieredMenu from "@/components/TieredMenu.vue"
 
@@ -56,10 +56,6 @@ watch(
   ([visible, x, y]) => syncMenu(visible, x, y),
   { flush: "post" },
 )
-
-// 挂载后补一次同步：immediate 首次执行时子组件 ref 尚未就绪（show/hide 静默 no-op），
-// 故以 visible 为 true 初始化的调用方此前会看到菜单不弹出
-onMounted(() => syncMenu(props.visible, props.x, props.y))
 
 /** 叶子项点击：上抛动作标识（菜单自身已收起） */
 function onSelect(item: TieredMenuItem): void {

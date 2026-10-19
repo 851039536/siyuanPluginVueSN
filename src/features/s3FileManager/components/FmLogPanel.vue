@@ -48,7 +48,7 @@
         </Tag>
         <span class="fm-log-action">{{ log.action }}</span>
         <span class="fm-log-name">{{ log.fileName }}</span>
-        <span class="fm-log-time">{{ relativeTime(log.time) }}</span>
+        <span class="fm-log-time">{{ formatRelativeTime(log.time) }}</span>
       </div>
       <!-- 附加消息 -->
       <div
@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue"
+import { reactive, watch } from "vue"
 import { formatRelativeTime } from "@/utils/format"
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
@@ -112,16 +112,23 @@ defineEmits<{
 /** 已展开失败清单的日志 id 集合（默认全部收起，按需展开控制大目录下的 DOM 量） */
 const expandedIds = reactive(new Set<string>())
 
+// 日志被清空或被上限裁剪后回收展开态，避免集合在长会话中只增不减（上限 200 条）
+watch(
+  () => props.logs,
+  (logs) => {
+    const alive = new Set(logs.map((log) => log.id))
+    for (const id of expandedIds) {
+      if (!alive.has(id)) { expandedIds.delete(id) }
+    }
+  },
+)
+
 function toggleExpanded(id: string, collapsed: boolean): void {
   if (collapsed) {
     expandedIds.delete(id)
   } else {
     expandedIds.add(id)
   }
-}
-
-function relativeTime(time: string): string {
-  return formatRelativeTime(time) || time
 }
 
 /** 清空确认：统一委托父组件的共享确认框（不再回退原生 confirm） */

@@ -3,6 +3,7 @@
  *
  * 维护视图模式（详细信息 / 图标网格）与排序偏好的响应式状态、持久化与
  * 与「条目列表排序 ref」的双向同步（排序来自 useS3Entries，偏好写入存储槽）。
+ * 落盘按序串行：快速切换排序/视图时后一次写盘等待前一次完成，最终落盘为最新状态。
  */
 import { ref, watch } from "vue"
 import type { Ref } from "vue"
@@ -17,12 +18,18 @@ export function useFmPrefs(deps: {
   sortAsc: Ref<boolean>
 }) {
   const prefs = ref<FmPrefs>({ ...DEFAULT_FM_PREFS })
+  /** 落盘串行链：后一次写盘等待前一次完成，保证最终落盘为最新状态 */
+  let writeChain: Promise<void> = Promise.resolve()
 
   /** 落盘当前偏好（排序字段从条目列表 ref 同步进来，保证列头排序也被记住） */
-  async function savePrefs(): Promise<void> {
+  function savePrefs(): Promise<void> {
     prefs.value.sortField = deps.sortField.value
     prefs.value.sortAsc = deps.sortAsc.value
-    await deps.storage.prefs.save({ ...prefs.value })
+    const write = deps.storage.prefs.save({ ...prefs.value }).then((ok) => {
+      if (!ok) { console.warn("[S3文件管理] 视图偏好落盘失败") }
+    })
+    writeChain = writeChain.then(() => write, () => write)
+    return write
   }
 
   /** 切换视图模式并持久化 */
@@ -33,17 +40,9 @@ export function useFmPrefs(deps: {
 
   /** 启动加载偏好并回填排序 ref */
   async function loadPrefs(): Promise<void> {
-    try {
-      prefs.value = await deps.storage.prefs.loadOrDefault()
-      deps.sortField.value = prefs.value.sortField
-      deps.sortAsc.value = prefs.value.sortAsc
-    } catch {
-      // 偏好加载失败用默认值（不阻断面板打开）。排序 ref 必须同步回滚，
-      // 否则其残留值会与默认 prefs 不一致，触发下方 watch 把默认排序落盘、覆盖用户已存偏好
-      prefs.value = { ...DEFAULT_FM_PREFS }
-      deps.sortField.value = DEFAULT_FM_PREFS.sortField
-      deps.sortAsc.value = DEFAULT_FM_PREFS.sortAsc
-    }
+    prefs.value = await deps.storage.prefs.loadOrDefault()
+    deps.sortField.value = prefs.value.sortField
+    deps.sortAsc.value = prefs.value.sortAsc
   }
 
   // 排序变更即时持久化（列头 toggleSort 不经过 setViewMode）

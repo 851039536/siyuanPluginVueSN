@@ -69,26 +69,22 @@ export function isValidEntryName(name: string): boolean {
 export function aggregateEntries(
   files: S3FileInfo[],
   prefix: string,
-): { files: S3FileInfo[]; folders: string[]; conflicts: string[] } {
+): { files: S3FileInfo[]; folders: string[] } {
   const directFiles: S3FileInfo[] = []
   const folderSet = new Set<string>()
-  const fileNames = new Set<string>()
   for (const f of files) {
     if (!f.key.startsWith(prefix) || f.key === prefix) { continue }
     const rest = f.key.slice(prefix.length)
     const slashIdx = rest.indexOf("/")
     if (slashIdx === -1) {
       directFiles.push(f)
-      fileNames.add(rest)
     } else {
       const seg = rest.slice(0, slashIdx)
       // 跳过双斜杠异常键（首段为空），避免聚合出与当前目录同名的假文件夹
       if (seg) { folderSet.add(`${prefix}${seg}/`) }
     }
   }
-  // 同名前缀文件夹与文件并存的异常后端会导致展示冲突，交由调用方记日志诊断
-  const conflicts = [...folderSet].filter((folder) => fileNames.has(nameFromKey(folder)))
-  return { files: directFiles, folders: [...folderSet], conflicts }
+  return { files: directFiles, folders: [...folderSet] }
 }
 
 /** 将 listDir 结果组装为统一的 S3Entry 列表（文件夹在前由排序器保证） */
@@ -123,12 +119,15 @@ export function buildEntries(files: S3FileInfo[], folders: string[]): S3Entry[] 
 export function normalizeListing(
   listing: S3DirListing,
   prefix: string,
-): { files: S3FileInfo[]; folders: string[]; conflicts: string[] } {
+): { files: S3FileInfo[]; folders: string[] } {
+  // delimiter 正常时 listing.files 已是当前层直接子项，聚合结果恒为空 —— 跳过整趟 O(n) 扫描
+  if (listing.files.length === 0) {
+    return { files: listing.files, folders: listing.folders }
+  }
   const agg = aggregateEntries(listing.files, prefix)
   return {
     files: agg.files,
     folders: [...new Set([...listing.folders, ...agg.folders])],
-    conflicts: agg.conflicts,
   }
 }
 

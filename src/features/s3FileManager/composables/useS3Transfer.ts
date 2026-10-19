@@ -1,7 +1,8 @@
 /**
  * S3 文件管理器上传/下载 composable
  *
- * 上传：Electron 多选文件 → 读 Buffer → 带字节进度上传（重名确认覆盖、大文件警告）。
+ * 上传：Electron 多选文件 → 共享层大文件感知上传（>100MB 自动 16MB 分片，
+ * 内存峰值恒定；存储端不支持分片时由共享层降级整包并告警）→ 带字节进度上报。
  * 下载：选择目标目录 → 流式写盘（文件夹递归保持相对结构）。
  * 进度经面板内进度条 + 状态栏任务双通道上报，整数百分比变化才更新响应式。
  */
@@ -10,7 +11,7 @@ import type { Ref } from "vue"
 import { showMessage } from "siyuan"
 import type { S3Client } from "@/utils/s3/s3Client"
 import { runWithConcurrency, runWithRetries } from "@/utils/s3/concurrency"
-import { LARGE_FILE_WARN_SIZE } from "@/utils/s3/types"
+import { uploadFileSmart } from "@/utils/s3/s3Multipart"
 import { getNodeModules } from "@/utils/nodeModules"
 import { pickDirectory, pickFiles, getPathsFromFiles } from "@/utils/electronDialog"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -18,9 +19,6 @@ import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarT
 import type { ConfirmRequest, FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
 import { TRANSFER_CONCURRENCY } from "../types"
 import { buildFailDetail, nameFromKey } from "../utils"
-
-/** 并发上传时允许驻留内存的 Buffer 总预算（多文件/大文件场景防 OOM） */
-const UPLOAD_MEMORY_BUDGET = 256 * 1024 * 1024
 
 /** 传输进度状态 */
 export interface TransferProgress {
@@ -41,6 +39,8 @@ export function useS3Transfer(deps: {
   afterMutation: () => Promise<void>
   /** 确认回调（由宿主的共享确认框承载，返回 Promise<boolean>） */
   confirmAction: ConfirmRequest
+  /** 面板是否已卸载：卸载后不再触发刷新等副作用 */
+  isDisposed: () => boolean
 }) {
   const { i18n } = deps
 
@@ -51,7 +51,7 @@ export function useS3Transfer(deps: {
 
   /** 更新进度（整数百分比变化才触发响应式，避免高频更新；fraction 为全部进行中任务的字节分数之和） */
   function reportProgress(label: string, currentFile: string, done: number, total: number, fraction: number): void {
-    const percent = Math.round(((done + fraction) / Math.max(total, 1)) * 100)
+    const percent = Math.round(((done + fraction) / total) * 100)
     const prev = transferProgress.value
     if (prev && prev.percent === percent && prev.currentFile === currentFile) { return }
     transferProgress.value = { label, currentFile, done, total, percent }
@@ -64,6 +64,16 @@ export function useS3Transfer(deps: {
     if (!ok) { throw error }
   }
 
+  /** 传输结束统一收尾：复位状态，仅在未卸载且确有成功项时刷新目录 */
+  async function finishTransfer(successCount: number): Promise<void> {
+    transferring.value = false
+    transferProgress.value = null
+    // 面板已卸载（插件卸载 / 重复注册销毁旧实例）时不再发网络请求
+    if (successCount > 0 && !deps.isDisposed()) {
+      await deps.afterMutation()
+    }
+  }
+
   // ========== 上传 ==========
 
   /** 单个上传任务：本地绝对路径 → 目标 key（含展示名） */
@@ -73,105 +83,40 @@ export function useS3Transfer(deps: {
     name: string
   }
 
-  /** 核心并发上传：读 Buffer → 带字节进度上传 → 汇总日志与状态栏上报 */
+  /** 核心并发上传：逐文件走共享层大文件感知上传 → 汇总日志与状态栏上报 */
   async function runUpload(tasks: UploadTask[], summaryName: string): Promise<void> {
     if (transferring.value || tasks.length === 0) { return }
     const client = deps.requireClient()
-    const node = getNodeModules()
-    if (!node) {
-      showMessage(i18n.desktopOnly, 3000, "error")
-      return
-    }
-    const { fs } = node
 
     transferring.value = true
     const failed: string[] = []
     let done = 0
-    let uploadedBytes = 0
+    let successCount = 0
     /** 进行中任务的字节分数（key → 0~1）：求和后参与百分比，避免并发交替上报导致进度回退 */
     const fractions = new Map<string, number>()
+
+    /** 上报当前聚合进度（done + 全部进行中任务分数之和） */
+    const reportUpload = (currentFile: string): void => {
+      let fractionSum = 0
+      for (const f of fractions.values()) { fractionSum += f }
+      reportProgress(i18n.statusUploading, currentFile, done, tasks.length, fractionSum)
+    }
+
     try {
-      // 预先 stat 全部任务：大文件警告仅汇总弹一次，尺寸复用于上传字节统计
-      const sizeMap = new Map<string, number>()
-      for (const task of tasks) {
-        try {
-          sizeMap.set(task.key, (await fs.promises.stat(task.path)).size)
-        } catch {
-          // stat 失败交给 worker 的 readFile 自然失败并计入 failed
-        }
-      }
-      const largeNames = tasks.filter((t) => (sizeMap.get(t.key) ?? 0) > LARGE_FILE_WARN_SIZE).map((t) => t.name)
-      if (largeNames.length > 0) {
-        // 大文件警告："存在超过 100MB 的大文件，上传时将整包驻留内存"（超过 3 个只显示数量）
-        const summary = largeNames.length > 3 ? `${largeNames.length} ${i18n.itemsUnit}` : largeNames.join(", ")
-        showMessage(`${i18n.largeFileWarn}: ${summary}`, 4000, "info")
-      }
-
-      /** 上报当前聚合进度（done + 全部进行中任务分数之和） */
-      const reportUpload = (currentFile: string): void => {
-        let fractionSum = 0
-        for (const f of fractions.values()) { fractionSum += f }
-        reportProgress(i18n.statusUploading, currentFile, done, tasks.length, fractionSum)
-      }
-
-      // 内存预算信号量：readFile 整包驻留内存，超过预算时暂停读下一个文件，
-      // 待前序 Buffer 上传完成释放后才继续，避免多文件/大文件并发读入导致 OOM。
-      // 记账口径：reserve 返回「实际预留的字节」，release 必须按同一数值归还，
-      // 且预留值恒为有限数（clamp 到预算），否则预算会被污染为 Infinity 而永久死锁。
-      let bytesInFlight = 0
-      const waiters: Array<() => void> = []
-      const reserveMemory = (bytes: number): Promise<number> => {
-        // stat 失败等场景传入非有限值时，按「单文件独占预算」预留：既有限、又可随释放归还
-        const want = Number.isFinite(bytes) && bytes > 0 ? bytes : UPLOAD_MEMORY_BUDGET
-        // 单文件即超预算时独占整块预算（而非绕过记账），保证 release 能正确归还
-        const need = Math.min(want, UPLOAD_MEMORY_BUDGET)
-        return new Promise<number>((resolve) => {
-          const wait = (): void => {
-            if (bytesInFlight + need <= UPLOAD_MEMORY_BUDGET) {
-              bytesInFlight += need
-              resolve(need)
-              return
-            }
-            waiters.push(wait)
-          }
-          wait()
-        })
-      }
-      const releaseMemory = (bytes: number): void => {
-        // 只归还有限的正数，避免 NaN/Infinity 把预算永久带偏
-        if (!Number.isFinite(bytes) || bytes <= 0) { return }
-        bytesInFlight = Math.max(0, bytesInFlight - bytes)
-        while (waiters.length > 0) {
-          const before = waiters.length
-          const next = waiters.shift()!
-          next()
-          // next() 未获批时会重新入队；队列长度未减少说明本次唤醒未获批，停止唤醒避免忙等
-          if (waiters.length === before) { break }
-        }
-      }
-
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
-        let buffer: Buffer | null = null
-        // 实际预留到的字节数：reserve 成功即为有限值，finally 必须按它归还（与 readFile 是否失败无关）
-        let reservedBytes = 0
         try {
-          const statSize = sizeMap.get(task.key)
-          reservedBytes = await reserveMemory(statSize ?? Number.POSITIVE_INFINITY)
-          buffer = await fs.promises.readFile(task.path)
           fractions.set(task.key, 0)
           reportUpload(task.name)
-          const payload = buffer
-          await withRetries(() => client.uploadBuffer(payload, task.key, (sent, total) => {
-            fractions.set(task.key, sent / Math.max(total, 1))
+          // 共享层入口：>100MB 自动分片（16MB 峰值），≤100MB 整包单 PUT 但强制分块写
+          await withRetries(() => uploadFileSmart(client, task.path, task.key, (sent, total) => {
+            fractions.set(task.key, sent / total)
             reportUpload(task.name)
           }))
-          uploadedBytes += statSize ?? payload.length
+          successCount++
         } catch (err) {
-          console.warn("[S3文件管理] 上传失败:", task.path, getErrorMessage(err))
+          console.warn("[S3文件管理] 上传失败:", deps.isDisposed() ? "" : task.path, getErrorMessage(err))
           failed.push(task.name)
         } finally {
-          // 无条件按预留量归还：readFile 抛错时 buffer 为 null，也必须释放，否则预算只增不减
-          releaseMemory(reservedBytes)
           fractions.delete(task.key)
         }
         done++
@@ -182,9 +127,10 @@ export function useS3Transfer(deps: {
       deps.addLog({
         type: "upload", action: i18n.actionUpload,
         fileName: tasks.length === 1 ? tasks[0].name : summaryName,
-        itemCount: tasks.length, fileSize: uploadedBytes,
+        itemCount: tasks.length,
         success,
         message: success ? undefined : `${failed.length} ${i18n.logFailed}: ${failed.join(", ")}`,
+        detail: buildFailDetail(failed),
       })
       if (success) {
         statusTask.complete(i18n.uploadSuccess)
@@ -194,9 +140,7 @@ export function useS3Transfer(deps: {
         showMessage(`${i18n.uploadFailed}: ${failed.join(", ")}`, 5000, "error")
       }
     } finally {
-      transferring.value = false
-      transferProgress.value = null
-      await deps.afterMutation()
+      await finishTransfer(successCount)
     }
   }
 
@@ -219,7 +163,7 @@ export function useS3Transfer(deps: {
     return result
   }
 
-  /** 选择本地文件并上传到当前目录（重名确认覆盖；大文件仅警告不阻断） */
+  /** 选择本地文件并上传到当前目录（重名确认覆盖；大文件由共享层自动分片） */
   async function uploadFiles(): Promise<void> {
     if (transferring.value) { return }
     deps.requireClient()
@@ -265,7 +209,7 @@ export function useS3Transfer(deps: {
     const { fs, path } = node
     const paths = getPathsFromFiles(files)
     if (paths.length === 0) {
-      // 取不到磁盘路径（非桌面版或 Electron 受限）
+      // 取不到磁盘路径（Electron 32+ webUtils 不可用时也会走到这里）
       showMessage(i18n.desktopOnly, 3000, "error")
       return
     }
@@ -273,11 +217,15 @@ export function useS3Transfer(deps: {
     // 展开：文件直接上传；目录递归收集并保持相对结构（顶层目录名作为前缀段）
     const tasks: UploadTask[] = []
     const topLevelNames: string[] = []
+    const skipped: string[] = []
     for (const p of paths) {
       let stat
       try {
         stat = await fs.promises.stat(p)
-      } catch {
+      } catch (err) {
+        // stat 失败（文件在拖入后被删/无权限）不再静默丢弃：计入失败清单并在结束时提示
+        console.warn("[S3文件管理] 读取拖入项失败:", p, getErrorMessage(err))
+        skipped.push(path.basename(p))
         continue
       }
       const baseName = path.basename(p)
@@ -292,7 +240,11 @@ export function useS3Transfer(deps: {
         tasks.push({ path: p, name: baseName, key: `${destPrefix}${baseName}` })
       }
     }
-    if (tasks.length === 0) { return }
+    if (tasks.length === 0) {
+      // 全部条目都读取失败时必须有可见反馈，否则用户拖入后毫无反应
+      showMessage(`${i18n.uploadFailed}: ${skipped.join(", ")}`, 5000, "error")
+      return
+    }
 
     // 重名覆盖确认（基于顶层名比对现有条目）
     const existingNames = new Set(deps.getEntries().map((e) => e.name))
@@ -308,8 +260,10 @@ export function useS3Transfer(deps: {
   // ========== 下载 ==========
 
   /** 收集下载任务：文件 → 目录/名称；文件夹 → 递归列举并保持相对结构 */
-  async function collectDownloadTasks(entries: S3Entry[], destDir: string, pathMod: { join: (...parts: string[]) => string }): Promise<{ key: string; dest: string }[]> {
+  async function collectDownloadTasks(entries: S3Entry[], destDir: string, pathMod: { join: (...parts: string[]) => string; sep: string }): Promise<{ key: string; dest: string }[]> {
     const client = deps.requireClient()
+    /** 目标目录必须带分隔符参与前缀比较，避免 /tmp/foo 与 /tmp/foobar 兄弟目录误判为同目录 */
+    const destRoot = destDir.endsWith(pathMod.sep) ? destDir : `${destDir}${pathMod.sep}`
     const tasks: { key: string; dest: string }[] = []
     for (const entry of entries) {
       if (!entry.isFolder) {
@@ -323,7 +277,7 @@ export function useS3Transfer(deps: {
         // 防止恶意 key 通过 ../ 越界写入目标目录之外
         const relative = f.key.slice(entry.key.length)
         const dest = pathMod.join(destDir, entry.name, ...relative.split("/"))
-        if (!dest.startsWith(destDir)) { continue }
+        if (!dest.startsWith(destRoot)) { continue }
         tasks.push({ key: f.key, dest })
       }
     }
@@ -345,22 +299,23 @@ export function useS3Transfer(deps: {
     transferring.value = true
     const failed: string[] = []
     let done = 0
+    let successCount = 0
     let taskCount = 0
     try {
       const tasks = await collectDownloadTasks(entries, destDir, node.path)
       taskCount = tasks.length
       if (tasks.length === 0) {
-        showMessage(i18n.downloadFailed, 5000, "error")
+        // 空文件夹（或仅含占位对象）不是失败，不该弹红色错误条
+        showMessage(i18n.emptyFolder, 3000, "info")
         return
       }
-      // 并发下载前统一预建目录，避免多文件同时 mkdir 时目录尚不存在导致写盘失败
-      const taskDirs = new Set(tasks.map((task) => node.path.dirname(task.dest)))
-      await Promise.all([...taskDirs].map((dir) => node.fs.promises.mkdir(dir, { recursive: true })))
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
         const displayName = nameFromKey(task.key)
         try {
           reportProgress(i18n.statusDownloading, displayName, done, tasks.length, 0)
+          // download 内部自建目标目录（mkdir recursive），无需在此预建
           await withRetries(() => client.download(task.key, task.dest))
+          successCount++
         } catch (err) {
           console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
           failed.push(task.key)
@@ -397,8 +352,8 @@ export function useS3Transfer(deps: {
         message: getErrorMessage(err),
       })
     } finally {
-      transferring.value = false
-      transferProgress.value = null
+      // 下载不改变远端，无需刷新目录
+      await finishTransfer(0)
     }
   }
 

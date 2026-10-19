@@ -1,17 +1,18 @@
 /**
  * S3 文件管理器目录浏览 composable
  *
- * 维护当前目录前缀、条目列表（delimiter 懒加载 + 目录缓存）、排序与
- * 面包屑导航；服务端不支持 delimiter 时降级为全量列举 + 客户端聚合。
+ * 维护当前目录前缀、条目列表（delimiter 懒加载 + 有界目录缓存）、排序与
+ * 面包屑导航。服务端**明确不支持** delimiter（405/501 等方法集错误）时降级为
+ * 全量列举 + 客户端聚合；网络/鉴权错误直接进入 loadError，不再伪装成能力缺陷。
  */
-import { computed, ref, shallowRef } from "vue"
+import { computed, onUnmounted, ref, shallowRef } from "vue"
 import type { S3Client } from "@/utils/s3/s3Client"
-import { listDir } from "@/utils/s3/s3ObjectOps"
+import { DelimiterUnsupportedError, listDir } from "@/utils/s3/s3ObjectOps"
 import type { S3DirListing } from "@/utils/s3/s3ObjectOps"
 import type { S3FileInfo } from "@/utils/s3/types"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3Entry, SortField } from "../types"
-import { RENDER_BATCH_SIZE } from "../types"
+import { MAX_CACHE_DIRS, RENDER_BATCH_SIZE } from "../types"
 import {
   buildEntries, compareEntries, normalizeListing,
   parentPrefix, prefixFromSegments, relativeSegments,
@@ -33,9 +34,13 @@ export function useS3Entries(deps: {
   /** 增量渲染上限（大目录先渲染一批，"加载更多"递增） */
   const renderLimit = ref(RENDER_BATCH_SIZE)
 
-  /** 目录缓存：prefix → 条目列表（写操作后定向失效） */
+  /**
+   * 目录缓存：prefix → 条目列表。
+   * persistent Modal 不随面板关闭卸载，无上限会在长会话遍历大量目录后持续驻留，
+   * 故按插入顺序淘汰最旧条目（Map 保序，等价简易 LRU）。
+   */
   const cache = new Map<string, S3Entry[]>()
-  /** 服务端 delimiter 能力探测结果（首次失败后固定走降级路径） */
+  /** delimiter 能力探测：true = 服务端明确拒绝 delimiter 参数（405/501 等），后续直接全量列举 */
   let delimiterUnsupported = false
   /**
    * 请求序号：每次 loadDir 自增并记录，响应回来时比对。
@@ -59,6 +64,28 @@ export function useS3Entries(deps: {
 
   const isAtRoot = computed(() => currentPrefix.value === deps.getRootPrefix())
 
+  // ========== 缓存 ==========
+
+  function readCache(prefix: string): S3Entry[] | undefined {
+    const hit = cache.get(prefix)
+    if (hit) {
+      // 刷新为最新：命中后重新插入以维持"末尾 = 最近使用"的顺序
+      cache.delete(prefix)
+      cache.set(prefix, hit)
+    }
+    return hit
+  }
+
+  function writeCache(prefix: string, value: S3Entry[]): void {
+    cache.delete(prefix)
+    cache.set(prefix, value)
+    while (cache.size > MAX_CACHE_DIRS) {
+      const oldest = cache.keys().next()
+      if (oldest.done) { break }
+      cache.delete(oldest.value)
+    }
+  }
+
   // ========== 方法 ==========
 
   /** 加载指定目录（命中缓存直接展示；force 跳过缓存） */
@@ -66,12 +93,18 @@ export function useS3Entries(deps: {
     // 本次请求的令牌：任何赋值前都校验它仍是最新请求，过期响应整体丢弃
     const seq = ++requestSeq
 
-    if (!force && cache.has(prefix)) {
-      entries.value = cache.get(prefix)!
-      currentPrefix.value = prefix
-      renderLimit.value = RENDER_BATCH_SIZE
-      loadError.value = ""
-      return
+    if (!force) {
+      const cached = readCache(prefix)
+      if (cached) {
+        entries.value = cached
+        currentPrefix.value = prefix
+        renderLimit.value = RENDER_BATCH_SIZE
+        loadError.value = ""
+        // 缓存命中不经过下方 finally：必须在此熄灭上一个请求遗留的 loading，
+        // 否则其响应因令牌过期被丢弃后，loading 再无人复位（列表永久转圈）
+        loading.value = false
+        return
+      }
     }
 
     loading.value = true
@@ -84,32 +117,26 @@ export function useS3Entries(deps: {
         try {
           listing = await listDir(client, prefix)
         } catch (err) {
-          // 代理不支持 delimiter 时降级为全量列举 + 客户端按 / 聚合（能力探测结果缓存）
-          console.warn("[S3文件管理] delimiter 列举失败，降级为全量聚合:", getErrorMessage(err))
+          // 仅当服务端明确拒绝 delimiter（405/501 等方法集错误）才降级；
+          // 403/超时/断网等普通错误必须冒泡到 loadError，否则会被误判成能力缺陷并永久钉住降级路径
+          if (!(err instanceof DelimiterUnsupportedError)) { throw err }
+          console.warn("[S3文件管理] 服务端不支持 delimiter，降级为全量聚合:", getErrorMessage(err))
           delimiterUnsupported = true
         }
       }
 
       let files: S3FileInfo[]
       let folders: string[]
-      if (listing) {
-        const normalized = normalizeListing(listing, prefix)
-        files = normalized.files
-        folders = normalized.folders
-        // 探测到 delimiter 被忽略（无 CommonPrefixes 却聚合出子目录）→ 后续直接走全量列举，省一次无效 delimiter 请求
-        if (listing.folders.length === 0 && normalized.folders.length > 0) {
-          delimiterUnsupported = true
-        }
-      } else {
-        const normalized = normalizeListing({ files: await client.list(prefix), folders: [] }, prefix)
-        files = normalized.files
-        folders = normalized.folders
-      }
+      // delimiter 被静默忽略时（OpenList 等代理返回扁平递归结果）listDir 本身就能成功返回，
+      // normalizeListing 会把嵌套对象折回当前层 —— 无需切换到更重的 client.list 全量路径
+      const normalized = normalizeListing(listing ?? { files: await client.list(prefix), folders: [] }, prefix)
+      files = normalized.files
+      folders = normalized.folders
 
       const built = buildEntries(files, folders)
       // 过期响应：已发起更新的请求，本次结果一律丢弃（不写缓存、不改状态，避免覆盖新目录）
       if (seq !== requestSeq) { return }
-      cache.set(prefix, built)
+      writeCache(prefix, built)
       entries.value = built
       currentPrefix.value = prefix
       renderLimit.value = RENDER_BATCH_SIZE
@@ -120,11 +147,6 @@ export function useS3Entries(deps: {
       // 仅最新请求有权结束 loading，否则旧请求的 finally 会提前熄灭新请求的加载态
       if (seq === requestSeq) { loading.value = false }
     }
-  }
-
-  /** 进入指定目录前缀 */
-  function navigateTo(prefix: string): Promise<void> {
-    return loadDir(prefix)
   }
 
   /** 返回上级目录（不越过浏览根） */
@@ -147,13 +169,9 @@ export function useS3Entries(deps: {
     return loadDir(currentPrefix.value, true)
   }
 
-  /** 失效缓存（无参全清；写操作后调用） */
-  function invalidateCache(prefix?: string): void {
-    if (prefix === undefined) {
-      cache.clear()
-    } else {
-      cache.delete(prefix)
-    }
+  /** 失效全部目录缓存（写操作后调用） */
+  function invalidateCache(): void {
+    cache.clear()
   }
 
   /** 重置 delimiter 能力探测（切换 endpoint/bucket 后旧探测结果不再适用） */
@@ -176,6 +194,9 @@ export function useS3Entries(deps: {
     }
   }
 
+  // 面板销毁后自增令牌，使在途列举的响应整体失效（不再写缓存与已销毁组件的状态）
+  onUnmounted(() => { requestSeq++ })
+
   return {
     currentPrefix,
     entries,
@@ -189,7 +210,6 @@ export function useS3Entries(deps: {
     pathSegments,
     isAtRoot,
     loadDir,
-    navigateTo,
     navigateUp,
     navigateToSegment,
     refresh,

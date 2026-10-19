@@ -6,6 +6,7 @@
  */
 import type { S3Client } from "./s3Client"
 import { MAX_LIST_PAGES } from "./s3Client"
+import type { NodeResponse } from "./s3Protocol"
 import type { S3FileInfo } from "./types"
 import { parseListDirXml, formatS3Error } from "./s3Protocol"
 
@@ -17,6 +18,25 @@ export interface S3DirListing {
   files: S3FileInfo[]
   /** 子目录前缀（以 / 结尾，如 "photos/2026/"） */
   folders: string[]
+}
+
+/**
+ * 服务端**明确不支持** delimiter 的降级信号（405/501 或 XML Code 为方法集类错误）。
+ *
+ * 只有这类错误才应触发「客户端全量聚合」降级；403/404/超时/断网等普通失败必须
+ * 原样冒泡 —— 否则一次网络抖动就会被误判为能力缺陷，并把降级路径永久钉住。
+ */
+export class DelimiterUnsupportedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "DelimiterUnsupportedError"
+  }
+}
+
+/** 判定「delimiter 不被支持」：HTTP 405/501 或 XML Code 为 NotImplemented 等方法集类错误 */
+function isDelimiterUnsupported(response: NodeResponse, body: string): boolean {
+  if (response.status === 405 || response.status === 501) { return true }
+  return /<Code>(NotImplemented|MethodNotAllowed|UnsupportedOperation|InvalidArgument|NotSupported)<\/Code>/.test(body)
 }
 
 /**
@@ -37,7 +57,11 @@ export async function listDir(client: S3Client, prefix: string): Promise<S3DirLi
     const response = await client.sendRequest("GET", "", query)
     if (!response.ok) {
       const body = await response.text()
-      throw new Error(formatS3Error(response, body, "S3 目录列举失败"))
+      const message = formatS3Error(response, body, "S3 目录列举失败")
+      // 只有「明确不支持 delimiter」才升级为专用错误，供调用方降级；其余错误原样抛出
+      throw isDelimiterUnsupported(response, body)
+        ? new DelimiterUnsupportedError(message)
+        : new Error(message)
     }
 
     const { files: pageFiles, folders, isTruncated, nextMarker } = parseListDirXml(await response.text())

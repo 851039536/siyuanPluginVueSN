@@ -1,0 +1,15 @@
+/**
+ * 弹窗页脚右侧按钮组（共享片段）
+ *
+ * Dialog 页脚为 flex-end，当页脚左侧另有元素（如"从 S3 备份导入"、目标路径提示）时，
+ * 用它把右侧按钮组推到末端。FmConfigDialog 与 FmMoveCopyDialog 共用，避免逐字重复两份。
+ * 由使用方 `@use "./_dialog-footer.scss";` 引入（scoped 下规则仍各自带 data-v 属性）。
+ */
+@use '@/variables.scss' as *;
+
+.fm-dialog-footer-right {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  margin-left: auto;
+}

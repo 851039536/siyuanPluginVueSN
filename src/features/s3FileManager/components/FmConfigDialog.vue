@@ -102,12 +102,11 @@
         {{ i18n.importFromBackup }}
       </Button>
       <div class="fm-dialog-footer-right">
-        <!-- 按钮："测试连接" -->
+        <!-- 按钮："测试连接"（Button 内部已把 loading 并入 disabled） -->
         <Button
           variant="ghost"
           size="small"
           :loading="testing"
-          :disabled="testing"
           @click="handleTest"
         >
           {{ i18n.testConnection }}
@@ -117,7 +116,6 @@
           variant="primary"
           size="small"
           :loading="saving"
-          :disabled="saving"
           @click="handleSave"
         >
           {{ i18n.save }}
@@ -158,6 +156,9 @@ const testing = ref(false)
 const saving = ref(false)
 const testResult = ref<{ success: boolean; message: string } | null>(null)
 
+// 全文件统一用解构后的 i18n，不再与 props.i18n 混写
+const { i18n } = props
+
 /** 归一化超时字段（空值/非法值回退默认） */
 function normalizeTimeout(value: unknown): number {
   const timeout = Number(value)
@@ -169,7 +170,7 @@ function snapshot(): S3Config {
   return { ...form, uploadTimeoutSec: normalizeTimeout(form.uploadTimeoutSec) }
 }
 
-/** 挂载时自加载已保存配置（解密凭证） */
+/** 挂载时自加载已保存配置（解密凭证）；失败时明确告知，不让表单静默停在默认值 */
 onMounted(async () => {
   try {
     const saved = await props.storage.config.loadOrDefault()
@@ -180,41 +181,36 @@ onMounted(async () => {
       uploadTimeoutSec: normalizeTimeout(saved.uploadTimeoutSec),
     })
   } catch (err) {
-    console.error("[S3文件管理] 配置加载失败:", getErrorMessage(err))
+    const msg = getErrorMessage(err)
+    console.error("[S3文件管理] 配置加载失败:", msg)
+    showMessage(`${i18n.configLoadFailed}: ${msg}`, 4000, "error")
   }
 })
 
+/** 测试连接：S3Client.testConnection 内部已收敛所有异常为结果对象，故无需 try/catch */
 async function handleTest(): Promise<void> {
   if (testing.value) { return }
   testing.value = true
   testResult.value = null
-  try {
-    testResult.value = await new S3Client(snapshot()).testConnection()
-  } catch (err) {
-    testResult.value = { success: false, message: `${i18n.testException}: ${getErrorMessage(err)}` }
-  } finally {
-    testing.value = false
-  }
+  testResult.value = await new S3Client(snapshot()).testConnection()
+  testing.value = false
 }
 
 /** 从 s3Backup 配置键导入（只读，解密后回填表单，不自动保存） */
 async function handleImport(): Promise<void> {
-  try {
-    const backupConfig = await props.storage.backupConfigReadonly.load()
-    if (!backupConfig || !backupConfig.endpoint) {
-      showMessage(props.i18n.importNoBackupConfig, 3000, "info")
-      return
-    }
-    Object.assign(form, {
-      ...backupConfig,
-      accessKey: await decryptSetting(backupConfig.accessKey),
-      secretKey: await decryptSetting(backupConfig.secretKey),
-      uploadTimeoutSec: normalizeTimeout(backupConfig.uploadTimeoutSec),
-    })
-    showMessage(props.i18n.importSuccess, 2000, "info")
-  } catch (err) {
-    showMessage(`${props.i18n.importFailed}: ${getErrorMessage(err)}`, 4000, "error")
+  // 存储读取与解密均在各自实现内收敛失败（返回 null / 原值），此处无异常路径
+  const backupConfig = await props.storage.backupConfigReadonly.load()
+  if (!backupConfig || !backupConfig.endpoint) {
+    showMessage(i18n.importNoBackupConfig, 3000, "info")
+    return
   }
+  Object.assign(form, {
+    ...backupConfig,
+    accessKey: await decryptSetting(backupConfig.accessKey),
+    secretKey: await decryptSetting(backupConfig.secretKey),
+    uploadTimeoutSec: normalizeTimeout(backupConfig.uploadTimeoutSec),
+  })
+  showMessage(i18n.importSuccess, 2000, "info")
 }
 
 /** 保存到自有配置键（凭证加密）并通知父组件应用 */
@@ -228,18 +224,20 @@ async function handleSave(): Promise<void> {
       accessKey: await encryptSetting(config.accessKey),
       secretKey: await encryptSetting(config.secretKey),
     }
-    await props.storage.config.save(encrypted)
-    showMessage(props.i18n.configSaved, 2000, "info")
+    // PluginStorage.save 失败时返回 false 而不抛，必须显式转成异常，
+    // 否则落盘失败仍会提示"配置已保存"并把未保存的配置应用到运行时
+    if (!await props.storage.config.save(encrypted)) {
+      throw new Error(i18n.saveFailed)
+    }
+    showMessage(i18n.configSaved, 2000, "info")
     // 仅发 saved：父组件 handleConfigSaved 会关闭弹窗，重复 emit("close") 会形成两条关闭路径
     emit("saved", config)
   } catch (err) {
-    showMessage(`${props.i18n.saveFailed}: ${getErrorMessage(err)}`, 4000, "error")
+    showMessage(`${i18n.saveFailed}: ${getErrorMessage(err)}`, 4000, "error")
   } finally {
     saving.value = false
   }
 }
-
-const i18n = props.i18n
 </script>
 
 <style scoped lang="scss">

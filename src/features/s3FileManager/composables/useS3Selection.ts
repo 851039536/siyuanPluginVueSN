@@ -13,11 +13,26 @@ export function useS3Selection(deps: { orderedEntries: Ref<S3Entry[]> }) {
   /** Shift 范围选择的锚点 key */
   let anchorKey: string | null = null
 
-  const selectedEntries = computed<S3Entry[]>(() =>
-    deps.orderedEntries.value.filter((e) => selectedKeys.value.has(e.key)),
-  )
+  /** key → 条目反查表（随列表变化重建一次 O(n)，使选中集读取从 O(n) 降为 O(k)） */
+  const entryByKey = computed(() => {
+    const map = new Map<string, S3Entry>()
+    for (const entry of deps.orderedEntries.value) {
+      map.set(entry.key, entry)
+    }
+    return map
+  })
 
-  // 仅统计当前目录可见条目，避免跨目录导航后残留 key 虚增计数
+  /** 按选中 key 反查条目（仅命中当前目录可见条目，跨目录残留 key 自动忽略） */
+  const selectedEntries = computed<S3Entry[]>(() => {
+    const map = entryByKey.value
+    const result: S3Entry[] = []
+    for (const key of selectedKeys.value) {
+      const entry = map.get(key)
+      if (entry) { result.push(entry) }
+    }
+    return result
+  })
+
   const selectedCount = computed(() => selectedEntries.value.length)
 
   function isSelected(key: string): boolean {

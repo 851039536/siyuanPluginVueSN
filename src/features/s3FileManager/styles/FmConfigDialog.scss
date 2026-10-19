@@ -2,6 +2,7 @@
  * S3 配置弹窗样式 — 字段网格 + 开关组 + 测试结果（外壳/底部按钮由共享 Dialog 承担）
  */
 @use '@/variables.scss' as *;
+@use "./_dialog-footer.scss";
 
 .fm-config-grid {
   display: grid;
@@ -32,13 +33,5 @@
     color: var(--b3-theme-error);
     border-color: var(--b3-theme-error);
   }
-}
-
-// 页脚右侧按钮组：Dialog 页脚为 flex-end，左侧另有元素时用它把右侧按钮组推到末端
-.fm-dialog-footer-right {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  margin-left: auto;
 }
 

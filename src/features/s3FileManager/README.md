@@ -26,7 +26,7 @@
 
 - **协议层复用**：S3 协议能力位于共享层 `src/utils/s3/`（`types` / `s3Protocol` / `s3Client` / `s3ObjectOps` / `s3Multipart` / `concurrency`），与 `s3Backup` 共用同一套 AWS SigV4 实现，本模块零直接导入其他 feature
 - **跨模块共享常量**：`TRANSFER_MAX_RETRIES` / `MAX_LOG_COUNT` / `MAX_LOG_DETAIL_FILES` / `S3_BACKUP_CONFIG_KEY` 定义在 `@/utils/s3/types`，两模块引用同一来源（存储键不再靠字面量维系）；重试循环走 `@/utils/s3/concurrency` 的 `runWithRetries`
-- **目录列举**：`listDir` 基于 ListObjects V1 + `delimiter=/`，自动翻页聚合当前层文件与子文件夹前缀；代理不支持 delimiter 时降级为全量拉取后按 `/` 客户端聚合（`normalizeListing` 统一口径）
+- **目录列举**：`listDir` 基于 ListObjects V1 + `delimiter=/`，自动翻页聚合当前层文件与子文件夹前缀；服务端**明确拒绝** delimiter（405/501 等方法集错误）时降级为全量列举后按 `/` 客户端聚合（`DelimiterUnsupportedError` 判别），网络/鉴权错误直接进入错误态；delimiter 被**静默忽略**（OpenList 等代理返回扁平结果）时由 `normalizeListing` 客户端折叠统一口径
 - **复制 / 移动**：`copyObject` 的 `x-amz-copy-source` 头进签名（signedHeaders 字母序），源 key 复用 `encodeKeyPath` 的 RFC 3986 分段编码，规避中文 / 空格 key 的 403 SignatureDoesNotMatch
 - **批量删除**：不使用 DeleteObjects 批量 API，改用 `runWithConcurrency` + 单对象删除（并发 4）
 - **组件划分**：`index.vue`（薄壳编排）+ `components/`（Toolbar / Breadcrumb / EntryList / ContextMenu / ConfigDialog / NameDialog / MoveCopyDialog / LogPanel）+ `composables/`（依赖注入，client / entries / selection / fileOps / transfer / logs / confirm / prefs）
@@ -37,5 +37,5 @@
 
 ## 已知约束
 
-- 上传为 Buffer 整体读入内存（SigV4 需全量 payload hash），超过 100MB 的文件仅警告不阻断；**未接入**共享层已有的 `uploadFileSmart`（`s3Backup` 三条上传路径已用），故无 Multipart 分片上传
+- 上传走共享层 `uploadFileSmart`：≤100MB 整包单 PUT（256KB 分块写），>100MB 自动 16MB Multipart 分片，存储端不支持分片（OpenList/Alist 等代理）时自动降级整包并告警；内存峰值由分片档位保证
 - 文件夹为 S3 的 0 字节占位对象（key 以 `/` 结尾），依赖 delimiter 或客户端聚合呈现层级

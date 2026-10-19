@@ -46,7 +46,7 @@
           @load-diff="loadDiff"
           @clear-output="ops.clearOutput(project.id)"
           @discard-file="(file: string, staged: boolean, status: string) => ops.handleDiscard(project.id, file, staged, status)"
-          @refresh-working-tree="ops.handleRefreshWorkingTree(project.id)"
+          @refresh-working-tree="ops.handleRefreshWorkingTree(project.id, { force: false })"
         />
       </template>
 
@@ -224,6 +224,8 @@ const {
   diffLoading,
   mdFiles,
   ensureDetailsLoaded,
+  ensureLogStats,
+  ensureRemoteTags,
   reloadLog,
   refreshTags,
   loadDiff,
@@ -366,19 +368,25 @@ function handleLogCountReload(count: number | "all") {
   void reloadLog(count)
 }
 
-// 切回 worktree 时刷新工作区（refresh 语义 + 最小间隔节流由调度器裁决，避免与面板内操作重复发 git）；切到 log/stash/tag 时懒加载卡内详情
+// 切回 worktree 时刷新工作区（refresh 语义 + 最小间隔节流由调度器裁决，避免与面板内操作重复发 git）；
+// 切到 log 时懒加载该项的高代价统计（--shortstat），切到 tag 时懒加载网络 ls-remote 状态
 watch(stashTagTab, (val) => {
   if (val === "worktree") {
     void ops.refreshProjectStatus(props.project.id)
-  } else {
-    void ensureDetailsLoaded()
+    return
   }
+  void ensureDetailsLoaded()
+  if (val === "log") ensureLogStats()
+  if (val === "tag") ensureRemoteTags()
 })
 
 /** 点击卡片任意位置时补齐当前项目数据（幂等：状态按 ensure + 详情在途共享，重复点击不产生额外查询） */
 function handleCardClick() {
   void ops.ensureProjectStatus(props.project.id)
   void ensureDetailsLoaded()
+  // 当前激活面板若是 LOG/TAG，点卡片也应补齐其懒加载域
+  if (stashTagTab.value === "log") ensureLogStats()
+  else if (stashTagTab.value === "tag") ensureRemoteTags()
 }
 </script>
 

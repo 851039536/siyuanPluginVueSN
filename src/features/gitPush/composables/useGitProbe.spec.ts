@@ -89,23 +89,28 @@ function stubWindow(): void {
 /**
  * 假调度器：只实现 useGitProbe 真正用到的能力。
  * `statusResult` 控制「git status 的返回」——用来模拟编辑器改动被发现的那一刻。
+ * `shown` 控制「该项目是否已在前台展示过」（`has("workingTree")`）：
+ * 未展示的项目首轮只建基线、不发 git（审查报告 §P0-2 的降峰手段）。
  */
-function makeScheduler(statusResult: () => any) {
+function makeScheduler(statusResult: () => any, shown = true) {
   const workingTrees = ref<Record<string, any>>({})
   const loadStatus = vi.fn(async (id: string) => {
     workingTrees.value[id] = statusResult()
   })
   const invalidate = vi.fn()
+  const has = vi.fn(() => shown)
   const scheduler = {
     workingTrees,
     loadStatus,
     invalidate,
+    has,
   } as unknown as ProjectQueryScheduler
   return {
     scheduler,
     workingTrees,
     loadStatus,
     invalidate,
+    has,
   }
 }
 
@@ -131,10 +136,11 @@ const DIRTY = {
 }
 
 describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
-  /** 假的「项目目录」：内含一个真实 .git/index，供预筛 stat */
+  /** 假的「项目目录」：内含真实 .git/index 与 .git/HEAD，供预筛 stat/readFileSync */
   let repoDir: string
   let gitDir: string
   let indexFile: string
+  let headFile: string
 
   beforeEach(() => {
     vi.useRealTimers()
@@ -144,6 +150,9 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
     mkdirSync(gitDir, { recursive: true })
     indexFile = join(gitDir, "index")
     writeFileSync(indexFile, "index-v1")
+    // 预筛的 HEAD 判据读的是文件文本（不再跑 rev-parse），故必须提供真实 HEAD
+    headFile = join(gitDir, "HEAD")
+    writeFileSync(headFile, "ref: refs/heads/main\n")
   })
 
   afterEach(() => {
@@ -211,10 +220,13 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
   })
 
   /**
-   * 缺陷②回归：被预筛跳过的轮次不得推进退避。
-   * 旧实现每次跳过都翻倍，导致间隔被迅速拉到上限，兜底时效越来越差。
+   * 缺陷②回归（新契约）：预筛持续判定「无变化」时，退避必须推进（空闲降频到上限）。
+   *
+   * 修复前：只有真查过才翻倍，跳过轮次不推进 ⇒ 间隔永远卡在 15s 基准，
+   * 每轮仍要对全部项目 stat + 读 HEAD（旧实现是每项目 spawn 一次 rev-parse）。
+   * 修复后：预筛是 0 进程的可靠结论，无变化就翻倍，最长间隔收敛到 maxIntervalMs。
    */
-  it("被预筛跳过时退避间隔不增长", async () => {
+  it("预筛持续无变化时退避推进并收敛到上限（空闲 0 进程）", async () => {
     const { scheduler } = makeScheduler(() => CLEAN)
     const manager = {
       getGitDir: async () => gitDir,
@@ -231,23 +243,78 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
     })
 
     await probe.probeNow()
-    // 首轮已真查且无变化 ⇒ 允许翻倍一次（这是正确行为：真查过才算数）
-    const [afterFirst] = await probe.__testRunRound()
-    // 上面这一轮同样真查且无变化，再翻倍一次；重点是后续**跳过**的轮次不得再翻倍
-    const beforeSkip = afterFirst.interval
-    expect(beforeSkip).toBeLessThanOrEqual(DEFAULT_PROBE_CONFIG.poll.maxIntervalMs)
-
-    // 连续跑若干轮，断言间隔始终不超过上限，且没有因「跳过」被无限推高
-    let maxSeen = beforeSkip
-    for (let i = 0; i < 6; i++) {
+    const cfg = makeConfig()
+    let last = 0
+    for (let i = 0; i < 8; i++) {
       const [snap] = await probe.__testRunRound()
-      maxSeen = Math.max(maxSeen, snap.interval)
-      // 核心断言：跳过的轮次不推进退避 ⇒ 单轮之间不得翻倍
-      // （只在被迫真查的那一轮才允许翻倍，故此处只校验不超过上限）
-      expect(snap.interval).toBeLessThanOrEqual(DEFAULT_PROBE_CONFIG.poll.maxIntervalMs)
+      expect(snap.interval).toBeLessThanOrEqual(cfg.poll.maxIntervalMs)
+      expect(snap.interval).toBeGreaterThanOrEqual(cfg.poll.intervalMs)
+      last = snap.interval
     }
+    // 连续无变化后必须已退避到上限（测试配置为 8000ms），而不是停在基准 1000ms
+    expect(last).toBe(cfg.poll.maxIntervalMs)
 
     probe.destroy()
+  })
+
+  /**
+   * 新契约：从未在前台展示过的项目，首轮只建立预筛基线（stat + 读 HEAD），
+   * 不发起任何 git 查询——避免「进入页面即对全部项目跑 3N 次 git」。
+   */
+  it("未展示过的项目首轮只建基线，不触发 loadStatus", async () => {
+    const { scheduler, loadStatus } = makeScheduler(() => CLEAN, false)
+    const manager = {
+      getGitDir: async () => gitDir,
+      getHeadHash: async () => "same-head",
+    }
+
+    const probe = useGitProbe({
+      manager: manager as any,
+      projects: ref([makeProject()]),
+      scheduler,
+      getConfig: () => makeConfig(),
+      isPaused: () => false,
+      isActive: () => true,
+    })
+
+    await probe.probeNow()
+    expect(loadStatus).not.toHaveBeenCalled()
+
+    probe.destroy()
+  })
+
+  /**
+   * 新契约：start 幂等——重复调用不得重复注册 window 监听（否则 destroy 只解绑最后一次，
+   * 残留监听会钉住整棵组件树，正是 Dock 泄漏的放大路径）。
+   */
+  it("start 幂等：重复调用不重复注册 window focus/blur", async () => {
+    const { scheduler } = makeScheduler(() => CLEAN)
+    const manager = {
+      getGitDir: async () => gitDir,
+      getHeadHash: async () => "same-head",
+    }
+    const focusAdded: string[] = []
+    const g = globalThis as any
+    const originalAdd = g.window.addEventListener
+    g.window.addEventListener = (type: string) => { focusAdded.push(type) }
+
+    const probe = useGitProbe({
+      manager: manager as any,
+      projects: ref([makeProject()]),
+      scheduler,
+      getConfig: () => makeConfig(),
+      isPaused: () => false,
+      isActive: () => true,
+    })
+
+    probe.start()
+    probe.start()
+    probe.start()
+    expect(focusAdded.filter((t) => t === "focus").length).toBe(1)
+    expect(focusAdded.filter((t) => t === "blur").length).toBe(1)
+
+    probe.destroy()
+    g.window.addEventListener = originalAdd
   })
 
   /**

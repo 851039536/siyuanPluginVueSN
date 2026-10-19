@@ -77,7 +77,8 @@ export interface CardOps {
   showIdeDialog: (show?: boolean) => void
   removeCustomIdeByName: (name: string) => void
   handleRefresh: (id: string) => void
-  handleRefreshWorkingTree: (id: string) => void
+  /** 刷新工作区；opts.force 缺省 true（手动/写后刷新），自动触发传 false 以复用调度器单飞 */
+  handleRefreshWorkingTree: (id: string, opts?: { force?: boolean }) => void
   handleRefreshRemoteStatus: (id: string) => void
   handleGitOp: (label: string, fn: () => Promise<void>, id: string) => Promise<void>
   stageItem: (id: string, file: string) => Promise<void>

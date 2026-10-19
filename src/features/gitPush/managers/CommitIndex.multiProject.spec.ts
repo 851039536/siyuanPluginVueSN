@@ -19,6 +19,7 @@ import {
 import {
   DEFAULT_INDEX_META,
 
+  INDEX_MAX_PROJECT_SEGMENTS,
   INDEX_META_VERSION,
 } from "../types/indexCache"
 import {
@@ -271,5 +272,30 @@ describe("索引多项目隔离", () => {
       projects: [],
     })
     expect(stale.getProjectMetas()).toEqual([])
+  })
+
+  /**
+   * 段上限回归：INDEX_MAX_PROJECT_SEGMENTS 此前只有定义、生产代码从未使用，
+   * 导致内存段 / 元数据 / 磁盘文件随「分析过的项目数」无界增长（审查报告 §L2）。
+   * 超出上限时必须按 analyzedAt 最旧淘汰，且只淘汰最旧的那批。
+   */
+  it("项目段数超出 INDEX_MAX_PROJECT_SEGMENTS 时按 analyzedAt 淘汰最旧", async () => {
+    const total = INDEX_MAX_PROJECT_SEGMENTS + 2
+    for (let i = 0; i < total; i++) {
+      await index.append(`p${i}`, [
+        commit(`h${i}`, "2024-01-01T00:00:00Z", "alice", [[`src/${i}.ts`, 1, 0]]),
+      ], {
+        ...metaPatch(`head${i}:g`),
+        // p0 最旧 → 优先淘汰
+        analyzedAt: new Date(Date.UTC(2024, 0, 1, 0, 0, i)).toISOString(),
+      })
+    }
+    const metas = index.getProjectMetas()
+    expect(metas.length).toBeLessThanOrEqual(INDEX_MAX_PROJECT_SEGMENTS)
+    expect(metas.some((m) => m.projectId === "p0")).toBe(false)
+    expect(metas.some((m) => m.projectId === `p${total - 1}`)).toBe(true)
+    // 被淘汰项目的磁盘文件与内存段都不得残留
+    expect(index.getCommitCount("p0")).toBe(0)
+    expect(io.files.has(projectFile("commits", "p0"))).toBe(false)
   })
 })

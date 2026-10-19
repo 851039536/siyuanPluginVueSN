@@ -177,13 +177,18 @@ export function useCardData(project: () => GitProject) {
   }
 
   /** 首次点卡片 / 切 Tab 时懒加载详情。
-   *  实例级标记 + 在途 Promise 双守卫：原实现「await 之后才置标记」使并发两次调用都能穿过守卫而重复发 git。 */
+   *  实例级标记 + 在途 Promise 双守卫：原实现「await 之后才置标记」使并发两次调用都能穿过守卫而重复发 git。
+   *  失败重试退避：全失败（如仓库被删）时若每次点击都重跑整组查询，会放大成「点一下 = 7~10 个 git」；
+   *  这里记录失败次数，2 次后进入 30s 冷却，冷却期内直接返回，避免错误路径被反复触发。 */
   let detailsLoaded = false
   let detailsPromise: Promise<void> | null = null
+  let detailsFailures = 0
+  let detailsCooldownUntil = 0
 
   async function ensureDetailsLoaded(): Promise<void> {
     if (detailsLoaded) return
     if (detailsPromise) return detailsPromise
+    if (Date.now() < detailsCooldownUntil) return
     const endLoading = beginLogLoading()
     detailsPromise = (async () => {
       try {
@@ -193,22 +198,41 @@ export function useCardData(project: () => GitProject) {
         // 多卡片工作区下会把共享池占满，拖慢其他卡片与本卡片后续操作。
         await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
         detailsLoaded = true
+        detailsFailures = 0
         // conflicts 改为后台异步补齐（不阻塞详情展示，语义不变）：
         // 若项目在打开面板前即处于冲突合并态，仅靠 dirty 信号（resolve/abort 触发）
         // 永远拉不到，故仍必须在首载时发起，只是不再占用首屏等待窗口。
         void loadConflicts().catch(() => {})
-        // 远程 Tag 状态与提交变更统计均为额外开销，后台异步补齐不阻塞详情展示
-        // （统计需 git 逐条算 diff，实测 200 条约 2.3s，故不并入上方 Promise.all）
-        void loadRemoteTags().catch(() => {})
-        void loadLogStats().catch(() => {})
+        // ⚠️ 远程 Tag 状态（每远程 1 次网络 ls-remote）与提交变更统计（200 条约 2.3s）
+        //    不再在首载时发起：它们只被 LOG / TAG 面板消费，首载就发等于让「点一下卡片」
+        //    额外付最多 4 次网络命令 + 一次全历史 diff 扫描（审查报告 §P1）。
+        //    改为对应面板首次可见时懒加载（ensureRemoteTags / ensureLogStats）。
       } catch {
-        // 加载失败不标记为已加载，允许重试
+        // 加载失败不标记为已加载，允许重试；但连续失败后进入冷却，避免错误路径被反复触发
+        detailsFailures++
+        if (detailsFailures >= 2) detailsCooldownUntil = Date.now() + 30_000
       } finally {
         endLoading()
         detailsPromise = null
       }
     })()
     return detailsPromise
+  }
+
+  /** LOG 面板首次可见时懒加载提交变更规模（--shortstat，代价高，失败静默） */
+  let logStatsRequested = false
+  function ensureLogStats(): void {
+    if (logStatsRequested) return
+    logStatsRequested = true
+    void loadLogStats().catch(() => {})
+  }
+
+  /** TAG 面板首次可见时懒加载远程 Tag 状态（网络 ls-remote，失败静默） */
+  let remoteTagsRequested = false
+  function ensureRemoteTags(): void {
+    if (remoteTagsRequested) return
+    remoteTagsRequested = true
+    void loadRemoteTags().catch(() => {})
   }
 
   /** LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景）。
@@ -230,6 +254,8 @@ export function useCardData(project: () => GitProject) {
     tagsLoading.value = true
     try {
       await loadTags(true)
+      // 远程 Tag 状态若已在 TAG 面板加载过，跟随刷新（否则等面板打开再懒加载）
+      if (remoteTagsRequested) await loadRemoteTags(true).catch(() => {})
     } finally {
       tagsLoading.value = false
     }
@@ -263,7 +289,8 @@ export function useCardData(project: () => GitProject) {
     const safeReload = (p: Promise<unknown>) => { p.catch(() => {}) }
     if (kinds.has("log")) {
       safeReload(loadLog(undefined, true))
-      safeReload(loadLogStats(true))
+      // 统计只在 LOG 面板用过（已请求过）时才跟着重载；否则等面板打开再懒加载
+      if (logStatsRequested) safeReload(loadLogStats(true))
     }
     if (kinds.has("branches")) safeReload(loadBranches(true))
     if (kinds.has("stash")) safeReload(loadStash(true))
@@ -303,6 +330,8 @@ export function useCardData(project: () => GitProject) {
     diffLoading,
     mdFiles,
     ensureDetailsLoaded,
+    ensureLogStats,
+    ensureRemoteTags,
     reloadLog,
     refreshTags,
     loadDiff,

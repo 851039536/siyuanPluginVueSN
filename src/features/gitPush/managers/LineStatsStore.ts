@@ -155,8 +155,22 @@ export class LineStatsStore {
     this.db = db
   }
 
-  /** 建表（幂等；运行时只建表/补列，不做数据迁移） */
-  static prepare(db: PluginDatabase): void {
+  /**
+   * 关闭底层 SQLite 连接（插件卸载时由 manager 调用；幂等）。
+   *
+   * 不关闭的后果：每次插件重载都会新建一个 DatabaseSync 并持有 .db/-wal/-shm 句柄，
+   * 旧连接既不释放也不被 GC 及时回收（详见 docs/gitPush-memory-cpu-review.md §L2）。
+   * 关闭后本实例不可再用；manager 会在 destroy 时同步清空初始化 Promise 缓存。
+   */
+  close(): void {
+    try {
+      this.db.close()
+    } catch (e) {
+      console.warn("[gitPush] 关闭行数统计数据库失败", e)
+    }
+  }
+
+  /** 建表（幂等；运行时只建表/补列，不做数据迁移） */  static prepare(db: PluginDatabase): void {
     db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.project_stats} (
       project_id TEXT PRIMARY KEY,
       name TEXT NOT NULL DEFAULT '',

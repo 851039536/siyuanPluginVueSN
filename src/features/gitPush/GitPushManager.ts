@@ -38,6 +38,7 @@ import {
 } from "vue"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
+import type { DockAppHandle } from "@/utils/vueAppHelper"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import GitPushPanel from "./index.vue"
 import { BfgOps } from "./managers/BfgOps"
@@ -114,6 +115,21 @@ export class GitPushManager {
   /** 独立窗口页签 Vue app 与容器（addTab 承载） */
   private tabApp: App | null = null
   private tabContainer: HTMLElement | null = null
+  /**
+   * Dock 面板卸载句柄（createVueDockApp 返回）。
+   *
+   * 必须由 manager 持有并在 destroy() 中调用：`addDock` 的 destroy 回调只在 Dock 移除时触发，
+   * 而插件卸载路径不会等待该回调，面板内探测链（定时器 + fs.watch）会随之泄漏。
+   */
+  private dockHandle: DockAppHandle | null = null
+  /**
+   * gitdir 解析缓存（projectPath → { dir, at }）。
+   *
+   * 探测层为每个项目重建 `.git` 监听时要付一次 `rev-parse --absolute-git-dir`（~250ms/进程）。
+   * 缓存到 manager 后，独立页签/浮动窗口重开时不再重复付这份进程成本；
+   * 5 分钟 TTL 与探测层周期性重建同口径，项目路径变更时按 path 键自然失效。
+   */
+  private gitDirCache = new Map<string, { dir: string, at: number }>()
   /**
    * 本地提交索引（延迟构造：目录解析需 await 工作空间路径，而构造函数不能是 async）。
    * null = 尚未初始化或索引不可用（此时全部统计路径回退到直接跑 git）。
@@ -488,7 +504,7 @@ export class GitPushManager {
     await this.remoteOps.loadPushBranchMode()
     const i18n = this.getPanelI18n()
 
-    createVueDockApp(this.plugin, GitPushPanel, {
+    this.dockHandle = createVueDockApp(this.plugin, GitPushPanel, {
       icon: "iconGitPush",
       title: i18n.title || "Git 推送",
       type: "git-push-dock",
@@ -500,10 +516,33 @@ export class GitPushManager {
     })
   }
 
+  /**
+   * 插件卸载 / 禁用时的统一销毁。
+   *
+   * 清理顺序刻意如此：先停探测侧入口（Dock 面板 unmount → 组件 onUnmounted → gitProbe.destroy），
+   * 再销毁执行器与写锁，最后释放索引/行数存储句柄——避免「已卸载但探测链仍在跑」的窗口期。
+   * 历史实现只清 writeLock/executor/tab，遗漏 Dock 面板与 SQLite 句柄，导致插件重载后
+   * 旧探测链继续 spawn git（详见 docs/gitPush-memory-cpu-review.md §L1/L2）。
+   */
   destroy() {
+    this.dockHandle?.unmount()
+    this.dockHandle = null
+    this.unmountTabPanel()
     this.writeLock.destroy()
     this.executor.destroy()
-    this.unmountTabPanel()
+    // 释放行数统计 SQLite 句柄（openWithRetry 每次新建 DatabaseSync，不 close 会随重载累积）
+    const storeInit = this.lineStatsStoreInit
+    this.lineStatsStoreInit = null
+    if (storeInit) {
+      void storeInit.then((store) => {
+        try { store?.close() } catch { /* 关闭失败不影响卸载 */ }
+      })
+    }
+    // 释放提交索引内存段（segments/fileLinesByProject 只增不减，见 §L2）
+    this.commitIndex?.dispose()
+    this.commitIndex = null
+    this.indexInit = null
+    this.gitDirCache.clear()
   }
 
   // ── 独立窗口承载（addTab + openTab + openWindow 官方 API）──
@@ -838,6 +877,28 @@ export class GitPushManager {
 
   /** 解析 gitdir 绝对路径（.git 文件监听定位用；失败返回空串） */
   async getGitDir(projectPath: string): Promise<string> { return this.worktreeOps.getGitDir(projectPath) }
+
+  /**
+   * 带 5 分钟 TTL 缓存的 gitdir 解析（探测层建 .git 监听用）。
+   *
+   * 单次 `rev-parse --absolute-git-dir` ≈ 250ms 进程费；独立页签/浮动窗口重开时
+   * 探测层会为全部项目重建监听，不缓存就每次重付 N 次进程。
+   * 5 分钟与探测层的周期性重建同口径；失败结果不缓存（允许重试）。
+   */
+  async getGitDirCached(projectPath: string): Promise<string> {
+    const GIT_DIR_CACHE_TTL_MS = 5 * 60 * 1000
+    const hit = this.gitDirCache.get(projectPath)
+    if (hit && Date.now() - hit.at < GIT_DIR_CACHE_TTL_MS) return hit.dir
+    const dir = await this.worktreeOps.getGitDir(projectPath)
+    if (dir) this.gitDirCache.set(projectPath, { dir, at: Date.now() })
+    return dir
+  }
+
+  /** 失效 gitdir 缓存（项目路径变更/删除后调用，避免监听落到旧目录） */
+  invalidateGitDirCache(projectPath?: string): void {
+    if (projectPath) this.gitDirCache.delete(projectPath)
+    else this.gitDirCache.clear()
+  }
 
   /** 仓库是否处于 rebase 中断状态（上次重写失败残留等，供修正弹窗给出准确提示） */
   async isInRebaseState(projectPath: string): Promise<boolean> { return this.worktreeOps.isInRebaseState(projectPath) }

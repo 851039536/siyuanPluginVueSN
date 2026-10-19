@@ -134,7 +134,7 @@ export function useRefreshOps(deps: {
 
   // ---- 细分刷新操作 ----
 
-  async function handleRefreshWorkingTree(id: string) {
+  async function handleRefreshWorkingTree(id: string, opts?: { force?: boolean }) {
     const project = findProject(projects, id)
     if (!project) return
     await withRecordLoading(refreshingWorkingTree, id, async () => {
@@ -142,7 +142,10 @@ export function useRefreshOps(deps: {
       // （一次 git status --porcelain=v2 --branch 同时拿到分支名与工作区状态）。
       // 旧写法在这里先 await resolveBranch 会多付一次 rev-parse 进程，
       // 而 loadWorkingTree 随后又会用同一个分支名再查一次工作区。
-      await scheduler.loadWorkingTree(id, { force: true })
+      //
+      // force 默认为 true（手动刷新/写后刷新语义）；自动触发（面板 pointerdown）传 false，
+      // 让调度器单飞去重与探测层的同域查询合并，避免一次切换里对同一项目查两遍。
+      await scheduler.loadWorkingTree(id, { force: opts?.force ?? true })
     })
   }
 

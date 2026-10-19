@@ -89,8 +89,9 @@ export default class PluginSample extends Plugin {
   public settings!: PluginSettings
   /** 浮动工具栏实例（由 floatingToolbar 功能模块注入） */
   public __floatingToolbar?: import("@/features/floatingToolbar/core/FloatingToolbar").FloatingToolbar
-  /** Git 推送实例（由 gitPush 功能模块注入，onunload 经 DESTROYABLE_KEYS 销毁） */
-  private __gitPush?: { destroy: () => void }
+  // ⚠️ `__gitPush` **不在此声明字段**：由 gitPush 的 register 内部经 `(plugin as any).__xxx` 自挂载，
+  //    并在 DESTROYABLE_KEYS 中登记（见下方条目注释）。与 `__globalRelations` / `__statistics`
+  //    保持同一做法——声明了反而触发 `noUnusedLocals`，且易被误认为「registerFeatures 需要接收返回值」。
   /** 主题色实例（rebuildThemeColor 维护，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __themeColor?: { destroy: () => void }
   // ⚠️ `__globalRelations` / `__statistics` **不在此声明字段**：它们由各自功能模块的 register
@@ -127,6 +128,7 @@ export default class PluginSample extends Plugin {
     "__statistics", // 数据统计（自动刷新定时器 + 事件监听器，register 内部自挂载）
     "__componentPreview", // 组件预览（addTab 模型 + 独立窗口 + 全局事件监听）
     "__statusBar", // 状态栏（Vue app + 状态栏 DOM）
+    "__gitPush", // Git 推送（Dock/Tab Vue app + 探测链 + fs.watch + SQLite 句柄）
   ] as const
 
   onload() {
@@ -185,8 +187,9 @@ export default class PluginSample extends Plugin {
     // 清除 Markdown 渲染器缓存
     clearRendererCache()
 
-    // Git 推送显式销毁（kill 子进程 / 清空等待队列与 AbortController）
-    this.__gitPush?.destroy()
+    // Git 推送的销毁已统一走 DESTROYABLE_KEYS（其内包含 Dock/Tab Vue app 卸载、
+    // 探测链与 fs.watch 释放、GitExecutor 子进程 kill、SQLite 句柄 close），
+    // 故此处不再保留个别功能的特例清理分支。
 
     // 统一销毁各功能实例（新增功能只需将实例字段名加入 DESTROYABLE_KEYS）
     for (const key of PluginSample.DESTROYABLE_KEYS) {
@@ -246,7 +249,7 @@ export default class PluginSample extends Plugin {
     if (s.enableComponentPreview) registerComponentPreview(this)
     if (s.enableScriptLauncher) registerScriptLauncher(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
-    if (s.enableGitPush) this.__gitPush = registerGitPush(this)
+    if (s.enableGitPush) registerGitPush(this)
     if (s.enableSkillLearning) registerSkillLearning(this)
     if (s.enableToolCollection) registerToolCollection(this)
     if (s.enableS3Backup) registerS3Backup(this)

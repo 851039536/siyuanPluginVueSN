@@ -1,6 +1,9 @@
 <!-- gitPush Git 项目管理主面板（Dock 侧栏 / 独立窗口 tab 双形态） -->
 <template>
-  <div class="git-push-panel">
+  <div
+    ref="panelRootEl"
+    class="git-push-panel"
+  >
     <!-- 头部 -->
     <PanelHeader
       v-model:currentView="currentView"
@@ -583,11 +586,15 @@ const listEmptyHint = computed(() => {
   return props.i18n.selectCategoryHint
 })
 
-// ── 仓库链接一致性校验（进入视图自动后台批量执行 git remote -v，结果叠加在统计视图的平台矩阵单元格上）──
+// ── 仓库链接一致性校验（仅在进入统计视图时执行；见审查报告 §P0-2 的门控要求）──
 const {
   auditRows,
   auditing,
-} = useRepoLinkAudit(props.manager, projects)
+  runAudit,
+} = useRepoLinkAudit(props.manager, projects, {
+  enabled: () => currentView.value === "stats",
+  isPaused: () => gitOpsPaused.value,
+})
 
 // ── 提交分析（批量读取各项目提交日志；结果持久化，首次进入复用缓存，无缓存时自动分析一次）──
 const {
@@ -795,10 +802,52 @@ async function saveProbeConfig(next: ProbeConfig) {
  */
 const probeWatchedCount = ref(0)
 
-/** 视图是否在前台：独立窗口页签模式下由文档可见性决定 */
-function isProbeActive(): boolean {
-  return typeof document === "undefined" || document.visibilityState !== "hidden"
+/** 面板根元素（可见性门控用：Dock 隐藏时祖先 display:none，不能只看 document.visibilityState） */
+const panelRootEl = ref<HTMLElement | null>(null)
+
+/**
+ * 面板是否真实可见。
+ *
+ * document.visibilityState 对「Dock 被隐藏 / 被其他 Dock 顶掉 / 页签切走」全部返回 visible，
+ * 故必须叠加元素级判据，否则关闭面板后探测仍全天候轮询（审查报告 §P0-3）。
+ * checkVisibility 在 Electron 44（Chromium 新）可用；不可用时回退 isConnected + 祖先可见性探测。
+ */
+const panelVisible = ref(true)
+
+function detectPanelVisible(): boolean {
+  const el = panelRootEl.value
+  if (!el) return false
+  if (!el.isConnected) return false
+  const check = (el as HTMLElement & { checkVisibility?: (opts?: Record<string, unknown>) => boolean }).checkVisibility
+  if (typeof check === "function") {
+    try {
+      return check.call(el, { checkOpacity: false, checkVisibilityCSS: true })
+    } catch {
+      // 老内核不支持参数对象时退回无参调用
+      try { return check.call(el) } catch { /* 落到下方兜底 */ }
+    }
+  }
+  return el.getClientRects().length > 0
 }
+
+/** 视图是否在前台：文档可见 + 面板元素真实可见（独立窗口页签模式同样适用） */
+function isProbeActive(): boolean {
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") return false
+  return panelVisible.value
+}
+
+/** 根元素可见性观察：Dock/页签显隐（class 切换 display:none）会触发 intersection 变化 */
+let panelVisibilityObserver: IntersectionObserver | null = null
+function setupPanelVisibilityObserver() {
+  if (typeof IntersectionObserver === "undefined") return
+  panelVisibilityObserver = new IntersectionObserver((entries) => {
+    const visible = entries.some((e) => e.isIntersecting)
+    panelVisible.value = visible
+    gitProbe.setVisible(visible)
+  })
+  if (panelRootEl.value) panelVisibilityObserver.observe(panelRootEl.value)
+}
+
 
 const gitProbe = useGitProbe({
   manager: props.manager,
@@ -808,7 +857,6 @@ const gitProbe = useGitProbe({
   isPaused: () => gitOpsPaused.value,
   isActive: isProbeActive,
 })
-
 /** 手动「立即检测」：清空预筛基准强制真查一轮 */
 async function handleProbeNow() {
   probeWatchedCount.value = gitProbe.getWatchedCount()
@@ -846,6 +894,9 @@ onMounted(async () => {
   void loadRuleCheckPrefs()
   // 实时探测配置：必须在 start() 之前加载，否则会按默认值建立监听与定时器
   await loadProbeConfig()
+  // 可见性门控：先观察根元素再启动探测，避免首帧就被判定为「隐藏」而漏掉首轮
+  panelVisible.value = detectPanelVisible()
+  setupPanelVisibilityObserver()
   gitProbe.start()
   // 不自动选择分类、不预加载任何项目：等用户点选分类 TAB 后由 watch(activeCategory) 按需加载该分类。
   // 故此处无需首屏批量加载（原 200ms initTimer 已随之移除）。
@@ -853,6 +904,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener("click", closeIdeMenuOnOutside)
+  panelVisibilityObserver?.disconnect()
+  panelVisibilityObserver = null
   // 探测持有 fs.watch 句柄与定时器，必须随组件卸载释放（否则多窗口/反复开关面板会累积泄漏）
   gitProbe.destroy()
 })
@@ -950,7 +1003,11 @@ async function refreshStatsData() {
 /** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
 watch(currentView, async (view) => {
   if (view === "list") await loadCurrentCategoryList()
-  if (view === "stats") await ensureStatsDataLoaded()
+  if (view === "stats") {
+    // 统计视图的平台矩阵需要一致性校验数据：进入时按需跑一次（约 6 路并发 git remote -v）
+    void runAudit()
+    await ensureStatsDataLoaded()
+  }
   if (view === "log") {
     opLogsLoading.value = true
     try {

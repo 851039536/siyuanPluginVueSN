@@ -18,7 +18,11 @@ export class TimerRegistry {
 
   /** 注册一次性定时器，返回统一句柄（生命周期由本实例托管） */
   setTimeout(cb: () => void, ms: number): TimerHandle {
-    const handle = window.setTimeout(cb, ms)
+    // 触发时先摘除句柄：一次性定时器完成后不应继续留在集合里（长会话下 Set 会无界增长）
+    const handle = window.setTimeout(() => {
+      this.timers.delete(handle)
+      cb()
+    }, ms)
     this.timers.add(handle)
     return handle
   }

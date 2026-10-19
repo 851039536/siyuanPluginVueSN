@@ -3,7 +3,7 @@
 > 审查对象：`src/features/gitPush/`（262 个文件），同时交叉核对 `src/utils/vueAppHelper.ts`、`src/utils/timerRegistry.ts`、`src/index.ts` 与思源前端 `addDock / Custom / Tab` 生命周期。
 >
 > 审查方式：静态阅读（read/grep/glob）+ 思源前端源码（Gitee `siyuan-note/siyuan@master`）交叉验证。
-> **未执行**构建 / lint / 测试，**未修改**任何源码。
+> 审查阶段**未执行**构建 / lint / 测试，**未修改**任何源码；修复阶段见文末「§8 修复记录」。
 >
 > 结论口径：凡「只能由运行时确认」的条目均标注 **待运行时验证**，不与「已确认缺陷」混排。
 
@@ -334,3 +334,64 @@ watch(() => projects.value.map(...).join("|"), () => { void runAudit() }, { imme
 2. `GitExecutor.run()` 中 `execFile` 同步抛错导致信号量计数漏减的概率（静态阅读无法排除）。
 3. Windows 上 `SIGTERM` 对 git 子进程树的实际效果。
 4. P0-1/P0-2 的 CPU 幅度取决于项目数、磁盘类型、杀软/EDR；本报告给出的是**进程次数**，不是实测 CPU 百分比。
+
+---
+
+## 8. 修复记录（2026-10-19）
+
+按本文档 P0 → P1 → P2 顺序落地。验证：`pnpm typecheck` 通过、`pnpm test` 全绿（34 文件 / 621 用例，含新增回归用例）。
+`pnpm lint` / `pnpm build` 按仓库规范由用户执行。
+
+### 8.1 P0-1 窗口 focus 双路刷新风暴
+
+| 改动 | 文件 | 说明 |
+|---|---|---|
+| 删除每卡片 `window focus` 监听 | `components/ListView/WorkingTreePanel.vue` | 保留 `@pointerdown` 局部触发；窗口获焦统一由探测层负责 |
+| focus 合并窗口 + 在途轮询合并 | `composables/useGitProbe.ts` | `FOCUS_MIN_INTERVAL_MS = 2000`；`roundInFlight` 使并发触发只跑一轮 |
+| 探测轮加最小间隔节流 | `composables/useGitProbe.ts` | `loadStatus(..., { minIntervalMs: 2000 })`，与卡片自动刷新同口径 |
+| 自动触发去 `force` | `useRefreshOps.ts` / `cardServices.ts` / `ProjectCard.vue` | `handleRefreshWorkingTree(id, { force: false })` 让单飞生效；手动刷新仍 `force` |
+
+### 8.2 P0-2 进入页面的全量扫描风暴
+
+| 改动 | 文件 | 说明 |
+|---|---|---|
+| 预筛 HEAD 改读 `.git/HEAD` 文件 | `useGitProbe.ts` | 每轮每项目 **0 次** `rev-parse`；文件缺失/读取失败才回退查询 |
+| 建监听不再额外解析 HEAD | `useGitProbe.ts` | 2N → N 次 rev-parse；基线用 stat + 读文件建立（0 进程） |
+| gitdir 解析缓存 + 限流并发 | `useGitProbe.ts` / `GitPushManager.ts` | `getGitDirCached`（5 分钟 TTL）+ `poolProcess` 并发 6 |
+| 未展示项目首轮不查询 | `useGitProbe.ts` | 只建基线，避免「进入即对全部项目跑 3N 次 git」 |
+| `ensureWatch` 在途去重 | `useGitProbe.ts` | `start()` 与 `syncProjects()` 同时触发只跑一次 |
+| audit 改为进入统计视图 | `useRepoLinkAudit.ts` / `index.vue` | 去掉 `immediate`；`enabled = currentView === "stats"`；6 并发 + 卸载取消 |
+| Markdown 扫描缓存 | `useMarkdownFiles.ts` | 按目录 mtime 缓存，N 卡挂载不再 N 次同步扫盘 |
+
+### 8.3 P0-3 常驻轮询
+
+| 改动 | 文件 | 说明 |
+|---|---|---|
+| 退避推进与「是否真查」解耦 | `useGitProbe.ts` | 预筛判无变化同样翻倍，收敛到 `maxIntervalMs`；失败轮不推进 |
+| 面板真实可见性门控 | `index.vue` / `useGitProbe.ts` | `IntersectionObserver` + `checkVisibility()`；隐藏时不轮询，重新可见重置基准间隔 |
+| 5 分钟重建不再清 gitdir 缓存 | `useGitProbe.ts` | 去掉每 5 分钟 N 次额外 rev-parse |
+| `start()` 幂等 | `useGitProbe.ts` | 重复调用不重复注册 focus/blur 与重建链 |
+
+### 8.4 P0-4 / P1 生命周期与泄漏
+
+| 改动 | 文件 | 说明 |
+|---|---|---|
+| Dock 注册 `destroy` + `init` 幂等卸载 | `src/utils/vueAppHelper.ts` | 返回 `DockAppHandle`；`unmount()` 先 `app.unmount()` 再移除容器 |
+| manager 持有并卸载 Dock；关 SQLite；释放索引 | `GitPushManager.ts` | `destroy()` 依次卸载 Dock/Tab → executor → store（`LineStatsStore.close()` / `CommitIndex.dispose()`） |
+| `LineStatsStore.close()` | `managers/LineStatsStore.ts` | 关闭 `DatabaseSync`，避免重载累积句柄 |
+| `CommitIndex.dispose()` + 段上限淘汰 | `managers/CommitIndex.ts` | 落地 `INDEX_MAX_PROJECT_SEGMENTS`（按 `analyzedAt` 最旧淘汰内存段 + 磁盘文件） |
+| `GitExecutor` 销毁守卫 | `managers/GitExecutor.ts` | `destroyed` 后 `execGit`/`execGitStreaming` 直接拒绝，残留链无法再 spawn |
+| `TimerRegistry` 触发即摘除句柄 | `src/utils/timerRegistry.ts` | 修复长会话 Set 无界增长 |
+| audit 卸载取消 | `useRepoLinkAudit.ts` | `cancelled` 标记，卸载后不写回、不再发起 |
+| 卡片懒加载降峰 | `useCardData.ts` / `ProjectCard.vue` | 首载不再发 `ls-remote` / 200 条 `--shortstat`，改 LOG/TAG 面板首次可见时懒加载；失败 2 次进入 30s 冷却 |
+| `__gitPush` 挂载规范 | `features/gitPush/index.ts` / `src/index.ts` | 加入 `DESTROYABLE_KEYS`，去掉 `onunload` 特例与 `registerFeatures` 接收返回值 |
+
+### 8.5 新增回归用例
+
+- `useGitProbe.spec.ts`：预筛持续无变化时退避收敛到上限（空闲 0 进程）；未展示项目首轮不触发 `loadStatus`；`start()` 幂等只注册一次 focus/blur。
+- `CommitIndex.multiProject.spec.ts`：段数超 `INDEX_MAX_PROJECT_SEGMENTS` 时按 `analyzedAt` 淘汰最旧，且内存段/磁盘文件同步清理。
+
+### 8.6 仍建议真机复核
+
+修复后仍建议按 §6 的三步测量复测：重点确认「关闭 Dock 后 git.exe 不再周期性出现」「从编辑器切回时不再出现 N+M 次突发」「反复开关 Tab 后 `.git-push-panel` 计数不增长」。
+若首次进入仍有可感知峰值，属剩余的 N 次 gitdir 解析（首次冷缓存），可在设置中关闭「文件监听」或等待 5 分钟缓存生效后观察差异。

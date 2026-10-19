@@ -40,17 +40,29 @@ export interface DockAppOptions {
   extraProps?: Record<string, any>
 }
 
+/** Dock 面板实例句柄（供 manager 在插件卸载时主动卸载；思源 destroy 之外的第二条保险） */
+export interface DockAppHandle {
+  /** 卸载 Vue app 并移除容器（幂等） */
+  unmount: () => void
+}
+
 /**
  * 创建并注册一个基于 Vue 组件的 Dock 侧边栏面板
  *
  * 消除 resourceManager / rssReader / wordQuery / unitConverter / statistics
  * 中重复的 container + createApp + mount + appendChild 模式。
+ *
+ * ⚠️ 生命周期必须显式卸载（勿回退为「交给 GC」）：
+ *   - 思源 `addDock` 的 `destroy` 回调是 Custom 被移除时唯一的通知点，Dock 隐藏不会触发；
+ *   - Vue 的 `onUnmounted` 不会被「DOM 从文档树移除」自动触发，而探测器/定时器/
+ *     document 监听会钉住整棵组件树，DOM 移除后不会回收（详见 docs/gitPush-memory-cpu-review.md）。
+ *   故这里：init 幂等（重建先卸载旧实例）+ 注册 destroy + 返回卸载句柄。
  */
 export function createVueDockApp(
   plugin: Plugin,
   component: Component,
   options: DockAppOptions,
-): void {
+): DockAppHandle {
   const {
     position = "RightTop",
     width = 380,
@@ -60,6 +72,21 @@ export function createVueDockApp(
     i18n,
     extraProps = {},
   } = options
+
+  let app: VueApp | null = null
+  let container: HTMLElement | null = null
+
+  /** 卸载旧实例（幂等）：先 unmount 触发组件 onUnmounted 清理副作用，再移除容器 */
+  const unmount = () => {
+    if (app) {
+      app.unmount()
+      app = null
+    }
+    if (container) {
+      container.remove()
+      container = null
+    }
+  }
 
   plugin.addDock({
     config: {
@@ -75,13 +102,15 @@ export function createVueDockApp(
     data: {},
     type,
     init: function (this: { element?: Element }) {
-      const container = document.createElement("div")
+      // 布局重建/重复 init 时先卸载旧实例，避免定时器、fs.watch、window 监听叠加
+      unmount()
+      const nextContainer = document.createElement("div")
       // 全局基准字号类：index.scss 中 .vp-dock-root 统一设为 $font-size-xs(12px)
-      container.classList.add("vp-dock-root")
-      container.style.height = "100%"
-      container.style.overflow = "hidden"
+      nextContainer.classList.add("vp-dock-root")
+      nextContainer.style.height = "100%"
+      nextContainer.style.overflow = "hidden"
 
-      const app = createApp({
+      const nextApp = createApp({
         setup() {
           return () => h(component as any, {
             // i18n 未传时不传该 prop，避免空对象以 attr 形式落到组件根元素
@@ -92,12 +121,16 @@ export function createVueDockApp(
         },
       })
 
-      app.mount(container)
+      nextApp.mount(nextContainer)
       // addDock 的 init 回调通过 this 指向 Dock 模型，this.element 为 Dock 容器 DOM
-      this.element?.appendChild(container)
-      // Dock 的 Vue 实例生命周期交给思源 dock 管理，卸载时随 dock DOM 移除后被 GC
+      this.element?.appendChild(nextContainer)
+      app = nextApp
+      container = nextContainer
     },
+    destroy: unmount,
   })
+
+  return { unmount }
 }
 
 // ============================================================

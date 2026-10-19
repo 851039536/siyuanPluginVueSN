@@ -29,6 +29,13 @@ export class GitExecutor {
   private networkWaitQueue: WaitQueueItem[] = []
   /** 记录当前正在执行的子进程引用（用于取消操作时 kill） */
   private activeProcesses: Set<ChildProcess> = new Set()
+  /**
+   * 已销毁标记。
+   *
+   * destroy() 之后必须拒绝新命令：Dock 面板泄漏期间（修复前）或异步链在卸载后才恢复，
+   * 仍可能调用 execGit；此时旧的子进程会被 kill 后又无限制地 spawn 新 git，CPU 无法归零。
+   */
+  private destroyed = false
   /** 项目 push/pull 的 AbortController 数组（同项目多操作不覆盖） */
   private abortControllers: Map<string, AbortController[]> = new Map()
   /** execFile maxBuffer 10MB（防止全量 diff / 大仓库 status 超 Node 默认 1MB 报错） */
@@ -177,6 +184,7 @@ export class GitExecutor {
       allowExitCodes?: number[]
     },
   ): Promise<string> {
+    if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
     const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
     const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : GitExecutor.DEFAULT_TIMEOUT_MS)
 
@@ -312,6 +320,7 @@ export class GitExecutor {
     input: string | Buffer,
     options?: { timeoutMs?: number, env?: Record<string, string> },
   ): Promise<Buffer> {
+    if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
     const timeoutMs = options?.timeoutMs ?? 600000
     return new Promise<Buffer>((resolve, reject) => {
       let killed = false
@@ -391,6 +400,7 @@ export class GitExecutor {
   }
 
   destroy() {
+    this.destroyed = true
     // 取消所有进行中的操作
     for (const list of this.abortControllers.values()) {
       for (const ac of list) { ac.abort() }

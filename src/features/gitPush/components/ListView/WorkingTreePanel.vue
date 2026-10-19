@@ -267,7 +267,6 @@ import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import {
   computed,
   nextTick,
-  onMounted,
   onUnmounted,
   ref,
   toRef,
@@ -366,13 +365,13 @@ watch(() => props.refreshingWorkingTree, (refreshing) => {
 
 /**
  * 自动同步工作区状态：外部编辑器改完文件后，面板不再停留在修改前的快照。
- * 两个触发源共用本处理器——① 窗口重新获得焦点（从编辑器/其他应用切回）；
- * ② 面板内按下指针（双窗口并列时不会切换窗口焦点）。git 操作在途或距上次刷新不足
- * 最小间隔时直接跳过，避免与面板内操作竞争子进程。
  *
- * 已有待发定时器时不再重置：本处理器同时挂在 pointerdown 与 window focus 上，
- * 若每次触发都刷新 800ms 窗口，用户在面板内的连续点击（每次 pointerdown 都会触发）
- * 会让刷新被无限推迟 —— 与「自动同步」意图相反。
+ * ⚠️ 只由 `@pointerdown` 触发（双窗口并列、点击面板不切焦点时使用）。
+ * 窗口获焦的刷新收敛到探测层统一入口（useGitProbe.handleFocus → 全项目 refresh + 标脏）：
+ * 曾经这里每张卡片各挂一个 window focus 监听，N 张卡获焦即并 N 路 force 查询，
+ * 与探测层全量轮询叠加成 2N 量级 git 进程风暴（见 docs/gitPush-memory-cpu-review.md §P0-1）。
+ *
+ * 已有待发定时器时不再重置：用户连续点击（每次 pointerdown 都会触发）会让刷新被无限推迟。
  */
 function handleAutoRefreshTrigger() {
   if (autoRefreshTimer !== null) return
@@ -386,9 +385,7 @@ function handleAutoRefreshTrigger() {
   }, AUTO_REFRESH_DEBOUNCE_MS)
 }
 
-onMounted(() => window.addEventListener("focus", handleAutoRefreshTrigger))
 onUnmounted(() => {
-  window.removeEventListener("focus", handleAutoRefreshTrigger)
   autoRefreshTimers.clearAll()
 })
 

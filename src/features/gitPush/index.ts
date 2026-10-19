@@ -2,13 +2,18 @@
 import type { Plugin } from "siyuan"
 import { GitPushManager } from "./types"
 
-export function registerGitPush(plugin: Plugin) {
+/**
+ * 注册 gitPush 功能。
+ *
+ * 实例在 register 内部自挂载到 `plugin.__gitPush`（由 `DESTROYABLE_KEYS` 统一 destroy），
+ * 不向 `registerFeatures()` 返回实例——遵循 AGENTS.md「实例挂载与销毁模式」的单一范式。
+ */
+export function registerGitPush(plugin: Plugin): void {
   plugin.addIcons(
     `<symbol id="iconGitPush" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M12 7v5"/><path d="m9 8-3 3 3 3"/><path d="m15 8 3 3-3 3"/><path d="M7 16a5 5 0 0 0 10 0"/></symbol>`,
   )
 
   const manager = new GitPushManager(plugin)
-  manager.init()
+  void manager.init()
   ;(plugin as any).__gitPush = manager
-  return manager
 }

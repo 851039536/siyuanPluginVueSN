@@ -54,7 +54,17 @@ const MD_VARIANT_MAP: Record<string, MdFileVariant> = {
 }
 
 /**
- * 扫描指定目录下的所有 Markdown 文件
+ * Markdown 扫描结果缓存（dir → 目录 mtime + 结果）。
+ *
+ * 每张 ProjectCard 挂载都会调一次 scanMarkdownFiles；N 张卡 = N 次同步 readdir + 逐文件 stat，
+ * 全部发生在挂载主线程上。缓存后同一目录只有首次扫描付这份 IO，目录 mtime 变化（新增/删除 .md）时自动失效。
+ * 说明：文件内容/size 变化不改目录 mtime，但 badge 只显示「文件存在 + 大小是否超大」，
+ * 对 size 的精确实时性要求很低（真正读取内容在弹窗打开时由 readMarkdownFile 重新读盘）。
+ */
+const scanCache = new Map<string, { dirMtimeMs: number, entries: MdFileEntry[] }>()
+
+/**
+ * 扫描指定目录下的所有 Markdown 文件（带目录 mtime 缓存）
  * @param dir 项目根目录绝对路径
  * @returns Markdown 文件元数据数组（按约定排序），fs 不可用时返回空数组
  */
@@ -65,7 +75,29 @@ export function scanMarkdownFiles(dir: string): MdFileEntry[] {
 
   try {
     if (!fs.existsSync(dir)) return []
+    const dirMtimeMs = fs.statSync(dir).mtimeMs
+    const cached = scanCache.get(dir)
+    if (cached && cached.dirMtimeMs === dirMtimeMs) return cached.entries
+    const entries = scanMarkdownFilesUncached(dir, fs, path)
+    scanCache.set(dir, { dirMtimeMs, entries })
+    return entries
+  } catch {
+    return []
+  }
+}
 
+/** 清空扫描缓存（项目删除/排障用；缓存本身按目录 mtime 自失效，通常无需调用） */
+export function clearMarkdownScanCache(): void {
+  scanCache.clear()
+}
+
+/** 实际扫描实现（无缓存） */
+function scanMarkdownFilesUncached(
+  dir: string,
+  fs: { readdirSync: typeof import("node:fs").readdirSync, statSync: typeof import("node:fs").statSync },
+  path: { join: (...parts: string[]) => string },
+): MdFileEntry[] {
+  try {
     return fs.readdirSync(dir, { withFileTypes: true })
       .filter(e => e.isFile() && e.name.toLowerCase().endsWith(".md"))
       .map((e) => {

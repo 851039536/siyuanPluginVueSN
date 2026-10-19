@@ -25,7 +25,7 @@ import type {
   ProjectIndexMeta,
 } from "../types/indexCache"
 import type { IndexFileIO } from "./indexIo"
-import { INDEX_META_VERSION } from "../types/indexCache"
+import { INDEX_MAX_PROJECT_SEGMENTS, INDEX_META_VERSION } from "../types/indexCache"
 import {
   FsIndexIO,
   INDEX_FILE,
@@ -552,13 +552,68 @@ export class CommitIndex {
     this.available = false
   }
 
-  /** 写入/更新单项目元数据（保持数组顺序稳定，便于调试比对） */
+  /**
+   * 释放内存段（插件卸载时由 manager 调用，不删磁盘文件）。
+   *
+   * segments / loaded / fileLinesByProject 只增不减（无 LRU），长会话中按「分析过的
+   * 项目数 × 提交数」常驻；卸载时不释放会让旧 manager 的整段内存随重载累积。
+   * 磁盘索引保留，下次启动仍可复用（invalidate 才是「删盘」语义，勿混用）。
+   */
+  dispose(): void {
+    this.segments.clear()
+    this.loaded.clear()
+    this.fileLinesByProject.clear()
+    this.writeChains.clear()
+  }
+
+  /** 写入/更新单项目元数据（保持数组顺序稳定，便于调试比对）；超出段上限时淘汰最旧项目 */
   private setProjectMeta(meta: ProjectIndexMeta): void {
     const list = this.meta.projects.filter((p) => p.projectId !== meta.projectId)
     list.push(meta)
     this.meta = {
       ...this.meta,
       projects: list,
+    }
+    this.evictOldestSegments()
+  }
+
+  /**
+   * 淘汰「超出段上限、且 analyzedAt 最旧」的项目（内存段 + 磁盘文件 + 元数据）。
+   *
+   * `INDEX_MAX_PROJECT_SEGMENTS` 此前只有定义、生产代码从未使用，导致：
+   *   - 索引目录随分析过的项目数无界增长；
+   *   - `segments` / `fileLinesByProject` 常驻内存只增不减（审查报告 §L2）。
+   * 只淘汰当前**未加载**的段即可满足内存上限；磁盘淘汰按最旧 analyzedAt 删，避免误删刚分析的项目。
+   * 注意：淘汰是「删盘」语义（下次分析该项目需重建索引），与 invalidate 相同口径。
+   * 淘汰失败只告警：索引是加速层，不能因清理失败影响主流程。
+   */
+  private evictOldestSegments(): void {
+    const max = INDEX_MAX_PROJECT_SEGMENTS
+    if (this.meta.projects.length <= max) return
+    const sorted = [...this.meta.projects].sort((a, b) => parseIsoMs(a.analyzedAt) - parseIsoMs(b.analyzedAt))
+    const evict = sorted.slice(0, this.meta.projects.length - max)
+    if (evict.length === 0) return
+    const evictIds = new Set(evict.map((p) => p.projectId))
+    for (const id of evictIds) {
+      this.segments.delete(id)
+      this.loaded.delete(id)
+      this.fileLinesByProject.delete(id)
+    }
+    this.meta = {
+      ...this.meta,
+      projects: this.meta.projects.filter((p) => !evictIds.has(p.projectId)),
+    }
+    // 磁盘清理串行排队（与项目写操作互斥），失败只告警
+    for (const id of evictIds) {
+      void this.withProjectLock(id, async () => {
+        await Promise.all([
+          this.io.remove(projectIndexFile("commits", id)),
+          this.io.remove(projectIndexFile("files", id)),
+          this.io.remove(projectIndexFile("fileLines", id)),
+        ])
+      }).catch((e) => {
+        console.warn("[gitPush] 淘汰旧索引段失败（不影响本次查询）", e)
+      })
     }
   }
 

@@ -46,7 +46,8 @@
           @load-diff="loadDiff"
           @clear-output="ops.clearOutput(project.id)"
           @discard-file="(file: string, staged: boolean, status: string) => ops.handleDiscard(project.id, file, staged, status)"
-          @refresh-working-tree="ops.handleRefreshWorkingTree(project.id, { force: false })"
+          @refresh-working-tree="ops.handleRefreshWorkingTree(project.id)"
+          @auto-refresh-working-tree="ops.handleRefreshWorkingTree(project.id, { force: false })"
         />
       </template>
 

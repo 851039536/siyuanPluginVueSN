@@ -76,16 +76,24 @@ export function createVueDockApp(
   let app: VueApp | null = null
   let container: HTMLElement | null = null
 
-  /** 卸载旧实例（幂等）：先 unmount 触发组件 onUnmounted 清理副作用，再移除容器 */
+  /**
+   * 卸载旧实例（幂等）：先 unmount 触发组件 onUnmounted 清理副作用，再移除容器。
+   * ⚠️ 先把引用置空再 unmount：组件的清理钩子若抛错（异步卸载/第三方 cleanup 异常），
+   * 状态也必须已复位，否则下一次 Dock 重建会因 app 非空而重复 unmount 或直接中断 init。
+   */
   const unmount = () => {
-    if (app) {
-      app.unmount()
-      app = null
+    const currentApp = app
+    const currentContainer = container
+    app = null
+    container = null
+    if (currentApp) {
+      try {
+        currentApp.unmount()
+      } catch (e) {
+        console.error("[vueAppHelper] Dock 组件卸载失败（已忽略，继续重建）:", e)
+      }
     }
-    if (container) {
-      container.remove()
-      container = null
-    }
+    currentContainer?.remove()
   }
 
   plugin.addDock({
@@ -121,9 +129,18 @@ export function createVueDockApp(
         },
       })
 
-      nextApp.mount(nextContainer)
-      // addDock 的 init 回调通过 this 指向 Dock 模型，this.element 为 Dock 容器 DOM
-      this.element?.appendChild(nextContainer)
+      try {
+        nextApp.mount(nextContainer)
+        // addDock 的 init 回调通过 this 指向 Dock 模型，this.element 为 Dock 容器 DOM
+        this.element?.appendChild(nextContainer)
+      } catch (e) {
+        // 组件 setup 抛错时 app/container 尚未登记，这里必须自行回收，
+        // 否则已挂载的 Vue 树（定时器/监听器）永远无人 unmount
+        try { nextApp.unmount() } catch { /* 忽略二次异常 */ }
+        nextContainer.remove()
+        console.error("[vueAppHelper] Dock 面板挂载失败:", e)
+        return
+      }
       app = nextApp
       container = nextContainer
     },

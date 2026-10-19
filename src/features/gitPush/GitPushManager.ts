@@ -62,6 +62,7 @@ import {
 } from "./managers/lineScan"
 import type { LineStatsStore, ProjectStatsRecord } from "./managers/LineStatsStore"
 import { openLineStatsStore, TIMES_PROBED_MARK } from "./managers/LineStatsStore"
+import { clearMarkdownScanCacheFor } from "./composables/useMarkdownFiles"
 import { ProjectStore } from "./managers/ProjectStore"
 import { ProjectWriteLock } from "./managers/ProjectWriteLock"
 import { RemoteOps } from "./managers/RemoteOps"
@@ -123,13 +124,23 @@ export class GitPushManager {
    */
   private dockHandle: DockAppHandle | null = null
   /**
-   * gitdir 解析缓存（projectPath → { dir, at }）。
+   * gitdir 解析缓存（projectPath → { dir }）。
    *
    * 探测层为每个项目重建 `.git` 监听时要付一次 `rev-parse --absolute-git-dir`（~250ms/进程）。
    * 缓存到 manager 后，独立页签/浮动窗口重开时不再重复付这份进程成本；
    * 5 分钟 TTL 与探测层周期性重建同口径，项目路径变更时按 path 键自然失效。
    */
   private gitDirCache = new Map<string, { dir: string, at: number }>()
+  /** 同 path 的解析在途 Promise（并发调用共享一次 rev-parse，避免重建时 N 路并发进程） */
+  private gitDirPending = new Map<string, Promise<string>>()
+  /**
+   * 已销毁标记。
+   *
+   * destroy() 之后必须阻止「异步链路恢复后再初始化」：getIndex/getLineStatsStore 的
+   * await 期间若发生卸载，旧实现会把新建的实例重新写回字段（commitIndex/lineStatsStoreInit），
+   * 于是刚释放的内存与 SQLite 句柄被重新创建且再无人关闭。
+   */
+  private destroyed = false
   /**
    * 本地提交索引（延迟构造：目录解析需 await 工作空间路径，而构造函数不能是 async）。
    * null = 尚未初始化或索引不可用（此时全部统计路径回退到直接跑 git）。
@@ -171,6 +182,7 @@ export class GitPushManager {
    * 且 `setIndexEnabled(true)` / `clearIndex()` 都无法恢复。清空后下次调用会重试。
    */
   async getIndex(): Promise<CommitIndex | null> {
+    if (this.destroyed) return null
     if (!(await this.storage.indexEnabled.loadOrDefault())) return null
     if (this.indexInit) return this.indexInit
     const init = (async () => {
@@ -189,6 +201,11 @@ export class GitPushManager {
     })()
     this.indexInit = init
     const index = await init
+    // 卸载竞态：await 期间已 destroy → 不能把新实例写回字段，直接丢弃并释放
+    if (this.destroyed) {
+      index?.dispose()
+      return null
+    }
     // 初始化失败（null）不保留缓存，允许后续调用重新尝试；成功则保持缓存复用
     if (!index && this.indexInit === init) this.indexInit = null
     this.commitIndex = index
@@ -202,6 +219,7 @@ export class GitPushManager {
    * （启动期工作区路径未就绪）不应把 `lineStatsStoreInit` 永久钉死为 null。
    */
   async getLineStatsStore(): Promise<LineStatsStore | null> {
+    if (this.destroyed) return null
     if (this.lineStatsStoreInit) return this.lineStatsStoreInit
     const init = (async () => {
       try {
@@ -217,6 +235,11 @@ export class GitPushManager {
     })()
     this.lineStatsStoreInit = init
     const store = await init
+    // 卸载竞态：await 期间已 destroy → 立即关闭新连接，且不写回缓存（否则句柄永不释放）
+    if (this.destroyed) {
+      try { store?.close() } catch { /* 关闭失败不影响卸载 */ }
+      return null
+    }
     // 失败不保留缓存，允许后续调用重新尝试；成功则保持复用
     if (!store && this.lineStatsStoreInit === init) this.lineStatsStoreInit = null
     return store
@@ -498,10 +521,14 @@ export class GitPushManager {
   }
 
   async init() {
+    if (this.destroyed) return
     await this.storage.init()
     await this.executor.loadGitConcurrency()
     await this.executor.loadNetworkTimeout()
     await this.remoteOps.loadPushBranchMode()
+    // 卸载竞态：await 期间插件可能已被卸载（onunload → destroy）。此时再挂 Dock 会创建一个
+    // 无人再销毁的 Vue app + 探测链，正是本次要消除的泄漏类型。
+    if (this.destroyed) return
     const i18n = this.getPanelI18n()
 
     this.dockHandle = createVueDockApp(this.plugin, GitPushPanel, {
@@ -525,6 +552,8 @@ export class GitPushManager {
    * 旧探测链继续 spawn git（详见 docs/gitPush-memory-cpu-review.md §L1/L2）。
    */
   destroy() {
+    // 先置标记：阻断 init/getIndex/getLineStatsStore 的异步恢复路径（见字段注释）
+    this.destroyed = true
     this.dockHandle?.unmount()
     this.dockHandle = null
     this.unmountTabPanel()
@@ -543,6 +572,7 @@ export class GitPushManager {
     this.commitIndex = null
     this.indexInit = null
     this.gitDirCache.clear()
+    this.gitDirPending.clear()
   }
 
   // ── 独立窗口承载（addTab + openTab + openWindow 官方 API）──
@@ -698,10 +728,34 @@ export class GitPushManager {
     return this.store.addProject(name, path, categoryId, tags, extras)
   }
 
-  async removeProject(id: string): Promise<void> { return this.store.removeProject(id) }
-
+  async removeProject(id: string): Promise<void> {
+    // 删除项目后清掉它的 gitdir 缓存与 Markdown 扫描缓存，避免已删项目条目常驻内存
+    const project = await this.store.getProjectById(id)
+    const paths = project ? [project.path, ...(project.localPaths || [])] : []
+    await this.store.removeProject(id)
+    for (const p of paths) {
+      this.invalidateGitDirCache(p)
+      clearMarkdownScanCacheFor(p)
+    }
+  }
   async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
-    return this.store.updateProjectMeta(id, patch)
+    // 路径类字段变更后必须失效 gitdir 缓存：否则探测层会继续监听旧目录（最长 5 分钟 TTL）
+    const pathFieldsChanged = patch.path !== undefined || patch.localPaths !== undefined
+    const before = pathFieldsChanged ? await this.store.getProjectById(id) : undefined
+    const updated = await this.store.updateProjectMeta(id, patch)
+    if (pathFieldsChanged) {
+      const paths = new Set<string>([
+        ...(before ? [before.path, ...(before.localPaths || [])] : []),
+        ...(updated ? [updated.path, ...(updated.localPaths || [])] : []),
+        ...(patch.path ? [patch.path] : []),
+        ...(patch.localPaths || []),
+      ])
+      for (const p of paths) {
+        this.invalidateGitDirCache(p)
+        clearMarkdownScanCacheFor(p)
+      }
+    }
+    return updated
   }
 
   async toggleStar(id: string): Promise<GitProject | null> { return this.store.toggleStar(id) }
@@ -884,14 +938,27 @@ export class GitPushManager {
    * 单次 `rev-parse --absolute-git-dir` ≈ 250ms 进程费；独立页签/浮动窗口重开时
    * 探测层会为全部项目重建监听，不缓存就每次重付 N 次进程。
    * 5 分钟与探测层的周期性重建同口径；失败结果不缓存（允许重试）。
+   * 同 path 的在途请求共享同一 Promise：重建时 N 路并发调用只产生 1 次进程。
    */
   async getGitDirCached(projectPath: string): Promise<string> {
+    if (this.destroyed) return ""
     const GIT_DIR_CACHE_TTL_MS = 5 * 60 * 1000
     const hit = this.gitDirCache.get(projectPath)
     if (hit && Date.now() - hit.at < GIT_DIR_CACHE_TTL_MS) return hit.dir
-    const dir = await this.worktreeOps.getGitDir(projectPath)
-    if (dir) this.gitDirCache.set(projectPath, { dir, at: Date.now() })
-    return dir
+    const pending = this.gitDirPending.get(projectPath)
+    if (pending) return pending
+    const task = (async () => {
+      try {
+        const dir = await this.worktreeOps.getGitDir(projectPath)
+        // 卸载竞态：destroy 期间的解析结果不再写入缓存
+        if (dir && !this.destroyed) this.gitDirCache.set(projectPath, { dir, at: Date.now() })
+        return dir
+      } finally {
+        this.gitDirPending.delete(projectPath)
+      }
+    })()
+    this.gitDirPending.set(projectPath, task)
+    return task
   }
 
   /** 失效 gitdir 缓存（项目路径变更/删除后调用，避免监听落到旧目录） */

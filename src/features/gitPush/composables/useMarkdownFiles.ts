@@ -53,6 +53,9 @@ const MD_VARIANT_MAP: Record<string, MdFileVariant> = {
   "codebuddy.md": "codebuddy",
 }
 
+/** 扫描缓存条数上限（项目数通常几十，超限按插入顺序淘汰最旧，防止已删项目条目常驻） */
+const SCAN_CACHE_MAX = 64
+
 /**
  * Markdown 扫描结果缓存（dir → 目录 mtime + 结果）。
  *
@@ -62,6 +65,18 @@ const MD_VARIANT_MAP: Record<string, MdFileVariant> = {
  * 对 size 的精确实时性要求很低（真正读取内容在弹窗打开时由 readMarkdownFile 重新读盘）。
  */
 const scanCache = new Map<string, { dirMtimeMs: number, entries: MdFileEntry[] }>()
+
+/** 写入缓存并按上限淘汰最旧条目 */
+function setScanCache(dir: string, value: { dirMtimeMs: number, entries: MdFileEntry[] }): void {
+  // 先删再插：保证 Map 的插入顺序 = 最近的写入顺序（便于按最旧淘汰）
+  scanCache.delete(dir)
+  scanCache.set(dir, value)
+  while (scanCache.size > SCAN_CACHE_MAX) {
+    const oldest = scanCache.keys().next().value
+    if (oldest === undefined) break
+    scanCache.delete(oldest)
+  }
+}
 
 /**
  * 扫描指定目录下的所有 Markdown 文件（带目录 mtime 缓存）
@@ -79,16 +94,21 @@ export function scanMarkdownFiles(dir: string): MdFileEntry[] {
     const cached = scanCache.get(dir)
     if (cached && cached.dirMtimeMs === dirMtimeMs) return cached.entries
     const entries = scanMarkdownFilesUncached(dir, fs, path)
-    scanCache.set(dir, { dirMtimeMs, entries })
+    setScanCache(dir, { dirMtimeMs, entries })
     return entries
   } catch {
     return []
   }
 }
 
-/** 清空扫描缓存（项目删除/排障用；缓存本身按目录 mtime 自失效，通常无需调用） */
+/** 清空扫描缓存（项目删除/卸载时调用；缓存本身按目录 mtime 自失效） */
 export function clearMarkdownScanCache(): void {
   scanCache.clear()
+}
+
+/** 删除单个目录的缓存（项目删除/路径变更后调用，避免已删项目条目常驻） */
+export function clearMarkdownScanCacheFor(dir: string): void {
+  scanCache.delete(dir)
 }
 
 /** 实际扫描实现（无缓存） */

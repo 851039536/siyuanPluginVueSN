@@ -306,8 +306,10 @@ const emit = defineEmits<{
   loadDiff: [file: string, staged: boolean]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]
-  /** 单独刷新工作区 */
+  /** 手动刷新工作区（顶部刷新按钮，force 语义：必须重查，不复用在飞结果） */
   refreshWorkingTree: []
+  /** 自动刷新工作区（pointerdown 触发，可复用调度器在飞单飞结果） */
+  autoRefreshWorkingTree: []
 }>()
 
 /** 已写入的 Conventional Commit 前缀：type + 可选 scope + 可选 `!` 破坏性标记 */
@@ -346,7 +348,7 @@ useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
 
 // ── 状态自动同步（避免停留在外部修改前的旧快照）──
 
-/** 自动刷新防抖时长：合并「窗口获焦 + 指针按下」的连续触发 */
+/** 自动刷新防抖时长：合并「指针按下」的连续触发 */
 const AUTO_REFRESH_DEBOUNCE_MS = 800
 /** 自动刷新最小间隔：距上次刷新过近时跳过——面板内操作本身已刷新，无需重复起 git 子进程。
  *  这是**自动触发**的 UI 限流（手动刷新按钮不受限）；数据层同名查询去重由调度器单飞承担 */
@@ -381,7 +383,9 @@ function handleAutoRefreshTrigger() {
     autoRefreshTimer = null
     // 防抖期间可能已有操作触发过刷新，真正发出前再判一次
     if (props.gitOpLoading || props.refreshingWorkingTree) return
-    emit("refreshWorkingTree")
+    // 自动路径单独事件：让父层以 force:false 复用调度器单飞，
+    // 与顶部「刷新」按钮（force:true，必须重查）区分开
+    emit("autoRefreshWorkingTree")
   }, AUTO_REFRESH_DEBOUNCE_MS)
 }
 

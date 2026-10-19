@@ -99,6 +99,10 @@ export class CommitIndex {
   private available = true
   /** 每项目的写队列尾（把 ensureLoaded→写入→persistMeta 串成链，消除并发写互相覆盖） */
   private writeChains = new Map<string, Promise<unknown>>()
+  /** 在途的段淘汰任务（供 awaitEvictions 等待结算） */
+  private evictionTasks = new Set<Promise<void>>()
+  /** 已释放标记（dispose 后拒绝后续写入，防止排队任务把内存重新填满） */
+  private disposed = false
   /** 元数据版本不符（构造期无法做异步 IO，故延后到首次读写前清盘） */
   private needsVersionReset = false
   /** 版本不符时待清理的项目 id（构造期从旧 meta 留存，因 this.meta.projects 已被清空） */
@@ -381,6 +385,8 @@ export class CommitIndex {
   ): Promise<void> {
     if (!this.available) throw new IndexUnavailableError("索引不可用")
     return this.withProjectLock(projectId, async () => {
+      // 排队期间可能已 dispose（插件卸载）：此时写入会把内存重新填满并落盘
+      this.ensureWritable()
       await this.ensureVersionReset()
       await this.ensureLoaded(projectId)
       const segment = this.segments.get(projectId)!
@@ -449,6 +455,7 @@ export class CommitIndex {
   async setFileLines(projectId: string, rootHash: string, lines: Map<string, number | null>): Promise<void> {
     if (!this.available) throw new IndexUnavailableError("索引不可用")
     return this.withProjectLock(projectId, async () => {
+      this.ensureWritable()
       this.fileLinesByProject.set(projectId, {
         rootHash,
         lines,
@@ -560,10 +567,21 @@ export class CommitIndex {
    * 磁盘索引保留，下次启动仍可复用（invalidate 才是「删盘」语义，勿混用）。
    */
   dispose(): void {
+    // 置 disposed 后，排队的 append/setFileLines 在入口即拒绝（见 ensureWritable），
+    // 不会在 dispose 之后把 segments/meta 重新写回（否则等于「释放后又长回来」）
+    this.disposed = true
     this.segments.clear()
     this.loaded.clear()
     this.fileLinesByProject.clear()
-    this.writeChains.clear()
+    this.meta = {
+      version: INDEX_META_VERSION,
+      projects: [],
+    }
+  }
+
+  /** 写入前置检查：已释放（卸载）后拒绝一切写操作 */
+  private ensureWritable(): void {
+    if (this.disposed) throw new IndexUnavailableError("索引已释放")
   }
 
   /** 写入/更新单项目元数据（保持数组顺序稳定，便于调试比对）；超出段上限时淘汰最旧项目 */
@@ -578,42 +596,58 @@ export class CommitIndex {
   }
 
   /**
-   * 淘汰「超出段上限、且 analyzedAt 最旧」的项目（内存段 + 磁盘文件 + 元数据）。
+   * 淘汰「超出段上限、analyzedAt 最旧」的项目（内存段 + 磁盘文件 + 元数据）。
    *
    * `INDEX_MAX_PROJECT_SEGMENTS` 此前只有定义、生产代码从未使用，导致：
    *   - 索引目录随分析过的项目数无界增长；
    *   - `segments` / `fileLinesByProject` 常驻内存只增不减（审查报告 §L2）。
-   * 只淘汰当前**未加载**的段即可满足内存上限；磁盘淘汰按最旧 analyzedAt 删，避免误删刚分析的项目。
-   * 注意：淘汰是「删盘」语义（下次分析该项目需重建索引），与 invalidate 相同口径。
-   * 淘汰失败只告警：索引是加速层，不能因清理失败影响主流程。
+   *
+   * ⚠️ 淘汰必须整体在「该项目写队列」内完成：原实现在 setProjectMeta() 里**同步**删 meta，
+   * 磁盘删除却排队到后续任务——若期间该项目有新 append 排队，append 会把已删项目重新写回
+   * meta/磁盘，随后排队的删除又把它删掉，造成「刚写入即丢失」。
+   * 现在：先按最旧排序选出候选，逐个进锁执行「内存 + meta + 磁盘」三段，全程与 append 互斥。
+   *
+   * 说明：候选**不按 loaded 过滤**——本会话分析过的项目都在 loaded 中，按 loaded 过滤会让
+   * 淘汰永不触发（上限形同虚设）。超限才发生、且只影响最旧项目，重建成本可接受。
    */
   private evictOldestSegments(): void {
     const max = INDEX_MAX_PROJECT_SEGMENTS
     if (this.meta.projects.length <= max) return
-    const sorted = [...this.meta.projects].sort((a, b) => parseIsoMs(a.analyzedAt) - parseIsoMs(b.analyzedAt))
-    const evict = sorted.slice(0, this.meta.projects.length - max)
-    if (evict.length === 0) return
-    const evictIds = new Set(evict.map((p) => p.projectId))
-    for (const id of evictIds) {
-      this.segments.delete(id)
-      this.loaded.delete(id)
-      this.fileLinesByProject.delete(id)
-    }
-    this.meta = {
-      ...this.meta,
-      projects: this.meta.projects.filter((p) => !evictIds.has(p.projectId)),
-    }
-    // 磁盘清理串行排队（与项目写操作互斥），失败只告警
-    for (const id of evictIds) {
-      void this.withProjectLock(id, async () => {
+    const overflow = this.meta.projects.length - max
+    const candidates = [...this.meta.projects]
+      .sort((a, b) => parseIsoMs(a.analyzedAt) - parseIsoMs(b.analyzedAt))
+      .slice(0, overflow)
+    if (candidates.length === 0) return
+    for (const candidate of candidates) {
+      const id = candidate.projectId
+      const task = this.withProjectLock(id, async () => {
+        this.segments.delete(id)
+        this.loaded.delete(id)
+        this.fileLinesByProject.delete(id)
+        this.meta = {
+          ...this.meta,
+          projects: this.meta.projects.filter((p) => p.projectId !== id),
+        }
         await Promise.all([
           this.io.remove(projectIndexFile("commits", id)),
           this.io.remove(projectIndexFile("files", id)),
           this.io.remove(projectIndexFile("fileLines", id)),
         ])
+        await this.persistMeta()
       }).catch((e) => {
+        // 淘汰失败只告警：索引是加速层，不能因清理失败影响主流程
         console.warn("[gitPush] 淘汰旧索引段失败（不影响本次查询）", e)
+      }).finally(() => {
+        this.evictionTasks.delete(task)
       })
+      this.evictionTasks.add(task)
+    }
+  }
+
+  /** 等待全部淘汰任务结算（单测与卸载前确认用；失败已在内部吞掉） */
+  async awaitEvictions(): Promise<void> {
+    while (this.evictionTasks.size > 0) {
+      await Promise.all([...this.evictionTasks])
     }
   }
 

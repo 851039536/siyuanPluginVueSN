@@ -590,6 +590,7 @@ const listEmptyHint = computed(() => {
 const {
   auditRows,
   auditing,
+  audited,
   runAudit,
 } = useRepoLinkAudit(props.manager, projects, {
   enabled: () => currentView.value === "stats",
@@ -810,14 +811,18 @@ const panelRootEl = ref<HTMLElement | null>(null)
  *
  * document.visibilityState 对「Dock 被隐藏 / 被其他 Dock 顶掉 / 页签切走」全部返回 visible，
  * 故必须叠加元素级判据，否则关闭面板后探测仍全天候轮询（审查报告 §P0-3）。
- * checkVisibility 在 Electron 44（Chromium 新）可用；不可用时回退 isConnected + 祖先可见性探测。
+ *
+ * ⚠️ 默认 true 而非「检测结果」：首帧 ref 尚未绑定（null）时不能据此判定为不可见，
+ * 否则一旦 IntersectionObserver 不可用就永久停机（探测再也起不来）。初始值只是乐观缺省，
+ * 真正的判定由 syncPanelVisible() 在挂载后立即执行并持续校正。
  */
 const panelVisible = ref(true)
 
 function detectPanelVisible(): boolean {
   const el = panelRootEl.value
-  if (!el) return false
+  if (!el) return true // 首帧/已卸载：不据此停机，避免永久关停探测
   if (!el.isConnected) return false
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") return false
   const check = (el as HTMLElement & { checkVisibility?: (opts?: Record<string, unknown>) => boolean }).checkVisibility
   if (typeof check === "function") {
     try {
@@ -830,24 +835,77 @@ function detectPanelVisible(): boolean {
   return el.getClientRects().length > 0
 }
 
+/**
+ * 统一可见性校正入口（唯一真源）：
+ * 元素级检测 → 写 panelVisible → 通知探测层。观察器、visibilitychange、挂载时都走这里，
+ * 避免两条可见性信号（document / 元素）互相漂移。
+ */
+function syncPanelVisible(): void {
+  const visible = detectPanelVisible()
+  if (panelVisible.value === visible) {
+    // 状态未变也要喂给 probe：panelVisible 的初值可能与 probe 内部 lastVisible 不同步
+    gitProbe.setVisible(visible)
+    return
+  }
+  panelVisible.value = visible
+  gitProbe.setVisible(visible)
+}
+
 /** 视图是否在前台：文档可见 + 面板元素真实可见（独立窗口页签模式同样适用） */
 function isProbeActive(): boolean {
   if (typeof document !== "undefined" && document.visibilityState === "hidden") return false
   return panelVisible.value
 }
 
-/** 根元素可见性观察：Dock/页签显隐（class 切换 display:none）会触发 intersection 变化 */
+/**
+ * 根元素可见性观察：Dock/页签显隐（class 切换 display:none）会触发 intersection 变化。
+ *
+ * ⚠️ 必须等 ref 真正绑定后再 observe：onMounted 内此时已绑定，故直接 observe；
+ * 若元素缺失/环境不支持 IntersectionObserver，则退化为仅依赖 window focus/blur +
+ * document.visibilitychange 的校正（不会永久停机）。
+ */
 let panelVisibilityObserver: IntersectionObserver | null = null
-function setupPanelVisibilityObserver() {
-  if (typeof IntersectionObserver === "undefined") return
+function setupPanelVisibilityObserver(): void {
+  const el = panelRootEl.value
+  if (typeof IntersectionObserver === "undefined" || !el) return
   panelVisibilityObserver = new IntersectionObserver((entries) => {
-    const visible = entries.some((e) => e.isIntersecting)
-    panelVisible.value = visible
-    gitProbe.setVisible(visible)
-  })
-  if (panelRootEl.value) panelVisibilityObserver.observe(panelRootEl.value)
+    // 取最后一条（同一次回调里同一元素可能有多次状态变化）
+    const last = entries[entries.length - 1]
+    if (!last) return
+    panelVisible.value = last.isIntersecting && detectPanelVisible()
+    gitProbe.setVisible(panelVisible.value)
+  }, { threshold: 0 })
+  panelVisibilityObserver.observe(el)
 }
 
+/** 文档可见性变化（最小化/切窗口）：与元素级检测合并后统一喂给探测层 */
+function handleDocumentVisibilityChange(): void {
+  if (panelRootEl.value) syncPanelVisible()
+}
+
+
+/**
+ * 已在前台展示过的项目集合（探测层据此决定首轮是否发 git）。
+ *
+ * 判定口径与列表/统计视图的「用户真的能看到」一致：
+ *   - 列表视图：当前分类下的项目（或智能视图命中的项目）；
+ *   - 统计视图 / 分析 / 报告 / 日志：这些视图会全量读取状态，视为全部展示；
+ * 未展示的项目只建预筛基线（stat + 读 HEAD，0 进程），不触发 git 查询，
+ * 避免「进入页面即对全部项目跑 3N 次 git」（审查报告 §P0-2）。
+ */
+const displayedProjectIds = ref<Set<string>>(new Set())
+
+function markProjectsDisplayed(ids: Iterable<string>): void {
+  let changed = false
+  for (const id of ids) {
+    if (!displayedProjectIds.value.has(id)) {
+      displayedProjectIds.value.add(id)
+      changed = true
+    }
+  }
+  // Set 就地修改不会触发依赖收集：需要换引用或显式版本号；probe 只在轮询时读取，无需响应式更新
+  if (changed) displayedProjectIds.value = new Set(displayedProjectIds.value)
+}
 
 const gitProbe = useGitProbe({
   manager: props.manager,
@@ -856,6 +914,7 @@ const gitProbe = useGitProbe({
   getConfig: () => probeConfig.value,
   isPaused: () => gitOpsPaused.value,
   isActive: isProbeActive,
+  isProjectDisplayed: (id) => displayedProjectIds.value.has(id),
 })
 /** 手动「立即检测」：清空预筛基准强制真查一轮 */
 async function handleProbeNow() {
@@ -882,6 +941,7 @@ function closeMarkdownPreview() {
 
 onMounted(async () => {
   document.addEventListener("click", closeIdeMenuOnOutside)
+  document.addEventListener("visibilitychange", handleDocumentVisibilityChange)
   await loadProjects()
   loadCommitTemplates()
   loadCustomIdes()
@@ -894,9 +954,9 @@ onMounted(async () => {
   void loadRuleCheckPrefs()
   // 实时探测配置：必须在 start() 之前加载，否则会按默认值建立监听与定时器
   await loadProbeConfig()
-  // 可见性门控：先观察根元素再启动探测，避免首帧就被判定为「隐藏」而漏掉首轮
-  panelVisible.value = detectPanelVisible()
+  // 可见性门控：先做一次元素级校正并挂观察器，再启动探测（探测启动时 isActive() 已是真实状态）
   setupPanelVisibilityObserver()
+  syncPanelVisible()
   gitProbe.start()
   // 不自动选择分类、不预加载任何项目：等用户点选分类 TAB 后由 watch(activeCategory) 按需加载该分类。
   // 故此处无需首屏批量加载（原 200ms initTimer 已随之移除）。
@@ -904,6 +964,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener("click", closeIdeMenuOnOutside)
+  document.removeEventListener("visibilitychange", handleDocumentVisibilityChange)
   panelVisibilityObserver?.disconnect()
   panelVisibilityObserver = null
   // 探测持有 fs.watch 句柄与定时器，必须随组件卸载释放（否则多窗口/反复开关面板会累积泄漏）
@@ -949,6 +1010,8 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
  */
 async function ensureStatusFor(list: GitProject[], fastWhenClean = false) {
   if (gitOpsPaused.value) return
+  // 进入加载即视为「已展示」：探测层随后按增量判定，不再做无谓的全量首查
+  markProjectsDisplayed(list.map((p) => p.id))
   await runProjectLoadBatch(list, (id) => ensureProjectStatus(id, fastWhenClean))
 }
 
@@ -990,6 +1053,7 @@ async function refreshStatsData() {
   if (statsRefreshing.value || projects.value.length === 0) return
   statsRefreshing.value = true
   try {
+    markProjectsDisplayed(projects.value.map((p) => p.id))
     await runBatchWithProgress(projects.value, tf("refreshingLabel"), async (p) => {
       // 显式刷新同样开快速路径：批量重查全部项目，干净工作区的比例通常很高
       await scheduler.loadStatus(p.id, { mode: "refresh", fastWhenClean: true })
@@ -1004,8 +1068,12 @@ async function refreshStatsData() {
 watch(currentView, async (view) => {
   if (view === "list") await loadCurrentCategoryList()
   if (view === "stats") {
-    // 统计视图的平台矩阵需要一致性校验数据：进入时按需跑一次（约 6 路并发 git remote -v）
-    void runAudit()
+    // 统计视图的平台矩阵需要一致性校验数据：进入时按需跑一次（约 6 路并发 git remote -v）。
+    // 只在「本次会话尚未成功校验」时跑，避免每次 stats/list 来回切换都重发 N 个进程
+    // （项目变更由 composable 内部的签名 watch 负责补跑）。
+    if (!audited.value) void runAudit().catch((e: unknown) => {
+      console.warn("[gitPush] 仓库链接一致性校验失败", e)
+    })
     await ensureStatsDataLoaded()
   }
   if (view === "log") {
@@ -1045,6 +1113,13 @@ watch(gitOpsPaused, async (paused) => {
   }
   // 统计视图 / 智能视图需要全量状态数据
   if (currentView.value === "stats" || viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
+    // 暂停期间进入统计视图时 audit 被跳过（audited 仍为 false），恢复后必须补跑，
+    // 否则平台矩阵会一直显示「未校验」直到用户离开再进统计视图
+    if (currentView.value === "stats" && !audited.value) {
+      void runAudit().catch((e: unknown) => {
+        console.warn("[gitPush] 仓库链接一致性校验失败", e)
+      })
+    }
     await ensureStatsDataLoaded()
     return
   }

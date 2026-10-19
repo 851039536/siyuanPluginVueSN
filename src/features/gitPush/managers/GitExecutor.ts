@@ -192,6 +192,13 @@ export class GitExecutor {
       let killed = false
 
       const run = () => {
+        // 排队期间可能已 destroy：此时队列被清空、run 不会再被调度，
+        // 必须在入口补一次判定，否则这个 Promise 永不 settle（调用方永久挂起）
+        if (this.destroyed) {
+          reject(new Error("插件已卸载，git 操作已取消"))
+          this.scheduleNext(isNetwork)
+          return
+        }
         if (signal?.aborted) {
           reject(new Error("操作已取消"))
           this.scheduleNext(isNetwork)
@@ -328,6 +335,16 @@ export class GitExecutor {
       let stderrTail = ""
 
       const run = () => {
+        // 排队期间可能已 destroy（队列被清空后 run 不会再被调度）：入口补判定，
+        // 否则该 Promise 永不 settle（调用方永久挂起）
+        if (this.destroyed) {
+          if (!settled) {
+            settled = true
+            reject(new Error("插件已卸载，git 操作已取消"))
+          }
+          this.scheduleNext(false)
+          return
+        }
         const cp = this.getProcess()
         if (!cp) {
           reject(new Error("Node 环境不可用"))

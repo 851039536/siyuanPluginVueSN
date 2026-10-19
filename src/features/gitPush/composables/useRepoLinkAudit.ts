@@ -45,6 +45,8 @@ export function useRepoLinkAudit(
   const audited = ref(false)
   /** 卸载标记：卸载后在飞结果不再写回（避免写已卸载组件的 ref） */
   let cancelled = false
+  /** 在途期间又有校验请求：结束后补跑一轮（避免项目变更被静默丢弃） */
+  let auditPending = false
 
   /** 对单个项目执行校验并构建校验行（路径无效/git 失败 → error 行） */
   async function auditProject(p: GitProject): Promise<RepoLinkAuditRow> {
@@ -75,19 +77,29 @@ export function useRepoLinkAudit(
    * `git remote -v` 一次性塞进共享本地池，挤占探测/卡片查询）。
    */
   async function runAudit() {
-    if (cancelled || auditing.value || !enabled() || isPaused()) { return }
+    if (cancelled || !enabled() || isPaused()) { return }
+    // 在途期间又来请求（项目变更 watcher）：标记 pending，结束后补跑，
+    // 不能直接丢弃——否则新加/改链接的项目要等用户离开统计视图再进才会被校验
+    if (auditing.value) {
+      auditPending = true
+      return
+    }
     auditing.value = true
     try {
-      const next: Record<string, RepoLinkAuditRow> = {}
-      const queue = [...projects.value]
-      await poolProcess(queue, AUDIT_CONCURRENCY, async (p) => {
+      do {
+        auditPending = false
+        const next: Record<string, RepoLinkAuditRow> = {}
+        const queue = [...projects.value]
+        await poolProcess(queue, AUDIT_CONCURRENCY, async (p) => {
+          if (cancelled) return
+          next[p.id] = await auditProject(p)
+        })
+        // 卸载后不写回：避免向已销毁组件的 ref 提交结果、延长对象存活
         if (cancelled) return
-        next[p.id] = await auditProject(p)
-      })
-      // 卸载后不写回：避免向已销毁组件的 ref 提交结果、延长对象存活
-      if (cancelled) return
-      auditRows.value = next
-      audited.value = true
+        auditRows.value = next
+        // 无论部分失败都标记「已跑过」：否则失败后没有重试入口（只能离开统计视图再进）
+        audited.value = true
+      } while (auditPending && !cancelled)
     } finally {
       auditing.value = false
     }
@@ -102,10 +114,16 @@ export function useRepoLinkAudit(
    *       ② 项目集合变化时若允许（在统计视图）才重跑。
    * 已有结果时保留旧值直到新一轮完成，避免单元格在校验期间闪烁回"未校验"态。
    */
+  /**
+   * 项目集合变化（新增/删除/编辑路径或链接）后重跑：去掉了 `audited` 门槛。
+   *
+   * 原条件 `enabled() && audited.value` 的问题是「首次整体失败 → audited 恒 false →
+   * 之后项目变更也不再重试」，但每次成功都会置 audited=true，故门槛去掉不会放大成本。
+   */
   watch(
     () => projects.value.map((p) => `${p.id}:${p.path}:${p.githubRemote}:${p.giteeRemote}:${p.giteaRemote}:${p.cnbRemote}`).join("|"),
     () => {
-      if (enabled() && audited.value) void runAudit()
+      if (enabled()) void runAudit()
     },
   )
 

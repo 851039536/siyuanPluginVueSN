@@ -89,28 +89,24 @@ function stubWindow(): void {
 /**
  * 假调度器：只实现 useGitProbe 真正用到的能力。
  * `statusResult` 控制「git status 的返回」——用来模拟编辑器改动被发现的那一刻。
- * `shown` 控制「该项目是否已在前台展示过」（`has("workingTree")`）：
- * 未展示的项目首轮只建基线、不发 git（审查报告 §P0-2 的降峰手段）。
+ * 「是否已展示」由用例通过 `isProjectDisplayed` 显式注入（探测层不再依赖 scheduler.has）。
  */
-function makeScheduler(statusResult: () => any, shown = true) {
+function makeScheduler(statusResult: () => any) {
   const workingTrees = ref<Record<string, any>>({})
   const loadStatus = vi.fn(async (id: string) => {
     workingTrees.value[id] = statusResult()
   })
   const invalidate = vi.fn()
-  const has = vi.fn(() => shown)
   const scheduler = {
     workingTrees,
     loadStatus,
     invalidate,
-    has,
   } as unknown as ProjectQueryScheduler
   return {
     scheduler,
     workingTrees,
     loadStatus,
     invalidate,
-    has,
   }
 }
 
@@ -177,7 +173,7 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
   }
 
   /**
-   * 缺陷①回归：index mtime 与 HEAD oid **都不变**（正是「改了跟踪文件内容但没 add」的情形），
+   * 缺陷①回归：index mtime 与 HEAD 文件文本**都不变**（正是「改了跟踪文件内容但没 add」的情形），
    * 预筛会判「无变化」。修复后必须每隔 MAX_SKIPPED_ROUNDS 轮强制真查一次。
    */
   it("index/HEAD 均不变时，连续跳过达上限后强制真查 status", async () => {
@@ -185,10 +181,9 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
       scheduler,
       loadStatus,
     } = makeScheduler(() => CLEAN)
-    // getHeadHash 恒返回同一值 ⇒ HEAD 判据也判「无变化」
+    // HEAD 判据读的是 .git/HEAD 文件文本（beforeEach 已写入固定内容）⇒ 判「无变化」
     const manager = {
       getGitDir: async () => gitDir,
-      getHeadHash: async () => "same-head",
     }
 
     const probe = useGitProbe({
@@ -230,7 +225,6 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
     const { scheduler } = makeScheduler(() => CLEAN)
     const manager = {
       getGitDir: async () => gitDir,
-      getHeadHash: async () => "same-head",
     }
 
     const probe = useGitProbe({
@@ -262,10 +256,9 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
    * 不发起任何 git 查询——避免「进入页面即对全部项目跑 3N 次 git」。
    */
   it("未展示过的项目首轮只建基线，不触发 loadStatus", async () => {
-    const { scheduler, loadStatus } = makeScheduler(() => CLEAN, false)
+    const { scheduler, loadStatus } = makeScheduler(() => CLEAN)
     const manager = {
       getGitDir: async () => gitDir,
-      getHeadHash: async () => "same-head",
     }
 
     const probe = useGitProbe({
@@ -275,6 +268,8 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
       getConfig: () => makeConfig(),
       isPaused: () => false,
       isActive: () => true,
+      // 显式「未展示」判定：不能依赖 scheduler.has（全局刷新会给所有项目写时间戳）
+      isProjectDisplayed: () => false,
     })
 
     await probe.probeNow()
@@ -291,7 +286,6 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
     const { scheduler } = makeScheduler(() => CLEAN)
     const manager = {
       getGitDir: async () => gitDir,
-      getHeadHash: async () => "same-head",
     }
     const focusAdded: string[] = []
     const g = globalThis as any
@@ -328,7 +322,6 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
     } = makeScheduler(() => (dirty ? DIRTY : CLEAN))
     const manager = {
       getGitDir: async () => gitDir,
-      getHeadHash: async () => "same-head",
     }
 
     const probe = useGitProbe({

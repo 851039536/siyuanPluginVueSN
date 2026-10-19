@@ -290,6 +290,8 @@ describe("索引多项目隔离", () => {
         analyzedAt: new Date(Date.UTC(2024, 0, 1, 0, 0, i)).toISOString(),
       })
     }
+    // 淘汰在项目写队列里异步执行：等它结算后再断言
+    await index.awaitEvictions()
     const metas = index.getProjectMetas()
     expect(metas.length).toBeLessThanOrEqual(INDEX_MAX_PROJECT_SEGMENTS)
     expect(metas.some((m) => m.projectId === "p0")).toBe(false)

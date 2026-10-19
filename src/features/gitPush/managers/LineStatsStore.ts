@@ -170,7 +170,8 @@ export class LineStatsStore {
     }
   }
 
-  /** 建表（幂等；运行时只建表/补列，不做数据迁移） */  static prepare(db: PluginDatabase): void {
+  /** 建表（幂等；运行时只建表/补列，不做数据迁移） */
+  static prepare(db: PluginDatabase): void {
     db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.project_stats} (
       project_id TEXT PRIMARY KEY,
       name TEXT NOT NULL DEFAULT '',

@@ -55,7 +55,6 @@ export interface GitProbeDeps {
   /** 仅取所需能力，避免整包依赖 manager */
   manager: {
     getGitDir: (projectPath: string) => Promise<string>
-    getHeadHash: (projectPath: string) => Promise<string>
     /**
      * 带缓存的 gitdir 解析（可选：manager 实现后跨面板复用，省掉重开页签时每项目一次 rev-parse）。
      * 测试桩可不提供，缺失时回退 getGitDir。
@@ -70,6 +69,14 @@ export interface GitProbeDeps {
   isPaused: () => boolean
   /** 视图是否在前台（不在前台不轮询；窗口失焦由 focus/blur 单独处理） */
   isActive: () => boolean
+  /**
+   * 该项目是否已在前台展示过（默认「全部视为已展示」）。
+   *
+   * 未展示的项目首轮只建预筛基线、不发起 git 查询，避免「进入页面即对全部项目跑 3N 次 git」。
+   * ⚠️ 不能用 `scheduler.has(id, "workingTree")` 代替：全局刷新（统计视图刷新、探针自身）
+   * 会给所有项目写时间戳，导致「未展示零成本」的保证失效。
+   */
+  isProjectDisplayed?: (projectId: string) => boolean
   /** 每轮探测结果回调（供 UI 展示「刚刚检测过」状态） */
   onProbeResult?: (changed: boolean, at: number) => void
 }
@@ -113,6 +120,7 @@ export function useGitProbe(deps: GitProbeDeps) {
     getConfig,
     isPaused,
     isActive,
+    isProjectDisplayed,
     onProbeResult,
   } = deps
 
@@ -125,6 +133,8 @@ export function useGitProbe(deps: GitProbeDeps) {
   /** 第 1/2/3 层各自的待发定时器句柄（null = 无待发） */
   let pollTimer: TimerHandle | null = null
   let networkTimer: TimerHandle | null = null
+  /** 周期重建定时器句柄（destroy 时必须显式取消，否则闭包最长被钉住 5 分钟） */
+  let rebuildTimer: TimerHandle | null = null
   /** 窗口最近一次失焦时间戳（0 = 当前聚焦），用于「离开较久后重聚焦补 fetch」 */
   let blurredAt = 0
   /** 上次 focus 触发立即轮询的时间戳（2s 合并窗口） */
@@ -137,8 +147,15 @@ export function useGitProbe(deps: GitProbeDeps) {
   let started = false
   /** ensureWatch 在途 Promise（并发调用共享同一次，避免「start 与 syncProjects 双跑」重复 rev-parse） */
   let ensureWatchInFlight: Promise<void> | null = null
+  /**
+   * 在途期间又有新请求（项目增删 / 配置变更 / 路径编辑）。
+   * 合并只应省掉重复劳动，**不能吞掉更新**：结束后必须补跑一轮，否则新项目要等 5 分钟 rebuild 才被监听。
+   */
+  let ensureWatchDirty = false
   /** 轮询轮在途标记（focus 与定时器同时触发时合并为一次，避免并发多条轮询链） */
   let roundInFlight = false
+  /** 在途期间又有轮询请求（取消后不能丢：结束后补跑，避免链停摆） */
+  let roundPending = false
 
   // ── 第 1 层：文件监听（0 次 git 进程）──
 
@@ -151,8 +168,18 @@ export function useGitProbe(deps: GitProbeDeps) {
    * 不去重会双倍 rev-parse。
    */
   function ensureWatch(): Promise<void> {
-    if (ensureWatchInFlight) return ensureWatchInFlight
-    const task = ensureWatchOnce().finally(() => {
+    if (ensureWatchInFlight) {
+      // 在途期间有新请求：标记为脏，结束后补跑一轮（否则新项目/改路径项目要等 5 分钟 rebuild）
+      ensureWatchDirty = true
+      return ensureWatchInFlight
+    }
+    const run = async (): Promise<void> => {
+      ensureWatchDirty = false
+      await ensureWatchOnce()
+      // 期间又有变化（syncProjects/applyConfig）：补跑一次直到稳定；destroyed 后不再自续
+      if (ensureWatchDirty && !destroyed) await run()
+    }
+    const task = run().finally(() => {
       if (ensureWatchInFlight === task) ensureWatchInFlight = null
     })
     ensureWatchInFlight = task
@@ -180,7 +207,11 @@ export function useGitProbe(deps: GitProbeDeps) {
       if (destroyed || watcher !== active) return
       if (active.isWatching(project.id)) return
       const projectPath = resolveValidPath(project)
-      const gitDir = await (manager.getGitDirCached?.(projectPath) ?? manager.getGitDir(projectPath))
+      // 方法缺失时才回退 getGitDir；解析失败（空串）fallback 也无意义，直接跳过建监听
+      // （注释别写成「运行期失败回退」，Promise 不会是 nullish，那样读会被误导）
+      const gitDir = manager.getGitDirCached
+        ? await manager.getGitDirCached(projectPath)
+        : await manager.getGitDir(projectPath)
       // await 期间可能已销毁或配置被关掉，双重检查后再落下监听
       if (!gitDir || destroyed || watcher !== active) return
       if (!active.watch(project.id, gitDir)) {
@@ -229,16 +260,22 @@ export function useGitProbe(deps: GitProbeDeps) {
   /**
    * 解析并缓存项目 gitdir（stat 预筛定位 .git/index 用）。
    * 失败缓存空串：预筛对该项目永久走「总是查询」的保守路径，不会每轮重试打转。
-   * `syncProjects` / 周期性 rebuild 时会清缓存，使路径修正后能重新解析。
+   * `syncProjects` 会清本地缓存，使路径修正后能重新解析。
+   *
+   * ⚠️ 统一走 manager.getGitDirCached（若提供）：与 ensureWatchOnce 共用同一份解析结果，
+   * 否则两条路径各自 rev-parse 后可能漂移——一边监听旧 gitdir、一边 stat 新 gitdir。
    */
   async function resolveGitDirCached(projectId: string): Promise<string> {
     const cached = gitDirCache.get(projectId)
     if (cached !== undefined) return cached
     const project = projects.value.find((p) => p.id === projectId)
     if (!project) return ""
+    const projectPath = resolveValidPath(project)
     let dir = ""
     try {
-      dir = await manager.getGitDir(resolveValidPath(project))
+      dir = manager.getGitDirCached
+        ? await manager.getGitDirCached(projectPath)
+        : await manager.getGitDir(projectPath)
     } catch {
       dir = ""
     }
@@ -345,7 +382,7 @@ export function useGitProbe(deps: GitProbeDeps) {
     }
   }
 
-  /** 刷新 HEAD 基准（读文件；失败时清空基准让下轮重试，不产生进程） */
+  /** 刷新 HEAD 基准（读文件；读取失败保留旧基准，由 needStatusQuery 的保守路径兜底，不产生进程） */
   function refreshHeadMarker(entry: PollEntry, gitDir: string): void {
     if (!gitDir) return
     const marker = readHeadMarker(gitDir)
@@ -373,9 +410,10 @@ export function useGitProbe(deps: GitProbeDeps) {
     try {
       // `has` 兜底：单测用最小 scheduler 桩（可能不实现 has）时按「已有数据」处理，
       // 行为与改造前一致；生产调度器一定实现该方法。
-      const hasShown = typeof scheduler.has === "function"
-        ? scheduler.has(project.id, "workingTree")
-        : true
+      // 尚未在前台展示过的项目（用户还没点选其分类 / 智能视图没命中）：只建立预筛基线，不跑 git。
+      // 首轮对全部项目真查 = 3N 次进程，而其中大多数项目用户根本没在看（审查报告 §P0-2）。
+      // 基线照常累积（index mtime + HEAD 文本），用户点选分类加载数据后即可按增量判定。
+      const hasShown = isProjectDisplayed ? isProjectDisplayed(project.id) : true
       if (!hasShown) {
         // 已有基线（由 ensureWatch 建立）则刷新一次（0 进程）；没有则留到首次展示时再建，
         // **绝不**为了预筛去 spawn rev-parse —— 未展示项目的轮询成本必须是 0。
@@ -514,11 +552,14 @@ export function useGitProbe(deps: GitProbeDeps) {
    * 原实现无条件立即全量跑一轮，是「每次切回 CPU 暴涨」的直接来源（见审查报告 §P0-1）。
    */
   function handleFocus(): void {
-    if (destroyed || isPaused() || !isActive()) return
+    if (destroyed || isPaused()) return
     const now = Date.now()
     const cfg = getConfig()
     const away = blurredAt > 0 ? now - blurredAt : 0
+    // 先消费 blurredAt 再做可见性门控：窗口在面板隐藏期间重获焦点时，
+    // 若提前 return 会把旧失焦时间留到下一次，away 计算失真（漏 fetch 或误 fetch）
     blurredAt = 0
+    if (!isActive()) return
     if (now - lastFocusRunAt < FOCUS_MIN_INTERVAL_MS) return
     lastFocusRunAt = now
     // 先取消待发定时器再直接跑一轮：否则待发定时器稍后仍会触发，形成第二条并发轮询链
@@ -561,17 +602,25 @@ export function useGitProbe(deps: GitProbeDeps) {
   }
 
   /**
-   * 面板可见性切换（由承载组件在 Dock/Tab 显隐时调用）。
+   * 面板可见性切换（由承载组件在 Dock/Tab 显隐/文档可见性变化时调用）。
    *
-   * 不可见时轮询链仍然存在（保持调度链不断、成本为 0 次 git），
-   * 重新可见时把退避间隔重置回基准排一轮，避免等满 120s 才刷新。
-   * 可见性判据见 index.vue 的 isProbeActive（面板元素真实可见，而非仅 document）。
+   * 不可见时**停掉轮询链**：否则面板隐藏后仍按最小间隔空转，每轮对全部项目
+   * statSync(index) + readFileSync(HEAD)，与「空闲零成本」目标相悖。
+   * 重新可见时把退避重置回基准并立即排一轮（暂停中则只重置状态、由恢复暂停路径 probeNow 补跑）。
    */
   function setVisible(visible: boolean): void {
-    if (destroyed || visible === lastVisible) return
+    if (destroyed) return
+    const changed = visible !== lastVisible
     lastVisible = visible
-    if (!visible || isPaused()) return
-    for (const entry of pollEntries.values()) entry.interval = getConfig().poll.intervalMs
+    if (!visible) {
+      if (changed) cancelPollTimer()
+      return
+    }    // 不可见 → 可见：重置退避节奏，避免等满 maxIntervalMs 才刷新。
+    // ⚠️ 状态更新（lastVisible/interval）必须在暂停判断之前完成：
+    //    否则「可见但处于暂停」时提前 return 会把 lastVisible 留在 true，
+    //    之后解除暂停再次 setVisible(true) 被去重，面板可能停在旧快照直到下一个定时器周期。
+    if (changed) for (const entry of pollEntries.values()) entry.interval = getConfig().poll.intervalMs
+    if (isPaused()) return
     cancelPollTimer()
     schedulePollRound()
   }
@@ -586,7 +635,8 @@ export function useGitProbe(deps: GitProbeDeps) {
    */
   function scheduleRebuild(): void {
     if (destroyed) return
-    timers.setTimeout(() => {
+    rebuildTimer = timers.setTimeout(() => {
+      rebuildTimer = null
       if (destroyed) return
       // 已删除的项目解除监听并清调度状态（避免句柄与缓存泄漏）
       const alive = new Set(projects.value.map((p) => p.id))
@@ -638,9 +688,7 @@ export function useGitProbe(deps: GitProbeDeps) {
     }
     if (cfg.poll.enabled) schedulePollRound()
     if (cfg.network.enabled) scheduleNetworkRound()
-  }
-
-  /**
+  }  /**
    * 立即探测一次（用户点「立即检测」/ 解除暂停时调用）。
    *
    * 清零预筛基准：用户主动要求，不能因「看起来没变化」被跳过。
@@ -675,15 +723,23 @@ export function useGitProbe(deps: GitProbeDeps) {
    * 被查两遍（每次 2~3 个 git 进程），故用 roundInFlight 把并发调用合并为一次。
    */
   async function runPollRoundNow(): Promise<void> {
-    if (roundInFlight) return
+    // 在途合并：不能直接丢弃请求（调用方可能刚 cancelPollTimer，丢弃会导致链停摆）。
+    // 标记 pending，由在途那一轮结束后补跑。
+    if (roundInFlight) {
+      roundPending = true
+      return
+    }
     roundInFlight = true
-    let anyChanged = false
     try {
-      for (const project of projects.value) {
-        if (destroyed) return
-        if (await pollOnce(project)) anyChanged = true
-      }
-      onProbeResult?.(anyChanged, Date.now())
+      do {
+        roundPending = false
+        let anyChanged = false
+        for (const project of projects.value) {
+          if (destroyed) return
+          if (await pollOnce(project)) anyChanged = true
+        }
+        onProbeResult?.(anyChanged, Date.now())
+      } while (roundPending && !destroyed)
     } finally {
       roundInFlight = false
     }
@@ -694,16 +750,21 @@ export function useGitProbe(deps: GitProbeDeps) {
     destroyed = true
     started = false
     roundInFlight = false
+    roundPending = false
     window.removeEventListener("focus", handleFocus)
     window.removeEventListener("blur", handleBlur)
     watcher?.destroy()
     watcher = null
     pollEntries.clear()
     gitDirCache.clear()
+    // 显式取消待发的重建定时器：只靠 destroyed 守卫会让闭包被钉住到下次触发（最长 5 分钟）
+    if (rebuildTimer !== null) timers.clear(rebuildTimer)
+    rebuildTimer = null
     timers.clearAll()
     pollTimer = null
     networkTimer = null
     ensureWatchInFlight = null
+    ensureWatchDirty = false
   }
 
   /** 已建立文件监听的项目数（设置面板/诊断展示） */

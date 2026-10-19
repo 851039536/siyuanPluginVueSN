@@ -14,6 +14,9 @@ export function registerGitPush(plugin: Plugin): void {
   )
 
   const manager = new GitPushManager(plugin)
-  void manager.init()
+  // init 是异步的（storage / git 配置读取）；失败必须可观测，且不能留下半初始化实例
+  void manager.init().catch((e: unknown) => {
+    console.error("[gitPush] 初始化失败", e)
+  })
   ;(plugin as any).__gitPush = manager
 }

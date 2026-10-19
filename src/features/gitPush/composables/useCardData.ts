@@ -219,20 +219,26 @@ export function useCardData(project: () => GitProject) {
     return detailsPromise
   }
 
-  /** LOG 面板首次可见时懒加载提交变更规模（--shortstat，代价高，失败静默） */
+  /** LOG 面板首次可见时懒加载提交变更规模（--shortstat，代价高，失败静默；失败后允许下次切换重试） */
   let logStatsRequested = false
   function ensureLogStats(): void {
     if (logStatsRequested) return
     logStatsRequested = true
-    void loadLogStats().catch(() => {})
+    loadLogStats().catch(() => {
+      // 失败回退标记：下次切到 LOG 面板可再试一次，避免一次 git 抖动后统计永久为空
+      logStatsRequested = false
+    })
   }
 
-  /** TAG 面板首次可见时懒加载远程 Tag 状态（网络 ls-remote，失败静默） */
+  /** TAG 面板首次可见时懒加载远程 Tag 状态（网络 ls-remote，失败静默；失败后允许下次切换重试） */
   let remoteTagsRequested = false
   function ensureRemoteTags(): void {
     if (remoteTagsRequested) return
     remoteTagsRequested = true
-    void loadRemoteTags().catch(() => {})
+    loadRemoteTags().catch(() => {
+      // 失败回退标记：下次切到 TAG 面板可再试一次，避免一次网络抖动后永久无远程状态
+      remoteTagsRequested = false
+    })
   }
 
   /** LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景）。
@@ -246,7 +252,9 @@ export function useCardData(project: () => GitProject) {
     } finally {
       endLoading()
     }
-    void loadLogStats(true).catch(() => {})
+    // 统计只在确实用过（LOG 面板已展示过）时才跟着刷新：
+    // 否则「卡片头部刷新 / 提交修正 / 删除提交」这些路径都会无条件付一次全历史 --shortstat
+    if (logStatsRequested) void loadLogStats(true).catch(() => {})
   }
 
   /** TAG Tab 手动刷新（强制重取） */
@@ -297,8 +305,9 @@ export function useCardData(project: () => GitProject) {
     if (kinds.has("tags")) {
       // loadTags 失败时跳过远程 Tag 刷新（否则 .then 不执行且整链成为未处理拒绝）
       safeReload(loadTags(true).then(() => {
-        // 推送/删除 Tag 后同步刷新远程 Tag 状态（网络命令后台执行）
-        loadRemoteTags(true).catch(() => {})
+        // 推送/删除 Tag 后同步刷新远程 Tag 状态（网络命令后台执行）；
+        // 与 TAG 面板懒加载同口径：面板未打开过就跳过，避免未展示面板也付 N 次 ls-remote
+        if (remoteTagsRequested) loadRemoteTags(true).catch(() => {})
       }))
     }
     if (kinds.has("conflicts")) safeReload(loadConflicts(true))

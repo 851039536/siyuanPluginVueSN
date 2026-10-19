@@ -1,6 +1,10 @@
 // Git 推送任务管理门面：组合各领域协作者（managers/），对外暴露统一 API
 import type { Plugin } from "siyuan"
 import type { App } from "vue"
+import type {
+  LineStatsStore,
+  ProjectStatsRecord,
+} from "./managers/LineStatsStore"
 import type { AllPlatformResult } from "./managers/RemoteOps"
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
 import type { NumstatCommit } from "./reportMetrics"
@@ -11,6 +15,7 @@ import type {
   PlatformKey,
   RepoScanResult,
 } from "./types/meta"
+import type { ProbeConfig } from "./types/probeConfig"
 import type {
   BranchInfo,
   CommitLogEntry,
@@ -28,6 +33,7 @@ import type {
   WorkingTreeInfo,
 } from "./types/storage"
 import type { AiApiConfig } from "@/utils/aiApi"
+import type { DockAppHandle } from "@/utils/vueAppHelper"
 import {
   openTab,
   openWindow,
@@ -38,8 +44,8 @@ import {
 } from "vue"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
-import type { DockAppHandle } from "@/utils/vueAppHelper"
 import { createVueDockApp } from "@/utils/vueAppHelper"
+import { clearMarkdownScanCacheFor } from "./composables/useMarkdownFiles"
 import GitPushPanel from "./index.vue"
 import { BfgOps } from "./managers/BfgOps"
 import {
@@ -60,9 +66,10 @@ import {
   scanProjectFileLines,
   sumScannedLines,
 } from "./managers/lineScan"
-import type { LineStatsStore, ProjectStatsRecord } from "./managers/LineStatsStore"
-import { openLineStatsStore, TIMES_PROBED_MARK } from "./managers/LineStatsStore"
-import { clearMarkdownScanCacheFor } from "./composables/useMarkdownFiles"
+import {
+  openLineStatsStore,
+  TIMES_PROBED_MARK,
+} from "./managers/LineStatsStore"
 import { ProjectStore } from "./managers/ProjectStore"
 import { ProjectWriteLock } from "./managers/ProjectWriteLock"
 import { RemoteOps } from "./managers/RemoteOps"
@@ -75,7 +82,6 @@ import {
   INDEX_META_VERSION,
 } from "./types/indexCache"
 import { clampProbeConfig } from "./types/probeConfig"
-import type { ProbeConfig } from "./types/probeConfig"
 import { GitPushStorage } from "./types/storage"
 import {
   DEFAULT_LOG_LIMIT,
@@ -703,6 +709,7 @@ export class GitPushManager {
   async setProbeConfig(config: Partial<ProbeConfig>): Promise<void> {
     await this.storage.probeConfig.save(clampProbeConfig(config))
   }
+
   cancelOp(id: string, action?: "push" | "pull"): void { return this.executor.cancelOp(id, action) }
 
   // ── 项目 / 分类 / 标签 CRUD（ProjectStore）──
@@ -738,6 +745,7 @@ export class GitPushManager {
       clearMarkdownScanCacheFor(p)
     }
   }
+
   async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
     // 路径类字段变更后必须失效 gitdir 缓存：否则探测层会继续监听旧目录（最长 5 分钟 TTL）
     const pathFieldsChanged = patch.path !== undefined || patch.localPaths !== undefined
@@ -864,8 +872,9 @@ export class GitPushManager {
     return this.worktreeOps.getWorkingTreeStatus(projectPath, opts)
   }
 
-  async getFileDiff(projectPath: string, file: string, staged = false): Promise<string> {
-    return this.worktreeOps.getFileDiff(projectPath, file, staged)
+  /** 获取文件差异。`status` 为可选提示（如 "untracked"），命中时走单进程快速路径；缺省行为不变 */
+  async getFileDiff(projectPath: string, file: string, staged = false, status?: string): Promise<string> {
+    return this.worktreeOps.getFileDiff(projectPath, file, staged, status)
   }
 
   async stageFile(projectPath: string, file: string): Promise<void> {
@@ -963,7 +972,11 @@ export class GitPushManager {
       try {
         const dir = await this.worktreeOps.getGitDir(projectPath)
         // 卸载竞态：destroy 期间的解析结果不再写入缓存
-        if (dir && !this.destroyed) this.gitDirCache.set(projectPath, { dir, at: Date.now() })
+        if (dir && !this.destroyed) { this.gitDirCache.set(projectPath, {
+          dir,
+          at: Date.now(),
+        })
+        }
         return dir
       } finally {
         this.gitDirPending.delete(projectPath)

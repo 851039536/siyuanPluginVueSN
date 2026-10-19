@@ -89,12 +89,22 @@
           <span>{{ i18n.loading }}</span>
         </div>
 
-        <!-- 图例 + 着色行（复用共享 DiffLines 片段） -->
-        <DiffLines
-          v-else
-          :i18n="i18n"
-          :lines="lines"
-        />
+        <!-- 图例 + 着色行（复用共享 DiffLines 片段；本地分页 1500 行，大补丁经「加载更多」增量渲染，
+             与 WorkingTreeDiffDialog / FileDetailModal 同口径——全量建 DOM 会让大 diff 打开即卡死） -->
+        <template v-else>
+          <DiffLines
+            :i18n="i18n"
+            :lines="visibleLines"
+          />
+          <!-- 剩余行增量渲染（仅 diff 正文分页；标题 +N/−N 统计仍按全量计算） -->
+          <LoadMoreButton
+            v-if="hasMoreLines"
+            :i18n="i18n"
+            :visible="visibleLines.length"
+            :total="lines.length"
+            @load-more="loadMoreLines"
+          />
+        </template>
       </div>
     </div>
   </Teleport>
@@ -102,12 +112,28 @@
 
 <script setup lang="ts">
 // gitPush 提交内文件 diff 弹窗（自包含：按 hash+file 拉取补丁并着色展示，复用共享 DiffLines 片段）
-import type { FileChange, GitProject } from "../../types"
-import { countDiffStats, parseDiffLines, resolveValidPath } from "../../utils"
+import type {
+  FileChange,
+  GitProject,
+} from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue"
+import {
+  computed,
+  inject,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue"
+import { usePagedList } from "../../composables/usePagedList"
 import { CARD_SERVICES_KEY } from "../../types"
+import {
+  countDiffStats,
+  parseDiffLines,
+  resolveValidPath,
+} from "../../utils"
 import DiffLines from "./DiffLines.vue"
+import LoadMoreButton from "./LoadMoreButton.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -136,7 +162,19 @@ const loading = ref(true)
 /** 将 diff 文本解析为带类型/行号/词级分段的行数组 */
 const lines = computed(() => parseDiffLines(diffText.value))
 
-/** 增/删行数统计（标题行展示） */
+// ── diff 正文本地分页：解析全量（供标题统计与截断计数）、只分页渲染（与 WorkingTreeDiffDialog 同口径），
+//    切换文件时 diff 文本变化 → watch 重置回首页
+/** diff 正文每页行数 */
+const DIFF_PAGE_SIZE = 1500
+const {
+  paged: visibleLines,
+  hasMore: hasMoreLines,
+  loadMore: loadMoreLines,
+  reset: resetDiffPage,
+} = usePagedList(lines, DIFF_PAGE_SIZE)
+watch(diffText, resetDiffPage)
+
+/** 增/删行数统计（标题行展示；按全量行计算） */
 const stats = computed(() => countDiffStats(lines.value))
 
 /** 当前文件在列表中的下标（路径匹配；单个提交内路径唯一） */

@@ -67,24 +67,24 @@
     <!-- 工作区详情 -->
     <div class="wt-body">
 
-      <!-- 文件列表 -->
+      <!-- 文件列表（本地分页：默认渲染前 200 行，其余经「加载更多」增量渲染；弹窗导航仍用完整列表） -->
       <div
-        v-if="tree?.files.length"
+        v-if="sortedFiles.length"
         class="wt-files"
       >
         <div
-          v-for="file in sortedFiles"
+          v-for="file in pagedFiles"
           :key="file.path"
           class="wt-file-row"
           :class="{
-            staged: file.staged,
+            'staged': file.staged,
             'partially-staged': file.staged && file.unstaged,
             'diff-active': activeDiffFile?.path === file.path,
           }"
           role="button"
           tabindex="0"
           :aria-pressed="activeDiffFile?.path === file.path"
-          :title="i18n.clickViewDiff + ' — ' + file.path"
+          :title="`${i18n.clickViewDiff} — ${file.path}`"
           @click="toggleDiff(file)"
           @keydown.enter.prevent="toggleDiff(file)"
           @keydown.space.prevent="toggleDiff(file)"
@@ -143,6 +143,14 @@
             @click.stop="$emit('discardFile', file.path, file.staged, file.status)"
           />
         </div>
+        <!-- 剩余文件增量渲染（复用日志面板/违规列表同款按钮） -->
+        <LoadMoreButton
+          v-if="filesHasMore"
+          :i18n="i18n"
+          :visible="pagedFiles.length"
+          :total="sortedFiles.length"
+          @load-more="loadMoreFiles"
+        />
       </div>
 
       <!-- 差异查看弹窗（子组件自含渲染与键盘导航，父只管开关与数据下发） -->
@@ -258,12 +266,7 @@ import type {
   FileChange,
   WorkingTreeInfo,
 } from "../../types"
-import { COMMIT_ANALYSIS_TYPE_META, COMMIT_TYPE_VALUES } from "../../types"
-import { checkCommitRule } from "../../commitRuleChecker"
-import { fileStatusIcon, fileStatusIconKey, fileStatusTitle, isIconFileStatus, ruleReasonDesc, ruleReasonText } from "../../utils"
-import { useGeneratedMsgSync } from "../../composables/useGeneratedMsgSync"
-import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
-import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
+import type { TimerHandle } from "@/utils/timerRegistry"
 import {
   computed,
   nextTick,
@@ -276,6 +279,27 @@ import Button from "@/components/Button.vue"
 import Checkbox from "@/components/Checkbox.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Textarea from "@/components/Textarea.vue"
+import {
+
+  TimerRegistry,
+} from "@/utils/timerRegistry"
+import { checkCommitRule } from "../../commitRuleChecker"
+import { useGeneratedMsgSync } from "../../composables/useGeneratedMsgSync"
+import { usePagedList } from "../../composables/usePagedList"
+import {
+  COMMIT_ANALYSIS_TYPE_META,
+  COMMIT_TYPE_VALUES,
+} from "../../types"
+import {
+  fileStatusIcon,
+  fileStatusIconKey,
+  fileStatusTitle,
+  isIconFileStatus,
+  ruleReasonDesc,
+  ruleReasonText,
+} from "../../utils"
+import LoadMoreButton from "../common/LoadMoreButton.vue"
+import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -303,7 +327,11 @@ const emit = defineEmits<{
   generateMsg: []
   /** 深度生成提交信息（暂存区完整 diff → 标题行 + 改动要点） */
   deepGenerateMsg: []
-  loadDiff: [file: string, staged: boolean]
+  /**
+   * 查看文件差异。opts.status 透传 FileChange.status（untracked 命中数据层单进程快速路径）；
+   *  opts.force=true 表示「内容必然已变」（写后重载），绕过数据层缓存命中
+   */
+  loadDiff: [file: string, staged: boolean, opts?: { force?: boolean, status?: string }]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]
   /** 手动刷新工作区（顶部刷新按钮，force 语义：必须重查，不复用在飞结果） */
@@ -313,10 +341,10 @@ const emit = defineEmits<{
 }>()
 
 /** 已写入的 Conventional Commit 前缀：type + 可选 scope + 可选 `!` 破坏性标记 */
-const TYPE_PREFIX_RE = /^([A-Za-z]+)((?:\([^)]*\))?!?):\s*/
+const TYPE_PREFIX_RE = /^([A-Z]+)((?:\([^)]*\))?!?):\s*/i
 
 /** 「尚未填写完成」：空串 / 纯空白 / 只有 type 前缀而没有描述 */
-const INCOMPLETE_COMMIT_RE = /^(?:[A-Za-z]+(?:\([^)]*\))?!?:\s*)?$/
+const INCOMPLETE_COMMIT_RE = /^(?:[A-Z]+(?:\([^)]*\))?!?:\s*)?$/i
 
 const commitType = ref("chore")
 const commitMessage = ref("")
@@ -350,8 +378,10 @@ useGeneratedMsgSync(toRef(props, "generatedMsg"), commitMessage)
 
 /** 自动刷新防抖时长：合并「指针按下」的连续触发 */
 const AUTO_REFRESH_DEBOUNCE_MS = 800
-/** 自动刷新最小间隔：距上次刷新过近时跳过——面板内操作本身已刷新，无需重复起 git 子进程。
- *  这是**自动触发**的 UI 限流（手动刷新按钮不受限）；数据层同名查询去重由调度器单飞承担 */
+/**
+ * 自动刷新最小间隔：距上次刷新过近时跳过——面板内操作本身已刷新，无需重复起 git 子进程。
+ *  这是**自动触发**的 UI 限流（手动刷新按钮不受限）；数据层同名查询去重由调度器单飞承担
+ */
 const AUTO_REFRESH_MIN_INTERVAL_MS = 2000
 
 /** 自动刷新定时器（统一入口 TimerRegistry，随组件卸载清理） */
@@ -373,9 +403,14 @@ watch(() => props.refreshingWorkingTree, (refreshing) => {
  * 曾经这里每张卡片各挂一个 window focus 监听，N 张卡获焦即并 N 路 force 查询，
  * 与探测层全量轮询叠加成 2N 量级 git 进程风暴（见 docs/gitPush-memory-cpu-review.md §P0-1）。
  *
+ * ⚠️ 差异弹窗打开期间跳过：弹窗未 Teleport、渲染在本面板内，弹窗内的每次点击
+ * （导航/复制/关闭）都会冒泡到此处，触发无意义的后台 git status —— 用户此时在「看」diff，
+ * 不是在改文件；关闭弹窗后的下一次 pointerdown 自然恢复刷新。
+ *
  * 已有待发定时器时不再重置：用户连续点击（每次 pointerdown 都会触发）会让刷新被无限推迟。
  */
 function handleAutoRefreshTrigger() {
+  if (activeDiffFile.value) return
   if (autoRefreshTimer !== null) return
   if (props.gitOpLoading || props.refreshingWorkingTree) return
   if (Date.now() - lastRefreshStartedAt < AUTO_REFRESH_MIN_INTERVAL_MS) return
@@ -407,6 +442,17 @@ const sortedFiles = computed(() => {
   })
 })
 
+// ── 文件列表本地分页：行内各挂一个 Checkbox + Button 组件实例，上千变更文件时
+//    全量渲染拖慢卡片挂载/刷新。复用 usePagedList 模式（违规列表/日志面板同款）；
+//    ⚠️ 差异弹窗导航必须用完整 sortedFiles（fileIndex 与 ←/→ 不受分页影响）。
+/** 文件列表每页行数（200 行 ≈ 10 屏滚动量，超出的靠「加载更多」增量渲染） */
+const WT_FILES_PAGE_SIZE = 200
+const {
+  paged: pagedFiles,
+  hasMore: filesHasMore,
+  loadMore: loadMoreFiles,
+} = usePagedList(sortedFiles, WT_FILES_PAGE_SIZE)
+
 function toggleStage(file: FileChange) {
   if (file.staged) {
     emit("unstageFile", file.path)
@@ -415,31 +461,33 @@ function toggleStage(file: FileChange) {
   }
 }
 
+/** 打开差异弹窗：纯查看语义（非 force）。缓存命中时数据层直接返回（0 git 进程、无加载闪烁） */
 function toggleDiff(file: FileChange) {
   if (activeDiffFile.value?.path === file.path && activeDiffFile.value?.staged === file.staged) {
     activeDiffFile.value = null
   } else {
     activeDiffFile.value = file
-    emit("loadDiff", file.path, file.staged)
+    emit("loadDiff", file.path, file.staged, { status: file.status })
     prefetchOtherScope(file)
   }
 }
 
-/** 弹窗内导航：切换当前差异文件并加载对应 diff */
-function handleDiffNavigate(file: FileChange) {
-  activeDiffFile.value = file
-  emit("loadDiff", file.path, file.staged)
-}
-
 /**
  * 预取另一份差异：仅「已暂存 + 工作区又改动」的文件有两份差异，
- * 提前拉取后弹窗内切范围命中缓存即刻渲染（不做则首次切换要等一次 git 子进程）
+ * 提前拉取后弹窗内切范围命中缓存即刻渲染（不做则首次切换要等一次 git 子进程）。
+ * 缓存命中时数据层直接返回，重复打开不再重复付进程。
  */
 function prefetchOtherScope(file: FileChange) {
-  if (file.staged && file.unstaged) emit("loadDiff", file.path, !file.staged)
+  if (file.staged && file.unstaged) emit("loadDiff", file.path, !file.staged, { status: file.status })
 }
 
-/** 弹窗内切换差异范围：仅切换查看对象，不改变文件的暂存状态 */
+/** 弹窗内导航：切换当前差异文件并加载对应 diff（非 force：已看过的文件命中缓存即时渲染） */
+function handleDiffNavigate(file: FileChange) {
+  activeDiffFile.value = file
+  emit("loadDiff", file.path, file.staged, { status: file.status })
+}
+
+/** 弹窗内切换差异范围：仅切换查看对象，不改变文件的暂存状态（非 force，预取缓存可命中） */
 function handleDiffRequest(staged: boolean) {
   const file = activeDiffFile.value
   if (!file) return
@@ -455,6 +503,8 @@ function handleDiffRequest(staged: boolean) {
  * 故暂存时同时清掉 unstaged，让 canSwitchScope 与实际状态一致；
  * 反向（取消暂存）则把内容交回工作区。
  * 真实状态仍以后续 tree 刷新为准（失败回滚由下方 watch 自愈）。
+ *
+ * ⚠️ force：暂存操作必然改变目标范围的 diff 内容，打开时预取的缓存已过期，必须重取。
  */
 function handleDiffStageToggle() {
   const file = activeDiffFile.value
@@ -466,7 +516,10 @@ function handleDiffStageToggle() {
     staged: nextStaged,
     unstaged: nextStaged ? false : file.unstaged,
   }
-  emit("loadDiff", file.path, nextStaged)
+  emit("loadDiff", file.path, nextStaged, {
+    force: true,
+    status: file.status,
+  })
 }
 
 /** 弹窗内丢弃：透传给父级确认流程，文件从树中消失后由下方 watch 关闭弹窗 */
@@ -476,22 +529,46 @@ function handleDiffDiscard() {
   emit("discardFile", file.path, file.staged, file.status)
 }
 
-// 树刷新后同步当前差异文件：两级匹配自愈——精确匹配则跟随新对象；仅同路径（操作失败回滚等）则改指现存条目；都不存在（丢弃/提交完成）则关闭弹窗
-watch(() => props.tree, (tree) => {
+/**
+ * 树刷新后同步当前差异文件：两级匹配自愈——
+ * - 精确匹配（path + staged 均未变）：跟随新对象；仅当暂存/未暂存计数相对**上一棵树**有变化
+ *   （说明有文件内容被外部改动，可能就是当前文件）时 force 重取一次；计数均未变则 diff 必然未变，
+ *   不重取（避免自动刷新风暴期反复 spawn git diff）；
+ * - 仅同路径（staged 翻转，暂存/取消暂存操作后）：scope 已变，force 重取目标范围；
+ * - 都不存在（丢弃/提交完成）则关闭弹窗。
+ */
+function syncActiveDiffOnTree(tree: WorkingTreeInfo, prev: WorkingTreeInfo | undefined) {
   const file = activeDiffFile.value
-  if (!file || !tree) return
+  if (!file) return
   const exact = tree.files.find((f) => f.path === file.path && f.staged === file.staged)
   if (exact) {
     activeDiffFile.value = exact
+    const countsChanged = !prev
+      || tree.stagedCount !== prev.stagedCount
+      || tree.unstagedCount !== prev.unstagedCount
+      || tree.untrackedCount !== prev.untrackedCount
+    if (countsChanged) { emit("loadDiff", file.path, file.staged, {
+      force: true,
+      status: file.status,
+    })
+    }
     return
   }
   const samePath = tree.files.find((f) => f.path === file.path)
   if (samePath) {
     activeDiffFile.value = samePath
-    emit("loadDiff", samePath.path, samePath.staged)
+    // staged 翻转 ⇒ 目标范围的 diff 内容必然已变（暂存把工作区改动并入暂存区），必须 force
+    emit("loadDiff", samePath.path, samePath.staged, {
+      force: true,
+      status: samePath.status,
+    })
   } else {
     activeDiffFile.value = null
   }
+}
+watch(() => props.tree, (tree, prevTree) => {
+  if (!tree) return
+  syncActiveDiffOnTree(tree, prevTree)
 })
 
 /**

@@ -7,6 +7,7 @@ import type {
   StashEntry,
   WorkingTreeInfo,
 } from "../types/storage"
+import type { GitExecutor } from "./GitExecutor"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import {
   buildDiffContext,
@@ -19,7 +20,6 @@ import {
   parseWorktreeStatus,
   parseWorktreeStatusV2,
 } from "../utils"
-import type { GitExecutor } from "./GitExecutor"
 import { HistoryRewriter } from "./HistoryRewriter"
 
 /**
@@ -130,10 +130,18 @@ export class WorktreeOps {
       // git status 内部自带 index stat 刷新（无 --no-optional-locks 时会回写 index），
       // 无需先跑 update-index --refresh——那等于对工作区做两次全量扫描
       const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "status", "--porcelain"])
-      if (!raw) { return { ...empty, branch } }
+      if (!raw) { return {
+        ...empty,
+        branch,
+      } }
 
       // porcelain v1 文本解析（状态归属 / 未跟踪计数 / 重命名路径拆分）见 utils/gitOutput.parseWorktreeStatus
-      const { files, stagedCount, unstagedCount, untrackedCount } = parseWorktreeStatus(raw)
+      const {
+        files,
+        stagedCount,
+        unstagedCount,
+        untrackedCount,
+      } = parseWorktreeStatus(raw)
       return {
         branch,
         files,
@@ -144,7 +152,10 @@ export class WorktreeOps {
       }
     } catch {
       // 解析失败按「无变更」呈现（分支名已取到则保留）
-      return { ...empty, branch }
+      return {
+        ...empty,
+        branch,
+      }
     }
   }
 
@@ -152,9 +163,18 @@ export class WorktreeOps {
    * 获取文件差异（失败返回空串，不产出面向用户的文案——空态/加载态由视图层经 i18n 呈现）。
    * 常规 `git diff` 对未跟踪文件恒为空（该文件不在 index 中），此时若文件也不在 HEAD 中，
    * 回退 `git diff --no-index -- /dev/null <file>` 展示完整的新增内容（有差异时退出码为 1，需白名单容忍）。
+   *
+   * ⚠️ `status` 提示参数：调用方（工作区面板）在点击时已持有 porcelain 状态，透传可走快速路径——
+   * `untracked` 且未暂存的文件**必然**不在 index 中（git diff 恒空、ls-files 必然 miss），
+   * 直接走 `--no-index`，省掉前两次注定空手的 git 进程（每次进程启动费 ~0.3s，3 → 1）。
+   * status 缺省时行为与旧签名完全一致（向后兼容）。
    */
-  async getFileDiff(projectPath: string, file: string, staged = false): Promise<string> {
+  async getFileDiff(projectPath: string, file: string, staged = false, status?: string): Promise<string> {
     try {
+      // 快速路径：未跟踪文件的常规 diff 与基线检查都是注定空手的进程，直接展示完整新增内容
+      if (!staged && status === "untracked") {
+        return await this.execNoIndexDiff(projectPath, file)
+      }
       const args = ["-c", "core.quotepath=false", "diff", "--text"]
       if (staged) args.push("--cached")
       args.push("--", file)
@@ -166,17 +186,22 @@ export class WorktreeOps {
         ? await this.isFileInHead(projectPath, file)
         : await this.isFileInIndex(projectPath, file)
       if (inBaseline) return ""
-      return await this.executor.execGit(
-        projectPath,
-        ["-c", "core.quotepath=false", "diff", "--no-index", "--text", "--", "/dev/null", file],
-        undefined,
-        undefined,
-        undefined,
-        { allowExitCodes: [1] },
-      )
+      return await this.execNoIndexDiff(projectPath, file)
     } catch {
       return ""
     }
+  }
+
+  /** `git diff --no-index -- /dev/null <file>`：未跟踪/新增文件展示完整内容（有差异时退出码 1，白名单容忍） */
+  private async execNoIndexDiff(projectPath: string, file: string): Promise<string> {
+    return await this.executor.execGit(
+      projectPath,
+      ["-c", "core.quotepath=false", "diff", "--no-index", "--text", "--", "/dev/null", file],
+      undefined,
+      undefined,
+      undefined,
+      { allowExitCodes: [1] },
+    )
   }
 
   /** 文件是否已存在于 HEAD（无提交 / 命令失败按 false 处理，使新仓库提交前的新增文件同样可见内容） */
@@ -322,7 +347,10 @@ export class WorktreeOps {
       const limit = count === "all" ? LOG_STAT_LIMIT : Math.min(count, LOG_STAT_LIMIT)
       // %x01 作记录分隔：shortstat 是可选行，换行切分无法定界（详见 parseCommitShortStats 注释）
       const raw = await this.executor.execGit(projectPath, [
-        "log", `-${limit}`, "--shortstat", "--format=%x01%h",
+        "log",
+        `-${limit}`,
+        "--shortstat",
+        "--format=%x01%h",
       ])
       if (!raw) return new Map()
       return parseCommitShortStats(raw)
@@ -357,7 +385,9 @@ export class WorktreeOps {
   async getRemoteTrackingRefs(projectPath: string): Promise<string[]> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "for-each-ref", "refs/remotes", "--format=%(refname:short)",
+        "for-each-ref",
+        "refs/remotes",
+        "--format=%(refname:short)",
       ])
       // 排除 origin/HEAD 之类的符号 ref（其 short 名为 origin -> origin/HEAD 形式或直接以 /HEAD 结尾）
       return raw.split("\n").map((l) => l.trim()).filter((l) => l && !l.endsWith("/HEAD"))
@@ -373,7 +403,10 @@ export class WorktreeOps {
    */
   async countAheadBehind(projectPath: string, remoteRef: string, localBranch: string): Promise<{ ahead: number, behind: number }> {
     const counts = await this.executor.execGit(projectPath, [
-      "rev-list", "--left-right", "--count", `${remoteRef}...${localBranch}`,
+      "rev-list",
+      "--left-right",
+      "--count",
+      `${remoteRef}...${localBranch}`,
     ])
     const parts = counts.split("\t")
     return {
@@ -423,7 +456,11 @@ export class WorktreeOps {
   async getStagedDiff(projectPath: string): Promise<string> {
     try {
       return await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached",
+        "-c",
+        "core.quotepath=false",
+        "diff",
+        "--text",
+        "--cached",
       ]) || ""
     } catch {
       return ""
@@ -434,11 +471,18 @@ export class WorktreeOps {
   async getStagedFiles(projectPath: string): Promise<FileChange[]> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--cached", "--name-status",
+        "-c",
+        "core.quotepath=false",
+        "diff",
+        "--cached",
+        "--name-status",
       ])
       if (!raw) return []
       // 清单全部来自暂存区 ⇒ 覆写 staged 标记（parseCommitFiles 面向历史提交，默认 false）
-      return parseCommitFiles(raw).map((f) => ({ ...f, staged: true }))
+      return parseCommitFiles(raw).map((f) => ({
+        ...f,
+        staged: true,
+      }))
     } catch {
       return []
     }
@@ -452,7 +496,12 @@ export class WorktreeOps {
   async getCommitDeepContext(projectPath: string, hash: string, budget = 10000): Promise<string> {
     try {
       const text = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "show", "--text", "--format=%B", hash,
+        "-c",
+        "core.quotepath=false",
+        "show",
+        "--text",
+        "--format=%B",
+        hash,
       ]) || ""
       // 行首锚定匹配 diff 起点，防提交消息体恰好包含 "diff --git " 字符串时误判为 diff 开头
       const diffStart = /^diff --git /m.exec(text)?.index ?? -1
@@ -467,7 +516,12 @@ export class WorktreeOps {
   async getCommitFullMessage(projectPath: string, hash: string): Promise<string> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "show", "-s", "--format=%B", hash,
+        "-c",
+        "core.quotepath=false",
+        "show",
+        "-s",
+        "--format=%B",
+        hash,
       ])
       return (raw || "").trim()
     } catch {
@@ -479,7 +533,12 @@ export class WorktreeOps {
   async getCommitFiles(projectPath: string, hash: string): Promise<FileChange[]> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "show", "--name-status", "--format=", hash,
+        "-c",
+        "core.quotepath=false",
+        "show",
+        "--name-status",
+        "--format=",
+        hash,
       ])
       if (!raw) return []
       return parseCommitFiles(raw)
@@ -492,7 +551,13 @@ export class WorktreeOps {
   async getCommitFilePatch(projectPath: string, hash: string, filePath: string): Promise<string> {
     try {
       return await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "show", "--format=", hash, "--", filePath,
+        "-c",
+        "core.quotepath=false",
+        "show",
+        "--format=",
+        hash,
+        "--",
+        filePath,
       ])
     } catch {
       return ""
@@ -502,7 +567,12 @@ export class WorktreeOps {
   /** 修改当前 HEAD 提交信息（仅允许最近一次提交，调用方负责前置校验） */
   async amendCommitMessage(projectPath: string, message: string): Promise<string> {
     return await this.executor.execGit(projectPath, [
-      "-c", "core.quotepath=false", "commit", "--amend", "-m", message,
+      "-c",
+      "core.quotepath=false",
+      "commit",
+      "--amend",
+      "-m",
+      message,
     ])
   }
 
@@ -510,7 +580,10 @@ export class WorktreeOps {
   async isInRebaseState(projectPath: string): Promise<boolean> {
     const node = getNodeFsPathOs()
     if (!node) return false
-    const { fs, path } = node
+    const {
+      fs,
+      path,
+    } = node
     try {
       // --git-path 无论目录是否存在都返回相对 projectPath 的路径，需 existsSync 判定
       const [mergeDir, applyDir] = await Promise.all([
@@ -547,11 +620,19 @@ export class WorktreeOps {
   ): Promise<{ fullHash: string, isMerge: boolean }> {
     const fullHash = (knownFullHash
       || await this.executor.execGit(projectPath, ["rev-parse", `${hash}^{commit}`]).catch(() => "")).trim()
-    if (!fullHash) return { fullHash: "", isMerge: false }
+    if (!fullHash) { return {
+      fullHash: "",
+      isMerge: false,
+    }
+    }
     const secondParent = (await this.executor.execGit(
-      projectPath, ["rev-parse", "--verify", `${fullHash}^2`],
+      projectPath,
+      ["rev-parse", "--verify", `${fullHash}^2`],
     ).catch(() => "")).trim()
-    return { fullHash, isMerge: !!secondParent }
+    return {
+      fullHash,
+      isMerge: !!secondParent,
+    }
   }
 
   /**
@@ -646,9 +727,11 @@ export class WorktreeOps {
     return await this.historyRewriter.drop(projectPath, fullHash, headHash, onProgress)
   }
 
-  /** 目标提交是否为当前 HEAD 的祖先（hash 支持短/完整；merge-base --is-ancestor 退出码判定；解析失败按否处理）
+  /**
+   * 目标提交是否为当前 HEAD 的祖先（hash 支持短/完整；merge-base --is-ancestor 退出码判定；解析失败按否处理）
    *  @param knownFullHash 调用方已知的完整 hash（省一次 rev-parse）
-   *  @param knownHeadHash 调用方已知的 HEAD hash（省一次 rev-parse） */
+   *  @param knownHeadHash 调用方已知的 HEAD hash（省一次 rev-parse）
+   */
   async isAncestorOfHead(projectPath: string, hash: string, knownFullHash?: string, knownHeadHash?: string): Promise<boolean> {
     try {
       const fullHash = (knownFullHash

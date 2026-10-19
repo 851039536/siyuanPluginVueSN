@@ -21,8 +21,11 @@ export interface DiffLine {
   segments?: DiffSegment[]
 }
 
-/** diff 文件头行前缀（渲染时淡化显示，不参与行号计算） */
-const DIFF_META_PREFIXES = ["diff --git", "index ", "--- ", "+++ ", "new file", "deleted file", "old mode", "new mode", "rename ", "copy ", "similarity ", "dissimilarity ", "Binary files", "\\ No newline"]
+/**
+ * diff 文件头行前缀（渲染时淡化显示，不参与行号计算）。
+ *  单个预编译正则替代逐前缀 startsWith：万行级 diff 每行省 13 次字符串扫描
+ */
+const DIFF_META_RE = /^(?:diff --git|index |--- |\+\+\+ |new file|deleted file|old mode|new mode|rename |copy |similarity |dissimilarity |Binary files|\\ No newline)/
 
 /** 将 diff 文本解析为带类型与行号的行数组（剥离行首 +/-/空格标记，标记改由渲染层的符号列展示） */
 export function parseDiffLines(diffText: string): DiffLine[] {
@@ -31,20 +34,41 @@ export function parseDiffLines(diffText: string): DiffLine[] {
   let newNo = 0
   const result: DiffLine[] = []
   for (const line of diffText.split("\n")) {
-    const hunk = /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line)
+    // 首字符分流：hunk 正则只在 '@' 开头时执行（万行级 diff 绝大多数行免付正则开销）
+    const head = line.charCodeAt(0)
+    const hunk = head === 64 /* '@' */ ? /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line) : null
     if (hunk) {
       oldNo = Number(hunk[1])
       newNo = Number(hunk[2])
-      result.push({ text: line, type: "hunk" })
-    } else if ((oldNo === 0 && newNo === 0) || DIFF_META_PREFIXES.some((p) => line.startsWith(p))) {
+      result.push({
+        text: line,
+        type: "hunk",
+      })
+    } else if ((oldNo === 0 && newNo === 0) || DIFF_META_RE.test(line)) {
       // 首个 hunk 之前的所有行、以及多文件 diff 中间的文件头行均为 meta
-      result.push({ text: line, type: "meta" })
+      result.push({
+        text: line,
+        type: "meta",
+      })
     } else if (line.startsWith("+")) {
-      result.push({ text: line.slice(1), type: "add", newNo: newNo++ })
+      result.push({
+        text: line.slice(1),
+        type: "add",
+        newNo: newNo++,
+      })
     } else if (line.startsWith("-")) {
-      result.push({ text: line.slice(1), type: "del", oldNo: oldNo++ })
+      result.push({
+        text: line.slice(1),
+        type: "del",
+        oldNo: oldNo++,
+      })
     } else {
-      result.push({ text: line.slice(1), type: "ctx", oldNo: oldNo++, newNo: newNo++ })
+      result.push({
+        text: line.slice(1),
+        type: "ctx",
+        oldNo: oldNo++,
+        newNo: newNo++,
+      })
     }
   }
   // 去掉文本末尾换行符经 split 产生的空行
@@ -71,7 +95,10 @@ export function countDiffStats(lines: DiffLine[]): { add: number, del: number } 
     if (line.type === "add") add++
     else if (line.type === "del") del++
   }
-  return { add, del }
+  return {
+    add,
+    del,
+  }
 }
 
 /** 单文件 diff 的最小分析配额（变更文件数超过预算容量时，仅完整覆盖前 capacity 个文件，其余由变更文件清单兜底） */
@@ -99,7 +126,11 @@ export function buildDiffContext(fullDiff: string, budget: number): string {
   const baseQuota = selected.length === 1 ? total : Math.floor(total / selected.length)
   const pieces = selected.map((full) => {
     const truncated = full.length > baseQuota
-    return { full, quota: truncated ? baseQuota : full.length, truncated }
+    return {
+      full,
+      quota: truncated ? baseQuota : full.length,
+      truncated,
+    }
   })
 
   // 短文件未用满的配额按序回补给被截断的长文件，使其能采样更多 hunk
@@ -174,12 +205,27 @@ function diffSegments(del: string, add: string): { del: DiffSegment[], add: Diff
   if (Math.max(delMid.length, addMid.length) / maxLen > INLINE_DIFF_MAX_CHANGED_RATIO) return null
   const build = (text: string, mid: string): DiffSegment[] => {
     const segs: DiffSegment[] = []
-    if (prefix) segs.push({ text: text.slice(0, prefix), changed: false })
-    if (mid) segs.push({ text: mid, changed: true })
-    if (suffix) segs.push({ text: text.slice(text.length - suffix), changed: false })
+    if (prefix) { segs.push({
+      text: text.slice(0, prefix),
+      changed: false,
+    })
+    }
+    if (mid) { segs.push({
+      text: mid,
+      changed: true,
+    })
+    }
+    if (suffix) { segs.push({
+      text: text.slice(text.length - suffix),
+      changed: false,
+    })
+    }
     return segs
   }
-  return { del: build(del, delMid), add: build(add, addMid) }
+  return {
+    del: build(del, delMid),
+    add: build(add, addMid),
+  }
 }
 
 /** 后处理：将连续 del 块与紧随的 add 块按下标配对，为每对行生成词级差异分段 */

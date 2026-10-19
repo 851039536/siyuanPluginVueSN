@@ -10,9 +10,20 @@ import type {
   TagInfo,
 } from "../types"
 import type { MdFileEntry } from "./useMarkdownFiles"
-import { inject, onMounted, ref, watch } from "vue"
+import {
+  inject,
+  onMounted,
+  ref,
+  watch,
+} from "vue"
 import { CARD_SERVICES_KEY } from "../types"
-import { DEFAULT_LOG_LIMIT, diffCacheKey, getProjectRemoteNames, pruneRecordCache, resolveValidPath } from "../utils"
+import {
+  DEFAULT_LOG_LIMIT,
+  diffCacheKey,
+  getProjectRemoteNames,
+  pruneRecordCache,
+  resolveValidPath,
+} from "../utils"
 import { scanMarkdownFiles } from "./useMarkdownFiles"
 
 /** Tag→commit 映射拉取上限（防异常大仓库失控） */
@@ -69,10 +80,12 @@ export function useCardData(project: () => GitProject) {
     logLimit.value = count
   }
 
-  /** 加载提交日志并同步项目最近活动时间（count 缺省走 logLimit，即列表选择框当前值，替代原 30 条默认）
+  /**
+   * 加载提交日志并同步项目最近活动时间（count 缺省走 logLimit，即列表选择框当前值，替代原 30 条默认）
    *  显式传入 count（用户切换条数）时绕过单飞：必须按新条数重抓，不能复用旧条数的在飞查询。
    *  绕过单飞 ⇒ 可能并发多笔（快速切换条数），故用请求序号守卫写入：
-   *  条数小的查询通常更快，若慢的「大条数」结果后到并覆盖，列表会少于用户所选条数 */
+   *  条数小的查询通常更快，若慢的「大条数」结果后到并覆盖，列表会少于用户所选条数
+   */
   let logRequestSeq = 0
 
   async function loadLog(count?: number | "all", force = false) {
@@ -90,10 +103,12 @@ export function useCardData(project: () => GitProject) {
     if (latest) await services.recordCommitActivity(project().id, latest)
   }
 
-  /** 加载体提交变更规模（--shortstat 批量单命令；条数跟随 logLimit，上限由 manager 侧收口）。
+  /**
+   * 加载体提交变更规模（--shortstat 批量单命令；条数跟随 logLimit，上限由 manager 侧收口）。
    *  与 loadLog 同因：强制重取绕过单飞，快速切换条数会并发多笔 --shortstat 查询
    *  （全历史扫 diff，代价高），若慢的「小条数」结果后到会覆盖新的大条数统计。
-   *  同样用请求序号守卫写入；logStats 按短 hash 索引，条数不匹配不会报错只会静默缺数据。 */
+   *  同样用请求序号守卫写入；logStats 按短 hash 索引，条数不匹配不会报错只会静默缺数据。
+   */
   let logStatsRequestSeq = 0
 
   async function loadLogStats(force = false) {
@@ -155,9 +170,11 @@ export function useCardData(project: () => GitProject) {
 
   // ── 懒加载与手动刷新入口 ──
 
-  /** logLoading 用引用计数而非布尔：详情首载与手动刷新/切换条数可能并发，
+  /**
+   * logLoading 用引用计数而非布尔：详情首载与手动刷新/切换条数可能并发，
    *  布尔会被先完成的那笔翻回 false，导致仍在飞的查询对应的转圈提前消失
-   *  （与 stashLoading / gitOpLoading 的引用计数范式一致） */
+   *  （与 stashLoading / gitOpLoading 的引用计数范式一致）
+   */
   let logLoadingRefCount = 0
 
   /** 进入一笔日志查询（返回退出函数，保证异常路径也能正确减计数） */
@@ -176,10 +193,12 @@ export function useCardData(project: () => GitProject) {
     }
   }
 
-  /** 首次点卡片 / 切 Tab 时懒加载详情。
+  /**
+   * 首次点卡片 / 切 Tab 时懒加载详情。
    *  实例级标记 + 在途 Promise 双守卫：原实现「await 之后才置标记」使并发两次调用都能穿过守卫而重复发 git。
    *  失败重试退避：全失败（如仓库被删）时若每次点击都重跑整组查询，会放大成「点一下 = 7~10 个 git」；
-   *  这里记录失败次数，2 次后进入 30s 冷却，冷却期内直接返回，避免错误路径被反复触发。 */
+   *  这里记录失败次数，2 次后进入 30s 冷却，冷却期内直接返回，避免错误路径被反复触发。
+   */
   let detailsLoaded = false
   let detailsPromise: Promise<void> | null = null
   let detailsFailures = 0
@@ -241,8 +260,10 @@ export function useCardData(project: () => GitProject) {
     })
   }
 
-  /** LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景）。
-   *  统计与列表并行：统计失败不影响列表，故不 await（列表渲染优先级更高） */
+  /**
+   * LOG Tab 手动刷新 / 变更显示条数 / 父层写操作后重载：一律强制重取（均为「数据已变」场景）。
+   *  统计与列表并行：统计失败不影响列表，故不 await（列表渲染优先级更高）
+   */
   async function reloadLog(count?: number | "all") {
     const endLoading = beginLogLoading()
     try {
@@ -269,25 +290,67 @@ export function useCardData(project: () => GitProject) {
     }
   }
 
-  /** 查看文件差异（原父层 fileDiffs Record 的卡内版；在途期间置加载标记，供弹窗区分「加载中」与「无差异」） */
-  async function loadDiff(file: string, staged: boolean) {
+  // ── 文件差异缓存（版本化：工作区每次刷新递增版本，取数时记录版本，版本不符即过期）──
+  // 过期条目不删除：打开中的弹窗不会因后台刷新闪空态，仅下次非 force 读取时视为未命中重新取。
+  /**
+   * 同 (文件, 范围) 的在飞差异请求（单飞去重；diff 键含文件路径，不适合进调度器）。
+   *  值类型 unknown：缓存命中路径提前返回 undefined，Map 仅用于去重不消费载荷
+   */
+  const diffInflight = new Map<string, Promise<unknown>>()
+  /** 缓存键 → 取数时的工作区版本（非响应式：仅 loadDiff 同步读写，不进模板/computed） */
+  const diffMeta: Record<string, number> = {}
+  /** 工作区版本号：workingTrees 条目每次整体替换（新对象引用）即递增 */
+  let diffTreeVersion = 0
+  watch(() => scheduler.workingTrees.value[project().id], () => {
+    diffTreeVersion++
+  })
+
+  /**
+   * 查看文件差异（卡内版）。默认 force=false：
+   * - 缓存命中且版本未过期 → 直接返回（来回导航 / 重开弹窗 / 切 scope 命中预取缓存 = 0 git 进程）；
+   * - 单飞：同 (文件, 范围) 在飞时共享同一 Promise，不重复 spawn git diff；
+   * - force=true 绕过前两者（语义对齐 scheduler.run 的 force）：用于「内容必然已变」的写后路径
+   *   （弹窗内暂存切换、暂存状态翻转后的重载）。
+   * ⚠️ status 为可选提示（FileChange.status 透传）：untracked 命中 manager 层单进程快速路径（3 → 1）。
+   */
+  async function loadDiff(file: string, staged: boolean, opts?: { force?: boolean, status?: string }) {
     const key = diffCacheKey(file, staged)
+    if (!opts?.force && key in fileDiffs.value && diffMeta[key] === diffTreeVersion) return
+    const inflight = diffInflight.get(key)
+    if (inflight) return inflight
+    // 取数时快照版本：响应期间工作区若刷新，本条结果自动降级为「过期」（下次读取重新取）
+    const fetchedAtVersion = diffTreeVersion
+    const exec = (async () => {
+      try {
+        const text = await manager.getFileDiff(path(), file, staged, opts?.status)
+        fileDiffs.value[key] = text
+        diffMeta[key] = fetchedAtVersion
+        pruneRecordCache(fileDiffs.value, 30)
+        // 与 fileDiffs 同步淘汰：prune 删掉的键不再保留版本记录
+        for (const k of Object.keys(diffMeta)) {
+          if (!(k in fileDiffs.value)) delete diffMeta[k]
+        }
+      } catch {
+        // 取差异失败按空差异呈现（弹窗显示空态），不向上抛以免调用方产生未处理的 Promise 拒绝
+        fileDiffs.value[key] = ""
+        diffMeta[key] = fetchedAtVersion
+      } finally {
+        delete diffLoading.value[key]
+        diffInflight.delete(key)
+      }
+    })()
+    // 创建与登记之间是同步段（首个 await 前不可能有别的调用方插进来），登记必然先于任何并发清理
+    diffInflight.set(key, exec)
     diffLoading.value[key] = true
-    try {
-      fileDiffs.value[key] = await manager.getFileDiff(path(), file, staged)
-      pruneRecordCache(fileDiffs.value, 30)
-    } catch {
-      // 取差异失败按空差异呈现（弹窗显示空态），不向上抛以免调用方产生未处理的 Promise 拒绝
-      fileDiffs.value[key] = ""
-    } finally {
-      delete diffLoading.value[key]
-    }
+    return exec
   }
 
   // ── 父层脏标记响应（提交/stash/tag/冲突/批量刷新完成后按域重载）──
 
-  /** 消费本项目脏域并重载对应数据（幂等：无脏域则无操作）。
-   *  一律 force：脏标记语义是「数据已变，必须重取」，复用在飞旧查询会把变更前的数据写回（脏标记失效） */
+  /**
+   * 消费本项目脏域并重载对应数据（幂等：无脏域则无操作）。
+   *  一律 force：脏标记语义是「数据已变，必须重取」，复用在飞旧查询会把变更前的数据写回（脏标记失效）
+   */
   function applyDirty() {
     const kinds = scheduler.consumeDirty(project().id)
     if (!kinds) return

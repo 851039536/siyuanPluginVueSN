@@ -177,21 +177,28 @@
       />
       <span>{{ i18n.loading }}</span>
     </div>
-    <!-- 图例 + 着色行（复用共享 DiffLines 片段） -->
-    <DiffLines
-      v-else
-      :i18n="i18n"
-      :lines="coloredDiffLines"
-    />
+    <!-- 图例 + 着色行（复用共享 DiffLines 片段；本地分页 1500 行，其余经「加载更多」增量渲染——
+         全量建虚拟 DOM 会让大 diff（数万行）弹窗打开瞬间卡死，解析全量、只截断渲染，与 FileDetailModal 同口径） -->
+    <template v-else>
+      <DiffLines
+        :i18n="i18n"
+        :lines="visibleDiffLines"
+      />
+      <!-- 剩余行增量渲染（仅 diff 正文分页；标题 +N/−N 统计仍按全量计算） -->
+      <LoadMoreButton
+        v-if="diffHasMore"
+        :i18n="i18n"
+        :visible="visibleDiffLines.length"
+        :total="coloredDiffLines.length"
+        @load-more="loadMoreDiff"
+      />
+    </template>
   </Dialog>
 </template>
 
 <script setup lang="ts">
 // gitPush 工作区文件差异弹窗（自含渲染/范围切换/复制/键盘导航，diff 文本由父层经缓存下发）
 import type { FileChange } from "../../types"
-import { countDiffStats, diffCacheKey, fileStatusText, parseDiffLines } from "../../utils"
-import { copyToClipboard } from "@/utils/domUtils"
-import { TimerRegistry } from "@/utils/timerRegistry"
 import { Icon } from "@iconify/vue"
 import {
   computed,
@@ -204,7 +211,17 @@ import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
 import Divider from "@/components/Divider.vue"
 import Tag from "@/components/Tag.vue"
+import { copyToClipboard } from "@/utils/domUtils"
+import { TimerRegistry } from "@/utils/timerRegistry"
+import { usePagedList } from "../../composables/usePagedList"
+import {
+  countDiffStats,
+  diffCacheKey,
+  fileStatusText,
+  parseDiffLines,
+} from "../../utils"
 import DiffLines from "../common/DiffLines.vue"
+import LoadMoreButton from "../common/LoadMoreButton.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -235,8 +252,14 @@ const COPY_FEEDBACK_MS = 2000
 
 /** 范围切换选项（labelKey 复用「已暂存 / 未暂存」既有文案键） */
 const SCOPE_OPTIONS: { value: DiffScope, labelKey: string }[] = [
-  { value: "staged", labelKey: "staged" },
-  { value: "unstaged", labelKey: "unstaged" },
+  {
+    value: "staged",
+    labelKey: "staged",
+  },
+  {
+    value: "unstaged",
+    labelKey: "unstaged",
+  },
 ]
 
 /** 仅「已暂存且工作区又改动」的文件存在两份差异，可切换查看 */
@@ -256,7 +279,22 @@ const loading = computed(() => !!props.diffLoading[diffKey.value])
 /** 将 diff 文本解析为带类型/行号/词级分段的行数组 */
 const coloredDiffLines = computed(() => parseDiffLines(diffText.value))
 
-/** 增/删行数统计（标题行展示） */
+// ── diff 正文本地分页：每行渲染 4+ 个 span（行号×2 + 符号 + 文本 + 词级分段），
+//    数万行的大 diff 全量建虚拟 DOM 会让弹窗打开瞬间卡死。解析全量（供标题统计与截断计数）、
+//    只分页渲染，与 CodeReport FileDetailModal 的 1500 行上限同口径；
+//    切换文件/范围时由下方 watch 重置回首页（避免上个文件翻到的页码残留）。
+/** diff 正文每页行数（1500 行 ≈ 全览绝大多数真实 diff，超出部分按需增量渲染） */
+const DIFF_PAGE_SIZE = 1500
+const {
+  paged: visibleDiffLines,
+  hasMore: diffHasMore,
+  loadMore: loadMoreDiff,
+  reset: resetDiffPage,
+} = usePagedList(coloredDiffLines, DIFF_PAGE_SIZE)
+// 文件/范围切换 → diff 文本变化 → 回到首页（下次导航不残留上份 diff 的展开状态）
+watch(diffText, resetDiffPage)
+
+/** 增/删行数统计（标题行展示；按全量行计算，与可见行数无关） */
 const diffStats = computed(() => countDiffStats(coloredDiffLines.value))
 
 /** 文件状态文案（与列表状态 tooltip 同源，文案经 i18n 解析） */

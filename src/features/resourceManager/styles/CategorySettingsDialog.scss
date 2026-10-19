@@ -1,14 +1,12 @@
+// 分类设置弹窗（遮罩/关闭按钮/过渡复用 _mixins.scss 的弹窗基座）
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
 
 // 遮罩：全屏固定、半透明黑（禁 backdrop-filter，对齐 gitPush 范式）
+// 原实现无 padding；与另两个弹窗统一为 dialog-mask（$s-4 内边距在居中布局下不改变视觉位置，
+// 仅在视口极窄时保留最小边距，避免弹窗贴边）
 .rm-settings-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
+  @include dialog-mask;
 }
 
 // 弹窗卡片
@@ -119,24 +117,7 @@
 
 // 通用图标按钮（头部关闭 / 行删除）
 .rm-settings-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: $s-4;
-  height: $s-4;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: $r-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface-light);
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-
-  &:hover {
-    background: var(--b3-list-hover);
-    color: var(--b3-theme-on-surface);
-  }
+  @include dialog-close-btn;
 
   // 危险操作（删除）hover 红色提示
   &--danger:hover {
@@ -145,20 +126,6 @@
 }
 
 // 进入/离开过渡：淡入 + 轻微缩放（0.12s，对齐 gitPush 范式）
-.rm-settings-fade-enter-active,
-.rm-settings-fade-leave-active {
-  transition: opacity 0.12s ease;
-
-  .rm-settings-dialog {
-    transition: transform 0.12s ease;
-  }
-}
-
-.rm-settings-fade-enter-from,
-.rm-settings-fade-leave-to {
-  opacity: 0;
-
-  .rm-settings-dialog {
-    transform: scale(0.98);
-  }
+.rm-settings-fade {
+  @include dialog-fade(".rm-settings-dialog");
 }

@@ -239,10 +239,9 @@
           v-if="unusedAssets.length > 0 && !loading"
           class="rm-section__actions"
         >
-          <!-- 按钮："删除所有未使用资源" -->
+          <!-- 按钮："删除所有未使用资源"（外层 v-if 已保证列表非空，无需再判 disabled） -->
           <button
             class="rm-btn danger small"
-            :disabled="unusedAssets.length === 0"
             @click="handleDeleteAllUnused"
           >
             {{ i18n.deleteAllUnused }}

@@ -32,8 +32,6 @@ export async function compressImage(
   target: CompressTarget,
   options: CompressOptions = DEFAULT_COMPRESS_OPTIONS,
 ): Promise<CompressResult> {
-  const startTime = Date.now()
-
   try {
     const diskPath = await toDiskAssetPath(target.path)
     const fileData = await getFile(diskPath)
@@ -60,7 +58,6 @@ export async function compressImage(
 
     const originalSize = file.size
     const compressedSize = compressedBlob.size
-    const compressionRatio = (1 - compressedSize / originalSize) * 100
 
     return {
       success: true,
@@ -68,9 +65,6 @@ export async function compressImage(
       originalSize,
       compressedBlob,
       compressedSize,
-      // 压缩率统一保留两位，避免统计面板出现 33.33333333333333%
-      compressionRatio: Number(compressionRatio.toFixed(2)),
-      timeTaken: Date.now() - startTime,
     }
   }
   catch (error) {
@@ -181,8 +175,6 @@ export function getCompressStats(results: CompressResult[]) {
   return {
     ...stats,
     averageRatio: Number(stats.averageRatio.toFixed(2)),
-    totalOriginalSizeMB: (stats.totalOriginalSize / 1024 / 1024).toFixed(2),
-    totalCompressedSizeMB: (stats.totalCompressedSize / 1024 / 1024).toFixed(2),
     totalSavedMB: (stats.totalSaved / 1024 / 1024).toFixed(2),
   }
 }

@@ -1,6 +1,21 @@
-// 资源管理模块纯工具函数与共享常量：路径过滤、SQL 转义、目录扫描
+// 资源管理模块纯工具函数与共享常量：文案占位符、路径过滤、SQL 转义、目录扫描
 import type { ResourceManagerI18n } from "./types"
 import { readDir, sql } from "@/api"
+
+/**
+ * i18n 文案占位符替换（`{key}` 形态）：缺失文案时返回空串，调用方无需二次判空。
+ * 用 split/join 而非 replaceAll —— 构建 target 低于 ES2021，replaceAll 不可用。
+ */
+export function fillTemplate(
+  template: string | undefined,
+  values: Record<string, string | number> = {},
+): string {
+  let out = template ?? ""
+  for (const [key, value] of Object.entries(values)) {
+    out = out.split(`{${key}}`).join(String(value))
+  }
+  return out
+}
 
 /** 图片扩展名匹配 */
 const IMAGE_EXT = /\.(?:png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|avif)$/i
@@ -34,7 +49,7 @@ export const STORAGE_HIDDEN_KEY = "resourceManager-hiddenBuiltIn"
  * 转义 SQL LIKE 模式中的特殊字符（单引号、反斜杠、% 与 _ 通配符）
  * 使用方须在 LIKE 子句后附加 ESCAPE '\'
  */
-export function escapeSqlLike(str: string): string {
+function escapeSqlLike(str: string): string {
   return str
     .replace(/\\/g, "\\\\")
     .replace(/[%_]/g, (ch) => `\\${ch}`)
@@ -176,34 +191,13 @@ export function buildVariantPairs(from: string, to: string): { from: string, to:
   return pairs
 }
 
-/**
- * 文件名兜底替换对：`from` 为旧文件名（三种编码形态，按 from 去重），
- * `to` 为同一编码形态下的新完整路径。
- * 不可复用 buildVariantPairs——其 from/to 共享同一变换，而此处 from 为文件名、
- * to 为完整路径，语义不同源，直接复用会产出错误形态的替换目标。
- */
-export function buildNameFallbackPairs(
-  baseName: string,
-  newPath: string,
-): { from: string, to: string }[] {
-  const seen = new Set<string>()
-  const pairs: { from: string, to: string }[] = []
-  for (const transform of PATH_ENCODING_TRANSFORMS) {
-    const f = transform(baseName)
-    if (seen.has(f)) continue
-    seen.add(f)
-    pairs.push({ from: f, to: transform(newPath) })
-  }
-  return pairs
-}
-
 /** 转义正则表达式元字符 */
 export function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 /** 检查资源文件是否存在于磁盘（通过列出父目录比对文件名） */
-export async function assetFileExists(path: string): Promise<boolean> {
+async function assetFileExists(path: string): Promise<boolean> {
   // 无目录段的路径会导致 readDir("") 扫描整个 /data，直接判定不存在
   if (!path.includes("/")) return false
   const segments = `/data/${path}`.split("/")

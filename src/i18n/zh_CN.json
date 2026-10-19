@@ -2926,7 +2926,6 @@
     "movePathPlaceholder": "输入新路径，如 assets/分类/xxx.png",
     "currentPath": "当前路径",
     "category": "快速分类",
-    "confirmMove": "确认移动",
     "cancel": "取消",
     "invalidPath": "路径无效：必须以 assets/ 开头且不含 ..",
     "refUpdateFailed": "引用更新失败，请手动检查文档链接",

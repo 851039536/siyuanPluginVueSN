@@ -2,7 +2,7 @@
 import type { ResourceManagerI18n } from "../types"
 import { sql } from "@/api"
 import { openBlock } from "@/utils/domUtils"
-import { buildPathVariants, escapeSqlString, queryBlocksByMarkdown } from "../utils"
+import { buildPathVariants, escapeSqlString, fillTemplate, queryBlocksByMarkdown } from "../utils"
 
 /** assets 表单资源引用查询上限 */
 const ASSET_REF_LIMIT = 32
@@ -45,7 +45,16 @@ async function queryBlockRefs(needle: string): Promise<Set<string> | null> {
 }
 
 /** 资源定位逻辑，供 useResourceManager 组合复用；showMsg 由调用方注入以复用统一提示封装 */
-export function useAssetLocator(i18n: ResourceManagerI18n, showMsg: (msg: string) => void) {
+export function useAssetLocator(deps: {
+  i18n: ResourceManagerI18n
+  /** 统一提示出口（由 useResourceManager 注入） */
+  showMsg: (msg: string) => void
+}) {
+  const {
+    i18n,
+    showMsg,
+  } = deps
+
   /**
    * 定位资源引用并跳转：assets 等值 → blocks 全路径 → 文件名兜底
    * 文件名兜底覆盖"移动后思源索引异步刷新、旧路径尚未更新"的窗口期
@@ -72,7 +81,7 @@ export function useAssetLocator(i18n: ResourceManagerI18n, showMsg: (msg: string
       showMsg(i18n.locateNotFound)
       return
     }
-    if (refIds.size > 1) showMsg((i18n.locateRefs ?? "").replace("{count}", String(refIds.size)))
+    if (refIds.size > 1) showMsg(fillTemplate(i18n.locateRefs, { count: refIds.size }))
     openBlock([...refIds][0])
   }
 

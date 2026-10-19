@@ -176,11 +176,6 @@ function srcVersion(path: string): string {
   return version ? `?v=${version}` : ""
 }
 
-/** 选择框 change 事件：把 DOM 勾选态回传父层（父层持有唯一选中集合） */
-function onToggleSelect(path: string) {
-  props.onToggleSelect(path)
-}
-
 /** 提取路径扩展名（不含点，大写）；无扩展名返回空串，用于文件卡片媒体区占位文案 */
 function fileExtName(path: string): string {
   const dot = path.lastIndexOf(".")

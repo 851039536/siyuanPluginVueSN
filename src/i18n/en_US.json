@@ -2926,7 +2926,6 @@
     "movePathPlaceholder": "Enter new path, e.g., assets/category/xxx.png",
     "currentPath": "Current Path",
     "category": "Quick Category",
-    "confirmMove": "Confirm Move",
     "cancel": "Cancel",
     "invalidPath": "Invalid path: must start with assets/ and must not contain ..",
     "refUpdateFailed": "Failed to update references, please check document links manually",

@@ -19,34 +19,37 @@ import {
   batchReplaceImages,
   getCompressStats,
 } from "../services/compressor"
+import { fillTemplate } from "../utils"
 
 /**
  * 压缩结果统计的零值形态（结果为空时展示，避免面板渲染 NaN）。
  *
- * 由 `getCompressStats([])` 派生而非手写：统计对象有 11 个字段，
+ * 由 `getCompressStats([])` 派生而非手写：统计对象有 8 个字段，
  * 手写子集会让 `stats` 的推断类型退化为两个分支的联合（消费方读非空分支独有字段即得 `undefined`）。
  * 派生后两分支同型，且服务层新增字段时零值自动跟进。
  * 冻结为只读；`stats` 的空分支返回其浅拷贝，避免消费方误改共享对象。
  */
 const EMPTY_STATS = Object.freeze(getCompressStats([]))
 
-/** i18n 占位符替换（缺失文案时回退空串，调用方不再二次判空） */
-function fill(template: string | undefined, values: Record<string, string | number>): string {
-  let out = template ?? ""
-  for (const [key, value] of Object.entries(values)) {
-    // 用 split/join 而非 replaceAll：构建 target 低于 ES2021，replaceAll 不可用
-    out = out.split(`{${key}}`).join(String(value))
-  }
-  return out
-}
-
-export function useImageCompress(
+/**
+ * 图片压缩逻辑，供 useResourceManager 组合复用。
+ *
+ * 依赖全部经 deps 注入：`imagePaths` 为页签已加载的图片资源（全量，非分页切片），
+ * `showMsg` 复用统一提示封装。
+ */
+export function useImageCompress(deps: {
   /** 当前页签已加载的图片资源路径（全量，非分页切片） */
-  imagePaths: Ref<string[]>,
-  i18n: ResourceManagerI18n,
+  imagePaths: Ref<string[]>
+  i18n: ResourceManagerI18n
   /** 统一提示出口（由 useResourceManager 注入） */
-  showMsg: (msg: string) => void,
-) {
+  showMsg: (msg: string) => void
+}) {
+  const {
+    imagePaths,
+    i18n,
+    showMsg,
+  } = deps
+
   /** 选中压缩的资源路径集合（跨筛选保留，便于「筛选后批量选」） */
   const selectedPaths = ref<Set<string>>(new Set())
   const compressing = ref(false)
@@ -126,7 +129,7 @@ export function useImageCompress(
       compressResults.value = results
 
       const next = getCompressStats(results)
-      showMsg(fill(i18n.compressDoneDetail, {
+      showMsg(fillTemplate(i18n.compressDoneDetail, {
         success: next.success,
         failed: next.failed,
         ratio: next.averageRatio,
@@ -136,7 +139,7 @@ export function useImageCompress(
       // 服务层已逐张兜底，此处捕获的是批次级意外异常（如回调抛错）；
       // 不吞掉：明确提示并留痕，避免 Promise 拒绝无人接管
       console.error("批量压缩失败:", e)
-      showMsg(fill(i18n.compressBatchFailed, {
+      showMsg(fillTemplate(i18n.compressBatchFailed, {
         error: e instanceof Error ? e.message : String(e),
       }))
     }
@@ -148,10 +151,11 @@ export function useImageCompress(
 
   /**
    * 将压缩结果写回原路径（覆盖原图）。
-   * @param onReplaced 写回成功后回调，入参为**成功写回的路径**，供父层释放这些路径的选中态。
-   *        缩略图缓存失效由本 composable 内部自增版本号完成（见 `bumpSrcVersions`）。
+   *
+   * 写回成功后由本 composable 内部释放这些路径的选中态：
+   * 缩略图缓存失效走自增版本号（见 `bumpSrcVersions`），选中态走 `mutateSelection`，父层无需回调。
    */
-  async function replaceOriginals(onReplaced: (paths: string[]) => void) {
+  async function replaceOriginals() {
     if (compressResults.value.length === 0) return
 
     replacing.value = true
@@ -171,10 +175,14 @@ export function useImageCompress(
       if (replacedPaths.length > 0) {
         // 磁盘内容已变但 URL 未变，须让缩略图绕过旧缓存
         bumpSrcVersions(replacedPaths)
-        onReplaced(replacedPaths)
+        // 已替换的路径不再需要保留选中态：选中集合由本 composable 内部释放
+        const replaced = new Set(replacedPaths)
+        mutateSelection((set) => {
+          for (const path of replaced) set.delete(path)
+        })
       }
 
-      showMsg(fill(i18n.replaceDoneDetail, { success, failed }))
+      showMsg(fillTemplate(i18n.replaceDoneDetail, { success, failed }))
     }
     catch (e: unknown) {
       // 保留 compressResults 不清空：写回中途失败时用户可修复后重试

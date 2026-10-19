@@ -22,7 +22,7 @@
 
 定位查询三级兜底：assets 表 path 等值匹配（原文/仅空格编码/全量编码三形态）→ blocks 表全路径模糊匹配 → 文件名模糊匹配（覆盖移动后思源索引异步刷新的窗口期）。任一层查询失败（内核/数据库异常）即中止并提示定位失败，不再降级为「未找到引用该资源的文档」。
 
-移动时引用更新两级匹配：全路径三形态精确替换 → 文件名兜底（正则将 `assets/任意目录/文件名` 整体替换为新路径，自愈历史移动遗留的失效引用）。磁盘操作前通过 `safeDecodeURI` + `assetFileExists` 解析真实文件路径（assets 表存储 URL 编码形态、磁盘为解码文件名）。引用更新成功后调用 `getAllEditor().reload()` 重载打开中的编辑器，避免 protyle 渲染缓存仍显示旧路径。
+移动时引用更新两级匹配：全路径三形态精确替换 → 文件名兜底（正则将 `assets/任意目录/文件名` 整体替换为新路径，自愈历史移动遗留的失效引用；兜底的 from 为**旧**文件名、to 为同编码形态的新完整路径，二者共用 `buildVariantPairs`——同一编码变换施加到两个入参，与全路径替换同构）。磁盘操作前通过 `resolveDiskPath`（内部 `assetFileExists` 先探原样形态、再探解码形态）解析真实文件路径（assets 表存储 URL 编码形态、磁盘为解码文件名）。引用更新成功后调用 `getAllEditor().reload()` 重载打开中的编辑器，避免 protyle 渲染缓存仍显示旧路径。移动链路由 `useAssetMover` 独立承载。
 
 分类目录名与筛选前缀统一小写（`normalizeCategoryKey`）：自定义分类输入 `Photos` 会落盘为 `assets/photos/`，与筛选前缀一致，避免「分类筛选结果恒为空」。
 
@@ -34,7 +34,7 @@
 resourceManager/
 ├── index.ts                          # registerResourceManager — 创建 Dock 面板
 ├── index.vue                         # 主面板：页签切换、资源列表、压缩操作条、移动表单、缩略图预览
-├── utils.ts                          # 纯函数与共享常量：SQL 转义、路径形态变换、目录扫描、磁盘路径归一
+├── utils.ts                          # 纯函数与共享常量：文案占位符、SQL 转义、路径形态变换、目录扫描、磁盘路径归一
 ├── types/index.ts                    # ResourceManagerI18n 文案接口 + CategoryItem + 压缩相关类型
 ├── services/
 │   └── compressor.ts                 # 图片压缩：单张/批量压缩、写回原图、统计汇总
@@ -47,14 +47,17 @@ resourceManager/
 │   ├── MoveAssetDialog.vue           # 移动资源弹窗：当前/新路径、快捷分类、确认/取消
 │   └── DocAssetsSection.vue          # 「文档资源」页签（自包含加载活动文档资源）
 ├── composables/
-│   ├── useResourceManager.ts         # 资源加载与缓存、分类筛选、移动/删除/重建索引、压缩编排
+│   ├── useResourceManager.ts         # 聚合入口：资源加载与缓存、分类筛选、删除、重建索引、压缩编排
+│   ├── useAssetMover.ts              # 资源移动：表单状态、磁盘重命名、全库引用更新、成功后路径同步
 │   ├── useCategoryManager.ts         # 分类可见性组装、空分类删除、内置分类隐藏/恢复与持久化
 │   ├── useAssetLocator.ts            # 引用定位三级兜底（assets → blocks 全路径 → 文件名）
 │   ├── useAssetActions.ts            # 复制 MD 引用、文件管理器中打开目录
-│   ├── useImageCompress.ts           # 压缩选中集合、批量压缩、写回原图
+│   ├── useImageCompress.ts           # 压缩选中集合、批量压缩、写回原图（含选中态释放）
 │   └── useDocAssets.ts               # 活动文档资源加载（含请求代际令牌）
-└── styles/                           # index.scss + AssetGridList.scss + MoveAssetDialog.scss + CompressDialog.scss + EmptyState.scss + DocAssetsSection.scss + CategoryFilterBar.scss + CategorySettingsDialog.scss
+└── styles/                           # _mixins.scss（纯 mixin 载体）+ index.scss + 各组件专属 SCSS
 ```
+
+> composable 均按 `AGENTS_ARCH.md § Composable 模式要求` 使用 **deps 对象注入**；`useResourceManager` 是聚合入口，按职责组合 5 个领域 composable。
 
 ## 关键实现说明
 
@@ -62,3 +65,6 @@ resourceManager/
 - **目录扫描**：递归分批（每批 8 个条目）并发读取，避免大树下瞬时打出大量内核请求；单目录失败记录日志并跳过，不中断整体扫描。
 - **缓存失效**：删除/移动成功后同步剔除 `allAssetPaths` / `missingAssets` / `unusedAssets` 中的失效路径，避免其它页签残留幽灵条目。
 - **移动目标校验**：`isValidAssetMovePath` 先解码再校验，拦截路径穿越、反斜杠、NUL、空目录段与目录结尾。
+- **文案占位符**：`fillTemplate(template?, values)` 统一处理 `{key}` 替换与缺失文案兜底（`split/join` 实现，构建 target 不支持 `replaceAll`）；不要再手写 `.replace("{x}", ...)`。
+- **样式基座**：`styles/_mixins.scss` 是**纯 mixin 载体**（遮罩 / 关闭按钮 / 表单输入 / fade+scale 过渡），三个弹窗与主面板共用；`styles/index.scss` 只服务 `index.vue`，子组件按需 `@use "./_mixins.scss" as *` 而非整套面板样式。
+

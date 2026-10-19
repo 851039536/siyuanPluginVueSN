@@ -13,7 +13,16 @@ function isDesktopFrontend(): boolean {
 }
 
 /** 行内快捷操作逻辑，供 useResourceManager 组合复用；showMsg 由调用方注入以复用统一提示封装 */
-export function useAssetActions(i18n: ResourceManagerI18n, showMsg: (msg: string) => void) {
+export function useAssetActions(deps: {
+  i18n: ResourceManagerI18n
+  /** 统一提示出口（由 useResourceManager 注入） */
+  showMsg: (msg: string) => void
+}) {
+  const {
+    i18n,
+    showMsg,
+  } = deps
+
   /** 复制资源的 Markdown 引用（图片用 ![]() 语法，文件用 []() 语法，路径为空格编码形态） */
   async function copyMarkdownRef(path: string, isImage: boolean) {
     const mdPath = toMarkdownPath(path)

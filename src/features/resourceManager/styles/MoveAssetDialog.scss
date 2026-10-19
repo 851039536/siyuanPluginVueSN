@@ -1,15 +1,10 @@
+// 移动资源弹窗（Teleport 至 body，样式自持；遮罩点击取消）。遮罩/关闭按钮/表单输入/过渡见 _mixins.scss
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
 
-// 移动资源弹窗（Teleport 至 body，样式自持；遮罩点击取消）
+// 遮罩：全屏固定、半透明黑（禁 backdrop-filter，对齐 gitPush 范式）
 .rm-move-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $s-4;
-  background: rgba(0, 0, 0, 0.5);
+  @include dialog-mask;
 }
 .rm-move-dialog {
   display: flex;
@@ -38,24 +33,7 @@
   }
 
   &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: $s-4;
-    height: $s-4;
-    padding: 0;
-    border: 1px solid transparent;
-    border-radius: $r-sm;
-    background: transparent;
-    color: var(--b3-theme-on-surface-light);
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s;
-
-    &:hover {
-      background: var(--b3-list-hover);
-      color: var(--b3-theme-on-surface);
-    }
+    @include dialog-close-btn;
   }
 
   &__body {
@@ -127,24 +105,10 @@
   }
 
   &__input {
+    @include form-input;
+    // 占满内容列（表单输入框基座未声明宽度）—— 必须放在 include 之后才能覆盖
     width: 100%;
     min-width: 0;
-    padding: $s-1 $s-2;
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-sm;
-    font-size: $t-xs;
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
-    outline: none;
-    transition: border-color 0.12s;
-
-    &:focus {
-      border-color: $c-primary;
-    }
-
-    &::placeholder {
-      color: var(--b3-theme-on-surface-light);
-    }
 
     &--inline {
       flex: 1;
@@ -178,13 +142,7 @@
   }
 }
 
-// 过渡：淡入淡出 0.12s
-.rm-move-fade-enter-active,
-.rm-move-fade-leave-active {
-  transition: opacity 0.12s ease;
-}
-
-.rm-move-fade-enter-from,
-.rm-move-fade-leave-to {
-  opacity: 0;
+// 过渡：淡入淡出 + 轻微缩放（0.12s，对齐 gitPush 范式）
+.rm-move-fade {
+  @include dialog-fade(".rm-move-dialog");
 }

@@ -33,7 +33,6 @@ export interface ResourceManagerI18n {
   movePathPlaceholder: string
   currentPath: string
   category: string
-  confirmMove: string
   cancel: string
   invalidPath: string
   refUpdateFailed: string
@@ -140,6 +139,4 @@ export interface CompressResult {
   compressedBlob?: Blob
   compressedSize?: number
   error?: string
-  compressionRatio?: number
-  timeTaken?: number
 }

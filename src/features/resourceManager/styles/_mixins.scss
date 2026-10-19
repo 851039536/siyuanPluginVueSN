@@ -1,0 +1,108 @@
+// resourceManager 共享 mixins — 纯 mixin 载体，无顶层选择器
+// （`_` 前缀仅用于纯 mixins/变量，见 AGENTS_STYLE.md § SCSS 必须分离到 styles/ 目录 规则 3）
+// ⚠️ 各组件引入本文件而非 index.scss —— index.scss 含真实选择器且只服务 index.vue，
+//    子组件引入它会把整套面板样式重复发射多份。
+@use "@/variables.scss" as *;
+
+// ==================== 基础工具 ====================
+@mixin text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: $s-1;
+    height: $s-1;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-theme-surface-lighter);
+    border-radius: $r-sm;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/// 弹窗/表单输入框基座（MoveAssetDialog 路径输入、主面板加载数量输入共用）
+@mixin form-input {
+  padding: $s-1 $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  font-size: $t-xs;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  outline: none;
+  transition: border-color 0.12s;
+
+  &:focus {
+    border-color: $c-primary;
+  }
+
+  &::placeholder {
+    color: var(--b3-theme-on-surface-light);
+  }
+}
+
+// ==================== 弹窗基座 ====================
+// 全屏遮罩：移动 / 分类设置 / 图片预览三处共用（对齐 AGENTS_STYLE §背景与过渡对齐 gitPush 范式）
+// 1. 底色统一 rgba(0, 0, 0, 0.5)，禁止 backdrop-filter
+// 2. 全屏遮罩 z-index 统一 10000
+/// 遮罩几何与底色：position fixed + inset 0 + 10000 层级 + 居中 + 半透明黑底。
+@mixin dialog-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $s-4;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/// 弹窗右上角关闭按钮（移动弹窗 / 分类设置弹窗 / 图片预览共用）
+@mixin dialog-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: $s-4;
+  height: $s-4;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: $r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+/// 弹窗进出场过渡：fade（遮罩 opacity）+ 内层面板 scale 0.98，统一 0.12s ease。
+/// $panel —— 面板选择器字符串（如 ".rm-move-dialog"），用于给内层面板加 transform 过渡。
+/// 用法：`.rm-move-fade { @include dialog-fade(".rm-move-dialog"); }`
+/// （& 在 mixin 内解析为 include 处的父选择器，故必须包在 `.rm-xxx-fade { }` 中）
+@mixin dialog-fade($panel) {
+  &-enter-active,
+  &-leave-active {
+    transition: opacity 0.12s ease;
+
+    #{$panel} {
+      transition: transform 0.12s ease;
+    }
+  }
+
+  &-enter-from,
+  &-leave-to {
+    opacity: 0;
+
+    #{$panel} {
+      transform: scale(0.98);
+    }
+  }
+}

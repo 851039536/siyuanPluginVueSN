@@ -1,44 +1,6 @@
+// 主面板样式（仅服务 index.vue）。共享 mixins 见 _mixins.scss
+@use "./_mixins.scss" as *;
 @use "@/variables.scss" as *;
-
-// ==================== Mixins ====================
-@mixin text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-@mixin custom-scrollbar {
-  &::-webkit-scrollbar {
-    width: $s-1;
-    height: $s-1;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: $r-sm;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-}
-
-@mixin form-input {
-  padding: $s-1 $s-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  font-size: $t-xs;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  outline: none;
-  transition: border-color 0.12s;
-
-  &:focus {
-    border-color: $c-primary;
-  }
-
-  &::placeholder {
-    color: var(--b3-theme-on-surface-light);
-  }
-}
 
 // ==================== Panel ====================
 .resource-manager-panel {
@@ -207,10 +169,6 @@
         align-items: center;
         gap: $s-1;
         flex-wrap: wrap;
-
-        &--primary {
-          flex-shrink: 0;
-        }
       }
     }
   }
@@ -221,12 +179,6 @@
     gap: $s-1;
     margin-bottom: $s-2;
     flex-wrap: wrap;
-
-    .rm-btn.active {
-      background: var(--b3-theme-primary);
-      color: var(--b3-theme-on-primary);
-      border-color: var(--b3-theme-primary);
-    }
 
     &--limit {
       align-items: center;
@@ -410,14 +362,7 @@
 
 // 图片放大预览弹层（Teleport 至 body，顶层规则）
 .rm-preview-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $s-4;
-  background: rgba(0, 0, 0, 0.5);
+  @include dialog-mask;
 }
 .rm-preview-panel {
   display: flex;
@@ -449,24 +394,7 @@
   }
 
   &__close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: $s-4;
-    height: $s-4;
-    padding: 0;
-    border: 1px solid transparent;
-    border-radius: $r-sm;
-    background: transparent;
-    color: var(--b3-theme-on-surface-light);
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s;
-
-    &:hover {
-      background: var(--b3-list-hover);
-      color: var(--b3-theme-on-surface);
-    }
+    @include dialog-close-btn;
   }
 
   &__body {
@@ -486,12 +414,7 @@
   }
 }
 
-.rm-preview-fade-enter-active,
-.rm-preview-fade-leave-active {
-  transition: opacity 0.12s ease;
-}
-
-.rm-preview-fade-enter-from,
-.rm-preview-fade-leave-to {
-  opacity: 0;
+// 过渡：淡入淡出 0.12s + 轻微缩放（对齐 gitPush 范式）
+.rm-preview-fade {
+  @include dialog-fade(".rm-preview-panel");
 }

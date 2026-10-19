@@ -1,0 +1,242 @@
+// 资源移动 composable：移动表单状态、磁盘重命名、全库引用更新与成功后路径同步
+import type { Ref } from "vue"
+import type { ResourceManagerI18n } from "../types"
+import { getAllEditor } from "siyuan"
+import { ref } from "vue"
+import {
+  putFile,
+  renameFile,
+  updateBlock,
+} from "@/api"
+import { copyToClipboard } from "@/utils/domUtils"
+import {
+  buildVariantPairs,
+  escapeRegExp,
+  fillTemplate,
+  isValidAssetMovePath,
+  normalizeCategoryKey,
+  queryBlocksByMarkdown,
+  resolveDiskPath,
+  safeDecodeURI,
+} from "../utils"
+
+/** 引用更新分批并发大小 */
+const UPDATE_BATCH_SIZE = 10
+/** 单次引用查询返回的块数上限 */
+const REF_QUERY_LIMIT = 1000
+
+/**
+ * 资源移动逻辑（表单状态 + 磁盘操作 + 引用更新），供 useResourceManager 组合复用。
+ *
+ * 依赖全部经 deps 注入：`showMsg` 复用统一提示封装，三个路径列表 ref 供移动后原地同步，
+ * `addCustomCategory` 供自定义分类移动成功后落盘。
+ */
+export function useAssetMover(deps: {
+  i18n: ResourceManagerI18n
+  /** 统一提示出口（由 useResourceManager 注入） */
+  showMsg: (msg: string) => void
+  /** 面板挂载状态：卸载后不再触碰编辑器与剪贴板 */
+  isMounted: Ref<boolean>
+  /** 全量资源路径缓存 */
+  allAssetPaths: Ref<string[]>
+  /** 丢失资源列表 */
+  missingAssets: Ref<string[]>
+  /** 未使用资源列表 */
+  unusedAssets: Ref<string[]>
+  /** 记录自定义分类（仅移动成功后调用） */
+  addCustomCategory: (key: string) => Promise<void>
+}) {
+  const {
+    i18n,
+    showMsg,
+    isMounted,
+    allAssetPaths,
+    missingAssets,
+    unusedAssets,
+    addCustomCategory,
+  } = deps
+
+  /** 正在移动的资源路径（null = 弹窗关闭） */
+  const movingAsset = ref<string | null>(null)
+  /** 移动表单中的新路径输入值 */
+  const moveNewPath = ref("")
+  /** 移动表单中的自定义分类输入值 */
+  const customCategory = ref("")
+
+  function startMoveAsset(path: string) {
+    movingAsset.value = path
+    moveNewPath.value = path
+  }
+
+  function cancelMove() {
+    movingAsset.value = null
+    moveNewPath.value = ""
+    customCategory.value = ""
+  }
+
+  async function applyCategory(currentPath: string, category: string): Promise<boolean> {
+    const fileName = currentPath.split("/").pop() || currentPath
+    // 分类名统一小写，保证磁盘目录名与筛选前缀（同样小写化）一致
+    moveNewPath.value = `assets/${normalizeCategoryKey(category)}/${fileName}`
+    // 点击分类即直接执行移动，避免"填入路径后未点确认"的静默无操作陷阱
+    return await handleMoveAsset(currentPath)
+  }
+
+  async function applyCustomCategory(currentPath: string) {
+    const cat = normalizeCategoryKey(customCategory.value)
+    if (!cat) return
+    const moved = await applyCategory(currentPath, cat)
+
+    // 仅移动成功时才记录自定义分类，避免移动失败仍新增分类
+    if (moved) await addCustomCategory(cat)
+    customCategory.value = ""
+  }
+
+  function updateAssetPathAfterMove(oldPath: string, newPath: string) {
+    allAssetPaths.value = allAssetPaths.value
+      .map((p) => (p === oldPath ? newPath : p))
+      .sort()
+    // 丢失/未使用列表中的旧路径同步失效
+    missingAssets.value = missingAssets.value.map((p) => (p === oldPath ? newPath : p))
+    unusedAssets.value = unusedAssets.value.filter((p) => p !== oldPath)
+  }
+
+  /**
+   * 更新全库中对资源的引用，两级匹配：
+   * 1. 全路径（原文/仅空格编码/全量编码三形态）精确替换
+   * 2. 文件名兜底——引用可能指向历史旧目录（此前移动时引用未同步），
+   *    按文件名查块并用正则将 assets/任意目录/文件名 整体替换为新路径，实现引用自愈
+   * @returns 成功更新的块数量
+   */
+  async function updateAssetReferences(oldPath: string, newPath: string): Promise<number> {
+    const oldBase = safeDecodeURI(oldPath)
+    const newBase = safeDecodeURI(newPath)
+    const variants = buildVariantPairs(oldBase, newBase)
+
+    // 各形态分别查询，按块 id 去重
+    const blockMap = new Map<string, string>()
+    for (const variant of variants) {
+      const rows = await queryBlocksByMarkdown(variant.from, REF_QUERY_LIMIT)
+      if (!rows) {
+        // sql 静默失败返回 null：文件已移动但引用未更新，明确提示用户
+        showMsg(i18n.refUpdateFailed)
+        return 0
+      }
+      for (const row of rows) {
+        if (!blockMap.has(row.id)) blockMap.set(row.id, row.markdown)
+      }
+    }
+
+    // 文件名兜底：按【旧路径】文件名（含编码形态）补查引用了旧目录路径的块；
+    // 每个 pair 的 to 为同编码形态的新完整路径，替换时保持形态一致
+    const baseName = oldBase.split("/").pop() ?? ""
+    const namePairs = baseName ? buildVariantPairs(baseName, newBase) : []
+    for (const pair of namePairs) {
+      const rows = await queryBlocksByMarkdown(`/${pair.from}`, REF_QUERY_LIMIT)
+      if (!rows) continue
+      for (const row of rows) {
+        if (!blockMap.has(row.id)) blockMap.set(row.id, row.markdown)
+      }
+    }
+
+    const updates = [...blockMap.entries()]
+      .map(([id, markdown]) => {
+        let next = markdown
+        for (const variant of variants) next = next.split(variant.from).join(variant.to)
+        // 兜底替换：assets/ 下任意目录 + 该文件名 → 同形态新路径（跳过已是新路径的引用）
+        for (const pair of namePairs) {
+          const pattern = new RegExp(`assets/(?:[^)\\s"']*/)?${escapeRegExp(pair.from)}`, "g")
+          next = next.replace(pattern, (match) => (match === pair.to ? match : pair.to))
+        }
+        return { id, next, changed: next !== markdown }
+      })
+      .filter((u) => u.changed)
+
+    // 分批并行更新，避免串行等待与瞬时请求风暴
+    let updatedCount = 0
+    for (let i = 0; i < updates.length; i += UPDATE_BATCH_SIZE) {
+      const batch = updates.slice(i, i + UPDATE_BATCH_SIZE)
+      const results = await Promise.all(batch.map(async (u) => {
+        try {
+          const res = await updateBlock("markdown", u.next, u.id)
+          // 内核失败时可能返回空数组而非 null，须按"有操作结果"判定成功
+          return Array.isArray(res) && res.length > 0
+        }
+        catch {
+          return false
+        }
+      }))
+      updatedCount += results.filter(Boolean).length
+    }
+    return updatedCount
+  }
+
+  async function handleMoveAsset(oldPath: string): Promise<boolean> {
+    const newPath = moveNewPath.value.trim()
+    if (!newPath) {
+      cancelMove()
+      return false
+    }
+    if (newPath === oldPath) {
+      // 路径未变化时明确提示，避免静默关闭被误认为移动成功
+      showMsg(i18n.samePathHint)
+      return false
+    }
+    if (!isValidAssetMovePath(newPath)) {
+      showMsg(i18n.invalidPath)
+      return false
+    }
+    try {
+      // 磁盘操作使用真实（解码）路径；markdown 引用更新仍按列表中的原形态
+      const diskOldPath = await resolveDiskPath(oldPath)
+      if (!diskOldPath) throw new Error(i18n.fileNotFound)
+      const diskNewPath = safeDecodeURI(newPath)
+
+      const dirPart = diskNewPath.substring(0, diskNewPath.lastIndexOf("/"))
+      if (dirPart && dirPart !== "assets") {
+        try { await putFile(`/data/${dirPart}`, true, new File([], "")) }
+        catch { /* 目录可能已存在 */ }
+      }
+
+      await renameFile(`/data/${diskOldPath}`, `/data/${diskNewPath}`)
+      const updatedCount = await updateAssetReferences(oldPath, newPath)
+
+      // 移动后不自动全量重建索引（思源按需维护资源索引，耗时操作留待「重建索引」页签手动触发）
+      // 面板已卸载时不再触碰编辑器与剪贴板（避免对已销毁的 Dock 做无意义副作用）
+      if (!isMounted.value) return true
+
+      // 引用已写入内核，但打开中的编辑器仍渲染旧路径缓存，需主动重载
+      if (updatedCount > 0) {
+        for (const editor of getAllEditor()) editor.reload(false)
+      }
+
+      // 移动成功后自动复制新路径，便于直接粘贴引用
+      const copied = await copyToClipboard(newPath)
+
+      const refMsg = updatedCount > 0 ? `（${fillTemplate(i18n.updatedRefs, { count: updatedCount })}）` : ""
+      const copyMsg = copied ? `（${fillTemplate(i18n.pathCopied)}）` : ""
+      showMsg(`${fillTemplate(i18n.moveSuccess)}${refMsg}（${fillTemplate(i18n.newPath)}: ${newPath}）${copyMsg}`)
+      updateAssetPathAfterMove(oldPath, newPath)
+      cancelMove()
+      return true
+    }
+    catch (e: unknown) {
+      if (isMounted.value) {
+        const msg = e instanceof Error ? e.message : String(e)
+        showMsg(`${fillTemplate(i18n.moveFailed)}: ${msg}`)
+      }
+      return false
+    }
+  }
+
+  return {
+    movingAsset,
+    moveNewPath,
+    customCategory,
+    startMoveAsset,
+    cancelMove,
+    applyCategory,
+    applyCustomCategory,
+    handleMoveAsset,
+  }
+}

@@ -340,7 +340,7 @@ TOP：`statistics/MilestonesCard.scss`(11)、`statistics/NotebookActivity.scss`(
 | `rssReader/utils/fetchRss.ts` | 4 | 请求超时 `15000/20000` | `RSS_FETCH_TIMEOUT_MS` |
 | `generalSettings/utils/styles.ts:363` | 1 | 轮询超时 `5000` | `ELEMENT_WAIT_TIMEOUT_MS` |
 | `gitPush/composables/usePagedList.ts:5` | 1 | `pageSize = 50` | `DEFAULT_PAGE_SIZE` |
-| `skillLearning/components/SkillListView.vue:109`、`resourceManager/...`、~~`diskBrowser/utils/index.ts:23`~~、`useIdeManagement.ts:211`、`useResultActions.ts:120` 等 | 各 1 | 分页/超时 | 各自 feature 的 `types/`（diskBrowser 已改为具名常量 `VOLUME_LABEL_TIMEOUT`） |
+| `skillLearning/components/SkillListView.vue:109`、~~`resourceManager/...`~~、~~`diskBrowser/utils/index.ts:23`~~、`useIdeManagement.ts:211`、`useResultActions.ts:120` 等 | 各 1 | 分页/超时 | 各自 feature 的 `types/`（diskBrowser 已改为具名常量 `VOLUME_LABEL_TIMEOUT`；resourceManager 的 `showMessage` 超时已改为 `MESSAGE_TIMEOUT_MS = 3000`，见 `useResourceManager.ts`） |
 
 **已是具名常量、无需再改**：`flashcardReading/types/index.ts:50` 的 `PAGE_SIZE: 10`、`docAnalysis/components/DocListView/index.vue:222` 的 `PAGE_SIZE = 50`、`gitPush/types/storage.ts:29` 的 `DEFAULT_NETWORK_TIMEOUT = 240`。
 

@@ -19,13 +19,18 @@ export type DeleteCategoryResult = "ok" | "notEmpty" | "failed"
 
 /**
  * 分类可见性管理：内置分类可删除（=隐藏并持久化，可恢复），自定义分类删除后从存储移除。
- * @param getAssetPaths 读取全量资源路径列表（图片+文件），用于判定分类目录是否仍被资源占用
  */
-export function useCategoryManager(
-  plugin: Plugin,
-  i18n: ResourceManagerI18n,
-  getAssetPaths: () => readonly string[],
-) {
+export function useCategoryManager(deps: {
+  plugin: Plugin
+  i18n: ResourceManagerI18n
+  /** 读取全量资源路径列表（图片+文件），用于判定分类目录是否仍被资源占用 */
+  getAssetPaths: () => readonly string[]
+}) {
+  const {
+    plugin,
+    i18n,
+    getAssetPaths,
+  } = deps
   const storage = new PluginStorage(plugin)
   /** 用户自建分类（key 归一化小写，落盘 assets/<key>/） */
   const customCategories = ref<string[]>([])

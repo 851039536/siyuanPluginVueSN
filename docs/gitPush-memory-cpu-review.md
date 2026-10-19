@@ -1,4 +1,4 @@
-# gitPush · 内存泄漏与「每次进入页面 CPU 暴涨」审查
+﻿# gitPush · 内存泄漏与「每次进入页面 CPU 暴涨」审查
 
 > 审查对象：`src/features/gitPush/`（262 个文件），同时交叉核对 `src/utils/vueAppHelper.ts`、`src/utils/timerRegistry.ts`、`src/index.ts` 与思源前端 `addDock / Custom / Tab` 生命周期。
 >
@@ -578,3 +578,47 @@ fetch 前 behind=0 → fetch 后 behind=2 → 本地领先 ahead=1/behind=2 → 
 
 > ⚠️ 提醒：插件 **必须重新 `pnpm build`/`pnpm dev` 部署**后才会生效；本轮排查发现用户环境中的
 > `index.js` 时间戳落后于源码修复时间，是「改了但现象不变」的直接原因之一。
+
+---
+
+## 13. OCR 复审（提交 2da0ea2a9）修复记录（2026-10-19 追加）
+
+用 `ocr review` 复审提交 `2da0ea2a9`（12 文件 / 22 条意见），修复其中 2 条 high 与多条 medium：
+
+### 13.1 high：失败计数是死代码（真正的功能缺陷）
+
+`fetchUntilMoved` 把单平台失败吞进 `failures` 并**正常 resolve**，不抛错；
+而 `useProjectQueryScheduler.refreshRemote` 丢弃了返回值，`index.vue` 只靠 `catch` 计数
+⇒ `needsPullUnverifiedCount` 恒为 0，`needsPullPartialFailed`（"部分项目查不到"）永不显示，
+用户再次看到"查不到"被伪装成"确实没有"。
+
+修复：`refreshRemote` 返回 `{ failures, unknown } | null`，manager 层同步签名，
+`index.vue` 按项目累计（`failures + unknown > 0` 即计为该项目结果不可信）。
+
+### 13.2 high（潜在漏报）："无法判定"被当成"确认无更新"
+
+`remoteBehind` 原先在 detached / 空仓库 / 跟踪 ref 不存在时返回 `0`，
+而 `0` 会触发短路 ⇒ 后续平台（github）的真实 `behind > 0` 被静默漏掉。
+
+修复：`remoteBehind` 返回 `number | null`——`0` 才可短路，`null` 计为 unknown 并**继续**下一个平台。
+新增回归用例（真实仓库构造 ref 不存在场景，断言 `attempted === 2`、`unknown === 2`）。
+
+### 13.3 其余修复
+
+| 问题 | 修复 |
+|---|---|
+| 注释语义与实现相反（3 处） | 统一为"确认**无需拉取**才停；需拉取则继续下一个平台" |
+| `PULL_CHECK_REMOTE_ORDER` 硬编码数组，新增平台会静默漏配 | 改为 `Record<PlatformKey, number>` 派生，类型系统强制补全 |
+| `fetchRemoteQuick` 死代码 | 删除（逻辑已内联在 `fetchUntilMoved`） |
+| `remoteBehind` 每平台重复 `rev-parse` 分支 | 分支名循环外解析一次传入 |
+| 预算定时器在 work 先完成时未清理 | 捕获 `TimerHandle` 并在 `finally` 中 `clear` |
+| 预算超时后后台池不检查暂停/卸载 | worker 内补 `gitOpsPaused/needsPullAborted` 守卫 |
+| 项目增删/改路径后不再触发检查（新增项目永远进不了列表） | 签名 watch 中重置 `needsPullCheckedThisSession` 并在 needsPull 视图下重跑 |
+| `props.i18n.xxx.replace` 可能在键缺失时抛错 | 改用既有 `tf()` 助手（含缺失兜底） |
+| 重复 import 同一模块 | 合并为单条 |
+| 返回类型未命名、形状重复 | 抽出 `ProjectRemoteName` 接口 |
+
+### 13.4 验证
+
+`pnpm typecheck` 通过；`pnpm test --hookTimeout 90000` **37 文件 / 639 用例全绿**；
+`pnpm audit:encoding` 0 问题；`pnpm i18n:verify` 通过。

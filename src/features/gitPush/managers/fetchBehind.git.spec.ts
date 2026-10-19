@@ -214,4 +214,54 @@ describe("需拉取判据链路（真实 git + 真实 GitExecutor）", () => {
     // 第一个平台（gitee=origin）确认无更新 ⇒ 短路，不应再试 github/cnb
     expect(result.attempted).toBe(1)
   }, 120000)
+
+  /**
+   * 高严重度回归：**「无法判定」不得当作「确认无更新」而短路**。
+   *
+   * 场景：某平台 fetch 成功，但它的跟踪 ref 不存在（远程换了默认分支 / 指向另一个仓库 /
+   * detached HEAD）。此时 `remoteBehind` 返回 null（未知），绝不能 break——
+   * 否则后面平台（github）里真实的 behind>0 会被漏掉，
+   * 表现就是用户抱怨的「明明有更新却显示没有」。
+   *
+   * 构造：第一个平台（gitee=origin）的跟踪 ref 指向一个**不存在的分支** ⇒ behind 未知；
+   *       第二个平台（github）配成真实有效的 origin ⇒ 它才是有更新的那个。
+   */
+  it("fetchUntilMoved：某平台无法判定 behind 时必须继续下一个平台，不得短路", async () => {
+    const { RemoteOps } = await import("./RemoteOps")
+    const { ProjectWriteLock } = await import("./ProjectWriteLock")
+
+    // 新建仓库，切到一个本地分支（远程没有该分支对应 ref）⇒ gitee 的 ref 不存在
+    const unknownBranchRepo = join(root, "unknown-branch")
+    git(root, ["clone", "-q", remote, unknownBranchRepo])
+    git(unknownBranchRepo, ["config", "user.email", "ub@test"])
+    git(unknownBranchRepo, ["config", "user.name", "ub"])
+    git(unknownBranchRepo, ["checkout", "-q", "-b", "local-only-branch"])
+
+    const project = {
+      id: "p3",
+      name: "p3",
+      path: unknownBranchRepo,
+      categoryId: "c1",
+      addedAt: 0,
+      // 第一个平台用 origin（它的 refs/remotes/origin/local-only-branch 不存在 → 未知）
+      giteeRemote: "origin",
+      // 第二个平台也指向 origin，但优先级更低；它同样未知。
+      // 关键是断言：不得因第一个平台「未知」就停在 attempted===1。
+      githubRemote: "origin2",
+    }
+    // 追加一个有效远程名，让第二个平台 fetch 成功（但 ref 仍不存在 → 仍未知）
+    git(unknownBranchRepo, ["remote", "add", "origin2", remote])
+
+    const store = {
+      getProjectById: async () => project,
+    } as never
+    const ops = new RemoteOps(executor, store, {} as never, new ProjectWriteLock())
+
+    const result = await ops.fetchUntilMoved("p3", { timeoutMs: 30000 })
+    // 两个平台都 fetch 成功但都无法判定 ⇒ 必须都尝试（attempted === 2），且上报 unknown
+    expect(result.attempted).toBe(2)
+    expect(result.unknown).toBe(2)
+    // 未知不得被当成「有更新」
+    expect(result.moved).toBe(false)
+  }, 120000)
 })

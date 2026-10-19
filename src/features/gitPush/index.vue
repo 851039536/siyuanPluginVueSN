@@ -307,7 +307,7 @@ import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { useCodeReport } from "./composables/useCodeReport"
 import { useReportExport } from "./composables/useReportExport"
 import { CARD_SERVICES_KEY, PLATFORM_META } from "./types"
-import { TimerRegistry } from "@/utils/timerRegistry"
+import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import { clampProbeConfig, DEFAULT_PROBE_CONFIG } from "./types/probeConfig"
 import {
   openLocalPath,
@@ -606,11 +606,16 @@ let needsPullCheckPromise: Promise<void> | null = null
 const needsPullChecking = ref(false)
 
 /**
- * 远程检查中失败的项目数。
- * 用途：空态文案要区分「确实没有需拉取」与「有项目没查成功」——
+ * 远程检查中「结果不可信」的项目数（fetch 全失败，或成功但无法判定 behind）。
+ *
+ * 用途：空态要区分「确实没有需拉取」与「有项目没查成功」——
  * 后者显示「暂无需拉取」会把「查不到」伪装成「没有」，是本功能最早的用户困惑来源。
+ *
+ * ⚠️ 必须来自 `refreshRemote` 的返回值（`{ failures, unknown }`），不能靠 catch：
+ *   fetchUntilMoved 内部把单个平台的失败吞进 failures 并正常返回，**不会抛错**，
+ *   早期实现依赖 catch 计数导致该计数恒为 0、`needsPullPartialFailed` 成了死代码。
  */
-const needsPullFailedCount = ref(0)
+const needsPullUnverifiedCount = ref(0)
 
 /** 单次「需拉取」远程检查的并发上限（网络命令走 GitExecutor 独立网络池，此处再限一层避免一次性打满远程） */
 const NEEDS_PULL_FETCH_CONCURRENCY = 4
@@ -675,23 +680,34 @@ async function ensureStatsDataLoadedWithinBudget(budgetMs: number): Promise<void
   const list = projects.value
   if (list.length === 0) return
   markProjectsDisplayed(list.map((p) => p.id))
-  // 已缓存 pushStatus 的项目无需等待（已有值即可参与过滤）；workingTree 与本视图无关
+  // 已缓存 pushStatus 的项目无需等待（已有值即可参与过滤）；workingTree 与本视图无关。
+  // 注：`has()` 只表示「曾成功加载过」。项目路径/远程被编辑时，`handleEditSaved` 会调
+  // `scheduler.clearProject(id)` 清掉该条记录，故陈旧缓存不会卡住这里；
+  // 即便偶有陈旧，后台 fetch 也会在数秒内覆盖为最新值。
   const pending = list.filter((p) => !scheduler.has(p.id, "pushStatus"))
   if (pending.length === 0) return
   const concurrency = Math.max(1, props.manager.getGitConcurrency())
   const work = poolProcess(pending, concurrency, async (p) => {
+    // 预算到期后这批仍在后台跑：暂停/卸载时必须停手，避免继续 spawn 本地 git
+    if (gitOpsPaused.value || needsPullAborted) return
     try {
       await scheduler.loadPushStatus(p.id)
     } catch {
       // 单项目失败静默：不阻断其余项目，也不影响渲染
     }
   })
-  await Promise.race([
-    work,
-    new Promise<void>((resolve) => {
-      needsPullTimers.setTimeout(resolve, budgetMs)
-    }),
-  ])
+  let budgetTimer: TimerHandle | null = null
+  try {
+    await Promise.race([
+      work,
+      new Promise<void>((resolve) => {
+        budgetTimer = needsPullTimers.setTimeout(resolve, budgetMs)
+      }),
+    ])
+  } finally {
+    // work 先完成时必须清掉预算定时器，否则每次进入都会留下一个未触发的句柄
+    if (budgetTimer !== null) needsPullTimers.clear(budgetTimer)
+  }
 }
 
 /**
@@ -700,16 +716,15 @@ async function ensureStatsDataLoadedWithinBudget(budgetMs: number): Promise<void
  * ⚠️ 单飞 + 可中断：切走/暂停/卸载后剩余项目直接跳过（不发无谓网络请求），
  * 已完成的项目结果仍然有效。
  *
- * ⚠️ 「已检查」判定必须含失败项目：若只在成功时置位，fetch 失败的项目 behind 恒为 0，
- * 界面会一直显示「暂无需要拉取」，用户永远看不到数据也无从得知是失败
- * （这正是「获取时间特别久也拿不到数据」的观感来源）。故这里记录失败数，
- * 由空态文案区分「确实没有」与「部分项目检查失败」。
+ * ⚠️ 失败计数必须取自 `refreshRemote` 的**返回值**：`fetchUntilMoved` 会把单平台失败
+ * 吞进 `failures` 并正常 resolve（不抛错），因此靠 `catch` 计数会恒为 0，
+ * 「部分项目查不到」的提示永远不出现——早期实现即栽在这里。
  */
 function startNeedsPullRemoteCheck(): Promise<void> {
   if (needsPullCheckPromise) return needsPullCheckPromise
   if (projects.value.length === 0) return Promise.resolve()
   needsPullChecking.value = true
-  needsPullFailedCount.value = 0
+  needsPullUnverifiedCount.value = 0
   markProjectsDisplayed(projects.value.map((p) => p.id))
   // 复制快照：检查期间项目增删不影响本轮遍历
   const queue = [...projects.value]
@@ -723,13 +738,16 @@ function startNeedsPullRemoteCheck(): Promise<void> {
       //    这里的 force 只会额外强制一次 resolveBranch（每项目多一个 rev-parse 进程）。
       // ⚠️ 必须传短超时：默认 240s 会让不可达远程把整批检查拖成「永远没结果」。
       // ⚠️ shortCircuit 语义（见 RemoteOps.fetchUntilMoved）：
-      //    gitee 需拉取 ⇒ 后续平台照常执行；gitee 无需拉取 ⇒ 跳过后面的平台。
-      await scheduler.refreshRemote(p.id, {
+      //    某平台需拉取 ⇒ 后续平台照常执行；某平台无需拉取 ⇒ 跳过后面平台。
+      const outcome = await scheduler.refreshRemote(p.id, {
         timeoutMs: NEEDS_PULL_FETCH_TIMEOUT_MS,
         shortCircuit: true,
       })
+      // 有平台 fetch 失败或无法判定 ⇒ 该项目的 behind 不完全可信，计入「未验证」
+      if (outcome && outcome.failures + outcome.unknown > 0) needsPullUnverifiedCount.value++
     } catch {
-      needsPullFailedCount.value++
+      // 整体失败（如项目路径失效导致 refreshRemotes 抛错）：同样计入未验证
+      needsPullUnverifiedCount.value++
     }
   }).then(() => {
     // 只要尝试过就标记已检查（失败项目由空态文案单独提示，不再整轮重试——
@@ -763,13 +781,13 @@ const listEmptyHint = computed(() => {
   if (filteredGroups.value.length > 0) return null
   if (searchQuery.value.trim()) return null
   if (viewMode.value === "needsPull") {
-    // 四态：正在后台查远程 / 有项目查失败 / 已查完且为空 / 还没查过
-    if (needsPullChecking.value) return props.i18n.needsPullChecking
-    if (needsPullCheckedThisSession && needsPullFailedCount.value > 0) {
-      return props.i18n.needsPullPartialFailed.replace("{0}", String(needsPullFailedCount.value))
+    // 四态：正在后台查远程 / 有项目结果不可信 / 已查完且确实为空 / 还没查过
+    if (needsPullChecking.value) return tf("needsPullChecking")
+    if (needsPullCheckedThisSession && needsPullUnverifiedCount.value > 0) {
+      return tf("needsPullPartialFailed", needsPullUnverifiedCount.value)
     }
-    if (needsPullCheckedThisSession) return props.i18n.needsPullEmpty
-    return props.i18n.needsPullNotFetched
+    if (needsPullCheckedThisSession) return tf("needsPullEmpty")
+    return tf("needsPullNotFetched")
   }
   if (viewMode.value !== "all") return null
   if (activeCategory.value) return null
@@ -1175,7 +1193,14 @@ onUnmounted(() => {
 const projectProbeSignature = computed(() =>
   projects.value.map((p) => `${p.id}:${p.path}`).join("|"),
 )
-watch(projectProbeSignature, () => gitProbe.syncProjects())
+watch(projectProbeSignature, () => {
+  gitProbe.syncProjects()
+  // 项目集合/路径变化后，「本会话已检查过」不再成立：新项目的 behind 尚未拉取。
+  // 不清会导致新增项目永远进不了「需拉取」列表（直到面板重挂载）。
+  needsPullCheckedThisSession = false
+  needsPullUnverifiedCount.value = 0
+  if (viewMode.value === "needsPull") void ensureNeedsPullData()
+})
 
 /** 暂停期间探测不执行（isPaused 已由 getConfig/isPaused 注入），恢复时立即补一轮并重排定时器 */
 watch(gitOpsPaused, (paused) => {

@@ -56,9 +56,15 @@ export function normalizeGitUrl(url: string): string {
   return s
 }
 
+/** 项目已配置的远程（平台 key + git 远程名）——供 orderRemotesForPullCheck 等复用同一形状 */
+export interface ProjectRemoteName {
+  key: PlatformKey
+  name: string
+}
+
 /** 获取项目已配置的远程名称列表（消除 4 处 for PLATFORM_META + project[pm.remoteProp] 重复模式） */
-export function getProjectRemoteNames(project: GitProject): { key: PlatformKey, name: string }[] {
-  const result: { key: PlatformKey, name: string }[] = []
+export function getProjectRemoteNames(project: GitProject): ProjectRemoteName[] {
+  const result: ProjectRemoteName[] = []
   for (const pm of PLATFORM_META) {
     const name = project[pm.remoteProp] as string | undefined
     if (name) { result.push({ key: pm.key, name }) }
@@ -67,28 +73,36 @@ export function getProjectRemoteNames(project: GitProject): { key: PlatformKey, 
 }
 
 /**
- * 「需拉取」检查用的远程尝试顺序（按国内可用性从高到低）。
+ * 「需拉取」检查用的远程优先级（数字越小越先尝试）。
  *
- * 为什么需要固定顺序：同一项目常配置 3~4 个远程，但**多数平台是镜像**（同一份提交推到多个平台），
- * 只需其中一个能看到新提交即可判定 behind。按此顺序逐个 fetch，一旦某个远程确认「远程有更新」
- * 就停止后续 fetch，可显著减少网络往返（实测本项目 github 8s、gitee 2.3s、cnb 1.2s、gitea 已失效）。
- *
- * 顺序依据：gitee（国内直连/SSH 快）→ cnb → github → gitea（自建域名最易失效）。
- * ⚠️ 与 PLATFORM_META 的顺序无关：后者是 UI 展示顺序，这里是网络探测顺序，两者用途不同。
+ * ⚠️ 用 `Record<PlatformKey, number>` 而非数组：新增平台时 TypeScript 会强制补上优先级，
+ * 避免「漏配 → 静默排到最后」的隐性行为变化。
  */
-export const PULL_CHECK_REMOTE_ORDER: PlatformKey[] = ["gitee", "cnb", "github", "gitea"]
+const PULL_CHECK_RANK: Record<PlatformKey, number> = {
+  gitee: 0,
+  cnb: 1,
+  github: 2,
+  gitea: 3,
+}
+
+/** 平台优先级列表（由 PULL_CHECK_RANK 派生，保证与平台集合同步） */
+export const PULL_CHECK_REMOTE_ORDER: PlatformKey[] = (Object.keys(PULL_CHECK_RANK) as PlatformKey[])
+  .sort((a, b) => PULL_CHECK_RANK[a] - PULL_CHECK_RANK[b])
 
 /**
- * 按 `PULL_CHECK_REMOTE_ORDER` 排序项目已配置的远程（未列入顺序表的平台排最后，保持稳定）。
- * 供「需拉取」检查做「短路 fetch」用。
+ * 按 `PULL_CHECK_REMOTE_ORDER` 排序项目已配置的远程。
+ *
+ * 短路语义（用户明确定义，勿按直觉改）：
+ *   - 某平台确认「**需拉取**」(behind > 0) ⇒ **继续**检查后续平台（镜像可能有独有提交，不能停）；
+ *   - 某平台确认「**无需拉取**」(behind === 0) ⇒ **跳过**后续平台（已是最新，省网络往返）；
+ *   - fetch 失败 ⇒ 视为「未知」，继续下一个平台（不能因 gitea 失效就放弃 github 的判定）。
+ *
+ * 顺序依据：gitee（国内直连/SSH 快）→ cnb → github → gitea（自建域名最易失效）。
+ * ⚠️ 与 PLATFORM_META 的顺序无关：后者是 UI 展示顺序，这里是网络探测顺序。
  */
-export function orderRemotesForPullCheck(project: GitProject): { key: PlatformKey, name: string }[] {
-  const all = getProjectRemoteNames(project)
-  const rank = (key: PlatformKey): number => {
-    const i = PULL_CHECK_REMOTE_ORDER.indexOf(key)
-    return i < 0 ? PULL_CHECK_REMOTE_ORDER.length : i
-  }
-  return [...all].sort((a, b) => rank(a.key) - rank(b.key))
+export function orderRemotesForPullCheck(project: GitProject): ProjectRemoteName[] {
+  const rank = (key: PlatformKey): number => PULL_CHECK_RANK[key] ?? PULL_CHECK_REMOTE_ORDER.length
+  return getProjectRemoteNames(project).sort((a, b) => rank(a.key) - rank(b.key))
 }
 
 /** 平台 key → 展示名（缺失/未识别时回落为 key 原文）。

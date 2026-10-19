@@ -811,13 +811,14 @@ export class GitPushManager {
   }
 
   /**
-   * 「需拉取」专用短路 fetch：按平台优先级逐个尝试，确认某远程有更新即停。
-   * 见 RemoteOps.fetchUntilMoved 的语义说明。
+   * 「需拉取」专用短路 fetch：按平台优先级逐个尝试。
+   * 短路语义见 RemoteOps.fetchUntilMoved：确认**无需拉取**才停；需拉取则继续下一个平台。
+   * 返回值含 fetch 失败/无法判定的平台数，供调用方做「部分项目查不到」提示。
    */
   async fetchUntilMoved(
     id: string,
     opts?: { timeoutMs?: number, signal?: AbortSignal },
-  ): Promise<{ moved: boolean, attempted: number, failures: number }> {
+  ): Promise<{ moved: boolean, attempted: number, failures: number, unknown: number }> {
     return this.remoteOps.fetchUntilMoved(id, opts)
   }
 

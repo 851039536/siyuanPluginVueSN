@@ -103,8 +103,13 @@ export interface ProjectQueryScheduler {
   loadStatus: (id: string, opts?: LoadProjectStatusOptions) => Promise<void>
   /** 统一远程刷新：refreshRemotes(配置) → fetch(网络) → loadPushStatus(纯本地比对)。
    *  `timeoutMs` 为单远程 fetch 超时——后台批量检测传短超时，避免不可达远程挂满默认 240s。
-   *  `shortCircuit` 为 true 时按平台优先级短路 fetch（有更新即停），仅供「需拉取」检测使用。 */
-  refreshRemote: (id: string, opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean }) => Promise<void>
+   *  `shortCircuit` 为 true 时按平台优先级短路 fetch：**确认无需拉取才停**（需拉取则继续下一个平台），
+   *  仅供「需拉取」检测使用。
+   *  返回 fetch 失败/无法判定的平台数（供调用方做「部分项目查不到」提示）；完整刷新路径返回 null。 */
+  refreshRemote: (
+    id: string,
+    opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean },
+  ) => Promise<{ failures: number, unknown: number } | null>
 
   // ── 缓存清理 ──
   /** 删除项目 / 项目路径或远程变更后清空其全部调度状态 */

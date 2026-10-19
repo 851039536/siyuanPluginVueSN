@@ -260,20 +260,28 @@ export function useProjectQueryScheduler(
    * @param opts.timeoutMs 单远程 fetch 超时（ms）。后台批量检测应传短超时，
    *   避免不可达远程各自挂满默认 240s 造成「整批永久无结果」。
    * @param opts.shortCircuit true 时用「按平台优先级短路 fetch」：
-   *   前面的平台确认远程有更新就停止，不再 fetch 后面的平台（多平台镜像场景可省大量网络往返）。
-   *   仅供「需拉取」检测使用——完整刷新（用户点 Fetch/刷新）仍需更新全部远程。
+   *   某平台确认**无需拉取**（behind===0）才停止；若**需拉取**（behind>0）则继续下一个平台
+   *   （镜像可能有独有提交）；fetch 失败视为未知继续。仅供「需拉取」检测使用——
+   *   完整刷新（用户点 Fetch/刷新）仍需更新全部远程。
+   * @returns 远程检查结果摘要（fetch 失败/无法判定的平台数），供调用方累计失败提示。
+   *          完整刷新路径返回 `null`（其语义是「更新全部远程」，不参与拉取检测的成败统计）。
    */
-  async function refreshRemote(id: string, opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean }): Promise<void> {
-    await run(id, "remoteRefresh", async () => {
+  async function refreshRemote(
+    id: string,
+    opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean },
+  ): Promise<{ failures: number, unknown: number } | null> {
+    return run(id, "remoteRefresh", async () => {
       const project = findProject(projects, id)
-      if (!project) return
+      if (!project) return null
       // 先刷新远程配置（本地 git remote -v），避免后续用陈旧远程名 fetch
       await manager.refreshRemotes(id)
+      let outcome: { failures: number, unknown: number } | null = null
       if (opts?.shortCircuit) {
-        // 短路 fetch：确认有更新即停，避免为镜像平台重复付网络往返
-        await manager.fetchUntilMoved(id, { timeoutMs: opts.timeoutMs })
+        // 短路 fetch：无需拉取即停（需拉取则继续下一个平台），并把失败/未知数带回给调用方
+        const result = await manager.fetchUntilMoved(id, { timeoutMs: opts.timeoutMs })
+        outcome = { failures: result.failures, unknown: result.unknown }
       } else {
-        // 完整刷新：一次网络 fetch 更新全部跟踪分支
+        // 完整刷新：一次网络 fetch 更新全部跟踪分支（失败已在内部收集，此处不透出）
         await manager.fetchAllForProject(id, { timeoutMs: opts?.timeoutMs })
       }
       // fetch 只会更新 refs/remotes，**不会改变 HEAD/当前分支名**，故无需在 fetch 后
@@ -290,7 +298,8 @@ export function useProjectQueryScheduler(
           force: true,
         })
       }
-    }, { force: opts?.force })
+      return outcome
+    })
   }
 
   // ── 缓存清理 ──

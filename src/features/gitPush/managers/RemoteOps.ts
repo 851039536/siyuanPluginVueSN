@@ -13,10 +13,9 @@ import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 RemoteOps 无法在 Node 单测环境加载（fetchBehind.git.spec.ts 需要真实实例）
-import { orderRemotesForPullCheck } from "../utils/platform"
+import { getProjectRemoteNames, orderRemotesForPullCheck } from "../utils/platform"
 import { parseAheadBehind } from "../utils/gitOutput"
 import { resolveValidPath, resolveValidPathWithSource } from "../utils/project"
-import { getProjectRemoteNames } from "../utils/platform"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 /** 远程操作结果 */
@@ -395,70 +394,58 @@ export class RemoteOps {
   }
 
   /**
-   * 快速检查用 fetch：带**短超时**（默认 20s），供「需拉取」等后台检测路径使用。
-   *
-   * 为什么需要独立入口：用户手动 Fetch 可以接受长时间等待（网络慢是预期内的），
-   * 但后台检测若用默认 240s 超时，遇到不可达远程（防火墙/私有网络/已失效地址）时
-   * 每个项目都要挂满 4 分钟，整批检查表现为「永久没结果」——正是用户报告的
-   * 「获取时间特别久也拿不到数据」。短超时快速失败并计入 failed，让 UI 能给出准确提示。
-   *
-   * @returns 是否成功（失败不抛错，由调用方累计失败数）
-   */
-  async fetchRemoteQuick(cwd: string, remoteName: string, timeoutMs = 20000): Promise<boolean> {
-    try {
-      await this.executor.execGit(cwd, ["fetch", "--prune", remoteName], undefined, timeoutMs)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  /**
-   * 「需拉取」专用短路 fetch：按平台优先级依次 fetch，**前一个平台无更新才继续下一个**。
+   * 「需拉取」专用短路 fetch：按平台优先级依次 fetch。
    *
    * 用户明确的语义（勿按直觉改）：
-   *   - gitee **需要拉取**（behind > 0）⇒ 后面的平台**照常执行**（不能停，其他镜像可能有额外提交）；
-   *   - gitee **不需要拉取**（behind === 0）⇒ 跳过后面的平台（gitee 已是最新，镜像通常同步，省往返）。
+   *   - 某平台**需要拉取**（behind > 0）⇒ **继续**执行后续平台（镜像可能有额外提交，不能停）；
+   *   - 某平台**不需要拉取**（behind === 0）⇒ **跳过**后续平台（已是最新，省网络往返）；
+   *   - fetch **失败**（失效/无权限/超时）⇒ 视为「未知」，继续下一个平台。
    *
-   * 为什么这样设计：多平台镜像通常同步，但**并非严格一致**——某个平台可能多推/少推。
-   * 「有更新就停」会漏掉其他平台的独有提交（正是用户最初抱怨「明明有更新却显示没有」）；
-   * 而「无更新才继续」既保留了完整性，又能跳过已确认为最新的镜像。
+   * ⚠️ 关键：`remoteBehind` 返回 `number | null`——
+   *   `0` 才是「确认无需拉取」（可短路）；`null` 表示「无法判定」（detached / 空仓库 /
+   *   该远程的跟踪 ref 不存在，例如远程换了默认分支或指向另一个仓库）。
+   *   把「无法判定」当成 0 会跳过后面的平台，从而漏掉 github 上真实的 behind>0
+   *   ——正是用户最初抱怨「明明有更新却显示没有」的同类故障。
    *
-   * 失败处理：某平台 fetch 失败（失效/无权限/超时）视为「未知」，**继续下一个平台**
-   * （不能因为 gitea 失效就放弃 github 的判定）。
-   *
-   * @returns `moved` 表示至少一个平台确认有更新；`stoppedEarly` 表示因「某平台确认无更新」而提前结束。
+   * @returns `moved` 至少一个平台确认有更新；`attempted` 尝试的平台数；
+   *          `failures` fetch 失败的平台数；`unknown` 成功 fetch 但无法判定 behind 的平台数。
    */
   async fetchUntilMoved(
     id: string,
     opts?: { timeoutMs?: number, signal?: AbortSignal },
-  ): Promise<{ moved: boolean, attempted: number, failures: number }> {
+  ): Promise<{ moved: boolean, attempted: number, failures: number, unknown: number }> {
     const project = await this.store.getProjectById(id)
-    if (!project) return { moved: false, attempted: 0, failures: 0 }
+    if (!project) return { moved: false, attempted: 0, failures: 0, unknown: 0 }
 
     const resolved = resolveValidPathWithSource(project)
     const cwd = resolved.path
     const remotes = orderRemotesForPullCheck(project)
-    if (remotes.length === 0) return { moved: false, attempted: 0, failures: 0 }
+    if (remotes.length === 0) return { moved: false, attempted: 0, failures: 0, unknown: 0 }
 
+    // 分支名只解析一次（原来每个平台都调一次 getCurrentBranch = N 次 rev-parse）
+    const branch = await this.getCurrentBranch(cwd)
     let attempted = 0
     let failures = 0
+    let unknown = 0
     let moved = false
     for (const { name } of remotes) {
       if (opts?.signal?.aborted) break
       attempted++
-      let fetched = false
       try {
         // 短超时 fetch：不可达远程快速失败，不拖住整批
         await this.executor.execGit(cwd, ["fetch", "--prune", name], opts?.signal, opts?.timeoutMs)
-        fetched = true
       } catch {
         // 该平台不可用（已失效/网络不通/无权限）：视为「未知」，继续尝试下一个平台
         failures++
+        continue
       }
-      if (!fetched) continue
 
-      const behind = await this.remoteBehind(cwd, name)
+      const behind = await this.remoteBehind(cwd, name, branch)
+      if (behind === null) {
+        // fetch 成功但无法判定（detached / ref 不存在）：**不能短路**，当作未知继续下一个平台
+        unknown++
+        continue
+      }
       if (behind > 0) {
         // 该平台**需要拉取** ⇒ 记录结果并**继续执行后续平台**（用户要求：其他平台也要执行）
         moved = true
@@ -468,19 +455,22 @@ export class RemoteOps {
       // （gitee 已是最新，镜像通常同步；继续查只会白付网络往返）
       break
     }
-    return { moved, attempted, failures }
+    return { moved, attempted, failures, unknown }
   }
 
   /**
-   * 读取某远程跟踪 ref 相对 HEAD 的 behind（>0 表示该远程有可拉取的提交）。
+   * 读取某远程跟踪 ref 相对 HEAD 的 behind。
+   *
+   * @param branch 已解析的当前分支（由调用方解析一次后传入，避免每平台重复 rev-parse）
+   * @returns `>0` 有更新可拉取；`0` **确认**无更新（可安全短路）；
+   *          `null` 无法判定（空分支/detached / ref 不存在 / 命令失败）——调用方**不得**据此短路。
    *
    * 只看该远程自己的 ref（`refs/remotes/<remote>/<branch>`），避免把其他远程的更新
-   * 误算到本远程头上。解析失败（detached/空仓库/ref 不存在）按 0 处理。
+   * 误算到本远程头上。
    */
-  private async remoteBehind(cwd: string, remoteName: string): Promise<number> {
+  private async remoteBehind(cwd: string, remoteName: string, branch: string): Promise<number | null> {
+    if (!branch) return null
     try {
-      const branch = await this.getCurrentBranch(cwd)
-      if (!branch) return 0
       const raw = await this.executor.execGit(cwd, [
         "for-each-ref",
         "--format=%(refname:short)%00%(ahead-behind:HEAD)",
@@ -488,10 +478,10 @@ export class RemoteOps {
       ])
       const map = parseAheadBehind(raw)
       const entry = map.get(`${remoteName}/${branch}`)
-      // 格式为 <behind> <ahead>
-      return entry ? entry.behind : 0
+      // 格式为 <behind> <ahead>；ref 不存在时 for-each-ref 静默缺行 → 映射中无该键 → null
+      return entry ? entry.behind : null
     } catch {
-      return 0
+      return null
     }
   }
 
@@ -499,7 +489,7 @@ export class RemoteOps {
    * Fetch 项目所有已配置远程，仅更新跟踪分支不合并代码
    *
    * @param timeoutMs 单远程 fetch 超时（ms）；缺省走 GitExecutor 的网络超时设置。
-   *   后台检测路径应传短超时（见 fetchRemoteQuick 注释）。
+   *   后台检测路径应传短超时，避免不可达远程挂满默认 240s。
    */
   async fetchAllForProject(id: string, opts?: { timeoutMs?: number }): Promise<{ fetched: string[]; errors: string[] }> {
     const project = await this.store.getProjectById(id)

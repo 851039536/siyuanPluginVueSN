@@ -301,6 +301,16 @@ export function useS3Transfer(deps: {
     let done = 0
     let successCount = 0
     let taskCount = 0
+    /** 进行中任务的字节分数（key → 0~1）：求和参与百分比，与上传同款聚合口径 */
+    const fractions = new Map<string, number>()
+
+    /** 上报当前聚合进度（done + 全部进行中任务分数之和） */
+    const reportDownload = (currentFile: string, total: number): void => {
+      let fractionSum = 0
+      for (const f of fractions.values()) { fractionSum += f }
+      reportProgress(i18n.statusDownloading, currentFile, done, total, fractionSum)
+    }
+
     try {
       const tasks = await collectDownloadTasks(entries, destDir, node.path)
       taskCount = tasks.length
@@ -312,16 +322,23 @@ export function useS3Transfer(deps: {
       await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
         const displayName = nameFromKey(task.key)
         try {
-          reportProgress(i18n.statusDownloading, displayName, done, tasks.length, 0)
+          fractions.set(task.key, 0)
+          reportDownload(displayName, tasks.length)
           // download 内部自建目标目录（mkdir recursive），无需在此预建
-          await withRetries(() => client.download(task.key, task.dest))
+          await withRetries(() => client.download(task.key, task.dest, (received, total) => {
+            // total 取 Content-Length：代理分块传输未给该头时为 0，无法计算分数 → 保持 0（由文件完成数兜底）
+            fractions.set(task.key, total > 0 ? received / total : 0)
+            reportDownload(displayName, tasks.length)
+          }))
           successCount++
         } catch (err) {
           console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
           failed.push(task.key)
+        } finally {
+          fractions.delete(task.key)
         }
         done++
-        reportProgress(i18n.statusDownloading, displayName, done, tasks.length, 0)
+        reportDownload(displayName, tasks.length)
       })
 
       const success = failed.length === 0

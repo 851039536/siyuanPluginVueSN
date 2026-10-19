@@ -806,8 +806,19 @@ export class GitPushManager {
     return this.remoteOps.pullSingle(id, target)
   }
 
-  async fetchAllForProject(id: string): Promise<{ fetched: string[], errors: string[] }> {
-    return this.remoteOps.fetchAllForProject(id)
+  async fetchAllForProject(id: string, opts?: { timeoutMs?: number }): Promise<{ fetched: string[], errors: string[] }> {
+    return this.remoteOps.fetchAllForProject(id, opts)
+  }
+
+  /**
+   * 「需拉取」专用短路 fetch：按平台优先级逐个尝试，确认某远程有更新即停。
+   * 见 RemoteOps.fetchUntilMoved 的语义说明。
+   */
+  async fetchUntilMoved(
+    id: string,
+    opts?: { timeoutMs?: number, signal?: AbortSignal },
+  ): Promise<{ moved: boolean, attempted: number, failures: number }> {
+    return this.remoteOps.fetchUntilMoved(id, opts)
   }
 
   /** 按路径 fetch 指定远程（--prune 可选，支持取消），供一致性分析使用 */

@@ -1,6 +1,9 @@
 // gitPush 平台与远程仓库辅助（平台标志映射、远程识别、URL 归一化、推送需求判定）
-import type { GitProject, GitRemoteInfo, PlatformKey, RemotePushStatus } from "../types"
-import { PLATFORM_META } from "../types"
+import type { GitProject, GitRemoteInfo, RemotePushStatus } from "../types/storage"
+// PlatformKey 与 PLATFORM_META 同属 meta.ts；直连纯模块（不经过 "../types" 桶）：
+// 桶里的 `export { GitPushManager }` 是值导出，会把 "siyuan" 运行时依赖拉进 Node 单测环境
+import type { PlatformKey } from "../types/meta"
+import { PLATFORM_META } from "../types/meta"
 
 /** 平台 key → GitRemoteInfo 检测标志属性名映射（供 ProjectStore.applyRemotesToProject 等按检测标志匹配复用） */
 export const PLATFORM_FLAG_BY_KEY: Record<PlatformKey, "isGithub" | "isGitee" | "isGitea" | "isCnb"> = {
@@ -61,6 +64,31 @@ export function getProjectRemoteNames(project: GitProject): { key: PlatformKey, 
     if (name) { result.push({ key: pm.key, name }) }
   }
   return result
+}
+
+/**
+ * 「需拉取」检查用的远程尝试顺序（按国内可用性从高到低）。
+ *
+ * 为什么需要固定顺序：同一项目常配置 3~4 个远程，但**多数平台是镜像**（同一份提交推到多个平台），
+ * 只需其中一个能看到新提交即可判定 behind。按此顺序逐个 fetch，一旦某个远程确认「远程有更新」
+ * 就停止后续 fetch，可显著减少网络往返（实测本项目 github 8s、gitee 2.3s、cnb 1.2s、gitea 已失效）。
+ *
+ * 顺序依据：gitee（国内直连/SSH 快）→ cnb → github → gitea（自建域名最易失效）。
+ * ⚠️ 与 PLATFORM_META 的顺序无关：后者是 UI 展示顺序，这里是网络探测顺序，两者用途不同。
+ */
+export const PULL_CHECK_REMOTE_ORDER: PlatformKey[] = ["gitee", "cnb", "github", "gitea"]
+
+/**
+ * 按 `PULL_CHECK_REMOTE_ORDER` 排序项目已配置的远程（未列入顺序表的平台排最后，保持稳定）。
+ * 供「需拉取」检查做「短路 fetch」用。
+ */
+export function orderRemotesForPullCheck(project: GitProject): { key: PlatformKey, name: string }[] {
+  const all = getProjectRemoteNames(project)
+  const rank = (key: PlatformKey): number => {
+    const i = PULL_CHECK_REMOTE_ORDER.indexOf(key)
+    return i < 0 ? PULL_CHECK_REMOTE_ORDER.length : i
+  }
+  return [...all].sort((a, b) => rank(a.key) - rank(b.key))
 }
 
 /** 平台 key → 展示名（缺失/未识别时回落为 key 原文）。

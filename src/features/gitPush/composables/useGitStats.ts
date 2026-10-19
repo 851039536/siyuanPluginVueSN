@@ -1,20 +1,29 @@
 // Git 项目统计信息获取 — 单次遍历统一计算所有统计指标
 import type { Ref } from "vue"
+import { computed, ref } from "vue"
+// ⚠️ 直连纯模块（storage/meta）而非 "../types" 桶：桶首行 `export { GitPushManager } from "../GitPushManager"`
+// 是**值**导出，Vite/Rollup 转译期即需解析整条模块图 ⇒ 拉进运行时 "siyuan" 依赖 ⇒ 本模块无法在
+// Node 单测环境加载（useGitStats.spec.ts 会直接报 siyuan 包导出错误）。与 useProjectQueryScheduler /
+// useGitProbe 的既有做法一致。storage.ts / meta.ts 均无运行时依赖。
 import type {
-  GitProject,
-  GitPushManager,
   NeedsPullItem,
   NeedsPushItem,
   PendingProjectItem,
-  ProjectCategory,
-  PushStatusInfo,
+  PlatformStatusItem,
   StatsView,
   UncommittedItem,
+} from "../types/meta"
+import { PLATFORM_META } from "../types/meta"
+import type { GitPushManager } from "../GitPushManager"
+import type {
+  GitProject,
+  ProjectCategory,
+  PushStatusInfo,
   WorkingTreeInfo,
-} from "../types"
-import { computed, ref } from "vue"
-import { PLATFORM_META, UNGROUPED_ID, DEFAULT_NETWORK_TIMEOUT, type PlatformStatusItem } from "../types"
-import { getProjectRemoteNames } from "../utils"
+} from "../types/storage"
+import { DEFAULT_NETWORK_TIMEOUT, UNGROUPED_ID } from "../types/storage"
+// 直连 utils/platform（纯函数模块）而非 "../utils" 桶，理由同上
+import { getProjectRemoteNames } from "../utils/platform"
 
 export function useGitStats(
   manager: GitPushManager,

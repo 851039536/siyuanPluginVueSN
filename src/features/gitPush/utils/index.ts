@@ -26,8 +26,10 @@ export {
   hasPlatformRemote,
   isAheadOfRemote,
   normalizeGitUrl,
+  orderRemotesForPullCheck,
   PLATFORM_FLAG_BY_KEY,
   platformLabel,
+  PULL_CHECK_REMOTE_ORDER,
   resolveRemotePlatform,
 } from "./platform"
 

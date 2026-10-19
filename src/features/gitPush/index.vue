@@ -307,11 +307,14 @@ import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { useCodeReport } from "./composables/useCodeReport"
 import { useReportExport } from "./composables/useReportExport"
 import { CARD_SERVICES_KEY, PLATFORM_META } from "./types"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import { clampProbeConfig, DEFAULT_PROBE_CONFIG } from "./types/probeConfig"
 import {
   openLocalPath,
   openRepoWebUrl,
 } from "./utils"
+// 直连纯模块（并发池），避免把整个 utils 桶的运行时依赖卷进来
+import { poolProcess } from "./utils/runtime"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -574,14 +577,201 @@ const {
 })
 
 /**
+ * 「需拉取」视图的专用补载。
+ *
+ * 与 ensureStatsDataLoaded 的差异：behind 的比较基准是 `refs/remotes/*`，
+ * **只有 fetch 才会更新**（checkPushStatus 是纯本地比对，见 RemoteOps 注释）。
+ * 因此仅加载本地状态不够：远程有新提交但本地从未 fetch 时，behind 恒为 0，视图会永远空。
+ *
+ * ⚠️ 性能红线（两次事故后固化，勿回退）：
+ *   1. **绝不能在 await 链里做全量 fetch**。fetch 是网络往返（单项目超时上限 240s），
+ *      N 个项目串下来把「切视图」变成分钟级等待，表现为整个面板假死。
+ *   2. **绝不能复用 useBatchProgress.runBatch**。它的 runChain 是跨批次全局串行锁，
+ *      一批长网络任务会把后续「切分类 / 切视图 / 首屏加载」的批次全部堵住。
+ *   3. **同一进入流程内不得跑两批全量**。早期实现「本地 ensure 一批 + 后台 fetch 一批」
+ *      同时并发，等于 3N 级进程（每项目 status + for-each-ref + rev-parse）同时起飞，
+ *      正是「一进视图 CPU 打满」的直接原因。
+ *
+ * 现在的策略（严格串行、每项目一次）：
+ *   ① 本地 ensure（有缓存立即返回，无缓存按渲染预算等）→ 渲染；
+ *   ② 远程检查（后台、独立池、单飞）→ 每个项目做一轮 fetch 并顺带回填 pushStatus；
+ *   ③ 全程不并行跑第 ①② 步的全量。
+ */
+/** 本会话是否已经**确认**检查过远程（含「确实无 upstream」的项目，见 startNeedsPullRemoteCheck） */
+let needsPullCheckedThisSession = false
+/** 在途检查的 Promise（同一时刻只允许一轮，重复进入直接复用） */
+let needsPullCheckPromise: Promise<void> | null = null
+
+/** 远程检查进行中（空态提示用） */
+const needsPullChecking = ref(false)
+
+/**
+ * 远程检查中失败的项目数。
+ * 用途：空态文案要区分「确实没有需拉取」与「有项目没查成功」——
+ * 后者显示「暂无需拉取」会把「查不到」伪装成「没有」，是本功能最早的用户困惑来源。
+ */
+const needsPullFailedCount = ref(0)
+
+/** 单次「需拉取」远程检查的并发上限（网络命令走 GitExecutor 独立网络池，此处再限一层避免一次性打满远程） */
+const NEEDS_PULL_FETCH_CONCURRENCY = 4
+
+/**
+ * 「需拉取」后台检查的单项目 fetch 超时（ms）。
+ *
+ * 用户手动 Fetch 可以等（网络慢是预期）；但后台检测若有不可达远程（已失效地址/防火墙），
+ * 用默认 240s 会对每个项目挂满 4 分钟，整批表现为「永远没结果」。
+ * 20s 足够正常网络完成一次 fetch，超时则快速失败并计入失败提示。
+ */
+const NEEDS_PULL_FETCH_TIMEOUT_MS = 20000
+
+/**
+ * 「需拉取」视图首屏渲染预算（ms）。
+ *
+ * 这一步只做**本地** git 查询（`status`/`for-each-ref`，不联网），单项目 0.25~1s。
+ * 预算内完成的先渲染，其余转后台增量补——否则 64 个项目会让人误以为「卡住」。
+ * 之所以能从 2500ms 收紧到 800ms：视图现在先出本地结果，网络检查完全在后台。
+ */
+const NEEDS_PULL_RENDER_BUDGET_MS = 800
+
+/** 预算定时器（统一走 TimerRegistry，随组件卸载清理；不占用 useBatchProgress 的全局批次锁） */
+const needsPullTimers = new TimerRegistry()
+
+/**
+ * 进入「需拉取」视图：先按本地缓存渲染，再**后台**发起一轮远程检查。
+ *
+ * 返回值为「本地状态已就绪」——调用方（viewMode watch）只为它 await，
+ * 远程检查不参与 await，避免阻塞首屏。
+ *
+ * ⚠️ 关键顺序（勿调换）：
+ *   1) **先按本地已有 refs/remotes 算一遍**（0 网络）。用户本地通常已有上次 fetch 的结果，
+ *      这一步立刻就能给出 behind>0 的项目——不必等网络。
+ *   2) 再发起后台网络检查逐项目刷新，结果到了自然增量更新。
+ *   早期实现把 1 和 2 混在一起（都走 refreshRemote），导致「不 fetch 就没有数据 + 等很久」。
+ */
+async function ensureNeedsPullData(): Promise<void> {
+  if (gitOpsPaused.value) return
+  await ensureStatsDataLoadedWithinBudget(NEEDS_PULL_RENDER_BUDGET_MS)
+  // 后台补一轮远程检查：不进 await 链，失败不影响渲染
+  if (!needsPullCheckedThisSession) void startNeedsPullRemoteCheck()
+}
+
+/**
+ * 带渲染预算的 ensureStatsDataLoaded：最多等 `budgetMs`，超时后剩余项目转后台。
+ *
+ * 存在理由：智能视图的命中判定需要全量状态，但「全量」在无缓存时是 N×2 个 git 进程
+ * （Windows/EDR 下单进程 0.25~1s）。等完成才渲染会让切视图像卡死；
+ * 不等又会出现「先空态后突然冒出卡片」的闪烁。折中是给一个短预算：
+ * 预算内完成的先渲染，其余后台补齐（完成后 Vue 自然增量渲染）。
+ *
+ * ⚠️ 刻意**不用** runProjectLoadBatch：它经 useBatchProgress 的 runChain 串行，
+ * 超时后这批仍占着全局锁，会把后续「切分类 / 首屏加载」的批次一起堵死
+ * （曾导致切到「需拉取」面板卡死）。这里用独立并发池，与批次编排互不影响。
+ *
+ * ⚠️ 只查 `pushStatus` 一个域：视图判据只需要 ahead/behind，**不需要** workingTree。
+ * `loadPushStatus` → `checkPushStatus` 是**纯本地**比对 refs/remotes（不联网），
+ * 所以这一步在用户之前 fetch 过的仓库上能立刻给出 behind。
+ */
+async function ensureStatsDataLoadedWithinBudget(budgetMs: number): Promise<void> {
+  const list = projects.value
+  if (list.length === 0) return
+  markProjectsDisplayed(list.map((p) => p.id))
+  // 已缓存 pushStatus 的项目无需等待（已有值即可参与过滤）；workingTree 与本视图无关
+  const pending = list.filter((p) => !scheduler.has(p.id, "pushStatus"))
+  if (pending.length === 0) return
+  const concurrency = Math.max(1, props.manager.getGitConcurrency())
+  const work = poolProcess(pending, concurrency, async (p) => {
+    try {
+      await scheduler.loadPushStatus(p.id)
+    } catch {
+      // 单项目失败静默：不阻断其余项目，也不影响渲染
+    }
+  })
+  await Promise.race([
+    work,
+    new Promise<void>((resolve) => {
+      needsPullTimers.setTimeout(resolve, budgetMs)
+    }),
+  ])
+}
+
+/**
+ * 后台远程检查（独立并发池 + 单飞）。
+ *
+ * ⚠️ 单飞 + 可中断：切走/暂停/卸载后剩余项目直接跳过（不发无谓网络请求），
+ * 已完成的项目结果仍然有效。
+ *
+ * ⚠️ 「已检查」判定必须含失败项目：若只在成功时置位，fetch 失败的项目 behind 恒为 0，
+ * 界面会一直显示「暂无需要拉取」，用户永远看不到数据也无从得知是失败
+ * （这正是「获取时间特别久也拿不到数据」的观感来源）。故这里记录失败数，
+ * 由空态文案区分「确实没有」与「部分项目检查失败」。
+ */
+function startNeedsPullRemoteCheck(): Promise<void> {
+  if (needsPullCheckPromise) return needsPullCheckPromise
+  if (projects.value.length === 0) return Promise.resolve()
+  needsPullChecking.value = true
+  needsPullFailedCount.value = 0
+  markProjectsDisplayed(projects.value.map((p) => p.id))
+  // 复制快照：检查期间项目增删不影响本轮遍历
+  const queue = [...projects.value]
+  let attempted = 0
+  needsPullCheckPromise = poolProcess(queue, NEEDS_PULL_FETCH_CONCURRENCY, async (p) => {
+    // 暂停中或已卸载：跳过剩余项目（已完成的结果仍会体现在 pushStatuses 里）
+    if (gitOpsPaused.value || needsPullAborted) return
+    attempted++
+    try {
+      // ⚠️ 不用 force：fetch 后 `refreshRemote` 内部本来就会 force 重查 loadPushStatus，
+      //    这里的 force 只会额外强制一次 resolveBranch（每项目多一个 rev-parse 进程）。
+      // ⚠️ 必须传短超时：默认 240s 会让不可达远程把整批检查拖成「永远没结果」。
+      // ⚠️ shortCircuit 语义（见 RemoteOps.fetchUntilMoved）：
+      //    gitee 需拉取 ⇒ 后续平台照常执行；gitee 无需拉取 ⇒ 跳过后面的平台。
+      await scheduler.refreshRemote(p.id, {
+        timeoutMs: NEEDS_PULL_FETCH_TIMEOUT_MS,
+        shortCircuit: true,
+      })
+    } catch {
+      needsPullFailedCount.value++
+    }
+  }).then(() => {
+    // 只要尝试过就标记已检查（失败项目由空态文案单独提示，不再整轮重试——
+    // 否则每次进入视图都会对全量项目重发 N 次网络请求，正是「时间特别久」的放大器）
+    if (attempted > 0) needsPullCheckedThisSession = true
+  }).catch((e: unknown) => {
+    console.warn("[gitPush] 需拉取视图的远程检查失败（不影响本地状态展示）", e)
+  }).finally(() => {
+    needsPullChecking.value = false
+    needsPullCheckPromise = null
+  })
+  return needsPullCheckPromise
+}
+
+/** 面板卸载标记：阻止后台检查继续发网络请求 */
+let needsPullAborted = false
+
+/**
  * 列表视图空态文案（null = 渲染卡片列表）。
- * 仅「全部」视图 + 无搜索词 + 未选择分类 时提示选择分类；智能视图（需推送/有变更/收藏/归档）
- * 与搜索态不依赖分类 TAB（走 smartViewProjects / allGroups），故不显示该提示，避免误导。
+ *
+ * ⚠️ 本值同时充当「是否渲染列表」的开关（ListView 用 v-if="emptyHint" / v-else）：
+ *   只要它非 null，**卡片列表整体不渲染**。因此这里必须先判断「是否真的没有命中项目」——
+ *   历史 bug：needsPull 一进入就返回「正在检查…」，导致检查期间即便已有 behind>0 的项目
+ *   也被整块遮住，表现为「等很久、什么都没有」（用户实际反馈）。
+ *
+ * 规则：只有 `filteredGroups` 为空时才给提示；有数据就返回 null 让列表正常渲染。
  */
 const listEmptyHint = computed(() => {
   if (projects.value.length === 0) return null
-  if (viewMode.value !== "all") return null
+  // 已有命中项目 → 永远不要遮挡列表（无论后台是否还在检查）
+  if (filteredGroups.value.length > 0) return null
   if (searchQuery.value.trim()) return null
+  if (viewMode.value === "needsPull") {
+    // 四态：正在后台查远程 / 有项目查失败 / 已查完且为空 / 还没查过
+    if (needsPullChecking.value) return props.i18n.needsPullChecking
+    if (needsPullCheckedThisSession && needsPullFailedCount.value > 0) {
+      return props.i18n.needsPullPartialFailed.replace("{0}", String(needsPullFailedCount.value))
+    }
+    if (needsPullCheckedThisSession) return props.i18n.needsPullEmpty
+    return props.i18n.needsPullNotFetched
+  }
+  if (viewMode.value !== "all") return null
   if (activeCategory.value) return null
   return props.i18n.selectCategoryHint
 })
@@ -967,6 +1157,10 @@ onUnmounted(() => {
   document.removeEventListener("visibilitychange", handleDocumentVisibilityChange)
   panelVisibilityObserver?.disconnect()
   panelVisibilityObserver = null
+  // 后台远程检查：置中断标记，剩余项目不再发网络请求
+  needsPullAborted = true
+  // 预算定时器随卸载清理（避免卸载后回调仍触发）
+  needsPullTimers.clearAll()
   // 探测持有 fs.watch 句柄与定时器，必须随组件卸载释放（否则多窗口/反复开关面板会累积泄漏）
   gitProbe.destroy()
 })
@@ -1091,8 +1285,21 @@ watch(currentView, async (view) => {
   if (view === "report" && !gitOpsPaused.value) await ensureReport()
 })
 
-/** 切换到"需推送/有变更"智能视图时，补齐命中判定所需的全量状态数据 */
+/**
+ * 切换到智能视图（需推送 / 需拉取 / 有变更）时，补齐命中判定所需的全量状态数据。
+ *
+ * ⚠️ `needsPull` 必须在此列：它的命中判据是 `pushStatuses[id].remotes[*].behind > 0`，
+ * 而 behind 只有跑过 loadStatus/checkPushStatus 才有值。历史实现漏了 needsPull，
+ * 导致「刚进面板就直接点需拉取」时 pushStatuses 为空 → 列表空白。
+ *
+ * ⚠️ 性能：`ensureNeedsPullData` 只 await「本地状态已就绪」；远程检查在后台进行，
+ * 不阻塞视图切换（早期版本在 await 链里跑全量 fetch，直接卡死面板）。
+ */
 watch(viewMode, async (mode) => {
+  if (mode === "needsPull") {
+    await ensureNeedsPullData()
+    return
+  }
   if (mode !== "needsPush" && mode !== "uncommitted") return
   await ensureStatsDataLoaded()
 })
@@ -1111,7 +1318,12 @@ watch(gitOpsPaused, async (paused) => {
     await ensureReport()
     return
   }
-  // 统计视图 / 智能视图需要全量状态数据
+  // 需拉取视图：暂停期间可能连 fetch 都没做过，恢复后走专用补载（含首次远程刷新）
+  if (viewMode.value === "needsPull") {
+    await ensureNeedsPullData()
+    return
+  }
+  // 统计视图 / 其他智能视图需要全量状态数据
   if (currentView.value === "stats" || viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
     // 暂停期间进入统计视图时 audit 被跳过（audited 仍为 false），恢复后必须补跑，
     // 否则平台矩阵会一直显示「未校验」直到用户离开再进统计视图

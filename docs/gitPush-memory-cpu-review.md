@@ -395,3 +395,186 @@ watch(() => projects.value.map(...).join("|"), () => { void runAudit() }, { imme
 
 修复后仍建议按 §6 的三步测量复测：重点确认「关闭 Dock 后 git.exe 不再周期性出现」「从编辑器切回时不再出现 N+M 次突发」「反复开关 Tab 后 `.git-push-panel` 计数不增长」。
 若首次进入仍有可感知峰值，属剩余的 N 次 gitdir 解析（首次冷缓存），可在设置中关闭「文件监听」或等待 5 分钟缓存生效后观察差异。
+
+---
+
+## 9. 补充修复：「需拉取」视图空白（2026-10-19 追加）
+
+**现象**：切到智能视图「需拉取」，列表空白，看不到任何需拉取项目。
+
+**根因（两个缺陷叠加）**：
+
+1. **P0 — 视图补载清单漏了 `needsPull`**（`index.vue` 的 `watch(viewMode)`）：
+   历史实现只对 `needsPush` / `uncommitted` 调 `ensureStatsDataLoaded()`。而「需拉取」判据是
+   `pushStatuses[id].remotes[platform].behind > 0`（`useGitStats.ts`），该数据只有跑过
+   `loadStatus`/`checkPushStatus` 才有。刚进面板直接点「需拉取」时 `pushStatuses` 为空 → 集合为空 → 空白。
+   §8.2 的「未展示项目首轮不发 git」降峰措施会把该问题**放大**（此前探测层首轮会兜底填满状态）。
+2. **P1 — `behind` 依赖 fetch 才有值**：`checkPushStatus` 是**纯本地比对** `refs/remotes/*`，
+   该 ref 只在 `fetch` 时更新；默认配置网络轮询关闭 ⇒ 远程有新提交而本地从未 fetch 时，behind 恒为 0。
+
+**修复**：
+
+| 改动 | 文件 | 说明 |
+|---|---|---|
+| `needsPull` 纳入补载清单 | `index.vue` | `watch(viewMode)` 对其走专用 `ensureNeedsPullData()`；解除暂停分支同步覆盖 |
+| 首次进入补一轮远程刷新 | `index.vue` | `refreshRemoteForNeedsPull()`：按项目串行 `scheduler.refreshRemote(id, { force: true })`（复用单飞管线 + 进度条），fetch 后重载状态回填 behind；单项目失败不阻断整轮 |
+| 空态区分三种状态 | `index.vue` + i18n | 未 fetch：`needsPullNotFetched`；刷新中：`needsPullChecking`；已完成且为空：`needsPullEmpty` |
+| 失败可重试 | `index.vue` | 整轮失败不置 `needsPullFetchCompleted`，重新进入视图会再试 |
+| 模块可单测（顺带） | `useGitStats.ts` / `utils/platform.ts` | 导入由 `../types`、`../utils` 桶改为直连 `types/meta`、`types/storage`、`utils/platform`（纯模块），避免桶里的值导出把 `siyuan` 拉进 Node 测试环境 |
+
+**新增用例**：`composables/useGitStats.spec.ts`（4 条）——`behind > 0` 必进 `needsPullProjects`、多平台 behind 逐个记录且合计正确、无 pushStatus 不误报、推/拉集合互不串味。
+
+**验证**：`pnpm typecheck` 通过；`pnpm test` 35 文件 / **625 用例**全绿；`pnpm i18n:verify`（4619 leaf keys 中英对齐）与 `pnpm audit:encoding`（0 问题）通过。
+
+---
+
+## 10. 修正：§9 的「进入即全量 fetch」导致切视图卡死（2026-10-19 追加）
+
+**现象**：§9 上线后，切到「需拉取」直接卡死（面板长时间无响应）。
+
+**根因（上一版修复引入的三处错误）**：
+
+1. **await 链里做全量网络 fetch**：`ensureNeedsPullData` 先 `await ensureStatsDataLoaded()` 再 `await runBatchWithProgress(全部项目 fetch)`，
+   而 `watch(viewMode)` 又 `await` 它 ⇒ 视图切换被押在「N 个项目 × 网络往返」之后。单项目 fetch 超时上限 240s，N 个项目串下来就是分钟级假死。
+2. **误用 `useBatchProgress.runBatch`**：它的 `runChain` 是**跨批次全局串行锁**，一批长网络任务会把后续「切分类 / 首屏加载 / 其他视图」的批次全部堵在锁后，放大为整面板卡死。
+3. **`ensureStatsDataLoaded` 本身无缓存时也是 N×2 个 git 进程**（EDR 下单进程 0.25~1s），仍被放在渲染前的 await 上。
+
+**修复原则**：**渲染不等网络，网络不占批次锁**。
+
+| 改动 | 说明 |
+|---|---|
+| 后台远程检查 | `startNeedsPullRemoteCheck()` 用独立 `poolProcess`（并发 4）在后台跑，**不进 await 链**；单飞（`needsPullCheckPromise`）避免重复进入叠多轮 |
+| 渲染预算 | `ensureStatsDataLoadedWithinBudget(2500ms)`：已缓存 `pushStatus` 的项目不等待；无缓存最多等 2.5s，其余转后台增量渲染 |
+| 绕开批次锁 | 预算加载改用独立 `poolProcess`（并发 = git 并发设置），**不再走** `runProjectLoadBatch` → 不会占 `runChain` 阻塞其他批次 |
+| 可中断 | 卸载时置 `needsPullAborted`，后台检查的剩余项目不再发网络请求；预算定时器走 `TimerRegistry` 并在 `onUnmounted` 清理 |
+| 状态机修正 | 只有「确实尝试过至少一个项目且至少成功一个」才置 `needsPullCheckedThisSession`，避免全失败后永不重试；空态三态（检查中 / 已检查为空 / 未检查）逻辑同步 |
+
+**验证**：`pnpm typecheck` 通过；`pnpm test --hookTimeout 60000` 35 文件 / 625 用例全绿；`pnpm audit:encoding` 0 问题；`pnpm i18n:verify` 通过。
+
+**经验**（勿再犯）：任何「进入视图时触发的网络操作」都必须满足三条——
+① 不 `await` 在视图切换链上；② 不占用跨批次串行锁；③ 并发受独立上限约束且可中断。
+
+---
+
+## 11. 再修正：进入「需拉取」CPU 打满 + 久等无数据（2026-10-19 追加）
+
+用户复报：切到「需拉取」**CPU 直接打满**，随后缓慢下降，但**等很久也拿不到数据**。
+
+### 11.1 严谨验证：判据链本身是正确的
+
+先用真实 git 做端到端验证，**排除**「解析/语义错误导致拿不到数据」：
+
+| 验证项 | 结果 |
+|---|---|
+| `for-each-ref --format='%(ahead-behind:HEAD)'` 字段顺序 | 与 `rev-list --left-right --count <remote>...HEAD` **完全一致**；输出 `<behind> <ahead>` |
+| fetch 前 behind | `0`（本地尚不知道远程领先）→ 这正是首次进入为空的原因 |
+| fetch 后 behind | `2` ✅ 判据链正确 |
+| 本地领先场景 | ahead=1 / behind=2，方向未颠倒 ✅ |
+
+结论：**数据链没有 bug**，问题全在「进入视图时做了什么」。
+
+### 11.2 三个确凿缺陷
+
+1. **进入视图并发跑两批全量（我引入，CPU 打满主因）**：
+   `ensureStatsDataLoadedWithinBudget`（N×loadStatus）+ `startNeedsPullRemoteCheck`（N×refreshRemote，其内部又是 fetch + for-each-ref + rev-parse）
+   **同时进行** ⇒ 单项目 5~6 个进程 × N × 2 批同时起飞。另外 `ensureProjectStatus` 会连 workingTree 一起查，而本视图只判 ahead/behind，**白付一倍进程**。
+2. **fetch 失败被显示成「暂无需要拉取」（我引入，久等无数据的观感来源）**：
+   `needsPullCheckedThisSession` 只在「至少成功一个」时置位，而失败项目的 behind 恒为 0 ⇒ 界面显示「所有项目均已是最新」，用户既看不到数据也不知道是失败。
+3. **fetch 用默认 240s 超时**：不可达远程（失效地址/防火墙/私有网络）时每个项目挂满 4 分钟，整批表现为「永久没结果」。
+
+### 11.3 修复
+
+| 改动 | 文件 | 说明 |
+|---|---|---|
+| 本地加载只查 `pushStatus` 单域 | `index.vue` | 视图判据只需 ahead/behind；不再调 `ensureProjectStatus`（省掉 workingTree 那一半进程） |
+| 两批严格串行（先本地后网络） | `index.vue` | 本地 ensure 完成（或预算到期）后才发起后台网络检查，杜绝 3N 级并发 |
+| 失败计数 + 空态四态 | `index.vue` + i18n | 新增 `needsPullPartialFailed`：`有 N 个项目远程检查失败，结果可能不完整`，不再把「查不到」伪装成「没有」 |
+| 后台 fetch 短超时 20s | `index.vue` / `RemoteOps.ts` / `queryScheduler.ts` | 新增 `fetchAllForProject({ timeoutMs })` 与 `refreshRemote({ timeoutMs })` 透传；后台检测传 20s，快速失败计入失败数 |
+| 去掉多余的 `force` | `index.vue` | `refreshRemote` 内部 fetch 后本就 force 重查 pushStatus；外层 `force` 只多加一次 `rev-parse`/项目 |
+| 新增 Quick fetch 入口 | `RemoteOps.ts` | `fetchRemoteQuick()`（短超时、不抛错返回布尔），供后续其他后台检测复用 |
+
+### 11.4 新增端到端回归用例
+
+`managers/fetchBehind.git.spec.ts`（5 条，**真实 git + 真实 GitExecutor**）：
+fetch 前 behind=0 → fetch 后 behind=2 → 本地领先 ahead=1/behind=2 → 无 upstream 时映射为空 → 不可达远程抛可捕获错误。
+这条用例锁住「fetch 后 behind 必须变化」这一不变量，防止重构退回「永远 0」。
+
+### 11.5 验证
+
+`pnpm typecheck` 通过；`pnpm test --hookTimeout 90000` **36 文件 / 630 用例全绿**；`pnpm audit:encoding` 0 问题；`pnpm i18n:verify` 通过。
+
+### 11.6 仍可能慢的真实原因（需用户侧确认）
+
+若修复后**首次**进入仍需等数秒，那是**网络 fetch 本身耗时**（每个项目一次网络往返，串行并发 4）。
+这是「需拉取」必须付的成本——除非改成「只展示本地缓存 + 手动点『检查远程』」。
+若希望完全不等网络，可把 `ensureNeedsPullData` 里的 `startNeedsPullRemoteCheck()` 改为按钮触发。
+
+---
+
+## 12. 用户真实环境取证 + 短路 fetch（2026-10-19 追加）
+
+### 12.1 用用户真实数据取证
+
+读取 `E:\siyuan2\data\storage\petal\siyuan-plugin-vite-vue-sn\git-push-projects`（64 个真实项目），
+对每个真实仓库执行 `for-each-ref %(ahead-behind:HEAD)`：
+
+| 项目 | behind | ahead | fetch 实测 |
+|---|---|---|---|
+| **snVideoEditor** | **78** | 0 | github ✅ 8s、cnb ✅ 1.2s、gitee ✅ 2.3s、**gitea ❌ 仓库不存在** |
+| MerryTest | 2 | 2 | origin ❌ 连不上 `10.175.5.82:3000`、est ❌ 远程名损坏（`rtt`） |
+
+**结论**：数据确实存在（snVideoEditor 落后 78 个提交），判据与解析均正确；
+「显示无需拉取」有两个叠加原因：
+1. 用户当时运行的构建产物时间戳为 `12:21`，早于 §11 的修复（属旧代码）；
+2. 单项目「部分远程失败」在旧实现下会被当作「无更新」呈现，缺少失败提示。
+
+### 12.2 短路 fetch（按用户明确定义修正）
+
+用户澄清后的**正确定义**（此前一版理解反了，已修正）：
+
+> gitee 发现**无需拉取**后，其他平台（github 等）不执行；
+> gitee 显示**需要拉取**时，其他平台**也要执行**。
+
+实现（`RemoteOps.fetchUntilMoved`）：
+
+| 前一平台结果 | 行为 |
+|---|---|
+| **需要拉取**（behind > 0） | **继续执行**后续平台（其他镜像可能有额外提交；不能停） |
+| **无需拉取**（behind === 0） | **跳过后**续平台（已是最新，省网络往返） |
+| **失败**（失效/无权限/超时） | 视为未知，继续执行下一个平台 |
+
+优先级（`PULL_CHECK_REMOTE_ORDER`）：`gitee → cnb → github → gitea`（按国内可用性）。
+注意与 `PLATFORM_META` 的 UI 展示顺序解耦，后者不动。
+
+**语义收益**：常见情况（gitee 已最新）只需 1 次网络往返；gitee 有更新时才继续，保证不漏其他平台。
+用户真实仓库 snVideoEditor：gitee 落后 78 ⇒ 继续 github/cnb（完整判定）；若日后 gitee 追上则自动短路。
+
+接线：`refreshRemote(id, { shortCircuit: true, timeoutMs: 20000 })` → `manager.fetchUntilMoved()`；
+仅「需拉取」检测使用，用户手动 Fetch/刷新仍走完整 `fetchAllForProject`（必须更新全部远程）。
+
+### 12.3 「没有数据显示」的根因与修复（重要）
+
+`ListView` 用 `v-if="emptyHint"` / `v-else` 渲染——**只要 `emptyHint` 非 null，卡片列表整体不渲染**。
+早期实现中 needsPull 一进入就返回「正在检查…」，导致：
+
+- 检查期间（可达数十秒）**列表被整块遮住**，即便已有 behind>0 的项目也看不到；
+- 用户观感 = 「等很久、什么都没有」，与本轮报告完全一致。
+
+修复：`listEmptyHint` 先判 `filteredGroups.value.length > 0` → **有命中项目就返回 null**，
+让列表正常渲染；只有真正空列表时才显示检查中/失败/无更新提示。
+
+同时把首屏预算从 2500ms 收紧到 **800ms**：该步骤只做本地 git 查询（不联网），
+先出本地已能算出的 behind，网络检查完全后台化。
+
+### 12.4 新增用例
+
+- `utils/platform.spec.ts`（6 条）：平台优先级排序、部分配置、无配置、顺序表完整性、与 `getProjectRemoteNames` 解耦。
+- `managers/fetchBehind.git.spec.ts`（7 条，真实 git + 真实 GitExecutor）：判据链 5 条 + 短路语义 2 条
+  （**首个平台需拉取 ⇒ 后续继续执行**；**首个平台无更新 ⇒ 短路，attempted===1**）。
+
+### 12.5 验证
+
+`pnpm typecheck` 通过；`pnpm test --hookTimeout 90000` **37 文件 / 638 用例全绿**；编码审计 0 问题；i18n 对齐通过。
+
+> ⚠️ 提醒：插件 **必须重新 `pnpm build`/`pnpm dev` 部署**后才会生效；本轮排查发现用户环境中的
+> `index.js` 时间戳落后于源码修复时间，是「改了但现象不变」的直接原因之一。

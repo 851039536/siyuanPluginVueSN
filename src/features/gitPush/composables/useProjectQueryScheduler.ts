@@ -252,15 +252,30 @@ export function useProjectQueryScheduler(
    * （handleFetchAll 直调 fetchAllForProject 与 handleRefreshRemoteStatus 经 checkPushStatus 内部 fetch）：
    * 单飞后同一项目同时触发两个入口只产生一轮网络 fetch。
    * 本管线是全局唯一的「fetch 后重查状态」路径，checkPushStatus 不再承担 fetch 职责。
+   *
+   * @param opts.force `true` 时**强制重新解析分支名**（多付一次 rev-parse）。
+   *   何时需要：分支可能在面板外被切换，且接下来要拿新分支去比对 refs/remotes。
+   *   何时不需要：普通「拉取最新状态」——fetch 不会改 HEAD，复用工作区缓存的分支名即可，
+   *   省掉的这次进程在批量场景（N 个项目）下等于 N 次进程创建。
+   * @param opts.timeoutMs 单远程 fetch 超时（ms）。后台批量检测应传短超时，
+   *   避免不可达远程各自挂满默认 240s 造成「整批永久无结果」。
+   * @param opts.shortCircuit true 时用「按平台优先级短路 fetch」：
+   *   前面的平台确认远程有更新就停止，不再 fetch 后面的平台（多平台镜像场景可省大量网络往返）。
+   *   仅供「需拉取」检测使用——完整刷新（用户点 Fetch/刷新）仍需更新全部远程。
    */
-  async function refreshRemote(id: string, opts?: { force?: boolean }): Promise<void> {
+  async function refreshRemote(id: string, opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean }): Promise<void> {
     await run(id, "remoteRefresh", async () => {
       const project = findProject(projects, id)
       if (!project) return
       // 先刷新远程配置（本地 git remote -v），避免后续用陈旧远程名 fetch
       await manager.refreshRemotes(id)
-      // 一次网络 fetch 更新跟踪分支
-      await manager.fetchAllForProject(id)
+      if (opts?.shortCircuit) {
+        // 短路 fetch：确认有更新即停，避免为镜像平台重复付网络往返
+        await manager.fetchUntilMoved(id, { timeoutMs: opts.timeoutMs })
+      } else {
+        // 完整刷新：一次网络 fetch 更新全部跟踪分支
+        await manager.fetchAllForProject(id, { timeoutMs: opts?.timeoutMs })
+      }
       // fetch 只会更新 refs/remotes，**不会改变 HEAD/当前分支名**，故无需在 fetch 后
       // 强制 rev-parse（旧实现每次付一次进程，本机实测 0.6~1.3s）。这里复用
       // 「显式入参 > 工作区缓存 > resolveBranch 兜底」三级取值：正常情况缓存已命中，
@@ -275,7 +290,7 @@ export function useProjectQueryScheduler(
           force: true,
         })
       }
-    }, opts)
+    }, { force: opts?.force })
   }
 
   // ── 缓存清理 ──

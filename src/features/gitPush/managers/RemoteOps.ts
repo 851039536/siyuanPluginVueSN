@@ -11,7 +11,12 @@ import { PLATFORM_META } from "../types/meta"
 import type { GitExecutor } from "./GitExecutor"
 import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
-import { getProjectRemoteNames, parseAheadBehind, resolveValidPath, resolveValidPathWithSource } from "../utils"
+// 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
+// 使 RemoteOps 无法在 Node 单测环境加载（fetchBehind.git.spec.ts 需要真实实例）
+import { orderRemotesForPullCheck } from "../utils/platform"
+import { parseAheadBehind } from "../utils/gitOutput"
+import { resolveValidPath, resolveValidPathWithSource } from "../utils/project"
+import { getProjectRemoteNames } from "../utils/platform"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 /** 远程操作结果 */
@@ -390,9 +395,113 @@ export class RemoteOps {
   }
 
   /**
-   * Fetch 项目所有已配置远程，仅更新跟踪分支不合并代码
+   * 快速检查用 fetch：带**短超时**（默认 20s），供「需拉取」等后台检测路径使用。
+   *
+   * 为什么需要独立入口：用户手动 Fetch 可以接受长时间等待（网络慢是预期内的），
+   * 但后台检测若用默认 240s 超时，遇到不可达远程（防火墙/私有网络/已失效地址）时
+   * 每个项目都要挂满 4 分钟，整批检查表现为「永久没结果」——正是用户报告的
+   * 「获取时间特别久也拿不到数据」。短超时快速失败并计入 failed，让 UI 能给出准确提示。
+   *
+   * @returns 是否成功（失败不抛错，由调用方累计失败数）
    */
-  async fetchAllForProject(id: string): Promise<{ fetched: string[]; errors: string[] }> {
+  async fetchRemoteQuick(cwd: string, remoteName: string, timeoutMs = 20000): Promise<boolean> {
+    try {
+      await this.executor.execGit(cwd, ["fetch", "--prune", remoteName], undefined, timeoutMs)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * 「需拉取」专用短路 fetch：按平台优先级依次 fetch，**前一个平台无更新才继续下一个**。
+   *
+   * 用户明确的语义（勿按直觉改）：
+   *   - gitee **需要拉取**（behind > 0）⇒ 后面的平台**照常执行**（不能停，其他镜像可能有额外提交）；
+   *   - gitee **不需要拉取**（behind === 0）⇒ 跳过后面的平台（gitee 已是最新，镜像通常同步，省往返）。
+   *
+   * 为什么这样设计：多平台镜像通常同步，但**并非严格一致**——某个平台可能多推/少推。
+   * 「有更新就停」会漏掉其他平台的独有提交（正是用户最初抱怨「明明有更新却显示没有」）；
+   * 而「无更新才继续」既保留了完整性，又能跳过已确认为最新的镜像。
+   *
+   * 失败处理：某平台 fetch 失败（失效/无权限/超时）视为「未知」，**继续下一个平台**
+   * （不能因为 gitea 失效就放弃 github 的判定）。
+   *
+   * @returns `moved` 表示至少一个平台确认有更新；`stoppedEarly` 表示因「某平台确认无更新」而提前结束。
+   */
+  async fetchUntilMoved(
+    id: string,
+    opts?: { timeoutMs?: number, signal?: AbortSignal },
+  ): Promise<{ moved: boolean, attempted: number, failures: number }> {
+    const project = await this.store.getProjectById(id)
+    if (!project) return { moved: false, attempted: 0, failures: 0 }
+
+    const resolved = resolveValidPathWithSource(project)
+    const cwd = resolved.path
+    const remotes = orderRemotesForPullCheck(project)
+    if (remotes.length === 0) return { moved: false, attempted: 0, failures: 0 }
+
+    let attempted = 0
+    let failures = 0
+    let moved = false
+    for (const { name } of remotes) {
+      if (opts?.signal?.aborted) break
+      attempted++
+      let fetched = false
+      try {
+        // 短超时 fetch：不可达远程快速失败，不拖住整批
+        await this.executor.execGit(cwd, ["fetch", "--prune", name], opts?.signal, opts?.timeoutMs)
+        fetched = true
+      } catch {
+        // 该平台不可用（已失效/网络不通/无权限）：视为「未知」，继续尝试下一个平台
+        failures++
+      }
+      if (!fetched) continue
+
+      const behind = await this.remoteBehind(cwd, name)
+      if (behind > 0) {
+        // 该平台**需要拉取** ⇒ 记录结果并**继续执行后续平台**（用户要求：其他平台也要执行）
+        moved = true
+        continue
+      }
+      // 该平台确认**无需拉取** ⇒ 用户要求：跳过后续平台
+      // （gitee 已是最新，镜像通常同步；继续查只会白付网络往返）
+      break
+    }
+    return { moved, attempted, failures }
+  }
+
+  /**
+   * 读取某远程跟踪 ref 相对 HEAD 的 behind（>0 表示该远程有可拉取的提交）。
+   *
+   * 只看该远程自己的 ref（`refs/remotes/<remote>/<branch>`），避免把其他远程的更新
+   * 误算到本远程头上。解析失败（detached/空仓库/ref 不存在）按 0 处理。
+   */
+  private async remoteBehind(cwd: string, remoteName: string): Promise<number> {
+    try {
+      const branch = await this.getCurrentBranch(cwd)
+      if (!branch) return 0
+      const raw = await this.executor.execGit(cwd, [
+        "for-each-ref",
+        "--format=%(refname:short)%00%(ahead-behind:HEAD)",
+        `refs/remotes/${remoteName}/${branch}`,
+      ])
+      const map = parseAheadBehind(raw)
+      const entry = map.get(`${remoteName}/${branch}`)
+      // 格式为 <behind> <ahead>
+      return entry ? entry.behind : 0
+    } catch {
+      return 0
+    }
+  }
+
+  /**
+   * Fetch 项目所有已配置远程，仅更新跟踪分支不合并代码
+   *
+   * @param timeoutMs 单远程 fetch 超时（ms）；缺省走 GitExecutor 的网络超时设置。
+   *   后台检测路径应传短超时（见 fetchRemoteQuick 注释）。
+   */
+  async fetchAllForProject(id: string, opts?: { timeoutMs?: number }): Promise<{ fetched: string[]; errors: string[] }> {
     const project = await this.store.getProjectById(id)
     if (!project) return { fetched: [], errors: [] }
 
@@ -411,7 +520,9 @@ export class RemoteOps {
     const fetched: string[] = []
     const errors: string[] = []
     const results = await Promise.allSettled(
-      remotesToFetch.map((name) => this.fetchRemoteAt(cwd, name).then(() => name)),
+      remotesToFetch.map((name) => this.executor
+        .execGit(cwd, ["fetch", "--prune", name], undefined, opts?.timeoutMs)
+        .then(() => name)),
     )
 
     for (const r of results) {

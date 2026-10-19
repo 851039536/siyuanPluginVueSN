@@ -101,8 +101,10 @@ export interface ProjectQueryScheduler {
   loadWorkingTree: (id: string, opts?: LoadStatusOptions) => Promise<void>
   /** 一次 resolveBranch 后并行加载 pushStatus + workingTree（取代 loadProjectGitStatus / loadStatsData） */
   loadStatus: (id: string, opts?: LoadProjectStatusOptions) => Promise<void>
-  /** 统一远程刷新：refreshRemotes(配置) → fetchAllForProject(网络一次) → loadPushStatus(纯本地比对) */
-  refreshRemote: (id: string, opts?: { force?: boolean }) => Promise<void>
+  /** 统一远程刷新：refreshRemotes(配置) → fetch(网络) → loadPushStatus(纯本地比对)。
+   *  `timeoutMs` 为单远程 fetch 超时——后台批量检测传短超时，避免不可达远程挂满默认 240s。
+   *  `shortCircuit` 为 true 时按平台优先级短路 fetch（有更新即停），仅供「需拉取」检测使用。 */
+  refreshRemote: (id: string, opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean }) => Promise<void>
 
   // ── 缓存清理 ──
   /** 删除项目 / 项目路径或远程变更后清空其全部调度状态 */

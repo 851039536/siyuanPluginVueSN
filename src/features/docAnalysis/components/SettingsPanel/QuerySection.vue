@@ -12,7 +12,7 @@
         :model-value="hideZero"
         size="xsmall"
         label="统计表格隐藏数量为 0 的行"
-        @update:model-value="(v) => emit('update:hideZero', v)"
+        @update:model-value="onHideZero"
       />
     </div>
 
@@ -26,7 +26,7 @@
         :options="notebookOptions"
         size="xsmall"
         aria-label="默认笔记本"
-        @update:model-value="(v) => emit('update:notebookId', toStr(v))"
+        @update:model-value="onNotebookId"
       />
     </div>
 
@@ -39,7 +39,7 @@
         :options="SORT_FIELD_OPTIONS"
         size="xsmall"
         aria-label="默认排序"
-        @update:model-value="(v) => emit('update:sortField', toStr(v) as SortField)"
+        @update:model-value="onSortField"
       />
       <Select
         class="settings-select-field settings-select-field--small"
@@ -47,7 +47,7 @@
         :options="SORT_ORDER_OPTIONS"
         size="xsmall"
         aria-label="排序方向"
-        @update:model-value="(v) => emit('update:sortOrder', toStr(v) as SortOrder)"
+        @update:model-value="onSortOrder"
       />
     </div>
   </section>
@@ -63,23 +63,19 @@ import { computed } from "vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 import { SORT_FIELD_OPTIONS } from "../../types/index"
+import { normalizeSelectValue, notebookSelectOptions } from "../../utils/selectOptions"
 
 interface Props {
-  hideZero: boolean
-  notebookId: string
-  sortField: SortField
-  sortOrder: SortOrder
   notebooks: NotebookInfo[]
 }
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
-  (e: "update:hideZero", value: boolean): void
-  (e: "update:notebookId", value: string): void
-  (e: "update:sortField", value: SortField): void
-  (e: "update:sortOrder", value: SortOrder): void
-}>()
+/** 四组受控配置（v-model:xxx，编辑副本，统一保存时生效） */
+const hideZero = defineModel<boolean>("hideZero", { required: true })
+const notebookId = defineModel<string>("notebookId", { required: true })
+const sortField = defineModel<SortField>("sortField", { required: true })
+const sortOrder = defineModel<SortOrder>("sortOrder", { required: true })
 
 /** 排序方向选项（与 SortOrder 联合类型编译期绑定） */
 const SORT_ORDER_OPTIONS: { value: SortOrder, label: string }[] = [
@@ -94,20 +90,22 @@ const SORT_ORDER_OPTIONS: { value: SortOrder, label: string }[] = [
 ]
 
 /** 笔记本选项：空串代表"全部笔记本"（与 FilterOptions.notebookId 的空值语义一致） */
-const notebookOptions = computed(() => [
-  {
-    value: "",
-    label: "全部笔记本",
-  },
-  ...props.notebooks.map((nb) => ({
-    value: nb.id,
-    label: nb.name,
-  })),
-])
+const notebookOptions = computed(() => notebookSelectOptions(props.notebooks))
 
-/** Select 载荷归一为字符串（组件载荷为 string | number | boolean | null） */
-function toStr(value: string | number | boolean | null): string {
-  return value === null ? "" : String(value)
+function onHideZero(value: boolean) {
+  hideZero.value = value
+}
+
+function onNotebookId(value: string | number | boolean | null) {
+  notebookId.value = normalizeSelectValue(value)
+}
+
+function onSortField(value: string | number | boolean | null) {
+  sortField.value = normalizeSelectValue(value) as SortField
+}
+
+function onSortOrder(value: string | number | boolean | null) {
+  sortOrder.value = normalizeSelectValue(value) as SortOrder
 }
 </script>
 

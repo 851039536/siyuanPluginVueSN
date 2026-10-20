@@ -12,14 +12,19 @@
   animation: spin 1s linear infinite;
 }
 
-// 自定义滚动条
-@mixin da-scrollbar {
+// 自定义滚动条（$thumb / $track 可覆盖，适配深色编辑器与浅色预览等自定义底色场景）
+@mixin da-scrollbar($thumb: var(--b3-scroll-color), $track: null) {
   &::-webkit-scrollbar {
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-scroll-color);
+    background: $thumb;
     border-radius: $r-px3;
+  }
+  @if $track != null {
+    &::-webkit-scrollbar-track {
+      background: $track;
+    }
   }
 }
 

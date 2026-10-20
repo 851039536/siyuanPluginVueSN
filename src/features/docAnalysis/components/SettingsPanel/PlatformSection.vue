@@ -133,29 +133,28 @@ import { DEFAULT_PLATFORM_META } from "../../types/index"
 
 interface Props {
   visible: boolean
-  platforms: PlatformMeta[]
 }
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
-  (e: "update:platforms", value: PlatformMeta[]): void
-  (e: "update:valid", value: boolean): void
-}>()
+/** 平台列表（v-model:platforms，编辑副本即时回写父级 draft） */
+const platforms = defineModel<PlatformMeta[]>("platforms", { required: true })
+/** 校验是否通过（v-model:valid，保存按钮禁用条件） */
+const valid = defineModel<boolean>("valid", { required: true })
 
 /** 平台编辑副本（打开/首次挂载时深拷贝初始化，编辑即时回写） */
 const localPlatforms = ref<PlatformMeta[]>([])
 
 watch(() => props.visible, (v) => {
   if (v) {
-    localPlatforms.value = props.platforms.map((p) => ({ ...p, matchers: [...p.matchers] }))
+    localPlatforms.value = platforms.value.map((p) => ({ ...p, matchers: [...p.matchers] }))
     validate()
   }
 }, { immediate: true })
 
 const errors = ref<Set<string>>(new Set())
 
-/** 校验：id 非空且唯一、name 非空；结果通过 update:valid 同步父级（保存按钮禁用条件） */
+/** 校验：id 非空且唯一、name 非空；结果经 v-model:valid 同步父级（保存按钮禁用条件） */
 function validate() {
   const ids = new Set<string>()
   const errs = new Set<string>()
@@ -173,7 +172,7 @@ function validate() {
     }
   }
   errors.value = errs
-  emit("update:valid", errs.size === 0 && localPlatforms.value.length > 0)
+  valid.value = errs.size === 0 && localPlatforms.value.length > 0
 }
 
 function getError(idx: number, field: string): boolean {
@@ -185,7 +184,7 @@ function getError(idx: number, field: string): boolean {
 /** 编辑变更统一出口：校验 + 回传父级副本 */
 function commit() {
   validate()
-  emit("update:platforms", localPlatforms.value.map((p) => ({ ...p, matchers: [...p.matchers] })))
+  platforms.value = localPlatforms.value.map((p) => ({ ...p, matchers: [...p.matchers] }))
 }
 
 function updateMatchers(idx: number, event: Event) {

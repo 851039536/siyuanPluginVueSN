@@ -201,6 +201,7 @@ import {
   SORT_FIELD_OPTIONS,
 } from "../../types/index"
 import DocListItem from "./DocListItem.vue"
+import { normalizeSelectValue } from "../../utils/selectOptions"
 
 interface Props {
   queryState: QueryState
@@ -289,7 +290,7 @@ onBeforeUnmount(() => {
 
 /** 排序字段变更（转发给父层 updateSort）；载荷归一为字符串 */
 function handleSortChange(value: string | number | boolean | null) {
-  emit("sortChange", value === null ? "" : String(value))
+  emit("sortChange", normalizeSelectValue(value))
 }
 </script>
 

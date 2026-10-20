@@ -1,7 +1,8 @@
 /**
  * 文档分析功能 - 统计分类查询条件配置
  */
-import { daysAgoStr, escapeSql } from "./sqlHelpers"
+import { escapeSql } from "@/utils/sqlHelpers"
+import { daysAgoStr } from "./sqlHelpers"
 
 /** 文档查询配置 */
 export interface DocQueryConfig {

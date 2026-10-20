@@ -1,10 +1,6 @@
 <!-- 排版预览窗格 - 渲染 Markdown 为 HTML 实时预览 -->
 <template>
-  <div
-    ref="previewRef"
-    class="preview-pane"
-    @scroll="handleScroll"
-  >
+  <div class="preview-pane">
     <div v-if="!html" class="preview-empty">
       <Icon icon="mdi:file-document-outline" class="preview-empty-icon" />
       <p class="preview-empty-title">实时预览</p>
@@ -29,29 +25,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
 import { Icon } from "@iconify/vue"
 
 interface Props {
   html: string
 }
 
-interface Emits {
-  (e: "scroll", scrollTop: number): void
-}
-
 defineProps<Props>()
-
-const emit = defineEmits<Emits>()
-
-const previewRef = ref<HTMLElement | null>(null)
-
-function handleScroll() {
-  const el = previewRef.value
-  if (el) {
-    emit("scroll", el.scrollTop)
-  }
-}
 </script>
 
 <style lang="scss" scoped>

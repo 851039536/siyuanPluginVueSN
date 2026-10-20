@@ -18,28 +18,25 @@ import { ref, watch } from "vue"
 
 interface Props {
   visible: boolean
-  names: string[]
 }
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
-  (e: "update:names", value: string[]): void
-}>()
+/** 排除名称（v-model:names，编辑即时转换回写副本） */
+const names = defineModel<string[]>("names", { required: true })
 
 /** 文本形式（每行一个名称），打开/首次挂载时初始化，编辑时即时转换回写副本 */
 const text = ref("")
 
 watch(() => props.visible, (v) => {
-  if (v) text.value = props.names.join("\n")
+  if (v) text.value = names.value.join("\n")
 }, { immediate: true })
 
 function handleInput(e: Event) {
   text.value = (e.target as HTMLTextAreaElement).value
-  const names = [...new Set(
+  names.value = [...new Set(
     text.value.split("\n").map((s) => s.trim()).filter(Boolean),
   )]
-  emit("update:names", names)
 }
 </script>
 

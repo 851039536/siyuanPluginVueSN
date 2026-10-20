@@ -27,39 +27,31 @@
         <div class="settings-body">
           <!-- 健康度分区：扣分项勾选 + 0B 排除书签勾选 -->
           <HealthSection
-            :enabled-deductions="draft.enabledDeductions"
-            :zero-byte-exclude-bookmarks="draft.zeroByteExcludeBookmarks"
+            v-model:enabledDeductions="draft.enabledDeductions"
+            v-model:zeroByteExcludeBookmarks="draft.zeroByteExcludeBookmarks"
             :bookmark-distribution="bookmarkDistribution"
-            @update:enabledDeductions="(v) => draft.enabledDeductions = v"
-            @update:zeroByteExcludeBookmarks="(v) => draft.zeroByteExcludeBookmarks = v"
           />
 
-          <!-- 名称排除分区：重名文档名称排除（初始值透传原始持久化列表，避免打开瞬间 draft 未初始化读到空） -->
+          <!-- 名称排除分区：重名文档名称排除 -->
           <ExcludeSection
             :visible="visible"
-            :names="props.duplicateNameFilter"
-            @update:names="(v) => draft.duplicateNames = v"
+            v-model:names="draft.duplicateNames"
           />
 
-          <!-- 平台管理分区：平台增删/排序/判定/隐藏（初始值透传原始平台列表，避免打开瞬间 draft 未初始化读到空） -->
+          <!-- 平台管理分区：平台增删/排序/判定/隐藏 -->
           <PlatformSection
             :visible="visible"
-            :platforms="props.platforms"
-            @update:platforms="(v) => draft.platforms = v"
-            @update:valid="(v) => platformValid = v"
+            v-model:platforms="draft.platforms"
+            v-model:valid="platformValid"
           />
 
           <!-- 查询默认分区：隐藏零值 + 默认笔记本 + 默认排序 -->
           <QuerySection
-            :hide-zero="draft.hideZero"
-            :notebook-id="draft.notebookId"
-            :sort-field="draft.sortField"
-            :sort-order="draft.sortOrder"
+            v-model:hideZero="draft.hideZero"
+            v-model:notebookId="draft.notebookId"
+            v-model:sortField="draft.sortField"
+            v-model:sortOrder="draft.sortOrder"
             :notebooks="notebooks"
-            @update:hideZero="(v) => draft.hideZero = v"
-            @update:notebookId="(v) => draft.notebookId = v"
-            @update:sortField="(v) => draft.sortField = v"
-            @update:sortOrder="(v) => draft.sortOrder = v"
           />
         </div>
 

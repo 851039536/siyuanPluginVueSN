@@ -1,22 +1,12 @@
 @use "@/variables.scss" as *;
+@use "./mixins" as *;
 
 .preview-pane {
   height: 100%;
   overflow-y: auto;
   background: var(--b3-theme-surface);
 
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: $r-px3;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  @include da-scrollbar(rgba(0, 0, 0, 0.15), transparent);
 }
 
 .preview-empty {

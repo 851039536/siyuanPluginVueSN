@@ -2,7 +2,7 @@
  * 文档分析功能 - 统计维度逻辑（状态 + 分析 + 分类下钻）
  */
 import type { Plugin } from "siyuan"
-import { computed, nextTick, onScopeDispose, reactive, ref, watch } from "vue"
+import { computed, onScopeDispose, reactive, ref } from "vue"
 import { sql } from "@/api"
 import type {
   DepthStats,
@@ -26,8 +26,10 @@ import {
 import { filterDuplicateGroups } from "../utils"
 import type { DocQueryConfig } from "../utils/categoryQueryConfig"
 import { EXISTS_MAP, SIZE_CONDITIONS, buildTimeConfig } from "../utils/categoryQueryConfig"
-import { buildBookmarkExcludeClause, buildIdInClause, buildIdNotInClause, quoteSql, quoteSqlList } from "../utils/sqlHelpers"
+import { quoteSql, quoteSqlList } from "@/utils/sqlHelpers"
+import { buildBookmarkExcludeClause, buildIdInClause, buildIdNotInClause } from "../utils/sqlHelpers"
 import { DOC_DEPTH_EXPR, IMAGE_SUBQUERY, REF_SUBQUERY, SIZE_WORDCOUNT_SUBQUERY } from "../utils/sqlConstants"
+import { usePersistedRef } from "./usePersistedRef"
 
 /** useDocStats 依赖注入接口（由 useDocAnalysis 提供共享状态与查询执行器） */
 export interface UseDocStatsDeps {
@@ -51,7 +53,10 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
   const hasAnalyzed = ref(false)
   const statsFilter = ref<string>("")
   const duplicateGroups = ref<DuplicateNameGroup[]>([])
-  const duplicateNameFilter = ref<string[]>([])
+  /** 重名排除名称（加载后变更自动持久化） */
+  const { state: duplicateNameFilter, load: loadDuplicateNameFilter } = usePersistedRef(storage.duplicateNameFilter, {
+    defaultValue: () => [],
+  })
   const platformUnpublishedCounts = ref<Record<string, number>>({})
 
   // 分析产物 ID 集（供分类下钻查询；由 analyzeDocStats 填充）
@@ -256,22 +261,6 @@ export function useDocStats(plugin: Plugin, storage: DocAnalysisStorage, deps: U
   const effectiveDuplicateGroups = computed(() =>
     filterDuplicateGroups(duplicateGroups.value, duplicateNameFilter.value),
   )
-
-  /** 首次加载完成前跳过持久化 */
-  let dupFilterLoaded = false
-
-  async function loadDuplicateNameFilter() {
-    try { duplicateNameFilter.value = await storage.duplicateNameFilter.load() || [] }
-    catch { duplicateNameFilter.value = [] }
-    // 等 watch 刷新完成后再放行持久化，避免加载回填（或加载失败置空）触发回写覆盖存储
-    await nextTick()
-    dupFilterLoaded = true
-  }
-
-  watch(duplicateNameFilter, async (val) => {
-    if (!dupFilterLoaded) return
-    await storage.duplicateNameFilter.save(val)
-  })
 
   return {
     docStats, depthStats, statsLoading, hasAnalyzed, statsFilter,

@@ -172,7 +172,6 @@ import PreviewPane from "./PreviewPane.vue"
 interface Props {
   plugin: Plugin
   docId?: string
-  initialMd?: string
   /** docAnalysis 分片 i18n（提供发布操作提示文案） */
   i18n: DocI18n
 }
@@ -235,8 +234,6 @@ async function loadDocContent() {
       // 剥离文档属性 front matter，编辑器内只保留正文
       mdText.value = stripFrontMatter(result.content)
     }
-  } else if (props.initialMd) {
-    mdText.value = props.initialMd
   }
 }
 

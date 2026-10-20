@@ -24,6 +24,11 @@ export function escapeHtml(str: string): string {
     .replace(/'/g, "&#039;")
 }
 
+/** 转义正则表达式元字符（用于把普通字符串安全拼入 RegExp） */
+export function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
 const FULL_ESCAPE_MAP: Record<string, string> = {
   "&": "&amp;",
   "<": "&lt;",

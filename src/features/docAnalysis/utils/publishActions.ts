@@ -4,6 +4,7 @@
 import { showMessage } from "siyuan"
 import { exportMdContent } from "@/api"
 import { copyToClipboard } from "@/utils/domUtils"
+import { escapeHtml, escapeRegExp } from "@/utils/stringUtils"
 import type { PublishPromoteConfig } from "../types/index"
 import { DEFAULT_PUBLISH_PROMOTE } from "../types/index"
 
@@ -18,16 +19,6 @@ export function setPromoteConfig(config: PublishPromoteConfig) {
 /** 读取当前推广文案配置 */
 export function getPromoteConfig(): PublishPromoteConfig {
   return { ...promoteConfig }
-}
-
-/** 转义 HTML 特殊字符（用户自定义文案含 < > & 时安全注入） */
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;")
 }
 
 /** 根据配置生成 Markdown 版推广尾部（关闭或无文案时返回空串） */
@@ -49,11 +40,6 @@ export function buildPromoteFooterHtml(config: PublishPromoteConfig): string {
  * 思源 exportMdContent 导出的文档属性 front matter（--- ... --- YAML 块）
  */
 const FRONT_MATTER_RE = /^---\r?\n[\s\S]*?\r?\n---(?=\r?\n|$)/
-
-/** 转义正则特殊字符（本地工具，不跨 feature 导入） */
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
 
 /**
  * 剥离思源导出 Markdown 开头的文档属性 front matter（--- ... --- 块）

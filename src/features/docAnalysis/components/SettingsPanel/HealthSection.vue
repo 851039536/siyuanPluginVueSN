@@ -53,42 +53,42 @@ import type { BookmarkDetail, DeductionKey } from "../../types/index"
 import { DEDUCTION_OPTIONS } from "../../types/index"
 
 interface Props {
-  enabledDeductions: DeductionKey[]
-  zeroByteExcludeBookmarks: string[]
   bookmarkDistribution: BookmarkDetail[]
 }
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
-  (e: "update:enabledDeductions", value: DeductionKey[]): void
-  (e: "update:zeroByteExcludeBookmarks", value: string[]): void
-}>()
+/** 扣分项勾选（v-model:enabledDeductions，编辑副本，统一保存时生效） */
+const enabledDeductions = defineModel<DeductionKey[]>("enabledDeductions", { required: true })
+/** 0B 排除书签勾选（v-model:zeroByteExcludeBookmarks） */
+const zeroByteExcludeBookmarks = defineModel<string[]>("zeroByteExcludeBookmarks", { required: true })
 
 /** 扣分项选项（静态注册表） */
 const deductionOptions = DEDUCTION_OPTIONS
 
 /** 0B 排除书签可选项：动态书签分布 ∪ 已勾选书签（去重），保证已排除的书签仍可取消勾选 */
 const bookmarkOptions = computed(() => {
-  const seen = new Set(props.zeroByteExcludeBookmarks)
+  const seen = new Set(zeroByteExcludeBookmarks.value)
   for (const b of props.bookmarkDistribution) seen.add(b.value)
   return [...seen]
 })
 
-/** 切换扣分项（编辑副本，统一保存时生效） */
+/** 切换数组集合成员（勾选加入 / 取消移除），返回新数组 */
+function toggleItem<T>(list: readonly T[], item: T, checked: boolean): T[] {
+  const next = new Set(list)
+  if (checked) next.add(item)
+  else next.delete(item)
+  return [...next]
+}
+
+/** 切换扣分项 */
 function toggleDeduction(key: DeductionKey, checked: boolean) {
-  const current = new Set(props.enabledDeductions)
-  if (checked) current.add(key)
-  else current.delete(key)
-  emit("update:enabledDeductions", [...current])
+  enabledDeductions.value = toggleItem(enabledDeductions.value, key, checked)
 }
 
 /** 切换 0B 排除书签 */
 function toggleBookmark(bookmark: string, checked: boolean) {
-  const current = new Set(props.zeroByteExcludeBookmarks)
-  if (checked) current.add(bookmark)
-  else current.delete(bookmark)
-  emit("update:zeroByteExcludeBookmarks", [...current])
+  zeroByteExcludeBookmarks.value = toggleItem(zeroByteExcludeBookmarks.value, bookmark, checked)
 }
 </script>
 

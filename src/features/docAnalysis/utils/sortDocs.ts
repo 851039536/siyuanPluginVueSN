@@ -3,8 +3,8 @@
  */
 import type { DocInfo } from "../types/index"
 
-/** 排序比较器映射 */
-export const SORT_CMP: Record<string, (a: DocInfo, b: DocInfo) => number> = {
+/** 排序比较器映射（仅本模块内部使用） */
+const SORT_CMP: Record<string, (a: DocInfo, b: DocInfo) => number> = {
   title: (a, b) => a.title.localeCompare(b.title, "zh-CN"),
   notebook: (a, b) => a.notebookName.localeCompare(b.notebookName, "zh-CN"),
   updated: (a, b) => (a.updated || "").localeCompare(b.updated || ""),

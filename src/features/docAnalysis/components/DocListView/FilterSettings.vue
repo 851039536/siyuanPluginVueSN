@@ -71,7 +71,7 @@
         :options="notebookOptions"
         size="xsmall"
         aria-label="笔记本过滤"
-        @update:model-value="(v) => options.notebookId = v === null ? '' : String(v)"
+        @update:model-value="(v) => options.notebookId = normalizeSelectValue(v)"
       />
       <input
         v-model="options.bookmarkName"
@@ -97,6 +97,7 @@ import {
 } from "vue"
 import Select from "@/components/Select.vue"
 import { DEFAULT_FILTER_OPTIONS } from "../../types/index"
+import { normalizeSelectValue, notebookSelectOptions } from "../../utils/selectOptions"
 
 interface Props {
   options: FilterOptions
@@ -121,16 +122,7 @@ onBeforeUnmount(() => {
 })
 
 /** 笔记本选项：空串代表"全部笔记本"（与 FilterOptions.notebookId 的空值语义一致） */
-const notebookOptions = computed(() => [
-  {
-    value: "",
-    label: "全部笔记本",
-  },
-  ...props.notebooks.map((nb) => ({
-    value: nb.id,
-    label: nb.name,
-  })),
-])
+const notebookOptions = computed(() => notebookSelectOptions(props.notebooks))
 
 /** 是否有任何非空过滤条件 */
 const hasAnyFilter = computed(() => {

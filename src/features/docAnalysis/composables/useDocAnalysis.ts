@@ -2,7 +2,7 @@
  * 文档分析功能 - 核心业务聚合入口（查询执行器 + 平台操作 + 统计逻辑组装）
  */
 import type { Plugin } from "siyuan"
-import { nextTick, onScopeDispose, reactive, ref, watch } from "vue"
+import { onScopeDispose, reactive, ref } from "vue"
 import {
   lsNotebooks,
   sql,
@@ -28,16 +28,14 @@ import {
   DocAnalysisStorage,
 } from "../types/storage"
 import {
+  collectYamlPlatformIds,
   computeUnpublishedPlatformNames,
   fetchDocPlatformSets,
-  getPlatformIdFromAttrKey,
 } from "../utils/platformPublish"
+import { escapeSql, quoteSql, quoteSqlList } from "@/utils/sqlHelpers"
 import {
   buildBookmarkExcludeClause,
   buildIdInClause,
-  escapeSql,
-  quoteSql,
-  quoteSqlList,
 } from "../utils/sqlHelpers"
 import {
   BOOKMARK_SUBQUERY,
@@ -49,6 +47,7 @@ import type { DocQueryConfig } from "../utils/categoryQueryConfig"
 import { sortDocs } from "../utils/sortDocs"
 import { useDocStats } from "./useDocStats"
 import { PLATFORM_META } from "./platformMeta"
+import { usePersistedRef } from "./usePersistedRef"
 
 /**
  * 文档分析 composable（须在组件 setup 中调用，watch/onScopeDispose 依赖当前 effect 作用域自动回收）
@@ -58,11 +57,8 @@ export function useDocAnalysis(plugin: Plugin) {
   const notebooks = ref<NotebookInfo[]>([])
 
   // ============================================================
-  // 健康度扣分项设置（加载 + watch 持久化，防回写覆盖）
+  // 健康度扣分项设置（加载 + 变更自动持久化）
   // ============================================================
-
-  /** 首次加载完成前跳过持久化（避免加载回填触发回写覆盖存储） */
-  let healthSettingsLoaded = false
 
   /** 深拷贝默认健康度设置（避免与 DEFAULT_HEALTH_SETTINGS 共享数组引用） */
   function makeDefaultHealthSettings(): HealthSettings {
@@ -72,31 +68,19 @@ export function useDocAnalysis(plugin: Plugin) {
     }
   }
 
-  const healthSettings = ref<HealthSettings>(makeDefaultHealthSettings())
-
-  async function loadHealthSettings() {
-    try {
-      const saved = await storage.healthSettings.loadOrDefault()
+  const { state: healthSettings, load: loadHealthSettings } = usePersistedRef(storage.healthSettings, {
+    defaultValue: makeDefaultHealthSettings,
+    normalize: (saved) => {
       /** 过滤已移除的扣分项 key（如旧的 "unused"），避免残留项进入运行态 */
       const validKeys = saved.enabledDeductions.filter((key) =>
         DEDUCTION_OPTIONS.some((opt) => opt.key === key),
       )
       // 兼容旧存储：zeroByteExcludeBookmarks 缺省时兜底为空数组
-      healthSettings.value = {
+      return {
         enabledDeductions: validKeys.length > 0 ? validKeys : [...DEFAULT_HEALTH_SETTINGS.enabledDeductions],
         zeroByteExcludeBookmarks: saved.zeroByteExcludeBookmarks ?? [],
       }
-    } catch {
-      healthSettings.value = makeDefaultHealthSettings()
-    }
-    // 等 watch 刷新完成后再放行持久化，避免加载回填（或加载失败置空）触发回写覆盖存储
-    await nextTick()
-    healthSettingsLoaded = true
-  }
-
-  watch(healthSettings, async (val) => {
-    if (!healthSettingsLoaded) return
-    await storage.healthSettings.save(val)
+    },
   })
 
   const queryState = reactive<QueryState>({
@@ -313,56 +297,49 @@ export function useDocAnalysis(plugin: Plugin) {
     if (docs.length === 0) return
     try {
       const yamlRows = await sql(`SELECT block_id, name FROM attributes WHERE name LIKE '%yaml%' AND block_id IN (${quoteSqlList(docs.map((d) => d.id))}) LIMIT 10000`)
-      const docPublishedMap = new Map<string, Set<string>>()
-      if (yamlRows) {
-        for (const row of yamlRows) {
-          const id = String(row.block_id)
-          if (!docPublishedMap.has(id)) docPublishedMap.set(id, new Set())
-          const platformId = getPlatformIdFromAttrKey(String(row.name), PLATFORM_META.value)
-          if (platformId) docPublishedMap.get(id)!.add(platformId)
-        }
-      }
+      // 与 analyzePlatformPublish 共用同一套 yaml→平台提取逻辑，避免判据漂移
+      const docPublishedMap = collectYamlPlatformIds(yamlRows ?? [], PLATFORM_META.value)
       for (const doc of docs) {
         doc.unpublishedPlatforms = computeUnpublishedPlatformNames(docPublishedMap.get(doc.id) || new Set(), PLATFORM_META.value)
       }
     } catch (e) { console.error("查询文档发布属性失败:", e) }
   }
 
-  async function queryByMissingPlatform(platformMatcher: string) {
+  /**
+   * 平台过滤统一下钻入口
+   * @param platformIdOrMatcher 平台 ID 或匹配关键词
+   * @param mode published=已发布到该平台；missing=已发布其他平台但未发布到该平台
+   */
+  async function queryByPlatform(platformIdOrMatcher: string, mode: "published" | "missing") {
     statsFilter.value = ""
-    const platformEntry = PLATFORM_META.value.find((p) => p.id === platformMatcher || p.matchers.includes(platformMatcher))
-    const targetIds = new Set(platformEntry ? [platformEntry.id] : [platformMatcher])
+    const platformEntry = PLATFORM_META.value.find((p) => p.id === platformIdOrMatcher || p.matchers.includes(platformIdOrMatcher))
+    const targetIds = new Set(platformEntry ? [platformEntry.id] : [platformIdOrMatcher])
     const nc = buildNotebookCondition()
 
     // 复用 analyzePlatformPublish 同一套 SQL + 判定逻辑，消除两处实现的语义漂移
     const docPlatforms = await fetchDocPlatformSets(nc, PLATFORM_META.value)
 
-    // 筛选：已发布到至少一个平台、但未发布到目标平台的文档
     const matchingIds: string[] = []
     for (const [id, platforms] of docPlatforms) {
-      if (platforms.size > 0 && ![...targetIds].some((t) => platforms.has(t))) {
-        matchingIds.push(id)
-      }
+      const matched = mode === "published"
+        ? platforms.has(platformIdOrMatcher)
+        // 已发布到至少一个平台、但未发布到目标平台
+        : platforms.size > 0 && ![...targetIds].some((t) => platforms.has(t))
+      if (matched) matchingIds.push(id)
     }
 
     if (matchingIds.length === 0) { setEmptyState(); return }
-    await runDocQuery({ extraWhere: buildIdInClause(new Set(matchingIds)) })
+    await runDocQuery({
+      extraWhere: buildIdInClause(new Set(matchingIds)),
+      ...(mode === "published" ? { orderBy: "b.updated DESC", excludeBookmarked: true } : {}),
+    })
   }
+
+  /** 按平台匹配词查询「已发布其他平台、待发布至该平台」的文档（过滤栏 chips 下钻） */
+  const queryByMissingPlatform = (platformMatcher: string) => queryByPlatform(platformMatcher, "missing")
 
   /** 按平台 ID 查询已发布到该平台的文档（统计面板发布分区平台分布行下钻） */
-  async function queryByPlatformPublished(platformId: string) {
-    statsFilter.value = ""
-    const nc = buildNotebookCondition()
-    const docPlatforms = await fetchDocPlatformSets(nc, PLATFORM_META.value)
-
-    const matchingIds: string[] = []
-    for (const [id, platforms] of docPlatforms) {
-      if (platforms.has(platformId)) matchingIds.push(id)
-    }
-
-    if (matchingIds.length === 0) { setEmptyState(); return }
-    await runDocQuery({ extraWhere: buildIdInClause(new Set(matchingIds)), orderBy: "b.updated DESC", excludeBookmarked: true })
-  }
+  const queryByPlatformPublished = (platformId: string) => queryByPlatform(platformId, "published")
 
   return {
     notebooks, queryState, filterOptions,

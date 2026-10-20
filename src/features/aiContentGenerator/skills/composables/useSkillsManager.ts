@@ -158,17 +158,41 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     copyingSkill.value = true
     try {
       const skillDir = manager.resolveSkillDir(skill.filePath)
-      const isGlobal = skill.filePath.startsWith(manager.getHomeDir())
-      const targetBase = isGlobal ? manager.getHomeDir() : (projectPath.value || "")
-      const targetPaths = isGlobal ? targetTool.skillPaths : targetTool.projectPaths
+      // 来源作用域：工作区前缀最具体（工作区可能位于用户目录内），先判工作区
+      const isWorkspace = await manager.isWorkspaceSkill(skill.filePath)
+      const isGlobal = !isWorkspace && skill.filePath.startsWith(manager.getHomeDir())
+      const isProject = !isWorkspace && !isGlobal
 
+      // 目标作用域候选（来源作用域优先，无登记路径的作用域自动顺延）：
+      // global 桶 = 用户全局（homeDir + skillPaths）+ 思源工作区（workspaceDir + workspacePaths）
+      const wsDir = await manager.getWorkspaceDir()
+      const globalTier: Array<{ base: string, rels: string[] }> = []
+      if (manager.getHomeDir() && targetTool.skillPaths.length > 0) {
+        globalTier.push({ base: manager.getHomeDir(), rels: targetTool.skillPaths })
+      }
+      if (wsDir && targetTool.workspacePaths && targetTool.workspacePaths.length > 0) {
+        globalTier.push({ base: wsDir, rels: targetTool.workspacePaths })
+      }
+      const projectTier: Array<{ base: string, rels: string[] }> = []
+      if (projectPath.value && targetTool.projectPaths.length > 0) {
+        projectTier.push({ base: projectPath.value, rels: targetTool.projectPaths })
+      }
+      const scopes = isProject
+        ? [...projectTier, ...globalTier]
+        : [...globalTier, ...projectTier]
+
+      // 只尝试第一个「有登记路径」的作用域（沿用旧语义：同作用域逐个尝试、失败即失败，
+      // 不跨作用域静默扩散，避免「目标已存在」时被额外复制到第二处）
       let copied = false
-      for (const relPath of targetPaths) {
-        const targetDir = manager.resolveDir(targetBase, relPath)
-        const success = await manager.copySkill(skillDir, targetDir)
-        if (success) {
-          copied = true
-          break
+      const scope = scopes[0]
+      if (scope) {
+        for (const relPath of scope.rels) {
+          const targetDir = manager.resolveDir(scope.base, relPath)
+          const success = await manager.copySkill(skillDir, targetDir)
+          if (success) {
+            copied = true
+            break
+          }
         }
       }
 
@@ -265,7 +289,7 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     } else {
       const tool = AI_TOOLS.find((t) => t.id === selectedTool.value)
       if (tool) {
-        dirPath = manager.firstGlobalSkillDir(tool) || ""
+        dirPath = (await manager.firstSkillDir(tool)) || ""
       }
     }
 

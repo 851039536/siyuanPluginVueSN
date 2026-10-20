@@ -157,3 +157,25 @@ SkillPreviewModal 还额外挂在 Dock DOM 内，同样受困。
 **遗留**：共享 `Dialog.vue` 本身不带 Teleport，其他挂在 App.vue/Dock 内的消费方（如 video 弹窗、gitPush 面板内弹窗）
 理论上同样受此陷阱影响。全局补 Teleport 需先解耦 gitPush 的祖先耦合选择器
 （`.git-push-panel .si-dialog...`，见 `WorkingTreeDiffDialog.scss`/`AiErrorAnalysisDialog.scss`），登记为待办。
+
+## 九、三轮：新增思源技能路径（`data/storage/ai/agent/skills`）
+
+**需求**：把思源内置 Agent 的技能目录纳入扫描（`<workspaceDir>/data/storage/ai/agent/skills`，
+与 `utils/sqliteDb.ts` 记录的 `<workspaceDir>/data/storage/petal` 布局一致）。
+
+**设计**：`AIToolConfig` 新增第三类路径作用域 `workspacePaths`（相对思源工作区根，与项目路径输入无关、始终扫描），
+`AI_TOOLS` 登记 `siyuan` 工具项（name「思源」、icon `ideaCatSiyuan`、color `#D5544C`）。
+
+**实现要点**：
+
+- 工作区根解析抽为共享工具 [`src/utils/workspaceDir.ts`](../src/utils/workspaceDir.ts)
+  （自 `utils/sqliteDb.ts` 的私有 `readWorkspaceDir` 迁出，保持「不 import `@/api`」的模块纯度约束，可被纯 Node 单测加载）；
+- `SkillsManager`：`scanToolSkills` 扫描 `workspacePaths`；`checkToolExists` 将工作区计数并入 global 桶
+  （UI 卡片按合计展示）；新增 `getWorkspaceDir()`（带缓存）/ `isWorkspaceSkill()` / `firstSkillDir()`（打开目录回退工作区路径）；
+- 复制作用域：来源作用域判定「工作区 → 全局 → 项目」（工作区前缀最具体，且工作区可能位于用户目录内）；
+  目标候选按「来源作用域优先、无登记路径的作用域顺延」取第一个有路径的作用域，
+  沿用旧语义「同作用域逐个尝试、失败即失败」，避免「目标已存在」时被静默复制到第二处；
+- 生成侧（`useSkillsLoader`）无需改动：工作区路径与项目路径输入无关，自动纳入扫描。
+
+**验证**：`npx tsc --noEmit` 0 错误；`pnpm test` 40 文件 **688 用例**全过（新增 `isWorkspaceSkill` / `getWorkspaceDir` 缓存 2 例，
+`sqliteDb.spec` 18 例回归通过确认抽取无破坏）；`pnpm validate:icons` 通过；`pnpm lint` 9496 ≤ 基线 9508。

@@ -54,6 +54,13 @@ aiContentGenerator/
 - **入口**：斜杠命令「Skills 查看器」由 `registerAIContentGenerator` 一并注册；
   面板技能选择区的「管理技能」按钮（`SkillSection.vue`）也可打开管理弹窗。
   弹窗关闭后 `index.vue` 自动刷新技能列表并尽量保持原选择。
+- **路径作用域**（单一数据源 `@/config/aiTools`，按 `AIToolConfig` 三类相对路径派生）：
+  - `skillPaths`：全局，基于用户主目录；
+  - `projectPaths`：项目级，基于弹窗内「项目路径」输入；
+  - `workspacePaths`：**思源工作区**（`workspaceDir` 下），含 `data/storage/ai/agent/skills`，
+    与项目路径输入无关、始终扫描；工作区根经 `@/utils/workspaceDir` 的 `readWorkspaceDir()` 解析
+    （`window.siyuan.config.system.workspaceDir`，getConf 回退）。
+  - 复制 Skill 的目标作用域沿用「来源作用域优先、无登记路径顺延」，工作区技能视为 global 桶。
 - **扫描**：`skills/index.ts` 的 `scanSkills()` 为模块内 API（`useSkillsLoader` 直连），
   不再走跨 Feature 依赖注入；`SkillInfo` 是扫描原始结构，`SkillItem`（`@/types/ai`）
   是展示/去重结构，经 `types/index.ts` 的 `toSkillItem` 转换。

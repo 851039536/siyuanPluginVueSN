@@ -19,6 +19,7 @@
  */
 import type { Plugin } from "siyuan"
 import { getNodeFsPathOs } from "./nodeModules"
+import { readWorkspaceDir } from "./workspaceDir"
 
 /** node:sqlite 模块类型（结构化声明，避免依赖 @types/node 的版本差异） */
 interface SqliteStatement {
@@ -120,35 +121,9 @@ export async function resolvePluginDataDir(plugin: Plugin): Promise<string> {
 }
 
 /**
- * 读取工作区根目录（纯浏览器 API，不触碰 `@/api`）。
- *
- * 优先读渲染进程已加载的内核配置（无网络往返）；未就绪时退回 `/api/system/getConf`。
- * 两者都失败返回空串，由调用方的重试逻辑兜底。
+ * 读取工作区根目录：已抽为共享工具 `utils/workspaceDir.ts`（skills 管理等消费方共用），
+ * 此处经顶部导入复用。
  */
-async function readWorkspaceDir(): Promise<string> {
-  // 1. 已加载的配置（思源刷新配置后可用）
-  try {
-    const dir = window.siyuan?.config?.system?.workspaceDir
-    if (typeof dir === "string" && dir) return dir
-  } catch {
-    // window/globalThis 不可用（纯 Node 单测）：继续走下一步
-  }
-
-  // 2. 回退：直接请求内核配置（与 @/api 的 getConf 等价，但不引入其依赖）
-  try {
-    const resp = await fetch("/api/system/getConf", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{}",
-    })
-    if (!resp.ok) return ""
-    const json = await resp.json() as { code?: number, data?: { conf?: { system?: { workspaceDir?: string } } } }
-    if (json?.code !== 0) return ""
-    return json.data?.conf?.system?.workspaceDir || ""
-  } catch {
-    return ""
-  }
-}
 
 /**
  * 解析库文件绝对路径（异步便捷入口）。无法确定时返回空串。

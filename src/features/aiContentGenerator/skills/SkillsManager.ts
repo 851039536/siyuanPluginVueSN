@@ -1,11 +1,12 @@
 /**
  * Skills 管理器（原 skillsViewer/SkillsViewerManager，随功能并入 aiContentGenerator）
  * 扫描并读取 AI 编程工具的 Skills 配置文件
- * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode
+ * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode，以及思源内置 Agent 技能目录（工作区作用域）
  */
 
 import { AI_TOOLS } from "@/config/aiTools"
 import type { AIToolConfig, AIToolType } from "@/config/aiTools"
+import { readWorkspaceDir } from "@/utils/workspaceDir"
 
 export interface SkillInfo {
   name: string
@@ -21,6 +22,8 @@ export class SkillsManager {
   private path: any = null
   private homeDir = ""
   private available = false
+  /** 思源工作区根目录缓存（null 表示尚未解析；解析失败缓存为空串） */
+  private workspaceDirCache: string | null = null
 
   constructor() {
     this.initFS()
@@ -48,15 +51,36 @@ export class SkillsManager {
     return this.homeDir
   }
 
+  /** 思源工作区根目录（内核配置读取，见 @/utils/workspaceDir）；不可用时为空串 */
+  async getWorkspaceDir(): Promise<string> {
+    if (this.workspaceDirCache === null) {
+      this.workspaceDirCache = await readWorkspaceDir()
+    }
+    return this.workspaceDirCache
+  }
+
+  /** 是否为思源工作区作用域下的技能（按路径前缀判定） */
+  async isWorkspaceSkill(filePath: string): Promise<boolean> {
+    const ws = await this.getWorkspaceDir()
+    return !!ws && filePath.startsWith(ws)
+  }
+
   /** skill.md 路径 → 所在技能目录（收敛原消费方对 getNodeModules().path.dirname 的依赖） */
   resolveSkillDir(filePath: string): string {
     return this.path.dirname(filePath)
   }
 
-  /** 工具的首个全局技能目录（供「打开目录」使用），无可用路径时返回 null */
-  firstGlobalSkillDir(tool: AIToolConfig): string | null {
-    if (!this.available || tool.skillPaths.length === 0) return null
-    return this.path.join(this.homeDir, tool.skillPaths[0])
+  /** 工具的首个可打开技能目录：全局（用户目录）优先，其次思源工作区；均无返回 null */
+  async firstSkillDir(tool: AIToolConfig): Promise<string | null> {
+    if (!this.available) return null
+    if (tool.skillPaths.length > 0) {
+      return this.path.join(this.homeDir, tool.skillPaths[0])
+    }
+    const ws = await this.getWorkspaceDir()
+    if (ws && tool.workspacePaths && tool.workspacePaths.length > 0) {
+      return this.path.join(ws, tool.workspacePaths[0])
+    }
+    return null
   }
 
   /** 拼接目录路径（收敛原消费方对 getNodeModules().path.join 的依赖） */
@@ -80,6 +104,18 @@ export class SkillsManager {
         const fullPath = this.path.join(projectPath, relPath)
         const found = await this.scanSkillDirectory(fullPath, tool.id)
         skills.push(...found)
+      }
+    }
+
+    // 思源工作区作用域（如 data/storage/ai/agent/skills）：与项目路径输入无关，始终扫描
+    if (tool.workspacePaths && tool.workspacePaths.length > 0) {
+      const ws = await this.getWorkspaceDir()
+      if (ws) {
+        for (const relPath of tool.workspacePaths) {
+          const fullPath = this.path.join(ws, relPath)
+          const found = await this.scanSkillDirectory(fullPath, tool.id)
+          skills.push(...found)
+        }
       }
     }
 
@@ -223,7 +259,12 @@ export class SkillsManager {
       }
     }
 
+    // 计数口径：global 桶 = 全局（用户目录）+ 思源工作区作用域（UI 卡片按合计展示）
     const globalResult = await this.checkPathGroup(this.homeDir, tool.skillPaths)
+    const wsDir = await this.getWorkspaceDir()
+    const workspaceResult = (wsDir && tool.workspacePaths && tool.workspacePaths.length > 0)
+      ? await this.checkPathGroup(wsDir, tool.workspacePaths)
+      : { exists: false, count: 0 }
     const projectResult = projectPath
       ? await this.checkPathGroup(projectPath, tool.projectPaths)
       : {
@@ -232,9 +273,9 @@ export class SkillsManager {
         }
 
     return {
-      global: globalResult.exists,
+      global: globalResult.exists || workspaceResult.exists,
       project: projectResult.exists,
-      globalCount: globalResult.count,
+      globalCount: globalResult.count + workspaceResult.count,
       projectCount: projectResult.count,
     }
   }
@@ -291,5 +332,6 @@ export class SkillsManager {
     this.fs = null
     this.path = null
     this.available = false
+    this.workspaceDirCache = null
   }
 }

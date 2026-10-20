@@ -4,10 +4,10 @@
  */
 import type { IconKey } from "@/config/icons"
 
-/** AI 编程工具类型标识（与各工具 skills 目录约定一一对应） */
-export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae" | "opencode"
+/** AI 编程工具类型标识（与各工具 skills 目录约定一一对应；siyuan 为思源内置 Agent 技能目录） */
+export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae" | "opencode" | "siyuan"
 
-/** AI 编程工具完整配置：展示元信息 + 全局/项目级 skills 路径 */
+/** AI 编程工具完整配置：展示元信息 + 全局/项目级/思源工作区 skills 路径 */
 export interface AIToolConfig {
   id: AIToolType
   name: string
@@ -17,6 +17,8 @@ export interface AIToolConfig {
   skillPaths: string[]
   /** 项目级 skills 相对路径列表 */
   projectPaths: string[]
+  /** 思源工作区（workspaceDir 下）skills 相对路径列表（与项目路径输入无关，始终扫描） */
+  workspacePaths?: string[]
 }
 
 /** 全部 AI 编程工具配置（新增工具时在此处登记） */
@@ -60,6 +62,15 @@ export const AI_TOOLS: AIToolConfig[] = [
     color: "#00ACC1",
     skillPaths: [".config/opencode/skills", ".agents/skills"],
     projectPaths: [".opencode/skills"],
+  },
+  {
+    id: "siyuan",
+    name: "思源",
+    icon: "ideaCatSiyuan",
+    color: "#D5544C",
+    skillPaths: [],
+    projectPaths: [],
+    workspacePaths: ["data/storage/ai/agent/skills"],
   },
 ]
 

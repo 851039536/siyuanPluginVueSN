@@ -2,9 +2,15 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest"
+import { readWorkspaceDir } from "@/utils/workspaceDir"
 import { toSkillItem } from "../types"
 import { SkillsManager } from "./SkillsManager"
+
+vi.mock("@/utils/workspaceDir", () => ({
+  readWorkspaceDir: vi.fn(() => Promise.resolve("C:\\siyuan-workspace")),
+}))
 
 const manager = new SkillsManager()
 
@@ -62,6 +68,24 @@ describe("skillsManager.parseSkillMd", () => {
     const { description } = manager.parseSkillMd(long, "fallback-dir")
     expect(description).toHaveLength(203)
     expect(description).toBe(`${"a".repeat(200)}...`)
+  })
+})
+
+describe("skillsManager 工作区作用域", () => {
+  it("isWorkspaceSkill 按思源工作区前缀判定（工作区优先于用户目录）", async () => {
+    const m = new SkillsManager()
+    expect(await m.isWorkspaceSkill("C:\\siyuan-workspace\\storage\\ai\\agent\\skills\\x\\skill.md")).toBe(true)
+    expect(await m.isWorkspaceSkill("C:\\other\\storage\\ai\\agent\\skills\\x\\skill.md")).toBe(false)
+    expect(await m.isWorkspaceSkill("")).toBe(false)
+  })
+
+  it("getWorkspaceDir 缓存解析结果，实例内只解析一次", async () => {
+    vi.mocked(readWorkspaceDir).mockClear()
+    const m = new SkillsManager()
+    expect(await m.getWorkspaceDir()).toBe("C:\\siyuan-workspace")
+    expect(await m.getWorkspaceDir()).toBe("C:\\siyuan-workspace")
+    expect(vi.mocked(readWorkspaceDir)).toHaveBeenCalledTimes(1)
+    m.destroy()
   })
 })
 

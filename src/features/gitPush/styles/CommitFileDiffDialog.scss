@@ -22,9 +22,38 @@
   overflow: hidden;
 }
 
-// 提交 hash 徽标（配合 .wt-diff-badge 的基座样式，额外加深主色）
+// 头部修复：基座 .wt-diff-header 为共享 Dialog 的 header 插槽设计（flex: 1 撑满
+// .si-dialog__header 行）；本弹窗自绘外壳，header 是 .cdf-dialog（flex 列）的直接子项，
+// flex: 1 会与 diff 内容区平分高度把头部撑高变形。此处抵消并补齐基座依赖
+// .si-dialog__header 提供的内边距与底部分隔线。
+.cdf-dialog .wt-diff-header {
+  flex: 0 0 auto;
+  padding: $s-2 $s-3;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+// 操作分组竖向分隔线是裸 span（基座选择器带 .si-divider 后缀匹配不上），自持几何
+.cdf-dialog .wt-diff-header-sep {
+  width: 1px;
+  height: 14px;
+  margin: 0 $s-1;
+  background: var(--b3-border-color);
+}
+
+// 提交 hash 徽标（裸 span，不依赖共享 Tag 的 .si-tag 基座——
+// .wt-diff-badge 的既有选择器带 .si-tag 后缀，匹配不上裸 span；完整 40 位 hash
+// 必须自带截断与不可压缩约束，否则撑破标题行把头部挤变形）
 .cdf-hash-badge {
+  flex-shrink: 0;
+  max-width: 88px;
+  overflow: hidden;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
   color: var(--b3-theme-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.75;
+  cursor: pointer;
 }
 
 // 重命名/复制旧路径（弱化，超长省略）

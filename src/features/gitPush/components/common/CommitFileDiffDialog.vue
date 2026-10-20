@@ -23,8 +23,17 @@
               class="cdf-old"
               :title="file.oldPath"
             >← {{ file.oldPath }}</span>
-            <!-- 提交 hash 徽标 -->
-            <span class="wt-diff-badge cdf-hash-badge">{{ hash }}</span>
+            <!-- 提交 hash 徽章（完整 hash 截断展示，悬停看全值，点击复制） -->
+            <span
+              class="cdf-hash-badge"
+              role="button"
+              tabindex="0"
+              :title="`${hash}\n${i18n.copyHash}`"
+              :aria-label="i18n.copyHash"
+              @click="copyHash"
+              @keydown.enter.prevent="copyHash"
+              @keydown.space.prevent="copyHash"
+            >{{ copied ? "✓" : hash.slice(0, 7) }}</span>
             <!-- 增/删行数统计 -->
             <span
               v-if="stats.add || stats.del"
@@ -125,6 +134,8 @@ import {
   ref,
   watch,
 } from "vue"
+import { copyToClipboard } from "@/utils/domUtils"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
 import { usePagedList } from "../../composables/usePagedList"
 import { CARD_SERVICES_KEY } from "../../types"
 import {
@@ -154,6 +165,18 @@ const emit = defineEmits<{
 
 const services = inject(CARD_SERVICES_KEY)!
 const { manager } = services
+
+/** hash 徽章复制反馈（2s 对勾；定时器清理由 composable 承担） */
+const {
+  copied,
+  notifyCopied,
+} = useCopyFeedback()
+
+/** 点击 hash 徽章复制完整哈希（git 定位/分享用；徽章内截断展示，完整值经 title 悬停可查） */
+async function copyHash() {
+  const ok = await copyToClipboard(props.hash)
+  if (ok) notifyCopied()
+}
 
 /** 原始 diff 文本（按文件加载） */
 const diffText = ref("")
@@ -203,7 +226,9 @@ async function load() {
 }
 
 // 上下文件切换时重新加载（组件保持挂载，watch 替代重建）
-watch(() => props.file.path, () => { void load() })
+watch(() => props.file.path, () => {
+  void load()
+})
 
 // Esc 关闭 / ← → 切换文件（组件仅在打开时挂载，onMounted/onUnmounted 即等价于开关监听）
 // 捕获阶段拦截并阻止继续派发，避免按键穿透触发下层弹窗（如提交文件/修正信息弹窗）的 Esc 监听

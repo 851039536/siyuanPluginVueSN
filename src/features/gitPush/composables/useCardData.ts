@@ -41,7 +41,7 @@ export function useCardData(project: () => GitProject) {
   const logEntries = ref<CommitLogEntry[]>([])
   const logLoading = ref(false)
   /**
-   * 短 hash → 提交变更规模（文件数/增删行数），供 LOG Tab 行悬停提示。
+   * 完整 hash → 提交变更规模（文件数/增删行数），供 LOG Tab 行悬停提示。
    * 与 logEntries 分开：--shortstat 需 git 为每条提交算 diff（实测 200 条约 2.3s，而无统计仅 0.3s），
    * 故列表先渲染、统计后台补齐，不阻塞 LOG Tab 首次可见。
    */
@@ -107,7 +107,7 @@ export function useCardData(project: () => GitProject) {
    * 加载体提交变更规模（--shortstat 批量单命令；条数跟随 logLimit，上限由 manager 侧收口）。
    *  与 loadLog 同因：强制重取绕过单飞，快速切换条数会并发多笔 --shortstat 查询
    *  （全历史扫 diff，代价高），若慢的「小条数」结果后到会覆盖新的大条数统计。
-   *  同样用请求序号守卫写入；logStats 按短 hash 索引，条数不匹配不会报错只会静默缺数据。
+   *  同样用请求序号守卫写入；logStats 按完整 hash 索引（与 %H 同口径），条数不匹配不会报错只会静默缺数据。
    */
   let logStatsRequestSeq = 0
 

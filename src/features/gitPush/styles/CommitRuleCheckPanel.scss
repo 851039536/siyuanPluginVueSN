@@ -149,9 +149,15 @@
   }
 }
 
+// 完整 hash 徽章（数据层 %H）：窄行内截断防溢出（悬停 title 补全由模板提供）
 .grc-item-hash {
   font-family: $ff-mono;
   opacity: 0.45;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
 }
 
 // 违规原因徽章：配色由共享 Tag（warning + xsmall + circle）承担，胶囊几何与字重沿用原徽章观感

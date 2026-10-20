@@ -123,7 +123,10 @@
                     class="gp-fix-project"
                     :title="item.projectName"
                   >{{ item.projectName }}</span>
-                  <span class="gp-fix-hash">{{ item.hash }}</span>
+                  <span
+                    class="gp-fix-hash"
+                    :title="item.hash"
+                  >{{ item.hash.slice(0, 7) }}</span>
                   <span
                     v-if="item.reason"
                     class="gp-fix-reason"

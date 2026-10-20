@@ -26,10 +26,13 @@
   opacity: 0.5;
 }
 
+// 完整 hash 徽章（40 位）：窄弹窗可换行防溢出；可点击复制（cursor 提示）
 .gp-tagc-hash {
   font-family: $ff-mono;
   font-variant-numeric: tabular-nums;
   opacity: 0.5;
+  word-break: break-all;
+  cursor: pointer;
 }
 
 .gp-tagc-message {

@@ -23,9 +23,12 @@
   max-width: 40%;
 }
 
+// 完整 hash 徽章（40 位）：窄弹窗可换行防溢出；可点击复制（cursor 提示）
 .gcf-hash {
   font-family: $ff-mono;
   opacity: 0.5;
+  word-break: break-all;
+  cursor: pointer;
 }
 
 // 提交信息（弱化展示，单行超长省略）

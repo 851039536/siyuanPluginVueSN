@@ -62,7 +62,10 @@
             :title="row.projectName"
             @click.stop="emit('viewProject', row.projectId)"
           >{{ row.projectName }}</span>
-          <span class="grc-item-hash">{{ row.hash }}</span>
+          <span
+            class="grc-item-hash"
+            :title="row.hash"
+          >{{ row.hash.slice(0, 7) }}</span>
           <!-- 违规原因徽章（悬停显示该规则的判定说明与改法） -->
           <Tag
             class="grc-item-reason"
@@ -116,24 +119,26 @@
 
 <script setup lang="ts">
 // gitPush 提交规则检查不合规提交列表区块（本地分页 + 修正/删除入口）
-import type { CommitRuleCheckStats, CommitRuleViolation } from "../../types"
-import { computed, ref, watch } from "vue"
+import type {
+  CommitRuleCheckStats,
+  CommitRuleViolation,
+} from "../../types"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
 import Checkbox from "@/components/Checkbox.vue"
 import Tag from "@/components/Tag.vue"
-import { formatDateTime, relativeTime, ruleReasonDesc, ruleReasonText } from "../../utils"
 import { usePagedList } from "../../composables/usePagedList"
+import {
+  formatDateTime,
+  relativeTime,
+  ruleReasonDesc,
+  ruleReasonText,
+} from "../../utils"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
-
-/** 违规行唯一键（同一提交可能命中多条规则，故键含 reason）：行 key / 选中集 / 批量筛选三处共用的唯一事实源 */
-function violationKey(v: CommitRuleViolation): string {
-  return `${v.projectId}-${v.hash}-${v.reason}`
-}
-
-/** 违规行视图：预计算唯一 key（violationKey），模板内不再逐行重复拼接 */
-interface ViolationRow extends CommitRuleViolation {
-  key: string
-}
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -149,6 +154,16 @@ const emit = defineEmits<{
   openDrop: [violation: CommitRuleViolation]
   openBatchFix: [violations: CommitRuleViolation[]]
 }>()
+
+/** 违规行唯一键（同一提交可能命中多条规则，故键含 reason）：行 key / 选中集 / 批量筛选三处共用的唯一事实源 */
+function violationKey(v: CommitRuleViolation): string {
+  return `${v.projectId}-${v.hash}-${v.reason}`
+}
+
+/** 违规行视图：预计算唯一 key（violationKey），模板内不再逐行重复拼接 */
+interface ViolationRow extends CommitRuleViolation {
+  key: string
+}
 
 /** 选中项 key 集合（键由 violationKey 统一生成，与行 key 一致） */
 const selectedKeys = ref<Set<string>>(new Set())

@@ -13,7 +13,10 @@
             class="vp-btn vp-btn--ghost vp-btn--xs"
             @click="emit('close')"
           >
-            <Icon icon="mdi:close" height="10" />
+            <Icon
+              icon="mdi:close"
+              height="10"
+            />
           </button>
         </div>
 
@@ -27,10 +30,19 @@
           </div>
 
           <template v-else>
-            <!-- 项目信息 + 提交 hash -->
+            <!-- 项目信息 + 提交 hash（完整 40 位，word-break 防溢出；悬停复制） -->
             <div class="gcf-meta">
               <span class="gcf-project">{{ project?.name || target.projectName }}</span>
-              <span class="gcf-hash">{{ target.hash }}</span>
+              <span
+                class="gcf-hash"
+                role="button"
+                tabindex="0"
+                :title="i18n.copyHash"
+                :aria-label="i18n.copyHash"
+                @click="copyHash"
+                @keydown.enter.prevent="copyHash"
+                @keydown.space.prevent="copyHash"
+              >{{ copied ? i18n.copied : target.hash }}</span>
             </div>
 
             <!-- 提交信息（弱化单行展示，悬停查看全文） -->
@@ -69,11 +81,21 @@
 
 <script setup lang="ts">
 // gitPush 提交文件弹窗（壳层：加载项目后内嵌 CommitFilesList 面板展示清单与差异）
-import type { CommitFixTarget, GitProject } from "../../types"
+import type {
+  CommitFixTarget,
+  GitProject,
+} from "../../types"
 import { Icon } from "@iconify/vue"
-import { inject, onMounted, onUnmounted, ref } from "vue"
-import { CARD_SERVICES_KEY } from "../../types"
+import {
+  inject,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
 import Loader from "@/components/Loader.vue"
+import { copyToClipboard } from "@/utils/domUtils"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import { CARD_SERVICES_KEY } from "../../types"
 import CommitFilesList from "./CommitFilesList.vue"
 
 const props = defineProps<{
@@ -90,6 +112,18 @@ const { manager } = services
 
 const project = ref<GitProject | null>(null)
 const loading = ref(true)
+
+/** hash 徽章复制反馈（2s「已复制」文案；定时器清理由 composable 承担） */
+const {
+  copied,
+  notifyCopied,
+} = useCopyFeedback()
+
+/** 点击 hash 徽章复制完整哈希（git 定位/分享用） */
+async function copyHash() {
+  const ok = await copyToClipboard(props.target.hash)
+  if (ok) notifyCopied()
+}
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") emit("close")

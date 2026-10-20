@@ -183,6 +183,7 @@
     "fetchError": "更新失败: {0}",
     "refreshCommitLog": "刷新提交日志",
     "commitSearchPlaceholder": "搜索提交信息...",
+    "copyHash": "复制完整提交哈希",
     "commitListEmpty": "暂无提交记录",
     "commitListNoMatch": "无匹配结果",
     "commitStatFiles": "{0} 个文件变更",

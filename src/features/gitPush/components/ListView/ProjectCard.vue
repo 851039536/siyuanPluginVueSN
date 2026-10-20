@@ -1,6 +1,9 @@
 <!-- gitPush 项目卡片编排层（仅 project prop，数据与操作全部经 useCardServices/useCardData 注入） -->
 <template>
-  <div class="gp-card" @click.capture="handleCardClick">
+  <div
+    class="gp-card"
+    @click.capture="handleCardClick"
+  >
     <!-- 卡片顶栏：信息区 + 操作按钮区 -->
     <CardHeader
       :project="project"
@@ -176,24 +179,32 @@ import type {
   CommitLogEntry,
   GitProject,
 } from "../../types"
-import { computed, ref, watch } from "vue"
+import type { CardTabId } from "./CardTabs.vue"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import { checkCommitRule } from "../../commitRuleChecker"
 import { useCardData } from "../../composables/useCardData"
-import { useCardServices } from "../../composables/useCardServices"
 import { provideCardMenu } from "../../composables/useCardMenu"
-import { getProjectRemoteNames, platformLabel } from "../../utils"
+import { useCardServices } from "../../composables/useCardServices"
+import {
+  getProjectRemoteNames,
+  platformLabel,
+} from "../../utils"
+import CommitFilesDialog from "../common/CommitFilesDialog.vue"
+import CommitFixDialog from "../common/CommitFixDialog.vue"
+import DropCommitDialog from "../common/DropCommitDialog.vue"
+import TagCommitDialog from "../common/TagCommitDialog.vue"
 import BranchCommitList from "./BranchCommitList.vue"
 import CardActionBar from "./CardActionBar.vue"
 import CardHeader from "./CardHeader.vue"
 import CardRemotes from "./CardRemotes.vue"
-import CardTabs, { type CardTabId } from "./CardTabs.vue"
-import CommitFilesDialog from "../common/CommitFilesDialog.vue"
-import CommitFixDialog from "../common/CommitFixDialog.vue"
-import DropCommitDialog from "../common/DropCommitDialog.vue"
+import CardTabs from "./CardTabs.vue"
 import ConflictSection from "./ConflictSection.vue"
 import OutputPanel from "./OutputPanel.vue"
 import StashSection from "./StashSection.vue"
-import TagCommitDialog from "../common/TagCommitDialog.vue"
 import TagPanel from "./TagPanel.vue"
 import WorkingTreePanel from "./WorkingTreePanel.vue"
 
@@ -202,8 +213,25 @@ const props = defineProps<{
 }>()
 
 // 卡片服务（共享数据 / 响应式 Record 派生 / 派生函数 / 操作集群）
-const { services, workingTree, committing, stashLoading, commitOutput, generatingMsg, gitOpLoading, tagPushLoading, genStashDescLoading, generatedStashMsg, refreshingWorkingTree, pullOutputs, pushOutputs } = useCardServices(() => props.project)
-const { shared, ops } = services
+const {
+  services,
+  workingTree,
+  committing,
+  stashLoading,
+  commitOutput,
+  generatingMsg,
+  gitOpLoading,
+  tagPushLoading,
+  genStashDescLoading,
+  generatedStashMsg,
+  refreshingWorkingTree,
+  pullOutputs,
+  pushOutputs,
+} = useCardServices(() => props.project)
+const {
+  shared,
+  ops,
+} = services
 const i18n = shared.i18n
 
 // 卡片内联下拉菜单（顶栏与操作栏共享互斥状态，行为与拆分前一致）
@@ -253,7 +281,10 @@ const pullRunningStates = computed(() =>
 function buildRunningStates(isRunning: (key: string) => boolean) {
   return getProjectRemoteNames(props.project)
     .filter(({ key }) => isRunning(key))
-    .map(({ key }) => ({ key, label: platformLabel(key) }))
+    .map(({ key }) => ({
+      key,
+      label: platformLabel(key),
+    }))
 }
 
 /** 当前正在修正的提交条目（null = 未打开修正弹窗） */
@@ -314,24 +345,9 @@ function openCommitFiles(entry: CommitLogEntry) {
 const taggingEntry = ref<CommitLogEntry | null>(null)
 
 /**
- * 短 hash → Tag 名数组映射。
- * tagCommitMap 的键是**完整** hash（来自 `git tag --format=%(objectname)`），
- * 而 CommitLogEntry.hash 是**短** hash（`git log --format=%h`，7 位）——
- * 直接 `tagCommitMap.get(entry.hash)` 永不命中，会导致打 Tag 弹窗的「已有 Tag」恒为空。
- * 故与 BranchCommitList.shortTagMap 一致，按前 7 位截取后建短 hash 映射。
+ * 打 Tag 弹窗目标（含该提交已命中的 Tag）。
+ *  tagCommitMap 键（`%(objectname)` 完整 hash）与日志条目 hash（`%H` 完整 hash）同口径，直接精确匹配
  */
-const shortTagMap = computed(() => {
-  const map = new Map<string, string[]>()
-  for (const [fullHash, names] of tagCommitMap.value) {
-    const short = fullHash.slice(0, 7)
-    const existing = map.get(short)
-    if (existing) existing.push(...names)
-    else map.set(short, [...names])
-  }
-  return map
-})
-
-/** 打 Tag 弹窗目标（含该提交已命中的 Tag，按短 hash 前缀匹配） */
 const tagDialogTarget = computed(() => {
   const entry = taggingEntry.value
   if (!entry) {
@@ -346,7 +362,7 @@ const tagDialogTarget = computed(() => {
     projectName: props.project.name,
     hash: entry.hash,
     message: entry.message,
-    existingTags: shortTagMap.value.get(entry.hash) ?? [],
+    existingTags: tagCommitMap.value.get(entry.hash) ?? [],
   }
 })
 

@@ -22,9 +22,12 @@
   max-width: 40%;
 }
 
+// 完整 hash 徽章（40 位）：窄弹窗可换行防溢出；可点击复制（cursor 提示）
 .gp-fix-hash {
   font-family: $ff-mono;
   opacity: 0.5;
+  word-break: break-all;
+  cursor: pointer;
 }
 
 .gp-fix-reason {

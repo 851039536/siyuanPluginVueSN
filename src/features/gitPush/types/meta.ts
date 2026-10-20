@@ -198,6 +198,7 @@ export type PanelView = "list" | "stats" | "log" | "analysis" | "report" | "repo
 export interface CommitAnalysisEntry {
   projectId: string
   projectName: string
+  /** 完整 hash（40 位，与 CommitLogEntry.hash 同口径；列表短展示由 UI 层截取） */
   hash: string
   message: string
   author: string

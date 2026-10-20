@@ -296,7 +296,7 @@ export interface WorkingTreeInfo {
 
 /** 提交历史单条记录 */
 export interface CommitLogEntry {
-  /** 短 hash（7 位） */
+  /** 完整 hash（40 位，`git log --format=%H`；列表短展示由 UI 层截取） */
   hash: string
   /** 提交信息 */
   message: string

@@ -14,7 +14,10 @@
             :disabled="busy"
             @click="emit('close')"
           >
-            <Icon icon="mdi:close" height="10" />
+            <Icon
+              icon="mdi:close"
+              height="10"
+            />
           </button>
         </div>
 
@@ -28,10 +31,19 @@
           </div>
 
           <template v-else>
-            <!-- 项目信息 + 提交 hash -->
+            <!-- 项目信息 + 提交 hash（完整 40 位，word-break 防溢出；悬停复制） -->
             <div class="gp-drop-meta">
               <span class="gp-drop-project">{{ project?.name || target.projectName }}</span>
-              <span class="gp-drop-hash">{{ target.hash }}</span>
+              <span
+                class="gp-drop-hash"
+                role="button"
+                tabindex="0"
+                :title="i18n.copyHash"
+                :aria-label="i18n.copyHash"
+                @click="copyHash"
+                @keydown.enter.prevent="copyHash"
+                @keydown.space.prevent="copyHash"
+              >{{ copied ? i18n.copied : target.hash }}</span>
             </div>
 
             <!-- 原提交信息 -->
@@ -55,7 +67,10 @@
 
             <!-- 内容不变说明（本操作的核心语义） -->
             <div class="gp-drop-note">
-              <Icon icon="mdi:information-outline" height="12" />
+              <Icon
+                icon="mdi:information-outline"
+                height="12"
+              />
               <span>{{ i18n.dropCommitBody }}</span>
             </div>
 
@@ -64,7 +79,10 @@
               v-if="!canDrop"
               class="gp-drop-warning"
             >
-              <Icon icon="mdi:alert-circle-outline" height="12" />
+              <Icon
+                icon="mdi:alert-circle-outline"
+                height="12"
+              />
               <span>{{ blockedReason }}</span>
             </div>
 
@@ -73,7 +91,10 @@
               v-if="canDrop"
               class="gp-drop-warning gp-drop-warning--danger"
             >
-              <Icon icon="mdi:alert-circle-outline" height="12" />
+              <Icon
+                icon="mdi:alert-circle-outline"
+                height="12"
+              />
               <span>{{ i18n.dropCommitForcePushHint }}</span>
             </div>
 
@@ -104,7 +125,7 @@
               <div class="gp-drop-progress">
                 <div
                   class="gp-drop-progress-bar"
-                  :style="{ width: (dropProgress && dropProgress.total > 0 ? Math.round(dropProgress.current / dropProgress.total * 100) : 0) + '%' }"
+                  :style="{ width: `${dropProgress && dropProgress.total > 0 ? Math.round(dropProgress.current / dropProgress.total * 100) : 0}%` }"
                 />
               </div>
             </div>
@@ -114,7 +135,10 @@
               v-if="error"
               class="gp-drop-warning gp-drop-warning--error"
             >
-              <Icon icon="mdi:alert-circle-outline" height="12" />
+              <Icon
+                icon="mdi:alert-circle-outline"
+                height="12"
+              />
               <span>{{ error }}</span>
             </div>
 
@@ -171,7 +195,10 @@
                   :title="i18n.dropCommitOpenBackupTip"
                   @click="openBackupFolder"
                 >
-                  <Icon icon="mdi:folder-open" height="12" />
+                  <Icon
+                    icon="mdi:folder-open"
+                    height="12"
+                  />
                   <span>{{ i18n.openFolder }}</span>
                 </button>
                 <!-- 清理备份：删除备份目录下全部 bundle 文件 -->
@@ -196,7 +223,10 @@
               v-if="backupCleaned"
               class="gp-drop-backup-cleaned"
             >
-              <Icon icon="mdi:check-circle-outline" height="12" />
+              <Icon
+                icon="mdi:check-circle-outline"
+                height="12"
+              />
               <span>{{ i18n.dropCommitBackupCleaned.replace("{0}", String(backupCleanedCount)) }}</span>
             </div>
           </template>
@@ -212,7 +242,10 @@
             class="vp-btn vp-btn--primary vp-btn--sm"
             @click="emit('close')"
           >
-            <Icon icon="mdi:check" height="12" />
+            <Icon
+              icon="mdi:check"
+              height="12"
+            />
             <span>{{ i18n.dropCommitDone }}</span>
           </button>
           <template v-else>
@@ -246,14 +279,28 @@
 
 <script setup lang="ts">
 // gitPush 删除历史提交弹窗（自包含：校验 HEAD/merge/祖先/rebase 四态，备份后执行 commit-tree 删除）
-import type { CommitFixTarget, GitProject } from "../../types"
+import type {
+  CommitFixTarget,
+  GitProject,
+} from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, inject, onMounted, onUnmounted, ref } from "vue"
-import { openLocalPath, resolveValidPath } from "../../utils"
-import { CARD_SERVICES_KEY } from "../../types"
+import {
+  computed,
+  inject,
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
+import Loader from "@/components/Loader.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
-import Loader from "@/components/Loader.vue"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import { CARD_SERVICES_KEY } from "../../types"
+import {
+  openLocalPath,
+  resolveValidPath,
+} from "../../utils"
 import CommitFilesList from "./CommitFilesList.vue"
 
 const props = defineProps<{
@@ -303,6 +350,18 @@ const autoBackup = ref(true)
 const busy = computed(() => backingUp.value || dropping.value || cleaningBackup.value)
 
 const projectPath = computed(() => project.value ? resolveValidPath(project.value) : "")
+
+/** hash 徽章复制反馈（2s「已复制」文案；定时器清理由 composable 承担） */
+const {
+  copied,
+  notifyCopied,
+} = useCopyFeedback()
+
+/** 点击 hash 徽章复制完整哈希（git 定位/分享用） */
+async function copyHash() {
+  const ok = await copyToClipboard(props.target.hash)
+  if (ok) notifyCopied()
+}
 
 /** 操作条展示路径：有本次备份时显示 bundle 文件路径，否则显示备份目录路径 */
 const displayBackupPath = computed(() =>
@@ -400,7 +459,10 @@ async function performDrop() {
     dropping.value = true
     dropProgress.value = null
     await manager.dropCommit(projectPath.value, props.target.hash, (current, total) => {
-      dropProgress.value = { current, total }
+      dropProgress.value = {
+        current,
+        total,
+      }
     })
     done.value = true
     emit("saved", props.target.projectId)

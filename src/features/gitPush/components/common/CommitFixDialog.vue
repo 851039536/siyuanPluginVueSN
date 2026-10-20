@@ -30,10 +30,19 @@
           </div>
 
           <template v-else>
-            <!-- 项目信息 + 提交 hash -->
+            <!-- 项目信息 + 提交 hash（完整 40 位，word-break 防溢出；悬停复制） -->
             <div class="gp-fix-meta">
               <span class="gp-fix-project">{{ project?.name || target.projectName }}</span>
-              <span class="gp-fix-hash">{{ target.hash }}</span>
+              <span
+                class="gp-fix-hash"
+                role="button"
+                tabindex="0"
+                :title="i18n.copyHash"
+                :aria-label="i18n.copyHash"
+                @click="copyHash"
+                @keydown.enter.prevent="copyHash"
+                @keydown.space.prevent="copyHash"
+              >{{ copied ? i18n.copied : target.hash }}</span>
               <span
                 v-if="target.reason"
                 class="gp-fix-reason"
@@ -227,8 +236,10 @@ import {
 } from "vue"
 import Loader from "@/components/Loader.vue"
 import RadioButton from "@/components/RadioButton.vue"
+import { copyToClipboard } from "@/utils/domUtils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { checkCommitRule } from "../../commitRuleChecker"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
 import {
   CARD_SERVICES_KEY,
   DEFAULT_COMMIT_RULE_CONFIG,
@@ -276,6 +287,18 @@ const workingTreeClean = ref(false)
 const rebaseStuck = ref(false)
 
 const projectPath = computed(() => project.value ? resolveValidPath(project.value) : "")
+
+/** hash 徽章复制反馈（2s 对勾/「已复制」文案；定时器清理由 composable 承担） */
+const {
+  copied,
+  notifyCopied,
+} = useCopyFeedback()
+
+/** 点击 hash 徽章复制完整哈希（git 定位/分享用） */
+async function copyHash() {
+  const ok = await copyToClipboard(props.target.hash)
+  if (ok) notifyCopied()
+}
 
 /** 是否历史提交（非 HEAD） */
 const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value && !headHash.value.startsWith(props.target.hash))

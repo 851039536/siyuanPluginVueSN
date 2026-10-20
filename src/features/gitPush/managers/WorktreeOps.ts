@@ -314,8 +314,10 @@ export class WorktreeOps {
    */
   async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
     try {
-      // 每行一条的格式串（含 %p 父 hash 列表以识别 merge）；解析见 utils/gitOutput.parseCommitLog
-      const format = "%h%n%s%n%an%n%ar%n%aI%n%p"
+      // 每行一条的格式串（含 %p 父 hash 列表以识别 merge）；解析见 utils/gitOutput.parseCommitLog。
+      // %H 完整 hash 作为单一真源：UI 需要短展示时自行截取前 7 位；修正/删除/打 Tag 等
+      // 后续 git 定位直接拿完整 hash（短 hash 在大仓库有歧义风险，见 HistoryRewriter 注释）
+      const format = "%H%n%s%n%an%n%ar%n%aI%n%p"
       // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
       const args = count === "all"
         ? ["log", "-n", "5000", `--format=${format}`]
@@ -345,12 +347,13 @@ export class WorktreeOps {
     try {
       // 与 getCommitLog 的条数上限口径一致；"all" 同样加保护上限，避免超长历史上限击穿 maxBuffer
       const limit = count === "all" ? LOG_STAT_LIMIT : Math.min(count, LOG_STAT_LIMIT)
-      // %x01 作记录分隔：shortstat 是可选行，换行切分无法定界（详见 parseCommitShortStats 注释）
+      // %x01 作记录分隔：shortstat 是可选行，换行切分无法定界（详见 parseCommitShortStats 注释）。
+      // 键用 %H 与 getCommitLog 的完整 hash 同口径（UI 按 entry.hash 直接命中）
       const raw = await this.executor.execGit(projectPath, [
         "log",
         `-${limit}`,
         "--shortstat",
-        "--format=%x01%h",
+        "--format=%x01%H",
       ])
       if (!raw) return new Map()
       return parseCommitShortStats(raw)

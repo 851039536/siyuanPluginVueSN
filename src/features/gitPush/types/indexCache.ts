@@ -7,7 +7,7 @@
 
 /** 磁盘索引中的一个提交记录（commits.ndjson 一行） */
 export interface IndexedCommit {
-  /** 短 hash（7 位，与 CommitAnalysisEntry.hash 同口径） */
+  /** 短 hash（7 位，索引私有口径；与完整 hash 的换算由调用方负责） */
   h: string
   /** 作者名 */
   a: string

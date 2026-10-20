@@ -298,9 +298,10 @@ export function parseStashList(raw: string): StashEntry[] {
 }
 
 /**
- * 解析 `git log --format=%h%n%s%n%an%n%ar%n%aI%n%p`（固定 6 行一条）输出。
+ * 解析 `git log --format=%H%n%s%n%an%n%ar%n%aI%n%p`（固定 6 行一条）输出。
  * 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则固定切分错位；
  * %p（父 hash 列表）用于识别 merge 提交（父数 > 1）。
+ * hash 为 %H 完整 40 位：UI 短展示自行截取，后续 git 定位（修正/删除/打 Tag）直接用完整值。
  */
 export function parseCommitLog(raw: string): CommitLogEntry[] {
   const allLines = raw.split("\n")
@@ -319,7 +320,7 @@ export function parseCommitLog(raw: string): CommitLogEntry[] {
 }
 
 /**
- * 解析 `git log --shortstat --format=%x01%h` 输出为「短 hash → 变更规模」映射。
+ * 解析 `git log --shortstat --format=%x01%H` 输出为「完整 hash → 变更规模」映射。
  *
  * 用 0x01（%x01）作记录分隔而非换行：shortstat 是**可选行**（merge 提交与空改动提交没有该行），
  * 固定行数切分必然错位；0x01 是 git format 明确支持的不可打印分隔符，且不会出现在 hash 中。

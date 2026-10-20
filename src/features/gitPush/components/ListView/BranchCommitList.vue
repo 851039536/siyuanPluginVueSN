@@ -74,8 +74,21 @@
       >
         <span
           class="bcl-hash"
-          :title="entry.hash"
-        >{{ entry.hash }}</span>
+          role="button"
+          tabindex="0"
+          :title="`${entry.hash}\n${i18n.copyHash}`"
+          :aria-label="i18n.copyHash"
+          @click.stop="copyHash(entry.hash)"
+          @keydown.enter.stop.prevent="copyHash(entry.hash)"
+          @keydown.space.stop.prevent="copyHash(entry.hash)"
+        >
+          <Icon
+            v-if="copied && copiedHash === entry.hash"
+            icon="mdi:check"
+            height="11"
+          />
+          <template v-else>{{ shortHash(entry.hash) }}</template>
+        </span>
         <!-- 该提交已命中的 Tag 徽标（tag→hash 映射；徽标内附已推送远程名，未推送时提示） -->
         <span
           v-if="entryTags(entry.hash).length"
@@ -113,7 +126,7 @@
           class="bcl-msg bcl-msg--clickable"
           role="button"
           tabindex="0"
-          :title="i18n.ruleFixOpen + ': ' + entry.message"
+          :title="`${i18n.ruleFixOpen}: ${entry.message}`"
           @click.stop="$emit('fixCommit', entry)"
           @keydown.enter.stop.prevent="$emit('fixCommit', entry)"
           @keydown.space.stop.prevent="$emit('fixCommit', entry)"
@@ -184,18 +197,27 @@
 </template>
 
 <script setup lang="ts">
-import type { CommitLogEntry, CommitStat } from "../../types"
+import type {
+  CommitLogEntry,
+  CommitStat,
+} from "../../types"
 import { Icon } from "@iconify/vue"
 import {
   computed,
   ref,
 } from "vue"
-import { DEFAULT_LOG_LIMIT, formatDateTime, relativeTime } from "../../utils"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import Tag from "@/components/Tag.vue"
 import Tooltip from "@/components/Tooltip.vue"
+import { copyToClipboard } from "@/utils/domUtils"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import {
+  DEFAULT_LOG_LIMIT,
+  formatDateTime,
+  relativeTime,
+} from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -223,7 +245,10 @@ const emit = defineEmits<{
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const
 /** 条数下拉选项（末尾「全部」取 i18n 文案；值为 number | "all"，与 displayCount 同值域） */
 const countSelectOptions = computed(() =>
-  countOptions.map((n) => ({ value: n, label: n === "all" ? props.i18n.logFilterAll : String(n) })),
+  countOptions.map((n) => ({
+    value: n,
+    label: n === "all" ? props.i18n.logFilterAll : String(n),
+  })),
 )
 const searchKeyword = ref("")
 /** 选择框当前值：以卡片级 logLimit（initialCount prop）为初始值，切换 Tab 重建后仍沿用用户上次选择 */
@@ -238,18 +263,8 @@ const filteredEntries = computed(() => {
   return displayCount.value === "all" ? list : list.slice(0, displayCount.value)
 })
 
-/** 短 hash（7 位）→ Tag 名数组（日志列表 hash 为短 hash，映射键为完整 hash，按前缀截取匹配） */
-const shortTagMap = computed(() => {
-  const map = new Map<string, string[]>()
-  if (!props.tagCommitMap) return map
-  for (const [fullHash, names] of props.tagCommitMap) {
-    const short = fullHash.slice(0, 7)
-    const existing = map.get(short)
-    if (existing) existing.push(...names)
-    else map.set(short, [...names])
-  }
-  return map
-})
+/** 短 hash（前 7 位）→ Tag 名数组。tagCommitMap 键与日志条目 hash 均为完整 hash（%H / %(objectname)），直接精确匹配 */
+const shortTagMap = computed(() => props.tagCommitMap ?? new Map<string, string[]>())
 
 function entryTags(hash: string): string[] {
   return shortTagMap.value.get(hash) ?? []
@@ -319,6 +334,30 @@ function statInsertions(hash: string): string {
 function statDeletions(hash: string): string {
   const stat = statOf(hash)
   return stat ? props.i18n.commitStatDeletions.replace("{0}", stat.deletions.toLocaleString()) : ""
+}
+
+// ── hash 展示与复制：数据层为完整 hash（%H），行内空间有限只显示前 7 位，
+//    悬停 tooltip 展示完整 hash，点击复制完整 hash（复制反馈复用 useCopyFeedback）──
+
+/** 行内显示用的短 hash（前 7 位；完整 hash 经悬停 tooltip 与点击复制获得） */
+function shortHash(hash: string): string {
+  return hash.slice(0, 7)
+}
+
+/** 复制反馈（2s 对勾；定时器清理由 composable 承担） */
+const {
+  copied,
+  notifyCopied,
+} = useCopyFeedback()
+/** 最近复制的 hash（多行各自反馈，只亮当前复制的行） */
+const copiedHash = ref("")
+
+/** 点击 hash 复制完整哈希（git 定位/分享用；短展示不妨碍拿全值） */
+async function copyHash(hash: string) {
+  const ok = await copyToClipboard(hash)
+  if (!ok) return
+  copiedHash.value = hash
+  notifyCopied()
 }
 </script>
 

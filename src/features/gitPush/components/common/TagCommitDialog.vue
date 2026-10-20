@@ -21,12 +21,21 @@
         </div>
 
         <div class="gp-dialog-body">
-          <!-- 元信息：项目名 + 提交 hash -->
+          <!-- 元信息：项目名 + 提交 hash（完整 40 位，word-break 防溢出；悬停复制） -->
           <div class="gp-tagc-meta">
             <span class="gp-tagc-project">{{ target.projectName }}</span>
             <!-- "提交" -->
             <span class="gp-tagc-label">{{ i18n.tagOnCommitHash }}</span>
-            <span class="gp-tagc-hash">{{ target.hash }}</span>
+            <span
+              class="gp-tagc-hash"
+              role="button"
+              tabindex="0"
+              :title="i18n.copyHash"
+              :aria-label="i18n.copyHash"
+              @click="copyHash"
+              @keydown.enter.prevent="copyHash"
+              @keydown.space.prevent="copyHash"
+            >{{ copied ? i18n.copied : target.hash }}</span>
           </div>
 
           <!-- 原提交信息 -->
@@ -105,8 +114,10 @@ import {
   ref,
 } from "vue"
 import Input from "@/components/Input.vue"
+import { copyToClipboard } from "@/utils/domUtils"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   target: {
     projectName: string
@@ -123,6 +134,18 @@ const emit = defineEmits<{
 
 const tagName = ref("")
 const tagMessage = ref("")
+
+/** hash 徽章复制反馈（2s「已复制」文案；定时器清理由 composable 承担） */
+const {
+  copied,
+  notifyCopied,
+} = useCopyFeedback()
+
+/** 点击 hash 徽章复制完整哈希（git 定位/分享用） */
+async function copyHash() {
+  const ok = await copyToClipboard(props.target.hash)
+  if (ok) notifyCopied()
+}
 
 function create() {
   const name = tagName.value.trim()

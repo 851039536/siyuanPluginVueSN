@@ -12,6 +12,7 @@
     "minimize": "Minimize",
     "restore": "Restore",
     "close": "Close",
+    "resize": "Drag to resize",
     "markDone": "Mark as done",
     "markPending": "Mark as pending",
     "deleteConfirm": "Delete this record?",

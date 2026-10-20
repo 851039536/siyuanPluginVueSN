@@ -2750,6 +2750,7 @@
     "minimize": "最小化",
     "restore": "展开",
     "close": "关闭",
+    "resize": "拖拽调整大小",
     "markDone": "标记完成",
     "markPending": "标记待完成",
     "deleteConfirm": "确定删除这条记录吗？",

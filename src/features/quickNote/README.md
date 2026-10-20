@@ -1,6 +1,6 @@
 # 速记（quickNote）
 
-日常待办、灵感收集、项目跟进与每周复盘的综合工作面板。保持 persistent Modal 弹窗形态，白底蓝绿商务风格，顶部固定「今天要处理的」聚焦视图自动汇总今日到期/逾期任务与卡点项目。
+日常待办、灵感收集、项目跟进与每周复盘的综合工作面板。保持 persistent Modal 弹窗形态，支持拖拽移动、右下角缩放与最小化贴边；白底蓝绿商务风格，顶部固定「今天要处理的」聚焦视图自动汇总今日到期/逾期任务与卡点项目。
 
 ## 功能
 
@@ -53,9 +53,11 @@
 
 ```
 quickNote/
-├── index.ts                    # QuickNoteManager（persistent Modal 生命周期 + 位置/拖拽/最小化应用）+ registerQuickNote
-├── index.vue                   # 弹窗主面板壳层（TodayFocus 聚焦区 + 四大 Tab 导航 + 定位/最小化逻辑 + composable 编排）
-├── pureUtils.ts                # 无依赖纯函数（日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日顺延），可直接单测
+├── index.ts                    # QuickNoteManager（persistent Modal 生命周期 + 位置/尺寸/拖拽/缩放/最小化应用）+ registerQuickNote
+├── index.vue                   # 弹窗主面板壳层（TodayFocus 聚焦区 + 四大 Tab 导航 + 缩放把手 + 状态同步 + composable 编排）
+├── pointerSession.ts           # 指针会话底座（pointerId 过滤 / pointercancel / 失焦 / buttons===0 兜底与幂等清理）
+├── layout.ts                   # 布局应用层（状态 → 遮罩 flex / 容器绝对定位 / 尺寸与视口钳制）
+├── pureUtils.ts                # 无依赖纯函数（日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日顺延 / 面板几何约束），可直接单测
 ├── pureUtils.spec.ts           # 上述纯函数的单元测试（45 例）
 ├── utils.ts                    # generateId / createPersistLock 串行锁 / polishText 润色回填辅助
 ├── components/
@@ -78,8 +80,9 @@ quickNote/
 │   ├── useProjects.ts          # 项目 CRUD + 关联待办进度计算 + 卡住筛选（todosRef 构造参数注入）
 │   └── useWeeklyReview.ts      # 复盘周切换纯派生（weekOffset 回溯任意周统计 + 卡点汇总）
 ├── types/
-│   ├── index.ts                # 类型入口（re-export position + data，外部导入路径不变）
-│   ├── position.ts             # 弹窗位置类型 + 位置 → 对齐/最小化方向映射表
+│   ├── index.ts                # 类型入口（re-export position + data + events，外部导入路径不变）
+│   ├── position.ts             # 弹窗位置/尺寸设置类型 + 位置 → 对齐/最小化方向映射表
+│   ├── events.ts               # 面板交互事件名常量（遮罩收起 / 状态回放）
 │   ├── data.ts                 # 待办/灵感/项目数据模型 + 优先级/状态元数据映射表
 │   └── storage.ts              # QuickNoteStorage（data + settings 两个槽位）
 └── styles/
@@ -119,29 +122,51 @@ index.vue  useAiPolish(plugin)  →  { polishing, polish }
 
 自动顺延在 `useTodoList.load()` 中执行：读取 `lastRolloverDate` 与今天对比，非今天则将已逾期未完成任务顺延到今天并累计 `rolloverCount`，更新 `lastRolloverDate` 后持久化，保证每天首次打开弹窗时自动顺延一次。
 
-## 位置与拖拽机制
+## 位置、尺寸与拖拽机制
 
 `createModalVueApp` 的遮罩层是全屏 fixed flex 容器（默认居中）。定位分两种模式：
 
-- **五档预设**：Manager 的 `applyPosition()` 按 `POSITION_ALIGN_MAP` 改写遮罩
+- **五档预设**：`layout.ts` 的 `applyPanelLayout()` 按 `POSITION_ALIGN_MAP` 改写遮罩
   `align-items` / `justify-content` 实现贴边/居中，贴边档位附加边缘间距
 - **custom 自定义**：拖拽产生，容器绝对定位到 `customX/customY`（视口坐标，应用时 clamp 到视口内）
 
-拖拽由 `startDrag()` 驱动；`consumeDragClick()` 供小条 click 护栏吞掉拖拽后的误触点击。
+尺寸：
+
+- 默认 `624px × 70vh`；面板右下角的 L 形把手可拖拽调整大小（最小 `360 × 320`），
+  松手持久化 `panelWidth` / `panelHeight`
+- 缩放不改变当前定位模式：预设档继续由 flex 锚定（贴右/贴底时尺寸向屏幕内侧生长），
+  custom 档以左上角为锚点；预设菜单可随时重新贴边
+- 每次应用都按视口重新钳制（四周留 8px）：手动放大后窗口变小会自动收敛，窗口恢复后再回到持久化尺寸
+- 窗口 resize / 界面缩放 / 跨屏移动时，custom 坐标与尺寸重新钳制；预设档位由遮罩 flex 自动回流
+  （这正是此前面板被拖出屏幕后只能靠「速记恢复」找回的根因）
+
+拖拽由 `startDrag()` 驱动，缩放由 `startResize()` 驱动，两者共用 `pointerSession.ts`：
+
+- 仅响应鼠标左键 / 主触点；右键、中键与多指副触点不参与
+- `pointercancel`、窗口失焦、`pointermove` 的 `buttons === 0` 均会兜底结束会话，
+  避免在窗口外松手后会话悬挂
+- 会话结束持久化坐标/尺寸；`consumeDragClick()` 供小条 click 护栏吞掉拖拽后的误触点击
+
 该实现与 `vueAppHelper` 的遮罩 DOM 结构耦合，helper 重构时需同步调整。
 
 ## 恢复兜底
 
 弹窗被拖到异常位置（如顶部）导致无法点击/拖动时，可打开状态栏「功能列表」抽屉，点击「速记恢复」条目，
 派发 `resetQuickNote` 事件，经 App.vue 调度调用 `QuickNoteManager.reset()`：
-将定位重置为居中、清除自定义坐标与绝对定位残留、退出最小化，持久化后重新应用展开态。
+将定位重置为居中、尺寸恢复默认、清除自定义坐标与绝对定位残留、退出最小化，持久化后重新应用展开态。
 
 ## 最小化机制
 
 最小化方向由当前定位派生（`POSITION_MINIMIZE_META`）。Manager 的 `setMinimized()` 将容器尺寸改为 `auto`，
 遮罩设为透明 + `pointer-events: none` 实现点击穿透；展开时还原尺寸与遮罩。最小化状态持久化。
-自定义定位下最小化时，会清除拖拽产生的 absolute 定位内联样式，小条以横条形态贴最左边缘垂直居中
-（customX/customY 缓存保留，展开时 `applyPosition()` 仍还原原拖拽坐标）。
+
+- **预设档位**：小条位置由遮罩 flex 对齐决定（顶/底/左/右/居中）
+- **custom 自定义**：小条原地收起在面板左上角（保持绝对定位），按住小条可继续拖动；
+  展开时按展开尺寸重新钳制坐标 —— 不会出现「小条在左边、展开却跳到别处」的割裂
+
+面板为 persistent Vue 实例，`reset()` / 初始化回放等外部路径改动 Manager 状态时，
+经 `QUICK_NOTE_STATE_EVENT` 通知面板把本地 `position` / `minimized` ref 拉回权威状态，
+避免出现「Manager 已展开、界面仍渲染小条」的失配。
 
 ## 联动链路
 
@@ -158,6 +183,6 @@ statusBar「速记恢复」抽屉条目 → emitCustomEvent("resetQuickNote")
 | 键 | 内容 |
 |------|------|
 | `quick-note-data` | 统一数据（`AppData`：待办/灵感/项目/顺延记录） |
-| `quick-note-settings` | 功能设置（`{ position, customX, customY, minimized }`，对象浅合并兜底未来字段） |
+| `quick-note-settings` | 功能设置（`{ position, customX, customY, minimized, panelWidth, panelHeight }`，对象浅合并兜底未来字段；`panelHeight: 0` 表示按视口 70% 派生） |
 
 > 注：重构后数据从 `quick-note-items` 升级为 `quick-note-data`（结构完全不同），旧数据不做迁移。

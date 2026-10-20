@@ -1,5 +1,5 @@
 // src/features/quickNote/pureUtils.spec.ts — 速记无依赖纯函数行为断言
-// 覆盖日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日自动顺延
+// 覆盖日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日自动顺延 / 面板几何约束
 import type { TodoItem } from "./types"
 import {
   describe,
@@ -10,6 +10,8 @@ import {
   getWeekStart,
   isOverdueAgainst,
   parseDateStr,
+  resolvePanelPoint,
+  resolvePanelSize,
   rolloverOverdue,
   splitTags,
   toDateStr,
@@ -413,5 +415,173 @@ describe("rolloverOverdue", () => {
     const before = list[0].dueDate
     rolloverOverdue(list, null, today)
     expect(list[0].dueDate).toBe(before)
+  })
+})
+
+describe("resolvePanelSize", () => {
+  const min = {
+    width: 360,
+    height: 320,
+  }
+
+  it("视口足够时保留期望尺寸", () => {
+    expect(resolvePanelSize(
+      {
+        width: 624,
+        height: 600,
+      },
+      {
+        width: 1920,
+        height: 1080,
+      },
+      min,
+      8,
+    )).toEqual({
+      width: 624,
+      height: 600,
+    })
+  })
+
+  it("低于最小值时抬到最小值", () => {
+    expect(resolvePanelSize(
+      {
+        width: 200,
+        height: 100,
+      },
+      {
+        width: 1920,
+        height: 1080,
+      },
+      min,
+      8,
+    )).toEqual(min)
+  })
+
+  it("超过视口时按两侧留白裁到上限", () => {
+    expect(resolvePanelSize(
+      {
+        width: 5000,
+        height: 5000,
+      },
+      {
+        width: 1000,
+        height: 800,
+      },
+      min,
+      8,
+    )).toEqual({
+      width: 984,
+      height: 784,
+    })
+  })
+
+  it("视口比最小值还小时以视口为准（不溢出屏幕）", () => {
+    expect(resolvePanelSize(
+      {
+        width: 624,
+        height: 600,
+      },
+      {
+        width: 320,
+        height: 240,
+      },
+      min,
+      8,
+    )).toEqual({
+      width: 304,
+      height: 224,
+    })
+  })
+
+  it("非有限值回落到最小值（损坏数据不撑破视口）", () => {
+    expect(resolvePanelSize(
+      {
+        width: Number.NaN,
+        height: Number.POSITIVE_INFINITY,
+      },
+      {
+        width: 1000,
+        height: 800,
+      },
+      min,
+      8,
+    )).toEqual(min)
+  })
+})
+
+describe("resolvePanelPoint", () => {
+  const size = {
+    width: 624,
+    height: 500,
+  }
+  const viewport = {
+    width: 1920,
+    height: 1080,
+  }
+
+  it("视口内的坐标保持不变", () => {
+    expect(resolvePanelPoint(
+      {
+        x: 300,
+        y: 200,
+      },
+      size,
+      viewport,
+      8,
+    )).toEqual({
+      x: 300,
+      y: 200,
+    })
+  })
+
+  it("负坐标钳制到留白边距", () => {
+    expect(resolvePanelPoint(
+      {
+        x: -50,
+        y: -20,
+      },
+      size,
+      viewport,
+      8,
+    )).toEqual({
+      x: 8,
+      y: 8,
+    })
+  })
+
+  it("右下越界时钳制到最大可见位置", () => {
+    expect(resolvePanelPoint(
+      {
+        x: 5000,
+        y: 5000,
+      },
+      size,
+      viewport,
+      8,
+    )).toEqual({
+      x: 1288,
+      y: 572,
+    })
+  })
+
+  it("面板比视口宽时钳制到 0（不产生负坐标）", () => {
+    expect(resolvePanelPoint(
+      {
+        x: 100,
+        y: 100,
+      },
+      {
+        width: 1200,
+        height: 200,
+      },
+      {
+        width: 1000,
+        height: 800,
+      },
+      8,
+    )).toEqual({
+      x: 0,
+      y: 100,
+    })
   })
 })

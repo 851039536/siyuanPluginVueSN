@@ -173,6 +173,13 @@
         @cancel="confirmDialog.cancel"
         @update:visible="(v) => !v && confirmDialog.cancel()"
       />
+
+      <!-- 右下角缩放把手（按住拖拽调整面板大小，tooltip："拖拽调整大小"） -->
+      <div
+        class="quick-note-resize-handle"
+        :title="i18n.resize"
+        @pointerdown="props.manager.startResize($event)"
+      />
     </template>
   </div>
 </template>
@@ -212,7 +219,9 @@ import { useTodoList } from "./composables/useTodoList"
 import { useWeeklyReview } from "./composables/useWeeklyReview"
 import {
   POSITION_MINIMIZE_META,
+  QUICK_NOTE_MASK_MINIMIZE_EVENT,
   QUICK_NOTE_POSITIONS,
+  QUICK_NOTE_STATE_EVENT,
 } from "./types"
 
 const props = defineProps<{
@@ -285,6 +294,17 @@ const blockedProjects = projectsApi.blockedProjects
 const syncPosition = () => {
   position.value = props.manager.getPosition()
 }
+/**
+ * 从 Manager 同步权威状态
+ * 面板为 persistent 实例，reset / 初始化回放等外部路径改动 Manager 状态时，
+ * 本地 ref 不会自动更新，必须经 quickNoteStateChange 事件拉回
+ */
+const syncFromManager = () => {
+  position.value = props.manager.getPosition()
+  minimized.value = props.manager.isMinimized()
+  // 状态切换后预设菜单的锚点/可用性已变化，直接收起
+  menuOpen.value = false
+}
 const handleToggleMenu = () => {
   syncPosition()
   menuOpen.value = !menuOpen.value
@@ -301,6 +321,7 @@ const handleWindowClick = (e: MouseEvent) => {
 }
 const handleToggleMinimize = () => {
   syncPosition()
+  menuOpen.value = false
   minimized.value = !minimized.value
   props.manager.setMinimized(minimized.value)
 }
@@ -315,13 +336,15 @@ const handleMiniBarClick = () => {
 
 // ==================== 生命周期 ====================
 onMounted(async () => {
+  // 交互监听先于数据加载注册：初次 load 期间用户仍可能点遮罩/触发状态回放
+  window.addEventListener("click", handleWindowClick)
+  window.addEventListener(QUICK_NOTE_MASK_MINIMIZE_EVENT, handleMaskMinimize)
+  window.addEventListener(QUICK_NOTE_STATE_EVENT, syncFromManager)
   await todoList.load()
   await inspirations.load()
   await projectsApi.load()
-  syncPosition()
-  minimized.value = props.manager.isMinimized()
-  window.addEventListener("click", handleWindowClick)
-  window.addEventListener("quickNoteMaskMinimize", handleMaskMinimize)
+  // load 期间 Manager 状态可能已变化（例如 init 完成后的回放），统一再同步一次
+  syncFromManager()
 })
 
 // 进入复盘 Tab 时校准周界基准（纯派生无定时器，防止面板常驻跨天后周界过期）
@@ -333,7 +356,8 @@ watch(activeTab, (tab) => {
 
 onUnmounted(() => {
   window.removeEventListener("click", handleWindowClick)
-  window.removeEventListener("quickNoteMaskMinimize", handleMaskMinimize)
+  window.removeEventListener(QUICK_NOTE_MASK_MINIMIZE_EVENT, handleMaskMinimize)
+  window.removeEventListener(QUICK_NOTE_STATE_EVENT, syncFromManager)
 })
 </script>
 

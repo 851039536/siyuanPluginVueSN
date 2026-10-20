@@ -82,6 +82,8 @@
 }
 
 .quick-note-panel {
+  // 缩放把手定位锚点（把手绝对定位到面板右下角）
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -92,6 +94,40 @@
   // 最小化态：容器尺寸由 Manager 改为 auto，面板随内容（最小化条）自适应
   &--minimized {
     height: auto;
+  }
+}
+
+// ========== 右下角缩放把手（固定 14px 命中区，保证小面板下仍可抓取） ==========
+
+.quick-note-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  // Pointer 拖拽需禁用默认触控手势
+  touch-action: none;
+
+  // L 形折角提示（Codex 风格：细线代替图标）
+  &::before {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid var(--b3-border-color);
+    border-bottom: 2px solid var(--b3-border-color);
+    opacity: 0.7;
+    transition: border-color 0.12s, opacity 0.12s;
+  }
+
+  &:hover::before,
+  &:active::before {
+    border-color: var(--b3-theme-primary);
+    opacity: 1;
   }
 }
 

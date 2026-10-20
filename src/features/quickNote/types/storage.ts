@@ -10,12 +10,14 @@ import type {
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
-/** 默认设置：弹窗居中显示，无自定义坐标，非最小化 */
+/** 默认设置：弹窗居中显示，无自定义坐标，非最小化，默认宽度 624px（高度由视口比例派生） */
 export const DEFAULT_QUICK_NOTE_SETTINGS: QuickNoteSettings = {
   position: "center",
   customX: 0,
   customY: 0,
   minimized: false,
+  panelWidth: 624,
+  panelHeight: 0,
 }
 
 /** 统一数据默认值：三大模块空数组 + 尚未执行过自动顺延 */

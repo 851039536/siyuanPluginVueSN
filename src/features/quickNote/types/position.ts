@@ -18,6 +18,10 @@ export interface QuickNoteSettings {
   customY: number
   /** 最小化状态（持久化，重启/自动打开时恢复小条形态） */
   minimized: boolean
+  /** 面板宽度（px，右下角拖拽缩放后持久化；渲染时按视口重新钳制） */
+  panelWidth: number
+  /** 面板高度（px；0 = 未手动缩放，按视口高度的默认比例计算） */
+  panelHeight: number
 }
 
 /** 位置选项列表（Select 选项与 Manager 校验共用的单一数据源） */

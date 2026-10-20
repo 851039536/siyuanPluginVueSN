@@ -1,4 +1,4 @@
-// 速记功能 — 无依赖纯函数（日期、标签、顺延规则）
+// 速记功能 — 无依赖纯函数（日期、标签、顺延规则、面板几何约束）
 // 这些函数不依赖 Vue 响应式与思源 API，也不 import 本 feature 的其它模块，
 // 因此可被 *.spec.ts 直接导入（composable / utils.ts 会间接引入 siyuan，无法在 node 环境加载）
 import type { TodoItem } from "./types"
@@ -99,5 +99,62 @@ export function rolloverOverdue(
     list: next,
     lastRolloverDate: today,
     changed,
+  }
+}
+
+// ==================== 面板几何约束（拖拽 / 缩放 / 视口自适应） ====================
+
+/** 面板宽高（px） */
+export interface PanelSize {
+  width: number
+  height: number
+}
+
+/** 面板左上角视口坐标（px） */
+export interface PanelPoint {
+  x: number
+  y: number
+}
+
+/**
+ * 数值钳制：max 小于 min 时以可用空间 max 为准，
+ * 避免「视口比面板最小值还小」时反而撑出屏幕
+ */
+export function clampBetween(value: number, min: number, max: number): number {
+  const upper = Math.max(max, 0)
+  const lower = Math.min(min, upper)
+  const safeValue = Number.isFinite(value) ? value : lower
+  return Math.min(Math.max(safeValue, lower), upper)
+}
+
+/**
+ * 把期望尺寸钳制到 [最小值, 视口 - 两侧留白]
+ * 手动缩放后的尺寸可超过视口（窗口随后变小），故渲染时必须重新钳制
+ */
+export function resolvePanelSize(
+  desired: PanelSize,
+  viewport: PanelSize,
+  min: PanelSize,
+  gutter: number,
+): PanelSize {
+  return {
+    width: clampBetween(desired.width, min.width, viewport.width - gutter * 2),
+    height: clampBetween(desired.height, min.height, viewport.height - gutter * 2),
+  }
+}
+
+/**
+ * 把期望左上角钳制到视口内（四周留白 gutter）
+ * 保证标题栏拖拽把手始终留在屏幕内，避免面板拖出视口后无法找回
+ */
+export function resolvePanelPoint(
+  desired: PanelPoint,
+  size: PanelSize,
+  viewport: PanelSize,
+  gutter: number,
+): PanelPoint {
+  return {
+    x: clampBetween(desired.x, gutter, viewport.width - size.width - gutter),
+    y: clampBetween(desired.y, gutter, viewport.height - size.height - gutter),
   }
 }

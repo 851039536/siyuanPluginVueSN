@@ -1,27 +1,24 @@
 /**
  * Everything 本地搜索 — Codex 风格
  * 代码文档式设计语言：等宽字体、大写标签、边框卡片、分割线
+ * 背景与过渡对齐 gitPush 范式：遮罩 rgba(0,0,0,0.5)、无 backdrop-filter、0.12s fade + scale 0.98
  */
 
 @use "@/variables.scss" as *;
 
-// 遮罩层
+// 遮罩层（全屏遮罩统一 z-index 10000；禁止 backdrop-filter）
 .vp-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba($c-fg, 0.55);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: flex-start;
   justify-content: center;
   padding-top: 10vh;
-  z-index: 99999;
-  backdrop-filter: blur(4px);
+  z-index: 10000;
 }
 
-// 主对话框
+// 主对话框（边框优先、禁用阴影）
 .vp-dialog {
   width: 800px;
   max-width: 90vw;
@@ -32,6 +29,26 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+// ========== 进出场过渡（fade + 轻微 scale，0.12s 对齐 Codex 规范） ==========
+// 由 index.vue 的 <Transition name="vp-dialog-fade"> 接线（Lead 负责模板侧）
+.vp-dialog-fade-enter-active,
+.vp-dialog-fade-leave-active {
+  transition: opacity 0.12s ease;
+
+  .vp-dialog {
+    transition: transform 0.12s ease;
+  }
+}
+
+.vp-dialog-fade-enter-from,
+.vp-dialog-fade-leave-to {
+  opacity: 0;
+
+  .vp-dialog {
+    transform: scale(0.98);
+  }
 }
 
 // ========== tab 模式（独立窗口页签）==========
@@ -50,4 +67,10 @@
   flex: 1;
   border-radius: 0;
   border: none;
+}
+
+// 对话框根容器：显式声明基准字号（两级字号制：$t-xs = 12px）
+.vp-overlay,
+.vp-search-tab-root {
+  font-size: $t-xs;
 }

@@ -1,0 +1,50 @@
+/**
+ * CacheCleanOptions — 缓存清理偏好设置
+ * 三行：清理方式（单选组）/ 时间门槛（数字输入）/ 条目上限（数字输入）
+ */
+
+@use "@/variables.scss" as *;
+@use "./mixins" as m;
+
+.cc-options {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+
+  &__field {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $s-2;
+  }
+
+  &__key {
+    @include m.uppercase-label;
+
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  // 数字输入：宽度收敛（仅容纳三四位数）
+  &__number {
+    flex: 0 0 auto;
+    width: 72px;
+  }
+
+  &__unit {
+    font-size: $t-2xs;
+    opacity: 0.6;
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: $t-2xs;
+    line-height: $lh-normal;
+    opacity: 0.45;
+  }
+
+  &__hint-inline {
+    font-size: $t-2xs;
+    opacity: 0.45;
+  }
+}

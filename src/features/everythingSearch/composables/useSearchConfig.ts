@@ -1,9 +1,11 @@
 /**
  * Everything搜索配置持久化 composable
- * 托管 config/options 响应式状态、存储加载（冲刷-再加载）与防抖保存
+ * 托管 config/options/cacheSettings 响应式状态、存储加载（冲刷-再加载）与防抖保存
  */
 import type { Plugin } from "siyuan"
 import type {
+  CacheCleanSettings,
+  CacheRootId,
   EverythingConfig,
   SearchOptions,
 } from "../types"
@@ -18,6 +20,7 @@ import {
   type TimerHandle,
 } from "@/utils/timerRegistry"
 import {
+  DEFAULT_CACHE_CLEAN_SETTINGS,
   DEFAULT_CONFIG,
   DEFAULT_OPTIONS,
   EverythingSearchStorage,
@@ -34,15 +37,21 @@ export function useSearchConfig(plugin: Plugin) {
   const timerRegistry = new TimerRegistry()
   const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG })
   const options = reactive<SearchOptions>({ ...DEFAULT_OPTIONS })
+  const cacheSettings = reactive<CacheCleanSettings>({
+    ...DEFAULT_CACHE_CLEAN_SETTINGS,
+    // 两个容器字段必须是独立副本：默认值里是 {}，直接展开会让多实例共享同一引用
+    enabledRoots: { ...DEFAULT_CACHE_CLEAN_SETTINGS.enabledRoots },
+  })
   let saveTimer: TimerHandle | null = null
   // 正在从存储加载配置（避免加载触发 watch 回写）
   let isLoadingConfig = false
 
-  /** 立即落盘当前 config/options */
+  /** 立即落盘当前 config/options/cacheSettings */
   const persist = async () => {
     try {
       await storage.config.save(config)
       await storage.options.save(options)
+      await storage.cacheClean.save(cacheSettings)
     } catch (error) {
       console.error("保存配置到插件存储失败:", error)
     }
@@ -61,6 +70,10 @@ export function useSearchConfig(plugin: Plugin) {
       const savedData = await storage.init()
       Object.assign(config, savedData.config)
       Object.assign(options, savedData.options)
+      // enabledRoots 用整体替换：Object.assign 会把缺省项残留成旧值，
+      // 而缓存分类的「显式勾选记录」语义要求缺失即回到 CACHE_ROOTS 默认值
+      Object.assign(cacheSettings, savedData.cacheClean)
+      cacheSettings.enabledRoots = { ...savedData.cacheClean.enabledRoots }
     } catch (error) {
       console.error("从插件存储加载配置失败:", error)
     } finally {
@@ -80,7 +93,7 @@ export function useSearchConfig(plugin: Plugin) {
   }
 
   /** 监听配置变化（reactive 源隐式 deep；加载触发的变更不回写存储，消除"读后即写"） */
-  watch([config, options], () => {
+  watch([config, options, cacheSettings], () => {
     if (isLoadingConfig) return
     saveConfigToPlugin()
   })
@@ -99,6 +112,26 @@ export function useSearchConfig(plugin: Plugin) {
     value: EverythingConfig[keyof EverythingConfig],
   ) => {
     Object.assign(config, { [key]: value })
+  }
+
+  /** 更新单个缓存清理偏好项 */
+  const updateCacheSettings = <K extends keyof CacheCleanSettings>(
+    key: K,
+    value: CacheCleanSettings[K],
+  ) => {
+    cacheSettings[key] = value
+  }
+
+  /**
+   * 记录某个缓存分类的显式勾选偏好。
+   * 只写「用户改过」的项，缺省项由 CACHE_ROOTS[].defaultEnabled 决定 ——
+   * 这样以后调整默认值无需迁移老数据。
+   */
+  const setCacheRootEnabled = (rootId: CacheRootId, enabled: boolean) => {
+    cacheSettings.enabledRoots = {
+      ...cacheSettings.enabledRoots,
+      [rootId]: enabled,
+    }
   }
 
   /** 添加常用关键字 */
@@ -121,9 +154,12 @@ export function useSearchConfig(plugin: Plugin) {
   return {
     config,
     options,
+    cacheSettings,
     loadConfig,
     updateOption,
     updateConfig,
+    updateCacheSettings,
+    setCacheRootEnabled,
     addKeyword,
     deleteKeyword,
   }

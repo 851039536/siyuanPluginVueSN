@@ -26,72 +26,38 @@
     font-style: italic;
   }
 
+  // chip 外壳：只做「药丸形边框 + 横排两个共享 Button」，无自建可点击语义
+  // （可点击的是内部两个 Button，外壳是纯展示容器 —— AGENTS.md 允许的局部布局容器例外）
   &__chip {
     display: inline-flex;
     align-items: center;
     gap: $s-px2;
-    padding: $s-px2 $s-2;
-    border-radius: $r-full;
-    border: 1px solid var(--b3-border-color);
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
-    font-size: $t-xs;
-    cursor: pointer;
-    transition: background 0.12s, border-color 0.12s;
     max-width: 160px;
+    padding: 0 $s-px2 0 $s-px2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-full;
+    background: var(--b3-theme-surface);
+    transition: border-color 0.12s;
 
     &:hover {
-      background: var(--b3-list-hover);
       border-color: var(--b3-theme-primary-lighter);
     }
   }
 
+  // 关键词按钮：长关键词单行省略，不撑破 chip
   &__chip-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 0;
+    max-width: 128px;
+
+    :deep(.si-button__text) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &__chip-del {
     flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    font-size: $t-xs;
-    line-height: 1;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.4;
-    transition: opacity 0.12s, background 0.12s;
-
-    &:hover {
-      opacity: 1;
-      background: var(--b3-list-hover);
-    }
-  }
-
-  &__plus {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 1px dashed var(--b3-border-color);
-    background: transparent;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.5;
-    font-size: $t-base;
-    line-height: 1;
-    cursor: pointer;
-    transition: opacity 0.12s, border-color 0.12s;
-
-    &:hover {
-      opacity: 1;
-      border-color: var(--b3-theme-primary-lighter);
-    }
   }
 
   &__add-wrap {
@@ -100,58 +66,14 @@
     gap: $s-1;
   }
 
-  &__add-input {
-    box-sizing: border-box;
+  // 新增态输入框宽度（共享 Input 根容器默认撑满，此处收窄为紧凑宽度）
+  // ⚠️ 选择器带上父级抬到 (0,2,0)：仅 (0,1,0) 时与库内 `.si-input` 同特异性，靠源顺序取胜太脆弱
+  &__row &__add-input {
     width: 120px;
-    height: 28px;
-    padding: 0 $s-2;
-    border-radius: $r-sm;
-    border: 1px solid var(--b3-theme-primary-lighter);
-    background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface);
-    font-size: $t-xs;
-    outline: none;
-
-    &::placeholder {
-      color: var(--b3-theme-on-surface);
-      opacity: 0.35;
-    }
+    flex-shrink: 0;
   }
 
-  &__add-btn,
-  &__add-cancel {
-    box-sizing: border-box;
-    height: 28px;
-    padding: 0 $s-2;
-    border-radius: $r-sm;
-    font-size: $t-xs;
-    cursor: pointer;
-    transition: background 0.12s;
-    border: none;
-  }
-
-  &__add-btn {
-    background: var(--b3-theme-primary);
-    color: var(--b3-theme-on-primary);
-
-    &:hover {
-      opacity: 0.85;
-    }
-
-    &:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-  }
-
-  &__add-cancel {
-    background: transparent;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.55;
-
-    &:hover {
-      opacity: 1;
-      background: var(--b3-list-hover);
-    }
+  &__plus {
+    flex-shrink: 0;
   }
 }

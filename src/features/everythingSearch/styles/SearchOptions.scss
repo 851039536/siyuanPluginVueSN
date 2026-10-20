@@ -1,6 +1,6 @@
 /**
  * SearchOptions — 搜索选项面板
- * 三行布局：行1 开关组 / 行2 配置选单（数量·大小·延迟·排序）/ 行3 路径范围过滤
+ * 三行布局：行1 开关组 / 行2 配置选单（数量·大小·延迟·排序）/ 行3 路径范围过滤（见 SearchPathFilter.scss）
  */
 
 @use "@/variables.scss" as *;
@@ -36,32 +36,26 @@
     white-space: nowrap;
   }
 
-  // 文件大小数值输入框（border-box 保证外高 28px，与 Select xsmall 一致）
-  &__size-input {
-    box-sizing: border-box;
+  // 文件大小数值输入框：共享 Input 默认撑满宽度，此处收窄为固定紧凑宽度；
+  // 内部字段用等宽字体并居中（等宽数字便于上下限对照）
+  // ⚠️ 选择器带上父级抬到 (0,2,0)：仅 (0,1,0) 时与库内 `.si-input` 同特异性，靠源顺序取胜太脆弱
+  &__item &__size-input {
     width: 48px;
-    height: 28px;
-    padding: 0 $s-px6;
-    font-size: $t-sm;
-    font-family: $ff-mono;
-    color: var(--b3-theme-on-surface);
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-base;
-    outline: none;
-    text-align: center;
+    flex-shrink: 0;
+  }
 
-    &:focus {
-      border-color: $c-danger;
+  &__size-input {
+    :deep(.si-input__field) {
+      font-family: $ff-mono;
+      text-align: center;
     }
 
-    // 隐藏数字输入框的上下箭头
-    &::-webkit-inner-spin-button,
-    &::-webkit-outer-spin-button {
+    // 隐藏数字输入框的上下箭头（与整改前观感一致）
+    :deep(.si-input__field)::-webkit-inner-spin-button,
+    :deep(.si-input__field)::-webkit-outer-spin-button {
       -webkit-appearance: none;
       margin: 0;
     }
-    -moz-appearance: textfield;
   }
 
   // 文件大小分隔符
@@ -70,59 +64,5 @@
     color: var(--b3-theme-on-surface);
     opacity: 0.3;
     font-weight: $fw-bold;
-  }
-
-  // 路径范围过滤区块（行4）
-  &__row--paths {
-    align-items: flex-start;
-  }
-
-  &__path-group {
-    display: flex;
-    flex-direction: column;
-    gap: $s-1;
-    min-width: 260px;
-    flex: 1;
-  }
-
-  // 路径组头部：标签 + 启用开关同行
-  &__path-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $s-2;
-  }
-
-  // 路径输入框（每行一个路径，换行分隔）
-  &__path-input {
-    box-sizing: border-box;
-    width: 100%;
-    min-height: 52px;
-    padding: $s-1 $s-2;
-    font-size: $t-2xs;
-    font-family: $ff-mono;
-    line-height: $lh-normal;
-    color: var(--b3-theme-on-surface);
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-sm;
-    outline: none;
-    resize: vertical;
-
-    &:focus {
-      border-color: $c-danger;
-    }
-
-    &::placeholder {
-      color: var(--b3-theme-on-surface);
-      opacity: 0.35;
-    }
-
-    // 开关关闭时：置灰不可编辑
-    &--disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      background: var(--b3-theme-surface-light);
-    }
   }
 }

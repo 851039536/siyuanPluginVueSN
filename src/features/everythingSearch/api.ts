@@ -1,7 +1,18 @@
 /**
  * Everything HTTP API 服务
  * Everything是一个Windows本地文件搜索工具，支持HTTP API接口
+ *
+ * 本文件只保留 IO（fetch）。表达式组装 / 路径拼接 / 时间解析等纯逻辑
+ * 已收敛到 ../utils.ts（可单测，见 ../utils.spec.ts）。
  */
+import type { SizeUnit } from "./utils"
+import {
+  buildSearchQuery,
+  parseEverythingDate,
+} from "./utils"
+
+/** 排序字段（单一定义，SearchOptions 经派生复用，避免联合类型重复声明） */
+export type EverythingSortField = "name" | "path" | "size" | "date_modified"
 
 export interface EverythingSearchResult {
   name: string
@@ -10,9 +21,6 @@ export interface EverythingSearchResult {
   dateModified: string
   type: "file" | "folder"
 }
-
-/** 排序字段（单一定义，SearchOptions 经派生复用，避免联合类型重复声明） */
-export type EverythingSortField = "name" | "path" | "size" | "date_modified"
 
 export interface EverythingSearchOptions {
   query: string
@@ -23,6 +31,8 @@ export interface EverythingSearchOptions {
   regex?: boolean
   sort?: EverythingSortField
   ascending?: boolean
+  /** 空文件夹模式（追加 `empty:` 并跳过大小过滤） */
+  emptyFolders?: boolean
   /** 是否启用仅搜索路径过滤（默认 false） */
   includePathsEnabled?: boolean
   /** 仅搜索路径列表（拼 path:"..."，多个 AND） */
@@ -31,12 +41,22 @@ export interface EverythingSearchOptions {
   excludePathsEnabled?: boolean
   /** 排除路径列表（拼 !path:"..."） */
   excludePaths?: string[]
+  /** 最小文件大小（0 = 不启用） */
+  minSize?: number
+  minSizeUnit?: SizeUnit
+  /** 最大文件大小（0 = 不启用） */
+  maxSize?: number
+  maxSizeUnit?: SizeUnit
 }
 
 export interface EverythingConfig {
   host: string
   port: number
 }
+
+/** 请求超时：探活短、搜索长（Everything 对大结果集做全量排序时耗时明显） */
+const SERVICE_PROBE_TIMEOUT_MS = 3000
+const SEARCH_TIMEOUT_MS = 10000
 
 /**
  * 检查Everything HTTP服务是否可用
@@ -49,7 +69,7 @@ export async function checkEverythingService(
       `http://${config.host}:${config.port}/?search=test&json=1&count=1`,
       {
         method: "GET",
-        signal: AbortSignal.timeout(3000),
+        signal: AbortSignal.timeout(SERVICE_PROBE_TIMEOUT_MS),
       },
     )
     return response.ok
@@ -57,6 +77,51 @@ export async function checkEverythingService(
     console.error("Everything服务不可用:", error)
     return false
   }
+}
+
+/** Everything 原始响应条目（字段全部可选：服务端在不同版本下会缺列） */
+export interface RawEverythingItem {
+  name?: string
+  path?: string
+  size?: number
+  date_modified?: number | string
+  type?: string
+}
+
+/** 毫秒时间戳 → 本地化展示字符串（年-月-日 时:分） */
+function formatDateValue(timestamp: number): string {
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) return ""
+  const locale = (typeof navigator !== "undefined" && navigator.language) || "zh-CN"
+  return date.toLocaleString(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+/**
+ * 解析 Everything 响应体为结果列表。
+ * 整改前的映射内联在 `searchFiles` 里、时间格式化另有一份递归推测逻辑，
+ * 现拆成纯函数以便对「字段缺失 / 时间格式差异 / 尺寸非法」逐条断言。
+ */
+export function parseSearchResponse(
+  data: { results?: RawEverythingItem[] } | null | undefined,
+): EverythingSearchResult[] {
+  return (data?.results ?? []).map((item) => {
+    const timestamp = parseEverythingDate(item.date_modified)
+    return {
+      name: item.name ?? "",
+      path: item.path ?? "",
+      size: typeof item.size === "number" && Number.isFinite(item.size) && item.size > 0
+        ? item.size
+        : 0,
+      dateModified: timestamp === null ? "" : formatDateValue(timestamp),
+      type: item.type === "folder" ? "folder" : "file",
+    }
+  })
 }
 
 /**
@@ -75,29 +140,30 @@ export async function searchFiles(
     regex = false,
     sort = "date_modified",
     ascending = false,
+    emptyFolders = false,
     includePathsEnabled = false,
     includePaths = [],
     excludePathsEnabled = false,
     excludePaths = [],
+    minSize = 0,
+    minSizeUnit = "KB",
+    maxSize = 0,
+    maxSizeUnit = "KB",
   } = options
 
-  // 路径过滤（仅对应开关开启时生效）：仅搜索路径 path:"..."（多个 AND）+ 排除路径 !path:"..."（引号转义空格）
-  const pathParts: string[] = []
-  if (includePathsEnabled) {
-    for (const p of includePaths) {
-      const trimmed = p.trim()
-      if (trimmed) pathParts.push(`path:"${trimmed}"`)
-    }
-  }
-  if (excludePathsEnabled) {
-    for (const p of excludePaths) {
-      const trimmed = p.trim()
-      if (trimmed) pathParts.push(`!path:"${trimmed}"`)
-    }
-  }
-  const searchQuery = pathParts.length > 0
-    ? `${query} ${pathParts.join(" ")}`.trim()
-    : query
+  // 表达式组装统一走纯函数（关键词 → 大小过滤 → 路径过滤；empty: 模式自动跳过大小过滤）
+  const searchQuery = buildSearchQuery({
+    query,
+    emptyFolders,
+    minSize,
+    minSizeUnit,
+    maxSize,
+    maxSizeUnit,
+    includePathsEnabled,
+    includePaths,
+    excludePathsEnabled,
+    excludePaths,
+  })
 
   // 构建URL参数
   const params = new URLSearchParams({
@@ -124,7 +190,7 @@ export async function searchFiles(
       `http://${config.host}:${config.port}/?${params.toString()}`,
       {
         method: "GET",
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
       },
     )
 
@@ -132,91 +198,9 @@ export async function searchFiles(
       throw new Error(`HTTP错误: ${response.status}`)
     }
 
-    const data = await response.json()
-
-    // 解析结果
-    const results: EverythingSearchResult[] = (data.results || []).map(
-      (item: any) => ({
-        name: item.name || "",
-        path: item.path || "",
-        size: item.size || 0,
-        dateModified: formatDate(item.date_modified),
-        type: item.type === "folder" ? "folder" : "file",
-      }),
-    )
-
-    return results
+    return parseSearchResponse(await response.json())
   } catch (error) {
     console.error("Everything搜索失败:", error)
     throw error
   }
-}
-
-/**
- * 格式化日期
- */
-function formatDate(timestamp: number | string): string {
-  if (!timestamp) return ""
-
-  // Everything返回的是Windows FILETIME格式或Unix时间戳
-  let date: Date
-  if (typeof timestamp === "number") {
-    // 如果是大数字，可能是Windows FILETIME (100-nanosecond intervals since January 1, 1601)
-    if (timestamp > 1e15) {
-      // Windows FILETIME转换
-      date = new Date(timestamp / 10000 - 11644473600000)
-    } else if (timestamp > 1e12) {
-      // 毫秒时间戳
-      date = new Date(timestamp)
-    } else {
-      // 秒时间戳
-      date = new Date(timestamp * 1000)
-    }
-  } else {
-    date = new Date(timestamp)
-  }
-
-  if (Number.isNaN(date.getTime())) return ""
-
-  const locale = (typeof navigator !== "undefined" && navigator.language) || "zh-CN"
-  return date.toLocaleString(locale, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
-}
-
-/**
- * 拼接搜索结果项的完整路径（path\\name）
- */
-export function getFullPath(item: EverythingSearchResult): string {
-  return item.path ? `${item.path}\\${item.name}` : item.name
-}
-
-/** 系统关键目录名列表（小写，用于排除空文件夹搜索结果中的系统路径，防止误删导致系统异常） */
-const SYSTEM_ROOT_DIRS = [
-  "windows",
-  "program files",
-  "program files (x86)",
-  "programdata",
-  "$recycle.bin",
-  "system volume information",
-  "recovery",
-  "boot",
-  "perflogs",
-]
-
-/** 提取 Windows 路径盘符后的一级目录名（如 "C:\\Windows\\System32" → "Windows"） */
-const ROOT_DIR_REGEX = /^[a-z]:\\([^\\]+)(?:\\|$)/i
-
-/**
- * 判断完整路径是否位于系统关键目录下
- * 仅做纯字符串比对，无文件系统 I/O，不会因访问系统文件引发异常
- */
-export function isSystemPath(fullPath: string): boolean {
-  const match = ROOT_DIR_REGEX.exec(fullPath)
-  if (!match) return false
-  return SYSTEM_ROOT_DIRS.includes(match[1].toLowerCase())
 }

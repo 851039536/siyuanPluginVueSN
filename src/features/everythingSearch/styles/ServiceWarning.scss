@@ -1,6 +1,7 @@
 /**
  * ServiceWarning — 服务未连接警告
- * 橙色标签 + 提示信息 + 重试按钮
+ * 警示文案由共享 Message（warn 语义 + warning 图标）承载，重试按钮为共享 Button（danger outlined）
+ * 本文件只负责「整条横向排布 + 区块虚线下边框」（区块基座沿用 mixins.section-dashed）
  */
 
 @use "@/variables.scss" as *;
@@ -12,41 +13,25 @@
   display: flex;
   align-items: center;
   gap: $s-px10;
-  border-bottom-color: var(--b3-theme-primary);
   font-family: $ff-zh;
 
+  // Message 撑满剩余宽度，超出时收缩而非顶开重试按钮
+  &__message {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // 警告标签："服务未连接"（加粗 + 不换行，与提示文案拉开层级）
   &__tag {
-    font-size: $t-xs;
     font-weight: $fw-semibold;
-    color: $c-danger;
-    padding: $s-px2 $s-px6;
-    border: 1px solid rgba($c-danger, 0.3);
-    border-radius: $r-sm;
-    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   &__msg {
-    flex: 1;
-    font-size: $t-xs;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.6;
+    opacity: 0.85;
   }
 
   &__retry {
-    display: inline-flex;
-    align-items: center;
-    padding: $s-px3 $s-px10;
-    font-size: $t-xs;
-    color: $c-danger;
-    background: transparent;
-    border: 1px solid rgba($c-danger, 0.35);
-    border-radius: $r-sm;
-    cursor: pointer;
     flex-shrink: 0;
-
-    &:hover {
-      background: rgba($c-danger, 0.08);
-      border-color: $c-danger;
-    }
   }
 }

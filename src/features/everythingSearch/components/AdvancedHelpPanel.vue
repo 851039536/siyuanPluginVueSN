@@ -1,3 +1,4 @@
+<!-- 高级搜索语法帮助面板：语法标签（共享 Button）点击插入到搜索框 -->
 <template>
   <div class="vp-adv-help">
     <div class="vp-adv-help__header">
@@ -7,27 +8,45 @@
       <span class="vp-adv-help__hint">{{ i18n.advHelpHint }}</span>
     </div>
     <div class="vp-adv-help__tags">
-      <!-- 语法标签（label/desc 走 i18n：扩展名/文件大小/修改日期等） -->
-      <button
+      <!-- 语法标签（label/desc 走 i18n：扩展名/文件大小/修改日期等）
+           ⚠️ 选 Button 而非 Tag：这些标签是「点击即执行动作」的按钮（插入语法），
+           不是行内标签/徽标 —— Tag 自身无原生 button 语义，需靠透传 role/tabindex 硬凑，
+           且其语义边界（AGENTS.md § 共享组件库 3）明确限定在「自身即内容」的展示场景 -->
+      <Button
         v-for="item in syntaxList"
         :key="item.keyword"
         class="vp-adv-help__tag"
+        variant="ghost"
+        outlined
+        size="xsmall"
         :title="item.desc"
+        :aria-label="`${item.keyword} ${item.label}`"
         @click="insertSyntax(item.keyword)"
       >
-        <code>{{ item.keyword }}</code>
-        <span>{{ item.label }}</span>
-      </button>
+        <code class="vp-adv-help__code">{{ item.keyword }}</code>
+        <span class="vp-adv-help__desc">{{ item.label }}</span>
+      </Button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 
 interface Props {
   /** everythingSearch 命名空间的 i18n 文案 */
   i18n: Record<string, string>
+}
+
+/** 语法标签渲染项 */
+interface SyntaxItem {
+  /** Everything 语法关键字（不翻译） */
+  keyword: string
+  /** 中文名（i18n） */
+  label: string
+  /** 用法示例（i18n） */
+  desc: string
 }
 
 interface Emits {
@@ -37,86 +56,34 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-interface SyntaxItem {
-  keyword: string
-  label: string
-  desc: string
-}
+/** 语法说明列表的键序（keyword 为 Everything 语法不翻译，label/desc 取 i18n 文案键） */
+const SYNTAX_KEYS: readonly [keyword: string, labelKey: string, descKey: string][] = [
+  ["ext:", "extension", "syntaxExtDesc"],
+  ["size:", "fileSize", "syntaxSizeDesc"],
+  ["date:", "modDate", "syntaxDateDesc"],
+  ["attrib:", "syntaxAttrib", "syntaxAttribDesc"],
+  ["child:", "syntaxChild", "syntaxChildDesc"],
+  ["parent:", "syntaxParent", "syntaxParentDesc"],
+  ["type:", "syntaxType", "syntaxTypeDesc"],
+  ["dupe:", "syntaxDupe", "syntaxDupeDesc"],
+  ["empty:", "syntaxEmpty", "syntaxEmptyDesc"],
+  ["len:", "syntaxLen", "syntaxLenDesc"],
+  ["|", "syntaxOr", "syntaxOrDesc"],
+  ["!", "syntaxNot", "syntaxNotDesc"],
+  ["\"\"", "syntaxExact", "syntaxExactDesc"],
+  ["\\ ", "syntaxEscape", "syntaxEscapeDesc"],
+]
 
-/** 语法说明列表（文案走 i18n，keyword 为 Everything 语法不翻译） */
-const syntaxList = computed<SyntaxItem[]>(() => [
-  {
-    keyword: "ext:",
-    label: props.i18n.extension,
-    desc: props.i18n.syntaxExtDesc,
-  },
-  {
-    keyword: "size:",
-    label: props.i18n.fileSize,
-    desc: props.i18n.syntaxSizeDesc,
-  },
-  {
-    keyword: "date:",
-    label: props.i18n.modDate,
-    desc: props.i18n.syntaxDateDesc,
-  },
-  {
-    keyword: "attrib:",
-    label: props.i18n.syntaxAttrib,
-    desc: props.i18n.syntaxAttribDesc,
-  },
-  {
-    keyword: "child:",
-    label: props.i18n.syntaxChild,
-    desc: props.i18n.syntaxChildDesc,
-  },
-  {
-    keyword: "parent:",
-    label: props.i18n.syntaxParent,
-    desc: props.i18n.syntaxParentDesc,
-  },
-  {
-    keyword: "type:",
-    label: props.i18n.syntaxType,
-    desc: props.i18n.syntaxTypeDesc,
-  },
-  {
-    keyword: "dupe:",
-    label: props.i18n.syntaxDupe,
-    desc: props.i18n.syntaxDupeDesc,
-  },
-  {
-    keyword: "empty:",
-    label: props.i18n.syntaxEmpty,
-    desc: props.i18n.syntaxEmptyDesc,
-  },
-  {
-    keyword: "len:",
-    label: props.i18n.syntaxLen,
-    desc: props.i18n.syntaxLenDesc,
-  },
-  {
-    keyword: "|",
-    label: props.i18n.syntaxOr,
-    desc: props.i18n.syntaxOrDesc,
-  },
-  {
-    keyword: "!",
-    label: props.i18n.syntaxNot,
-    desc: props.i18n.syntaxNotDesc,
-  },
-  {
-    keyword: "\"\"",
-    label: props.i18n.syntaxExact,
-    desc: props.i18n.syntaxExactDesc,
-  },
-  {
-    keyword: "\\ ",
-    label: props.i18n.syntaxEscape,
-    desc: props.i18n.syntaxEscapeDesc,
-  },
-])
+/** 语法说明列表（i18n 文案 → 渲染项，集中在 computed 内一次映射） */
+const syntaxList = computed<SyntaxItem[]>(() =>
+  SYNTAX_KEYS.map(([keyword, labelKey, descKey]) => ({
+    keyword,
+    label: props.i18n[labelKey] ?? labelKey,
+    desc: props.i18n[descKey] ?? descKey,
+  })),
+)
 
+/** 点击语法标签：派发 keyword 给父层插入搜索框 */
 const insertSyntax = (keyword: string) => {
   emit("insert", keyword)
 }

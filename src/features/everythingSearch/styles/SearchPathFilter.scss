@@ -1,0 +1,47 @@
+/**
+ * SearchPathFilter — 路径范围过滤（仅搜索路径 / 排除路径）
+ * 共享 Textarea（等宽字体）+ Switch；本文件只负责双列布局与标签排版
+ */
+
+@use "@/variables.scss" as *;
+@use "./mixins" as m;
+
+.vp-path-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: $s-2 $s-3;
+  padding-top: $s-1;
+  border-top: 1px dashed var(--b3-border-color);
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+    min-width: 260px;
+    flex: 1;
+  }
+
+  // 路径组头部：标签 + 启用开关同行
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $s-2;
+  }
+
+  &__key {
+    @include m.uppercase-label;
+
+    opacity: 0.5;
+    white-space: nowrap;
+  }
+
+  // 路径输入框：每行一个路径，等宽字体便于比对路径
+  // ⚠️ 字号不覆写 —— xsmall 档位已由 Textarea 自身承担 10px（两级字号制的唯一例外）
+  &__input {
+    :deep(.si-textarea__field) {
+      font-family: $ff-mono;
+    }
+  }
+}

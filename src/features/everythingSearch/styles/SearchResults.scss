@@ -1,6 +1,9 @@
 /**
  * SearchResults — 搜索结果区域
  * 5 种状态：loading/error/idle/empty/success
+ * 空态图标边长由 IconWrapper :size 承担（不在 SCSS 内写 font-size）
+ * 注意：滚动容器的右侧留白由 .vp-results__list 承担，不加在 __scroll 上
+ *      （__scroll 承载 overflow，加 padding-right 会在右侧留出滚动条与内容的空隙带）
  */
 
 @use "@/variables.scss" as *;
@@ -21,6 +24,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    padding-right: $s-2;
   }
 
   &__header {
@@ -41,7 +45,7 @@
     overflow-y: auto;
 
     &::-webkit-scrollbar {
-      width: 6px;
+      width: $s-px6;
     }
 
     &::-webkit-scrollbar-track {
@@ -66,11 +70,15 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 30px;
+  padding: $s-8 $s-4;
 
-  &__emoji {
-    font-size: 32px; // 图标尺寸（空状态 emoji，无精确 Token）
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: $s-2;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.35;
   }
 
   &__msg {

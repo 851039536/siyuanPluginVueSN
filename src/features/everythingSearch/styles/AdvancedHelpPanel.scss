@@ -1,6 +1,6 @@
 /**
  * AdvancedHelpPanel — 高级搜索语法帮助面板
- * 等宽字体标签、边框卡片、hover 高亮
+ * 语法标签由共享 Button（ghost + outlined + xsmall）渲染；本文件只补等宽关键字与说明文字的排版
  */
 
 @use "@/variables.scss" as *;
@@ -34,37 +34,20 @@
     gap: $s-1;
   }
 
-  &__tag {
-    display: inline-flex;
-    align-items: center;
-    gap: $s-px5;
-    padding: $s-px2 $s-2;
+  // 关键字用等宽字体 + 品牌色；说明文字降一档并收敛透明度（观感对齐整改前）
+  &__code {
+    font-family: $ff-mono;
     font-size: $t-xs;
-    background: var(--b3-theme-background);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-sm;
-    cursor: pointer;
-    color: var(--b3-theme-on-surface);
+    font-weight: $fw-semibold;
+  }
 
-    code {
-      font-family: $ff-mono;
-      font-size: $t-xs;
-      font-weight: $fw-semibold;
-      color: $c-danger;
-    }
+  &__desc {
+    font-size: $t-2xs;
+    opacity: 0.55;
+  }
 
-    span {
-      font-size: $t-2xs;
-      opacity: 0.55;
-    }
-
-    &:hover {
-      border-color: $c-danger;
-      background: rgba($c-danger, 0.06);
-
-      span {
-        opacity: 0.8;
-      }
-    }
+  // Button 的默认 gap 对「关键字 + 说明」偏大，按语法标签的密集排布收紧
+  &__tag {
+    gap: $s-px5;
   }
 }

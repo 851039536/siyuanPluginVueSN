@@ -1,6 +1,7 @@
 /**
  * ResultItem — 搜索结果项
  * Codex 风格：边框格子图标、等宽路径/Meta、hover 显示操作按钮
+ * 四个操作按钮由共享 Button（ghost/dense/rounded）渲染，尺寸与焦点环交给组件库
  */
 
 @use "@/variables.scss" as *;
@@ -12,9 +13,16 @@
   padding: $s-2 $s-4;
   border-bottom: 1px solid var(--b3-border-color);
   cursor: pointer;
+  transition: background 0.12s;
+
+  // 键盘焦点：行级可聚焦（role=button + tabindex=0），用边框内阴影指示，不改变布局
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
 
   &:hover {
-    background: rgba(201, 122, 93, 0.06);
+    background: var(--b3-list-hover);
 
     .vp-result-item__actions {
       opacity: 1;
@@ -28,7 +36,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: $t-sm;
     flex-shrink: 0;
     border: 1px solid var(--b3-border-color);
     border-radius: $r-sm;
@@ -63,13 +70,14 @@
     margin-top: $s-px2;
   }
 
-  // 元数据 — 等宽字体
+  // 元数据 — 等宽字体 + 等宽数字（数值纵向可比，对齐 gitPush 计数徽章口径）
   &__meta {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: $s-px2;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
   }
 
   &__size {
@@ -87,35 +95,29 @@
     opacity: 0.4;
   }
 
-  // 操作按钮 — hover 显示
+  // 操作按钮组 — 默认隐藏，hover / 键盘聚焦行内元素时显示（键盘用户不会永久看不到操作）
   &__actions {
     display: flex;
+    align-items: center;
     gap: $s-1;
     opacity: 0;
+    transition: opacity 0.12s;
   }
 
+  &:focus-within &__actions,
+  &__actions:focus-within {
+    opacity: 1;
+  }
+
+  // 共享 Button 的 hover 用交互底色；此处统一提示为中性色，删除按钮保留 danger 色（由 severity 提供）
   &__action {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    background: var(--b3-theme-surface);
-    border: 1px solid var(--b3-border-color);
-    border-radius: $r-sm;
-    cursor: pointer;
-    color: var(--b3-theme-on-surface);
+    flex-shrink: 0;
+  }
 
-    svg {
-      width: $t-xs;
-      height: $t-xs;
-    }
-
-    &:hover {
-      background: $c-danger;
-      border-color: $c-danger;
-      color: $c-bg;
+  // 触屏 / 无 hover 环境：操作按钮常显，避免「看得见却点不到」
+  @media (hover: none) {
+    &__actions {
+      opacity: 1;
     }
   }
 }

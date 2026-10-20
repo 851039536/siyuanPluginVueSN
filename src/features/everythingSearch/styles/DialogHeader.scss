@@ -1,6 +1,7 @@
 /**
  * DialogHeader — 标题栏
- * 橙色品牌色标题 + 边框关闭按钮
+ * 橙色品牌色标题 + 两个纯图标按钮（共享 Button 的 ghost/text/rounded 形态）
+ * 按钮的几何与交互态由 Button 承担，本文件只保留定位与品牌色
  */
 
 @use "@/variables.scss" as *;
@@ -38,35 +39,21 @@
   gap: $s-1;
 }
 
+// 按钮容器只负责「不收缩」与品牌色 hover；尺寸/圆角/焦点环由共享 Button 提供
+// `#iconFloatingWindow` 为思源 symbol 图标（非 IconKey），尺寸由本类接管
 .vp-header__float,
 .vp-header__close {
-  // 按钮重置：清除思源主题 button 默认样式（padding/font 等）
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  // 尺寸与外观
-  display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: $r-sm;
-  cursor: pointer;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
 
-  svg {
+  &:hover:not(.si-button--disabled) {
+    color: var(--b3-theme-primary);
+  }
+}
+
+.vp-header__float {
+  :deep(.vp-header__float-icon) {
     width: $t-xs;
     height: $t-xs;
     flex-shrink: 0;
-  }
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    color: var(--b3-theme-primary);
   }
 }

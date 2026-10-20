@@ -1,0 +1,122 @@
+/**
+ * CacheCleanPanel — 缓存清理面板容器
+ * Codex 风格：面板底色 background、卡片 surface、边框优先无阴影、0.12s 过渡
+ */
+
+@use "@/variables.scss" as *;
+
+.cc-panel {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  padding: $s-2 $s-3 $s-2 $s-4;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-background);
+
+  // ── 顶部工具条 ──
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $s-1 $s-2;
+  }
+
+  &__spacer {
+    flex: 1 1 auto;
+  }
+
+  // 已选统计（等宽数字，避免数值跳动时宽度抖动）
+  &__selected {
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $t-2xs;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  // ── 进度行 ──
+  &__progress {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+
+    .si-progressbar {
+      flex: 1 1 auto;
+    }
+  }
+
+  &__progress-text {
+    flex: 0 0 auto;
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $t-2xs;
+    opacity: 0.6;
+  }
+
+  // ── 反馈条 ──
+  &__feedback {
+    width: 100%;
+  }
+
+  // ── 未扫描空态 ──
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $s-2;
+    padding: $s-8 $s-4;
+    border: 1px dashed var(--b3-border-color);
+    border-radius: $r-base;
+    font-style: italic;
+    opacity: 0.45;
+  }
+
+  &__empty-text {
+    margin: 0;
+    font-size: $t-xs;
+    line-height: $lh-normal;
+    text-align: center;
+  }
+
+  // ── 合计卡片（底—卡关系：面板 background，卡片 surface）──
+  &__totals {
+    display: flex;
+    align-items: baseline;
+    gap: $s-6;
+    padding: $s-2 $s-3;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-base;
+    background: var(--b3-theme-surface);
+  }
+
+  &__total {
+    display: flex;
+    flex-direction: column;
+    gap: $s-px1;
+  }
+
+  &__total-value {
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-on-surface);
+  }
+
+  &__total-label {
+    font-size: $t-2xs;
+    opacity: 0.5;
+  }
+
+  &__elapsed {
+    margin-left: auto;
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $t-2xs;
+    opacity: 0.45;
+  }
+
+  // ── 清理偏好设置：样式已随 CacheCleanOptions 迁至 CacheCleanOptions.scss ──
+}

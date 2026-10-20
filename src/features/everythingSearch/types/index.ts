@@ -5,6 +5,7 @@ import type { App } from "vue"
  * 承载方案（纯官方 API，双形态）：overlay 弹窗（index.vue Teleport）+ 独立窗口（addTab + openWindow）
  */
 import type { EverythingSearchOptions, EverythingSearchResult } from "../api"
+import type { SizeUnit } from "../utils"
 import {
   openTab,
   openWindow,
@@ -18,15 +19,21 @@ import EverythingSearchPanel from "../index.vue"
 export type {
   /** Everything 服务连接配置 */
   EverythingConfig,
+  /** Everything 排序字段 */
+  EverythingSortField,
   /** Everything 搜索结果项 */
   EverythingSearchResult,
 } from "../api"
+
+// 缓存清理相关类型（独立文件承载，避免本文件膨胀）
+export * from "./cacheScan"
+export type { CacheCleanSettings } from "./storage"
 
 /**
  * 搜索选项 = API 透传字段（必选化，见 api.ts EverythingSearchOptions）
  * + UI 专属字段，消除与 API 参数类型的字段重复定义
  */
-export interface SearchOptions extends Required<Omit<EverythingSearchOptions, "query">> {
+export interface SearchOptions extends Required<Omit<EverythingSearchOptions, "query" | "emptyFolders">> {
   /** 防抖延迟（毫秒） */
   debounceDelay: number
   /** 高级搜索模式（显示语法帮助面板） */
@@ -34,11 +41,11 @@ export interface SearchOptions extends Required<Omit<EverythingSearchOptions, "q
   /** 最小文件大小过滤值（0=禁用） */
   minSize: number
   /** 最小文件大小单位 */
-  minSizeUnit: 'KB' | 'MB' | 'GB'
+  minSizeUnit: SizeUnit
   /** 最大文件大小过滤值（0=禁用） */
   maxSize: number
   /** 最大文件大小单位 */
-  maxSizeUnit: 'KB' | 'MB' | 'GB'
+  maxSizeUnit: SizeUnit
   /** 常用关键字列表 */
   frequentKeywords: string[]
 }

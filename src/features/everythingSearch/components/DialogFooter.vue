@@ -1,3 +1,4 @@
+<!-- 底部配置栏：Everything 服务地址与端口输入（无端口校验以外的逻辑） -->
 <template>
   <div class="vp-footer">
     <div class="vp-footer__config">

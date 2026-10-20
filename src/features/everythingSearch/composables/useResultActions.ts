@@ -1,30 +1,45 @@
 /**
  * Everything搜索结果操作 composable
- * 打开 / 资源管理器显示 / 复制路径 / 移入回收站（shell 瀑布降级 + PowerShell 兜底）
+ * 打开 / 资源管理器显示 / 复制路径 / 移入回收站
+ *
+ * 整改要点：
+ * 1. `trashViaPowerShell` 原先用 `execFileSync("powershell", ...)` 拼字符串调
+ *    `Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile/DeleteDirectory` ——
+ *    这是**杀软最敏感的行为组合**（脚本宿主 + 原生删除 + 无签名命令行），
+ *    企业版 360 极易按「可疑脚本行为」拦截并上报。现一律走 Electron 主进程的
+ *    `shell.trashItem`（真正的系统回收站 API，与资源管理器删文件同一条路径，
+ *    不产生子进程、不落脚本特征），并**取消 PowerShell 兜底**：
+ *    宁可在极端环境下提示「删除失败」，也不引入会被安全软件上报的执行路径。
+ * 2. 删除前统一经 `isProtectedPath` 守卫（系统关键路径一律拒绝）。
+ * 3. `shell.openPath` 的契约是「成功返回空串、失败返回错误描述」，原先未取返回值，
+ *    失败也会提示成功 —— 现按返回值分流提示。
  */
 import type { ComputedRef } from "vue"
-import type {
-  EverythingSearchResult,
-  SearchState,
-} from "../types"
+import type { EverythingSearchResult } from "../types"
 import { showMessage } from "siyuan"
+import { openPathInShell } from "@/utils/electronDialog"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
   getElectronModules,
   getElectronRemoteShell,
-  getNodeProcessModules,
 } from "@/utils/nodeModules"
-import { getFullPath } from "../api"
+import {
+  getFullPath,
+  isProtectedPath,
+} from "../utils"
 
 /** Electron shell 统一类型（remote / local 同构） */
 type Shell = NonNullable<ReturnType<typeof getElectronRemoteShell>>
 
 /**
- * 结果操作：依赖 i18n 文案与搜索状态（删除成功后从结果列表移除）
+ * 结果操作：依赖 i18n 文案与「移除条目」回调。
+ *
+ * ⚠️ 删除成功后的列表与状态更新由父层注入 `removeResult` 完成 —— 本 composable
+ * 既不读也不写 `SearchState`，避免「谁能改结果列表」出现两个入口。
  */
 export function useResultActions(
   i18n: ComputedRef<Record<string, string>>,
-  searchState: SearchState,
+  removeResult: (item: EverythingSearchResult) => void,
 ) {
   /** 正在删除的 item 集合（防止异步删除窗口内重复触发） */
   const deletingItems = new Set<EverythingSearchResult>()
@@ -32,7 +47,10 @@ export function useResultActions(
   /** 获取本进程 Electron shell（nodeModules 统一封装，非 Electron 环境返回 null） */
   const getShell = (): Shell | null => getElectronModules()?.shell ?? null
 
-  /** 获取全部可用 shell：remote 优先（trashItem 依赖主进程 FileOperation），local 兜底 */
+  /**
+   * 获取全部可用 shell：remote 优先（`trashItem` 依赖主进程 FileOperation，
+   * 渲染进程直接调用会抛 "Failed to create FileOperation instance"），local 兜底。
+   */
   const getShells = (): Shell[] => {
     const shells: Shell[] = []
     const remote = getElectronRemoteShell()
@@ -42,18 +60,12 @@ export function useResultActions(
     return shells
   }
 
-  /** 打开项目 */
+  /** 打开项目（按 `openPathInShell` 的返回值分流提示，不再无条件报成功） */
   const handleItemOpen = async (item: EverythingSearchResult) => {
-    const shell = getShell()
-    if (!shell) {
+    const ok = await openPathInShell(getFullPath(item))
+    if (!ok) {
       // 错误提示："打开失败"
       showMessage(i18n.value.openFailed, 3000, "error")
-      return
-    }
-    try {
-      await shell.openPath(getFullPath(item))
-    } catch (error) {
-      showMessage(`${i18n.value.openFailed}: ${(error as Error).message}`, 3000, "error")
     }
   }
 
@@ -79,7 +91,10 @@ export function useResultActions(
     showMessage(ok ? i18n.value.pathCopied : i18n.value.copyFailed, 2000, ok ? "info" : "error")
   }
 
-  /** shell 瀑布：先在全部 shell 中找 trashItem，再找 moveItemToTrash；无可用通道返回 false */
+  /**
+   * 移入系统回收站：仅在 Electron 主进程 shell 上寻找 `trashItem` / `moveItemToTrash`。
+   * 无可用通道时返回 false（**不再降级到 PowerShell**，见文件头说明）。
+   */
   const trashViaShell = async (shells: Shell[], fullPath: string): Promise<boolean> => {
     for (const shell of shells) {
       if (typeof shell.trashItem === "function") {
@@ -96,50 +111,27 @@ export function useResultActions(
     return false
   }
 
-  /**
-   * PowerShell 兜底：execFileSync 直启 powershell（不经 cmd.exe，规避 % 变量展开注入），
-   * 按类型区分 DeleteFile / DeleteDirectory（空文件夹场景必须用 DeleteDirectory）
-   */
-  const trashViaPowerShell = (
-    fullPath: string,
-    type: EverythingSearchResult["type"],
-  ) => {
-    const nodeModules = getNodeProcessModules()
-    if (!nodeModules) {
-      throw new Error(i18n.value.operationFailed)
-    }
-    const verb = type === "folder" ? "DeleteDirectory" : "DeleteFile"
-    const escaped = fullPath.replace(/'/g, "''")
-    nodeModules.child_process.execFileSync(
-      "powershell",
-      [
-        "-NoProfile",
-        "-Command",
-        `Add-Type -AssemblyName Microsoft.VisualBasic;[Microsoft.VisualBasic.FileIO.FileSystem]::${verb}('${escaped}','OnlyErrorDialogs','SendToRecycleBin')`,
-      ],
-      { timeout: 5000 },
-    )
-  }
-
-  /** 删除文件（移入回收站：shell 瀑布 trashItem → moveItemToTrash → PowerShell 兜底） */
+  /** 删除文件（移入回收站） */
   const handleItemDelete = async (item: EverythingSearchResult) => {
     // 同一 item 的删除正在进行时直接忽略（快速双击时第二击可能在 await 窗口内到达）
     if (deletingItems.has(item)) {
       return
     }
-    deletingItems.add(item)
     const fullPath = getFullPath(item)
+
+    // 系统关键路径守卫：宁可拒绝，也不允许把系统文件移入回收站
+    if (isProtectedPath(fullPath)) {
+      showMessage(i18n.value.protectedPath, 3000, "error")
+      return
+    }
+
+    deletingItems.add(item)
     try {
       if (!await trashViaShell(getShells(), fullPath)) {
-        trashViaPowerShell(fullPath, item.type)
+        throw new Error(i18n.value.operationFailed)
       }
-      // 删除期间新搜索可能已替换结果数组：仅当 item 仍在当前结果中才更新（避免误置 empty）
-      if (searchState.results.includes(item)) {
-        searchState.results = searchState.results.filter((r) => r !== item)
-        if (searchState.results.length === 0) {
-          searchState.status = "empty"
-        }
-      }
+      // 删除成功后从结果列表移除（条目可能已被新搜索替换，由父层按「仍在列表中」判断）
+      removeResult(item)
       // 提示："文件已移入回收站"
       showMessage(i18n.value.deletedToTrash, 2000, "info")
     } catch (error) {

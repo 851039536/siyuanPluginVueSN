@@ -1,3 +1,4 @@
+<!-- 搜索结果区域：5 种状态（loading/error/idle/empty/success），成功态渲染结果列表 -->
 <template>
   <div class="vp-results">
     <!-- 加载状态 -->
@@ -12,10 +13,12 @@
     <div
       v-else-if="state.status === 'error'"
       class="vp-empty"
+      role="alert"
     >
-      <span class="vp-empty__emoji"><IconWrapper
+      <span class="vp-empty__icon"><IconWrapper
         name="error"
-        :size="32"
+        :size="EMPTY_ICON_SIZE"
+        aria-hidden="true"
       /></span>
       <p class="vp-empty__msg">
         {{ state.errorMessage }}
@@ -27,9 +30,10 @@
       v-else-if="state.status === 'idle'"
       class="vp-empty"
     >
-      <span class="vp-empty__emoji"><IconWrapper
+      <span class="vp-empty__icon"><IconWrapper
         name="folder"
-        :size="32"
+        :size="EMPTY_ICON_SIZE"
+        aria-hidden="true"
       /></span>
       <p class="vp-empty__msg">
         <!-- 空状态提示："输入关键词自动搜索本地文件" -->
@@ -46,9 +50,10 @@
       v-else-if="state.status === 'empty'"
       class="vp-empty"
     >
-      <span class="vp-empty__emoji"><IconWrapper
+      <span class="vp-empty__icon"><IconWrapper
         name="search"
-        :size="32"
+        :size="EMPTY_ICON_SIZE"
+        aria-hidden="true"
       /></span>
       <p class="vp-empty__msg">
         <!-- 无结果提示："未找到匹配的文件" -->
@@ -90,6 +95,9 @@ import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
 import ResultItem from "./ResultItem.vue"
+
+/** 空态图标边长（由 IconWrapper 的 size 承担，禁止在 SCSS 里写 font-size） */
+const EMPTY_ICON_SIZE = 32
 
 interface Props {
   /** 搜索状态 */

@@ -1,3 +1,4 @@
+<!-- 搜索栏：关键词输入 + 搜索/空文件夹按钮 + Enter 触发 -->
 <template>
   <div class="vp-search">
     <Input

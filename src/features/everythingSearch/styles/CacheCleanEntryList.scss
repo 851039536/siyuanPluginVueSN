@@ -1,0 +1,161 @@
+/**
+ * CacheCleanEntryList — 缓存条目明细列表
+ * 行结构：勾选框 | 类型图标 | 名称 / 路径 | 体积 + 修改时间 | 打开按钮
+ */
+
+@use "@/variables.scss" as *;
+@use "./mixins" as m;
+
+.cc-entries {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  min-height: 0;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+  }
+
+  &__title {
+    @include m.uppercase-label;
+
+    opacity: 0.55;
+    white-space: nowrap;
+  }
+
+  &__count {
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $t-2xs;
+    opacity: 0.5;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $s-px1;
+    margin-left: auto;
+  }
+
+  &__empty {
+    padding: $s-6 $s-4;
+    border: 1px dashed var(--b3-border-color);
+    border-radius: $r-base;
+    font-size: $t-xs;
+    font-style: italic;
+    text-align: center;
+    opacity: 0.4;
+  }
+
+  // 滚动容器：条目上限由扫描侧约束，此处只做高度收敛 + 右侧留白（避免贴滚动条）
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $s-px1;
+    margin: 0;
+    padding: $s-1 $s-2 $s-1 0;
+    max-height: 260px;
+    overflow-y: auto;
+    list-style: none;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-base;
+    background: var(--b3-theme-surface);
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: $c-surface;
+      border-radius: $r-px3;
+
+      &:hover {
+        background: $c-muted;
+      }
+    }
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    padding: $s-1 $s-2;
+    border-radius: $r-sm;
+    transition: background-color 0.12s ease;
+
+    &:hover {
+      background: var(--b3-theme-background);
+    }
+
+    &--picked {
+      background: var(--b3-theme-background);
+
+      &:hover {
+        background: var(--b3-theme-background-light, var(--b3-theme-background));
+      }
+    }
+  }
+
+  &__icon {
+    flex: 0 0 auto;
+    opacity: 0.6;
+  }
+
+  &__main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    gap: $s-px1;
+    min-width: 0;
+  }
+
+  &__name {
+    overflow: hidden;
+    font-size: $t-xs;
+    color: var(--b3-theme-on-surface);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  // 完整路径：等宽小字，超长省略（title 保留全文）
+  &__path {
+    overflow: hidden;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    line-height: $lh-tight;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    opacity: 0.5;
+  }
+
+  // 体积 / 修改时间右对齐一列
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    align-items: flex-end;
+    gap: $s-px1;
+  }
+
+  &__size {
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $t-xs;
+    font-weight: $fw-medium;
+    white-space: nowrap;
+  }
+
+  &__time {
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    font-size: $t-2xs;
+    white-space: nowrap;
+    opacity: 0.45;
+  }
+}

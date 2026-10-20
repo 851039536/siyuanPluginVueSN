@@ -59,7 +59,11 @@ aiContentGenerator/
   是展示/去重结构，经 `types/index.ts` 的 `toSkillItem` 转换。
 - **稳定标识**：列表 key 与编辑/删除/复制目标均使用 `skill.filePath`，禁止回退到数组索引。
 - **Markdown 渲染**：SkillCard 展开内容与 SkillPreviewModal 同用 `utils.ts` 的
-  `renderMarkdown`（XSS 安全版，转义 skill.md 中的原始 HTML），禁止再引裸 `parseMarkdown`。
+  `renderMarkdown`（XSS 安全版，转义 skill.md 中的原始 HTML），禁止再引裸 `parseMarkdown`；
+  展开内容排版统一 `@include markdown-preview`，不再自建 Markdown 样式副本。
+- **UI 约定**：查看器弹窗与两个确认弹窗、技能预览弹窗外壳全部复用共享 `Dialog`（宽度经
+  `--si-dialog-width` 变量保持原尺寸）；按钮/输入/加载态消费共享 `Button`/`Input`/`Loader`，
+  纯图标按钮必给 `aria-label`；可点选的卡片/选项按 `role="button"` + `tabindex` + Enter/空格可达。
 - **文件大小**：用共享 `@/utils/format` 的 `formatFileSize`，模块内不再自建。
 - **i18n**：弹窗文案仍在 `src/i18n/{zh_CN,en_US}/skillsViewer.json` 分片
   （嵌套命名空间 `plugin.i18n.skillsViewer`，扁平合并会与通用键碰撞，故保留）；

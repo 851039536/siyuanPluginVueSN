@@ -1,4 +1,4 @@
-<!-- Skills 查看器 — 单个 Skill 卡片（展示/编辑/展开） -->
+<!-- Skills 管理 — 单个 Skill 卡片（展示/编辑/展开；操作按钮与编辑器用共享组件） -->
 <template>
   <div
     class="sv-skill-card"
@@ -21,65 +21,57 @@
       </div>
       <div class="sv-skill-header-actions">
         <!-- 操作按钮：编辑 -->
-        <button
+        <Button
           v-if="!editing"
-          class="sv-skill-action-btn sv-skill-action-btn--edit"
+          variant="ghost"
+          size="xsmall"
+          icon="edit"
+          :aria-label="i18n.editSkill"
           :title="i18n.editSkill"
           @click="$emit('edit')"
-        >
-          <IconWrapper
-            name="edit"
-            :size="14"
-          />
-        </button>
+        />
         <!-- 操作按钮：复制到其他工具 -->
-        <button
+        <Button
           v-if="!editing"
-          class="sv-skill-action-btn sv-skill-action-btn--copy"
+          variant="ghost"
+          size="xsmall"
+          icon="list"
+          :aria-label="i18n.copySkill"
           :title="i18n.copySkill"
           @click="$emit('copy')"
-        >
-          <IconWrapper
-            name="list"
-            :size="14"
-          />
-        </button>
-        <template v-if="editing">
-          <!-- 操作按钮：保存 -->
-          <button
-            class="sv-skill-action-btn sv-skill-action-btn--save"
-            :title="i18n.saveSkill"
-            :disabled="savingSkill"
-            @click="$emit('save', editContent)"
-          >
-            <IconWrapper
-              v-if="!savingSkill"
-              name="save"
-              :size="14"
-            />
-            <span v-else>...</span>
-          </button>
-          <!-- 操作按钮：取消编辑 -->
-          <button
-            class="sv-skill-action-btn sv-skill-action-btn--cancel"
-            :title="i18n.cancelEdit"
-            @click="$emit('cancelEdit')"
-          >
-            <IconWrapper name="close" :size="12" />
-          </button>
-        </template>
+        />
+        <!-- 操作按钮：保存 -->
+        <Button
+          v-if="editing"
+          variant="ghost"
+          size="xsmall"
+          icon="save"
+          :loading="savingSkill"
+          :disabled="savingSkill"
+          :aria-label="i18n.saveSkill"
+          :title="i18n.saveSkill"
+          @click="$emit('save', editContent)"
+        />
+        <!-- 操作按钮：取消编辑 -->
+        <Button
+          v-if="editing"
+          variant="ghost"
+          size="xsmall"
+          icon="close"
+          :aria-label="i18n.cancelEdit"
+          :title="i18n.cancelEdit"
+          @click="$emit('cancelEdit')"
+        />
         <!-- 操作按钮：删除 -->
-        <button
+        <Button
           v-if="!editing"
-          class="sv-skill-action-btn sv-skill-action-btn--delete"
+          variant="ghost"
+          size="xsmall"
+          icon="delete"
+          :aria-label="i18n.deleteSkill"
           :title="i18n.deleteSkill"
           @click="$emit('delete')"
-        >
-          <IconWrapper
-            name="delete"
-            :size="14"
-          />
-        </button>
+        />
       </div>
     </div>
     <div
@@ -97,13 +89,16 @@
 
     <template v-if="editing">
       <div class="sv-skill-editor">
-        <textarea
-          :value="editContent"
+        <!-- 内容编辑器：共享 Input（textarea），语义与原生 textarea 一致 -->
+        <Input
+          type="textarea"
           class="sv-skill-editor-textarea"
+          :model-value="editContent"
           :placeholder="i18n.editSkillPlaceholder"
-          spellcheck="false"
-          @input="$emit('update:editContent', ($event.target as HTMLTextAreaElement).value)"
-        ></textarea>
+          :rows="8"
+          :spellcheck="false"
+          @update:model-value="(v) => $emit('update:editContent', String(v ?? ''))"
+        />
         <div class="sv-skill-editor-footer">
           <!-- 编辑提示文案 -->
           <span class="sv-skill-editor-hint">{{ i18n.editSkillHint }}</span>
@@ -112,14 +107,18 @@
     </template>
 
     <template v-else>
-      <!-- 展开/收起按钮 -->
-      <button
+      <!-- 展开/收起按钮（aria-expanded 表达状态，文案随状态切换） -->
+      <Button
         class="sv-skill-expand-btn"
+        variant="ghost"
+        text
+        size="xsmall"
+        :icon="expanded ? 'chevronDown' : 'chevronRight'"
+        :aria-expanded="expanded"
         @click="$emit('toggleExpand')"
       >
-        {{ i18n.expand }}
-        <span class="sv-expand-arrow">{{ expanded ? '▾' : '▸' }}</span>
-      </button>
+        {{ expanded ? i18n.collapse : i18n.expand }}
+      </Button>
       <div
         v-if="expanded"
         class="sv-skill-content"
@@ -132,9 +131,10 @@
 <script setup lang="ts">
 import type { SkillInfo } from "../../SkillsManager"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
 import { formatFileSize } from "@/utils/format"
 import { renderMarkdown } from "../../utils"
-import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
   skill: SkillInfo
@@ -150,12 +150,12 @@ interface Props {
 const props = defineProps<Props>()
 
 defineEmits<{
-  edit: []
-  save: [content: string]
-  cancelEdit: []
-  toggleExpand: []
-  delete: []
-  copy: []
+  "edit": []
+  "save": [content: string]
+  "cancelEdit": []
+  "toggleExpand": []
+  "delete": []
+  "copy": []
   'update:editContent': [value: string]
 }>()
 

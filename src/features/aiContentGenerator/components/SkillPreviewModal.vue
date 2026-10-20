@@ -1,39 +1,42 @@
-<!-- 技能细则预览弹窗组件 -->
+<!-- 技能细则预览弹窗（外壳复用共享 Dialog；Markdown 渲染走模块 XSS 安全路径） -->
 <template>
+  <!-- Teleport 到 body：逃逸 Dock / .plugin-app-main 的层叠上下文，避免被思源原生界面压住 -->
   <Teleport to="body">
-    <div
-      v-if="currentSkill"
-      class="skill-preview-overlay"
-      @click.self="$emit('close')"
+    <Dialog
+      :visible="!!currentSkill"
+      size="medium"
+      :close-label="i18n.skillPreviewClose"
+      dismissable-mask
+      @update:visible="$emit('close')"
     >
-      <div class="skill-preview-modal">
-        <div class="skill-preview-header">
-          <div>
-            <span class="skill-preview-title">{{ currentSkill.name }}</span>
-            <span
-              v-if="currentSkill.description"
-              class="skill-preview-desc"
-            >{{ currentSkill.description }}</span>
-          </div>
-          <!-- 纯图标按钮：关闭弹窗（ariaLabel："关闭"） -->
-          <Button
-            variant="ghost"
-            text
-            size="xsmall"
-            icon="close"
-            :aria-label="i18n.skillPreviewClose"
-            @click="$emit('close')"
-          />
+      <!-- 标题栏：技能名 + 描述两行（沿用 Dialog 的标题类名与 id 保持无障碍关联） -->
+      <template
+        #header="{
+          class: titleClass, headerId,
+        }"
+      >
+        <div class="skill-preview-heading">
+          <span
+            :id="headerId"
+            class="skill-preview-title"
+            :class="titleClass"
+          >{{ currentSkill?.name }}</span>
+          <span
+            v-if="currentSkill?.description"
+            class="skill-preview-desc"
+          >{{ currentSkill.description }}</span>
         </div>
-        <div class="skill-preview-body">
-          <div
-            class="skill-preview-content markdown-preview"
-            v-html="renderedContent"
-          ></div>
-        </div>
+      </template>
+
+      <div
+        class="skill-preview-content markdown-preview"
+        v-html="renderedContent"
+      ></div>
+
+      <template #footer>
         <div class="skill-preview-footer">
           <!-- 元信息："来源: " + 工具名 -->
-          <span class="skill-preview-tool">{{ i18n.skillSourceLabel }} {{ currentSkill.tool }}</span>
+          <span class="skill-preview-tool">{{ i18n.skillSourceLabel }} {{ currentSkill?.tool }}</span>
           <!-- 按钮："关闭" -->
           <Button
             variant="ghost"
@@ -43,8 +46,8 @@
             {{ i18n.skillPreviewClose }}
           </Button>
         </div>
-      </div>
-    </div>
+      </template>
+    </Dialog>
   </Teleport>
 </template>
 
@@ -52,6 +55,7 @@
 import type { SkillItem } from "@/types/ai"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
+import Dialog from "@/components/Dialog.vue"
 import { renderMarkdown } from "../utils"
 
 const props = defineProps<{

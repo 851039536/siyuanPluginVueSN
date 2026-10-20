@@ -1,75 +1,30 @@
-// SkillsViewer — 共享 Modal 基座（DeleteConfirmModal / CopySkillModal 共用）
+// Skills 管理 — 确认弹窗内容基座（DeleteConfirmModal / CopySkillModal 共用；
+// 外壳/遮罩/标题栏/页脚均复用共享 Dialog，此处只管弹窗内容排版）
 @use "@/variables.scss" as *;
 
-.sv-modal-overlay {
-  position: fixed;
-  inset: 0;
-  // 遮罩：对齐 gitPush/websiteNavigation（无 backdrop-filter）
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  font-size: $t-xs;
+.sv-modal-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-on-surface-variant, $c-muted);
 }
 
-.sv-modal {
-  width: 380px;
-  max-width: 90vw;
-  background: var(--b3-theme-surface, $c-surface);
-  border: 1px solid var(--b3-border-color, $c-border);
-  border-radius: $r-base;
-  overflow: hidden;
+.sv-modal-body {
   font-size: $t-xs;
+  color: var(--b3-theme-on-surface-variant, $c-muted);
+  line-height: $lh-normal;
 
-  .sv-modal-header {
-    display: flex;
-    align-items: center;
-    gap: $s-2;
-    padding: $s-4 $s-5 0;
-
-    .sv-modal-icon {
-      font-size: $t-base;
-      line-height: $lh-tight;
-    }
-
-    .sv-modal-title {
-      flex: 1;
-      font-size: $t-sm;
-      font-weight: $fw-semibold;
-      color: var(--b3-theme-on-surface, $c-fg);
-      border-bottom: 1px dashed var(--b3-border-color, $c-border);
-      padding-bottom: $s-3;
-    }
+  .sv-modal-skill-name {
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-on-surface, $c-fg);
+    margin-top: $s-2;
   }
 
-  .sv-modal-body {
-    padding: $s-3 $s-5;
-    font-size: $t-xs;
+  .sv-modal-skill-path {
+    font-size: $t-2xs;
     color: var(--b3-theme-on-surface-variant, $c-muted);
-    line-height: $lh-normal;
-
-    .sv-modal-skill-name {
-      font-size: $t-sm;
-      font-weight: $fw-semibold;
-      color: var(--b3-theme-on-surface, $c-fg);
-      margin-top: $s-2;
-    }
-
-    .sv-modal-skill-path {
-      font-size: $t-2xs;
-      color: var(--b3-theme-on-surface-variant, $c-muted);
-      opacity: 0.6;
-      font-family: $ff-mono;
-      margin-top: $s-1;
-      word-break: break-all;
-    }
-  }
-
-  .sv-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: $s-2;
-    padding: $s-3 $s-5 $s-4;
+    opacity: 0.6;
+    font-family: $ff-mono;
+    margin-top: $s-1;
+    word-break: break-all;
   }
 }

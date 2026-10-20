@@ -1,53 +1,64 @@
-<!-- Skills 查看器 — 删除确认弹窗 -->
+<!-- Skills 管理 — 删除确认弹窗（外壳复用共享 Dialog） -->
 <template>
-  <Teleport to="body">
-    <div
-      v-if="visible"
-      class="sv-modal-overlay"
-      @click.self="$emit('cancel')"
+  <Dialog
+    :visible="visible"
+    size="small"
+    :close-label="i18n.close"
+    @update:visible="$emit('cancel')"
+  >
+    <!-- 标题栏：警告图标 + 标题 -->
+    <template
+      #header="{
+        class: titleClass, headerId,
+      }"
     >
-      <div class="sv-modal">
-        <div class="sv-modal-header">
-          <IconWrapper
-            class="sv-modal-icon"
-            name="warning"
-            :size="16"
-          />
-          <!-- 弹窗标题："确认删除 Skill" -->
-          <span class="sv-modal-title">{{ i18n.deleteSkillTitle }}</span>
-        </div>
-        <div class="sv-modal-body">
-          <!-- 删除确认提示 -->
-          <p>{{ i18n.deleteSkillConfirm }}</p>
-          <p class="sv-modal-skill-name">{{ skillName }}</p>
-          <p class="sv-modal-skill-path">{{ skillPath }}</p>
-        </div>
-        <div class="sv-modal-footer">
-          <!-- 取消按钮 -->
-          <SiButton
-            variant="ghost"
-            size="xsmall"
-            @click="$emit('cancel')"
-          >
-            {{ i18n.cancel }}
-          </SiButton>
-          <!-- 确认删除按钮 -->
-          <SiButton
-            variant="danger"
-            size="xsmall"
-            :loading="loading"
-            @click="$emit('confirm')"
-          >
-            {{ i18n.confirmDelete }}
-          </SiButton>
-        </div>
-      </div>
+      <IconWrapper
+        class="sv-modal-icon"
+        name="warning"
+        :size="16"
+      />
+      <span
+        :id="headerId"
+        :class="titleClass"
+      >{{ i18n.deleteSkillTitle }}</span>
+    </template>
+
+    <div class="sv-modal-body">
+      <!-- 删除确认提示 -->
+      <p>{{ i18n.deleteSkillConfirm }}</p>
+      <p class="sv-modal-skill-name">
+        {{ skillName }}
+      </p>
+      <p class="sv-modal-skill-path">
+        {{ skillPath }}
+      </p>
     </div>
-  </Teleport>
+
+    <template #footer>
+      <!-- 取消按钮 -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        @click="$emit('cancel')"
+      >
+        {{ i18n.cancel }}
+      </Button>
+      <!-- 确认删除按钮 -->
+      <Button
+        variant="danger"
+        size="xsmall"
+        :loading="loading"
+        @click="$emit('confirm')"
+      >
+        {{ i18n.confirmDelete }}
+      </Button>
+    </template>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
-import SiButton from "@/components/Button.vue"
+import Button from "@/components/Button.vue"
+import Dialog from "@/components/Dialog.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 
 defineProps<{

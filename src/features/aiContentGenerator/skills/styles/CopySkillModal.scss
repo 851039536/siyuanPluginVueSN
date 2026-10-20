@@ -1,5 +1,5 @@
 /**
- * SkillsViewer — CopySkillModal 组件特定样式（modal 基座见 _modal.scss）
+ * Skills 管理 — CopySkillModal 组件特定样式（内容基座见 _modal.scss，外壳用共享 Dialog）
  */
 @use "@/variables.scss" as *;
 @use "./modal" as *;
@@ -20,6 +20,12 @@
       border-radius: $r-base;
       cursor: pointer;
       transition: border-color 0.12s ease, background 0.12s ease;
+
+      // 键盘聚焦与鼠标悬停同权（role=button 的可聚焦选项）
+      &:focus-visible {
+        outline: 2px solid var(--b3-theme-primary, $c-primary);
+        outline-offset: 1px;
+      }
 
       &:hover {
         border-color: var(--tool-color);

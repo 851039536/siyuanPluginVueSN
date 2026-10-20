@@ -1,7 +1,10 @@
 /**
- * SkillsViewer — SkillCard 样式
+ * Skills 管理 — SkillCard 样式
+ * （操作按钮/编辑器用共享 Button/Input，仅保留卡片专属版式；
+ *   Markdown 排版复用模块共享 markdown-preview mixin，与 SkillPreviewModal 同源）
  */
 @use "@/variables.scss" as *;
+@use "../../styles/index.scss" as *;
 @use "./mixins" as *;
 
 .sv-skill-card {
@@ -57,6 +60,7 @@
       }
     }
 
+    // 操作按钮（共享 Button）：悬停显现
     .sv-skill-header-actions {
       display: flex;
       align-items: center;
@@ -67,7 +71,9 @@
     }
   }
 
-  &:hover .sv-skill-header-actions {
+  // 编辑态下保存/取消按钮常显，避免键盘操作时按钮隐藏
+  &:hover .sv-skill-header-actions,
+  &--editing .sv-skill-header-actions {
     opacity: 1;
   }
 
@@ -88,55 +94,6 @@
     opacity: 0.45;
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
-  }
-
-  .sv-skill-action-btn {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--b3-border-color, $c-border);
-    border-radius: $r-sm;
-    cursor: pointer;
-    font-size: $t-xs;
-    background: var(--b3-theme-background, $c-bg);
-    color: var(--b3-theme-on-surface-variant, $c-muted);
-    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-
-    &--edit:hover {
-      border-color: var(--b3-theme-primary, $c-primary);
-      color: var(--b3-theme-primary, $c-primary);
-      background: var(--b3-theme-surface-lighter, $c-secondary);
-    }
-
-    &--save {
-      &:hover:not(:disabled) {
-        border-color: var(--b3-theme-success, $c-success);
-        color: var(--b3-theme-success, $c-success);
-        background: var(--b3-theme-surface-lighter, $c-secondary);
-      }
-      &:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
-    }
-
-    &--cancel:hover {
-      background: var(--b3-theme-surface-lighter, $c-secondary);
-    }
-
-    &--delete:hover {
-      border-color: var(--b3-theme-error, $c-danger);
-      color: var(--b3-theme-error, $c-danger);
-      background: var(--b3-theme-surface-lighter, $c-secondary);
-    }
-
-    &--copy:hover {
-      border-color: var(--b3-theme-primary, $c-primary);
-      color: var(--b3-theme-primary, $c-primary);
-      background: var(--b3-theme-surface-lighter, $c-secondary);
-    }
   }
 
   .sv-skill-desc {
@@ -162,178 +119,27 @@
     max-width: 100%;
   }
 
+  // 展开/收起按钮（共享 Button）仅需外边距
   .sv-skill-expand-btn {
     margin-top: $s-2;
-    font-size: $t-xs;
-    color: var(--b3-theme-primary, $c-primary);
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: $s-1 0;
-    display: inline-flex;
-    align-items: center;
-    gap: $s-1;
-    font-weight: $fw-medium;
-    transition: opacity 0.12s;
-    opacity: 0.75;
-
-    &:hover {
-      opacity: 1;
-    }
-
-    .sv-expand-arrow {
-      display: inline-block;
-      transition: transform 0.12s ease;
-      font-size: $t-2xs;
-    }
   }
 
+  // 展开内容：容器限高内滚，Markdown 排版复用共享 mixin
   .sv-skill-content {
     margin-top: $s-3;
-    padding: $s-3;
-    background: var(--b3-theme-background, $c-bg);
-    border: 1px solid var(--b3-border-color, $c-border);
-    border-radius: $r-base;
     max-height: 320px;
-    overflow-y: auto;
-    font-size: $t-xs;
-    line-height: $lh-relaxed;
-    color: var(--b3-theme-on-background, $c-fg);
-    word-break: break-word;
 
+    @include markdown-preview;
     @include sv-custom-scrollbar;
-
-    :deep(h1),
-    :deep(h2),
-    :deep(h3),
-    :deep(h4),
-    :deep(h5),
-    :deep(h6) {
-      color: var(--b3-theme-on-surface, $c-fg);
-      margin: $s-3 0 $s-px6;
-      font-weight: $fw-semibold;
-      line-height: $lh-tight;
-
-      &:first-child {
-        margin-top: 0;
-      }
-    }
-
-    :deep(h1) { font-size: $t-base; }
-    :deep(h2) { font-size: $t-sm; }
-    :deep(h3) { font-size: $t-sm; }
-
-    :deep(p) {
-      margin: $s-1 0;
-    }
-
-    :deep(ul),
-    :deep(ol) {
-      margin: $s-1 0;
-      padding-left: $s-5;
-    }
-
-    :deep(li) {
-      margin: $s-px3 0;
-    }
-
-    :deep(code) {
-      font-family: $ff-mono;
-      font-size: $t-xs;
-      padding: $s-px2 $s-1;
-      border-radius: $r-sm;
-      background: color-mix(in srgb, var(--b3-theme-primary, $c-primary) 8%, transparent);
-      color: var(--b3-theme-primary, $c-primary);
-    }
-
-    :deep(pre) {
-      margin: $s-2 0;
-      padding: $s-3;
-      border-radius: $r-base;
-      background: var(--b3-theme-surface, $c-surface);
-      border: 1px solid var(--b3-border-color, $c-border);
-      overflow-x: auto;
-
-      code {
-        padding: 0;
-        background: none;
-        color: var(--b3-theme-on-surface, $c-fg);
-        font-size: $t-xs;
-      }
-    }
-
-    :deep(blockquote) {
-      margin: $s-2 0;
-      padding: $s-1 $s-3;
-      border-left: $s-px3 solid var(--b3-theme-primary, $c-primary);
-      background: color-mix(in srgb, var(--b3-theme-primary, $c-primary) 4%, transparent);
-      color: var(--b3-theme-on-surface-variant, $c-muted);
-    }
-
-    :deep(a) {
-      color: var(--b3-theme-primary, $c-primary);
-      text-decoration: none;
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-
-    :deep(table) {
-      width: 100%;
-      border-collapse: collapse;
-      margin: $s-2 0;
-      font-size: $t-xs;
-
-      th,
-      td {
-        padding: $s-1 $s-2;
-        border: 1px solid var(--b3-border-color, $c-border);
-        text-align: left;
-      }
-
-      th {
-        background: var(--b3-theme-surface, $c-surface);
-        font-weight: $fw-semibold;
-      }
-    }
-
-    :deep(hr) {
-      margin: $s-3 0;
-      border: none;
-      border-top: 1px dashed var(--b3-border-color, $c-border);
-    }
-
-    :deep(strong) {
-      font-weight: $fw-semibold;
-      color: var(--b3-theme-on-surface, $c-fg);
-    }
-
-    :deep(em) {
-      font-style: italic;
-    }
   }
 
   .sv-skill-editor {
     margin-top: $s-3;
 
+    // 字段外观由共享 Input 提供，此处仅补充等宽编辑语义
     .sv-skill-editor-textarea {
-      width: 100%;
-      min-height: 140px;
-      max-height: 300px;
-      padding: $s-3;
-      font-size: $t-xs;
-      font-family: $ff-mono;
-      line-height: $lh-relaxed;
-      color: var(--b3-theme-on-background, $c-fg);
-      background: var(--b3-theme-background, $c-bg);
-      border: 1px solid var(--b3-theme-primary, $c-primary);
-      border-radius: $r-base;
-      outline: none;
-      resize: vertical;
-
-      &::placeholder {
-        color: var(--b3-theme-on-surface-variant, $c-muted);
-        opacity: 0.4;
+      :deep(.si-input__field) {
+        font-family: $ff-mono;
       }
     }
 

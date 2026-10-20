@@ -1,76 +1,104 @@
-<!-- Skills 查看器 — 复制 Skill 到其他工具弹窗 -->
+<!-- Skills 管理 — 复制 Skill 到其他工具弹窗（外壳复用共享 Dialog） -->
 <template>
-  <Teleport to="body">
-    <div
-      v-if="visible"
-      class="sv-modal-overlay"
-      @click.self="$emit('cancel')"
+  <Dialog
+    :visible="visible"
+    size="small"
+    :close-label="i18n.close"
+    @update:visible="$emit('cancel')"
+  >
+    <!-- 标题栏：列表图标 + 标题 -->
+    <template
+      #header="{
+        class: titleClass, headerId,
+      }"
     >
-      <div class="sv-modal">
-        <div class="sv-modal-header">
-          <IconWrapper
-            class="sv-modal-icon"
-            name="list"
+      <IconWrapper
+        class="sv-modal-icon"
+        name="list"
+        :size="16"
+      />
+      <span
+        :id="headerId"
+        :class="titleClass"
+      >{{ i18n.copySkillTitle }}</span>
+    </template>
+
+    <div class="sv-modal-body">
+      <!-- 复制说明 -->
+      <p>{{ i18n.copySkillConfirm }}</p>
+      <p
+        v-if="sourceSkill"
+        class="sv-modal-skill-name"
+      >
+        {{ sourceSkill.name }}
+      </p>
+      <div
+        class="sv-modal-tool-select"
+        role="group"
+        :aria-label="i18n.copySkillTitle"
+      >
+        <!-- 目标工具选项：可点击 + 可键盘操作（Enter/空格）的单选按钮 -->
+        <div
+          v-for="tool in targetTools"
+          :key="tool.id"
+          class="sv-modal-tool-option"
+          :class="{ active: selectedToolId === tool.id }"
+          :style="{ '--tool-color': tool.color }"
+          role="button"
+          tabindex="0"
+          :aria-pressed="selectedToolId === tool.id"
+          :aria-label="tool.name"
+          @click="selectedToolId = tool.id"
+          @keydown.enter.prevent="selectedToolId = tool.id"
+          @keydown.space.prevent="selectedToolId = tool.id"
+        >
+          <span class="sv-modal-tool-option-icon"><IconWrapper
+            :name="tool.icon"
             :size="16"
-          />
-          <!-- 弹窗标题："复制 Skill 到其他工具" -->
-          <span class="sv-modal-title">{{ i18n.copySkillTitle }}</span>
-        </div>
-        <div class="sv-modal-body">
-          <!-- 复制说明 -->
-          <p>{{ i18n.copySkillConfirm }}</p>
-          <p
-            v-if="sourceSkill"
-            class="sv-modal-skill-name"
-          >
-            {{ sourceSkill.name }}
-          </p>
-          <div class="sv-modal-tool-select">
-            <div
-              v-for="tool in targetTools"
-              :key="tool.id"
-              class="sv-modal-tool-option"
-              :class="{ active: selectedToolId === tool.id }"
-              :style="{ '--tool-color': tool.color }"
-              @click="selectedToolId = tool.id"
-            >
-              <span class="sv-modal-tool-option-icon"><IconWrapper :name="tool.icon" :size="16" /></span>
-              <span class="sv-modal-tool-option-name">{{ tool.name }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="sv-modal-footer">
-          <!-- 取消按钮 -->
-          <SiButton
-            variant="ghost"
-            size="xsmall"
-            @click="$emit('cancel')"
-          >
-            {{ i18n.cancel }}
-          </SiButton>
-          <!-- 复制确认按钮（显示目标工具名） -->
-          <SiButton
-            variant="primary"
-            size="xsmall"
-            :loading="loading"
-            :disabled="!selectedToolId"
-            @click="$emit('confirm', selectedToolId!)"
-          >
-            {{ i18n.copyTo }} {{ selectedToolId && getAITool(selectedToolId)?.name }}
-          </SiButton>
+          /></span>
+          <span class="sv-modal-tool-option-name">{{ tool.name }}</span>
         </div>
       </div>
     </div>
-  </Teleport>
+
+    <template #footer>
+      <!-- 取消按钮 -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        @click="$emit('cancel')"
+      >
+        {{ i18n.cancel }}
+      </Button>
+      <!-- 复制确认按钮（显示目标工具名） -->
+      <Button
+        variant="primary"
+        size="xsmall"
+        :loading="loading"
+        :disabled="!selectedToolId"
+        @click="selectedToolId && $emit('confirm', selectedToolId)"
+      >
+        {{ i18n.copyTo }} {{ selectedToolId && getAITool(selectedToolId)?.name }}
+      </Button>
+    </template>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
-import type { AIToolType } from "@/config/aiTools"
 import type { SkillInfo } from "../../SkillsManager"
-import { computed, ref, watch } from "vue"
-import SiButton from "@/components/Button.vue"
+import type { AIToolType } from "@/config/aiTools"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
+import Button from "@/components/Button.vue"
+import Dialog from "@/components/Dialog.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { AI_TOOLS, getAITool } from "@/config/aiTools"
+import {
+  AI_TOOLS,
+  getAITool,
+} from "@/config/aiTools"
 
 interface Props {
   visible: boolean
@@ -81,7 +109,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const emit = defineEmits<{
+defineEmits<{
   confirm: [targetToolId: AIToolType]
   cancel: []
 }>()

@@ -1,97 +1,42 @@
-// 技能预览弹窗样式
+// 技能预览弹窗样式（外壳/遮罩/标题栏/页脚复用共享 Dialog；
+// Markdown 排版由组件 @include 共享 markdown-preview mixin，此处不再重复排版规则）
 @use "@/variables.scss" as *;
 
-.skill-preview-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+// 保持原 480px 宽度（覆盖共享 Dialog 的档位宽度变量）
+:deep(.si-dialog) {
+  --si-dialog-width: 480px;
 }
 
-.skill-preview-modal {
-  width: 480px;
-  max-height: 75vh;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-theme-surface-light);
-  border-radius: $r-lg;
+.skill-preview-heading {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-}
-
-.skill-preview-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: $s-3 $s-4;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  gap: $s-3;
+  gap: $s-px2;
+  min-width: 0;
 }
 
 .skill-preview-title {
-  display: block;
-  font-size: $t-base;
   font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
-  margin-bottom: $s-px2;
 }
 
 .skill-preview-desc {
-  display: block;
   font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.6;
   line-height: $lh-tight;
 }
 
-.skill-preview-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: $s-4;
-}
-
+// 正文字号沿用原预览字号（略高于共享 mixin 的默认字号）
 .skill-preview-content {
   font-size: $t-sm;
-  line-height: 1.6;
-  color: var(--b3-theme-on-surface);
-
-  :deep(h2), :deep(h3) {
-    margin-top: 0.8em;
-    margin-bottom: 0.4em;
-    font-weight: $fw-medium;
-  }
-  :deep(p) { margin: 0.4em 0; }
-  :deep(ul), :deep(ol) { margin: 0.3em 0; padding-left: 1.4em; }
-  :deep(code) {
-    padding: $s-px1 $s-1;
-    background: var(--b3-theme-surface-lighter);
-    border-radius: $r-px2;
-    font-size: 0.85em;
-  }
-  :deep(pre) {
-    padding: $s-2;
-    background: var(--b3-theme-surface-lighter);
-    border-radius: $r-sm;
-    overflow-x: auto;
-    margin: 0.4em 0;
-  }
-  :deep(blockquote) {
-    margin: 0.4em 0;
-    padding-left: 0.5em;
-    border-left: 2px solid var(--b3-theme-primary);
-    opacity: 0.8;
-  }
 }
 
+// 页脚：来源元信息居左、关闭按钮居右（占满 Dialog 页脚宽度）
 .skill-preview-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $s-px10 $s-4;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
+  width: 100%;
 }
 
 .skill-preview-tool {

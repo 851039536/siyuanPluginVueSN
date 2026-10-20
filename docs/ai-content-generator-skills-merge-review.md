@@ -42,7 +42,7 @@ skillsViewer（技能文件管理）与 aiContentGenerator（技能消费方）�
 | R6 | `useSkillsViewer.ts:65-70`、`CopySkillModal.vue:95-97`、`aiContentGenerator/utils.ts:78` | `toolColorMap`/`toolNameMap` 三处各自构建 | ✅ `@/config/aiTools` 新增 `getAITool(id)` 统一查询；三处收敛 |
 | R7 | `vite.config.ts:100`、`tsconfig.json:47` | `@skillsViewer` 别名目标目录消失（悬空） | ✅ 删除 `@skillsViewer`（vite+tsconfig+AGENTS_API.md 清单同步）。**`@aiContentGenerator` 保留**：项目约定每个功能模块均登记别名（AGENTS_API.md「强制规则」），该模块目录仍存在，删除反而违反约定 |
 | R8 | `superPanel.json:81-82`（中英）、`features/config.ts:213-216` | 「Skills 查看器 / 查看和管理…」文案双份维护（superPanel 分片 + FEATURE_CONFIG 默认文案） | ✅ 随功能身份移除一并删除；`pnpm i18n:merge` 重生成合并产物 |
-| R9 | `skills/styles/_modal.scss`、3 个自建 Teleport overlay + `SkillPreviewModal.vue` | 4 处自建弹窗壳 vs 共享 `Dialog.vue`/`ConfirmPopup`（`docs/shared-component-usage-audit.md` 已登记） | ⏸ **本轮不做**：无目视回归条件，迁移有 UI 回归风险。遗留待办（见 §六） |
+| R9 | `skills/styles/_modal.scss`、3 个自建 Teleport overlay + `SkillPreviewModal.vue` | 4 处自建弹窗壳 vs 共享 `Dialog.vue`/`ConfirmPopup`（`docs/shared-component-usage-audit.md` 已登记） | ✅ 二轮完成：4 处全部迁共享 `Dialog.vue`（含 SkillPreviewModal），自建 overlay/过渡/页脚壳删除，仅留内容版式（见 §八） |
 | R10 | `useSkillsViewer.ts:7` vs `SkillsViewerManager.ts:29-41` | `getNodeModules()` 与 Manager 内部 `window.require` 两套 fs/path 获取 | ✅ Manager 暴露 `resolveSkillDir`/`resolveDir`/`firstGlobalSkillDir`；composable 去掉 `getNodeModules` |
 
 ### 非冗余、有意保留（异形态不合并）
@@ -85,13 +85,11 @@ skillsViewer（技能文件管理）与 aiContentGenerator（技能消费方）�
 
 ## 六、遗留待办
 
-1. **R9 弹窗基座迁移**：4 个自建 overlay（SkillsManagerDialog / DeleteConfirmModal / CopySkillModal /
-   SkillPreviewModal）迁共享 `Dialog.vue`/`ConfirmPopup`。需目视回归条件，迁移时注意
-   `_modal.scss` 基座的间距/标题虚线等视觉细节与共享组件的差异。
+1. ~~**R9 弹窗基座迁移**~~ → 已在二轮「查看器页面优化」完成（见 §八）。
 2. **i18n 命名空间改名（可选）**：`skillsViewer.json` 分片与 `plugin.i18n.skillsViewer` 命名空间保留原名，
    如需彻底去 skillsViewer 痕迹，需同步改分片内容顶层键 + `useSkillsManager` 的取值路径。
 3. **仓库 lint 存量债**：9508 errors 与本变更无关，建议单独一轮 `eslint --fix` + 人工复核。
-4. `skills/styles/*` 文件头部注释仍含「SkillsViewer」字样（纯注释，不影响行为）。
+4. ~~`skills/styles/*` 文件头部注释仍含「SkillsViewer」字样~~ → 已随二轮重写清理。
 
 ## 七、公共 API / 配置面变更速查
 
@@ -101,3 +99,61 @@ skillsViewer（技能文件管理）与 aiContentGenerator（技能消费方）�
 - `PluginSettings`：删 `enableSkillsViewer`
 - `FeatureId` / `FEATURE_ICONS`：少 `skillsViewer` 一项（编译期断言链校验一致）
 - `@/config/aiTools`：增 `getAITool(id)`
+
+## 八、二轮：查看器页面优化（控件共享化 + R9 弹窗迁移）
+
+> 范围（用户确认）：控件统一到共享组件库 + 可访问性；弹窗迁移到共享 Dialog（R9）。
+
+### 弹窗外壳迁移（R9 完成）
+
+| 弹窗 | 迁移前 | 迁移后 |
+| --- | --- | --- |
+| [SkillsManagerDialog.vue](../src/features/aiContentGenerator/skills/components/SkillsManagerDialog.vue) | 自建 Teleport + fade/scale 双 Transition + overlay/dialog 壳 | 共享 `Dialog`（Esc 关闭、遮罩点关、初始焦点、`role="dialog"`）；760px 宽度经 `--si-dialog-width` 覆盖保持不变 |
+| [DeleteConfirmModal.vue](../src/features/aiContentGenerator/skills/components/DeleteConfirmModal.vue) | 自建 overlay + `_modal.scss` 壳 | 共享 `Dialog` + `#footer` 按钮组 |
+| [CopySkillModal.vue](../src/features/aiContentGenerator/skills/components/CopySkillModal.vue) | 同上 | 同上 |
+| [SkillPreviewModal.vue](../src/features/aiContentGenerator/components/SkillPreviewModal.vue) | 自建 overlay/modal/header/footer 壳 | 共享 `Dialog`；480px 宽度经变量覆盖保持不变 |
+
+自建 overlay、页脚壳、fade/scale 过渡样式全部删除；`_modal.scss` 瘦身为「弹窗内容基座」（skill 名/路径排版）。
+
+### 控件共享化 + 可访问性
+
+- 裸 `<button>`（SkillCard 编辑/复制/保存/取消/删除、展开/收起、查看器关闭）→ 共享 `Button`
+  （纯图标按钮补 `aria-label` + `title`；保存按钮接 `loading`/`disabled`）
+- 裸 `<input>` / `<textarea>`（项目路径、Skill 内容编辑器）→ 共享 `Input`（含 `type="textarea"`、`spellcheck=false`、等宽字体保留）
+- 自建 loading spinner → 共享 `Loader`（`role="status"` 自带）
+- 工具筛选卡 / 复制目标工具选项：补 `role="button"`、`tabindex="0"`、`aria-pressed`、Enter/空格键盘操作、`focus-visible` 轮廓
+- 展开/收起按钮：`aria-expanded` 表达状态，文案随状态切换（新增 i18n 键 `collapse`/`close`，中英分片各 2）
+
+### 顺带消除的重复
+
+- `SkillCard.scss` 与 `SkillPreviewModal.scss` 各持一份 Markdown 排版规则（`markdown-preview` mixin 的近似副本）
+  → 统一 `@include markdown-preview`（与模块样式约定一致，见 README「样式引入约定」）。
+
+### 验证（二轮）
+
+| 检查 | 结果 |
+| --- | --- |
+| `npx tsc --noEmit` | ✅ 0 错误 |
+| `pnpm test` | ✅ 40 文件 686 用例全过 |
+| `pnpm i18n:verify` | ✅ 新键中英对齐，合并产物已重生成 |
+| `pnpm lint` | ✅ 9507 errors ≤ HEAD 基线 9508（重写文件经 `--fix` 后 0 errors，净 delta 未增加） |
+
+**视觉变化说明**：弹窗外壳改用共享 Dialog 后，标题栏/按钮/过渡采用组件库样式（细微外观差异属预期）；
+SkillCard 展开内容的排版由自定义值收敛到 `markdown-preview` mixin 默认值（代码块/引用等样式略有统一性变化）。
+
+### 修复：弹窗被思源原生界面遮挡（层叠上下文陷阱）
+
+**现象**：迁移后弹出的查看器/确认/预览弹窗会被思源原生界面压住一部分。
+
+**根因**：App.vue 宿主 [`.plugin-app-main`](../src/styles/app.scss) 为 `position: absolute; z-index: 4`，
+**制造了低层层叠上下文**；迁移共享 Dialog 时丢掉了旧实现的 `Teleport to="body"`，
+弹窗（即便自身 `z-index: 10000`）被关在 z-index:4 的上下文内，任意 z-index > 4 的思源原生元素都能覆盖它。
+SkillPreviewModal 还额外挂在 Dock DOM 内，同样受困。
+
+**修复**：[SkillsManagerDialog.vue](../src/features/aiContentGenerator/skills/components/SkillsManagerDialog.vue)（含两个确认弹窗）
+与 [SkillPreviewModal.vue](../src/features/aiContentGenerator/components/SkillPreviewModal.vue) 的 `Dialog`
+外层恢复 `<Teleport to="body">`，回到根层叠上下文（z-index 10000 即与思源原生 UI 正常比较，与迁移前行为一致）。
+
+**遗留**：共享 `Dialog.vue` 本身不带 Teleport，其他挂在 App.vue/Dock 内的消费方（如 video 弹窗、gitPush 面板内弹窗）
+理论上同样受此陷阱影响。全局补 Teleport 需先解耦 gitPush 的祖先耦合选择器
+（`.git-push-panel .si-dialog...`，见 `WorkingTreeDiffDialog.scss`/`AiErrorAnalysisDialog.scss`），登记为待办。

@@ -1,101 +1,40 @@
 /**
- * SkillsViewer — 核心弹窗样式
+ * Skills 管理弹窗内容样式（外壳/遮罩/过渡复用共享 Dialog，此处只管内容区）
  */
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-/* ── overlay & dialog ─────────────────────────────────── */
-
-// 遮罩：对齐 gitPush/websiteNavigation（无 backdrop-filter，避免 Electron 下滚动性能开销）
-.skills-viewer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  font-size: $t-xs;
+// 保持查看器原有 760px 宽度（覆盖共享 Dialog 的档位宽度变量）
+:deep(.si-dialog) {
+  --si-dialog-width: 760px;
 }
 
-// 弹窗底色用 background：与 surface 卡片形成「底—卡」凸出层级（对齐 gitPush 卡片范式）
-.skills-viewer-dialog {
-  width: 760px;
-  max-width: 92vw;
-  max-height: 86vh;
-  background: var(--b3-theme-background);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+// 内容区滚动条沿用模块自定义滚动条 mixin
+:deep(.si-dialog__content) {
+  @include sv-custom-scrollbar;
 }
 
-/* ── header ───────────────────────────────────────────── */
+/* ── header 插槽内容 ───────────────────────────────────── */
 
-.skills-viewer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $s-3 $s-4;
-  border-bottom: 1px solid var(--b3-border-color, $c-border);
+.sv-header-icon {
   flex-shrink: 0;
-  background: var(--b3-theme-surface, $c-surface);
-  user-select: none;
+  color: var(--b3-theme-primary, $c-primary);
+}
 
-  .sv-header-left {
-    display: flex;
-    align-items: center;
-    gap: $s-3;
-
-    .sv-header-title {
-      font-size: $t-base;
-      font-weight: $fw-semibold;
-      color: var(--b3-theme-on-surface, $c-fg);
-    }
-
-    .sv-header-badge {
-      font-size: $t-2xs;
-      padding: $s-px3 $s-2;
-      border-radius: $r-full;
-      background: color-mix(in srgb, var(--b3-theme-primary, $c-primary) 10%, transparent);
-      color: var(--b3-theme-primary, $c-primary);
-      font-weight: $fw-semibold;
-      line-height: $lh-tight;
-    }
-  }
-
-  .sv-close-btn {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--b3-border-color, $c-border);
-    border-radius: $r-base;
-    cursor: pointer;
-    background: transparent;
-    color: var(--b3-theme-on-surface-variant, $c-muted);
-    font-size: $t-sm;
-    transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
-
-    &:hover {
-      border-color: var(--b3-theme-primary, $c-primary);
-      color: var(--b3-theme-primary, $c-primary);
-      background: var(--b3-theme-surface-lighter, $c-secondary);
-    }
-  }
+.sv-header-badge {
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  padding: $s-px3 $s-2;
+  border-radius: $r-full;
+  background: color-mix(in srgb, var(--b3-theme-primary, $c-primary) 10%, transparent);
+  color: var(--b3-theme-primary, $c-primary);
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
 }
 
 /* ── body ─────────────────────────────────────────────── */
 
 .skills-viewer-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: $s-5;
-
-  @include sv-custom-scrollbar;
-
   .sv-description {
     font-size: $t-xs;
     color: var(--b3-theme-on-surface-variant, $c-muted);
@@ -124,6 +63,12 @@
       background: var(--b3-theme-surface, $c-surface);
       position: relative;
       transition: border-color 0.12s ease, background 0.12s ease;
+
+      // 键盘聚焦与鼠标悬停同权（role=button 的可聚焦卡片）
+      &:focus-visible {
+        outline: 2px solid var(--b3-theme-primary, $c-primary);
+        outline-offset: 1px;
+      }
 
       &::after {
         content: "";
@@ -209,25 +154,10 @@
       opacity: 0.45;
     }
 
-    .sv-path-input-row {
-      display: flex;
-      gap: $s-2;
-
-      .sv-path-input {
-        flex: 1;
-        padding: $s-2 $s-3;
-        font-size: $t-xs;
-        border: 1px solid var(--b3-border-color, $c-border);
-        border-radius: $r-sm;
-        background: var(--b3-theme-surface, $c-surface);
-        color: var(--b3-theme-on-surface, $c-fg);
-        outline: none;
+    // 路径输入用等宽字体（共享 Input 的内部输入框）
+    .sv-path-input {
+      :deep(.si-input__field) {
         font-family: $ff-mono;
-        transition: border-color 0.12s ease;
-
-        &:focus {
-          border-color: var(--b3-theme-primary, $c-primary);
-        }
       }
     }
   }
@@ -278,33 +208,21 @@
     }
   }
 
-  /* ── loading ────────────────────────────────── */
+  /* ── loading（指示器用共享 Loader） ─────────── */
 
   .sv-loading {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: $s-10;
     gap: $s-3;
-
-    .sv-loading-spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid var(--b3-theme-surface-lighter, $c-surface);
-      border-top-color: var(--b3-theme-primary, $c-primary);
-      border-radius: 50%;
-      animation: sv-spin 0.6s linear infinite;
-    }
 
     .sv-loading-text {
       font-size: $t-xs;
       color: var(--b3-theme-on-surface-variant, $c-muted);
       opacity: 0.7;
     }
-  }
-
-  @keyframes sv-spin {
-    to { transform: rotate(360deg); }
   }
 
   /* ── unsupported ────────────────────────────── */
@@ -325,24 +243,4 @@
       line-height: $lh-normal;
     }
   }
-}
-
-/* ── transitions（0.12s 契合 Codex 规范，对齐 gitPush Dialog 过渡）────────── */
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.12s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.scale-enter-active,
-.scale-leave-active {
-  transition: transform 0.12s ease;
-}
-.scale-enter-from,
-.scale-leave-to {
-  transform: scale(0.98);
 }

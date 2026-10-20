@@ -1,7 +1,9 @@
 /**
  * 文档分析功能 - 类型定义
+ *
+ * 常量 / 默认值 / 元数据表拆分至 ./constants 与 ./statCards，
+ * 本文件保持为纯类型定义；末尾统一再导出，既有 `types/index` 导入路径保持不变。
  */
-import { WC_TOP_BIN_LABEL } from "../utils/docStatsAnalyzer"
 
 // ============================================================
 // 类型定义
@@ -52,18 +54,6 @@ export interface DepthStats {
 /** 排序方式 */
 export type SortField = "wordCount" | "title" | "notebook" | "updated" | "depth" | "refCount" | "imageCount" | "bookmark"
 export type SortOrder = "asc" | "desc"
-
-/** 排序字段下拉选项（value 与 SortField 联合类型编译期绑定，避免模板 option 硬编码脱节） */
-export const SORT_FIELD_OPTIONS: { value: SortField, label: string }[] = [
-  { value: "wordCount", label: "按字数" },
-  { value: "title", label: "按标题" },
-  { value: "notebook", label: "按笔记本" },
-  { value: "updated", label: "按更新时间" },
-  { value: "depth", label: "按深度" },
-  { value: "refCount", label: "按引用数" },
-  { value: "imageCount", label: "按图片数" },
-  { value: "bookmark", label: "按书签" },
-]
 
 /** 查询状态 */
 export type QueryStatus = "idle" | "loading" | "success" | "error" | "empty"
@@ -205,12 +195,6 @@ export interface PublishPromoteConfig {
   text: string
 }
 
-/** 默认发布推广文案配置 */
-export const DEFAULT_PUBLISH_PROMOTE: PublishPromoteConfig = {
-  enabled: true,
-  text: "公众号搜「oykperson」，一起学习，共同成长！",
-}
-
 /** 发布平台主题定义 */
 export interface PublishTheme {
   /** 主题唯一标识 */
@@ -223,27 +207,10 @@ export interface PublishTheme {
   elements: Record<string, Record<string, string>>
 }
 
-
-// ============================================================
-// 常量
-// ============================================================
-
 /** 笔记本简要信息 */
 export interface NotebookInfo {
   id: string
   name: string
-}
-
-/** 默认过滤选项 */
-export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
-  titleKeyword: "",
-  contentKeyword: "",
-  notebookId: "",
-  sortField: "wordCount",
-  sortOrder: "asc",
-  wordCountMin: 0,
-  wordCountMax: 30000,
-  bookmarkName: "",
 }
 
 /** 视图偏好设置 */
@@ -252,103 +219,8 @@ export interface ViewSettings {
   hideZero: boolean
 }
 
-/** 默认视图偏好设置 */
-export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
-  hideZero: false,
-}
-
-/** 默认平台元数据（用户未自定义时使用） */
-export const DEFAULT_PLATFORM_META: PlatformMeta[] = [
-  { id: "csdn",         matchers: ["csdn"],                    name: "CSDN",    url: "https://mp.csdn.net/mp_blog/creation/editor", fullCheck: true },
-  { id: "zhihu",        matchers: ["zhihu"],                   name: "知乎",    url: "https://zhuanlan.zhihu.com/write", fullCheck: true },
-  { id: "juejin",       matchers: ["juejin"],                  name: "掘金",    url: "https://juejin.cn/editor/drafts/new", fullCheck: true },
-  { id: "cnblogs",      matchers: ["cnblogs", "blog"],         name: "博客园",  url: "https://i.cnblogs.com/posts/edit", fullCheck: true },
-  { id: "bili",         matchers: ["bili", "bibi"],            name: "B站",     url: "https://www.bilibili.com/", fullCheck: true },
-  { id: "gzh",          matchers: ["gzh"],                     name: "公众号",  url: "", fullCheck: true },
-  { id: "jianshu",      matchers: ["jianshu"],                 name: "简书",    url: "https://www.jianshu.com/writer", fullCheck: true },
-  { id: "cto51",        matchers: ["cto51"],                   name: "51CTO",   url: "https://blog.51cto.com/writer", fullCheck: true },
-  { id: "segmentfault", matchers: ["segmentfault", "sifou"],   name: "思否",    url: "https://segmentfault.com/write", fullCheck: true },
-  { id: "oschina",      matchers: ["oschina"],                 name: "开源中国", url: "https://oschina.net/writer", fullCheck: true },
-  { id: "infoq",        matchers: ["infoq"],                   name: "InfoQ",   url: "https://www.infoq.com/", fullCheck: true },
-]
-
-/** 默认文档统计零值 */
-export const DEFAULT_DOC_STATS: DocStats = {
-  totalDocs: 0,
-  zeroByteDocs: 0,
-  smallDocs: 0,
-  mediumDocs: 0,
-  largeDocs: 0,
-  xlargeDocs: 0,
-  updatedIn7Days: 0,
-  updatedIn30Days: 0,
-  updatedIn1To2Months: 0,
-  updatedIn2To3Months: 0,
-  updatedOverHalfYear: 0,
-  deepDocs: 0,
-  refDocs: 0,
-  totalRefs: 0,
-  imageDocs: 0,
-  totalImages: 0,
-  bookmarkedDocs: 0,
-  noBookmarkDocs: 0,
-  fullPublishDocs: 0,
-  partialPublishDocs: 0,
-  noPublishDocs: 0,
-  taggedDocs: 0,
-  aliasedDocs: 0,
-  memoedDocs: 0,
-  incomingRefDocs: 0,
-  orphanDocs: 0,
-  platformCounts: {},
-  wordCountDistribution: [],
-  bookmarkDistribution: [],
-}
-
-/** 生成全新的默认统计对象（嵌套字段深拷贝，避免与 DEFAULT_DOC_STATS 常量共享引用被意外污染） */
-export function makeDefaultDocStats(): DocStats {
-  return { ...DEFAULT_DOC_STATS, platformCounts: {}, wordCountDistribution: [], bookmarkDistribution: [] }
-}
-
 // ============================================================
-// 类别标签
-// ============================================================
-
-const CATEGORY_LABELS: Record<string, string> = {
-  "0B": "0B 空文档",
-  "small": "< 1KB",
-  "medium": "1~10KB",
-  "large": "10~100KB",
-  "xlarge": ">100KB",
-  "duplicate": "重名文档",
-  "7days": "7天内更新",
-  "30days": "7~30天更新",
-  "1to2month": "1~2月更新",
-  "2to3month": "2~3月更新",
-  "halfYear": "半年以上未更新",
-  "deep": "深层文档(≥5层)",
-  "hasRef": "含引用",
-  "hasImage": "含图片",
-  "hasBookmark": "有书签",
-  "noBookmark": "无书签",
-  "fullPublish": "完整发布",
-  "partialPublish": "部分发布",
-  "noPublish": "未发布",
-  "hasTag": "有标签",
-  "noTag": "无标签",
-  "hasAlias": "有别名",
-  "hasMemo": "有备注",
-  "incomingRef": "被引用",
-  "orphanDoc": "孤文档",
-}
-
-/** 获取统计类别的中文标签 */
-export function getCategoryLabel(category: string): string {
-  return CATEGORY_LABELS[category] || category
-}
-
-// ============================================================
-// StatsOverview 元数据驱动渲染
+// StatsOverview 元数据驱动渲染（类型）
 // ============================================================
 
 /** 统计卡片颜色类名 */
@@ -412,63 +284,8 @@ export interface StatTableRow {
   clickable?: boolean
 }
 
-export const STAT_SECTIONS: StatSectionDef[] = [
-  {
-    key: "size", title: "大小分布", icon: "mdi:harddisk",
-    cards: [
-      { id: "0B", shortLabel: "0B空", statKey: "zeroByteDocs", colorClass: "zero" },
-      { id: "small", shortLabel: "<1KB", statKey: "smallDocs", colorClass: "small" },
-      { id: "medium", shortLabel: "1~10KB", statKey: "mediumDocs", colorClass: "medium" },
-      { id: "large", shortLabel: "10~100KB", statKey: "largeDocs", colorClass: "large" },
-      { id: "xlarge", shortLabel: ">100KB", statKey: "xlargeDocs", colorClass: "xlarge" },
-    ],
-  },
-  {
-    key: "time", title: "更新时间", icon: "mdi:clock-outline",
-    cards: [
-      { id: "7days", shortLabel: "7天内", statKey: "updatedIn7Days", colorClass: "time-green" },
-      { id: "30days", shortLabel: "7~30天", statKey: "updatedIn30Days", colorClass: "time-yellow" },
-      { id: "1to2month", shortLabel: "1~2月", statKey: "updatedIn1To2Months", colorClass: "time-cyan" },
-      { id: "2to3month", shortLabel: "2~3月", statKey: "updatedIn2To3Months", colorClass: "time-orange" },
-      { id: "halfYear", shortLabel: "半年+", statKey: "updatedOverHalfYear", colorClass: "time-red" },
-    ],
-  },
-  {
-    key: "bookmark", title: "书签", icon: "mdi:bookmark-outline",
-    extraRows: "bookmarkDistribution",
-    cards: [
-      { id: "hasBookmark", shortLabel: "有书签", statKey: "bookmarkedDocs", colorClass: "bookmark-color" },
-      { id: "noBookmark", shortLabel: "无书签", statKey: "noBookmarkDocs", colorClass: "no-bookmark-color" },
-    ],
-  },
-  {
-    key: "publish", title: "发布状态", icon: "mdi:cloud-check-outline",
-    cards: [
-      { id: "fullPublish", shortLabel: "完整发布", statKey: "fullPublishDocs", colorClass: "full-publish-color" },
-      { id: "partialPublish", shortLabel: "部分发布", statKey: "partialPublishDocs", colorClass: "partial-publish-color" },
-      { id: "noPublish", shortLabel: "未发布", statKey: "noPublishDocs", colorClass: "no-publish-color" },
-    ],
-  },
-]
-
-/** 质量 Tab 卡片元数据（与概览分区卡片同构，驱动 v-for 渲染） */
-export const QUALITY_CARDS: StatCardDef[] = [
-  { id: "deep", shortLabel: "深层≥5", statKey: "deepDocs", colorClass: "depth-color" },
-  { id: "hasImage", shortLabel: "图片", statKey: "imageDocs", colorClass: "img-color", suffixStatKey: "totalImages" },
-  { id: "hasTag", shortLabel: "有标签", statKey: "taggedDocs", colorClass: "time-green" },
-  { id: "noTag", shortLabel: "无标签", statKey: "taggedDocs", colorClass: "time-red", resolveValue: (s) => s.totalDocs - s.taggedDocs },
-  { id: "hasAlias", shortLabel: "有别名", statKey: "aliasedDocs", colorClass: "time-cyan" },
-  { id: "hasMemo", shortLabel: "有备注", statKey: "memoedDocs", colorClass: "time-purple" },
-  { id: "hasRef", shortLabel: "含引用", statKey: "refDocs", colorClass: "ref-color", suffixStatKey: "totalRefs" },
-  { id: "incomingRef", shortLabel: "被引用", statKey: "incomingRefDocs", colorClass: "time-cyan" },
-  { id: "orphanDoc", shortLabel: "孤文档", statKey: "orphanDocs", colorClass: "zero" },
-  { id: "duplicate", shortLabel: "重名", colorClass: "dup",
-    resolveValue: (_s, ctx) => ctx.effectiveDupDocs,
-    suffixValue: (_s, ctx) => `${ctx.effectiveDupGroupCount}组` },
-]
-
 // ============================================================
-// 健康度扣分项（可配置）
+// 健康度扣分项（可配置，类型）
 // ============================================================
 
 /** 健康度扣分项 key（可配置项标识） */
@@ -500,51 +317,9 @@ export interface HealthSettings {
   zeroByteExcludeBookmarks: string[]
 }
 
-/** 默认健康度设置：全部扣分项启用（新增项默认开启，用户可在健康度面板取消） */
-export const DEFAULT_HEALTH_SETTINGS: HealthSettings = {
-  enabledDeductions: [
-    "zeroByte", "duplicate", "noBookmark", "partialPublish",
-    "deepGt7", "wcGt20000", "orphan", "noTag", "noPublish",
-  ],
-  zeroByteExcludeBookmarks: [],
-}
+// ============================================================
+// 常量与元数据表（拆分至独立模块，统一再导出以保持既有导入路径）
+// ============================================================
 
-/** 可选扣分项注册表（按当前功能已有统计指标生成） */
-export const DEDUCTION_OPTIONS: DeductionOptionDef[] = [
-  { key: "zeroByte", label: "0B空", resolve: (stats) => stats.zeroByteDocs },
-  {
-    key: "duplicate",
-    label: "重名超出",
-    resolve: (_stats, ctx) => Math.max(0, ctx.effectiveDupDocs - ctx.effectiveDupGroupCount),
-  },
-  {
-    key: "noBookmark",
-    label: "无书签(排除0B)",
-    resolve: (stats) => Math.max(0, stats.noBookmarkDocs - stats.zeroByteDocs),
-  },
-  { key: "partialPublish", label: "部分发布", resolve: (stats) => stats.partialPublishDocs },
-  {
-    key: "deepGt7",
-    label: "深度>7",
-    resolve: (_stats, _ctx, depthStats) =>
-      depthStats.depthDistribution
-        .filter((d) => d.depth > 7)
-        .reduce((sum, d) => sum + d.count, 0),
-  },
-  {
-    key: "wcGt20000",
-    label: "字数>2万",
-    resolve: (stats) =>
-      stats.wordCountDistribution
-        .filter((d) => d.label === WC_TOP_BIN_LABEL)
-        .reduce((sum, d) => sum + d.count, 0),
-  },
-  { key: "orphan", label: "孤文档", resolve: (stats) => stats.orphanDocs },
-  {
-    key: "noTag",
-    label: "无标签",
-    resolve: (stats) => Math.max(0, stats.totalDocs - stats.taggedDocs),
-  },
-  { key: "noPublish", label: "未发布", resolve: (stats) => stats.noPublishDocs },
-]
-
+export * from "./constants"
+export * from "./statCards"

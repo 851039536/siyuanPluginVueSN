@@ -4,7 +4,7 @@
     <div class="hero-top">
       <div class="hero-left">
         <span class="hero-label">总文档</span>
-        <span class="hero-value">{{ stats.totalDocs }}</span>
+        <span class="hero-value">{{ totalDocs }}</span>
       </div>
       <div class="hero-right">
         <span class="hero-health-label">健康度</span>
@@ -27,10 +27,9 @@
 </template>
 
 <script setup lang="ts">
-import type { DocStats } from "../../types/index"
-
 interface Props {
-  stats: DocStats
+  /** 总文档数（仅取该字段，避免传入整个 DocStats） */
+  totalDocs: number
   healthPct: number
   healthTooltip: string
 }

@@ -4,7 +4,7 @@
     <template v-if="hasAnalyzed">
       <!-- Hero 汇总卡：总文档 + 健康度（问题详情见下方各统计表格） -->
       <HeroCard
-        :stats="stats"
+        :total-docs="stats.totalDocs"
         :health-pct="healthPct"
         :health-tooltip="healthTooltip"
       />

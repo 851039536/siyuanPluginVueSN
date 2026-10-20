@@ -3,8 +3,8 @@
   <div class="preview-pane">
     <div v-if="!html" class="preview-empty">
       <Icon icon="mdi:file-document-outline" class="preview-empty-icon" />
-      <p class="preview-empty-title">实时预览</p>
-      <p class="preview-empty-desc">在左侧编辑器中输入 Markdown，即可在此预览排版效果</p>
+      <p class="preview-empty-title">{{ i18n.previewTitle }}</p>
+      <p class="preview-empty-desc">{{ i18n.previewDesc }}</p>
     </div>
     <div
       v-else
@@ -26,9 +26,12 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
+import type { DocI18n } from "../../types/index"
 
 interface Props {
   html: string
+  /** docAnalysis 分片 i18n（空态文案） */
+  i18n: DocI18n
 }
 
 defineProps<Props>()

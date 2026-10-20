@@ -116,20 +116,11 @@ export const DEFAULT_NAV_SETTINGS: DocNavSettings = {
   enablePublishStatus: true,
 }
 
-/** 平台标识→显示名映射（与 docAnalysis 默认平台元数据一致，供发布状态徽章显示具体平台名） */
-export const PLATFORM_MATCHERS: Array<{ matchers: string[]; name: string }> = [
-  { matchers: ["csdn"], name: "CSDN" },
-  { matchers: ["zhihu"], name: "知乎" },
-  { matchers: ["juejin"], name: "掘金" },
-  { matchers: ["cnblogs", "blog"], name: "博客园" },
-  { matchers: ["bili", "bibi"], name: "B站" },
-  { matchers: ["gzh"], name: "公众号" },
-  { matchers: ["jianshu"], name: "简书" },
-  { matchers: ["cto51"], name: "51CTO" },
-  { matchers: ["segmentfault", "sifou"], name: "思否" },
-  { matchers: ["oschina"], name: "开源中国" },
-  { matchers: ["infoq"], name: "InfoQ" },
-]
+/**
+ * 平台标识→显示名映射（跨功能共享真源：@/config/publishPlatforms，
+ * 与 docAnalysis 默认平台元数据同源，避免两处各写一份造成漂移）
+ */
+export { PLATFORM_MATCHERS } from "@/config/publishPlatforms"
 
 export interface ProtyleLike {
   block?: { rootID: string }

@@ -35,8 +35,8 @@ export const TIME_BIN_DAYS = {
   "halfYear": 180,
 } as const
 
-/** 时间区间相邻策略：7days→(>=7d), 30days→(>=30d,<7d)，以此类推 */
-const TIME_INTERVALS: Record<string, [number, number | null]> = {
+/** 时间区间相邻策略：7days→(>=7d), 30days→(>=30d,<7d)，以此类推（统计分析与下钻共用唯一事实源） */
+export const TIME_INTERVALS: Record<string, [number, number | null]> = {
   "7days": [TIME_BIN_DAYS["7days"], null],
   "30days": [TIME_BIN_DAYS["30days"], TIME_BIN_DAYS["7days"]],
   "1to2month": [TIME_BIN_DAYS["1to2month"], TIME_BIN_DAYS["30days"]],

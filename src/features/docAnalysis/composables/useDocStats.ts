@@ -23,7 +23,7 @@ import {
   analyzeUpdateTime,
   analyzeWordCount,
 } from "../utils/docStatsAnalyzer"
-import { filterDuplicateGroups } from "../utils"
+import { filterDuplicateGroups } from "../utils/duplicateFilter"
 import type { DocQueryConfig } from "../utils/categoryQueryConfig"
 import { EXISTS_MAP, SIZE_CONDITIONS, buildTimeConfig } from "../utils/categoryQueryConfig"
 import { quoteSql, quoteSqlList } from "@/utils/sqlHelpers"

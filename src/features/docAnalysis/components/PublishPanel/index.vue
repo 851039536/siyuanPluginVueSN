@@ -123,6 +123,7 @@
       <div class="publish-preview-pane">
         <PreviewPane
           :html="renderedHtml"
+          :i18n="props.i18n"
         />
       </div>
     </div>
@@ -130,7 +131,7 @@
     <!-- 底部状态栏 -->
     <div class="publish-statusbar">
       <span class="statusbar-left">
-        字数：{{ wordCount }}
+        {{ props.i18n.statusWordCount }}: {{ wordCount }}
       </span>
       <span class="statusbar-right">
         微信公众号排版
@@ -154,7 +155,7 @@ import { copyToClipboard, triggerBlobDownload } from "@/utils/domUtils"
 import type { DocI18n, PublishPromoteConfig, PublishTheme } from "../../types/index"
 import { DEFAULT_PUBLISH_PROMOTE } from "../../types/index"
 import { DocAnalysisStorage } from "../../types/storage"
-import { parseMarkdown } from "../../utils/mdRenderer"
+import { parseMarkdown } from "@/utils/mdRenderer"
 import { applyTheme, buildExportableHtml } from "../../utils/themeApplicator"
 import { DEFAULT_THEME } from "../../utils/themes"
 import {
@@ -245,9 +246,9 @@ loadPromoteConfig()
 // ============================================================
 const placeholderText = computed(() => {
   if (props.docId) {
-    return "文档内容已加载，可编辑后发布..."
+    return props.i18n.editorLoaded
   }
-  return "在此输入或粘贴 Markdown 内容..."
+  return props.i18n.editorPlaceholder
 })
 
 // ============================================================
@@ -294,7 +295,8 @@ function render() {
   }
 
   try {
-    const rawHtml = parseMarkdown(md)
+    // 微信公众号排版预设（微信兼容的内联样式 + hljs）
+    const rawHtml = parseMarkdown(md, "wechat")
     const themedHtml = applyTheme(rawHtml, theme)
     renderedHtml.value = themedHtml
     lastRenderedMd = md

@@ -3,13 +3,19 @@
  */
 import { sql } from "@/api"
 import type { BookmarkDetail, DocStats, DepthStats, PlatformMeta } from "../types/index"
-import { TIME_BIN_DAYS } from "./categoryQueryConfig"
+import { WC_TOP_BIN_LABEL } from "../types/constants"
+import { TIME_BIN_DAYS, TIME_INTERVALS } from "./categoryQueryConfig"
 import { daysAgoStr } from "./sqlHelpers"
 import { fetchDocPlatformSets } from "./platformPublish"
 import { SIZE_WORDCOUNT_SUBQUERY, DOC_DEPTH_EXPR } from "./sqlConstants"
 
-/** 字数分布最高档标签（健康度扣分项引用此常量，避免字符串耦合） */
-export const WC_TOP_BIN_LABEL = ">2万字"
+/** 时间分档 → SQL 别名（与 DocStats 字段一一对应） */
+const TIME_BUCKET_ALIASES: Record<string, string> = {
+  "7days": "in_7_days",
+  "30days": "in_30_days",
+  "1to2month": "in_1_to_2_months",
+  "2to3month": "in_2_to_3_months",
+}
 
 // ============================================================
 // 各维度分析（通过闭包修改 docStats / depthStats reactive）
@@ -17,20 +23,19 @@ export const WC_TOP_BIN_LABEL = ">2万字"
 
 export async function analyzeUpdateTime(notebookCondition: string, docStats: DocStats) {
   try {
-    const ts7 = daysAgoStr(TIME_BIN_DAYS["7days"])
-    const ts30 = daysAgoStr(TIME_BIN_DAYS["30days"])
-    const ts60 = daysAgoStr(TIME_BIN_DAYS["1to2month"])
-    const ts90 = daysAgoStr(TIME_BIN_DAYS["2to3month"])
-    const ts180 = daysAgoStr(TIME_BIN_DAYS.halfYear)
-
+    // 区间语义唯一定义在 TIME_INTERVALS（与 buildTimeConfig 共用），此处只负责映射为 SQL 条件
+    const bucketSelects = Object.entries(TIME_INTERVALS).map(([key, [lower, upper]]) => {
+      const lowerCond = `b.updated >= '${daysAgoStr(lower)}'`
+      const cond = upper === null ? lowerCond : `${lowerCond} AND b.updated < '${daysAgoStr(upper)}'`
+      return `SUM(CASE WHEN ${cond} THEN 1 ELSE 0 END) as ${TIME_BUCKET_ALIASES[key]}`
+    })
     // 注：90~180 天区间无对应统计桶（UI 无 3~6 月卡片），各桶之和不等于文档总数，属现状设计
+    const overHalfYear = `SUM(CASE WHEN b.updated < '${daysAgoStr(TIME_BIN_DAYS.halfYear)}' THEN 1 ELSE 0 END) as over_half_year`
+
     const rows = await sql(`
       SELECT
-        SUM(CASE WHEN b.updated >= '${ts7}' THEN 1 ELSE 0 END) as in_7_days,
-        SUM(CASE WHEN b.updated >= '${ts30}' AND b.updated < '${ts7}' THEN 1 ELSE 0 END) as in_30_days,
-        SUM(CASE WHEN b.updated >= '${ts60}' AND b.updated < '${ts30}' THEN 1 ELSE 0 END) as in_1_to_2_months,
-        SUM(CASE WHEN b.updated >= '${ts90}' AND b.updated < '${ts60}' THEN 1 ELSE 0 END) as in_2_to_3_months,
-        SUM(CASE WHEN b.updated < '${ts180}' THEN 1 ELSE 0 END) as over_half_year
+        ${bucketSelects.join(",\n        ")},
+        ${overHalfYear}
       FROM blocks b
       WHERE b.type = 'd' ${notebookCondition}
     `)

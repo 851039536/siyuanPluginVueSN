@@ -191,10 +191,8 @@ export function buildVariantPairs(from: string, to: string): { from: string, to:
   return pairs
 }
 
-/** 转义正则表达式元字符 */
-export function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
+/** 转义正则表达式元字符（统一由 @/utils/stringUtils 提供） */
+export { escapeRegExp } from "@/utils/stringUtils"
 
 /** 检查资源文件是否存在于磁盘（通过列出父目录比对文件名） */
 async function assetFileExists(path: string): Promise<boolean> {

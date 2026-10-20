@@ -1,7 +1,7 @@
 /**
- * 文档分析功能 - 共享纯工具函数
+ * 文档分析功能 - 重名文档过滤纯函数
  */
-import type { DuplicateNameGroup } from "./types/index"
+import type { DuplicateNameGroup } from "../types/index"
 
 /** 按排除名称列表过滤重名组（不区分大小写） */
 export function filterDuplicateGroups(

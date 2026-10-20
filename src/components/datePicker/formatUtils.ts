@@ -4,6 +4,7 @@
  */
 import type { FormatLabels } from "./types"
 import { DEFAULT_FORMAT_LABELS } from "./types"
+import { escapeRegExp } from "@/utils/stringUtils"
 
 /** Windows ticks 起点差：0001-01-01 至 1970-01-01 的毫秒数（`!` 令牌用） */
 const WINDOWS_TICKS_OFFSET_MS = 62135596800000
@@ -33,8 +34,6 @@ const NUMERIC_PARSE_TOKENS: Record<string, string> = {
 const UNPARSEABLE_TOKENS = new Set(["o", "oo", "D", "DD", "M", "MM"])
 
 const pad = (value: number, length = 2) => String(value).padStart(length, "0")
-
-const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 /** 年内第几天（1 起） */
 export function getDayOfYear(date: Date): number {

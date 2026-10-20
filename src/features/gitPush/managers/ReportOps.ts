@@ -1,15 +1,10 @@
-// gitPush 报告数据操作：numstat 提交日志 + 首提交日期 + 已跟踪文件 + 文件历史补丁（代码统计报告 / 行数统计共用）
+// gitPush 报告数据操作：numstat 提交日志 + 仓库生命周期 + 已跟踪文件 + 文件历史补丁（代码统计报告 / 行数统计共用）
 import type { GitExecutor } from "./GitExecutor"
-import type { IndexedFileLines } from "../types/indexCache"
 import { parseNumstatBlock, parseNumstatBlocks, type NumstatCommit } from "../reportMetrics"
 import { classifyFetchFailure, fetchFailureReason, ProjectFetchError } from "../utils/errors"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** diff 补丁截断上限（约 5KB 文本，防止巨型文件撑爆弹窗） */
 const DIFF_MAX_CHARS = 5000
-
-/** 单文件可读上限（2MB：压缩包/锁文件/二进制不读全文，与 reportMetrics.countFileLines 同口径） */
-const FILE_LINES_MAX_BYTES = 2 * 1024 * 1024
 
 /** 增量扫描单次回传提交上限（首次导入超大仓库时防止把 10MB maxBuffer 撑爆） */
 const INCREMENTAL_MAX_COMMITS = 20000
@@ -20,6 +15,47 @@ export interface IncrementalScan {
   commits: NumstatCommit[]
   /** 是否已扫到历史根（false = 达到 INCREMENTAL_MAX_COMMITS 上限，本次未覆盖全历史） */
   complete: boolean
+}
+
+/**
+ * 从 `git rev-list --max-parents=0 --format=%H%x1f%aI HEAD` 的输出中解析
+ * **最早的**根提交时间（ISO），无有效值返回空串。
+ *
+ * ⚠️ **两个易错点，缺一即错**：
+ *
+ * 1. **`--format` 会额外输出 `commit <oid>` 抬头行**。
+ *    该行不含 `\x1f` 分隔符，必须跳过（否则会被当成一条提交记录解析出空日期）。
+ *
+ * 2. **多个根提交时必须取最早的那个**。
+ *    `git merge --allow-unrelated-histories` 之类的历史合并会造出多个根提交，
+ *    `rev-list` 按拓扑序输出、**不保证按时间排序**。取「第一条」会随机得到
+ *    某个较晚的根（用户看到「新建日期」晚于真实诞生时间），
+ *    故必须遍历全部根提交并按时间取最小值。
+ *
+ * 3. **绝不能用 `git log --reverse -1` 取根提交**。
+ *    `--reverse` 作用于**已经按数量截断后的输出**：`-n 1` 先把输出限成 1 条
+ *    （即 HEAD），`--reverse` 再把这一条反转（仍是 HEAD）。
+ *    结果恒等于 HEAD 的时间 ⇒ 「新建日期」与「最后修改」永远相同 —— 这正是
+ *    该缺陷的根因（旧实现 `getFirstCommitDate` 用的就是这条命令）。
+ *    正确做法是 `rev-list --max-parents=0`（按「无父提交」定位历史根，与条数无关）。
+ */
+function pickEarliestRootDate(raw: string): string {
+  let earliest = ""
+  let earliestMs = Number.POSITIVE_INFINITY
+  for (const line of raw.split("\n")) {
+    // 跳过 `commit <oid>` 抬头行（无 \x1f 分隔符）
+    if (!line.includes("\x1f")) continue
+    const date = (line.split("\x1f")[1] || "").trim()
+    if (!date) continue
+    const ms = Date.parse(date)
+    // 时间无法解析（损坏日期）：跳过，避免用一个坏值污染「最早」判定
+    if (Number.isNaN(ms)) continue
+    if (ms < earliestMs) {
+      earliestMs = ms
+      earliest = date
+    }
+  }
+  return earliest
 }
 
 /** HEAD 快照（仓库身份与末条提交判据，供本地索引短路比较） */
@@ -128,22 +164,6 @@ export class ReportOps {
   }
 
   /**
-   * 统计已跟踪文件的存量行数与路径清单（供索引缓存；HEAD 未变时完全复用，不再读盘）。
-   * 只列已跟踪文件（自动排除未跟踪与被 .gitignore 忽略的文件，如 node_modules）。
-   * 复用 countFileLines 口径：>2MB / 二进制 / 读失败 / 已删除 → null。
-   */
-  async getTrackedFileLines(projectPath: string, rootHash: string): Promise<IndexedFileLines[]> {
-    const files = await this.getTrackedFiles(projectPath)
-    const modules = getNodeFsPathOs()
-    const { fs, path } = modules || {}
-    const rows: IndexedFileLines[] = []
-    for (const file of files) {
-      rows.push({ r: rootHash, f: file, n: readFileLineCount(fs, path, projectPath, file) })
-    }
-    return rows
-  }
-
-  /**
    * 获取 numstat 提交日志（每条提交：作者 + ISO 日期 + 每文件增删行）。
    * since 为空时统计全部历史；maxCount 传入时仅取最近 N 条提交（与 git log -N 等价）。
    * git 失败/路径无效时抛出错误，
@@ -191,15 +211,6 @@ export class ReportOps {
     const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "ls-files"])
     if (!raw) return []
     return raw.split("\n").filter((line) => line.trim().length > 0)
-  }
-
-  /** 获取仓库首个提交日期（ISO，无提交/失败返回空串；"全部历史"范围用它生成时间范围标签） */
-  async getFirstCommitDate(projectPath: string): Promise<string> {
-    try {
-      return await this.executor.execGit(projectPath, ["log", "--reverse", "--format=%aI", "-1"])
-    } catch {
-      return ""
-    }
   }
 
   /**
@@ -261,6 +272,15 @@ export class ReportOps {
    * 1. `log -n 1 --pretty=format:%H%x1f%aI` → HEAD oid + 末次提交时间
    * 2. `rev-list --max-parents=0 --format=%H%x1f%aI HEAD` → 根提交时间
    *
+   * ⚠️ 第 2 条**不能**写成 `git log --reverse -1`：该写法恒返回 **HEAD** 的时间
+   * （`--reverse` 作用于已按 `-n 1` 截断的输出），会使「新建日期」与「最后修改」
+   * 永远相同。`rev-list --max-parents=0` 按「无父提交」定位历史根，与条数无关。
+   * 详见 {@link pickEarliestRootDate}。
+   *
+   * **根提交时间每次都重新探测**（不读缓存、不加「已尝试」标记）：
+   * 它与 HEAD 打包在同一次生命周期快照里，零额外进程开销；
+   * 而「读缓存优先」会把旧版写错的 firstCommit 永久固化。
+   *
    * 仓库身份不再由 `rev-parse --absolute-git-dir` 提供：改由纯 fs 探测的
    * `resolveRepoIdentity()` 给出（见 lineScan.ts），零 git 调用。
    *
@@ -310,14 +330,7 @@ export class ReportOps {
     // 但需区分「无提交」与「真实故障」—— 后者记 warn 便于排查
     let rootDate = ""
     if (rootResult.status === "fulfilled") {
-      for (const line of rootResult.value.split("\n")) {
-        if (!line.includes("\x1f")) continue
-        const date = line.split("\x1f")[1]
-        if (date) {
-          rootDate = date.trim()
-          break
-        }
-      }
+      rootDate = pickEarliestRootDate(rootResult.value)
     } else if (classifyFetchFailure(rootResult.reason) !== "noCommits") {
       console.warn(
         `[gitPush] 读取根提交时间失败（${projectPath}）:`
@@ -344,29 +357,5 @@ export class ReportOps {
     const raw = await this.executor.execGit(projectPath, args, undefined, 10000)
     if (!raw) return ""
     return raw.length > DIFF_MAX_CHARS ? raw.slice(0, DIFF_MAX_CHARS) + "\n…(truncated)" : raw
-  }
-}
-
-/**
- * 读取仓库内文件的行数（按行切分计数）。
- * 与 reportMetrics.countFileLines 保持同口径（>2MB / 非文件 / 读失败 → null），
- * 差异仅在于此处由调用方传入已解析的 fs/path，避免逐文件重复取模块。
- */
-function readFileLineCount(
-  fs: typeof import("node:fs") | undefined,
-  path: typeof import("node:path") | undefined,
-  projectPath: string,
-  filePath: string,
-): number | null {
-  if (!fs || !path) return null
-  try {
-    const abs = path.join(projectPath, filePath)
-    const stat = fs.statSync(abs)
-    if (!stat.isFile() || stat.size > FILE_LINES_MAX_BYTES) return null
-    const content = fs.readFileSync(abs, "utf8") as string
-    const lines = content.split("\n")
-    return lines.length - (lines[lines.length - 1] === "" ? 1 : 0)
-  } catch {
-    return null
   }
 }

@@ -1,21 +1,16 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 行数排行行（项目排行 + 详情弹窗作者/文件明细共用）
+// ── 行数排行行（项目代码行数排行）
 // 列模板单点定义：数据行（.lrr-row）与表头（.lrr-head）必须共用同一模板，
 // 否则各列起止点错位（这是排行可读性的硬约束）──
 //
-// 项目排行：排名 | 名称（自适应）| 新建日期 | 最后修改 | 占比 | 总行数
+// 列集：排名 | 名称（自适应）| 新建日期 | 最后修改 | 占比 | 总行数
 // 日期列固定窄宽：YYYY-MM-DD 在 $t-2xs 等宽字体下约 58px，取 60px 留 2px 呼吸；
 // 名称列吃到剩余空间（minmax 下限 56px，保证极窄面板下也不会把名称压成不可读）。
 $_lrr-cols: 16px minmax(56px, 1fr) 60px 60px 40px minmax(40px, auto);
-// 无总行数列（详情弹窗场景）：去掉末列
-$_lrr-cols-no-total: 16px minmax(56px, 1fr) 60px 60px 42px;
-// 无日期列（详情弹窗作者/文件明细）：名称 | 占比 [| 总行数]
-$_lrr-cols-no-date: 16px minmax(64px, 1.1fr) 42px;
-$_lrr-cols-no-date-no-total: 16px minmax(64px, 1.1fr) 40px;
 
-// 排行列表容器（两处共用：面板项目排行 + 弹窗作者排行）
+// 排行列表容器
 .lrr-list {
   display: flex;
   flex-direction: column;
@@ -67,21 +62,6 @@ $_lrr-cols-no-date-no-total: 16px minmax(64px, 1.1fr) 40px;
   &:focus-visible {
     @include focus-ring;
   }
-}
-
-// 无总行数列变体（详情弹窗场景）
-.lrr-row--no-total {
-  grid-template-columns: $_lrr-cols-no-total;
-}
-
-// 无日期列变体（详情弹窗作者/文件明细）
-.lrr-row--no-date {
-  grid-template-columns: $_lrr-cols-no-date;
-}
-
-// 日期与总行数同时缺省（弹窗内最简行）
-.lrr-row--no-date.lrr-row--no-total {
-  grid-template-columns: $_lrr-cols-no-date-no-total;
 }
 
 // 可点击行：hover 时名称变主题色，提示可打开详情（与 CommitAnalysisPanel 交互模式一致）
@@ -145,19 +125,4 @@ $_lrr-cols-no-date-no-total: 16px minmax(64px, 1.1fr) 40px;
   white-space: nowrap;
   color: var(--b3-theme-on-surface);
   opacity: 0.8;
-}
-
-// ── 净增语义色（前缀 lrr-net）──
-// 项目排行已不再展示净增，但详情弹窗与占比条仍在用（LineShareBar 的 fill 着色、
-// ProjectLineDetail 的作者明细），故保留这组 class。
-.lrr-net--pos {
-  color: var(--b3-theme-success);
-}
-
-.lrr-net--neg {
-  color: var(--b3-theme-error);
-}
-
-.lrr-net--zero {
-  opacity: 0.5;
 }

@@ -23,6 +23,7 @@
 - **报告一键导出 HTML**：统计报告视图工具条「导出HTML」按钮，把当前项目 + 当前时间范围的报告导出为**单个自包含 HTML 文件**（内联 CSS + 内联 SVG 图表，零外部依赖、断网可打开、可直接分享或存档）；覆盖团队总览 / 代码贡献度 / 技术债务 / 代码热点 / 提交趋势五个分区全部内容，K 线图按 `MAX_CANDLES` 分桶压缩保证宽度有界；弹原生保存对话框选定路径，写盘后自动打开；未生成/git 失败/零提交时不产出空文件
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
 - **行数排行视图**：「提交分析」视图内的内部 Tab，展示各项目**当前代码行数**（存量口径：工作区已跟踪文件的实际行数）排行，并给出**新建日期**（仓库首次提交）与**最后修改**（最后一次提交），可按文件格式过滤（扩展名多选排除列表）。列表只保留存量口径——不再展示历史累计的「新增/删除/净增」，因此分析**完全不抓取全历史 numstat**，只做 `git ls-files` + 文件行数统计，这是本视图刷新速度的关键前提
+  - ⚠️ **「新建日期」口径**：`rev-list --max-parents=0`（历史根提交，多根时取最早那个）——**不是** `git log --reverse -1`（该写法恒返回 HEAD 时间，会让两列日期永远相同，详见 §行数统计快路径）
 - **行数统计的增量刷新（SQLite）**：逐文件行数连同 `(mtime, size)` 一起落 `plugin.db` 的 `gp_file_lines` 表。重新分析时逐文件 `statSync` 比对判据，**只重读内容变化过的文件**；`HEAD` 与 `gitdir` 都未变的项目直接复用 `gp_project_stats` 汇总行，零 git 调用、零读盘。原实现每次分析都要 `readFileSync` 每个文件全文（只为数 `\n`），且判据是 `rootHash`（一次提交即全仓库重读），这是「行数分析慢」的唯一根因
 - **本地提交索引（增量刷新）**：插件数据目录下的 NDJSON 提交索引，使统计视图「秒开 + 后台增量」而非每次重跑全量 `git log`。HEAD 未变的项目零 git 调用、零逐文件读盘；索引不可用时全部路径自动回退直接扫描 git（详见「性能优化 § 本地提交索引」）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
@@ -117,8 +118,8 @@ src/features/gitPush/
 │   │   ├── CommitFileDiffDialog.vue # 提交文件差异弹窗
 │   │   ├── DiffLines.vue            # diff 着色行共享渲染片段
 │   │   ├── TagCommitDialog.vue      # 标签提交弹窗
-│   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/增删净/占比/可选总行数；clickable 时原生 button 可键盘激活；行数统计面板与详情弹窗共用）
-│   │   └── LineShareBar.vue         # 行数占比迷你条（轨道 + 填充 + 百分比文本，填充按净增正负着色；详情弹窗文件明细占比列用）
+│   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/新建日期/最后修改/占比/总行数；clickable 时原生 button 可键盘激活；项目代码行数排行专用）
+│   │   └── LineShareBar.vue         # 行数占比迷你条（轨道 + 填充 + 百分比文本；详情弹窗文件明细占比列用）
 │   ├── ListView/                    # 列表视图专属（16 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏
@@ -207,7 +208,7 @@ src/features/gitPush/
     ├── AnalysisToolbar.scss         # 分析类视图统一工具条样式（三视图共用）
     ├── AnalysisGate.scss            # 分析类视图状态门样式（失败提示条 .gp-analysishint）
     ├── StatCardGrid.scss            # KPI 卡片网格样式（五视图共用；原 .gp-stat-card/.gpa-card/.grc-card/.gls-card/.gpr-card 五份合一）
-    ├── LineRankRow.scss             # 行数排行行样式（列模板单点定义 + 表头吸顶 + 数字列 + lrr-net 语义色）
+    ├── LineRankRow.scss             # 行数排行行样式（列模板单点定义 + 表头吸顶 + 数字列）
     ├── LineShareBar.scss            # 行数占比迷你条样式
     ├── ProjectLineDetail.scss       # 项目行数详情弹窗样式（弹窗尺寸 + 头部 + 文件明细表格）
     ├── ExtFilterDialog.scss         # 文件格式过滤弹窗样式
@@ -267,7 +268,6 @@ GitPushManager (facade)
 | `getNumstatLog(path, since?, maxCount?)` | 获取 numstat 提交日志（每文件增删行；供代码统计报告聚合） |
 | `getCommitStatsLog(path, maxCount?)` | 行数统计专用单命令抓取：numstat + hash/message/author/date（替代原 getCommitLog + getNumstatLog 双命令） |
 | `getIndexedCommitLog(project, {maxCount?, sinceDays?, forceRebuild?})` | **索引驱动的提交抓取**：HEAD 未变零 git 扫描，否则增量补抓后落盘；返回 `source`（`index`/`incremental`/`git`）标识数据来源 |
-| `getIndexedFileLines(project)` | 已跟踪文件存量行数（索引按 HEAD 复用，未变时零 `ls-files`、零逐文件读盘） |
 | `getIndex(project)` / `getIndexStatus()` | 获取索引实例 / 索引状态摘要（目录 + 各项目提交数与截断标记） |
 | `clearIndex()` / `setIndexEnabled(on)` / `isIndexEnabled()` | 清空索引 / 索引开关读写 |
 | `getIndexMaxCommits()` / `setIndexMaxCommits(n)` | 单项目索引提交上限读写（钳位 1000~100000） |
@@ -477,6 +477,9 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 **快路径**（`GitPushManager.scanProjectLineStats`，逐级降低开销）：
 
 1. **生命周期快照只用 2 次 git**：`getRepoLifecycle` 用 `log -n1`（HEAD oid + 末次提交时间）与 `rev-list --max-parents=0 --format`（根提交时间）**并发**拿齐三项信息。原实现需 3 次（多一次 `rev-parse --absolute-git-dir`）。
+   - ⚠️ **根提交时间不能用 `git log --reverse -1` 取**：`--reverse` 作用于**已按 `-n 1` 截断的输出**（先截成 1 条 = HEAD，再反转这一条），结果恒等于 **HEAD 的时间** ⇒ 「新建日期」与「最后修改」永远相同。`rev-list --max-parents=0` 按「无父提交」定位历史根，与条数无关。
+   - **多个根提交时取时间最早的那个**（`rev-list` 按拓扑序输出、不按时间排序，取「第一条」会随机得到较晚的根）。
+   - **根提交时间每次都重新探测**（不读缓存）：它与 HEAD 打包在同一次快照里，零额外进程开销；而「读缓存优先」会把旧版写错的 `firstCommit` 永久固化。旧库里的错值会在下次分析时**自动纠正**。
 2. `HEAD oid` 未变 → **直接读 `gp_project_stats` 汇总行返回**，不再 `ls-files`、不再 `statSync`。
 3. `HEAD` 变了 → `git ls-files` + 逐文件 `statSync`，只对 `(mtime, size)` 变化的文件读内容（**刻意不用 `git status` 变更集**，原因见下）。
 4. 数据库不可用（旧版思源 / 打开失败）→ 全量扫，**功能不降级**，只是回到改造前的速度。

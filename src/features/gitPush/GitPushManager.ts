@@ -68,7 +68,6 @@ import {
 } from "./managers/lineScan"
 import {
   openLineStatsStore,
-  TIMES_PROBED_MARK,
 } from "./managers/LineStatsStore"
 import { ProjectStore } from "./managers/ProjectStore"
 import { ProjectWriteLock } from "./managers/ProjectWriteLock"
@@ -366,18 +365,21 @@ export class GitPushManager {
         totalLines += rec.lines
         fileCount++
       }
-      // 历史根时间：有值复用；无值但**确已成功探过**（精确匹配标记）也不再重取。
-      // 注意必须用 === TIMES_PROBED_MARK 精确比较：旧行该列存的是 gitdir 路径字符串
-      // （truthy），按真值判断会把老数据全部误认成「已探过」，其中的空 firstCommit 永不修复。
-      const probed = cached.timesProbed === TIMES_PROBED_MARK
-      const firstCommit = cached.firstCommit || (probed ? "" : lifecycle.rootDate)
+      // 历史根时间：**本次探测值优先，缓存值仅作探测失败时的兜底**。
+      //
+      // 为什么不能反过来（先用缓存）：旧实现用 `git log --reverse -1` 取「首个提交」，
+      // 而 `--reverse` 作用于**已按条数截断的输出**（`-n 1` 先截成 1 条 = HEAD，
+      // `--reverse` 再反转这一条），故该命令恒返回 **HEAD 的时间**。
+      // 那个错误值一旦写进缓存，就会被「有值就复用」的逻辑永久固化，
+      // 表现为「新建日期」与「最后修改」永远相同。
+      //
+      // 现在 `rootDate` 由 `getRepoLifecycle` **每次都并发探测**（与 HEAD 一次调用打包，
+      // 零额外进程开销），故直接采信新鲜值 —— 旧缓存里的错值会被自动纠正。
+      // 探测失败（git 抖动 / shallow 未就绪）时 rootDate 为空，才回退缓存兜底。
+      const firstCommit = lifecycle.rootDate || cached.firstCommit
       const lastCommit = lifecycle.lastDate
-      // 只有「确实探到了根提交时间」或「旧缓存已有值」才落「已探」标记。
-      // lifecycle.rootDate 为空 ⇒ 本次探测失败（git 抖动/超时/shallow 未就绪），
-      // 此时落标记会让该项目的「新建日期」永久为空、再也不重试。
-      const canMarkProbed = !!lifecycle.rootDate || !!cached.firstCommit
-      if (canMarkProbed
-        && (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit || !probed)) {
+      // 纠正后落库（rootDate 为空时保留旧值，不把正确数据冲掉）
+      if (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit) {
         try {
           store!.updateCommitTimes(project.id, firstCommit, lastCommit, cached.analyzedAt)
         } catch {
@@ -423,8 +425,10 @@ export class GitPushManager {
       if (f.lines !== null && shouldInclude(f.path)) fileCount++
     }
 
-    // 历史根时间：缓存有值就复用；否则用本次 rev-list 结果
-    const firstCommit = cached?.firstCommit || lifecycle.rootDate
+    // 历史根时间：与快路径同口径 —— **本次探测值优先**，缓存仅在探测失败时兜底。
+    // （旧实现是「缓存有值就复用」，会把旧版 `git log --reverse -1` 写错的
+    //   HEAD 时间永久固化，使「新建日期」恒等于「最后修改」。）
+    const firstCommit = lifecycle.rootDate || cached?.firstCommit || ""
     const lastCommit = lifecycle.lastDate
 
     if (store) {
@@ -439,9 +443,6 @@ export class GitPushManager {
           headOid: lifecycle.head,
           // 仓库身份（.git 规范化路径）：使「改指向另一份 clone」正确失效
           repoId,
-          // 标记「时间已尝试」：仅当确实取到根提交时间（或已有旧值）时才标记，
-          // 避免把一次 git 抖动固化成「永不重试」的空新建日期
-          timesProbed: (lifecycle.rootDate || firstCommit) ? TIMES_PROBED_MARK : "",
           analyzedAt: nowIso,
         }, scan.files)
       } catch (e) {
@@ -1177,11 +1178,6 @@ export class GitPushManager {
     return this.reportOps.getCommitStatsLog(projectPath, maxCount)
   }
 
-  /** 获取仓库首个提交日期（ISO，无提交/失败返回空串） */
-  async getFirstCommitDate(projectPath: string): Promise<string> {
-    return this.reportOps.getFirstCommitDate(projectPath)
-  }
-
   /** 获取仓库已跟踪文件列表（git ls-files；行数统计「当前总行数」用；git 失败抛出错误） */
   async getTrackedFiles(projectPath: string): Promise<string[]> {
     return this.reportOps.getTrackedFiles(projectPath)
@@ -1346,53 +1342,6 @@ export class GitPushManager {
       const t = Date.parse(c.date)
       return Number.isNaN(t) ? true : t >= cutoff
     })
-  }
-
-  /**
-   * 抓取项目的已跟踪文件存量行数（索引优先：HEAD 未变时零 IO）。
-   * 命中时不跑 `git ls-files`、也不逐文件读盘——行数统计里最贵的一环。
-   * 打印 `[gitPush][索引] ... filelines=hit|scan` 日志便于确认。
-   */
-  async getIndexedFileLines(
-    project: GitProject,
-  ): Promise<{ rootHash: string, lines: Map<string, number | null> } | null> {
-    const startedAt = Date.now()
-    const projectPath = resolveValidPath(project)
-    const index = await this.getIndex()
-    if (!index) return null
-    try {
-      const snapshot = await this.reportOps.getHeadSnapshot(projectPath)
-      if (!snapshot.head) { return {
-        rootHash: "",
-        lines: new Map(),
-      }
-      }
-      const rootHash = buildRootHash(snapshot.head, snapshot.gitDir)
-      const cached = await index.loadFileLines(project.id, rootHash)
-      if (cached) {
-        console.warn(
-          `[gitPush][索引] ${project.name} filelines=hit 耗时=${Date.now() - startedAt}ms 文件数=${cached.size}`,
-        )
-        return {
-          rootHash,
-          lines: cached,
-        }
-      }
-      const rows = await this.reportOps.getTrackedFileLines(projectPath, rootHash)
-      const lines = new Map<string, number | null>()
-      for (const row of rows) lines.set(row.f, row.n)
-      await index.setFileLines(project.id, rootHash, lines)
-      console.warn(
-        `[gitPush][索引] ${project.name} filelines=scan 耗时=${Date.now() - startedAt}ms 文件数=${lines.size}`,
-      )
-      return {
-        rootHash,
-        lines,
-      }
-    } catch (e) {
-      console.warn("[gitPush] 文件存量行数索引读写失败，回退直接扫描", e)
-      return null
-    }
   }
 
   // ── 仓库清理（RepoCleanOps：体检扫描 + BFG 六步工作流）──

@@ -24,15 +24,6 @@
   transition: width 0.12s ease;
 }
 
-// fill 的净增着色（前缀共用 lrr-net，与 LineRankRow 的净增数字着色同语义）
-.lsb-fill.lrr-net--pos {
-  background: var(--b3-theme-success);
-}
-
-.lsb-fill.lrr-net--neg {
-  background: var(--b3-theme-error);
-}
-
 .lsb-text {
   flex: 0 0 40px;
   text-align: right;

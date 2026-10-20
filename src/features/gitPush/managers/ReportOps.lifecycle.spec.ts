@@ -59,6 +59,11 @@ describe.skipIf(!hasGit())("ReportOps.getRepoLifecycle", () => {
     execFileSync("git", ["-C", path, "commit", "-qm", "init"])
   }
 
+  /** 读取仓库当前分支名（默认分支名随 git 版本/全局配置而变，故不写死 "master"） */
+  function currentBranch(path: string): string {
+    return execFileSync("git", ["-C", path, "branch", "--show-current"], { encoding: "utf8" }).trim()
+  }
+
   it("正常仓库：返回 HEAD oid、末次提交时间与根提交时间", async () => {
     const repo = join(dir, "normal")
     initRepo(repo, true)
@@ -115,5 +120,65 @@ describe.skipIf(!hasGit())("ReportOps.getRepoLifecycle", () => {
     expect(Date.parse(lc.rootDate)).toBeLessThan(Date.parse(lc.lastDate))
     // lastDate 应取较晚那次提交
     expect(lc.lastDate).toContain("2030-06-01")
+  })
+
+  it("回归：rootDate 不得等于 lastDate（旧实现用 `git log --reverse -1`，恒返回 HEAD 时间）", async () => {
+    const repo = join(dir, "regression")
+    initRepo(repo, true)
+    // 把根提交时间显式拉到很早，与 HEAD 拉开距离
+    execFileSync("git", ["-C", repo, "commit", "--amend", "--no-edit", "--date=2019-03-03T08:00:00+08:00"], {
+      env: {
+        ...process.env,
+        GIT_AUTHOR_DATE: "2019-03-03T08:00:00+08:00",
+        GIT_COMMITTER_DATE: "2019-03-03T08:00:00+08:00",
+      },
+    })
+    writeFileSync(join(repo, "b.ts"), "x\n", "utf8")
+    execFileSync("git", ["-C", repo, "add", "-A"])
+    execFileSync("git", ["-C", repo, "commit", "-qm", "second"], {
+      env: {
+        ...process.env,
+        GIT_AUTHOR_DATE: "2030-06-01T12:00:00+08:00",
+        GIT_COMMITTER_DATE: "2030-06-01T12:00:00+08:00",
+      },
+    })
+
+    const lc = await ops.getRepoLifecycle(repo)
+    // 核心断言：两个日期必须不同（旧实现恒等 ⇒ 用户看到「新建日期 == 最后修改」）
+    expect(lc.rootDate).not.toBe(lc.lastDate)
+    expect(lc.rootDate).toContain("2019-03-03")
+    expect(lc.lastDate).toContain("2030-06-01")
+  })
+
+  it("多根提交仓库：rootDate 取**最早**的那个根（rev-list 不按时间排序）", async () => {
+    const repo = join(dir, "multiroot")
+    initRepo(repo, true)
+    const mainBranch = currentBranch(repo)
+    // 造第二个「无父提交」的根：`--orphan` 分支与主分支历史完全无关
+    execFileSync("git", ["-C", repo, "checkout", "-q", "--orphan", "side"])
+    execFileSync("git", ["-C", repo, "rm", "-q", "-rf", "."])
+    writeFileSync(join(repo, "s.ts"), "s\n", "utf8")
+    execFileSync("git", ["-C", repo, "add", "-A"])
+    execFileSync("git", ["-C", repo, "commit", "-qm", "sideRoot"], {
+      env: {
+        ...process.env,
+        GIT_AUTHOR_DATE: "2018-01-01T08:00:00+08:00",
+        GIT_COMMITTER_DATE: "2018-01-01T08:00:00+08:00",
+      },
+    })
+    execFileSync("git", ["-C", repo, "checkout", "-q", mainBranch])
+    execFileSync("git", ["-C", repo, "merge", "-q", "--allow-unrelated-histories", "side", "-m", "merge side"], {
+      env: {
+        ...process.env,
+        GIT_AUTHOR_DATE: "2030-06-01T12:00:00+08:00",
+        GIT_COMMITTER_DATE: "2030-06-01T12:00:00+08:00",
+      },
+    })
+
+    const lc = await ops.getRepoLifecycle(repo)
+    // 两个根提交中取时间最早的（2018-01-01），而非「rev-list 输出里的第一条」
+    // （rev-list 按拓扑序输出，可能把较晚的根排在前面）
+    expect(lc.rootDate).toContain("2018-01-01")
+    expect(lc.rootDate).not.toBe(lc.lastDate)
   })
 })

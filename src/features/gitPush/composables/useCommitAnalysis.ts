@@ -1,7 +1,6 @@
 // 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行；
 // 行数排行改为「存量规模 + 生命周期」视图，只扫已跟踪文件行数与首/末次提交（不再抓全历史 numstat）
 import type { Ref } from "vue"
-import type { NumstatCommit } from "../reportMetrics"
 import type {
   CommitAnalysisEntry,
   CommitAnalysisStats,
@@ -139,8 +138,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   })
   /** 行数详情弹窗单项目刷新中标记（防并发点击） */
   const lineDetailRefreshing = ref(false)
-  /** per-project 原始 numstat 数据（仅内存不持久化；行数统计分析后填充，供项目详情弹窗消费，下次分析覆盖） */
-  const perProjectNumstat = ref<Map<string, NumstatCommit[]>>(new Map())
   /** per-project 已跟踪文件的存量行数 Map<路径, 行数|null>（仅内存不持久化；行数统计分析后填充，供详情弹窗文件明细查存量；null=2MB/二进制/读失败/已删除） */
   const perProjectFileLines = ref<Map<string, Map<string, number | null>>>(new Map())
 
@@ -436,7 +433,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             fileLinesMap.set(r.projectId, r.fileLines)
           }
         }
-        perProjectNumstat.value = new Map()
         perProjectFileLines.value = fileLinesMap
         // 清理已删除项目的残留统计数据（防 SQLite 表随项目增减无界增长）
         await manager.pruneLineStats(projects.value.map((p) => p.id))
@@ -648,7 +644,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         true,
       )
       perProjectFileLines.value.set(projectId, fileLines)
-      perProjectNumstat.value.delete(projectId)
       // 项目排行 upsert：剔除旧条目后重插并按总行数降序重排（与 buildLineRankings 同口径），
       // 弹窗「当前总行数」chip 随之更新
       const old = projectLineRanking.value.find((r) => r.id === projectId)

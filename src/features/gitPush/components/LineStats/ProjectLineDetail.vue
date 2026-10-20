@@ -83,7 +83,6 @@
                 <LineShareBar
                   :pct="row.pct"
                   :share="row.share"
-                  :net="row.totalLines ?? 0"
                 />
               </span>
             </div>

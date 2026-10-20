@@ -59,34 +59,9 @@ export interface ProjectStatsRecord {
    * 空串 = 旧数据行（升级前写入，未记录身份）→ 视为不匹配，触发一次重算并补写。
    */
   repoId: string
-  /**
-   * 生命周期时间的「已尝试」标记（如 `"1"`）。
-   *
-   * 为什么需要：`firstCommit`/`lastCommit` 在空仓库或 git 异常时会取到空串。
-   * 若只用「缓存值为空」判断是否需要重取，这些项目**每次分析都会再跑一次
-   * rev-list / log**，几十个项目时又变成几十次进程启动。
-   * 记下标记后，空值也算「已知结果」，不再重试。
-   *
-   * 该列历史上是 `git_dir`（仓库身份判据），因判据已收敛为 `headOid` 而闲置，
-   * 故复用它存标记，无需 schema 迁移（旧行里是路径字符串 → 非 "1"，会被当作
-   * 「未尝试」，只是让老数据多取一次，随后写回标记）。
-   */
-  timesProbed: string
   /** 本次统计完成时间（ISO） */
   analyzedAt: string
 }
-
-/**
- * 「生命周期时间已尝试获取」的标记值。
- *
- * 存放在 `gp_project_stats.git_dir` 列（该列在判据收敛为 headOid 后闲置，
- * 复用它可避免 schema 迁移）。语义：**该列的精确值等于本常量**才算「已尝试」。
- *
- * 为什么必须用精确比较而非真值判断：旧版本该列存的是 git 目录**路径字符串**
- * （同样 truthy），若按真值判断会把所有老数据误认成「已尝试」，
- * 使其中的空 firstCommit 永不被修复。
- */
-export const TIMES_PROBED_MARK = "1"
 
 /** 单文件存量行数记录 */
 export interface FileLinesRecord {
@@ -109,7 +84,7 @@ interface ProjectStatsRow {
   first_commit: string
   last_commit: string
   head_oid: string
-  /** 「时间已尝试」标记（历史上是 gitdir，现复用；详见 timesProbed） */
+  /** 「时间已尝试」标记（**已废弃**，历史上是 gitdir；新代码不再写入，保留列不做迁移） */
   git_dir: string
   /** 仓库身份（.git 规范化路径）；旧库经 ALTER 补列后为空串 */
   repo_id?: string
@@ -136,8 +111,6 @@ function toProjectStats(row: ProjectStatsRow): ProjectStatsRecord {
     headOid: row.head_oid ?? "",
     // 旧库（ALTER 前写入）无此列 → 空串 → 视为不匹配，触发一次重算并补写
     repoId: row.repo_id ?? "",
-    // 复用闲置的 git_dir 列存「时间已尝试」标记（详见 ProjectStatsRecord.timesProbed）
-    timesProbed: row.git_dir ?? "",
     analyzedAt: row.analyzed_at ?? "",
   }
 }
@@ -259,8 +232,8 @@ export class LineStatsStore {
         record.firstCommit,
         record.lastCommit,
         record.headOid,
-        // git_dir 列存「时间已尝试」标记（列名保留以免 schema 迁移）
-        record.timesProbed,
+        // git_dir 列已废弃（曾存「时间已尝试」标记），写入空串以清掉旧标记值
+        "",
         record.repoId,
         record.analyzedAt,
       )
@@ -280,18 +253,17 @@ export class LineStatsStore {
   }
 
   /**
-   * 仅更新汇总行的生命周期字段（首/末次提交）+「已尝试」标记。
+   * 仅更新汇总行的生命周期字段（首/末次提交时间）。
    * 供「HEAD 未变、只需补首末提交时间」的快路径使用，避免读一遍文件明细。
-   * 标记一并写入，使「取到空值」也算已知结果，不再每次重试。
    */
   updateCommitTimes(projectId: string, firstCommit: string, lastCommit: string, analyzedAt: string): void {
     this.db.run(
-      `UPDATE ${TABLE.project_stats} SET first_commit = ?, last_commit = ?, analyzed_at = ?, git_dir = ?
-        WHERE project_id = ?`,
+      `UPDATE ${TABLE.project_stats} SET first_commit = ?, last_commit = ?, analyzed_at = ?,
+         git_dir = ''
+       WHERE project_id = ?`,
       firstCommit,
       lastCommit,
       analyzedAt,
-      TIMES_PROBED_MARK,
       projectId,
     )
   }

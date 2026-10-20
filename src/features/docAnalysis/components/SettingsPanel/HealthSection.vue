@@ -1,8 +1,6 @@
 <!-- 文档分析功能 - 设置弹窗健康度分区（扣分项勾选 + 0B 排除书签勾选） -->
 <template>
   <section class="settings-section">
-    <div class="settings-section-title">健康度</div>
-
     <!-- 扣分项配置区：勾选的项才参与扣分分析 -->
     <div class="deduction-list">
       <label

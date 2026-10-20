@@ -39,21 +39,16 @@
   padding: $s-1 $s-2;
 }
 
-// ============ 分区通用 ============
-.settings-section {
-  padding: $s-2 $s-3;
+// ============ 顶部分类标签栏 ============
+.settings-tabs {
+  flex-shrink: 0;
+  padding: 0 $s-3;
   border-bottom: 1px solid var(--b3-border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
 }
 
-.settings-section-title {
-  font-size: $t-sm;
-  font-weight: $fw-semibold;
-  color: var(--b3-theme-on-background);
-  margin-bottom: $s-1;
+// ============ 分区通用（标签页模式：每屏仅展示一个分区） ============
+.settings-section {
+  padding: $s-3 $s-4;
 }
 
 .settings-subsection {
@@ -194,32 +189,29 @@
   }
 }
 
-// 完整发布判定切换
-.cell-fullcheck {
-  width: 36px;
-  flex-shrink: 0;
+// 行尾控件组：判定/可见性开关 + 上下移/删除（分隔线把开关与操作分组）
+.cell-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: $s-px2;
+  flex-shrink: 0;
   padding-bottom: $s-px1;
-
-  .fullcheck-toggle {
-    color: var(--b3-theme-on-surface-variant);
-
-    &.active {
-      color: var(--b3-theme-success, #22c55e);
-    }
-  }
 }
 
-// 可见性切换
-.cell-vis {
-  width: 28px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-bottom: $s-px1;
+.cell-controls-divider {
+  width: 1px;
+  height: $s-4;
+  background: var(--b3-border-color);
+  margin: 0 $s-px2;
+}
+
+// 完整发布判定切换
+.fullcheck-toggle {
+  color: var(--b3-theme-on-surface-variant);
+
+  &.active {
+    color: var(--b3-theme-success, #22c55e);
+  }
 }
 
 // 字段单元格
@@ -259,18 +251,11 @@
   }
 }
 
-.cell-name     { width: 88px; flex-shrink: 0; }
-.cell-id       { width: 72px; flex-shrink: 0; }
-.cell-matchers { flex: 0.6; }
-.cell-url      { flex: 1; }
+.cell-name     { width: 96px; flex-shrink: 0; }
+.cell-id       { width: 80px; flex-shrink: 0; }
+.cell-matchers { flex: 1; min-width: 0; }
 
-// 操作按钮区
-.cell-actions {
-  display: flex;
-  gap: $s-px2;
-  flex-shrink: 0;
-  padding-bottom: $s-px1;
-}
+// 操作按钮组间距由 .cell-controls 统一提供
 
 .row-btn-icon {
   display: flex;
@@ -379,12 +364,12 @@
 }
 
 // ============ 响应式：窄面板下平台行允许横向滚动 ============
-@media (max-width: 560px) {
+@media (max-width: 480px) {
   .settings-body {
     overflow-x: auto;
   }
 
   .platform-row {
-    min-width: 520px;
+    min-width: 420px;
   }
 }

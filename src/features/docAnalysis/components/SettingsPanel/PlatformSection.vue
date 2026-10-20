@@ -1,37 +1,13 @@
 <!-- 文档分析功能 - 设置弹窗平台管理分区（平台增删/上下移/恢复默认/校验） -->
 <template>
   <section class="settings-section">
-    <div class="settings-section-title">平台管理</div>
-
     <div
       v-for="(p, idx) in localPlatforms"
       :key="idx"
       class="platform-row"
       :class="{ 'platform-row--hidden': p.hidden }"
     >
-      <!-- 完整发布判定切换（undefined 视为参与判定） -->
-      <span class="cell-fullcheck">
-        <button
-          class="row-btn-icon fullcheck-toggle"
-          :class="{ active: p.fullCheck !== false }"
-          :title="(p.fullCheck !== false) ? '参与完整发布判定' : '不参与完整发布判定'"
-          @click="toggleFullCheck(idx)"
-        >
-          <Icon :icon="(p.fullCheck !== false) ? 'mdi:check-circle' : 'mdi:circle-outline'" />
-        </button>
-      </span>
-
-      <!-- 可见性切换 -->
-      <span class="cell-vis">
-        <button
-          class="row-btn-icon"
-          :title="p.hidden ? '取消隐藏' : '隐藏'"
-          @click="toggleHidden(idx)"
-        >
-          <Icon :icon="p.hidden ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" />
-        </button>
-      </span>
-
+      <!-- 完整发布判定切换（undefined 视为参与判定）与可见性切换收在行尾控件组，精简列数 -->
       <!-- 名称 -->
       <span class="cell-field cell-name">
         <input
@@ -67,8 +43,24 @@
         />
       </span>
 
-      <!-- 操作 -->
-      <span class="cell-actions">
+      <!-- 行尾控件组：判定/可见性开关 + 排序/删除操作 -->
+      <span class="cell-controls">
+        <button
+          class="row-btn-icon fullcheck-toggle"
+          :class="{ active: p.fullCheck !== false }"
+          :title="(p.fullCheck !== false) ? '参与完整发布判定' : '不参与完整发布判定'"
+          @click="toggleFullCheck(idx)"
+        >
+          <Icon :icon="(p.fullCheck !== false) ? 'mdi:check-circle' : 'mdi:circle-outline'" />
+        </button>
+        <button
+          class="row-btn-icon"
+          :title="p.hidden ? '取消隐藏' : '隐藏'"
+          @click="toggleHidden(idx)"
+        >
+          <Icon :icon="p.hidden ? 'mdi:eye-off-outline' : 'mdi:eye-outline'" />
+        </button>
+        <span class="cell-controls-divider" />
         <button
           class="row-btn-icon"
           :disabled="idx === 0"

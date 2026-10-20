@@ -1,7 +1,6 @@
 <!-- 文档分析功能 - 设置弹窗名称排除分区（重名文档名称排除） -->
 <template>
   <section class="settings-section">
-    <div class="settings-section-title">名称排除</div>
     <p class="settings-hint">每行一个文档名称，包含该名称的文档将从重名统计中排除（不区分大小写）</p>
     <textarea
       :value="text"

@@ -1,10 +1,6 @@
 <!-- 文档分析功能 - 设置弹窗查询默认分区（隐藏零值/默认笔记本/默认排序） -->
 <template>
   <section class="settings-section">
-    <div class="settings-section-title">
-      查询默认
-    </div>
-
     <!-- 隐藏零值行开关 -->
     <div class="settings-row">
       <span class="settings-row-label">隐藏零值</span>

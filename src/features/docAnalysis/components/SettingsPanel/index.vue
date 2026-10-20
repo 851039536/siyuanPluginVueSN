@@ -24,9 +24,29 @@
           </button>
         </div>
 
+        <!-- 顶部分类标签栏：四个配置分区切换（每屏只展示当前分区，收敛弹窗高度） -->
+        <Tabs
+          :value="activeSection"
+          size="xsmall"
+          class="settings-tabs"
+          @update:value="(v) => activeSection = v as SectionKey"
+        >
+          <TabList>
+            <Tab
+              v-for="s in SECTIONS"
+              :key="s.key"
+              :value="s.key"
+            >
+              <Icon :icon="s.icon" />
+              {{ s.label }}
+            </Tab>
+          </TabList>
+        </Tabs>
+
         <div class="settings-body">
           <!-- 健康度分区：扣分项勾选 + 0B 排除书签勾选 -->
           <HealthSection
+            v-show="activeSection === 'health'"
             v-model:enabledDeductions="draft.enabledDeductions"
             v-model:zeroByteExcludeBookmarks="draft.zeroByteExcludeBookmarks"
             :bookmark-distribution="bookmarkDistribution"
@@ -34,12 +54,14 @@
 
           <!-- 名称排除分区：重名文档名称排除 -->
           <ExcludeSection
+            v-show="activeSection === 'exclude'"
             :visible="visible"
             v-model:names="draft.duplicateNames"
           />
 
           <!-- 平台管理分区：平台增删/排序/判定/隐藏 -->
           <PlatformSection
+            v-show="activeSection === 'platform'"
             :visible="visible"
             v-model:platforms="draft.platforms"
             v-model:valid="platformValid"
@@ -47,6 +69,7 @@
 
           <!-- 查询默认分区：隐藏零值 + 默认笔记本 + 默认排序 -->
           <QuerySection
+            v-show="activeSection === 'query'"
             v-model:hideZero="draft.hideZero"
             v-model:notebookId="draft.notebookId"
             v-model:sortField="draft.sortField"
@@ -81,6 +104,9 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
 import { computed, reactive, ref, watch } from "vue"
+import Tab from "@/components/Tab.vue"
+import TabList from "@/components/TabList.vue"
+import Tabs from "@/components/Tabs.vue"
 import type {
   DeductionKey,
   DocStats,
@@ -132,6 +158,20 @@ const emit = defineEmits<{
 const platformValid = ref(true)
 const saving = ref(false)
 
+/** 配置分区 key */
+type SectionKey = "health" | "exclude" | "platform" | "query"
+
+/** 顶部分类标签页元数据（图标 + 文案；新增分区在此追加一项即可） */
+const SECTIONS: { key: SectionKey, label: string, icon: string }[] = [
+  { key: "health", label: "健康度", icon: "mdi:heart-pulse" },
+  { key: "exclude", label: "名称排除", icon: "mdi:filter-remove-outline" },
+  { key: "platform", label: "平台管理", icon: "mdi:cloud-check-outline" },
+  { key: "query", label: "查询默认", icon: "mdi:tune-variant" },
+]
+
+/** 当前激活的配置分区 */
+const activeSection = ref<SectionKey>("health")
+
 /** 聚合副本：打开时从各持久化状态初始化，编辑过程仅改副本 */
 const draft = reactive<SettingsDraft>({
   enabledDeductions: [],
@@ -147,6 +187,7 @@ const draft = reactive<SettingsDraft>({
 /** 打开/首次挂载时用各持久化状态初始化副本（immediate 保证 v-if 首次挂载 visible=true 也能初始化） */
 watch(() => props.visible, (v) => {
   if (!v) return
+  activeSection.value = "health"
   draft.enabledDeductions = [...props.healthSettings.enabledDeductions]
   draft.zeroByteExcludeBookmarks = [...props.healthSettings.zeroByteExcludeBookmarks]
   draft.duplicateNames = [...props.duplicateNameFilter]

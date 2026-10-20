@@ -19,8 +19,11 @@ import {
   PANEL_DEFAULT_HEIGHT_CSS,
   PANEL_MIN_HEIGHT,
   PANEL_MIN_WIDTH,
+  PANEL_TOGGLE_TRANSITION_MS,
   applyPanelLayout,
+  beginPanelToggleAnimation,
   disposePanelLayout,
+  endPanelToggleAnimation,
   getQuickNoteMask,
 } from "./layout"
 import { beginPointerSession } from "./pointerSession"
@@ -43,13 +46,13 @@ export class QuickNoteManager {
   /** 自定义定位坐标（拖拽产生，position === "custom" 时生效） */
   private customX = DEFAULT_QUICK_NOTE_SETTINGS.customX
   private customY = DEFAULT_QUICK_NOTE_SETTINGS.customY
-  /** 最小化状态（持久化，重启/自动打开时恢复小条形态） */
+  /** 最小化状态（持久化，重启/自动打开时恢复图标形态） */
   private minimized = DEFAULT_QUICK_NOTE_SETTINGS.minimized
   /** 面板宽度（px，右下角缩放后持久化） */
   private panelWidth = DEFAULT_QUICK_NOTE_SETTINGS.panelWidth
   /** 面板高度（px；0 = 未手动缩放，按视口比例计算） */
   private panelHeight = DEFAULT_QUICK_NOTE_SETTINGS.panelHeight
-  /** 刚完成一次拖拽/缩放（供小条 click 与遮罩点击护栏读取） */
+  /** 刚完成一次拖拽/缩放（供图标按钮 click 与遮罩点击护栏读取） */
   private interactionMoved = false
   /** 当前拖拽 / 缩放会话（destroy 与新会话抢占时清理） */
   private dragSession: PointerSession | null = null
@@ -58,6 +61,8 @@ export class QuickNoteManager {
   private timerRegistry = new TimerRegistry()
   /** 交互标记的复位定时器句柄 */
   private interactionResetTimer: TimerHandle | null = null
+  /** 最小化/展开尺寸过渡的收尾定时器句柄 */
+  private toggleAnimationTimer: TimerHandle | null = null
 
   constructor(plugin: Plugin) {
     this.storage = new QuickNoteStorage(plugin)
@@ -66,7 +71,7 @@ export class QuickNoteManager {
       maskId: MASK_ID,
       width: `${DEFAULT_QUICK_NOTE_SETTINGS.panelWidth}px`,
       height: PANEL_DEFAULT_HEIGHT_CSS,
-      // 点击遮罩（面板外区域）收起为最小化条而非关闭，关闭仅由头部关闭按钮/状态栏切换触发
+      // 点击遮罩（面板外区域）收起为最小化图标而非关闭，关闭仅由头部关闭按钮/状态栏切换触发
       getCloseHandler: () => this.requestMinimize,
       persistent: true,
       buildProps: () => ({
@@ -118,8 +123,9 @@ export class QuickNoteManager {
   }
 
   close = (): void => {
-    // 关闭时终止进行中的拖拽/缩放，避免隐藏后会话仍在改写样式
+    // 关闭时终止进行中的拖拽/缩放与尺寸过渡，避免隐藏后会话/动画仍在改写样式
     this.endSessions()
+    this.stopToggleAnimation()
     this.modal.close()
   }
 
@@ -129,6 +135,7 @@ export class QuickNoteManager {
    */
   async reset(): Promise<void> {
     this.endSessions()
+    this.stopToggleAnimation()
     this.position = DEFAULT_QUICK_NOTE_SETTINGS.position
     this.customX = DEFAULT_QUICK_NOTE_SETTINGS.customX
     this.customY = DEFAULT_QUICK_NOTE_SETTINGS.customY
@@ -141,8 +148,8 @@ export class QuickNoteManager {
   }
 
   /**
-   * 遮罩点击入口：请求收起为最小化条
-   * 最小化条视图由面板组件渲染（v-if），故派发事件让面板同步切换并回调 setMinimized
+   * 遮罩点击入口：请求收起为最小化图标
+   * 最小化视图由面板组件渲染（v-if），故派发事件让面板同步切换并回调 setMinimized
    */
   private requestMinimize = (): void => {
     // 从头部起拖 / 从缩放把手起拖、松手落在遮罩上时 click 会派发到遮罩（共同祖先），不应误触收起
@@ -162,11 +169,13 @@ export class QuickNoteManager {
 
   /**
    * 设置最小化状态（供面板最小化/展开按钮调用，持久化供重启恢复）
-   * 收起：容器尺寸改为 auto（由面板最小化条的 CSS 决定收缩方向与尺寸），
-   * 遮罩变透明且点击穿透，仅小条可交互；展开：还原尺寸与遮罩
+   * 收起：容器固定为 32×32 的纯图标按钮，遮罩变透明且点击穿透；
+   * 展开：还原尺寸与遮罩。两者之间以 0.12s 宽高过渡衔接
    */
   setMinimized(minimized: boolean): void {
     this.endSessions()
+    // 先挂过渡类再改尺寸：仅最小化/展开做动画，窗口 resize 与拖拽缩放保持即时
+    this.startToggleAnimation()
     this.minimized = minimized
     this.applyLayout()
     this.emitStateChange()
@@ -185,19 +194,21 @@ export class QuickNoteManager {
   }
 
   /**
-   * 拖拽移动入口（展开态头部与最小化小条的 pointerdown 调用）
+   * 拖拽移动入口（展开态头部与最小化图标按钮的 pointerdown 调用）
    * 位移超过阈值才切换为 custom 绝对定位并跟随移动；松手后持久化坐标并置交互标记供 click 护栏读取
    */
   startDrag(e: PointerEvent): void {
     const container = this.modal.container
     // 只响应鼠标左键 / 主触点；右键、中键与多指副触点不参与拖拽
     if (!container || e.button !== 0 || !e.isPrimary) return
-    // 拖拽把手内的其它按钮（最小化/关闭/预设菜单）不触发拖拽；小条自身是 button，不在此限
+    // 拖拽把手内的其它按钮（最小化/关闭/预设菜单）不触发拖拽；图标按钮自身是 button，不在此限
     const targetButton = e.target instanceof Element ? e.target.closest("button") : null
     if (targetButton && targetButton !== e.currentTarget) return
     // 阻止拖拽过程中选中面板文本
     e.preventDefault()
     this.endSessions()
+    // 手动拖拽必须即时跟手，终止可能仍在进行的展开/收起尺寸过渡
+    this.stopToggleAnimation()
 
     const rect = container.getBoundingClientRect()
     const size: PanelSize = {
@@ -243,8 +254,7 @@ export class QuickNoteManager {
         this.persistSettings().catch((err) => {
           console.error("[quickNote] 拖拽位置保存失败:", err)
         })
-        // 最小化时不同步：避免小条横竖方向在拖放瞬间翻转，展开时由 handleToggleMinimize 再同步
-        if (!this.minimized) this.emitStateChange()
+        this.emitStateChange()
       },
     })
   }
@@ -258,6 +268,8 @@ export class QuickNoteManager {
     if (!container || this.minimized || e.button !== 0 || !e.isPrimary) return
     e.preventDefault()
     this.endSessions()
+    // 手动缩放必须即时跟手，终止可能仍在进行的展开/收起尺寸过渡
+    this.stopToggleAnimation()
 
     const rect = container.getBoundingClientRect()
     const startX = e.clientX
@@ -301,7 +313,7 @@ export class QuickNoteManager {
     })
   }
 
-  /** 小条 click 护栏：刚完成拖拽/缩放则返回 true（本次点击应被吞掉，不触发展开） */
+  /** 图标按钮 click 护栏：刚完成拖拽/缩放则返回 true（本次点击应被吞掉，不触发展开） */
   consumeDragClick(): boolean {
     const moved = this.interactionMoved
     this.interactionMoved = false
@@ -338,6 +350,23 @@ export class QuickNoteManager {
     }, 0)
   }
 
+  /** 开启最小化/展开的尺寸过渡，并在过渡结束后移除动画类（样式保留复用） */
+  private startToggleAnimation(): void {
+    beginPanelToggleAnimation()
+    this.timerRegistry.clear(this.toggleAnimationTimer)
+    this.toggleAnimationTimer = this.timerRegistry.setTimeout(() => {
+      endPanelToggleAnimation()
+      this.toggleAnimationTimer = null
+    }, PANEL_TOGGLE_TRANSITION_MS + 40)
+  }
+
+  /** 立即收尾尺寸过渡（关闭 / 恢复 / 销毁时调用，避免动画类残留） */
+  private stopToggleAnimation(): void {
+    this.timerRegistry.clear(this.toggleAnimationTimer)
+    this.toggleAnimationTimer = null
+    endPanelToggleAnimation()
+  }
+
   /** 主动结束进行中的拖拽/缩放会话（不落盘、不派发状态） */
   private endSessions(): void {
     this.dragSession?.cleanup()
@@ -353,11 +382,13 @@ export class QuickNoteManager {
 
   /**
    * 视口变化（窗口缩放 / 界面缩放 / 拖动窗口跨屏）后重新钳制：
-   * 展开态重算尺寸与坐标；最小化 custom 小条重算坐标；预设档位由遮罩 flex 自动回流
+   * 展开态重算尺寸与坐标；最小化 custom 图标重算坐标；预设档位由遮罩 flex 自动回流
    */
   private handleWindowResize = (): void => {
     if (!this.modal.visible) return
-    // 最小化预设小条由遮罩 flex 自动回流；展开态与 custom 小条需重算尺寸/坐标
+    // 视口变化需即时重排，先终止可能仍在进行的展开/收起尺寸过渡
+    this.stopToggleAnimation()
+    // 最小化预设图标由遮罩 flex 自动回流；展开态与 custom 图标需重算尺寸/坐标
     if (this.minimized && this.position !== "custom") return
     this.applyLayout()
   }
@@ -376,8 +407,9 @@ export class QuickNoteManager {
 
   /** 彻底销毁（persistent Modal 必须 destroy 而非 close，否则残留 DOM） */
   destroy(): void {
-    // 兜底清理拖拽/缩放会话（含 resize cursor）、复位定时器、视口监听与最小化动态样式
+    // 兜底清理拖拽/缩放会话（含 resize cursor）、尺寸过渡、复位定时器、视口监听与注入样式
     this.endSessions()
+    this.stopToggleAnimation()
     this.timerRegistry.clear(this.interactionResetTimer)
     this.interactionResetTimer = null
     window.removeEventListener("resize", this.handleWindowResize)

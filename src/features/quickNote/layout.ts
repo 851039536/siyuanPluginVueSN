@@ -22,14 +22,22 @@ export const PANEL_MIN_HEIGHT = 320
 const MASK_BACKGROUND = "rgba(0, 0, 0, 0.5)"
 /** 遮罩 DOM ID（与 createModalVueApp 传入的 maskId 一致） */
 export const MASK_ID = "quick-note-mask"
-/** 最小化态动态样式的 style 标签 ID（injectStyle/removeStyle 配对） */
-const MINIMIZED_STYLE_ID = "quick-note-minimized-style"
-/** 最小化态遮罩状态类（Manager 与注入样式共用） */
+/** 最小化态容器边长（px）：与 .mini-bar 的 30px 按钮居中配合 */
+const MINIMIZED_PANEL_SIZE = 32
+/** 最小化/展开的尺寸过渡时长（ms）：0.12s，与全库过渡节奏一致 */
+export const PANEL_TOGGLE_TRANSITION_MS = 120
+/** 切换动画的遮罩状态类（仅切换瞬间存在，避免窗口 resize / 拖拽缩放反复动画） */
+const TOGGLE_ANIMATING_CLASS = "quick-note-mask--animating"
+/** 尺寸过渡注入样式的 style 标签 ID（injectStyle/removeStyle 配对） */
+const LAYOUT_STYLE_ID = "quick-note-layout-style"
+/** 最小化态遮罩状态类（半透明样式作用域） */
 const MINIMIZED_MASK_CLASS = "quick-note-mask--minimized"
-/** 最小化小条根节点类名（测量小条尺寸前确认 Vue 已完成渲染） */
+/** 最小化态半透明注入样式的 style 标签 ID */
+const MINIMIZED_STYLE_ID = "quick-note-minimized-style"
+/** 最小化态静止透明度（悬停恢复 1，降低小图标对界面的视觉干扰） */
+const MINIMIZED_OPACITY = 0.4
+/** 最小化图标按钮根节点类名（测量其尺寸前确认 Vue 已完成渲染） */
 const MINI_BAR_CLASS = "mini-bar"
-/** 最小化态半透明度（悬停恢复不透明，降低小条对背后界面的视觉干扰） */
-const MINIMIZED_OPACITY = 0.5
 
 /** 应用布局所需的权威状态（由 Manager 传入，本层不持有） */
 export interface PanelLayoutState {
@@ -52,9 +60,37 @@ export function getQuickNoteMask(): HTMLElement | null {
   return document.getElementById(MASK_ID)
 }
 
-/** 移除最小化态注入样式（Manager destroy 调用） */
+/** 移除布局相关注入样式（Manager destroy 调用） */
 export function disposePanelLayout(): void {
+  removeStyle(LAYOUT_STYLE_ID)
   removeStyle(MINIMIZED_STYLE_ID)
+}
+
+/**
+ * 开启一次最小化/展开的宽高过渡
+ * 仅在切换瞬间加状态类：窗口 resize、拖拽缩放、打开面板都不能触发尺寸动画
+ */
+export function beginPanelToggleAnimation(): void {
+  const mask = getQuickNoteMask()
+  if (!mask) return
+  injectStyle(LAYOUT_STYLE_ID, `
+    #${MASK_ID}.${TOGGLE_ANIMATING_CLASS} > div {
+      transition: width ${PANEL_TOGGLE_TRANSITION_MS}ms ease, height ${PANEL_TOGGLE_TRANSITION_MS}ms ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #${MASK_ID}.${TOGGLE_ANIMATING_CLASS} > div {
+        transition: none;
+      }
+    }
+  `)
+  mask.classList.add(TOGGLE_ANIMATING_CLASS)
+  // 强制一次布局读取，确保过渡属性先于随后的宽高变化生效
+  mask.getBoundingClientRect()
+}
+
+/** 结束尺寸过渡（移除状态类；注入样式保留复用，destroy 时统一移除） */
+export function endPanelToggleAnimation(): void {
+  getQuickNoteMask()?.classList.remove(TOGGLE_ANIMATING_CLASS)
 }
 
 /** 视口尺寸（读写分离，便于两处钳制共用同一来源） */
@@ -84,7 +120,7 @@ function getAppliedPanelSize(state: PanelLayoutState): PanelSize {
   )
 }
 
-/** 小条实际尺寸；Vue 尚未把内容切到小条时返回 null（不能拿展开面板尺寸钳制小条坐标） */
+/** 最小化图标按钮实际尺寸；Vue 尚未把内容切到图标时返回 null（不能拿展开尺寸钳制图标坐标） */
 function getMinimizedSize(container: HTMLElement): PanelSize | null {
   if (!container.querySelector(`.${MINI_BAR_CLASS}`)) return null
   const rect = container.getBoundingClientRect()
@@ -106,7 +142,7 @@ function applyPlacement(
   state: PanelLayoutState,
 ): PanelLayoutResult {
   if (state.position === "custom") {
-    // 最小化过渡中小条可能尚未渲染，此时以 0 尺寸仅约束左上角，避免把展开尺寸当成小条尺寸
+    // 最小化过渡中图标按钮可能尚未渲染，此时以 0 尺寸仅约束左上角，避免把展开尺寸当成图标尺寸
     const size = state.minimized
       ? getMinimizedSize(container) ?? {
         width: 0,
@@ -157,22 +193,26 @@ function applyExpandedChrome(mask: HTMLElement, container: HTMLElement, state: P
   container.style.height = `${size.height}px`
 }
 
-/** 最小化态：容器收缩为 auto，遮罩透明且点击穿透，仅小条可交互 */
+/** 最小化态：容器收缩为固定小方块（纯图标按钮），遮罩透明且点击穿透，仅图标可交互 */
 function applyMinimizedChrome(mask: HTMLElement, container: HTMLElement): void {
-  container.style.width = "auto"
-  container.style.height = "auto"
+  container.style.width = `${MINIMIZED_PANEL_SIZE}px`
+  container.style.height = `${MINIMIZED_PANEL_SIZE}px`
   mask.style.background = "transparent"
   mask.style.pointerEvents = "none"
   container.style.pointerEvents = "auto"
   mask.classList.add(MINIMIZED_MASK_CLASS)
-  // 小条外壳（容器 div）半透明，悬停恢复：:hover 无法用内联样式表达，经 injectStyle + 遮罩状态 class 实现
+  // 静止半透明、悬停恢复：容器整体降低存在感（边框/底色/图标一起淡出）
+  // 刻意不写 transition：避免覆盖切换瞬间的宽高过渡，悬停为即时恢复
   injectStyle(MINIMIZED_STYLE_ID, `
     #${MASK_ID}.${MINIMIZED_MASK_CLASS} > div {
       opacity: ${MINIMIZED_OPACITY};
-      transition: opacity 0.12s;
     }
     #${MASK_ID}.${MINIMIZED_MASK_CLASS} > div:hover {
       opacity: 1;
+    }
+    /* 悬停淡入；切换动画期间让位给宽高过渡（:not 选择器不匹配） */
+    #${MASK_ID}.${MINIMIZED_MASK_CLASS}:not(.${TOGGLE_ANIMATING_CLASS}) > div {
+      transition: opacity 0.12s ease;
     }
   `)
 }

@@ -1,6 +1,6 @@
 # 速记（quickNote）
 
-日常待办、灵感收集、项目跟进与每周复盘的综合工作面板。保持 persistent Modal 弹窗形态，支持拖拽移动、右下角缩放与最小化贴边；白底蓝绿商务风格，顶部固定「今天要处理的」聚焦视图自动汇总今日到期/逾期任务与卡点项目。
+日常待办、灵感收集、项目跟进与每周复盘的综合工作面板。保持 persistent Modal 弹窗形态，支持拖拽移动、右下角缩放与最小化收纳为纯图标小按钮；白底蓝绿商务风格，顶部固定「今天要处理的」聚焦视图自动汇总今日到期/逾期任务与卡点项目。
 
 ## 功能
 
@@ -81,7 +81,7 @@ quickNote/
 │   └── useWeeklyReview.ts      # 复盘周切换纯派生（weekOffset 回溯任意周统计 + 卡点汇总）
 ├── types/
 │   ├── index.ts                # 类型入口（re-export position + data + events，外部导入路径不变）
-│   ├── position.ts             # 弹窗位置/尺寸设置类型 + 位置 → 对齐/最小化方向映射表
+│   ├── position.ts             # 弹窗位置/尺寸设置类型 + 位置 → 对齐 / 收起图标映射表
 │   ├── events.ts               # 面板交互事件名常量（遮罩收起 / 状态回放）
 │   ├── data.ts                 # 待办/灵感/项目数据模型 + 优先级/状态元数据映射表
 │   └── storage.ts              # QuickNoteStorage（data + settings 两个槽位）
@@ -145,7 +145,7 @@ index.vue  useAiPolish(plugin)  →  { polishing, polish }
 - 仅响应鼠标左键 / 主触点；右键、中键与多指副触点不参与
 - `pointercancel`、窗口失焦、`pointermove` 的 `buttons === 0` 均会兜底结束会话，
   避免在窗口外松手后会话悬挂
-- 会话结束持久化坐标/尺寸；`consumeDragClick()` 供小条 click 护栏吞掉拖拽后的误触点击
+- 会话结束持久化坐标/尺寸；`consumeDragClick()` 供图标按钮 click 护栏吞掉拖拽后的误触点击
 
 该实现与 `vueAppHelper` 的遮罩 DOM 结构耦合，helper 重构时需同步调整。
 
@@ -157,16 +157,23 @@ index.vue  useAiPolish(plugin)  →  { polishing, polish }
 
 ## 最小化机制
 
-最小化方向由当前定位派生（`POSITION_MINIMIZE_META`）。Manager 的 `setMinimized()` 将容器尺寸改为 `auto`，
-遮罩设为透明 + `pointer-events: none` 实现点击穿透；展开时还原尺寸与遮罩。最小化状态持久化。
+最小化态统一为 **32px 纯图标小按钮**（30px 图标按钮 + 右上角待办计数徽标，GitHub 风格），
+收起按钮的箭头方向由当前定位派生（`POSITION_COLLAPSE_ICONS`）。Manager 的 `setMinimized()`
+将容器固定为 `32 × 32`，遮罩设为透明 + `pointer-events: none` 实现点击穿透；展开时还原尺寸与遮罩。
+最小化状态持久化。
 
-- **预设档位**：小条位置由遮罩 flex 对齐决定（顶/底/左/右/居中）
-- **custom 自定义**：小条原地收起在面板左上角（保持绝对定位），按住小条可继续拖动；
-  展开时按展开尺寸重新钳制坐标 —— 不会出现「小条在左边、展开却跳到别处」的割裂
+- **预设档位**：图标位置由遮罩 flex 对齐决定（顶/底/左/右/居中）
+- **custom 自定义**：图标原地收起在面板左上角（保持绝对定位），按住图标可继续拖动；
+  展开时按展开尺寸重新钳制坐标 —— 不会出现「图标在左边、展开却跳到别处」的割裂
+- **静止半透明**：整个小方块（边框/底色/图标/计数）默认 40% 透明度，悬停恢复不透明，
+  降低常驻图标对界面的视觉干扰；悬停淡入 0.12s，切换动画期间让位给宽高过渡
+- **切换动画**：最小化/展开瞬间挂 0.12s 宽高过渡类，图标以 0.12s 缩放淡入；
+  动画类只在切换瞬间存在，窗口 resize 与手动拖拽缩放保持即时，避免跟手滞后
+- 待办计数超过 99 折叠显示为 `99+`，徽标不拦截指针事件（点击仍落在图标按钮上）
 
 面板为 persistent Vue 实例，`reset()` / 初始化回放等外部路径改动 Manager 状态时，
 经 `QUICK_NOTE_STATE_EVENT` 通知面板把本地 `position` / `minimized` ref 拉回权威状态，
-避免出现「Manager 已展开、界面仍渲染小条」的失配。
+避免出现「Manager 已展开、界面仍渲染小图标」的失配。
 
 ## 联动链路
 

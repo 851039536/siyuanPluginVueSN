@@ -90,11 +90,6 @@
   overflow: hidden;
   // 弹窗基准字号（防止内部未声明字号的文字继承思源全局默认字号）
   font-size: $t-xs;
-
-  // 最小化态：容器尺寸由 Manager 改为 auto，面板随内容（最小化条）自适应
-  &--minimized {
-    height: auto;
-  }
 }
 
 // ========== 右下角缩放把手（固定 14px 命中区，保证小面板下仍可抓取） ==========
@@ -131,23 +126,28 @@
   }
 }
 
-// ========== 最小化条（点击展开） ==========
+// ========== 最小化态：纯图标小按钮（点击展开） ==========
 
 .mini-bar {
+  // 30×30：容器由 Manager 固定为 32px，四周留 1px 兼容 border-box / content-box
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin: auto;
   display: flex;
   align-items: center;
-  gap: $s-2;
-  padding: $s-2 $s-3;
+  justify-content: center;
+  padding: 0;
   border: none;
+  border-radius: $r-base;
   background: transparent;
-  color: var(--b3-theme-on-surface);
-  font-size: $t-xs;
-  font-weight: $fw-semibold;
-  font-family: inherit;
+  color: var(--b3-theme-primary);
   // 可拖动把手（pointer 拖拽需禁用默认触控手势）
   cursor: grab;
   touch-action: none;
   transition: background 0.12s;
+  animation: qn-mini-in 0.12s ease;
 
   &:hover {
     background: var(--b3-theme-surface-lighter);
@@ -156,30 +156,47 @@
   &:active {
     cursor: grabbing;
   }
+}
 
-  // 竖条态（位置为左/右贴边）：纵向堆叠，标题纵向排版
-  &--vertical {
-    flex-direction: column;
-    padding: $s-3 $s-2;
+// 右上角未完成待办计数徽标（超过 99 折叠为 99+）
+.mini-bar__count {
+  position: absolute;
+  top: $s-px2;
+  right: $s-px2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: $s-3;
+  height: $s-3;
+  padding: 0 $s-px3;
+  border: 1px solid var(--b3-theme-background);
+  border-radius: $r-full;
+  background: var(--b3-card-error-color);
+  color: var(--b3-theme-on-primary);
+  // 辅助文字
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
+  pointer-events: none;
+}
 
-    .mini-bar__title {
-      writing-mode: vertical-rl;
-    }
+// 图标入场：缩小时轻微缩放淡入，配合容器尺寸过渡
+@keyframes qn-mini-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-.mini-bar__count {
-  // 辅助文字：未完成待办计数徽标
-  font-size: $t-2xs;
-  padding: 0 $s-1;
-  border-radius: $r-full;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  color: var(--b3-theme-on-surface-variant);
-}
-
-.mini-bar__chevron {
-  color: var(--b3-theme-on-surface-variant);
+@media (prefers-reduced-motion: reduce) {
+  .mini-bar {
+    animation: none;
+  }
 }
 
 // ========== 面板头部（紧凑拖拽把手） ==========

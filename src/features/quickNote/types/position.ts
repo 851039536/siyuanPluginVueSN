@@ -16,7 +16,7 @@ export interface QuickNoteSettings {
   /** 自定义定位的容器左上角视口坐标（px，position === "custom" 时生效） */
   customX: number
   customY: number
-  /** 最小化状态（持久化，重启/自动打开时恢复小条形态） */
+  /** 最小化状态（持久化，重启/自动打开时恢复图标形态） */
   minimized: boolean
   /** 面板宽度（px，右下角拖拽缩放后持久化；渲染时按视口重新钳制） */
   panelWidth: number
@@ -63,47 +63,16 @@ export const POSITION_ALIGN_MAP: Record<
   },
 }
 
-/** 最小化条的收缩轴向：horizontal = 收成横条（上/下/居中），vertical = 收成竖条（左/右） */
-export type QuickNoteMinimizeAxis = "horizontal" | "vertical"
-
 /**
- * 位置 → 最小化方向元数据映射
- * axis 决定最小化条的收缩轴向；collapseIcon/expandIcon 指示收起/展开的方向箭头
+ * 位置 → 收起按钮图标映射
+ * 最小化态统一为纯图标小按钮（不再区分横条/竖条），仅收起箭头随预设位置提示折叠方向
  */
-export const POSITION_MINIMIZE_META: Record<
-  QuickNotePlacement,
-  { axis: QuickNoteMinimizeAxis, collapseIcon: IconKey, expandIcon: IconKey }
-> = {
-  // 居中无贴靠边缘，按横条收起（视觉上向上折叠为标题条）
-  center: {
-    axis: "horizontal",
-    collapseIcon: "chevronUp",
-    expandIcon: "chevronDown",
-  },
-  // 自定义坐标无贴靠边缘，同 center 按横条原地收起
-  custom: {
-    axis: "horizontal",
-    collapseIcon: "chevronUp",
-    expandIcon: "chevronDown",
-  },
-  top: {
-    axis: "horizontal",
-    collapseIcon: "chevronUp",
-    expandIcon: "chevronDown",
-  },
-  bottom: {
-    axis: "horizontal",
-    collapseIcon: "chevronDown",
-    expandIcon: "chevronUp",
-  },
-  left: {
-    axis: "vertical",
-    collapseIcon: "chevronLeft",
-    expandIcon: "chevronRight",
-  },
-  right: {
-    axis: "vertical",
-    collapseIcon: "chevronRight",
-    expandIcon: "chevronLeft",
-  },
+export const POSITION_COLLAPSE_ICONS: Record<QuickNotePlacement, IconKey> = {
+  // 居中/自定义无贴靠边缘，按向上折叠提示
+  center: "chevronUp",
+  custom: "chevronUp",
+  top: "chevronUp",
+  bottom: "chevronDown",
+  left: "chevronLeft",
+  right: "chevronRight",
 }

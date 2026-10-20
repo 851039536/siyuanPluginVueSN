@@ -1,33 +1,24 @@
 <template>
-  <div
-    class="quick-note-panel"
-    :class="{ 'quick-note-panel--minimized': minimized }"
-  >
-    <!-- 最小化态：贴边小条（横条/竖条由当前位置派生），按住可拖动，点击展开，tooltip："展开" -->
+  <div class="quick-note-panel">
+    <!-- 最小化态：纯图标小按钮（GitHub 风格），按住可拖动，点击展开，tooltip："展开" -->
     <button
       v-if="minimized"
       class="mini-bar"
-      :class="{ 'mini-bar--vertical': minimizeMeta.axis === 'vertical' }"
       :title="i18n.restore"
+      :aria-label="i18n.restore"
       @pointerdown="props.manager.startDrag($event)"
       @click="handleMiniBarClick"
     >
       <IconWrapper
         name="quickNote"
-        :size="14"
+        :size="16"
       />
-      <!-- 最小化条标题："速记"（竖条时纵向排版） -->
-      <span class="mini-bar__title">{{ i18n.title }}</span>
-      <!-- 未完成待办计数徽标 -->
+      <!-- 未完成待办计数徽标（超过 99 折叠显示） -->
       <span
         v-if="pendingCount > 0"
         class="mini-bar__count"
-      >{{ pendingCount }}</span>
-      <IconWrapper
-        :name="minimizeMeta.expandIcon"
-        :size="14"
-        class="mini-bar__chevron"
-      />
+        aria-hidden="true"
+      >{{ pendingCount > 99 ? "99+" : pendingCount }}</span>
     </button>
 
     <!-- 展开态：完整面板 -->
@@ -85,7 +76,7 @@
             @click="handleToggleMinimize"
           >
             <IconWrapper
-              :name="minimizeMeta.collapseIcon"
+              :name="collapseIcon"
               :size="12"
             />
           </button>
@@ -218,7 +209,7 @@ import { useProjects } from "./composables/useProjects"
 import { useTodoList } from "./composables/useTodoList"
 import { useWeeklyReview } from "./composables/useWeeklyReview"
 import {
-  POSITION_MINIMIZE_META,
+  POSITION_COLLAPSE_ICONS,
   QUICK_NOTE_MASK_MINIMIZE_EVENT,
   QUICK_NOTE_POSITIONS,
   QUICK_NOTE_STATE_EVENT,
@@ -276,14 +267,15 @@ const activeTab = ref<(typeof TABS)[number]["key"]>("todo")
 // ==================== 定位/最小化（沿用 Manager 机制） ====================
 const position = ref<QuickNotePlacement>(props.manager.getPosition())
 const minimized = ref(props.manager.isMinimized())
-const minimizeMeta = computed(() => POSITION_MINIMIZE_META[position.value])
+/** 头部收起按钮的方向图标（最小化态本身固定为纯图标小按钮） */
+const collapseIcon = computed(() => POSITION_COLLAPSE_ICONS[position.value])
 
 // 预设位置菜单开合
 const menuOpen = ref(false)
 const menuWrapRef = ref<HTMLElement | null>(null)
 
 // ==================== 壳层数据访问 ====================
-/** 未完成待办计数（最小化条徽标用） */
+/** 未完成待办计数（最小化图标徽标用） */
 const pendingCount = todoList.pendingCount
 /** 今日到期 + 逾期未完成任务（聚焦区用） */
 const todayFocus = todoList.todayFocus

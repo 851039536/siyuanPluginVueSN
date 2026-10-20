@@ -10,6 +10,8 @@
   @extend %modal-panel;
   width: 700px;
   max-width: 94vw;
+  // 固定高度：切换标签页时弹窗尺寸不跳动（内容超高由 .settings-body 内部滚动）
+  height: 520px;
   max-height: 84vh;
 }
 
@@ -28,6 +30,8 @@
 
 .settings-body {
   flex: 1;
+  // 固定高度容器下的 flex 子项须可收缩，overflow-y:auto 才能生效（否则内容撑高弹窗）
+  min-height: 0;
   overflow-y: auto;
   padding: 0;
   @include da-scrollbar;
@@ -40,10 +44,14 @@
 }
 
 // ============ 顶部分类标签栏 ============
+// 基线复用共享 TabList 的通栏下边线（与 s3Backup TabsShell、statistics 等顶栏同为单线观感），
+// 标签左右留白与弹窗内容（$s-4）对齐；激活下划线由组件压在基线上，此处不额外画线，避免双线。
 .settings-tabs {
   flex-shrink: 0;
-  padding: 0 $s-3;
-  border-bottom: 1px solid var(--b3-border-color);
+
+  :deep(.si-tablist) {
+    padding: 0 $s-4;
+  }
 }
 
 // ============ 分区通用（标签页模式：每屏仅展示一个分区） ============

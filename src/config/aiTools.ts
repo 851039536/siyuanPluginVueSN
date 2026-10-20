@@ -1,6 +1,6 @@
 /**
  * AI 工具元数据（顶层共享配置层，单一数据源）
- * skillsViewer 的扫描/复制路径与 aiContentGenerator 的展示颜色均从此处派生。
+ * skills 扫描/复制路径（aiContentGenerator/skills 子模块）与技能来源展示颜色均从此处派生。
  */
 import type { IconKey } from "@/config/icons"
 
@@ -72,3 +72,8 @@ export interface AIToolMeta {
 
 /** 从完整配置派生的最小投影，避免多处维护 id/name/color 造成漂移 */
 export const AI_TOOL_META: AIToolMeta[] = AI_TOOLS.map(({ id, name, color }) => ({ id, name, color }))
+
+/** 按 id 查询工具配置（工具色/名等展示信息的统一取值口，替代各处自建 Map） */
+export function getAITool(id: string): AIToolConfig | undefined {
+  return AI_TOOLS.find((t) => t.id === id)
+}

@@ -186,12 +186,6 @@ export const FEATURE_ICONS = {
     color: "#a855f7",
   },
 
-  // Skills 查看器
-  skillsViewer: {
-    icon: "mdi:puzzle",
-    color: "#f59e0b",
-  },
-
   // 主题色
   themeColor: {
     icon: "mdi:palette",

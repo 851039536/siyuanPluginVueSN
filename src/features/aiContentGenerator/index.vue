@@ -86,11 +86,12 @@ import { showMessage } from "siyuan"
 // 类型
 import type { DeepSeekReasoningEffort, GenerateOptions, ReviewResult, SkillItem, TargetDoc } from "@/types/ai"
 import { ACTION_META, DEFAULT_SYSTEM_PROMPTS, MD_OUTPUT_SUFFIX } from "./types"
-import type { EditActionKey, ScanSkillsFn } from "./types"
+import type { EditActionKey } from "./types"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 
 // 模块内部导入
 import { AIGeneratorStorage } from "./types/storage"
+import { skillsManagerVisible } from "./skills"
 import { useSkillsLoader } from "./composables/useSkillsLoader"
 import { useGeneration } from "./composables/useGeneration"
 import { useReview } from "./composables/useReview"
@@ -108,8 +109,6 @@ interface Props {
   onGenerate: (options: GenerateOptions) => Promise<string>
   /** 交叉审核回调（modules 侧 addDock 始终注入） */
   onReview: (userRequest: string, generatedContent: string, skill?: SkillItem) => Promise<ReviewResult>
-  /** 技能扫描回调（modules 侧仅在注入时透传，故为可选） */
-  scanSkills?: ScanSkillsFn
 }
 
 const props = defineProps<Props>()
@@ -137,7 +136,7 @@ const editCustomInput = ref("")
 
 const {
   skills, currentSkillIndex, currentSkill, loadSkills, restoreSkillById,
-} = useSkillsLoader(props.plugin, props.scanSkills)
+} = useSkillsLoader(props.plugin)
 
 // ============ 生成管道 ============
 
@@ -368,6 +367,14 @@ watch(
 
 // 技能选择变更持久化（按 id 保存，索引不稳定）
 watch(currentSkillIndex, scheduleSaveSettings)
+
+// Skills 管理弹窗关闭后刷新技能列表（弹窗内可能编辑/删除/复制了技能文件），并尽量保持原选择
+watch(skillsManagerVisible, async (visible) => {
+  if (visible) return
+  const prevId = currentSkill.value?.id ?? ""
+  await loadSkills()
+  restoreSkillById(prevId)
+})
 
 // ============ 清除所有展示态 ============
 

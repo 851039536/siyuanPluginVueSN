@@ -12,9 +12,9 @@
 | `@/libs/` | `src/libs/` | `@/libs/siyuan` |
 | `@<featureName>` | `src/features/<featureName>` | `@gitPush/...` → `src/features/gitPush/...` |
 
-**功能模块别名清单**（共 40 个，按 `src/features/` 目录一一生成）：
+**功能模块别名清单**（共 39 个，按 `src/features/` 目录一一生成）：
 
-`@aiContentGenerator`、`@apiDebugger`、`@bookmarkMarker`、`@compactMode`、`@dataSnapshot`、`@diskBrowser`、`@docAnalysis`、`@docNavigation`、`@encryption`、`@everythingSearch`、`@flashcardReading`、`@floatingBox`、`@floatingToolbar`、`@formatAssistant`、`@generalSettings`、`@gitPush`、`@htmlViewer`、`@imageCompressor`、`@imageCreation`、`@pageLock`、`@passwordVault`、`@prompts`、`@quickNote`、`@resourceManager`、`@rssReader`、`@s3Backup`、`@s3FileManager`、`@scriptLauncher`、`@skillLearning`、`@skillsViewer`、`@statistics`、`@statusBar`、`@superPanel`、`@tableOfContents`、`@textDiff`、`@themeColor`、`@toolCollection`、`@video`、`@websiteNavigation`
+`@aiContentGenerator`、`@apiDebugger`、`@bookmarkMarker`、`@compactMode`、`@dataSnapshot`、`@diskBrowser`、`@docAnalysis`、`@docNavigation`、`@encryption`、`@everythingSearch`、`@flashcardReading`、`@floatingBox`、`@floatingToolbar`、`@formatAssistant`、`@generalSettings`、`@gitPush`、`@htmlViewer`、`@imageCompressor`、`@imageCreation`、`@pageLock`、`@passwordVault`、`@prompts`、`@quickNote`、`@resourceManager`、`@rssReader`、`@s3Backup`、`@s3FileManager`、`@scriptLauncher`、`@skillLearning`、`@statistics`、`@statusBar`、`@superPanel`、`@tableOfContents`、`@textDiff`、`@themeColor`、`@toolCollection`、`@video`、`@websiteNavigation`
 
 ```typescript
 // 使用示例：以 gitPush 模块为例

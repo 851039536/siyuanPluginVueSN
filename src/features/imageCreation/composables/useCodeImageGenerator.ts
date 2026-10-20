@@ -3,7 +3,7 @@
  * 状态收敛为单一 reactive state；偏好持久化经 CodeImageSettingsService
  */
 import type { CSSProperties } from "vue"
-import type { SelectOption } from "@/components/Select.vue"
+import type { SelectOption } from "@/components/select/types"
 import type {
   CodeImageCandidate,
   CodeImageState,

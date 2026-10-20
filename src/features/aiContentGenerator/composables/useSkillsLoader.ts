@@ -2,13 +2,13 @@
  * 技能加载 Composable
  * 统一 index.vue 中的 loadSkills 逻辑
  * 支持同名技能去重（合并来源提示）和持久化选择恢复
- * scanSkills 由调用方通过依赖注入传入（遵循零跨 Feature 直接导入规则）
+ * scanSkills 取自本模块 skills/ 子模块（功能合并后不再依赖注入）
  */
 import type {
   SkillItem,
 } from "@/types/ai"
-import type { ScanSkillsFn } from "../types"
 import { toSkillItem } from "../types"
+import { scanSkills } from "../skills"
 import {
   computed,
   ref,
@@ -16,7 +16,6 @@ import {
 
 export function useSkillsLoader(
   plugin: any,
-  scanSkills?: ScanSkillsFn,
 ) {
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
@@ -64,12 +63,6 @@ export function useSkillsLoader(
 
   /** 扫描加载 AI 技能 */
   async function loadSkills() {
-    // modules 侧未注入 scanSkills（可选契约）时置空技能列表直接返回
-    if (!scanSkills) {
-      skills.value = []
-      currentSkillIndex.value = -1
-      return
-    }
     try {
       let projectPath = ""
       try {

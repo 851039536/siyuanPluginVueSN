@@ -210,11 +210,6 @@ export const FEATURE_CONFIG = [
     descI18nKey: "resourceManager.description",
   },
   {
-    id: "skillsViewer",
-    defaultTitle: "Skills 查看器",
-    defaultDesc: "查看和管理 AI 编程工具的 Skills 配置文件",
-  },
-  {
     id: "superPanel",
     defaultTitle: "超级面板",
     defaultDesc: "统一的插件功能入口面板，集中展示与管理所有功能",

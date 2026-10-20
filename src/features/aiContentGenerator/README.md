@@ -6,11 +6,23 @@
 
 ```
 aiContentGenerator/
-├── index.ts                  # registerAIContentGenerator(plugin) — 功能注册入口
+├── index.ts                  # registerAIContentGenerator(plugin) — 功能注册入口（含 skills 命令注册）
 ├── index.vue                 # Dock 面板编排层（注入 i18n，衔接生成/审核/编辑操作）
 ├── utils.ts                  # 纯工具函数（Markdown 渲染与转换、技能提示词构建等）
 ├── modules/
 │   └── AIContentGenerator.ts # Dock 注册 + AI 生成/交叉审核调用（走 @/utils/aiApi）
+├── skills/                   # Skills 管理子模块（原 skillsViewer 功能，2026-02 并入）
+│   ├── SkillsManager.ts      # SkillsManager 类 + SkillInfo：扫描/解析/CRUD（fs 能力封装）
+│   ├── SkillsManager.spec.ts # parseSkillMd / toSkillItem 单测
+│   ├── index.ts              # registerSkillsManager（addCommand）+ scanSkills（模块内共享）
+│   ├── state.ts              # 弹窗可见性 ref + show/hide
+│   ├── composables/useSkillsManager.ts # 弹窗全部状态与 CRUD 逻辑（filePath 稳定标识）
+│   ├── components/
+│   │   ├── SkillsManagerDialog.vue # 主弹窗（App.vue 挂载，Teleport 到 body）
+│   │   ├── SkillCard.vue     # 单 Skill 卡片（展示/编辑/展开）
+│   │   ├── DeleteConfirmModal.vue  # 删除确认弹窗
+│   │   └── CopySkillModal.vue      # 复制到其他工具弹窗
+│   └── styles/               # 弹窗/卡片/弹窗基座样式
 ├── composables/              # 视图逻辑：生成 / 审核 / 编辑操作 / 文档目标 / 技能加载
 ├── types/
 │   ├── index.ts              # 类型 + 共享常量（ACTION_META / DEFAULT_SYSTEM_PROMPTS 等）
@@ -19,7 +31,7 @@ aiContentGenerator/
 │   ├── MainContentArea.vue   # 主内容区：加载/错误/空态、预览·对比·审查三视图
 │   ├── ResultActionsBar.vue  # 生成结果操作栏（停止/应用/插入子文档/撤回/复制/直接审查/清空对话/清除）
 │   ├── BottomInputArea.vue   # 底部输入区：文档与块选择、技能、快捷动作、模型与开关、自定义输入
-│   ├── SkillSection.vue      # 技能选择（共享 Select + filterable）
+│   ├── SkillSection.vue      # 技能选择（共享 Select + filterable）+「管理技能」入口
 │   ├── SkillPreviewModal.vue # 技能细则预览弹窗
 │   ├── DiffPreview.vue       # 原文/新文差异视图（vue-diff）
 │   ├── ReviewPanel.vue       # 交叉审核面板：分项评分 / 严重度过滤 / 问题清单 / 自动修复
@@ -33,6 +45,25 @@ aiContentGenerator/
     ├── _shell.scss           # 面板壳层规则，仅 index.vue 引入一次
     └── <Component>.scss      # 各组件专属样式
 ```
+
+### Skills 管理子模块（原 skillsViewer）
+
+原独立功能「Skills 查看器」已整体并入本模块（评审记录见
+`docs/ai-content-generator-skills-merge-review.md`）：
+
+- **入口**：斜杠命令「Skills 查看器」由 `registerAIContentGenerator` 一并注册；
+  面板技能选择区的「管理技能」按钮（`SkillSection.vue`）也可打开管理弹窗。
+  弹窗关闭后 `index.vue` 自动刷新技能列表并尽量保持原选择。
+- **扫描**：`skills/index.ts` 的 `scanSkills()` 为模块内 API（`useSkillsLoader` 直连），
+  不再走跨 Feature 依赖注入；`SkillInfo` 是扫描原始结构，`SkillItem`（`@/types/ai`）
+  是展示/去重结构，经 `types/index.ts` 的 `toSkillItem` 转换。
+- **稳定标识**：列表 key 与编辑/删除/复制目标均使用 `skill.filePath`，禁止回退到数组索引。
+- **Markdown 渲染**：SkillCard 展开内容与 SkillPreviewModal 同用 `utils.ts` 的
+  `renderMarkdown`（XSS 安全版，转义 skill.md 中的原始 HTML），禁止再引裸 `parseMarkdown`。
+- **文件大小**：用共享 `@/utils/format` 的 `formatFileSize`，模块内不再自建。
+- **i18n**：弹窗文案仍在 `src/i18n/{zh_CN,en_US}/skillsViewer.json` 分片
+  （嵌套命名空间 `plugin.i18n.skillsViewer`，扁平合并会与通用键碰撞，故保留）；
+  面板入口按钮文案 `manageSkills` 在 `aiContentGenerator.json` 分片。
 
 ### 样式引入约定（避免重复发射）
 

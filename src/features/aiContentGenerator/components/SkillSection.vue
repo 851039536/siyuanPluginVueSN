@@ -61,6 +61,15 @@
       :aria-label="i18n.skillPreviewTitle"
       @click="$emit('showPreview')"
     />
+    <!-- 纯图标按钮：打开 Skills 管理弹窗（ariaLabel："管理技能"） -->
+    <Button
+      variant="ghost"
+      text
+      size="xsmall"
+      icon="settings"
+      :aria-label="i18n.manageSkills"
+      @click="showSkillsManager"
+    />
   </div>
 </template>
 
@@ -70,6 +79,7 @@ import type { SkillItem } from "@/types/ai"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
+import { showSkillsManager } from "../skills"
 import { getSourceDotColors } from "../utils"
 
 const props = defineProps<{

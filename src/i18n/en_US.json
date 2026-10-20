@@ -175,6 +175,7 @@
   "skillNoMatch": "No matching skill",
   "skillPreviewClose": "Close",
   "skillSourceLabel": "Source:",
+  "manageSkills": "Manage skills",
   "emptyTitle": "AI Content Editing Assistant",
   "emptyStep1": "Click \"Select document\" or \"Select block\" below",
   "emptyStep2": "Pick a quick action or enter a custom instruction",
@@ -4256,8 +4257,6 @@
     "resourceManagerDesc": "Manage Siyuan asset files: view, rename, insert, and clean up resources",
     "heatmapMarker": "Heatmap Marker",
     "heatmapMarkerDesc": "Automatically marks English words from the wordbook in documents, showing a heatmap gradient based on practice count",
-    "skillsViewer": "Skills Viewer",
-    "skillsViewerDesc": "View and manage AI coding tools Skills configuration files",
     "themeColor": "Theme Color",
     "themeColorDesc": "Override SiYuan CSS variables to switch global theme color"
   },

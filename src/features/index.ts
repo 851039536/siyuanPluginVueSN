@@ -72,12 +72,9 @@ export { registerS3FileManager } from "./s3FileManager"
 // shortcut 已迁移至 toolCollection/tools/shortcut/
 export { registerSkillLearning } from "./skillLearning"
 export {
-  hideSkillsViewer,
-  registerSkillsViewer,
-  scanSkills,
-  type SkillInfo,
-  skillsViewerVisible,
-} from "./skillsViewer"
+  hideSkillsManager,
+  skillsManagerVisible,
+} from "./aiContentGenerator/skills"
 export {
   registerPrompts,
   showPromptsModal,
@@ -120,7 +117,7 @@ type _Registered =
   | "statusBar" | "floatingToolbar" | "floatingBox" | "textDiff"
   | "flashcardReading" | "passwordVault" | "docAnalysis"
   | "formatAssistant" | "htmlViewer" | "rssReader" | "resourceManager"
-  | "skillsViewer" | "themeColor" | "bookmarkMarker" | "apiDebugger"
+  | "themeColor" | "bookmarkMarker" | "apiDebugger"
   | "scriptLauncher" | "websiteNavigation" | "minimalBrowser" | "dataSnapshot" | "gitPush" | "skillLearning" | "prompts" | "toolCollection" | "s3Backup" | "s3FileManager"
   | "globalRelations"
   | "componentPreview"

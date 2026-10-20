@@ -44,7 +44,6 @@
       "@s3FileManager/*": ["./src/features/s3FileManager/*"],
       "@scriptLauncher/*": ["./src/features/scriptLauncher/*"],
       "@skillLearning/*": ["./src/features/skillLearning/*"],
-      "@skillsViewer/*": ["./src/features/skillsViewer/*"],
       "@statistics/*": ["./src/features/statistics/*"],
       "@statusBar/*": ["./src/features/statusBar/*"],
       "@superPanel/*": ["./src/features/superPanel/*"],

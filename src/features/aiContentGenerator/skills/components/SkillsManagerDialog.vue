@@ -1,4 +1,4 @@
-<!-- Skills 查看器 — 查看和管理 AI 编程工具的 Skills 配置文件（逻辑位于 useSkillsViewer） -->
+<!-- Skills 查看器弹窗（aiContentGenerator/skills 子模块，逻辑位于 useSkillsManager） -->
 <template>
   <Teleport to="body">
     <Transition name="fade">
@@ -207,10 +207,10 @@
 import type { Plugin } from "siyuan"
 import SiButton from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import DeleteConfirmModal from "./components/DeleteConfirmModal.vue"
-import CopySkillModal from "./components/CopySkillModal.vue"
-import SkillCard from "./components/SkillCard.vue"
-import { useSkillsViewer } from "./composables/useSkillsViewer"
+import DeleteConfirmModal from "./DeleteConfirmModal.vue"
+import CopySkillModal from "./CopySkillModal.vue"
+import SkillCard from "./SkillCard.vue"
+import { useSkillsManager } from "../composables/useSkillsManager"
 
 interface Props {
   visible: boolean
@@ -265,7 +265,7 @@ const {
   refreshSkills,
   openCurrentToolDir,
   handlePathChange,
-} = useSkillsViewer(props)
+} = useSkillsManager(props)
 
 function closeDialog() {
   emit("update:visible", false)
@@ -274,5 +274,5 @@ function closeDialog() {
 </script>
 
 <style scoped lang="scss">
-@use "./styles/index.scss";
+@use "../styles/index.scss";
 </style>

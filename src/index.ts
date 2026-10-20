@@ -51,7 +51,6 @@ import {
   registerS3FileManager,
   registerScriptLauncher,
   registerSkillLearning,
-  registerSkillsViewer,
   registerStatistics,
   registerStatusBar,
   registerSuperPanel,
@@ -63,7 +62,6 @@ import {
   // wordQuery 已迁移至 toolCollection/tools/wordQuery/
   registerVideo,
   registerWebsiteNavigation,
-  scanSkills as scanSkillsFromViewer,
 } from "@/features"
 import { applyCompactMode } from "@/features/compactMode"
 
@@ -222,7 +220,7 @@ export default class PluginSample extends Plugin {
     if (s.enableGeneralSettings) registerGeneralSettings(this)
     // unitConverter 已迁移至 toolCollection/tools/unitConverter/
     if (s.enableDiskBrowser) registerDiskBrowser(this)
-    if (s.enableAIContentGenerator) registerAIContentGenerator(this, { scanSkills: scanSkillsFromViewer })
+    if (s.enableAIContentGenerator) registerAIContentGenerator(this)
     if (s.enableImageCreation) registerImageCreation(this)
     if (s.enableStatistics) registerStatistics(this)
     if (s.enableEncryption) registerEncryption(this)
@@ -235,7 +233,6 @@ export default class PluginSample extends Plugin {
     if (s.enableFlashcardReading) registerFlashcardReading(this)
     if (s.enablePasswordVault) registerPasswordVault(this)
     if (s.enablePrompts) registerPrompts(this)
-    if (s.enableSkillsViewer) registerSkillsViewer(this)
     if (s.enableDocAnalysis) registerDocAnalysis(this)
     if (s.enableFormatAssistant) registerFormatAssistant(this)
     if (s.enableHtmlViewer) registerHtmlViewer(this)

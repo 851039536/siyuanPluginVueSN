@@ -55,13 +55,12 @@
       @close="htmlViewerVisible = false"
     />
 
-    <!-- Skills 查看器弹窗 -->
-    <SkillsViewerDialog
-      v-if="skillsViewerEnabled"
-      :visible="skillsViewerVisible"
+    <!-- Skills 管理弹窗（aiContentGenerator/skills 子模块） -->
+    <SkillsManagerDialog
+      :visible="skillsManagerVisible"
       :plugin="plugin"
-      @update:visible="(v) => skillsViewerVisible = v"
-      @close="hideSkillsViewer"
+      @update:visible="(v) => skillsManagerVisible = v"
+      @close="hideSkillsManager"
     />
 
     <!-- 图片生成器（按功能开关挂载，关闭开关时不再常驻） -->
@@ -85,7 +84,7 @@ import {
   getTextDiffManager,
   hideImageCreation,
   hidePasswordVault,
-  hideSkillsViewer,
+  hideSkillsManager,
   showPromptsModal,
   showImageCreation,
   showWebsiteNavigation,
@@ -93,7 +92,7 @@ import {
   imageCreationVisible,
   openPasswordVaultWithText,
   passwordVaultVisible,
-  skillsViewerVisible,
+  skillsManagerVisible,
   toggleFlashcardDialog,
   toggleToolCollection,
 } from "@/features"
@@ -107,12 +106,11 @@ import {
 import HtmlViewerDialog from "@/features/htmlViewer/index.vue"
 import ImageCreationDialog from "@/features/imageCreation/index.vue"
 import PasswordVaultDialog from "@/features/passwordVault/index.vue"
-import SkillsViewerDialog from "@/features/skillsViewer/index.vue"
+import SkillsManagerDialog from "@/features/aiContentGenerator/skills/components/SkillsManagerDialog.vue"
 import VideoManager from "@/features/video/index.vue"
 import { usePlugin } from "@/main"
 
 const plugin = usePlugin() as PluginSample
-const skillsViewerEnabled = plugin.settings.enableSkillsViewer !== false
 const imageCreationEnabled = plugin.settings.enableImageCreation !== false
 const showQRCodeDialog = ref(false)
 const showVideoManager = ref(false)
@@ -256,11 +254,6 @@ onMounted(() => {
   // 监听工具合集面板切换事件
   addWindowListener("toggleToolCollection", () => {
     toggleToolCollection()
-  })
-
-  // 监听 Skills 查看器打开事件（来自状态栏）
-  addWindowListener("openSkillsViewer", () => {
-    skillsViewerVisible.value = true
   })
 
   // 监听网站导航切换事件（来自状态栏）

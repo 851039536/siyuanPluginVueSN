@@ -2,23 +2,8 @@
  * AI 内容生成器类型定义与共享常量
  */
 import type { IconKey } from "@/config/icons"
+import type { SkillInfo } from "../skills/SkillsManager"
 import type { IssueSeverity, ReviewRating, SkillItem } from "@/types/ai"
-
-/**
- * 技能扫描原始条目（skillsViewer scanSkills 返回类型的本地投影，避免跨功能导入）
- * 注意：skillsViewer 的 SkillInfo 含 fileSize 字段，此处按需投影；
- * 若未来消费方需要该字段，需同步补充（保持与 SkillInfo 结构兼容）。
- */
-export interface SkillScanEntry {
-  filePath: string
-  name: string
-  description: string
-  content: string
-  tool: string
-}
-
-/** 技能扫描函数签名 */
-export type ScanSkillsFn = (projectPath?: string) => Promise<SkillScanEntry[]>
 
 /** AI 快捷编辑动作类型（BottomInputArea 快捷操作键 / index.vue aiEditAction 共用） */
 export type EditActionKey = "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"
@@ -109,8 +94,8 @@ export const DEFAULT_SYSTEM_PROMPTS = {
   fixIssue: "你是一个专业的文档编辑助手。请根据描述的问题定向修改，仅修正相关问题部分，保持其他内容不变。直接输出修改后的完整文档。",
 } as const
 
-/** RawSkillEntry → SkillItem 转换 */
-export function toSkillItem(entry: SkillScanEntry): SkillItem {
+/** SkillInfo（skills/ 扫描原始条目，含 fileSize）→ SkillItem（展示/去重模型）转换 */
+export function toSkillItem(entry: SkillInfo): SkillItem {
   return {
     id: entry.filePath,
     name: entry.name,

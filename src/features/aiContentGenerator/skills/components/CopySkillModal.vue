@@ -56,7 +56,7 @@
             :disabled="!selectedToolId"
             @click="$emit('confirm', selectedToolId!)"
           >
-            {{ i18n.copyTo }} {{ selectedToolId && toolNameMap.get(selectedToolId) }}
+            {{ i18n.copyTo }} {{ selectedToolId && getAITool(selectedToolId)?.name }}
           </SiButton>
         </div>
       </div>
@@ -66,11 +66,11 @@
 
 <script setup lang="ts">
 import type { AIToolType } from "@/config/aiTools"
-import type { SkillInfo } from "../types/SkillsViewerManager"
+import type { SkillInfo } from "../../SkillsManager"
 import { computed, ref, watch } from "vue"
 import SiButton from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import { AI_TOOLS } from "@/config/aiTools"
+import { AI_TOOLS, getAITool } from "@/config/aiTools"
 
 interface Props {
   visible: boolean
@@ -90,10 +90,6 @@ const selectedToolId = ref<AIToolType | null>(null)
 
 const targetTools = computed(() =>
   AI_TOOLS.filter((t) => t.id !== props.sourceSkill?.tool),
-)
-
-const toolNameMap = new Map<AIToolType, string>(
-  AI_TOOLS.map((t) => [t.id, t.name]),
 )
 
 watch(() => props.visible, (v) => {

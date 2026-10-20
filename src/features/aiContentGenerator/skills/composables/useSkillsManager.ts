@@ -1,13 +1,12 @@
 /**
- * Skills 查看器 — 状态与 CRUD 逻辑（以 filePath 为稳定标识，含定时器清理）
+ * Skills 管理 — 状态与 CRUD 逻辑（以 filePath 为稳定标识，含定时器清理）
  */
 import type { Plugin } from "siyuan"
 import type { AIToolType } from "@/config/aiTools"
-import type { SkillInfo } from "../types/SkillsViewerManager"
-import { getNodeModules } from "@/utils/nodeModules"
+import type { SkillInfo } from "../SkillsManager"
 import { showMessage } from "siyuan"
-import { AI_TOOLS } from "@/config/aiTools"
-import { SkillsViewerManager } from "../types/SkillsViewerManager"
+import { AI_TOOLS, getAITool } from "@/config/aiTools"
+import { SkillsManager } from "../SkillsManager"
 import {
   computed,
   onBeforeUnmount,
@@ -16,17 +15,17 @@ import {
   watch,
 } from "vue"
 
-interface UseSkillsViewerProps {
+interface UseSkillsManagerProps {
   visible: boolean
   plugin?: Plugin | null
 }
 
-export function useSkillsViewer(props: UseSkillsViewerProps) {
+export function useSkillsManager(props: UseSkillsManagerProps) {
   const i18n = computed<Record<string, string>>(
     () => (props.plugin?.i18n?.skillsViewer as unknown as Record<string, string>) || {},
   )
 
-  const manager = new SkillsViewerManager()
+  const manager = new SkillsManager()
   const managerAvailable = manager.isAvailable()
   const aiTools = AI_TOOLS
 
@@ -62,13 +61,6 @@ export function useSkillsViewer(props: UseSkillsViewerProps) {
     projectCount: number
   }>>({})
 
-  const toolColorMap = new Map<AIToolType, string>(
-    AI_TOOLS.map((t) => [t.id, t.color]),
-  )
-  const toolNameMap = new Map<AIToolType, string>(
-    AI_TOOLS.map((t) => [t.id, t.name]),
-  )
-
   const filteredSkills = computed(() => {
     if (selectedTool.value === "all") return skills.value
     return skills.value.filter((s) => s.tool === selectedTool.value)
@@ -78,13 +70,13 @@ export function useSkillsViewer(props: UseSkillsViewerProps) {
     selectedTool.value = toolId
   }
 
-  /** AI_TOOLS 全量含 color，此处非空断言安全 */
+  /** 工具展示色（经共享 getAITool 查询，AI_TOOLS 全量含 color） */
   function getToolColor(toolId: AIToolType): string {
-    return toolColorMap.get(toolId)!
+    return getAITool(toolId)?.color || "#999"
   }
 
   function getToolName(toolId: AIToolType): string {
-    return toolNameMap.get(toolId) || toolId
+    return getAITool(toolId)?.name || toolId
   }
 
   function toggleExpand(filePath: string) {
@@ -165,16 +157,14 @@ export function useSkillsViewer(props: UseSkillsViewerProps) {
 
     copyingSkill.value = true
     try {
-      const node = getNodeModules()
-      if (!node) return
-      const skillDir = node.path.dirname(skill.filePath)
+      const skillDir = manager.resolveSkillDir(skill.filePath)
       const isGlobal = skill.filePath.startsWith(manager.getHomeDir())
       const targetBase = isGlobal ? manager.getHomeDir() : (projectPath.value || "")
       const targetPaths = isGlobal ? targetTool.skillPaths : targetTool.projectPaths
 
       let copied = false
       for (const relPath of targetPaths) {
-        const targetDir = node.path.join(targetBase, relPath)
+        const targetDir = manager.resolveDir(targetBase, relPath)
         const success = await manager.copySkill(skillDir, targetDir)
         if (success) {
           copied = true
@@ -209,9 +199,7 @@ export function useSkillsViewer(props: UseSkillsViewerProps) {
 
     deletingSkill.value = true
     try {
-      const node = getNodeModules()
-      if (!node) return
-      const skillDir = node.path.dirname(skill.filePath)
+      const skillDir = manager.resolveSkillDir(skill.filePath)
       const success = await manager.deleteSkill(skillDir)
       if (success) {
         const originalIndex = skills.value.findIndex((s) => s.filePath === skill.filePath)
@@ -276,11 +264,8 @@ export function useSkillsViewer(props: UseSkillsViewerProps) {
       dirPath = manager.getHomeDir()
     } else {
       const tool = AI_TOOLS.find((t) => t.id === selectedTool.value)
-      if (tool && tool.skillPaths.length > 0) {
-        const node = getNodeModules()
-        if (node) {
-          dirPath = node.path.join(manager.getHomeDir(), tool.skillPaths[0])
-        }
+      if (tool) {
+        dirPath = manager.firstGlobalSkillDir(tool) || ""
       }
     }
 

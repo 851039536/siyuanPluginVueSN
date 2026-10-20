@@ -9,7 +9,6 @@ import type {
   SkillItem,
 } from "@/types/ai"
 import type { AiApiConfig } from "@/utils/aiApi"
-import type { ScanSkillsFn } from "../types"
 import { RATING_NEEDS_FIX, RATING_VALUES, SEVERITY_LEVELS } from "../types"
 import { DEEPSEEK_V4_PRO } from "@/config/aiModels"
 import {
@@ -71,11 +70,9 @@ const RETRY_MAX_TOKENS_CAP = 65536
 
 export class AIContentGenerator {
   private plugin: Plugin
-  private scanSkills: ScanSkillsFn | null
 
-  constructor(plugin: Plugin, options?: { scanSkills?: ScanSkillsFn }) {
+  constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.scanSkills = options?.scanSkills ?? null
   }
 
   private getApiConfig(): AiApiConfig {
@@ -105,7 +102,6 @@ export class AIContentGenerator {
         ): Promise<ReviewResult> => {
           return await this.reviewContent(userRequest, generatedContent, skill)
         },
-        ...(this.scanSkills ? { scanSkills: this.scanSkills } : {}),
       },
     })
   }

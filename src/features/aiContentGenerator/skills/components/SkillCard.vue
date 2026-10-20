@@ -130,10 +130,10 @@
 </template>
 
 <script setup lang="ts">
-import type { SkillInfo } from "../types/SkillsViewerManager"
+import type { SkillInfo } from "../../SkillsManager"
 import { computed } from "vue"
-import { parseMarkdown } from "@/utils/mdRenderer"
-import { formatFileSize } from "../utils"
+import { formatFileSize } from "@/utils/format"
+import { renderMarkdown } from "../../utils"
 import IconWrapper from "@/components/IconWrapper.vue"
 
 interface Props {
@@ -159,15 +159,8 @@ defineEmits<{
   'update:editContent': [value: string]
 }>()
 
-function renderMarkdown(content: string): string {
-  try {
-    return parseMarkdown(content)
-  } catch {
-    return content
-  }
-}
-
-const renderedContent = computed(() => renderMarkdown(props.skill.content))
+// 统一走模块的 XSS 安全渲染（转义 skill.md 中的原始 HTML），与 SkillPreviewModal 同源
+const renderedContent = computed(() => renderMarkdown(props.skill.content, false))
 </script>
 
 <style scoped lang="scss">

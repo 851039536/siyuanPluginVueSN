@@ -78,6 +78,7 @@
   "skillNoMatch": "No matching skill",
   "skillPreviewClose": "Close",
   "skillSourceLabel": "Source:",
+  "manageSkills": "Manage skills",
   "emptyTitle": "AI Content Editing Assistant",
   "emptyStep1": "Click \"Select document\" or \"Select block\" below",
   "emptyStep2": "Pick a quick action or enter a custom instruction",

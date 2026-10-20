@@ -1,5 +1,5 @@
 /**
- * Skills 查看器管理器
+ * Skills 管理器（原 skillsViewer/SkillsViewerManager，随功能并入 aiContentGenerator）
  * 扫描并读取 AI 编程工具的 Skills 配置文件
  * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode
  */
@@ -16,7 +16,7 @@ export interface SkillInfo {
   fileSize: number
 }
 
-export class SkillsViewerManager {
+export class SkillsManager {
   private fs: any = null
   private path: any = null
   private homeDir = ""
@@ -46,6 +46,22 @@ export class SkillsViewerManager {
 
   getHomeDir(): string {
     return this.homeDir
+  }
+
+  /** skill.md 路径 → 所在技能目录（收敛原消费方对 getNodeModules().path.dirname 的依赖） */
+  resolveSkillDir(filePath: string): string {
+    return this.path.dirname(filePath)
+  }
+
+  /** 工具的首个全局技能目录（供「打开目录」使用），无可用路径时返回 null */
+  firstGlobalSkillDir(tool: AIToolConfig): string | null {
+    if (!this.available || tool.skillPaths.length === 0) return null
+    return this.path.join(this.homeDir, tool.skillPaths[0])
+  }
+
+  /** 拼接目录路径（收敛原消费方对 getNodeModules().path.join 的依赖） */
+  resolveDir(basePath: string, relPath: string): string {
+    return this.path.join(basePath, relPath)
   }
 
   async scanToolSkills(tool: AIToolConfig, projectPath?: string): Promise<SkillInfo[]> {

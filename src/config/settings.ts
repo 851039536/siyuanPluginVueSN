@@ -36,7 +36,6 @@ export interface PluginSettings {
   enableFloatingToolbar: boolean // 是否启用浮动工具栏功能
   enableFloatingBox: boolean // 是否启用悬浮框功能
   enablePrompts: boolean // 是否启用提示词库功能
-  enableSkillsViewer: boolean // 是否启用 Skills 查看器功能
   enableTextDiff: boolean // 是否启用文本对比功能
   enableFlashcardReading: boolean // 是否启用单词阅读功能
   enableHeatmapMarker: boolean // 是否启用热力图标记功能
@@ -107,7 +106,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableFloatingToolbar: true,
   enableFloatingBox: true,
   enablePrompts: true,
-  enableSkillsViewer: true,
   enableTextDiff: true,
   enableFlashcardReading: true,
   enableHeatmapMarker: true,

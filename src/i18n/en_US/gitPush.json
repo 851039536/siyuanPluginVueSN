@@ -295,6 +295,7 @@
     "noPlatformLink": "No platform link configured",
     "openProject": "Open project",
     "openFolder": "Open folder",
+    "openTerminalHint": "Open {0} in project directory",
     "noIdeDetected": "No IDE detected",
     "confirmDeleteShort": "Confirm delete?",
     "deleteCustomIdeMultiConfirm": "Delete all {0} paths?",

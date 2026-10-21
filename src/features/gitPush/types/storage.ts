@@ -159,6 +159,22 @@ export interface IdeEntry {
 /** 自定义 IDE 条目（仅 name + 可执行路径，多路径按同名聚合） */
 export interface CustomIde { name: string, path: string }
 
+/** 内置终端条目（Windows 平台探测，useIdeManagement 持有；启动模式仿 IdeEntry：cmds → knownPaths 依次尝试） */
+export interface TerminalEntry {
+  name: string
+  icon: string
+  /** PATH 上的候选命令名（依次探测可用性） */
+  cmds: string[]
+  /** 已知安装路径候选（环境变量展开后 fs.existsSync 检测，如 Git Bash / CMD） */
+  knownPaths?: string[]
+  /** 控制台类 shell 经 `cmd /c start` 拉起新窗口（detached 直启控制台程序不分配窗口，会静默失败） */
+  startWrapped?: boolean
+  /** 以 cwd 方式传入项目目录（而非把目录拼进启动参数） */
+  useCwd?: boolean
+  /** 由项目目录生成启动参数（startWrapped 时为 shell 自身参数） */
+  buildArgs: (path: string) => string[]
+}
+
 /** 项目映射条目 */
 export interface GitProject {
   /** 唯一标识（时间戳生成） */

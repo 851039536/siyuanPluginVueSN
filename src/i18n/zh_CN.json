@@ -1550,6 +1550,7 @@
     "noPlatformLink": "未配置平台链接",
     "openProject": "打开项目",
     "openFolder": "打开文件夹",
+    "openTerminalHint": "在项目目录打开 {0}",
     "noIdeDetected": "未检测到 IDE",
     "confirmDeleteShort": "确认删除?",
     "deleteCustomIdeMultiConfirm": "删除全部 {0} 条路径?",

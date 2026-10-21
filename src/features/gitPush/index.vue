@@ -883,6 +883,7 @@ const { exporting: reportExporting, exportHtml: exportReportHtml } = useReportEx
 const {
   detectedIdes,
   customIdes,
+  detectedTerminals,
   showIdeDialog,
   saveEditIde,
   loadCustomIdes,
@@ -891,7 +892,9 @@ const {
   removeCustomIdeByName,
   handleOpenCustomIde,
   scanIdes,
+  scanTerminals,
   handleOpenIde,
+  handleOpenTerminal,
 } = useIdeManagement({
   plugin: props.plugin,
   openFolder: (path: string) => { void openLocalPath(path) },
@@ -1159,6 +1162,7 @@ onMounted(async () => {
   loadCommitTemplates()
   loadCustomIdes()
   scanIdes() // 扫描已安装的 IDE
+  scanTerminals() // 扫描当前平台可用的内置终端
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
   loadGitConcurrency()
@@ -1504,6 +1508,7 @@ provide(CARD_SERVICES_KEY, {
     categories,
     detectedIdes,
     customIdes,
+    detectedTerminals,
     commitTemplates,
     searchQuery,
   },
@@ -1544,6 +1549,7 @@ provide(CARD_SERVICES_KEY, {
     openProjectGitConfig: handleOpenProjectGitConfig,
     handleOpenIde,
     handleOpenCustomIde,
+    handleOpenTerminal,
     showIdeDialog: (show = true) => { showIdeDialog.value = show },
     removeCustomIdeByName,
     handleRefresh,

@@ -11,6 +11,7 @@ import type {
   ProjectCategory,
   PushOutputEntry,
   PushStatusInfo,
+  TerminalEntry,
   WorkingTreeInfo,
 } from "./storage"
 
@@ -20,6 +21,7 @@ export interface CardSharedData {
   categories: Ref<ProjectCategory[]>
   detectedIdes: Ref<IdeEntry[]>
   customIdes: Ref<CustomIde[]>
+  detectedTerminals: Ref<TerminalEntry[]>
   commitTemplates: Ref<CommitTemplate[]>
   searchQuery: Ref<string>
 }
@@ -74,6 +76,8 @@ export interface CardOps {
   openProjectGitConfig: (id: string) => void
   handleOpenIde: (path: string, ide: IdeEntry) => void
   handleOpenCustomIde: (path: string, name: string) => void
+  /** 在项目目录打开指定终端（useIdeManagement 提供） */
+  handleOpenTerminal: (path: string, terminal: TerminalEntry) => void
   showIdeDialog: (show?: boolean) => void
   removeCustomIdeByName: (name: string) => void
   handleRefresh: (id: string) => void

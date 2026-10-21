@@ -102,6 +102,20 @@
           />
           <span>{{ i18n.openFolder }}</span>
         </button>
+        <!-- 终端菜单项组：每个探测到的内置终端一项，点击在项目目录打开（多设备路径经 resolveValidPath 实时解析） -->
+        <button
+          v-for="t in detectedTerminals"
+          :key="`terminal-${t.name}`"
+          class="gp-ide-item"
+          :title="i18n.openTerminalHint?.replace('{0}', t.name) ?? t.name"
+          @click="ops.handleOpenTerminal(projectPath(), t); openMenu = null"
+        >
+          <Icon
+            :icon="t.icon"
+            height="12"
+          />
+          <span>{{ t.name }}</span>
+        </button>
         <div class="gp-ide-divider" />
         <!-- 空态项："未检测到 IDE" -->
         <button
@@ -286,6 +300,7 @@ const i18n = shared.i18n
 const categories = shared.categories
 const detectedIdes = shared.detectedIdes
 const customIdes = shared.customIdes
+const detectedTerminals = shared.detectedTerminals
 
 // 菜单开关（顶栏 platform/ide/refresh 与操作栏 pull/push 共用同一互斥状态）
 const { openMenu, toggleMenu } = useCardMenu()

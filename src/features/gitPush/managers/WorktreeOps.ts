@@ -675,11 +675,12 @@ export class WorktreeOps {
         // 保留原提交的 committer date，避免 GitHub 显示为当前时间
         const originalDate = (await this.executor.execGit(projectPath, ["log", "-1", "--format=%cI", fullHash])).trim()
         if (originalDate) {
+          // timeoutMs 传 undefined：commit 是本地命令，走 GitExecutor 的可配置本地超时（默认 60s，设置面板持久化）
           return await this.executor.execGit(
             projectPath,
             ["-c", "core.quotepath=false", "commit", "--amend", "-m", message],
             undefined,
-            30000,
+            undefined,
             undefined,
             { env: { GIT_COMMITTER_DATE: originalDate } },
           )

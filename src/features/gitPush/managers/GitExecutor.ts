@@ -2,7 +2,7 @@
 import type { ChildProcess } from "node:child_process"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
-import { clampGitConcurrency, clampNetworkTimeout, DEFAULT_GIT_CONCURRENCY, DEFAULT_NETWORK_TIMEOUT } from "../types/storage"
+import { clampGitConcurrency, clampLocalTimeout, clampNetworkTimeout, DEFAULT_GIT_CONCURRENCY, DEFAULT_LOCAL_TIMEOUT, DEFAULT_NETWORK_TIMEOUT } from "../types/storage"
 
 /** 等待队列条目（本地池/网络池共用结构） */
 interface WaitQueueItem {
@@ -19,6 +19,8 @@ export class GitExecutor {
   private gitMaxConcurrent = DEFAULT_GIT_CONCURRENCY
   /** 网络命令超时（ms，从存储加载，可通过 setNetworkTimeout 修改；默认 240s） */
   private networkTimeoutMs = DEFAULT_NETWORK_TIMEOUT * 1000
+  /** 本地命令超时（ms，从存储加载，可通过 setLocalTimeout 修改；默认 60s） */
+  private localTimeoutMs = DEFAULT_LOCAL_TIMEOUT * 1000
   /** 等待队列（关联 signal + reject 以便 abort/destroy 时精准拒绝） */
   private gitWaitQueue: WaitQueueItem[] = []
   /** 识别网络 IO 类 git 命令，自动路由到独立并发池 */
@@ -40,8 +42,6 @@ export class GitExecutor {
   private abortControllers: Map<string, AbortController[]> = new Map()
   /** execFile maxBuffer 10MB（防止全量 diff / 大仓库 status 超 Node 默认 1MB 报错） */
   private static readonly MAX_BUFFER = 10 * 1024 * 1024
-  /** 本地命令默认超时 */
-  private static readonly DEFAULT_TIMEOUT_MS = 30000
 
   constructor(storage: GitPushStorage) {
     this.storage = storage
@@ -79,6 +79,23 @@ export class GitExecutor {
     const clamped = clampNetworkTimeout(n)
     this.networkTimeoutMs = clamped * 1000
     await this.storage.networkTimeout.save(clamped)
+  }
+
+  /** 从存储加载本地命令超时（秒 → ms，init 时调用） */
+  async loadLocalTimeout(): Promise<void> {
+    this.localTimeoutMs = (await this.storage.localTimeout.loadOrDefault()) * 1000
+  }
+
+  /** 获取当前本地命令超时（秒，供设置面板显示） */
+  getLocalTimeout(): number {
+    return Math.round(this.localTimeoutMs / 1000)
+  }
+
+  /** 设置本地命令超时（秒）并持久化 */
+  async setLocalTimeout(n: number): Promise<void> {
+    const clamped = clampLocalTimeout(n)
+    this.localTimeoutMs = clamped * 1000
+    await this.storage.localTimeout.save(clamped)
   }
 
   /** 获取 child_process 模块（简写） */
@@ -168,7 +185,7 @@ export class GitExecutor {
   /**
    * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
-   * @param timeoutMs 显式超时（不传时自动路由：网络命令默认按设置项（240s），本地命令默认 30s；clone 等长耗时操作可传更大值）
+   * @param timeoutMs 显式超时（不传时自动路由：网络命令默认按设置项（240s），本地命令默认按设置项（60s）；clone 等长耗时操作可传更大值）
    * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块（clone --progress 等长任务日志展示）
    * @param options 可选额外参数（如 rebase 编辑器所需环境变量、视为成功的退出码白名单）
    */
@@ -186,7 +203,7 @@ export class GitExecutor {
   ): Promise<string> {
     if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
     const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
-    const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : GitExecutor.DEFAULT_TIMEOUT_MS)
+    const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : this.localTimeoutMs)
 
     return new Promise<string>((resolve, reject) => {
       let killed = false

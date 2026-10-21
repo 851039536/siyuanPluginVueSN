@@ -532,6 +532,7 @@ export class GitPushManager {
     await this.storage.init()
     await this.executor.loadGitConcurrency()
     await this.executor.loadNetworkTimeout()
+    await this.executor.loadLocalTimeout()
     await this.remoteOps.loadPushBranchMode()
     // 卸载竞态：await 期间插件可能已被卸载（onunload → destroy）。此时再挂 Dock 会创建一个
     // 无人再销毁的 Vue app + 探测链，正是本次要消除的泄漏类型。
@@ -688,6 +689,12 @@ export class GitPushManager {
 
   /** 设置网络命令超时（秒）并持久化 */
   async setNetworkTimeout(n: number): Promise<void> { return this.executor.setNetworkTimeout(n) }
+
+  /** 获取本地命令超时（秒，供设置面板显示） */
+  getLocalTimeout(): number { return this.executor.getLocalTimeout() }
+
+  /** 设置本地命令超时（秒）并持久化 */
+  async setLocalTimeout(n: number): Promise<void> { return this.executor.setLocalTimeout(n) }
 
   /** 上次扫描导入使用的目录（空串 = 从未扫描过，弹窗保持占位符提示） */
   async getScanDir(): Promise<string> { return this.storage.scanDir.loadOrDefault() }

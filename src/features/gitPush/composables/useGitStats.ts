@@ -21,7 +21,7 @@ import type {
   PushStatusInfo,
   WorkingTreeInfo,
 } from "../types/storage"
-import { DEFAULT_NETWORK_TIMEOUT, UNGROUPED_ID } from "../types/storage"
+import { DEFAULT_LOCAL_TIMEOUT, DEFAULT_NETWORK_TIMEOUT, UNGROUPED_ID } from "../types/storage"
 // 直连 utils/platform（纯函数模块）而非 "../utils" 桶，理由同上
 import { getProjectRemoteNames } from "../utils/platform"
 
@@ -35,6 +35,8 @@ export function useGitStats(
   const gitConcurrency = ref(3)
   /** 网络命令超时（秒，默认 240s，设置面板展示与修改） */
   const networkTimeout = ref(DEFAULT_NETWORK_TIMEOUT)
+  /** 本地命令超时（秒，默认 60s，设置面板展示与修改） */
+  const localTimeout = ref(DEFAULT_LOCAL_TIMEOUT)
 
   function loadGitConcurrency() {
     gitConcurrency.value = manager.getGitConcurrency()
@@ -54,6 +56,16 @@ export function useGitStats(
     await manager.setNetworkTimeout(n)
     // 回读 manager 钳位后的实际值，避免 UI 显示与持久化值不一致
     networkTimeout.value = manager.getNetworkTimeout()
+  }
+
+  function loadLocalTimeout() {
+    localTimeout.value = manager.getLocalTimeout()
+  }
+
+  async function setLocalTimeout(n: number) {
+    await manager.setLocalTimeout(n)
+    // 回读 manager 钳位后的实际值，避免 UI 显示与持久化值不一致
+    localTimeout.value = manager.getLocalTimeout()
   }
 
   /**
@@ -248,6 +260,9 @@ export function useGitStats(
     networkTimeout,
     loadNetworkTimeout,
     setNetworkTimeout,
+    localTimeout,
+    loadLocalTimeout,
+    setLocalTimeout,
     groupedProjects,
     projectCount,
     needsPushProjects,

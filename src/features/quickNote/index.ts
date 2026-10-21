@@ -9,6 +9,7 @@ import type { QuickNotePlacement, QuickNotePosition } from "./types"
 import type { PointerSession } from "./pointerSession"
 import type { TimerHandle } from "@/utils/timerRegistry"
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
+import { loadEnableFlag } from "@/config/settings"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import { createModalVueApp } from "@/utils/vueAppHelper"
@@ -433,9 +434,14 @@ function toFiniteNumber(value: unknown, fallback: number): number {
  */
 export function registerQuickNote(plugin: Plugin): void {
   const manager = new QuickNoteManager(plugin)
-  manager.init().then(() => {
-    // 超级面板子开关「启动时自动打开」：init 完成后再 open，保证持久化位置缓存已加载
-    if ((plugin as any).settings?.enableQuickNoteAutoOpen) {
+  manager.init().then(async () => {
+    // 速记子开关「启动时自动打开」：init 完成后再 open，保证持久化位置缓存已加载。
+    // 开关值必须经 loadEnableFlag 读权威持久化配置（plugin-settings 文件），不能读启动期
+    // plugin.settings 快照 —— 该快照来自 loadFeatureFlagsSync() 的 localStorage 降级缓存，
+    // 思源每次启动端口随机（窗口源随端口变化），冷启动缓存为空会把开关误判为默认 false，
+    // 表现为「程序初次启动不出最小化小图标、刷新后才出现」（刷新同源后缓存已写入）
+    const snapshot = Boolean((plugin as any).settings?.enableQuickNoteAutoOpen)
+    if (await loadEnableFlag(plugin, "enableQuickNoteAutoOpen", snapshot)) {
       manager.open()
     }
   }).catch((err) => {

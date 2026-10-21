@@ -282,6 +282,37 @@ export function loadFeatureFlagsSync(): Partial<PluginSettings> {
 }
 
 /**
+ * 读取单个 enable* 开关的**权威持久化值**（plugin-settings 文件，经内核 API，跨窗口源可靠）。
+ *
+ * ⚠️ 启动后的异步行为决策（如速记「启动时自动打开」）不能读 `plugin.settings` 快照：
+ * 该快照来自 `loadFeatureFlagsSync()`，而其文件缓存 `feature-flags.json` 因 `plugin.dataDir`
+ * 在思源运行时为 undefined 从未落盘（`setFeatureFlagsDir(undefined)` → 降级 localStorage）。
+ * 思源每次启动内核端口随机，窗口源 `https://127.0.0.1:<port>` 随之变化，
+ * **冷启动时 localStorage 为空**，快照中的开关会回落到 DEFAULT_SETTINGS ——
+ * 典型症状：程序初次启动自动打开不生效、F5 刷新（同源，缓存已被 loadAndApplySettings 写回）后才生效。
+ *
+ * 语义与 `loadSettings` 的合并规则一致：文件中存在该键按文件值；从未写过该键按 DEFAULT_SETTINGS；
+ * 读取失败回退 `fallback`（调用方传入启动期快照值兜底）。
+ */
+export async function loadEnableFlag(
+  plugin: Plugin,
+  key: Extract<keyof PluginSettings, `enable${string}`>,
+  fallback: boolean,
+): Promise<boolean> {
+  try {
+    const data = await plugin.loadData(SETTINGS_KEY)
+    if (data && typeof data === "object") {
+      const value = (data as Record<string, unknown>)[key]
+      if (typeof value === "boolean") return value
+      if (value === undefined) return DEFAULT_SETTINGS[key]
+    }
+  } catch {
+    // 读取失败：回退调用方快照
+  }
+  return fallback
+}
+
+/**
  * 对 settings 中的敏感字段执行加密（保存前调用）
  */
 async function encryptSensitiveFields(

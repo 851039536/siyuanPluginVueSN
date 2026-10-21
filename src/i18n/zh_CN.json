@@ -1903,6 +1903,8 @@
     "concurrencyHint": "本地与网络命令各自的 git 子进程并发上限（1~16）",
     "networkTimeout": "网络超时（秒）",
     "networkTimeoutHint": "网络/推送命令超时上限（30~600 秒），推送大仓库时网络较慢可将值调大",
+    "localTimeout": "本地命令超时（秒）",
+    "localTimeoutHint": "本地 git 命令（提交/日志/状态等）超时上限（10~600 秒），大仓库或慢磁盘提交超时可调大",
     "indexTitle": "本地提交索引",
     "indexRefreshStatus": "查看状态",
     "indexChecking": "正在读取索引状态…",

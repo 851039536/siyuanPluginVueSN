@@ -151,6 +151,7 @@
         :manager="props.manager"
         :concurrency="gitConcurrency"
         :network-timeout="networkTimeout"
+        :local-timeout="localTimeout"
         :rule-config="ruleConfig"
         :push-branch-mode="pushBranchMode"
         :view-settings="analysisViewSettings"
@@ -160,6 +161,7 @@
         @close="showSettings = false"
         @save="setGitConcurrency"
         @save-network-timeout="setNetworkTimeout"
+        @save-local-timeout="setLocalTimeout"
         @save-rule-config="updateCommitRuleConfig"
         @save-branch-mode="handleSaveBranchMode"
         @update-view-settings="updateViewSettings"
@@ -390,6 +392,9 @@ const {
   networkTimeout,
   loadNetworkTimeout,
   setNetworkTimeout,
+  localTimeout,
+  loadLocalTimeout,
+  setLocalTimeout,
   stashLoading,
   doStashSave,
   doStashPop,
@@ -1158,6 +1163,7 @@ onMounted(async () => {
   await loadShowArchived() // 从持久化存储恢复归档显示状态
   loadGitConcurrency()
   loadNetworkTimeout()
+  loadLocalTimeout()
   // 预载提交规则检查偏好（含描述最短字数阈值），保证设置弹窗打开即显示已保存值
   void loadRuleCheckPrefs()
   // 实时探测配置：必须在 start() 之前加载，否则会按默认值建立监听与定时器

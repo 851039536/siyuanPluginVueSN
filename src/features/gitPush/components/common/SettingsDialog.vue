@@ -141,6 +141,31 @@
             <div class="gp-set-hint">
               {{ i18n.networkTimeoutHint }}
             </div>
+            <!-- 本地命令超时设置行 -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："本地命令超时（秒）" -->
+              <label class="gp-set-label">{{ i18n.localTimeout }}</label>
+              <div class="gp-set-input-row">
+                <Input
+                  :model-value="localLocalTimeout"
+                  type="number"
+                  size="xsmall"
+                  class="gp-set-concurrency-input"
+                  @update:model-value="localLocalTimeout = clampLocalTimeout(Number($event))"
+                />
+                <button
+                  class="vp-btn vp-btn--primary vp-btn--sm"
+                  @click="saveLocalTimeout"
+                >
+                  <!-- 按钮文案："保存" -->
+                  {{ i18n.save }}
+                </button>
+              </div>
+            </div>
+            <!-- 提示文案："本地 git 命令（提交/日志/状态等）超时上限（10~600 秒），大仓库或慢磁盘提交超时可调大" -->
+            <div class="gp-set-hint">
+              {{ i18n.localTimeoutHint }}
+            </div>
             <!-- 本地提交索引：开关 + 状态 + 重建（统计「秒开 + 增量刷新」的基础） -->
             <div class="gp-set-row gp-set-row--spaced">
               <label class="gp-set-label">{{ i18n.indexTitle }}</label>
@@ -490,6 +515,7 @@ import {
   clampGitConcurrency,
   clampMaxBodyLineLength,
   clampMinSubjectLength,
+  clampLocalTimeout,
   clampNetworkTimeout,
 } from "../../types"
 import { clampProbeConfig } from "../../types/probeConfig"
@@ -504,6 +530,8 @@ const props = defineProps<{
   concurrency: number
   /** 网络命令超时（秒） */
   networkTimeout: number
+  /** 本地命令超时（秒） */
+  localTimeout: number
   /** 提交规则配置（最短描述阈值 + 可选规则开关） */
   ruleConfig: CommitRuleConfig
   pushBranchMode: "all" | "head"
@@ -521,6 +549,7 @@ const emit = defineEmits<{
   close: []
   save: [value: number]
   saveNetworkTimeout: [value: number]
+  saveLocalTimeout: [value: number]
   /** 提交规则配置局部更新（开关即时/阈值保存按钮与 Enter 键共用） */
   saveRuleConfig: [patch: Partial<CommitRuleConfig>]
   saveBranchMode: [mode: "all" | "head"]
@@ -554,6 +583,7 @@ const sections: { id: SettingsSection, icon: string, labelKey: string }[] = [
 
 const localConcurrency = ref(clampGitConcurrency(props.concurrency))
 const localNetworkTimeout = ref(clampNetworkTimeout(props.networkTimeout))
+const localLocalTimeout = ref(clampLocalTimeout(props.localTimeout))
 const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubjectLength))
 const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBodyLineLength))
 const localDiffContextBudget = ref(clampDiffContextBudget(props.ruleConfig.diffContextBudget))
@@ -737,6 +767,11 @@ function saveNetworkTimeout() {
   emit("saveNetworkTimeout", localNetworkTimeout.value)
 }
 
+/** 保存本地命令超时（保存按钮 / Enter 键共用） */
+function saveLocalTimeout() {
+  emit("saveLocalTimeout", localLocalTimeout.value)
+}
+
 /** 保存描述最短字数（保存按钮 / Enter 键共用） */
 function saveMinSubjectLength() {
   emit("saveRuleConfig", { minSubjectLength: localMinSubjectLength.value })
@@ -764,6 +799,7 @@ function onEnterKey() {
   if (activeSection.value === "general") {
     saveConcurrency()
     saveNetworkTimeout()
+    saveLocalTimeout()
     saveMinSubjectLength()
     saveBodyLineLimit()
     saveDiffContextBudget()

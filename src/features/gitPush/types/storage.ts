@@ -106,6 +106,18 @@ export function clampNetworkTimeout(n: number): number {
   return Math.max(NETWORK_TIMEOUT_MIN, Math.min(NETWORK_TIMEOUT_MAX, num))
 }
 
+/** Git 本地命令超时允许范围（秒，设置弹窗输入与 GitExecutor 钳位的单一数据源） */
+export const LOCAL_TIMEOUT_MIN = 10
+export const LOCAL_TIMEOUT_MAX = 600
+/** 本地命令默认超时（秒）：提交/日志/status 等纯本地命令，默认 60s（原硬编码 30s 放宽） */
+export const DEFAULT_LOCAL_TIMEOUT = 60
+
+/** 将本地超时（秒）整数化并钳位到允许范围 */
+export function clampLocalTimeout(n: number): number {
+  const num = Math.round(Number(n) || DEFAULT_LOCAL_TIMEOUT)
+  return Math.max(LOCAL_TIMEOUT_MIN, Math.min(LOCAL_TIMEOUT_MAX, num))
+}
+
 /** 提交描述最短字数允许范围（设置弹窗输入与规则检查钳位的单一数据源） */
 export const MIN_SUBJECT_LENGTH_MIN = 1
 export const MIN_SUBJECT_LENGTH_MAX = 100
@@ -517,6 +529,8 @@ export class GitPushStorage {
   readonly gitConcurrency: TypedStorage<number>
   /** 网络命令超时（秒，GitExecutor 加载后转换为毫秒生效；默认 240s） */
   readonly networkTimeout: TypedStorage<number>
+  /** 本地命令超时（秒，GitExecutor 加载后转换为毫秒生效；默认 60s） */
+  readonly localTimeout: TypedStorage<number>
   /** 全局标签缓存（所有用过的标签，用于筛选条与输入建议） */
   readonly tags: TypedStorage<string[]>
   /** 提交信息模板 */
@@ -575,6 +589,7 @@ export class GitPushStorage {
     // 默认 0 = 未迁移（迁移完成后写入 GIT_CONCURRENCY_MIGRATION_VERSION）
     this.gitConcurrencyMigration = new TypedStorage(storage, "git-push-concurrency-migration", 0)
     this.networkTimeout = new TypedStorage(storage, "git-push-network-timeout", DEFAULT_NETWORK_TIMEOUT)
+    this.localTimeout = new TypedStorage(storage, "git-push-local-timeout", DEFAULT_LOCAL_TIMEOUT)
     this.tags = new TypedStorage(storage, "git-push-tags", [])
     this.commitTemplates = new TypedStorage(storage, "git-push-commit-templates", DEFAULT_TEMPLATES)
     this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)

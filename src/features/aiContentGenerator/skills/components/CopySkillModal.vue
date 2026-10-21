@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import type { SkillInfo } from "../../SkillsManager"
+import type { SkillInfo } from "../SkillsManager"
 import type { AIToolType } from "@/config/aiTools"
 import {
   computed,

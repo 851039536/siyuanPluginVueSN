@@ -15,8 +15,10 @@ import { copyToClipboard } from "@/utils/domUtils"
  * - 输入变化时自动清除错误
  * - 统一的 API 配置获取
  * - 统一的剪贴板操作（遵循 AGENTS.md 统一入口原则）
+ * @param plugin 思源插件实例
+ * @param i18n 词条文案（提示信息国际化）
  */
-export function useCodeFeature(plugin?: Plugin) {
+export function useCodeFeature(plugin?: Plugin, i18n?: Record<string, string>) {
   const errorMessage = ref("")
 
   /**
@@ -47,16 +49,16 @@ export function useCodeFeature(plugin?: Plugin) {
   /**
    * 复制文本到剪贴板，成功/失败自动提示
    */
-  async function copyText(text: string, successMsg = "已复制") {
+  async function copyText(text: string, successMsg?: string) {
     if (!text) {
-      showMessage("没有可复制的内容", 2000, "error")
+      showMessage(i18n?.noCopyContent || "没有可复制的内容", 2000, "error")
       return
     }
     const ok = await copyToClipboard(text)
     if (ok) {
-      showMessage(successMsg, 1500, "info")
+      showMessage(successMsg || i18n?.copySuccess || "已复制到剪贴板", 1500, "info")
     } else {
-      showMessage("复制失败", 3000, "error")
+      showMessage(i18n?.copyFailed || "复制失败", 3000, "error")
     }
   }
 

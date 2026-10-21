@@ -18,3 +18,15 @@ export const LANGUAGE_MAP: Record<string, string> = {
   de: "德文",
   es: "西班牙文",
 }
+
+/** 语言代码 → i18n 键（界面展示本地化名称，prompt 内仍用 LANGUAGE_MAP 的中文名） */
+export const LANGUAGE_I18N_KEYS: Record<string, string> = {
+  auto: "autoDetect",
+  zh: "chinese",
+  en: "english",
+  ja: "japanese",
+  ko: "korean",
+  fr: "french",
+  de: "german",
+  es: "spanish",
+}

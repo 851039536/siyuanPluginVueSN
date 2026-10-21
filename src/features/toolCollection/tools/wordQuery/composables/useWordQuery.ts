@@ -2,14 +2,24 @@
 import type { Plugin } from "siyuan"
 import type { Ref } from "vue"
 import { showMessage } from "siyuan"
-import { computed, ref, watch } from "vue"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
-import { copyToClipboard } from "@/utils/domUtils"
+import {
+  copyToClipboard,
+  triggerBlobDownload,
+} from "@/utils/domUtils"
 import { buildQueryPrompt, callWordQueryAPI } from "../utils/api"
 
 const AUTO_OPERATION_DELAY = 2000
 const WORD_PATTERN =
   /^[a-z0-9\s\-.,;:!?'"()Ā-鿿　-〿＀-￯]+$/i
+
+/** 中文（含中日韩表意文字）判定：用于选择 TTS 发音语言 */
+const CHINESE_PATTERN = /[㐀-鿿]/
 
 
 export const FIELD_MAPPINGS = [
@@ -75,11 +85,13 @@ export interface ExtractedParts {
  * @param plugin 思源插件实例
  * @param pronunciationType 发音类型 ref（来自 useSettings）
  * @param autoPlayPronunciation 自动播放 ref（来自 useSettings）
+ * @param i18n 词条文案（用于错误提示国际化）
  */
 export function useWordQuery(
   plugin?: Plugin,
   pronunciationType?: Ref<"uk" | "us">,
   autoPlayPronunciation?: Ref<boolean>,
+  i18n?: Record<string, string>,
 ) {
   const searchWord = ref("")
   const queryResult = ref("")
@@ -88,44 +100,22 @@ export function useWordQuery(
   const showCopyOptions = ref(false)
   const autoQueryTimer = ref<NodeJS.Timeout | null>(null)
 
+  /** 进行中的请求：连续输入时取消上一次，避免旧结果覆盖新结果 */
+  let abortController: AbortController | null = null
+  /** 请求序号：仅最新一次请求的结果可以落地 */
+  let requestSeq = 0
+
   // ========== 计算属性 ==========
 
   // 从 AI 返回结果中提取单词（处理 AI 修正拼写的情况），fallback 到用户输入
   const extractWord = computed(() => {
-    const match = queryResult.value.match(/^####\s*(?:单词|词语)：(.+)$/m)
-    return match ? match[1].trim() : searchWord.value.trim()
-  })
-
-  const formattedResult = computed(() => {
-    if (!queryResult.value) return ""
-
-    let html = queryResult.value
-    html = html.replace(/^#### (.+)$/gm, '<h4 class="result-title">$1</h4>')
-    html = html.replace(/\n/g, "<br>")
-
-    const firstField = FIELD_MAPPINGS.find((m) => m.pattern.test(html))
-    let labelReplacement = ""
-
-    if (firstField) {
-      labelReplacement = `<div class="result-section ${firstField.class}"><span class="result-label">${firstField.label}`
-    }
-
-    FIELD_MAPPINGS.forEach((mapping, index) => {
-      if (index === 0 && firstField) return
-      html = html.replace(
-        mapping.pattern,
-        `</div><div class="result-section ${mapping.class}"><span class="result-label">${mapping.label}`,
-      )
-    })
-
-    if (firstField) {
-      html = html.replace(firstField.pattern, labelReplacement)
-    }
-
-    html = `<div class="result-wrapper">${html}</div>`
-    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-
-    return html
+    // 优先取 Markdown 标题行（prompt 要求输出 `#### 单词`）
+    const heading = queryResult.value.match(/^####\s*(.+)$/m)
+    if (heading) return heading[1].trim()
+    // 兼容「单词：xxx」字段行
+    const field = queryResult.value.match(/(?:单词|词语)：(.+)$/m)
+    if (field) return field[1].trim()
+    return searchWord.value.trim()
   })
 
   const extractContentParts = computed<ExtractedParts>(() => {
@@ -153,14 +143,27 @@ export function useWordQuery(
   // ========== 输入验证 ==========
 
   const validateInput = (input: string) => {
-    if (!input.trim()) return "请输入单词"
-    if (!WORD_PATTERN.test(input)) return "请输入有效的单词或词语"
+    if (!input.trim()) return i18n?.enterWordPlease || "请输入单词"
+    if (!WORD_PATTERN.test(input)) {
+      return i18n?.enterValidWord || "请输入有效的单词或词语"
+    }
     return null
   }
 
   // ========== 查询 ==========
 
+  /** 清除待触发的防抖查询（手动查询时先取消，避免同一次输入发出两轮请求） */
+  const clearTimer = () => {
+    if (autoQueryTimer.value) {
+      clearTimeout(autoQueryTimer.value)
+      autoQueryTimer.value = null
+    }
+  }
+
   const handleQuery = async () => {
+    // 手动查询时清掉待触发的防抖查询，避免同一次输入发出两轮请求
+    clearTimer()
+
     const word = searchWord.value.trim()
     const error = validateInput(word)
     if (error) {
@@ -168,25 +171,41 @@ export function useWordQuery(
       return
     }
 
+    // 取消上一次未完成的请求
+    abortController?.abort()
+    abortController = new AbortController()
+    const currentSeq = ++requestSeq
+
     isLoading.value = true
     errorMessage.value = ""
 
     try {
       const config = getApiConfigFromPlugin(plugin)
-      const result = await callWordQueryAPI(buildQueryPrompt(word), config)
+      const result = await callWordQueryAPI(buildQueryPrompt(word), config, {
+        signal: abortController.signal,
+      })
+      // 仅最新一次请求可以写入结果
+      if (currentSeq !== requestSeq) return
+
       if (result) {
         queryResult.value = result
         if (autoPlayPronunciation?.value) {
           playPronunciation(word)
         }
       } else {
-        errorMessage.value = "查询失败,请重试"
+        errorMessage.value = i18n?.queryFailed || "查询失败，请重试"
       }
     } catch (error) {
+      // 主动取消不算错误
+      if ((error as Error).name === "AbortError") return
       console.error("Query error:", error)
-      errorMessage.value = (error as Error).message || "未知错误"
+      errorMessage.value
+        = (error as Error).message || i18n?.unknownError || "未知错误"
     } finally {
-      isLoading.value = false
+      if (currentSeq === requestSeq) {
+        isLoading.value = false
+        abortController = null
+      }
     }
   }
 
@@ -200,7 +219,12 @@ export function useWordQuery(
   const playPronunciation = (word: string) => {
     try {
       const utterance = new SpeechSynthesisUtterance(word)
-      utterance.lang = pronunciationType?.value === "us" ? "en-US" : "en-GB"
+      // 中文词语用中文发音，其余按英/美式发音
+      utterance.lang = CHINESE_PATTERN.test(word)
+        ? "zh-CN"
+        : pronunciationType?.value === "us"
+          ? "en-US"
+          : "en-GB"
       utterance.rate = 0.8
       speechSynthesis.speak(utterance)
     } catch (error) {
@@ -214,7 +238,7 @@ export function useWordQuery(
     showCopyOptions.value = !showCopyOptions.value
   }
 
-  const copyResult = async (type: string = "all", i18n?: Record<string, string>) => {
+  const copyResult = async (type: string = "all", labels?: Record<string, string>) => {
     let textToCopy = ""
     let hasContent = false
 
@@ -227,7 +251,7 @@ export function useWordQuery(
     }
 
     if (!hasContent) {
-      showMessage("没有找到要复制的内容", 2000, "error")
+      showMessage(labels?.noCopyContent || "没有找到要复制的内容", 2000, "error")
       return
     }
 
@@ -235,34 +259,27 @@ export function useWordQuery(
     if (ok) {
       showCopyOptions.value = false
     } else {
-      showMessage(i18n?.copyFailed || "复制失败", 3000, "error")
+      showMessage(labels?.copyFailed || "复制失败", 3000, "error")
     }
   }
 
-  // ========== 导出 ==========
+  // ========== 导出（下载 Markdown 文件） ==========
 
-  const exportContent = async (i18n?: Record<string, string>) => {
+  const exportContent = (labels?: Record<string, string>) => {
     if (!queryResult.value) {
-      showMessage("没有可导出的内容", 2000, "error")
+      showMessage(labels?.noExportContent || "没有可导出的内容", 2000, "error")
       return
     }
 
-    const word = searchWord.value.trim()
+    const word = extractWord.value || searchWord.value.trim()
     const content = `## ${word}\n\n${queryResult.value}`
-    const ok = await copyToClipboard(content)
-    if (!ok) {
-      showMessage(i18n?.exportFailed || "导出失败", 3000, "error")
-    }
+    const blob = new Blob([content], { type: "text/markdown;charset=utf-8" })
+    // 文件名去除非法字符
+    const safeName = word.replace(/[\\/:*?"<>|]/g, "_") || "word-query"
+    triggerBlobDownload(blob, `${safeName}.md`)
   }
 
   // ========== 防抖自动查询 ==========
-
-  const clearTimer = () => {
-    if (autoQueryTimer.value) {
-      clearTimeout(autoQueryTimer.value)
-      autoQueryTimer.value = null
-    }
-  }
 
   const setupAutoQuery = () => {
     clearTimer()
@@ -300,7 +317,6 @@ export function useWordQuery(
     autoQueryTimer,
     // 计算属性
     extractWord,
-    formattedResult,
     extractContentParts,
     // 方法
     validateInput,
@@ -315,4 +331,3 @@ export function useWordQuery(
     handleClickOutside,
   }
 }
-

@@ -1,15 +1,19 @@
 <!-- 单词查询面板 — 输入、高级选项、结果展示、复制/播放/导出操作 -->
 <template>
   <div class="word-query-mode-content">
+    <!-- 输入区：输入框 + 查询 + 高级选项 -->
     <div class="input-section">
       <div class="input-wrapper">
         <Input
           v-model="searchWord"
+          class="search-input"
           :placeholder="i18n.enterWordPlaceholder || '输入单词或词语，2秒后自动查询...'"
           @keydown.enter="handleQuery"
         />
         <Button
           class="query-btn"
+          variant="primary"
+          size="small"
           :disabled="isLoading"
           :loading="isLoading"
           @click="handleQuery"
@@ -18,96 +22,63 @@
             name="search"
             :size="16"
           />
+          {{ i18n.query || '查询' }}
         </Button>
         <Button
+          class="advanced-toggle"
           variant="ghost"
           size="xsmall"
           :title="i18n.advancedOptions || '高级选项'"
-          @click="togglePanel('advanced')"
+          :aria-pressed="advancedOpen"
+          @click="advancedOpen = !advancedOpen"
         >
           <IconWrapper
             name="generalSettings"
-            :size="18"
+            :size="16"
           />
         </Button>
       </div>
     </div>
 
+    <!-- 高级选项：单行紧凑排布（发音类型 + 自动播放） -->
     <div
-      v-if="activePanel"
-      class="common-panel"
+      v-if="advancedOpen"
+      class="advanced-panel"
     >
-      <div class="panel-header">
-        <span>
+      <div class="advanced-item">
+        <span class="advanced-label">
           <IconWrapper
-            :name="getPanelConfig(activePanel).iconKey"
-            :size="16"
+            name="pronunciation"
+            :size="14"
           />
-          {{ getPanelConfig(activePanel).title }}
+          {{ i18n.pronunciation || '发音设置' }}
         </span>
-        <div class="panel-actions">
-          <Button
-            variant="ghost"
+        <!-- 发音类型单选组（同组共用 name，方向键与 ARIA 语义方生效） -->
+        <div class="option-row">
+          <RadioButton
+            name="wordquery-pronunciation"
+            :model-value="pronunciationType"
+            value="uk"
             size="xsmall"
-            @click="togglePanel(null)"
-          >
-            <IconWrapper
-              name="close"
-              :size="16"
-            />
-          </Button>
+            :label="i18n.britishPronunciation || '英式发音'"
+            @update:model-value="pronunciationType = toPronunciationType($event)"
+          />
+          <RadioButton
+            name="wordquery-pronunciation"
+            :model-value="pronunciationType"
+            value="us"
+            size="xsmall"
+            :label="i18n.americanPronunciation || '美式发音'"
+            @update:model-value="pronunciationType = toPronunciationType($event)"
+          />
         </div>
       </div>
-
-      <div
-        v-if="activePanel === 'advanced'"
-        class="panel-content advanced-content"
-      >
-        <div class="option-group">
-          <label class="option-label">
-            <IconWrapper
-              name="pronunciation"
-              :size="16"
-            />
-            <span>{{ i18n.pronunciation || '发音设置' }}</span>
-          </label>
-          <div class="option-row">
-            <!-- 发音类型单选组（同组共用 name，方向键与 ARIA 语义方生效） -->
-            <RadioButton
-              class="option-radio"
-              name="wordquery-pronunciation"
-              :model-value="pronunciationType"
-              value="uk"
-              size="xsmall"
-              :label="i18n.britishPronunciation || '英式发音'"
-              @update:model-value="pronunciationType = toPronunciationType($event)"
-            />
-            <RadioButton
-              class="option-radio"
-              name="wordquery-pronunciation"
-              :model-value="pronunciationType"
-              value="us"
-              size="xsmall"
-              :label="i18n.americanPronunciation || '美式发音'"
-              @update:model-value="pronunciationType = toPronunciationType($event)"
-            />
-          </div>
-        </div>
-
-        <div class="option-group">
-          <label class="checkbox-label">
-            <input
-              v-model="autoPlayPronunciation"
-              type="checkbox"
-            />
-            <IconWrapper
-              name="play"
-              :size="16"
-            />
-            <span>{{ i18n.autoPlayPronunciation || '查询后自动播放发音' }}</span>
-          </label>
-        </div>
-      </div>
+      <Checkbox
+        v-model="autoPlayPronunciation"
+        class="advanced-item"
+        size="xsmall"
+        :label="i18n.autoPlayPronunciation || '查询后自动播放发音'"
+      />
     </div>
 
     <div class="query-content">
@@ -115,6 +86,7 @@
         v-if="isLoading"
         class="query-loading"
       >
+        <div class="loading-spinner" />
         <p>{{ i18n.querying || '正在查询...' }}</p>
       </div>
 
@@ -122,6 +94,10 @@
         v-else-if="errorMessage"
         class="query-error"
       >
+        <IconWrapper
+          name="error"
+          :size="20"
+        />
         <p>{{ errorMessage }}</p>
       </div>
 
@@ -284,12 +260,12 @@
 <script setup lang="ts">
 import type { WordQueryComponentProps } from "../types"
 import {
-  computed,
   onMounted,
   onUnmounted,
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
+import Checkbox from "@/components/Checkbox.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import RadioButton from "@/components/RadioButton.vue"
@@ -329,37 +305,17 @@ const {
   exportContent,
   clearTimer,
   handleClickOutside,
-} = useWordQuery(props.plugin, pronunciationType, autoPlayPronunciation)
+} = useWordQuery(props.plugin, pronunciationType, autoPlayPronunciation, i18n)
 
-// 高级选项面板
-const activePanel = ref<string | null>(null)
-
-const togglePanel = (panelKey: string | null) => {
-  activePanel.value = activePanel.value === panelKey ? null : panelKey
-}
-
-const panelConfig = computed(() => ({
-  advanced: {
-    iconKey: "settings" as const,
-    title: (i18n.advancedOptions as string) || "高级选项",
-  },
-}))
-
-const getPanelConfig = (panel: string) => {
-  return (
-    panelConfig.value[panel as keyof typeof panelConfig.value] || {
-      iconKey: "settings",
-      title: "",
-    }
-  )
-}
+// 高级选项面板展开态
+const advancedOpen = ref(false)
 
 // 复制（传递 i18n 给 composable）
 const handleCopy = (type: string) => {
   copyResult(type, i18n)
 }
 
-// 导出
+// 导出（下载 Markdown 文件）
 const handleExport = () => {
   exportContent(i18n)
 }

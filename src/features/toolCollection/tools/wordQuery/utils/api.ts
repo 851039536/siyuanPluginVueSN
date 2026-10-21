@@ -70,13 +70,20 @@ export function buildTranslatePrompt(
   text: string,
   sourceLang: string,
   targetLang: string,
+  options?: { partial?: boolean },
 ): string {
   const sourceName = LANGUAGE_MAP[sourceLang] || sourceLang
   const targetName = LANGUAGE_MAP[targetLang] || targetLang
 
-  return sourceLang === "auto"
+  const body = sourceLang === "auto"
     ? `请将以下文本翻译成${targetName}，保持原文的格式和语气，只输出翻译结果，不要有任何解释或说明：\n\n${text}`
     : `请将以下${sourceName}文本翻译成${targetName}，保持原文的格式和语气，只输出翻译结果，不要有任何解释或说明：\n\n${text}`
+
+  if (!options?.partial) return body
+
+  // 分段翻译：明确告知这是长文片段，避免模型输出「以下是译文」之类的引导语
+  const sourceHint = sourceLang === "auto" ? "" : sourceName
+  return `以下是长文的一部分，请只翻译这部分${sourceHint}内容并译成${targetName}，保持原文格式与语气，直接输出译文，不要添加任何前后说明：\n\n${text}`
 }
 
 export async function callWordQueryAPI(
@@ -87,6 +94,22 @@ export async function callWordQueryAPI(
   return callAI(prompt, config, {
     systemPrompt:
       "你是一个专业的多语言教学助手，擅长提供单词的详细释义、音标、谐音和例句。",
+    ...options,
+  })
+}
+
+/**
+ * 翻译专用调用 — 系统提示词强调「忠实原意 + 只输出译文」，
+ * 避免沿用教学助手人格时模型附加讲解、复述原文或加引号
+ */
+export async function callTranslateAPI(
+  prompt: string,
+  config: ApiConfig,
+  options?: AiCallOptions,
+): Promise<string> {
+  return callAI(prompt, config, {
+    systemPrompt:
+      "你是一个专业翻译引擎。忠实传达原意，保留原文的段落、换行与格式；只输出译文正文，不要复述原文、不要添加解释、不要使用引号包裹译文。",
     ...options,
   })
 }

@@ -3,9 +3,8 @@
   <div class="code-explainer-panel">
     <div class="panel-content">
       <div class="input-section">
-        <Input
+        <Textarea
           v-model="codeInput"
-          type="textarea"
           class="code-textarea"
           :placeholder="i18n.codeInputPlaceholder || '粘贴需要解释的代码...'"
           :rows="8"
@@ -115,7 +114,7 @@ import type { CodeExplanationResult } from "../utils/codeUtils"
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Input from "@/components/Input.vue"
+import Textarea from "@/components/Textarea.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
 import { explainCode } from "../utils/codeUtils"
 import type { WordQueryComponentProps } from "../types"
@@ -131,7 +130,7 @@ const {
   clearErrorOnInput,
   getApiConfig,
   copyText,
-} = useCodeFeature(props.plugin)
+} = useCodeFeature(props.plugin, props.i18n)
 clearErrorOnInput(codeInput)
 
 async function handleExplain() {

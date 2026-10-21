@@ -3,9 +3,8 @@
   <div class="regex-generator-panel">
     <div class="panel-content">
       <div class="input-section">
-        <Input
+        <Textarea
           v-model="description"
-          type="textarea"
           class="description-textarea"
           :placeholder="i18n.regexDescPlaceholder || '描述你想要的正则表达式，例如：匹配邮箱地址、匹配手机号码...'"
           :rows="3"
@@ -224,6 +223,7 @@ import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
+import Textarea from "@/components/Textarea.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
 import { generateRegex, testRegex } from "../utils/codeUtils"
 import type { WordQueryComponentProps } from "../types"
@@ -249,7 +249,7 @@ const {
   clearErrorOnInput,
   getApiConfig,
   copyText,
-} = useCodeFeature(props.plugin)
+} = useCodeFeature(props.plugin, props.i18n)
 clearErrorOnInput(description)
 
 function addExample() {

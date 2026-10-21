@@ -4,9 +4,8 @@
     <div class="panel-content">
       <div class="input-row">
         <div class="input-section">
-          <Input
+          <Textarea
             v-model="chineseInput"
-            type="textarea"
             :placeholder="i18n.enterChinesePlaceholder || '输入中文，如：获取用户信息、用户接口、计算总价...'"
             :rows="2"
           />
@@ -156,7 +155,7 @@ import type {
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Input from "@/components/Input.vue"
+import Textarea from "@/components/Textarea.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
 import {
   generateAbbreviation,
@@ -177,7 +176,7 @@ const {
   clearErrorOnInput,
   getApiConfig,
   copyText,
-} = useCodeFeature(props.plugin)
+} = useCodeFeature(props.plugin, props.i18n)
 clearErrorOnInput(chineseInput)
 
 function selectStyle(style: NamingStyle) {

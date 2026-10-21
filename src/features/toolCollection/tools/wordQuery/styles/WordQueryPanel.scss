@@ -1,5 +1,6 @@
 @use '@/variables.scss' as *;
 @use 'codeUtils.scss' as cutils;
+@use 'common.scss' as c;
 
 // 单词查询面板样式
 
@@ -10,29 +11,73 @@
   overflow: hidden;
 }
 
+// ========== 输入区 ==========
 .input-section {
-  padding: $s-4;
+  padding: $s-3 $s-4;
   border-bottom: 1px solid var(--b3-border-color, $c-border);
   flex-shrink: 0;
 
   .input-wrapper {
     display: flex;
+    align-items: center;
     gap: $s-2;
     width: 100%;
   }
 
-  .query-btn {
+  .search-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .query-btn,
+  .advanced-toggle {
     flex-shrink: 0;
   }
 }
 
+// ========== 高级选项（单行紧凑排布） ==========
+.advanced-panel {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $s-2 $s-4;
+  padding: $s-2 $s-4;
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
+  background: var(--b3-theme-surface-lighter, $c-surface);
+  flex-shrink: 0;
+
+  .advanced-item {
+    display: inline-flex;
+    align-items: center;
+    gap: $s-2;
+    font-size: $t-xs;
+    color: var(--b3-theme-on-background, $c-fg);
+  }
+
+  .advanced-label {
+    display: inline-flex;
+    align-items: center;
+    gap: $s-1;
+    font-weight: $fw-medium;
+    color: var(--b3-theme-secondary, $c-muted);
+  }
+
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: $s-3;
+    flex-wrap: wrap;
+  }
+}
+
+// ========== 结果区 ==========
 .query-content {
   flex: 1;
   padding: $s-4;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 0;
 
   .query-loading {
@@ -40,17 +85,36 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: $s-2;
     height: 100%;
     color: var(--b3-theme-on-background, $c-fg);
+
+    .loading-spinner {
+      @include c.spinner;
+    }
+
+    p {
+      margin: 0;
+      font-size: $t-sm;
+      opacity: 0.65;
+    }
   }
 
   .query-error {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: $s-2;
     height: 100%;
     color: var(--b3-theme-error, $c-danger);
     text-align: center;
+
+    p {
+      margin: 0;
+      font-size: $t-sm;
+      overflow-wrap: break-word;
+    }
   }
 
   .query-result {
@@ -75,8 +139,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
     gap: $s-3;
+    // 结果区整体顶部对齐，空态仍保持居中
+    margin: auto 0;
     color: var(--b3-theme-secondary, $c-muted);
     text-align: center;
     padding: $s-8 $s-4;
@@ -91,88 +156,6 @@
     p {
       font-size: $t-sm;
       opacity: 0.6;
-    }
-  }
-}
-
-.common-panel {
-  border-bottom: 1px solid var(--b3-border-color, $c-border);
-  background: var(--b3-theme-surface-lighter, $c-surface);
-  max-width: 100%;
-  overflow: hidden;
-  max-height: 300px;
-
-  .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: $s-3 $s-4;
-    font-weight: $fw-semibold;
-    font-size: $t-sm;
-    font-family: $ff-zh;
-    color: var(--b3-theme-on-background, $c-fg);
-    background: var(--b3-theme-background, $c-bg);
-    border-bottom: 1px solid var(--b3-border-color, $c-border);
-
-    .panel-actions {
-      display: flex;
-      gap: $s-2;
-      align-items: center;
-    }
-  }
-
-  .panel-content {
-    padding: $s-2;
-    max-height: 240px;
-    overflow-y: auto;
-  }
-
-  .advanced-content {
-    padding: $s-4;
-
-    .option-group {
-      margin-bottom: $s-4;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .option-label {
-        display: block;
-        font-weight: $fw-medium;
-        font-size: $t-sm;
-        font-family: $ff-zh;
-        margin-bottom: $s-2;
-        color: var(--b3-theme-on-background, $c-fg);
-      }
-
-      .option-row {
-        display: flex;
-        align-items: center;
-        gap: $s-4;
-        flex-wrap: wrap;
-      }
-
-      .checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: $s-2;
-        font-size: $t-sm;
-        color: var(--b3-theme-on-background, $c-fg);
-        cursor: pointer;
-        padding: $s-2;
-        border-radius: $r-base;
-
-        &:hover {
-          background-color: var(--b3-theme-surface-lighter, $c-surface);
-        }
-
-        input[type="checkbox"] {
-          width: 16px;
-          height: 16px;
-          cursor: pointer;
-        }
-      }
     }
   }
 }

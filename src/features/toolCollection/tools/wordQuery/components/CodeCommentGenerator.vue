@@ -3,9 +3,8 @@
   <div class="code-comment-panel">
     <div class="panel-content">
       <div class="input-section">
-        <Input
+        <Textarea
           v-model="codeInput"
-          type="textarea"
           class="code-textarea"
           :placeholder="i18n.codeInputPlaceholder || '粘贴需要添加注释的代码...'"
           :rows="8"
@@ -117,7 +116,7 @@ import type {
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
-import Input from "@/components/Input.vue"
+import Textarea from "@/components/Textarea.vue"
 import { useCodeFeature } from "../composables/useCodeFeature"
 import {
   COMMENT_STYLES,
@@ -137,7 +136,7 @@ const {
   clearErrorOnInput,
   getApiConfig,
   copyText,
-} = useCodeFeature(props.plugin)
+} = useCodeFeature(props.plugin, props.i18n)
 clearErrorOnInput(codeInput)
 
 function selectStyle(style: CommentStyle) {

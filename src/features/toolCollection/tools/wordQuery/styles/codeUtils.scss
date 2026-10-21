@@ -104,10 +104,13 @@ $compact-gap: 6px;          // 紧凑间距 — 无全局精确对应（$s-1=4px
   .code-textarea,
   .description-textarea {
     width: 100%;
-    font-family: $ff-mono;
-    font-size: $t-sm;
-    line-height: $code-line-height;
-    resize: vertical;
+
+    // 共享 Textarea 组件自带字号档位，代码场景只需覆盖字体族与行高
+    :deep(.si-textarea__field) {
+      font-family: $ff-mono;
+      font-size: $t-sm;
+      line-height: $code-line-height;
+    }
   }
 }
 

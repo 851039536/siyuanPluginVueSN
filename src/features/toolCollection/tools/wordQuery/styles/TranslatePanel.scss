@@ -1,6 +1,7 @@
 @use '@/variables.scss' as *;
+@use 'common.scss' as c;
 
-// ========== 翻译面板 — 紧凑单列布局 ==========
+// ========== 翻译面板 — 紧凑单列布局（宽屏切换为左右双栏） ==========
 // 工具集底部面板宽度通常在 500~900px，双栏会挤压输入/译文，
 // 这里采用「语言栏 + 上下结构」，在窄容器中更友好。
 
@@ -17,11 +18,14 @@
 // ========== 语言选择栏 ==========
 .translate-toolbar {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
 }
 
 .language-bar {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: $s-2;
   flex-wrap: wrap;
 
@@ -44,8 +48,44 @@
     width: 100%;
   }
 
+  // 语言检测 / 译向提示：单行省略，避免挤压选择器
+  .language-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: $s-1;
+    min-width: 0;
+    max-width: 100%;
+    font-size: $t-2xs;
+    line-height: 1.2;
+    color: var(--b3-theme-secondary, $c-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .swap-btn {
     flex-shrink: 0;
+    margin-top: $s-3;
+  }
+}
+
+// ========== 源语言与目标语言冲突提示 ==========
+.language-warning {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-2 $s-3;
+  border-radius: $r-base;
+  background: var(--b3-theme-warning-light, #fef3c7);
+  color: var(--b3-theme-warning, #d97706);
+  font-size: $t-2xs;
+
+  .language-warning-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -80,9 +120,7 @@
   }
 
   .translate-textarea {
-    // 让 textarea 占满可用高度
-    flex: 1;
-    min-height: 0;
+    width: 100%;
   }
 }
 
@@ -110,9 +148,21 @@
       display: inline-flex;
       align-items: center;
       gap: $s-1;
+      min-width: 0;
       font-size: $t-xs;
       font-weight: $fw-semibold;
       color: var(--b3-theme-on-background, $c-fg);
+    }
+
+    // 译文语言角标：长文对照阅读时提示译文语种
+    .result-language {
+      padding: 0 $s-2;
+      border-radius: $r-sm;
+      background: var(--b3-theme-primary-light, #e0f2fe);
+      color: var(--b3-theme-primary, $c-danger);
+      font-size: $t-2xs;
+      font-weight: $fw-normal;
+      line-height: 1.5;
     }
   }
 
@@ -180,18 +230,7 @@
 
 // ========== 加载动画 ==========
 .loading-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--b3-theme-surface-lighter, $c-surface);
-  border-top-color: var(--b3-theme-primary, $c-danger);
-  border-radius: $r-full;
-  animation: translate-spin 0.7s linear infinite;
-}
-
-@keyframes translate-spin {
-  to {
-    transform: rotate(360deg);
-  }
+  @include c.spinner;
 }
 
 // ========== 响应式 ==========

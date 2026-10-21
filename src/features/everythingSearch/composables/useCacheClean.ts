@@ -24,25 +24,20 @@ import {
   TimerRegistry,
   type TimerHandle,
 } from "@/utils/timerRegistry"
-import { CACHE_ROOTS, resolveCacheRoots } from "../cacheScan/roots"
-import { formatSize } from "../components/cacheClean/format"
+import { CACHE_ROOTS, getCacheRootDef, resolveCacheRoots } from "../cacheScan/roots"
 import {
   buildCacheCleanTexts,
   toPercent,
 } from "../components/cacheClean/labels"
 import { buildCacheCleanSetters } from "../components/cacheClean/preferences"
-import {
-  buildRootRows,
-  flattenEntries,
-} from "../components/cacheClean/rows"
+import { buildRootRows } from "../components/cacheClean/rows"
 import {
   abortActive,
   createAbortHolder,
-  listEntries,
   runClean,
   runScan,
 } from "../components/cacheClean/tasks"
-import { summarizeSize } from "../utils"
+import { flattenCacheEntries, summarizeSize } from "../utils"
 
 /** 依赖注入：外部状态与回调由父层（useSearchConfig）传入 */
 export interface UseCacheCleanDeps {
@@ -69,7 +64,13 @@ export function useCacheClean(deps: UseCacheCleanDeps) {
 
   // ── 状态引用（传给 tasks.ts 由执行器写入）──
   const roots = shallowRef<ResolvedCacheRoot[]>(resolveCacheRoots())
-  const scanResult = ref<CacheScanResult | null>(null)
+  /**
+   * 扫描结果必须是 `shallowRef`：单次扫描可含上万条 `CacheEntry`，
+   * 用 `ref` 会把它们逐个 Proxy 化并建立依赖追踪（实测为数 MB 级额外占用）。
+   * 本状态的所有写入都是**整体替换**（扫描赋值 / `pruneDeletedEntries` 返回新对象），
+   * 不存在原地修改嵌套字段的场景，`shallowRef` 语义完全等价。
+   */
+  const scanResult = shallowRef<CacheScanResult | null>(null)
   const scanStatus = ref<"idle" | "scanning">("idle")
   const scanProgress = ref<CacheScanProgress | null>(null)
   const scanError = ref("")
@@ -87,7 +88,7 @@ export function useCacheClean(deps: UseCacheCleanDeps) {
   const isRootEnabled = (id: CacheRootId): boolean => {
     const explicit = settings.enabledRoots[id]
     if (explicit !== undefined) return explicit
-    return CACHE_ROOTS.find(def => def.id === id)?.defaultEnabled ?? false
+    return getCacheRootDef(id)?.defaultEnabled ?? false
   }
 
   /** rootId → 已解析路径（同一分类可能解析出多个候选目录） */
@@ -117,9 +118,16 @@ export function useCacheClean(deps: UseCacheCleanDeps) {
     label: labelKey => t(labelKey),
   }))
 
-  /** 已选条目（体积降序） */
+  /**
+   * 全部条目（体积降序）。
+   * 平铺 + 排序只在「扫描结果变化」时做一次：勾选变化时若重新平铺排序，
+   * 每次点击都要对上万条重排并新建数组（GC 压力与卡顿都来自这里）。
+   */
+  const allEntries = computed<CacheEntry[]>(() => flattenCacheEntries(scanResult.value))
+
+  /** 已选条目（沿用 `allEntries` 的体积降序，不再二次排序） */
   const selectedEntries = computed<CacheEntry[]>(
-    () => flattenEntries(scanResult.value).filter(entry => selected.value.has(entry.path)),
+    () => allEntries.value.filter(entry => selected.value.has(entry.path)),
   )
   const selectedSize = computed(() => summarizeSize(selectedEntries.value).size)
 
@@ -213,7 +221,7 @@ export function useCacheClean(deps: UseCacheCleanDeps) {
 
   /** 全选 / 全不选（仅作用于条目，不改扫描位置偏好） */
   const selectAll = () => {
-    selected.value = new Set(listEntries(scanResult.value).map(entry => entry.path))
+    selected.value = new Set(allEntries.value.map(entry => entry.path))
   }
   const selectNone = () => {
     selected.value = new Set()
@@ -236,17 +244,16 @@ export function useCacheClean(deps: UseCacheCleanDeps) {
   })
 
   return {
-    // 状态
-    roots,
+    // 状态（只暴露模板真正消费的项：roots / selectedSize 为内部派生，不外抛）
     rootRows,
     scanResult,
     scanStatus,
-    scanProgress,
     scanPercent: computed(() => toPercent(scanProgress.value)),
     cleanPercent: computed(() => toPercent(cleanProgress.value)),
     selected,
     selectedEntries,
-    selectedSize,
+    /** 待渲染条目（体积降序；容器直接交给列表组件，避免各视图再平铺一次） */
+    allEntries,
     cleaning,
     cleanProgress,
     confirmVisible,
@@ -263,6 +270,5 @@ export function useCacheClean(deps: UseCacheCleanDeps) {
     closeConfirm,
     doClean,
     ...buildCacheCleanSetters(updateSettings),
-    formatSize,
   }
 }

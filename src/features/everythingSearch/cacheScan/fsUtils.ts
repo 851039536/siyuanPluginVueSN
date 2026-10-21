@@ -20,49 +20,33 @@ export function yieldToEventLoop(): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, 0))
 }
 
-/** 目录体积累加器 */
-export interface SizeAccumulator {
-  size: number
-  files: number
-  /** 目录内最后修改时间的最大值（供年龄门槛判定） */
-  latestModified: number
-  /** 是否因深度/异常而未能完整统计 */
-  partial: boolean
-}
-
 /**
- * 递归统计目录体积。
+ * 递归统计目录的字节体积（只返回体积：条目数与最新 mtime 无人消费，见下）。
  *
  * - 符号链接 / junction 一律跳过（`isSymbolicLink()`），否则可能顺着链接读到别处、
  *   甚至形成环 —— 这既会算错体积，也会让「删除」越出白名单语义。
- * - 权限拒绝 / 文件被占用等异常只影响该条目，不中断整体统计（`partial` 标记）。
+ * - 权限拒绝 / 文件被占用等异常只跳过该条目，不中断整体统计。
+ * - 取消时提前返回已累计部分（调用方本就会丢弃未完成的根结果）。
  */
-export function measureDirectory(
+export function measureDirectorySize(
   dirPath: string,
   depth: number,
   signal?: AbortSignal,
-): SizeAccumulator {
-  const result: SizeAccumulator = { size: 0, files: 0, latestModified: 0, partial: false }
+): number {
   const fsPathOs = getNodeFsPathOs()
-  if (!fsPathOs) {
-    result.partial = true
-    return result
-  }
+  if (!fsPathOs) return 0
 
   let entries: Dirent[]
   try {
     entries = fsPathOs.fs.readdirSync(dirPath, { withFileTypes: true })
   } catch {
     // 无权限 / 已被删除 / 不是目录
-    result.partial = true
-    return result
+    return 0
   }
 
+  let size = 0
   for (const entry of entries) {
-    if (isAborted(signal)) {
-      result.partial = true
-      return result
-    }
+    if (isAborted(signal)) return size
     // 符号链接与 junction 一律跳过（防循环与跨盘）
     if (entry.isSymbolicLink()) continue
 
@@ -71,16 +55,8 @@ export function measureDirectory(
     if (isProtectedPath(childPath)) continue
 
     if (entry.isDirectory()) {
-      result.files++
-      if (depth >= MAX_DEPTH) {
-        result.partial = true
-        continue
-      }
-      const nested = measureDirectory(childPath, depth + 1, signal)
-      result.size += nested.size
-      result.files += nested.files
-      result.latestModified = Math.max(result.latestModified, nested.latestModified)
-      if (nested.partial) result.partial = true
+      if (depth >= MAX_DEPTH) continue
+      size += measureDirectorySize(childPath, depth + 1, signal)
       continue
     }
 
@@ -89,22 +65,10 @@ export function measureDirectory(
       stats = fsPathOs.fs.statSync(childPath)
     } catch {
       // 文件在 readdir 与 stat 之间消失 / 被占用：跳过但不影响其他条目
-      result.partial = true
       continue
     }
-    result.files++
-    if (Number.isFinite(stats.size) && stats.size > 0) result.size += stats.size
-    const modified = stats.mtimeMs
-    if (Number.isFinite(modified) && modified > result.latestModified) {
-      result.latestModified = modified
-    }
+    if (Number.isFinite(stats.size) && stats.size > 0) size += stats.size
   }
 
-  return result
-}
-
-/** 从异常对象取可读文案（非 Error 原样转字符串，避免误吞未知抛错） */
-export function readErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message
-  return typeof error === "string" ? error : String(error ?? "")
+  return size
 }

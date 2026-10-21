@@ -4,7 +4,6 @@ import type { ComputedRef } from "vue"
 import type {
   CacheCleanResult,
   CacheEntry,
-  CacheRisk,
   CacheScanProgress,
   CacheScanResult,
 } from "../../types"
@@ -53,7 +52,6 @@ export interface CacheCleanTexts {
   cleanProgressText: ComputedRef<string>
   scanFeedback: ComputedRef<CachePanelFeedback | null>
   cleanFeedback: ComputedRef<CachePanelFeedback | null>
-  riskLabel: (risk: CacheRisk) => string
 }
 
 /** 构建面板全部展示文案 */
@@ -77,7 +75,6 @@ export function buildCacheCleanTexts(
     cleanProgressText: computed(() => toProgressText(src.cleanProgress())),
     scanFeedback: computed(() => buildScanFeedback(t, src.scanError(), src.scanCancelled())),
     cleanFeedback: computed(() => buildCleanFeedback(t, src.cleanError(), src.cleanResult())),
-    riskLabel: (risk: CacheRisk): string => t(risk === "safe" ? "cacheRiskSafe" : "cacheRiskCaution"),
   }
 }
 

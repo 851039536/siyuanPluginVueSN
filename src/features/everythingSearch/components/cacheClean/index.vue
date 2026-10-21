@@ -120,7 +120,7 @@
 
       <!-- 条目明细 -->
       <CacheEntryList
-        :entries="scanEntries"
+        :entries="allEntries"
         :selected="selected"
         :i18n="i18n"
         @toggle-entry="handleToggleEntry"
@@ -179,7 +179,7 @@ import { useCacheClean } from "../../composables/useCacheClean"
 import CacheCleanOptions from "./CacheCleanOptions.vue"
 import CacheEntryList from "./CacheEntryList.vue"
 import CacheRootList from "./CacheRootList.vue"
-import { flattenEntries } from "./rows"
+import { formatSize } from "./format"
 
 interface Props {
   /** everythingSearch 命名空间的 i18n 文案（父层 computed，随语言切换即时更新） */
@@ -211,6 +211,7 @@ const {
   elapsedText,
   selected,
   selectedEntries,
+  allEntries,
   selectedText,
   cleaning,
   cleanPercent,
@@ -232,7 +233,6 @@ const {
   setMode,
   setMinAgeMinutes,
   setMaxEntries,
-  formatSize,
 } = useCacheClean({
   i18n: i18n,
   settings: props.settings,
@@ -243,15 +243,10 @@ const {
 /** 扫描中（Button/进度条共用，避免模板里反复比较字符串） */
 const scanning = computed(() => scanStatus.value === "scanning")
 
-/** 待展示条目：各分类平铺后按体积降序（分类已在根目录区体现） */
-const scanEntries = computed(() => flattenEntries(scanResult.value))
-
 /** 反馈条：清理反馈优先（清理完成时扫描反馈已无意义） */
 const feedback = computed<CachePanelFeedback | null>(
   () => cleanFeedback.value ?? scanFeedback.value,
 )
-
-/** 清理方式选项已由 CacheCleanOptions 子组件承担，此处不再重复文案构建 */
 
 const handleToggleRoot = (id: CacheRootId, checked: boolean) => {
   toggleRoot(id, checked)

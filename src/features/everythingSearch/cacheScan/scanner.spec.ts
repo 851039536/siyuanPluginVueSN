@@ -24,13 +24,13 @@ import {
   expect,
   it,
 } from "vitest"
-import {
-  cleanCacheEntries,
-  DEFAULT_MAX_ENTRIES,
-  flattenCacheEntries,
-  isAllowedCachePath,
-  scanCacheRoots,
-} from "./scanner"
+import type {
+  CacheRootScanResult,
+  CacheScanResult,
+} from "../types"
+import { flattenCacheEntries } from "../utils"
+import { cleanCacheEntries, isAllowedCachePath } from "./cleaner"
+import { DEFAULT_MAX_ENTRIES, scanCacheRoots } from "./scanner"
 
 /** 每个用例独立的临时根目录 */
 let sandbox = ""
@@ -295,33 +295,28 @@ describe("flattenCacheEntries（平铺）", () => {
   it("空结果为 []，多根结果按体积降序合并", () => {
     expect(flattenCacheEntries(null)).toEqual([])
 
-    const flattened = flattenCacheEntries({
-      roots: [
-        {
-          rootId: "userTemp",
-          path: "C:\\A",
-          message: "",
-          size: 30,
-          files: 2,
-          truncated: false,
-          entries: [makeEntry("C:\\A\\s.tmp", 10), makeEntry("C:\\A\\b.tmp", 20)],
-        },
-        {
-          rootId: "npmCache",
-          path: "C:\\B",
-          message: "",
-          size: 90,
-          files: 1,
-          truncated: false,
-          entries: [makeEntry("C:\\B\\big", 90)],
-        },
-      ],
-      size: 120,
-      files: 3,
-      elapsed: 5,
-      cancelled: false,
-    })
+    const roots: CacheRootScanResult[] = [
+      {
+        rootId: "userTemp",
+        path: "C:\\A",
+        message: "",
+        size: 30,
+        files: 2,
+        truncated: false,
+        entries: [makeEntry("C:\\A\\s.tmp", 10), makeEntry("C:\\A\\b.tmp", 20)],
+      },
+      {
+        rootId: "npmCache",
+        path: "C:\\B",
+        message: "",
+        size: 90,
+        files: 1,
+        truncated: false,
+        entries: [makeEntry("C:\\B\\big", 90)],
+      },
+    ]
+    const result: CacheScanResult = { roots, size: 120, files: 3, elapsed: 5, cancelled: false }
 
-    expect(flattened.map(entry => entry.size)).toEqual([90, 20, 10])
+    expect(flattenCacheEntries(result).map(entry => entry.size)).toEqual([90, 20, 10])
   })
 })

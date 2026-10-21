@@ -16,11 +16,10 @@ import type {
   CacheScanResult,
 } from "../types"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { isProtectedPath, normalizeWinPath } from "../utils"
+import { isProtectedPath, normalizeWinPath, summarizeSize } from "../utils"
 import { CACHE_ROOTS, resolveCacheRoots } from "./roots"
-import { isAborted, measureDirectory, yieldToEventLoop } from "./fsUtils"
-
-export { cleanCacheEntries, isAllowedCachePath, type CleanCacheOptions } from "./cleaner"
+import { isAborted, measureDirectorySize, yieldToEventLoop } from "./fsUtils"
+import { logInfo, logWarn } from "./log"
 
 /** 默认单根条目上限（防止临时目录海量小文件拖垮面板与内存） */
 export const DEFAULT_MAX_ENTRIES = 3000
@@ -54,17 +53,23 @@ export async function scanCacheRoots(options: ScanCacheOptions = {}): Promise<Ca
   const maxEntries = options.maxEntries && options.maxEntries > 0
     ? options.maxEntries
     : DEFAULT_MAX_ENTRIES
-  const minAgeMs = options.minAgeMinutes && options.minAgeMinutes > 0
-    ? options.minAgeMinutes * 60_000
+  const minAgeMinutes = options.minAgeMinutes && options.minAgeMinutes > 0
+    ? options.minAgeMinutes
     : 0
+  const minAgeMs = minAgeMinutes * 60_000
   const signal = options.signal
 
   const resolvedRoots = resolveCacheRoots(defs)
   const total = defs.length
   let done = 0
 
-  // 按定义分组：一个 def 可能解析出多个目录（如浏览器多个厂商）
   const results: CacheRootScanResult[] = []
+  logInfo("扫描开始", {
+    roots: defs.map(def => def.id),
+    resolvedDirs: resolvedRoots.length,
+    maxEntries,
+    minAgeMinutes,
+  })
 
   for (const def of defs) {
     if (isAborted(signal)) break
@@ -72,39 +77,30 @@ export async function scanCacheRoots(options: ScanCacheOptions = {}): Promise<Ca
 
     const paths = resolvedRoots.filter(root => root.def.id === def.id).map(root => root.path)
     if (paths.length === 0) {
-      results.push({
-        rootId: def.id,
-        path: "",
-        message: "missing",
-        size: 0,
-        files: 0,
-        entries: [],
-        truncated: false,
-      })
+      logWarn(`根目录不存在，跳过：${def.id}`)
+      results.push(emptyRootResult(def.id, "", "missing"))
       done++
       options.onProgress?.({ done, total, current: def.id })
       continue
     }
 
-    const merged: CacheRootScanResult = {
-      rootId: def.id,
-      path: paths[0],
-      paths,
-      message: "",
-      size: 0,
-      files: 0,
-      entries: [],
-      truncated: false,
-    }
+    // 同一 def 可能解析出多个目录（如浏览器多厂商）：逐个扫，再合并裁剪
+    const merged: CacheRootScanResult = emptyRootResult(def.id, paths[0], "")
 
     for (const rootPath of paths) {
       if (isAborted(signal)) break
       const part = scanSingleRoot(rootPath, def.id, maxEntries, minAgeMs, signal)
-      merged.size += part.size
-      merged.files += part.files
+      // 合计不在此累加：多候选合并后要按「裁剪后实际保留的条目」重算，见下方统一重算
       merged.entries.push(...part.entries)
       if (part.truncated) merged.truncated = true
       if (part.message) merged.message = part.message
+      logInfo(`根目录扫描完成：${def.id}`, {
+        path: rootPath,
+        entries: part.entries.length,
+        bytes: part.size,
+        truncated: part.truncated,
+        message: part.message || undefined,
+      })
       // 让出事件循环：单根扫描可能包含上万次同步 IO
       await yieldToEventLoop()
       if (isAborted(signal)) break
@@ -115,9 +111,10 @@ export async function scanCacheRoots(options: ScanCacheOptions = {}): Promise<Ca
       merged.entries.length = maxEntries
       merged.truncated = true
     }
-    // 条目被截断后，合计体积按实际保留的条目重算，避免「面板合计」与「可清理项」不一致
-    merged.size = merged.entries.reduce((sum, entry) => sum + entry.size, 0)
-    merged.files = merged.entries.length
+    // 条目被截断后，合计按实际保留的条目重算，避免「面板合计」与「可清理项」不一致
+    const mergedSummary = summarizeSize(merged.entries)
+    merged.size = mergedSummary.size
+    merged.files = mergedSummary.files
 
     results.push(merged)
     done++
@@ -126,26 +123,40 @@ export async function scanCacheRoots(options: ScanCacheOptions = {}): Promise<Ca
 
   // 未扫描的根补空结果（取消时保持结构完整，UI 无需判空）
   for (const def of defs.slice(results.length)) {
-    results.push({
-      rootId: def.id,
-      path: "",
-      message: "pending",
-      size: 0,
-      files: 0,
-      entries: [],
-      truncated: false,
-    })
+    results.push(emptyRootResult(def.id, "", "pending"))
   }
 
-  const totalSize = results.reduce((sum, root) => sum + root.size, 0)
-  const totalFiles = results.reduce((sum, root) => sum + root.files, 0)
+  const roots = results.sort((a, b) => b.size - a.size)
+  // 合计按各根已汇总的值累加（`summarizeSize` 统计的是「数组元素个数」，不适用于根这一层）
+  const size = roots.reduce((sum, root) => sum + root.size, 0)
+  const files = roots.reduce((sum, root) => sum + root.files, 0)
+  const cancelled = isAborted(signal)
+  const elapsed = Date.now() - startedAt
+  logInfo("扫描结束", { roots: roots.length, size, files, elapsed, cancelled })
 
   return {
-    roots: results.sort((a, b) => b.size - a.size),
-    size: totalSize,
-    files: totalFiles,
-    elapsed: Date.now() - startedAt,
-    cancelled: isAborted(signal),
+    roots,
+    size,
+    files,
+    elapsed,
+    cancelled,
+  }
+}
+
+/** 空的单根结果（`missing` / `pending` / `denied` 等场景共用，避免四处重复字面量） */
+function emptyRootResult(
+  rootId: CacheRootId,
+  path: string,
+  message: string,
+): CacheRootScanResult {
+  return {
+    rootId,
+    path,
+    message,
+    size: 0,
+    files: 0,
+    entries: [],
+    truncated: false,
   }
 }
 
@@ -160,32 +171,22 @@ function scanSingleRoot(
   minAgeMs: number,
   signal: AbortSignal | undefined,
 ): CacheRootScanResult {
-  const empty = (message: string): CacheRootScanResult => ({
-    rootId,
-    path: rootPath,
-    message,
-    size: 0,
-    files: 0,
-    entries: [],
-    truncated: false,
-  })
-
   const fsPathOs = getNodeFsPathOs()
-  if (!fsPathOs) return empty("no-node")
+  if (!fsPathOs) return emptyRootResult(rootId, rootPath, "no-node")
 
   let entries: Dirent[]
   try {
     entries = fsPathOs.fs.readdirSync(rootPath, { withFileTypes: true })
   } catch {
-    return empty("denied")
+    return emptyRootResult(rootId, rootPath, "denied")
   }
 
   const collected: CacheEntry[] = []
   let truncated = false
   const now = Date.now()
-  // 收集上限 = 目标上限的若干倍：先收够候选再按体积裁剪，
+  // 收集上限 = 目标上限 × 采样倍数：先收够候选再按体积裁剪，
   // 否则「上限」会退化成「目录枚举顺序里的前 N 个」而不是「最大的 N 个」。
-  const collectLimit = Math.max(maxEntries, maxEntries * COLLECT_OVERSAMPLE)
+  const collectLimit = maxEntries * COLLECT_OVERSAMPLE
 
   for (const entry of entries) {
     if (isAborted(signal)) break
@@ -207,7 +208,8 @@ function scanSingleRoot(
       continue
     }
 
-    const isDirectory = entry.isDirectory() || (stats.isDirectory() && !entry.isFile())
+    // 目录类型以 dirent 为准，遇到 DT_UNKNOWN 的文件系统再用 stat 兜底
+    const isDirectory = entry.isDirectory() || stats.isDirectory()
     if (!isDirectory && !entry.isFile()) continue
 
     const modifiedTime = Number.isFinite(stats.mtimeMs) ? stats.mtimeMs : 0
@@ -216,7 +218,7 @@ function scanSingleRoot(
     if (minAgeMs > 0 && modifiedTime > 0 && now - modifiedTime < minAgeMs) continue
 
     const size = isDirectory
-      ? measureDirectory(childPath, 0, signal).size
+      ? measureDirectorySize(childPath, 0, signal)
       : (Number.isFinite(stats.size) && stats.size > 0 ? stats.size : 0)
 
     collected.push({
@@ -230,22 +232,15 @@ function scanSingleRoot(
   }
 
   collected.sort((a, b) => b.size - a.size)
+  const { size, files } = summarizeSize(collected)
 
   return {
     rootId,
     path: rootPath,
     message: "",
-    size: collected.reduce((sum, entry) => sum + entry.size, 0),
-    files: collected.length,
+    size,
+    files,
     entries: collected,
     truncated,
   }
-}
-
-/** 扫描结果的条目平铺（体积降序；供 UI 与测试复用） */
-export function flattenCacheEntries(result: CacheScanResult | null): CacheEntry[] {
-  if (!result) return []
-  const entries: CacheEntry[] = []
-  for (const root of result.roots) entries.push(...root.entries)
-  return entries.sort((a, b) => b.size - a.size)
 }

@@ -1,4 +1,4 @@
-// cacheClean 视图模型构建（纯函数）：根目录行、默认勾选集合、扫描结果修剪与条目平铺
+// cacheClean 视图模型构建（纯函数）：根目录行、默认勾选集合、扫描结果修剪
 
 import type {
   CacheEntry,
@@ -8,6 +8,7 @@ import type {
   CacheScanResult,
 } from "../../types"
 import type { CacheRootRow } from "./types"
+import { summarizeSize } from "../../utils"
 
 /** 根目录行构建入参（各数据源由 composable 提供，本函数只做投影） */
 export interface RootRowsInput {
@@ -89,21 +90,11 @@ export function pruneDeletedEntries(
   let totalFiles = 0
   const roots = result.roots.map((root) => {
     const entries = root.entries.filter(entry => !deletedPaths.has(entry.path))
-    let size = 0
-    for (const entry of entries) {
-      if (Number.isFinite(entry.size) && entry.size > 0) size += entry.size
-    }
+    // 合计口径与扫描侧一致（非法/负数尺寸按 0 计）
+    const { size } = summarizeSize(entries)
     totalSize += size
     totalFiles += entries.length
     return { ...root, entries, size, files: entries.length }
   })
   return { ...result, roots, size: totalSize, files: totalFiles }
-}
-
-/** 把所有分类的条目平铺为一维列表（体积降序，明细区按体积优先展示） */
-export function flattenEntries(result: CacheScanResult | null): CacheEntry[] {
-  if (!result) return []
-  const entries: CacheEntry[] = []
-  for (const root of result.roots) entries.push(...root.entries)
-  return entries.sort((a, b) => b.size - a.size)
 }

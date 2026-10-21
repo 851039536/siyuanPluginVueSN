@@ -26,6 +26,10 @@
 
 **默认保守取向**：回收站模式 + 跳过 5 分钟内改动过的文件 + 条目上限 3000 + 浏览器缓存/安装包缓存默认不勾 + 仅手动触发扫描。
 
+**诊断日志**：扫描/清理全链路的日志统一带 `[cacheClean]` 前缀，在 DevTools 控制台按该前缀过滤即可定位问题。
+`info` 只打生命周期里程碑（开始 / 每根完成 / 汇总 / 首次成功的回收站通道），`warn` 打单条目失败（守卫拒绝、删除失败、根目录缺失），
+逐条目成功不打日志（单次可达 3000 条）。实现见 `cacheScan/log.ts`。
+
 ## 目录结构
 
 ```
@@ -43,6 +47,7 @@ src/features/everythingSearch/
 ├── cacheScan/
 │   ├── roots.ts      # CACHE_ROOTS 白名单唯一真源 + resolveCacheRoots()
 │   ├── fsUtils.ts    # 递归体积统计 / 取消与让出事件循环（扫描与清理共用）
+│   ├── log.ts        # 带 [cacheClean] 前缀的分级诊断日志（info / warn / error）
 │   ├── scanner.ts    # scanCacheRoots()（只读扫描）
 │   ├── cleaner.ts    # cleanCacheEntries() / isAllowedCachePath()（三重守卫删除）
 │   └── *.spec.ts     # 白名单与扫描器行为断言

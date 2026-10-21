@@ -122,9 +122,6 @@ export const CACHE_ROOTS: readonly CacheRootDef[] = [
   },
 ]
 
-/** 盘符字母（跳过 A/B 软驱保留位） */
-const DRIVE_LETTERS = "CDEFGHIJKLMNOPQRSTUVWXYZ".split("")
-
 /** 拼接路径段（统一用 Windows 分隔符，末段不带分隔符） */
 function joinSegments(base: string, segments: readonly string[]): string {
   let path = base.replace(/[\\/]+$/, "")
@@ -230,11 +227,4 @@ export const CACHE_ROOT_LABEL_KEYS: readonly string[] = CACHE_ROOTS.map(def => d
 /** 按 id 取根定义（未知名返回 undefined） */
 export function getCacheRootDef(id: string): CacheRootDef | undefined {
   return CACHE_ROOTS.find(def => def.id === id)
-}
-
-/** 探测到的盘符根列表（供需要遍历盘符的场景；当前白名单不依赖，保留给扩展） */
-export function listDriveRoots(): string[] {
-  return DRIVE_LETTERS
-    .map(letter => `${letter}:\\`)
-    .filter(root => isExistingDirectory(root))
 }

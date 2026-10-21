@@ -17,6 +17,7 @@
 import type { ComputedRef } from "vue"
 import type { EverythingSearchResult } from "../types"
 import { showMessage } from "siyuan"
+import { onScopeDispose } from "vue"
 import { openPathInShell } from "@/utils/electronDialog"
 import { copyToClipboard } from "@/utils/domUtils"
 import {
@@ -43,6 +44,10 @@ export function useResultActions(
 ) {
   /** 正在删除的 item 集合（防止异步删除窗口内重复触发） */
   const deletingItems = new Set<EverythingSearchResult>()
+
+  // 卸载时清空：`trashItem` 若长期不返回，该集合会一直握着结果对象，
+  // 而结果对象可能已被下一次搜索整体替换（本应可回收）
+  onScopeDispose(() => deletingItems.clear())
 
   /** 获取本进程 Electron shell（nodeModules 统一封装，非 Electron 环境返回 null） */
   const getShell = (): Shell | null => getElectronModules()?.shell ?? null

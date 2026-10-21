@@ -15,10 +15,15 @@ import type {
   CacheRootDef,
   ResolvedCacheRoot,
 } from "../types"
-import { getNodeFsPathOs } from "@/utils/nodeModules"
-import { isPathInside, isProtectedPath, normalizeWinPath } from "../utils"
+import {
+  getElectronModules,
+  getElectronRemoteShell,
+  getNodeFsPathOs,
+} from "@/utils/nodeModules"
+import { isPathInside, isProtectedPath, normalizeWinPath, readErrorMessage } from "../utils"
 import { CACHE_ROOTS, resolveCacheRoots } from "./roots"
-import { isAborted, readErrorMessage, yieldToEventLoop } from "./fsUtils"
+import { isAborted, yieldToEventLoop } from "./fsUtils"
+import { logInfo, logWarn } from "./log"
 
 /** 失败原因截取条数（全部展示会撑爆提示条） */
 const MAX_ERRORS = 10
@@ -74,6 +79,7 @@ export interface CleanCacheOptions {
  * 回收站 API 不可用时该条目记 `failed`，宁可提示失败，也不静默改为不可逆删除。
  */
 export async function cleanCacheEntries(options: CleanCacheOptions): Promise<CacheCleanResult> {
+  const startedAt = Date.now()
   const { entries, mode, signal } = options
   const resolvedRoots = resolveCacheRoots(options.roots ?? CACHE_ROOTS)
   const result: CacheCleanResult = {
@@ -85,11 +91,19 @@ export async function cleanCacheEntries(options: CleanCacheOptions): Promise<Cac
   }
 
   const pushError = (message: string) => {
-    if (result.errors.length < MAX_ERRORS) result.errors.push(message)
+    // 只记前 MAX_ERRORS 条：与面板提示条同口径，避免批量失败时刷爆控制台
+    if (result.errors.length < MAX_ERRORS) {
+      result.errors.push(message)
+      logWarn("条目处理失败", message)
+    }
   }
 
   const total = entries.length
   let done = 0
+  /** 回收站通道名（首次成功时记录，用于排查「为什么删不掉」） */
+  let recycleChannel = ""
+
+  logInfo("清理开始", { entries: total, mode, resolvedRoots: resolvedRoots.length })
 
   for (const entry of entries) {
     if (isAborted(signal)) {
@@ -108,7 +122,11 @@ export async function cleanCacheEntries(options: CleanCacheOptions): Promise<Cac
 
     try {
       if (mode === "recycle") {
-        await trashToRecycleBin(entry.path)
+        const channel = await trashToRecycleBin(entry.path)
+        if (!recycleChannel) {
+          recycleChannel = channel
+          logInfo(`回收站通道：${channel}`)
+        }
       } else {
         deletePermanently(entry.path)
       }
@@ -125,40 +143,63 @@ export async function cleanCacheEntries(options: CleanCacheOptions): Promise<Cac
     if (done % 20 === 0) await yieldToEventLoop()
   }
 
+  logInfo("清理结束", {
+    deleted: result.deleted,
+    failed: result.failed,
+    freed: result.freed,
+    cancelled: result.cancelled,
+    elapsed: Date.now() - startedAt,
+  })
+
   return result
 }
 
+/** 可用的回收站通道（按优先级排列；两者都取自 `@/utils/nodeModules` 的统一入口） */
+interface RecycleChannel {
+  name: string
+  shell: {
+    trashItem?: (path: string) => Promise<void>
+    moveItemToTrash?: (path: string) => boolean
+  }
+}
+
+/** 探测可用通道：remote（主进程桥接）优先，local（渲染进程 shell）兜底 */
+function listRecycleChannels(): RecycleChannel[] {
+  const channels: RecycleChannel[] = []
+  const remote = getElectronRemoteShell()
+  if (remote) channels.push({ name: "remote", shell: remote })
+  const local = getElectronModules()?.shell
+  if (local) channels.push({ name: "local", shell: local })
+  return channels
+}
+
 /**
- * 移入系统回收站（Electron 主进程 API）。
+ * 移入系统回收站（Electron 主进程 API），返回实际使用的通道名。
+ *
  * 刻意**不用** PowerShell/cmd 脚本 —— 那套行为特征会被企业安全软件判定为可疑删除并上报。
- * 无可用 shell 时抛错（调用方记 failed，不做任何降级）。
+ * 通道存在但操作失败（返回 false / 抛错）时直接向上抛，**不**静默换下一条：
+ * 那会把「权限被策略禁用」伪装成「已删除」。
  */
-async function trashToRecycleBin(targetPath: string): Promise<void> {
+async function trashToRecycleBin(targetPath: string): Promise<string> {
   // 纯 Node 环境（单测）没有 window，shell 必然不可用 —— 直接抛错，由调用方记 failed
   if (typeof window === "undefined") {
     throw new Error("recycle-bin unavailable (non-Electron environment)")
   }
-  const { getElectronRemoteShell, getElectronModules } = await import("@/utils/nodeModules")
-  const remote = getElectronRemoteShell()
-  if (remote && typeof remote.trashItem === "function") {
-    await remote.trashItem(targetPath)
-    return
+
+  for (const channel of listRecycleChannels()) {
+    const { shell } = channel
+    if (typeof shell.trashItem === "function") {
+      await shell.trashItem(targetPath)
+      return `${channel.name}.trashItem`
+    }
+    if (typeof shell.moveItemToTrash === "function") {
+      if (!shell.moveItemToTrash(targetPath)) {
+        throw new Error(`${channel.name}.moveItemToTrash returned false`)
+      }
+      return `${channel.name}.moveItemToTrash`
+    }
   }
-  if (remote && typeof remote.moveItemToTrash === "function") {
-    const ok = remote.moveItemToTrash(targetPath)
-    if (ok) return
-    throw new Error("moveItemToTrash returned false")
-  }
-  const local = getElectronModules()?.shell
-  if (local && typeof local.trashItem === "function") {
-    await local.trashItem(targetPath)
-    return
-  }
-  if (local && typeof local.moveItemToTrash === "function") {
-    const ok = local.moveItemToTrash(targetPath)
-    if (ok) return
-    throw new Error("moveItemToTrash returned false")
-  }
+
   throw new Error("recycle-bin unavailable")
 }
 

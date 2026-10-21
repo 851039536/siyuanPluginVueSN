@@ -15,12 +15,6 @@ export function clampInt(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.round(value)))
 }
 
-/** 从错误对象取可读文案（非 Error 的原样转字符串，避免误吞未知抛错） */
-export function readError(error: unknown): string {
-  if (error instanceof Error) return error.message
-  return typeof error === "string" ? error : String(error ?? "")
-}
-
 /** 偏好写入器集合（模板层直接绑定，无需重复校验数值） */
 export interface CacheCleanSetters {
   setMode: (mode: CacheCleanMode) => void

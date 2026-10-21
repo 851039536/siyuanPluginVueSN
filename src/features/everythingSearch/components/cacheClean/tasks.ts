@@ -13,18 +13,14 @@ import type {
   CacheScanResult,
   ResolvedCacheRoot,
 } from "../../types"
-import {
-  CACHE_ROOTS,
-  resolveCacheRoots,
-} from "../../cacheScan/roots"
-import {
-  cleanCacheEntries,
-  scanCacheRoots,
-} from "../../cacheScan/scanner"
-import { clampInt, MIN_AGE_MINUTES_RANGE, readError } from "./preferences"
+import { CACHE_ROOTS, resolveCacheRoots } from "../../cacheScan/roots"
+import { scanCacheRoots } from "../../cacheScan/scanner"
+import { cleanCacheEntries } from "../../cacheScan/cleaner"
+import { logError, logInfo } from "../../cacheScan/log"
+import { readErrorMessage } from "../../utils"
+import { clampInt, MIN_AGE_MINUTES_RANGE } from "./preferences"
 import {
   defaultSelection,
-  flattenEntries,
   pruneDeletedEntries,
 } from "./rows"
 
@@ -51,7 +47,8 @@ export function abortActive(holder: AbortHolder): void {
 /** 任务执行器操作的状态引用集合 */
 export interface CacheTaskState {
   roots: ShallowRef<ResolvedCacheRoot[]>
-  scanResult: Ref<CacheScanResult | null>
+  /** 必须与 `useCacheClean` 保持 `shallowRef`：条目上万，深度响应式会逐条 Proxy 化 */
+  scanResult: ShallowRef<CacheScanResult | null>
   scanStatus: Ref<"idle" | "scanning">
   scanProgress: Ref<CacheScanProgress | null>
   scanError: Ref<string>
@@ -95,6 +92,7 @@ export async function runScan(rt: CacheTaskRuntime): Promise<void> {
 
   if (enabledDefs.length === 0) {
     // 一个分类都没勾：直接给空结果，避免把「没得扫」呈现成「扫描失败」
+    logInfo("无已勾选分类，跳过扫描")
     state.scanResult.value = { roots: [], size: 0, files: 0, elapsed: 0, cancelled: false }
     state.selected.value = new Set()
     return
@@ -123,7 +121,10 @@ export async function runScan(rt: CacheTaskRuntime): Promise<void> {
     }
   } catch (error) {
     if (controller.signal.aborted) state.scanCancelled.value = true
-    else state.scanError.value = readError(error)
+    else {
+      state.scanError.value = readErrorMessage(error)
+      logError("扫描失败", error)
+    }
   } finally {
     if (rt.abortHolder.current === controller) rt.abortHolder.current = null
     state.scanStatus.value = "idle"
@@ -174,15 +175,11 @@ export async function runClean(rt: CacheTaskRuntime): Promise<void> {
       if (!state.cleanError.value) state.cleanResult.value = null
     }, CLEAN_FEEDBACK_MS)
   } catch (error) {
-    state.cleanError.value = readError(error)
+    state.cleanError.value = readErrorMessage(error)
+    logError("清理失败", error)
   } finally {
     if (rt.abortHolder.current === controller) rt.abortHolder.current = null
     state.cleaning.value = false
     state.cleanProgress.value = null
   }
-}
-
-/** 扫描结果平铺（供容器直接渲染条目明细） */
-export function listEntries(result: CacheScanResult | null): CacheEntry[] {
-  return flattenEntries(result)
 }

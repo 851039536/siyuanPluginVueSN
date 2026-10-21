@@ -99,10 +99,8 @@ export interface CacheEntry {
 /** 单个根目录的扫描结果 */
 export interface CacheRootScanResult {
   rootId: CacheRootId
-  /** 解析到的绝对路径（未解析到为空串） */
+  /** 解析到的绝对路径（未解析到为空串）；同类多候选目录的完整清单见 `ResolvedCacheRoot` */
   path: string
-  /** 同一分类解析出的全部目录（如浏览器多厂商、npm 多候选） */
-  paths?: string[]
   /** 未解析/不可读的原因（失败时填写，成功为空串） */
   message: string
   /** 条目的字节数合计 */

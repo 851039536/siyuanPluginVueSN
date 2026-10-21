@@ -1,5 +1,10 @@
-// everythingSearch 纯函数层：Everything 查询组装、Windows 路径安全判定、缓存大小聚合
+// everythingSearch 纯函数层：Everything 查询组装、Windows 路径安全判定、缓存结果聚合
 // 本文件不依赖 Vue / siyuan / 任何 IO，可在纯 Node 环境单测（见 utils.spec.ts）。
+
+import type {
+  CacheEntry,
+  CacheScanResult,
+} from "./types"
 
 /** 文件大小过滤单位 */
 export type SizeUnit = "KB" | "MB" | "GB"
@@ -256,4 +261,18 @@ export function sizeSeverity(ratio: number): "primary" | "warning" | "danger" {
   if (!Number.isFinite(ratio) || ratio < 0.5) return "primary"
   if (ratio < 0.8) return "warning"
   return "danger"
+}
+
+/** 从异常对象取可读文案（非 Error 原样转字符串，避免误吞未知抛错） */
+export function readErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return typeof error === "string" ? error : String(error ?? "")
+}
+
+/** 把扫描结果各根下的条目平铺为一维列表（体积降序；UI 勾选与统计共用同一顺序） */
+export function flattenCacheEntries(result: CacheScanResult | null): CacheEntry[] {
+  if (!result) return []
+  const entries: CacheEntry[] = []
+  for (const root of result.roots) entries.push(...root.entries)
+  return entries.sort((a, b) => b.size - a.size)
 }

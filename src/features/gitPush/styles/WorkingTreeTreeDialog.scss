@@ -1,0 +1,140 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 变更目录树弹窗（从 WorkingTreePanel 列表迁出的树形浏览面）
+// 外壳（遮罩 / 定位 / z-index / Esc / 焦点归还）由共享 Dialog 承担；
+// 文件行复用 WorkingTreePanel.scss 的全局 wt-* 类（@use 模块缓存，样式零复制）
+
+// 宽屏优先：覆盖 Dialog large 档的固定宽度（(0,3,0) 压过组件 scoped 的 --si-dialog-width，与 diff 弹窗同法）
+.git-push-panel .si-dialog.wt-tree-dialog {
+  --si-dialog-width: min(90vw, 560px);
+}
+
+// 内容区纵向 flex + 去 Dialog 默认内边距：工具栏固定、树自行滚动（与 diff 弹窗同法）
+.git-push-panel .wt-tree-dialog .si-dialog__content {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  padding: $s-2;
+  overflow: hidden;
+}
+
+// 标题行（header 插槽渲染在 .si-dialog__header 内，内边距/下边框由其提供）
+.wt-tree-header {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+}
+
+.wt-tree-title-row {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  min-width: 0;
+  color: var(--b3-theme-on-surface);
+}
+
+.wt-tree-title {
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+}
+
+// 文件总数徽章（复用区块计数口径）
+.wt-tree-total {
+  @include gp-section-count-base;
+}
+
+// 工具栏：筛选输入 + 展开/收起
+.wt-tree-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  flex-shrink: 0;
+}
+
+.wt-tree-search {
+  flex: 1;
+  min-width: 0;
+}
+
+// 树主体：与面板内 .wt-files 容器同风格（描边圆角 + 稳定滚动条槽位），高度随弹窗主体伸展
+.wt-tree-body {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+}
+
+// 树行基座：缩进 = 基准 6px + 层级 × 10px（--wt-tree-depth 由模板注入，Token 计算）
+.wt-tree-row {
+  --wt-tree-indent-base: #{$s-px6};
+  --wt-tree-indent-step: #{$s-px10};
+
+  padding-left: calc(var(--wt-tree-indent-base) + var(--wt-tree-depth, 0) * var(--wt-tree-indent-step));
+}
+
+// 目录行：button 重置 + 悬停高亮（原生 button 承担 Enter/Space 折叠与 aria-expanded）
+.wt-tree-dir {
+  @include btn-reset;
+
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  width: 100%;
+  padding-top: $s-px2;
+  padding-bottom: $s-px2;
+  padding-right: $s-px6;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+}
+
+// 展开箭头：展开态旋转 90°（0.12s 过渡契合仓库过渡规范）
+.wt-tree-chev {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: transform 0.12s;
+
+  &.is-open {
+    transform: rotate(90deg);
+  }
+}
+
+.wt-tree-folder {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.wt-tree-name {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+// 子树文件计数徽章（弱化等宽小字，语义同 .gp-section-count 但底色更淡）
+.wt-tree-count {
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  opacity: 0.5;
+}
+
+// 文件行缩进：复用面板 .wt-file-row 的全部外观，仅以同款变量覆盖水平内边距左值
+.wt-tree-file {
+  padding-left: calc(#{$s-px6} + var(--wt-tree-depth, 0) * #{$s-px10});
+}

@@ -635,6 +635,10 @@ export const COMMON_ICONS = {
   folder: {
     icon: "mdi:folder",
   },
+  /** 文件树（gitPush 变更目录树视图入口等场景） */
+  fileTree: {
+    icon: "mdi:file-tree",
+  },
   folderAlert: {
     icon: "mdi:folder-alert",
   },

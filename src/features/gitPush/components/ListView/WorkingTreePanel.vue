@@ -50,6 +50,15 @@
           >
             {{ i18n.unstageAll }}
           </Button>
+          <!-- 目录树视图（tooltip："目录树视图"；打开 VS Code 源代码管理风格的变更目录树弹窗） -->
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="fileTree"
+            :title="i18n.fileTreeOpenButton"
+            @click.stop="showTreeDialog = true"
+          />
           <!-- 单独刷新工作区 -->
           <Button
             variant="ghost"
@@ -152,6 +161,21 @@
           @load-more="loadMoreFiles"
         />
       </div>
+
+      <!-- 变更目录树弹窗（VS Code 源代码管理风格：目录分组折叠 + 筛选 + 行内操作；
+           刻意放在差异弹窗之前 —— 同 z-index 下 DOM 靠后的差异弹窗叠于树弹窗之上） -->
+      <WorkingTreeTreeDialog
+        v-if="showTreeDialog"
+        :i18n="i18n"
+        :files="sortedFiles"
+        :active-file="activeDiffFile"
+        :git-op-loading="gitOpLoading"
+        @close="showTreeDialog = false"
+        @view-diff="openDiffFromTree"
+        @stage-file="(file: string) => emit('stageFile', file)"
+        @unstage-file="(file: string) => emit('unstageFile', file)"
+        @discard-file="(file: string, staged: boolean, status: string) => emit('discardFile', file, staged, status)"
+      />
 
       <!-- 差异查看弹窗（子组件自含渲染与键盘导航，父只管开关与数据下发） -->
       <WorkingTreeDiffDialog
@@ -300,6 +324,7 @@ import {
 } from "../../utils"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
+import WorkingTreeTreeDialog from "./WorkingTreeTreeDialog.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -349,6 +374,8 @@ const INCOMPLETE_COMMIT_RE = /^(?:[A-Z]+(?:\([^)]*\))?!?:\s*)?$/i
 const commitType = ref("chore")
 const commitMessage = ref("")
 const activeDiffFile = ref<FileChange | null>(null)
+/** 变更目录树弹窗开关（VS Code 源代码管理风格浏览面；打开期间暂停 pointerdown 自动刷新） */
+const showTreeDialog = ref(false)
 /** 提交信息输入框（类型按钮赋值后把焦点交回此处） */
 const textareaEl = ref<InstanceType<typeof Textarea>>()
 
@@ -403,14 +430,14 @@ watch(() => props.refreshingWorkingTree, (refreshing) => {
  * 曾经这里每张卡片各挂一个 window focus 监听，N 张卡获焦即并 N 路 force 查询，
  * 与探测层全量轮询叠加成 2N 量级 git 进程风暴（见 docs/gitPush-memory-cpu-review.md §P0-1）。
  *
- * ⚠️ 差异弹窗打开期间跳过：弹窗未 Teleport、渲染在本面板内，弹窗内的每次点击
- * （导航/复制/关闭）都会冒泡到此处，触发无意义的后台 git status —— 用户此时在「看」diff，
+ * ⚠️ 差异弹窗 / 目录树弹窗打开期间跳过：弹窗未 Teleport、渲染在本面板内，弹窗内的每次点击
+ * （导航/复制/关闭）都会冒泡到此处，触发无意义的后台 git status —— 用户此时在「看」diff/树，
  * 不是在改文件；关闭弹窗后的下一次 pointerdown 自然恢复刷新。
  *
  * 已有待发定时器时不再重置：用户连续点击（每次 pointerdown 都会触发）会让刷新被无限推迟。
  */
 function handleAutoRefreshTrigger() {
-  if (activeDiffFile.value) return
+  if (activeDiffFile.value || showTreeDialog.value) return
   if (autoRefreshTimer !== null) return
   if (props.gitOpLoading || props.refreshingWorkingTree) return
   if (Date.now() - lastRefreshStartedAt < AUTO_REFRESH_MIN_INTERVAL_MS) return
@@ -470,6 +497,13 @@ function toggleDiff(file: FileChange) {
     emit("loadDiff", file.path, file.staged, { status: file.status })
     prefetchOtherScope(file)
   }
+}
+
+/** 目录树弹窗内点击文件：始终「打开」（无切换关闭语义），其余与 toggleDiff 打开分支一致 */
+function openDiffFromTree(file: FileChange) {
+  activeDiffFile.value = file
+  emit("loadDiff", file.path, file.staged, { status: file.status })
+  prefetchOtherScope(file)
 }
 
 /**

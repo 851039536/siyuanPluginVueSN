@@ -8,7 +8,7 @@
 - **远程检测**：自动检测 `github.com`、`gitee.com`、`gitcode.com`、Gitea 远程仓库，支持远程名称辅助识别（不区分大小写）
 - **多平台推送/拉取**：一键推送到/拉取自 GitHub / Gitee / Gitea，或全部操作，并发信号量限流
 - **路径检查**：添加时检查路径是否为合法 Git 仓库
-- **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改
+- **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改；摘要条「目录树视图」按钮可打开**变更目录树弹窗**（VS Code 源代码管理风格：变更文件按目录分组折叠、路径关键词筛选、全部展开/收起、行内暂存/丢弃/查看差异，目录行显示子树变更计数；操作全部桥接回面板既有链路——暂存/丢弃确认/差异弹窗缓存零复制）
 - **差异查看弹窗**：着色 diff + 词级高亮 + 行号双列；新增/未跟踪文件同样展示完整内容（`git diff` 对未跟踪文件恒为空，数据层回退 `git diff --no-index`）；「已暂存且工作区又改动」的文件可切换查看暂存区/工作区两份差异（另一份后台预取）；取差异期间显示加载态（不再与空态混淆）；标题含全路径 tooltip、文件状态与重命名原路径；支持复制差异全文/文件路径；Esc 关闭、←/→ 切换文件
 - **提交功能**：Conventional Commit 快捷类型选择、AI 生成提交信息（基于变更统计摘要，输出单行信息，支持思考模式控制）与 AI 深度生成提交信息（读取暂存区完整 diff 理解实际改动，输出「标题行 + 改动要点列表」的多行信息；与提交历史修正弹窗的两档生成同构）
 - **AI 错误分析**：推送/拉取失败时日志面板提供「AI 分析」按钮，弹窗内流式分析失败日志，输出错误原因、解决方案与预防建议
@@ -52,6 +52,7 @@ src/features/gitPush/
 │   ├── format.ts                    # 展示格式化：相对与绝对时间、年份选项、分析状态、日志标签
 │   ├── metrics.ts                   # 百分比与条形宽度、净增语义 class、行数排行预计算
 │   ├── search.ts                    # 搜索高亮片段切分
+│   ├── fileTree.ts                  # 变更文件目录树构建（目录分组拉平/折叠剪枝/子树计数/路径过滤，变更目录树弹窗用）
 │   ├── runtime.ts                   # 缓存裁剪、连续并发池、并发标志计数
 │   └── errors.ts                    # 抓取失败分类与专用错误类型
 ├── managers/
@@ -136,7 +137,8 @@ src/features/gitPush/
 │   │   ├── StashSection.vue         # Stash 管理区
 │   │   ├── TagPanel.vue             # 标签面板
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
-│   │   └── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
+│   │   ├── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
+│   │   └── WorkingTreeTreeDialog.vue# 变更目录树弹窗（VS Code 源代码管理风格：目录分组折叠 + 路径筛选 + 行内暂存/丢弃，操作桥接回 WorkingTreePanel）
 │   ├── StatsView/                   # 统计视图专属（3 层信息架构 + common/ 共享组件）
 │   │   ├── index.vue               # 统计视图入口容器（空态 + 工具条 + 概览/行动/明细三层编排）
 │   │   ├── StatsToolbar.vue        # 顶部工具条（快照状态文案 + 刷新全部；与提交分析 AnalysisToolbar 同构）
@@ -215,6 +217,7 @@ src/features/gitPush/
     ├── FetchFailuresDialog.scss     # 项目抓取失败明细弹窗样式
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
+    ├── WorkingTreeTreeDialog.scss   # 变更目录树弹窗样式（目录行/缩进/工具栏；文件行复用面板 wt-* 类）
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
     ├── BranchCommitList.scss        # 提交历史列表样式
     ├── variables.scss               # 全局 Token 透传（已废弃：引用方已统一为 @/variables.scss，可删除）

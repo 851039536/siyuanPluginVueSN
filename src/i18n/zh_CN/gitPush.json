@@ -926,6 +926,13 @@
     "cardTabLog": "日志",
     "cardTabStash": "储藏",
     "cardTabTag": "标签",
-    "commitLogCountLabel": "显示条数"
+    "commitLogCountLabel": "显示条数",
+
+    "fileTreeOpenButton": "目录树视图",
+    "fileTreeTitle": "变更目录树",
+    "fileTreeSearchPlaceholder": "筛选文件路径...",
+    "fileTreeExpandAll": "全部展开",
+    "fileTreeCollapseAll": "全部收起",
+    "fileTreeEmptyFiltered": "没有匹配的变更文件"
   }
 }

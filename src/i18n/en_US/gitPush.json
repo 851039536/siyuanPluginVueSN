@@ -926,6 +926,13 @@
     "cardTabLog": "LOG",
     "cardTabStash": "STASH",
     "cardTabTag": "TAG",
-    "commitLogCountLabel": "Rows"
+    "commitLogCountLabel": "Rows",
+
+    "fileTreeOpenButton": "Tree view",
+    "fileTreeTitle": "Changes Tree",
+    "fileTreeSearchPlaceholder": "Filter file paths...",
+    "fileTreeExpandAll": "Expand all",
+    "fileTreeCollapseAll": "Collapse all",
+    "fileTreeEmptyFiltered": "No matching changed files"
   }
 }

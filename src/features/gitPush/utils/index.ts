@@ -120,6 +120,13 @@ export {
 } from "./runtime"
 
 export {
+  buildFileTreeRows,
+  filterFilesByQuery,
+  topLevelDirPaths,
+} from "./fileTree"
+export type { FileTreeDirRow, FileTreeFileRow, FileTreeRow } from "./fileTree"
+
+export {
   classifyFetchFailure,
   fetchFailureReason,
   ProjectFetchError,

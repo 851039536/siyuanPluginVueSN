@@ -2178,7 +2178,13 @@
     "cardTabLog": "LOG",
     "cardTabStash": "STASH",
     "cardTabTag": "TAG",
-    "commitLogCountLabel": "Rows"
+    "commitLogCountLabel": "Rows",
+    "fileTreeOpenButton": "Tree view",
+    "fileTreeTitle": "Changes Tree",
+    "fileTreeSearchPlaceholder": "Filter file paths...",
+    "fileTreeExpandAll": "Expand all",
+    "fileTreeCollapseAll": "Collapse all",
+    "fileTreeEmptyFiltered": "No matching changed files"
   },
   "enableGlobalRelations": "Enable Global Relations",
   "enableGlobalRelationsDesc": "Query bidirectional link relations across the whole library via refs table and getBacklink2 API",

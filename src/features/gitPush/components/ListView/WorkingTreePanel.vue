@@ -174,6 +174,8 @@
         @view-diff="openDiffFromTree"
         @stage-file="(file: string) => emit('stageFile', file)"
         @unstage-file="(file: string) => emit('unstageFile', file)"
+        @stage-all="emit('stageAll')"
+        @unstage-all="emit('unstageAll')"
         @discard-file="(file: string, staged: boolean, status: string) => emit('discardFile', file, staged, status)"
       />
 

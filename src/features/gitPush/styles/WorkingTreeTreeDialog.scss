@@ -77,6 +77,46 @@
   padding-left: calc(var(--wt-tree-indent-base) + var(--wt-tree-depth, 0) * var(--wt-tree-indent-step));
 }
 
+// 分区行："已暂存/未暂存" 顶级分组（分区标题不缩进，border 分隔两区；点击折叠/展开）
+.wt-tree-section {
+  @include btn-reset;
+
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  width: 100%;
+  padding: $s-px3 $s-px6;
+  border-bottom: 1px solid var(--b3-border-color);
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  transition: background 0.12s;
+  text-align: left;
+  user-select: none;
+
+  &:hover {
+    background: var(--b3-list-hover);
+
+    .wt-tree-section-btn {
+      opacity: 0.8;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+}
+
+// 分区级快捷按钮（暂存全部/取消暂存全部）：hover 前隐藏避免占位干扰标题行，hover 显现
+.wt-tree-section-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
 // 目录行：button 重置 + 悬停高亮（原生 button 承担 Enter/Space 折叠与 aria-expanded）
 .wt-tree-dir {
   @include btn-reset;

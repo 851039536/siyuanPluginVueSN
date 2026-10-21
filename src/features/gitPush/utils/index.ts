@@ -121,10 +121,11 @@ export {
 
 export {
   buildFileTreeRows,
+  buildSectionedTreeRows,
   filterFilesByQuery,
   topLevelDirPaths,
 } from "./fileTree"
-export type { FileTreeDirRow, FileTreeFileRow, FileTreeRow } from "./fileTree"
+export type { FileTreeDirRow, FileTreeFileRow, FileTreeRow, FileTreeSectionId, FileTreeSectionRow } from "./fileTree"
 
 export {
   classifyFetchFailure,

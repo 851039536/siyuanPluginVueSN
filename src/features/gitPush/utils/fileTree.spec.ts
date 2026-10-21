@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import type { FileChange } from "../types"
 import {
   buildFileTreeRows,
+  buildSectionedTreeRows,
   filterFilesByQuery,
   topLevelDirPaths,
 } from "./fileTree"
@@ -41,7 +42,8 @@ describe("buildFileTreeRows", () => {
       "file:b/f.ts",
       "file:root.md",
     ])
-    expect(rows[0].depth).toBe(1)
+    // 深度语义：文件比其父目录深一层（目录 depth 0，文件 depth 1；根级文件 depth 0）
+    expect(rows[0].depth).toBe(0)
     expect(rows[1].depth).toBe(1)
     expect(rows[rows.length - 1].depth).toBe(0)
   })
@@ -117,5 +119,51 @@ describe("filterFilesByQuery", () => {
 
   it("无命中返回空数组（目录由构建器从文件派生，空文件即空树）", () => {
     expect(filterFilesByQuery(files, "不存在的路径")).toEqual([])
+  })
+})
+
+describe("buildSectionedTreeRows", () => {
+  it("两分区各成树：分区行 depth 0，其下目录/文件从 depth 1 起；键带分区前缀", () => {
+    const stagedFile = fc("src/s.ts", true)
+    const unstagedFile = fc("src/u.ts", false)
+    const rows = buildSectionedTreeRows([
+      { section: "staged", name: "已暂存", files: [stagedFile] },
+      { section: "unstaged", name: "未暂存", files: [unstagedFile] },
+    ], new Set())
+    expect(rows.map((r) => `${r.type}:${r.key}@${r.depth}`)).toEqual([
+      "section:section:staged@0",
+      "dir:src@1",
+      "file:staged:src/s.ts@2",
+      "section:section:unstaged@0",
+      "dir:src@1",
+      "file:unstaged:src/u.ts@2",
+    ])
+  })
+
+  it("空分区整段省略；分区折叠时只保留分区行", () => {
+    const rows = buildSectionedTreeRows([
+      { section: "staged", name: "已暂存", files: [] },
+      { section: "unstaged", name: "未暂存", files: [fc("a.ts")] },
+    ], new Set(["section:unstaged"]))
+    expect(rows.map((r) => r.key)).toEqual(["section:unstaged"])
+  })
+
+  it("部分暂存文件两侧分区都出现（键不同、file 引用相同）", () => {
+    const partial: FileChange = { path: "m.ts", status: "modified", staged: true, unstaged: true }
+    const rows = buildSectionedTreeRows([
+      { section: "staged", name: "已暂存", files: [partial] },
+      { section: "unstaged", name: "未暂存", files: [partial] },
+    ], new Set())
+    const fileRows = rows.filter((r) => r.type === "file")
+    expect(fileRows.map((r) => r.key)).toEqual(["staged:m.ts", "unstaged:m.ts"])
+    expect(fileRows[0].file).toBe(partial)
+    expect(fileRows[1].file).toBe(partial)
+  })
+
+  it("全部输入为空返回空数组", () => {
+    expect(buildSectionedTreeRows([
+      { section: "staged", name: "已暂存", files: [] },
+      { section: "unstaged", name: "未暂存", files: [] },
+    ], new Set())).toEqual([])
   })
 })

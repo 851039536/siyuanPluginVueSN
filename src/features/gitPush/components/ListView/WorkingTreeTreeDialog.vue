@@ -89,9 +89,56 @@
         v-for="row in pagedRows"
         :key="row.key"
       >
+        <!-- 分区行："已暂存"/"未暂存" 顶级分组（点击折叠/展开；hover 出现分区级暂存/取消暂存） -->
+        <div
+          v-if="row.type === 'section'"
+          class="wt-tree-section"
+          role="button"
+          tabindex="0"
+          :aria-expanded="!isCollapsed(row.key)"
+          @click="toggleDir(row.key)"
+          @keydown.enter.prevent="toggleDir(row.key)"
+          @keydown.space.prevent="toggleDir(row.key)"
+        >
+          <Icon
+            icon="mdi:chevron-right"
+            height="12"
+            class="wt-tree-chev"
+            :class="{ 'is-open': !isCollapsed(row.key) }"
+          />
+          <!-- 分区名（复用面板"已暂存/未暂存"文案） -->
+          <span class="wt-tree-name">{{ row.name }}</span>
+          <span class="wt-tree-count">{{ row.count }}</span>
+          <!-- 分区级快捷操作：已暂存区提供"取消暂存全部"，未暂存区提供"暂存全部"（复用面板既有 emit） -->
+          <Button
+            v-if="row.section === 'staged'"
+            class="wt-tree-section-btn"
+            variant="ghost"
+            size="xsmall"
+            dense
+            :disabled="gitOpLoading"
+            :title="i18n.unstageAll"
+            @click.stop="emit('unstageAll')"
+          >
+            {{ i18n.unstageAll }}
+          </Button>
+          <Button
+            v-else
+            class="wt-tree-section-btn"
+            variant="ghost"
+            size="xsmall"
+            dense
+            :disabled="gitOpLoading"
+            :title="i18n.stageAll"
+            @click.stop="emit('stageAll')"
+          >
+            {{ i18n.stageAll }}
+          </Button>
+        </div>
+
         <!-- 目录行：点击折叠/展开 -->
         <button
-          v-if="row.type === 'dir'"
+          v-else-if="row.type === 'dir'"
           class="wt-tree-row wt-tree-dir"
           :style="indentStyle(row.depth)"
           :aria-expanded="!isCollapsed(row.path)"
@@ -222,7 +269,7 @@ import EmptyState from "../common/EmptyState.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 import { usePagedList } from "../../composables/usePagedList"
 import {
-  buildFileTreeRows,
+  buildSectionedTreeRows,
   fileStatusIcon,
   fileStatusIconKey,
   fileStatusTitle,
@@ -247,19 +294,38 @@ const emit = defineEmits<{
   viewDiff: [file: FileChange]
   stageFile: [file: string]
   unstageFile: [file: string]
+  /** 分区级批量操作（复用面板既有 stageAll/unstageAll 链路与确认语义） */
+  stageAll: []
+  unstageAll: []
   discardFile: [file: string, staged: boolean, status: string]
 }>()
 
 /** 路径筛选词（大小写不敏感的子串匹配；筛选时忽略折叠状态全展开，VS Code 同语义） */
 const query = ref("")
 
-/** 已折叠目录的完整路径集合（按路径记忆，树刷新/筛选后仍生效；替换式更新保证响应式） */
+/**
+ * 已折叠节点的键集合（按键记忆，树刷新/筛选后仍生效；替换式更新保证响应式）。
+ * 键空间：目录 = 目录完整路径（两分区共享折叠记忆）；分区 = "section:staged" / "section:unstaged"
+ */
 const collapsedDirs = ref<ReadonlySet<string>>(new Set())
 
-/** 拉平树行（筛选生效时传空折叠集 = 全展开；文件行为文件名显示，目录行含子树计数） */
+/** 按暂存状态拆分：「已暂存」区收 staged 文件，「未暂存」区收其余（工作区改动/未跟踪） */
+const sectionedFiles = computed(() => {
+  const filtered = filterFilesByQuery(props.files, query.value)
+  return [
+    { section: "staged" as const, name: props.i18n.staged, files: filtered.filter((f) => f.staged) },
+    { section: "unstaged" as const, name: props.i18n.unstaged, files: filtered.filter((f) => !f.staged) },
+  ]
+})
+
+/**
+ * 拉平树行（「已暂存 / 未暂存」两分区各自成树，VS Code 源代码管理同构）。
+ * - 部分暂存文件两侧分区都出现（勾选后数据驱动自动跨区移动）；
+ * - 空分区整段省略；筛选生效时传空折叠集 = 全展开。
+ */
 const rows = computed(() =>
-  buildFileTreeRows(
-    filterFilesByQuery(props.files, query.value),
+  buildSectionedTreeRows(
+    sectionedFiles.value,
     query.value.trim() ? new Set() : collapsedDirs.value,
   ),
 )
@@ -272,25 +338,25 @@ const {
   loadMore,
 } = usePagedList(rows, WT_TREE_PAGE_SIZE)
 
-function isCollapsed(dirPath: string): boolean {
-  return collapsedDirs.value.has(dirPath)
+function isCollapsed(key: string): boolean {
+  return collapsedDirs.value.has(key)
 }
 
-function toggleDir(dirPath: string) {
+function toggleDir(key: string) {
   const next = new Set(collapsedDirs.value)
-  if (next.has(dirPath)) next.delete(dirPath)
-  else next.add(dirPath)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
   collapsedDirs.value = next
 }
 
-/** 全部展开：清空折叠集 */
+/** 全部展开：清空折叠集（含分区与目录） */
 function expandAll() {
   collapsedDirs.value = new Set()
 }
 
-/** 全部收起：只收顶层目录（顶层折叠即整棵树收起） */
+/** 全部收起：收起两分区（分区折叠即整棵树收起，顶层目录在分区之下） */
 function collapseAll() {
-  collapsedDirs.value = new Set(topLevelDirPaths(props.files))
+  collapsedDirs.value = new Set(["section:staged", "section:unstaged", ...topLevelDirPaths(props.files)])
 }
 
 /** 文件名筛选命中片段（gp-hl 高亮，与卡片名称搜索同款渲染） */

@@ -72,6 +72,8 @@ export interface CardOps {
   switchBranch: (id: string, branch: string) => Promise<void>
   handleRemove: (project: GitProject) => void
   openEditDialog: (project: GitProject) => void
+  /** 打开项目脚本弹窗（识别 package.json/.NET/脚本文件命令并运行） */
+  openScriptRunnerDialog: (project: GitProject) => void
   openMarkdownPreview: (project: GitProject, fileName: string) => void
   openProjectGitConfig: (id: string) => void
   handleOpenIde: (path: string, ide: IdeEntry) => void

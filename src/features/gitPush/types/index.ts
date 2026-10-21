@@ -28,6 +28,7 @@ export type {
   ScannedGitRepo,
   StashEntry,
   TagInfo,
+  TerminalEntry,
   WorkingTreeInfo,
 } from "./storage"
 export {

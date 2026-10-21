@@ -238,6 +238,15 @@
         @close="closeGitConfig"
       />
     </Transition>
+    <!-- 项目脚本弹窗（自动识别前端/.NET/脚本文件命令，点击运行） -->
+    <Transition name="gp-dialog-fade">
+      <ScriptRunnerDialog
+        v-if="scriptRunnerProject"
+        :project="scriptRunnerProject"
+        :i18n="i18n"
+        @close="scriptRunnerProject = null"
+      />
+    </Transition>
     <!-- 远程与本地一致性分析弹窗（自包含：仅传 manager + i18n，内部自行取项目快照与分析） -->
     <Transition name="gp-dialog-fade">
       <ConsistencyAuditDialog
@@ -292,6 +301,7 @@ import CommitAnalysisPanel from "./components/CommitAnalysis/index.vue"
 import CodeReportPanel from "./components/CodeReport/index.vue"
 import RepoCleanPanel from "./components/RepoCleanPanel/index.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
+import ScriptRunnerDialog from "./components/common/ScriptRunnerDialog.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useGitProbe } from "./composables/useGitProbe"
 import { useBatchProgress } from "./composables/useBatchProgress"
@@ -1155,6 +1165,14 @@ function closeMarkdownPreview() {
   markdownPreviewInitialFile.value = undefined
 }
 
+/** 项目脚本弹窗状态（null = 关闭；传项目快照，弹窗自扫描识别） */
+const scriptRunnerProject = ref<GitProject | null>(null)
+
+/** 打开项目脚本弹窗（识别 package.json/.NET/脚本文件命令并按需运行） */
+function openScriptRunnerDialog(project: GitProject) {
+  scriptRunnerProject.value = project
+}
+
 onMounted(async () => {
   document.addEventListener("click", closeIdeMenuOnOutside)
   document.addEventListener("visibilitychange", handleDocumentVisibilityChange)
@@ -1545,6 +1563,7 @@ provide(CARD_SERVICES_KEY, {
     switchBranch: handleSwitchBranch,
     handleRemove,
     openEditDialog,
+    openScriptRunnerDialog,
     openMarkdownPreview,
     openProjectGitConfig: handleOpenProjectGitConfig,
     handleOpenIde,

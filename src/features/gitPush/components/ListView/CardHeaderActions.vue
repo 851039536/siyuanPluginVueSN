@@ -249,6 +249,15 @@
       :title="i18n.editProjectBtn"
       @click="ops.openEditDialog(project)"
     />
+    <!-- 悬停提示："项目脚本（识别/运行）"（自动识别 package.json/.NET/脚本文件命令） -->
+    <Button
+      variant="ghost"
+      size="xsmall"
+      dense
+      icon="scriptLauncher"
+      :title="i18n.scriptRunnerBtn"
+      @click="ops.openScriptRunnerDialog(project)"
+    />
     <!-- 悬停提示："查看项目 Git 配置" -->
     <Button
       variant="ghost"

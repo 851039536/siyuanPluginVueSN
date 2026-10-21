@@ -32,7 +32,10 @@ export default defineConfig({
      * 重命名与 amend），单例在空闲机器上约 2~5s，但受磁盘与并发影响可达 10s+。
      * Vitest 默认 5s 会让这些用例偶发「Test timed out」——这是超时预算不足，而非逻辑缺陷。
      * 提到 30s：纯函数用例仍在毫秒级完成，只有 git 用例才会用到这个预算。
+     * hookTimeout 同步提到 30s：仓库创建在 beforeAll 钩子里，钩子默认 10s 同样会误报
+     * 「Hook timed out」（testTimeout 管不到钩子）。
      */
     testTimeout: 30000,
+    hookTimeout: 30000,
   },
 })

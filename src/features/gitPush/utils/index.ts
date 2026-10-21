@@ -132,3 +132,18 @@ export {
   fetchFailureReason,
   ProjectFetchError,
 } from "./errors"
+
+export {
+  buildDotnetGroup,
+  buildPackageGroup,
+  buildScriptFileGroup,
+  buildScriptGroups,
+  classifyScriptFiles,
+  detectPackageManager,
+  formatCommandLine,
+  parsePackageJsonScripts,
+  scanProjectScripts,
+  SCRIPT_KIND_ORDER,
+  shellQuote,
+} from "./scriptScan"
+export type { PackageJsonEntry, ScriptFileSet } from "./scriptScan"

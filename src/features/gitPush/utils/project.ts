@@ -32,13 +32,15 @@ export function getAllProjectPathsForDedup(project: GitProject): string[] {
   return [project.path, ...(project.localPaths || [])].map(normalizePathForDedup)
 }
 
-/** 全局排序：starred 优先 → lastActivity 降序 → name */
+/**
+ * 全局排序：starred 优先 → name。
+ * ⚠️ 刻意不用 lastActivity 参与排序：提交/修正/刷新日志等操作会经 recordCommitActivity
+ * 回写 lastActivity，若作为排序键会让正在操作的卡片实时跳到分组最前，打断用户位置感；
+ * 活动时间仅保留持久化与卡片活跃度徽章展示两个用途。
+ */
 export function sortProjects(list: GitProject[]): GitProject[] {
   return [...list].sort((a, b) => {
     if (!!a.starred !== !!b.starred) return a.starred ? -1 : 1
-    const ta = a.lastActivity ? Date.parse(a.lastActivity) : 0
-    const tb = b.lastActivity ? Date.parse(b.lastActivity) : 0
-    if (ta !== tb) return tb - ta
     return a.name.localeCompare(b.name)
   })
 }

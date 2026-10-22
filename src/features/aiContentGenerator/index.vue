@@ -232,6 +232,19 @@ const renderedDisplayedMarkdown = computed(() => renderMarkdown(displayedContent
 
 // ============ AI 编辑动作（薄壳包装，调用 composable 核心）============
 
+/**
+ * 联网搜索词：文档标题优先（+ 可选的自定义指令）。
+ * userInput 以固定指令模板开头，若靠 extractSearchQuery 截前 128 字，
+ * query 会被模板文字占满导致「换文档后搜索词不变」；标题才是文档主题的最强检索信号。
+ */
+const buildDocSearchQuery = (instruction?: string): string | undefined => {
+  const parts = [
+    editTargetDoc.value?.title || "",
+    instruction || "",
+  ].map((s) => s.trim()).filter(Boolean)
+  return parts.length ? parts.join(" ") : undefined
+}
+
 const aiEditAction = async (action: EditActionKey) => {
   if (!editTargetDoc.value) {
     showMessage(props.i18n.msgSelectDocFirst, 2000, "info")
@@ -249,6 +262,7 @@ const aiEditAction = async (action: EditActionKey) => {
     () => buildGenerateOptions(
       `${ACTION_META[action].prompt}\n\n${editTargetDoc.value!.content}`,
       systemPromptText,
+      buildDocSearchQuery(),
     ),
     undefined,
     { reviewUserRequest: ACTION_META[action].reviewLabel },
@@ -299,7 +313,7 @@ ${editTargetDoc.value.content}`
       finalSystemPrompt = baseSystemPrompt
     }
 
-    return buildGenerateOptions(userInput, finalSystemPrompt, editCustomInput.value.trim() || undefined)
+    return buildGenerateOptions(userInput, finalSystemPrompt, buildDocSearchQuery(editCustomInput.value.trim() || undefined))
   }, () => {
     editCustomInput.value = ""
   }, { reviewUserRequest: reviewRequest })

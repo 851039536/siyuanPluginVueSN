@@ -22,6 +22,9 @@ const DEEPSEEK_SEARCH_ENDPOINT = "https://api.deepseek.com/v1/tools/search"
 /** rerank_score 优质阈值（官方口径：≥1.5 为优质结果） */
 const GOOD_SCORE = 1.5
 
+/** DeepSeek Search API 的 query 上限（官方限制：1~128 个 Unicode 字符，不能全为空白） */
+const MAX_QUERY_LENGTH = 128
+
 /**
  * DeepSeek 网页搜索 API 调用
  * 端点：POST https://api.deepseek.com/v1/tools/search，Bearer 认证（复用 DeepSeek API Key）
@@ -32,6 +35,17 @@ async function searchDeepSeek(
   apiKey: string,
   maxResults: number = DEFAULT_MAX_RESULTS,
 ): Promise<SearchResult[]> {
+  // DeepSeek 对 query 有硬性限制：压缩空白（多行提示词会把换行带进来）、
+  // 去掉外层引号后再截断到 128 字符，超限会被服务端以 400 拒绝
+  const safeQuery = query
+    .replace(/^"|"$/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_QUERY_LENGTH)
+  if (!safeQuery) {
+    throw new Error("搜索词为空，无法执行联网搜索")
+  }
+
   const response = await fetch(DEEPSEEK_SEARCH_ENDPOINT, {
     method: "POST",
     headers: {
@@ -39,7 +53,7 @@ async function searchDeepSeek(
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      query,
+      query: safeQuery,
       count: maxResults,
       need_content: false,
     }),

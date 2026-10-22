@@ -537,8 +537,8 @@ function extractSearchQuery(prompt: string): string {
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // 链接只保留文本
     .trim()
 
-  // 搜索 query 不宜过长，截取前 200 字
-  return cleaned.length > 200 ? cleaned.slice(0, 200) : cleaned
+  // 搜索 query 上限 128 字（DeepSeek Search API 官方限制，webSearch 侧另有兜底截断）
+  return cleaned.length > 128 ? cleaned.slice(0, 128) : cleaned
 }
 
 /**

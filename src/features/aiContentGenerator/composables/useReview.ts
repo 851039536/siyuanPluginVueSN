@@ -130,6 +130,8 @@ ${suggestionsText}`
       () => buildGenerateOptions(
         `${fixInstruction}\n\n待修正内容：\n${currentContent}`,
         systemPrompt,
+        // 搜索词用文档标题：fixInstruction 是固定模板，截前 128 字会让 query 与文档无关
+        editTargetDoc.value?.title?.trim() || undefined,
       ),
       undefined,
       { skipReview: true }, // 自动修复内部循环，跳过审核避免死循环
@@ -168,6 +170,8 @@ ${suggestionsText}`
       () => buildGenerateOptions(
         `${fixInstruction}\n\n当前文档：\n${currentContent}`,
         systemPrompt,
+        // 搜索词用文档标题：fixInstruction 是固定模板，截前 128 字会让 query 与文档无关
+        editTargetDoc.value?.title?.trim() || undefined,
       ),
       undefined,
       { skipReview: true },

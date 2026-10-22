@@ -2,7 +2,7 @@
 <template>
   <!-- 筛选工具栏（智能视图 + 归档 toggle + 暂停 toggle） -->
   <div
-    v-if="projects.length > 0"
+    v-if="hasAnyProject"
     class="gp-filter-bar"
   >
     <!-- 智能视图：一组互斥选项 ⇒ Button 分组 + aria-pressed（不引入面板，故不用 Tabs） -->
@@ -80,9 +80,9 @@
 </template>
 
 <script setup lang="ts">
-import type { GitProject, ProjectCategory, ViewMode } from "../../types"
+import type { GroupedProject, ViewMode } from "../../types"
 import { VIEW_MODE_META, VIEW_MODES } from "../../types"
-import { onBeforeUnmount, ref, watch } from "vue"
+import { computed, onBeforeUnmount, ref, watch } from "vue"
 import type { IconKey } from "@/components/kit/icons"
 import Button from "@/components/Button.vue"
 import ToggleButton from "@/components/ToggleButton.vue"
@@ -97,11 +97,16 @@ const VIEW_MODE_ICONS: Record<ViewMode, IconKey> = {
   archived: "archiveOutline",
 }
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
-  projects: GitProject[]
-  groupedProjects: { category: ProjectCategory, projects: GitProject[] }[]
+  groupedProjects: GroupedProject[]
 }>()
+
+/**
+ * 是否存在任何项目（工具栏整体显隐判据，原 projects prop 的唯一用途）。
+ * 与 projects.length > 0 等价：每个项目必落入某分类桶或「未分组」合成桶（恒存在，见 useGitStats / types/storage）。
+ */
+const hasAnyProject = computed(() => props.groupedProjects.some((g) => g.projects.length > 0))
 
 const viewMode = defineModel<ViewMode>("viewMode", { required: true })
 const activeCategory = defineModel<string>("activeCategory", { required: true })

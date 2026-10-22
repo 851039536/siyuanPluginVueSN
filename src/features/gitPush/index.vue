@@ -117,7 +117,6 @@
       v-model:show-archived="showArchived"
       v-model:git-ops-paused="gitOpsPaused"
       :i18n="i18n"
-      :projects="projects"
       :grouped-projects="groupedProjects"
       :filtered-groups="filteredGroups"
       :empty-hint="listEmptyHint"
@@ -1512,7 +1511,7 @@ const settingsYearOptions = computed(() =>
 )
 
 // 推送状态派生视图（徽章文案/样式类/推送判定，供 ProjectCard 函数 props）
-const { statusLabel, statusBadgeClass, needsPushFor, hasBehind } = usePushStatusView(pushStatuses)
+const { statusLabel, statusBadgeClass, needsPushFor } = usePushStatusView(pushStatuses)
 
 // ── 卡片服务注入（五分组契约，消除中间人 props/emits：共享数据 / 响应式 Record / 派生函数 / 操作集群）──
 provide(CARD_SERVICES_KEY, {
@@ -1555,7 +1554,6 @@ provide(CARD_SERVICES_KEY, {
     statusLabel,
     statusBadgeClass,
     needsPushFor,
-    hasBehind,
   },
   ops: {
     toggleStar,

@@ -1,4 +1,4 @@
-<!-- gitPush 项目卡片远程仓库状态（远程列表 + 推送状态徽章 + 冲突警告，数据经 useCardServices 注入） -->
+<!-- gitPush 项目卡片远程仓库状态（远程列表 + 推送状态徽章，数据经 useCardServices 注入） -->
 <template>
   <!-- 远程仓库状态 -->
   <div class="gp-remotes">
@@ -15,9 +15,10 @@
     />
     <!-- 当前分支名（原操作栏分支检查按钮的信息价值合并至此）。
          注：CardHeader 的分支行是懒加载的「可切换分支列表」，首屏通常为空，
-         故分支名的首屏展示由此承担，两者不重复。 -->
+         故分支名的首屏展示由此承担；分支行就绪后（branchRowVisible）由其统一承担，
+         避免同一分支名两处并列。 -->
     <span
-      v-if="pushStatus?.branch"
+      v-if="pushStatus?.branch && !branchRowVisible"
       class="gp-remote-branch"
     >
       <Icon
@@ -36,32 +37,23 @@
         height="12"
       />
       <span>{{ project[r.remoteProp] }}</span>
-      <!-- 推送状态徽章（配色由共享 Tag 的 variant 承担，与原 .gp-status-badge--* 一一对应） -->
+      <!-- 推送状态徽章（配色由共享 Tag 的 variant 承担，与原 .gp-status-badge--* 一一对应）。
+           behind 徽章悬停给出行动建议（原整行警告条已合并至此，title 经 Tag 根元素 attr 透传生效） -->
       <Tag
         v-if="pushStatus?.remotes[r.key] && derived.statusLabel(project.id, r.key)"
         class="gp-status-badge"
         :variant="statusVariant(derived.statusBadgeClass(project.id, r.key))"
         size="xsmall"
         :content="derived.statusLabel(project.id, r.key)"
+        :title="derived.statusBadgeClass(project.id, r.key) === 'gp-behind' ? i18n.conflictWarn : undefined"
       />
     </div>
   </div>
 
-  <!-- 远程冲突警告："远程有新的提交，建议先拉取再推送" -->
-  <div
-    v-if="derived.hasBehind(project.id)"
-    class="gp-conflict-warn"
-  >
-    <Icon
-      icon="mdi:alert-circle-outline"
-      height="12"
-    />
-    <span>{{ i18n.conflictWarn }}</span>
-  </div>
 </template>
 
 <script setup lang="ts">
-// gitPush 项目卡片远程状态区（已配置远程列表 + 状态徽章 + 冲突警告）
+// gitPush 项目卡片远程状态区（已配置远程列表 + 状态徽章；behind 行动建议并入徽章悬停提示）
 import type { GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
@@ -86,6 +78,8 @@ function statusVariant(badgeClass: string): "primary" | "warning" | "danger" | "
 
 const props = defineProps<{
   project: GitProject
+  /** 顶栏分支行是否已就绪（CardHeader 分支行渲染中）；就绪后远程区不再重复展示当前分支名 */
+  branchRowVisible?: boolean
 }>()
 
 const { services, pushStatus, remoteStatusLoading } = useCardServices(() => props.project)

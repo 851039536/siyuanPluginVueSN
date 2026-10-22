@@ -13,8 +13,11 @@
       :refresh-tags="refreshTags"
     />
 
-    <!-- 远程仓库状态 + 冲突警告 -->
-    <CardRemotes :project="project" />
+    <!-- 远程仓库状态 + 冲突警告（branchRowVisible：顶栏分支行就绪后远程区不再重复展示当前分支名） -->
+    <CardRemotes
+      :project="project"
+      :branch-row-visible="branches.length > 0"
+    />
 
     <!-- 多面板 Tab 切换（工作区 / 提交日志 / Stash / Tag）；面板经具名插槽下发，未激活面板不挂载 -->
     <CardTabs

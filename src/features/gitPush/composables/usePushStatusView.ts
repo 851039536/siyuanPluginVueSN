@@ -39,17 +39,9 @@ export function usePushStatusView(pushStatuses: Ref<Record<string, PushStatusInf
     return isAheadOfRemote(rs)
   }
 
-  /** 判断项目是否有远程落后（远程有新提交） */
-  function hasBehind(projectId: string): boolean {
-    const status = pushStatuses.value[projectId]
-    if (!status) return false
-    return Object.values(status.remotes).some((r) => r.behind > 0)
-  }
-
   return {
     statusLabel,
     statusBadgeClass,
     needsPushFor,
-    hasBehind,
   }
 }

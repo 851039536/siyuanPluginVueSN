@@ -62,7 +62,6 @@ export interface CardDerivedFns {
   statusLabel: (id: string, key: string) => string
   statusBadgeClass: (id: string, key: string) => string
   needsPushFor: (id: string, key: string) => boolean
-  hasBehind: (id: string) => boolean
 }
 
 /** 卡片操作函数（原 40+ emits 对应的 handler 集群，index.vue 提供） */

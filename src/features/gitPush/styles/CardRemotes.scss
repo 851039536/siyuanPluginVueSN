@@ -1,4 +1,4 @@
-// gitPush 卡片远程状态区样式（远程列表 + 状态徽章 + 冲突警告，从 index.scss 提取）
+// gitPush 卡片远程状态区样式（远程列表 + 状态徽章，从 index.scss 提取）
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
@@ -52,19 +52,6 @@
     opacity: 1;
     color: var(--b3-theme-primary);
   }
-}
-
-.gp-conflict-warn {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-  padding: $s-1 $s-2;
-  margin-top: $s-px6;
-  font-size: $t-xs;
-  color: var(--b3-theme-warning);
-  background: var(--b3-theme-warning-lightest);
-  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
-  border-radius: $r-sm;
 }
 
 // 推送状态徽章：配色与内边距由共享 Tag 的 variant 承担，此处仅保留与远程名的间距

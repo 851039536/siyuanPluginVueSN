@@ -103,7 +103,8 @@
           {{ mdExpanded ? "−" : `+${hiddenMdCount}` }}
         </Button>
       </div>
-      <!-- 分支标签（悬停："当前分支"/"切换到 {0}"） -->
+      <!-- 分支标签（悬停："当前分支"/"切换到 {0}"；懒加载就绪后当前分支名的展示由本行统一承担，
+           远程区同名分支名随之隐藏，避免两处并列） -->
       <div
         v-if="branches?.length"
         class="gp-branch-row"

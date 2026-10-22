@@ -1,4 +1,5 @@
 // gitPush 模块类型定义入口
+import type { GitProject, ProjectCategory } from "./storage"
 
 // ── 重导出管理器（运行时逻辑已迁移至 ../GitPushManager.ts）──
 export { GitPushManager } from "../GitPushManager"
@@ -66,6 +67,13 @@ export type {
   CardServices,
   CardSharedData,
 } from "./cardServices"
+
+// ── 列表视图分组结构（useGitStats.groupedProjects / useProjectFilters.filteredGroups 元素同构）──
+/** 分组：分类 + 该分类下的项目列表 */
+export interface GroupedProject {
+  category: ProjectCategory
+  projects: GitProject[]
+}
 
 // ── 重导出元数据（来自 meta.ts，独立模块切断循环引用）──
 export {

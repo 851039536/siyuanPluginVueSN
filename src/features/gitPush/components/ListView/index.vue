@@ -7,7 +7,6 @@
     v-model:show-archived="showArchived"
     v-model:git-ops-paused="gitOpsPaused"
     :i18n="i18n"
-    :projects="projects"
     :grouped-projects="groupedProjects"
   />
 
@@ -39,20 +38,13 @@
 
 <script setup lang="ts">
 // 列表视图容器（纯渲染，卡片数据与操作全部经 useCardServices 注入，无领域状态）
-import type { GitProject, ProjectCategory, ViewMode } from "../../types"
+import type { GroupedProject, ViewMode } from "../../types"
 import EmptyState from "../common/EmptyState.vue"
 import ListViewToolbar from "./ListViewToolbar.vue"
 import ProjectCard from "./ProjectCard.vue"
 
-/** 分组：分类 + 该分类下的项目列表 */
-export interface GroupedProject {
-  category: ProjectCategory
-  projects: GitProject[]
-}
-
 defineProps<{
   i18n: Record<string, any>
-  projects: GitProject[]
   groupedProjects: GroupedProject[]
   filteredGroups: GroupedProject[]
   /** 空态提示文案（null = 不显示空态，走卡片列表；由 index.vue 综合视图模式与搜索词计算） */

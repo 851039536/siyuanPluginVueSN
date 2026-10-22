@@ -1,94 +1,29 @@
-// SuperPanel AI 设置面板样式
-@use "@/variables.scss" as *;
+// SuperPanel AI 设置面板外壳样式（Tab 分页布局，各分区样式在各自 SCSS 中）
+// 注意：$spacing-* 定义在 superPanel 本模块 variables.scss，不在全局 @/variables.scss
+@use "./variables" as *;
 
-// 通用切换按钮（思考模式开关）
-.toggle-btn {
-  padding: $s-1 $s-3;
-  border-radius: $r-sm;
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  cursor: pointer;
-  transition: all 0.12s;
-  border: 1px solid var(--b3-border-color);
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-
-  &:hover {
-    background: var(--b3-theme-surface-lighter);
-    border-color: var(--b3-theme-on-surface);
-  }
-
-  &.active {
-    border: 1px solid var(--b3-theme-primary);
-    background: var(--b3-theme-primary);
-    color: #fff;
-
-    &:hover { opacity: 0.9; }
-  }
-}
-
-.thinking-toggle-row {
+.ai-settings-panel {
+  // 弹窗容器高度固定，面板撑满后滚动收在 Tab 面板区，切换 Tab 不跳变
+  height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
+  flex-direction: column;
+  overflow: hidden;
 
-.thinking-toggle-label {
-  font-size: $t-xs;
-  color: var(--b3-theme-on-surface);
-  white-space: nowrap;
-}
-
-.search-section-divider {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  margin: $s-2 0 $s-1;
-  padding-top: $s-2;
-  border-top: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.divider-text {
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  color: var(--b3-theme-primary);
-  white-space: nowrap;
-}
-
-.deepseek-hint {
-  background: rgba(var(--b3-theme-primary-rgb), 0.06);
-  border-radius: $r-sm;
-  padding: $s-1 $s-2;
-}
-
-.test-search-btn {
-  width: 100%;
-  padding: $s-1 $s-4;
-  border-radius: $r-sm;
-  font-size: $t-xs;
-  font-weight: $fw-semibold;
-  cursor: pointer;
-  transition: all 0.12s;
-  border: 1px solid var(--b3-theme-primary);
-  background: var(--b3-theme-primary);
-  color: #fff;
-
-  &:hover { opacity: 0.9; }
-
-  &:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
+  :deep(.si-tabs) {
+    flex: 1;
+    min-height: 0;
   }
-}
 
-.search-test-result {
-  margin-top: $s-1;
-  font-size: $t-2xs;
-  line-height: $lh-normal;
-  word-break: break-all;
+  :deep(.si-tabpanels) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
 
-  &.error {
-    color: var(--b3-theme-error);
+  :deep(.si-tabpanel) {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-md;
+    padding-bottom: $spacing-md;
   }
 }

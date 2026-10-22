@@ -146,7 +146,8 @@ export class SuperPanelManager {
     this.aiSettingsModal = createModalVueApp(AiSettingsPanel, {
       maskId: "super-panel-ai-settings-mask",
       width: "520px",
-      height: "auto",
+      // 固定高度：Tab 内容量不同会导致 auto 高度切换时跳变
+      height: "560px",
       // 从超级面板之上弹出的二级弹窗：透明遮罩避免两层全屏遮罩叠加压暗
       maskBackground: "rgba(0, 0, 0, 0)",
       getCloseHandler: () => this.closeAiSettings.bind(this),

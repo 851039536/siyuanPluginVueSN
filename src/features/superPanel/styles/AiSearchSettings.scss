@@ -1,0 +1,45 @@
+// 「联网搜索」区块（并入模型页）：DeepSeek 搜索说明 + 测试搜索
+@use "@/variables.scss" as *;
+
+// 与上方模型表单以分隔线区隔
+.ai-search-settings {
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+  padding-top: $s-3;
+}
+
+.deepseek-hint {
+  background: rgba(var(--b3-theme-primary-rgb), 0.06);
+  border-radius: $r-sm;
+  padding: $s-1 $s-2;
+}
+
+.test-search-btn {
+  width: 100%;
+  padding: $s-1 $s-4;
+  border-radius: $r-sm;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid var(--b3-theme-primary);
+  background: var(--b3-theme-primary);
+  color: #fff;
+
+  &:hover { opacity: 0.9; }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.search-test-result {
+  margin-top: $s-1;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  word-break: break-all;
+
+  &.error {
+    color: var(--b3-theme-error);
+  }
+}

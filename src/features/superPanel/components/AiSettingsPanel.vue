@@ -1,3 +1,4 @@
+<!-- AI 设置面板外壳：Tab 分页（模型 / 联网搜索 / 配置档案），各分区拆分至独立子组件 -->
 <template>
   <div
     v-if="visible"
@@ -14,152 +15,52 @@
         @click="handleClose"
       />
     </div>
-    <div class="ai-settings-content">
-      <!-- ====== AI 配置档案 ====== -->
-      <SettingGroup>
-        <template #label>
-          <!-- 分组标签："配置档案" -->
-          {{ i18n.aiProfileTitle }}
-        </template>
-        <AiProfileManager
-          :profiles="profileList"
-          :i18n="i18n"
-          @save="handleProfileSave"
-          @apply="handleProfileApply"
-          @delete="handleProfileDelete"
-        />
-      </SettingGroup>
 
-      <!-- API供应商选择 -->
-      <SettingGroup>
-        <template #label>
-          <!-- 分组标签："API供应商" -->
-          {{ i18n.apiProvider }}
-        </template>
-        <AiProviderSelect
-          :model-value="settings.provider"
-          :i18n="i18n"
-          @update:model-value="handleProviderChange"
-        />
-      </SettingGroup>
+    <!-- ====== Tab 分页 ====== -->
+    <Tabs v-model:value="activeTab">
+      <TabList>
+        <Tab value="model">
+          <IconWrapper
+            name="settings"
+            :size="13"
+          />{{ i18n.tabModel }}
+        </Tab>
+        <Tab value="profile">
+          <IconWrapper
+            name="folder"
+            :size="13"
+          />{{ i18n.tabProfile }}
+        </Tab>
+      </TabList>
+      <TabPanels>
+        <!-- 「模型」：供应商 / 模型 / 思考模式 / 密钥 / 端点 / 联网搜索 -->
+        <TabPanel value="model">
+          <AiModelSettings
+            :settings="settings"
+            :i18n="i18n"
+            @update="handleSettingUpdate"
+            @provider-change="handleProviderChange"
+          />
 
-      <!-- 模型选择 -->
-      <SettingGroup v-if="settings.provider !== 'custom'">
-        <template #label>
-          <!-- 分组标签："模型" -->
-          {{ i18n.aiModel }}
-        </template>
-        <AiModelSelect
-          :provider="settings.provider"
-          :model-value="settings.model"
-          :custom-model="settings.customModel"
-          :i18n="i18n"
-          @update:model-value="(v: string) => updateSetting('model', v)"
-          @update:custom-model="(v: string) => updateSetting('customModel', v)"
-        />
-      </SettingGroup>
+          <!-- 联网搜索：与请求链路相关，并入模型页（分隔线由组件自身样式承载） -->
+          <AiSearchSettings
+            :deepseek-api-key="settings.apiKeys['deepseek'] || ''"
+            :i18n="i18n"
+          />
+        </TabPanel>
 
-      <!-- 自定义模型名（自定义API供应商时直接输入） -->
-      <SettingGroup v-if="settings.provider === 'custom'">
-        <template #label>
-          <!-- 分组标签："模型" -->
-          {{ i18n.aiModel }}
-        </template>
-        <TextInput
-          :model-value="settings.customModel"
-          :placeholder="i18n.customModelPlaceholder"
-          @update:model-value="(v: string) => updateSetting('customModel', v)"
-        />
-        <div class="setting-desc">
-          <!-- 说明文字：模型名称须与 API 服务实际提供的名称一致 -->
-          {{ i18n.customModelDesc }}
-        </div>
-      </SettingGroup>
-
-      <!-- 思考模式开关（仅DeepSeek显示） -->
-      <SettingGroup v-if="settings.provider === 'deepseek'">
-        <div class="thinking-toggle-row">
-          <!-- 开关标签："思考模式" -->
-          <label class="thinking-toggle-label">{{ i18n.thinkingMode }}</label>
-          <button
-            class="toggle-btn"
-            :class="{ active: settings.enableThinking }"
-            @click="updateSetting('enableThinking', !settings.enableThinking)"
-          >
-            <!-- 开关状态文案："已开启" / "已关闭" -->
-            {{ settings.enableThinking ? i18n.thinkingOn : i18n.thinkingOff }}
-          </button>
-        </div>
-        <div class="setting-desc">
-          <!-- 说明文字：开启后模型会先进行深度思考再回答 -->
-          {{ i18n.thinkingDesc }}
-        </div>
-      </SettingGroup>
-
-      <!-- API密钥输入 -->
-      <SettingGroup>
-        <template #label>
-          <!-- 分组标签："API密钥" -->
-          {{ i18n.apiKey }}
-        </template>
-        <ApiKeyInput
-          :provider="settings.provider"
-          :model-value="settings.apiKey"
-          :i18n="i18n"
-          @update:model-value="(v: string) => updateSetting('apiKey', v)"
-        />
-      </SettingGroup>
-
-      <!-- 自定义API端点 -->
-      <SettingGroup v-if="settings.provider === 'custom'">
-        <template #label>
-          <!-- 分组标签："API端点" -->
-          {{ i18n.customEndpoint }}
-        </template>
-        <TextInput
-          :model-value="settings.customEndpoint"
-          placeholder="https://api.example.com/v1"
-          @update:model-value="(v: string) => updateSetting('customEndpoint', v)"
-        />
-        <div class="setting-desc">
-          <!-- 说明文字：支持 OpenAI 兼容基地址（自动补全 /chat/completions）或完整端点 URL -->
-          {{ i18n.customEndpointDesc }}
-        </div>
-      </SettingGroup>
-
-      <!-- ====== 联网搜索配置 ====== -->
-      <div class="search-section-divider">
-        <!-- 分隔线标题："联网搜索（RAG 模式）" -->
-        <span class="divider-text">{{ i18n.searchSectionTitle }}</span>
-      </div>
-
-      <!-- 搜索引擎说明（固定 DeepSeek Search API，复用 DeepSeek 供应商密钥） -->
-      <SettingGroup>
-        <div class="setting-desc deepseek-hint">
-          <!-- 说明文字：使用 DeepSeek 自研搜索引擎，复用 DeepSeek 供应商的 API Key -->
-          {{ i18n.searchDeepSeekDesc }}
-        </div>
-      </SettingGroup>
-
-      <!-- 测试搜索 -->
-      <SettingGroup>
-        <button
-          class="test-search-btn"
-          :disabled="isTestingSearch"
-          @click="testSearch"
-        >
-          <!-- 按钮文案："测试联网搜索" / "搜索中..." -->
-          {{ isTestingSearch ? i18n.searching : i18n.testSearchButton }}
-        </button>
-        <div
-          v-if="searchTestResult"
-          class="setting-desc search-test-result"
-          :class="{ error: searchTestError }"
-        >
-          {{ searchTestResult }}
-        </div>
-      </SettingGroup>
-    </div>
+        <!-- 「配置档案」：整套 AI 配置的命名快照 -->
+        <TabPanel value="profile">
+          <AiProfileSettings
+            :profiles="profileList"
+            :i18n="i18n"
+            @save="handleProfileSave"
+            @apply="handleProfileApply"
+            @delete="handleProfileDelete"
+          />
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
   </div>
 </template>
 
@@ -175,14 +76,16 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
-import { searchWeb } from "@/utils/webSearch"
-import AiModelSelect from "./AiModelSelect.vue"
-import AiProfileManager from "./AiProfileManager.vue"
-import AiProviderSelect from "./AiProviderSelect.vue"
-import ApiKeyInput from "./ApiKeyInput.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
+import Tab from "@/components/Tab.vue"
+import TabList from "@/components/TabList.vue"
+import TabPanel from "@/components/TabPanel.vue"
+import TabPanels from "@/components/TabPanels.vue"
+import Tabs from "@/components/Tabs.vue"
+import AiModelSettings from "./AiModelSettings.vue"
+import AiProfileSettings from "./AiProfileSettings.vue"
+import AiSearchSettings from "./AiSearchSettings.vue"
 import { getDefaultModel } from "./providers"
-import SettingGroup from "./SettingGroup.vue"
-import TextInput from "./TextInput.vue"
 
 interface Props {
   visible: boolean
@@ -211,6 +114,9 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// 当前激活的 Tab
+const activeTab = ref("model")
+
 // 本地响应式副本，确保切换供应商时 UI 立即更新
 const settings = reactive<AiSettings>({ ...props.settings })
 
@@ -219,15 +125,12 @@ const profileList = ref<AiProfileConfig[]>(
   props.profiles ? [...props.profiles] : [],
 )
 
-const isTestingSearch = ref(false)
-const searchTestResult = ref("")
-const searchTestError = ref(false)
-
 const handleClose = () => {
   emit("close")
 }
 
-const updateSetting = (field: keyof AiSettings, value: string | boolean) => {
+/** 子组件粒度更新：写回本地副本后整体上抛持久化 */
+const handleSettingUpdate = (field: keyof AiSettings, value: string | boolean) => {
   (settings as any)[field] = value
   emit("update:settings", { ...settings })
 }
@@ -296,32 +199,6 @@ const handleProfileApply = (name: string) => {
 const handleProfileDelete = (name: string) => {
   profileList.value = profileList.value.filter((p) => p.name !== name)
   emit("update:profiles", profileList.value)
-}
-
-const testSearch = async () => {
-  isTestingSearch.value = true
-  searchTestResult.value = ""
-  searchTestError.value = false
-
-  try {
-    const results = await searchWeb("今天是几号 最新新闻", {
-      searchProvider: "deepseek",
-      deepseekApiKey: settings.apiKeys["deepseek"] || "",
-    })
-
-    if (results.length > 0) {
-      searchTestResult.value = `搜索成功！获取到 ${results.length} 条结果，首条：${results[0].title} - ${results[0].content.slice(0, 80)}...`
-      showMessage("联网搜索测试成功", 2000, "info")
-    } else {
-      searchTestError.value = true
-      searchTestResult.value = props.i18n.searchNoResults
-    }
-  } catch (error) {
-    searchTestError.value = true
-    searchTestResult.value = `搜索失败: ${(error as Error).message}`
-  } finally {
-    isTestingSearch.value = false
-  }
 }
 </script>
 

@@ -1,0 +1,41 @@
+// 「模型」Tab：思考模式开关（其余表单控件样式复用全局 setting-* 体系）
+@use "@/variables.scss" as *;
+
+// 通用切换按钮（思考模式开关）
+.toggle-btn {
+  padding: $s-1 $s-3;
+  border-radius: $r-sm;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  cursor: pointer;
+  transition: all 0.12s;
+  border: 1px solid var(--b3-border-color);
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    border-color: var(--b3-theme-on-surface);
+  }
+
+  &.active {
+    border: 1px solid var(--b3-theme-primary);
+    background: var(--b3-theme-primary);
+    color: #fff;
+
+    &:hover { opacity: 0.9; }
+  }
+}
+
+.thinking-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.thinking-toggle-label {
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  white-space: nowrap;
+}

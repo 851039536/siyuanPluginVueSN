@@ -34,7 +34,11 @@ export interface ScriptSessionStore {
   clearLog: (projectId: string, scriptId: string) => void
   /** 注册全局变更回调（日志追加/状态迁移/淘汰），返回退订函数 */
   onChange: (cb: () => void) => () => void
-  /** 插件卸载：杀掉全部运行中会话并清空（不留孤儿进程） */
+  /** 运行中会话的进程 pid（供持久化落盘与下次启动清扫） */
+  listRunningPids: () => number[]
+  /** 仅在 pid 集合变化（启动/停止/退出/清空）时通知；日志追加不触发（持久化订阅用） */
+  onPidsChange: (cb: () => void) => () => void
+  /** 插件卸载：杀掉全部运行中会话并清空（不留孤儿进程；订阅关系保留） */
   destroyAll: () => void
 }
 
@@ -79,10 +83,16 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
   /** 用户主动停止的会话 key（区分 stopped / 自然 exited） */
   const killed = new Set<string>()
   const listeners = new Set<() => void>()
+  const pidListeners = new Set<() => void>()
 
   const key = (projectId: string, scriptId: string) => `${projectId}\u0000${scriptId}`
   const notify = () => {
     for (const cb of [...listeners]) {
+      try { cb() } catch { /* 单个订阅者异常不影响其余 */ }
+    }
+  }
+  const notifyPids = () => {
+    for (const cb of [...pidListeners]) {
       try { cb() } catch { /* 单个订阅者异常不影响其余 */ }
     }
   }
@@ -150,7 +160,7 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
           cur.status = killed.has(k) ? "stopped" : "exited"
           cur.exitCode = code
           cur.endedAt = Date.now()
-          handles.delete(k)
+          if (handles.delete(k)) notifyPids()
           evict()
           notify()
         },
@@ -158,6 +168,7 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
       if (handle) {
         rec.pid = handle.pid
         handles.set(k, handle)
+        notifyPids()
       }
       notify()
       return snapshot(rec)
@@ -186,7 +197,7 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
       rec.status = "stopped"
       rec.endedAt = Date.now()
       const handle = handles.get(k)
-      handles.delete(k)
+      if (handles.delete(k)) notifyPids()
       try { handle?.kill() } catch { /* 已退出 */ }
       notify()
     },
@@ -201,17 +212,47 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
       listeners.add(cb)
       return () => { listeners.delete(cb) }
     },
+    listRunningPids() {
+      const pids: number[] = []
+      for (const handle of handles.values()) {
+        if (typeof handle.pid === "number" && handle.pid > 0) pids.push(handle.pid)
+      }
+      return pids
+    },
+    onPidsChange(cb) {
+      pidListeners.add(cb)
+      return () => { pidListeners.delete(cb) }
+    },
     destroyAll() {
       for (const [k, handle] of handles) {
         killed.add(k)
         try { handle.kill() } catch { /* 已退出 */ }
       }
+      const hadRunning = handles.size > 0
       handles.clear()
       recs.clear()
-      listeners.clear()
+      killed.clear()
+      // 订阅关系保留（模块单例跨插件禁用/启用存活）；仅重置数据
+      if (hadRunning) notifyPids()
+      notify()
     },
   }
 }
 
 /** 全插件唯一会话表（真实 spawn；插件卸载经 GitPushManager.destroy → destroyAll 杀进程） */
 export const scriptSessions: ScriptSessionStore = createScriptSessionStore(runProjectScript)
+
+let pageGuardInstalled = false
+
+/**
+ * 页面卸载兜底：思源刷新 UI（reloadUI/livereload）与关窗**不保证**触发插件 onunload，
+ * 必须自行监听 beforeunload/pagehide 杀会话。配合 pid 落盘清扫，覆盖三条路径：
+ * 正常卸载（onunload）/ 页面刷新与关窗（beforeunload）/ 崩溃强杀（下次启动清扫）。
+ */
+export function installScriptSessionPageGuard(): void {
+  if (pageGuardInstalled || typeof window === "undefined") return
+  pageGuardInstalled = true
+  const handler = () => { scriptSessions.destroyAll() }
+  window.addEventListener("beforeunload", handler)
+  window.addEventListener("pagehide", handler)
+}

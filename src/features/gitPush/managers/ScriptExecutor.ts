@@ -93,7 +93,8 @@ export function runProjectScript(script: ProjectScript, opts: ScriptRunOptions):
       }
       if (isWin) {
         try {
-          child_process.execFile("taskkill", ["/pid", String(child.pid), "/T", "/F"], () => { /* 异步兜底 */ })
+          // 同步树杀：插件卸载 / 页面 beforeunload 是同步窗口，异步 execFile 来不及等回收
+          child_process.execFileSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true })
         } catch {
           try { child.kill() } catch { /* 已退出 */ }
         }
@@ -101,5 +102,44 @@ export function runProjectScript(script: ProjectScript, opts: ScriptRunOptions):
         try { child.kill("SIGTERM") } catch { /* 已退出 */ }
       }
     },
+  }
+}
+
+/** 允许启动清扫的进程映像名（防 PID 复用误杀无关进程） */
+const SWEEP_IMAGE_NAMES = new Set([
+  "cmd", "node", "npm", "npx", "powershell", "pwsh", "dotnet",
+  "bash", "sh", "python", "pythonw", "bun", "deno", "ruby", "php",
+])
+
+/** 进程映像名是否属于可清扫的脚本运行时（纯函数，供单测） */
+export function isSweepableImage(name: string): boolean {
+  const base = name.trim().toLowerCase().replace(/\.exe$/, "").split(/[\\/]/).pop() ?? ""
+  return SWEEP_IMAGE_NAMES.has(base)
+}
+
+/**
+ * 启动清扫遗留会话进程（崩溃/强杀后 onunload 不执行，pid 落盘后由下次启动补杀）。
+ * 先核对映像名白名单防 PID 复用误杀；返回是否成功发出终止。
+ */
+export function killOrphanPid(pid: number): boolean {
+  const node = getNodeProcessModules()
+  if (!node || !Number.isInteger(pid) || pid <= 0) return false
+  const { child_process, os } = node
+  try {
+    if (os.platform() === "win32") {
+      const out = String(child_process.execFileSync(
+        "tasklist", ["/FI", `PID eq ${pid}`, "/NH", "/FO", "CSV"],
+        { windowsHide: true, encoding: "utf-8" },
+      ))
+      if (!isSweepableImage(out.trim().split(",")[0].replace(/"/g, ""))) return false
+      child_process.execFileSync("taskkill", ["/pid", String(pid), "/T", "/F"], { windowsHide: true })
+      return true
+    }
+    const comm = String(child_process.execFileSync("ps", ["-p", String(pid), "-o", "comm="], { encoding: "utf-8" }))
+    if (!isSweepableImage(comm)) return false
+    process.kill(pid, "SIGTERM")
+    return true
+  } catch {
+    return false
   }
 }

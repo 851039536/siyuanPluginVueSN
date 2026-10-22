@@ -166,4 +166,28 @@ describe("createScriptSessionStore", () => {
     calls[0].opts.onOutput("y")
     expect(n).toBe(2)
   })
+
+  it("listRunningPids 只含运行中会话，退出/停止后移除", () => {
+    const { runner, calls } = makeFakeRunner()
+    const store = createScriptSessionStore(runner)
+    store.start("p1", makeScript("a"))
+    store.start("p1", makeScript("b"))
+    expect(store.listRunningPids().sort()).toEqual([1000, 1001])
+    calls[0].opts.onExit(0)
+    store.stop("p1", "package:package.json:b")
+    expect(store.listRunningPids()).toEqual([])
+  })
+
+  it("onPidsChange 仅在 pid 集合变化时触发，日志追加不触发", () => {
+    const { runner, calls } = makeFakeRunner()
+    const store = createScriptSessionStore(runner)
+    let n = 0
+    store.onPidsChange(() => { n++ })
+    store.start("p1", makeScript("dev"))
+    expect(n).toBe(1)
+    calls[0].opts.onOutput("log-line")
+    expect(n).toBe(1)
+    calls[0].opts.onExit(0)
+    expect(n).toBe(2)
+  })
 })

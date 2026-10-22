@@ -1,4 +1,4 @@
-<!-- gitPush 项目脚本弹窗：识别前端/.NET/脚本文件命令并点击运行 -->
+<!-- gitPush 项目脚本弹窗：识别前端/.NET/脚本文件命令并点击运行（会话托管，关窗不断） -->
 <template>
   <div
     tabindex="-1"
@@ -81,7 +81,12 @@
                 v-for="s in g.scripts"
                 :key="s.id"
                 class="gp-sr-row"
-                :class="{ 'gp-sr-row--running': runningId === s.id }"
+                :class="{
+                  'gp-sr-row--running': rowSession(s)?.status === 'running',
+                  'gp-sr-row--attachable': !!rowSession(s),
+                }"
+                :title="rowSession(s) ? i18n.scriptViewOutput : ''"
+                @click="attachTo(s)"
               >
                 <div class="gp-sr-row-info">
                   <div class="gp-sr-row-line">
@@ -99,16 +104,15 @@
                     {{ s.detail }}
                   </div>
                 </div>
-                <!-- 悬停提示："运行" / "停止" -->
+                <!-- 悬停提示："运行" / "停止"（运行经会话托管，关窗不中断） -->
                 <Button
-                  v-if="runningId !== s.id"
+                  v-if="rowSession(s)?.status !== 'running'"
                   variant="ghost"
                   size="xsmall"
                   dense
                   icon="play"
                   :title="i18n.scriptRun"
-                  :disabled="!!runningId"
-                  @click="runScript(s)"
+                  @click.stop="runScript(s)"
                 />
                 <Button
                   v-else
@@ -117,25 +121,25 @@
                   dense
                   icon="stop"
                   :title="i18n.scriptStop"
-                  @click="stopScript"
+                  @click.stop="stopScript(s)"
                 />
               </div>
             </div>
           </template>
         </div>
 
-        <!-- 运行输出 -->
+        <!-- 运行输出（显示所点击行的会话日志，可回看） -->
         <div class="gp-sr-console-wrap">
           <div class="gp-sr-console-head">
-            <span class="gp-sr-console-title">{{ i18n.scriptOutput }}</span>
+            <span class="gp-sr-console-title">{{ i18n.scriptOutput }}<template v-if="attachedLabel"> · {{ attachedLabel }}</template></span>
             <span
-              v-if="runningId"
+              v-if="attachedState?.status === 'running'"
               class="gp-sr-status gp-sr-status--running"
             >{{ i18n.scriptRunning }}</span>
             <span
               v-else-if="exitLabel"
               class="gp-sr-status"
-              :class="{ 'gp-sr-status--fail': exitCode !== 0 }"
+              :class="{ 'gp-sr-status--fail': attachedState?.status === 'exited' && attachedState.exitCode !== 0 }"
             >{{ exitLabel }}</span>
             <Button
               class="gp-sr-clear-btn"
@@ -147,6 +151,12 @@
               :disabled="!logText"
               @click="clearLog"
             />
+          </div>
+          <div
+            v-if="notice"
+            class="gp-sr-notice"
+          >
+            {{ notice }}
           </div>
           <div
             ref="consoleEl"
@@ -170,13 +180,15 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 项目脚本弹窗：自扫描脚本命令、单条运行 + 流式日志、停止杀进程树
+// gitPush 项目脚本弹窗：脚本识别 + 会话托管运行（关窗不杀进程，重开回看日志）
 import type { ScriptGroup, ScriptKind, ProjectScript } from "../../types/scripts"
+import type { ScriptSession } from "../../managers/ScriptSessionStore"
 import { Icon } from "@iconify/vue"
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { DOTNET_VERB_KEYS } from "../../types/scripts"
 import { resolveValidPath, scanProjectScripts } from "../../utils"
-import { runProjectScript, type ScriptRunHandle } from "../../managers/ScriptExecutor"
+import { MAX_RUNNING_SCRIPTS } from "../../managers/ScriptSessionStore"
+import { useScriptSessions } from "../../composables/useScriptSessions"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
 import type { GitProject } from "../../types/storage"
@@ -190,26 +202,20 @@ const emit = defineEmits<{
   close: []
 }>()
 
+const { sessionVersion, sessionsOf, sessionOf, store } = useScriptSessions()
+
 const scanning = ref(false)
 const groups = ref<ScriptGroup[]>([])
-const runningId = ref("")
+/** 当前查看输出的脚本会话（脚本 id） */
+const attachedScriptId = ref("")
 const logText = ref("")
-const exitCode = ref<number | null>(null)
-const stopped = ref(false)
+const notice = ref("")
 const consoleEl = ref<HTMLElement | null>(null)
-let handle: ScriptRunHandle | null = null
-/** 防 error/exit 双事件重复收尾 */
-let finished = true
 
-/** 日志展示上限与保留水位（超出裁掉头部，防长时间运行把内存吃满） */
-const LOG_CAP = 300_000
-const LOG_KEEP = 250_000
-/** 输出节流间隔：块缓冲 + 定时合并刷新，避免逐 chunk 全量重渲染 */
+/** 会话日志镜像节流：store 通知高频（每 chunk），写 logText 限频 80ms */
 const FLUSH_INTERVAL_MS = 80
 const timers = new TimerRegistry()
-let logChunks: string[] = []
-let logLen = 0
-let flushHandle: number | null = null
+let syncHandle: number | null = null
 
 function rescan() {
   scanning.value = true
@@ -223,105 +229,85 @@ function rescan() {
   }
 }
 
-/** 输出先进块缓冲，由定时器合并刷新（高频输出下避免 O(n) 字符串拷贝与逐块重排） */
-function appendLog(chunk: string) {
-  if (!chunk) return
-  logChunks.push(chunk)
-  logLen += chunk.length
-  if (logLen > LOG_CAP) trimBuffer()
-  if (flushHandle === null) {
-    flushHandle = timers.setTimeout(() => {
-      flushHandle = null
-      flushLog()
-    }, FLUSH_INTERVAL_MS)
-  }
+function rowSession(script: ProjectScript): ScriptSession | undefined {
+  return sessionOf(props.project.id, script.id)
 }
 
-/** 裁掉旧块，尾部保留 LOG_KEEP 字符 */
-function trimBuffer() {
-  while (logLen > LOG_KEEP && logChunks.length > 1) {
-    logLen -= logChunks.shift()!.length
-  }
-  if (logChunks.length === 1 && logLen > LOG_KEEP) {
-    logChunks[0] = logChunks[0].slice(logLen - LOG_KEEP)
-    logLen = LOG_KEEP
-  }
+function attachedSession(): ScriptSession | undefined {
+  return sessionOf(props.project.id, attachedScriptId.value)
 }
 
-/** 合并缓冲写入 logText 并滚到底（每 ~80ms 一次，而非每 chunk 一次） */
-function flushLog() {
-  if (logChunks.length === 0) return
-  logText.value += logChunks.join("")
-  logChunks = []
-  logLen = 0
-  if (logText.value.length > LOG_CAP) {
-    logText.value = logText.value.slice(logText.value.length - LOG_KEEP)
-  }
+/** 把会话日志镜像到展示区并滚到底 */
+function syncNow() {
+  logText.value = attachedSession()?.log ?? ""
   void nextTick(() => {
     const el = consoleEl.value
     if (el) el.scrollTop = el.scrollHeight
   })
 }
 
-function clearLog() {
-  timers.clear(flushHandle)
-  flushHandle = null
-  logChunks = []
-  logLen = 0
-  logText.value = ""
-  exitCode.value = null
-  stopped.value = false
+function scheduleSync() {
+  if (syncHandle !== null) return
+  syncHandle = timers.setTimeout(() => {
+    syncHandle = null
+    syncNow()
+  }, FLUSH_INTERVAL_MS)
+}
+
+// 会话/日志变更 → 节流镜像（关闭弹窗后 watch 随组件销毁，进程在 store 继续跑）
+watch(sessionVersion, scheduleSync)
+
+/** 点击行接入该会话的输出（运行中实时续传，已结束可回看） */
+function attachTo(script: ProjectScript) {
+  if (!rowSession(script)) return
+  attachedScriptId.value = script.id
+  notice.value = ""
+  syncNow()
 }
 
 function runScript(script: ProjectScript) {
-  if (runningId.value) return
-  clearLog()
-  runningId.value = script.id
-  finished = false
-  appendLog(`> ${script.preview}\n`)
-  handle = runProjectScript(script, {
-    onOutput: appendLog,
-    onExit: (code) => {
-      if (finished) return
-      finished = true
-      runningId.value = ""
-      handle = null
-      flushLog()
-      exitCode.value = code
-    },
-  })
-  if (!handle) {
-    finished = true
-    runningId.value = ""
+  notice.value = ""
+  const ss = store.start(props.project.id, script)
+  if (!ss) {
+    notice.value = String(props.i18n.scriptTooManySessions).replace("{0}", String(MAX_RUNNING_SCRIPTS))
+    return
   }
+  attachedScriptId.value = script.id
+  syncNow()
 }
 
-function stopScript() {
-  if (!handle) return
-  stopped.value = true
-  try {
-    handle.kill()
-  } catch { /* 已退出 */ }
-  handle = null
-  flushLog()
-  // 进程树终止后 exit 事件不一定回来，直接收尾保证 UI 可再运行
-  if (!finished) {
-    finished = true
-    runningId.value = ""
-  }
+function stopScript(script: ProjectScript) {
+  store.stop(props.project.id, script.id)
+  syncNow()
+}
+
+function clearLog() {
+  notice.value = ""
+  if (attachedScriptId.value) store.clearLog(props.project.id, attachedScriptId.value)
+  syncNow()
 }
 
 function handleClose() {
-  stopScript()
   emit("close")
 }
 
+const attachedState = computed(() => {
+  void sessionVersion.value
+  return attachedSession()
+})
+
+const attachedLabel = computed(() => {
+  const ss = attachedState.value
+  return ss ? scriptLabel(ss.script.kind, ss.script) : ""
+})
+
 const exitLabel = computed(() => {
-  if (runningId.value || exitCode.value === null) return ""
-  if (stopped.value) return String(props.i18n.scriptStopped)
-  return exitCode.value === 0
+  const ss = attachedState.value
+  if (!ss || ss.status === "running") return ""
+  if (ss.status === "stopped") return String(props.i18n.scriptStopped)
+  return ss.exitCode === 0
     ? String(props.i18n.scriptExitOk)
-    : String(props.i18n.scriptExitFail).replace("{0}", String(exitCode.value))
+    : String(props.i18n.scriptExitFail).replace("{0}", String(ss.exitCode ?? -1))
 })
 
 function groupIcon(kind: ScriptKind): string {
@@ -343,9 +329,18 @@ function scriptLabel(kind: ScriptKind, s: ProjectScript): string {
   return key ? String(props.i18n[key] ?? s.label) : s.label
 }
 
-onMounted(rescan)
+onMounted(() => {
+  rescan()
+  // 默认接回最近会话（运行中优先）：关窗重开即回现场
+  const list = sessionsOf(props.project.id)
+  const pick = list.find((s) => s.status === "running")
+    ?? [...list].sort((a, b) => b.startedAt - a.startedAt)[0]
+  if (pick) attachedScriptId.value = pick.script.id
+  syncNow()
+})
+
+// 卸载只摘视图：进程与日志留在会话表继续跑（显式「停止」才杀进程树）
 onBeforeUnmount(() => {
-  stopScript()
   timers.clearAll()
 })
 </script>

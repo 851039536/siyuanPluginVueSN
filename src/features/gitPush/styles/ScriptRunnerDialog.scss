@@ -139,6 +139,11 @@
   }
 }
 
+// 有会话的行可点击查看输出
+.gp-sr-row--attachable {
+  cursor: pointer;
+}
+
 .gp-sr-row-info {
   flex: 1;
   min-width: 0;
@@ -184,6 +189,14 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+// 提示条（并发上限等一次性提示）
+.gp-sr-notice {
+  padding: $s-px3 $s-3;
+  font-size: $t-2xs;
+  color: var(--b3-theme-error);
+  border-bottom: 1px solid var(--b3-border-color);
 }
 
 .gp-sr-console-head {

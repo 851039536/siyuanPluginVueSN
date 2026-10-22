@@ -75,6 +75,7 @@ import { RemoteOps } from "./managers/RemoteOps"
 import { RepoCleanOps } from "./managers/RepoCleanOps"
 import { RepoOps } from "./managers/RepoOps"
 import { ReportOps } from "./managers/ReportOps"
+import { scriptSessions } from "./managers/ScriptSessionStore"
 import { WorktreeOps } from "./managers/WorktreeOps"
 import {
   clampIndexMaxCommits,
@@ -567,6 +568,8 @@ export class GitPushManager {
     this.unmountTabPanel()
     this.writeLock.destroy()
     this.executor.destroy()
+    // 杀掉托管中的脚本会话进程（dev server 等长驻脚本关弹窗不杀，但卸载必须清，防孤儿）
+    scriptSessions.destroyAll()
     // 释放行数统计 SQLite 句柄（openWithRetry 每次新建 DatabaseSync，不 close 会随重载累积）
     const storeInit = this.lineStatsStoreInit
     this.lineStatsStoreInit = null

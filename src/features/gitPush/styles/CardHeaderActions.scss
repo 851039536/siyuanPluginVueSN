@@ -15,6 +15,23 @@
   }
 }
 
+// 项目脚本按钮运行中角标（会话表存在该项目活跃会话时显示）
+.gp-script-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.gp-script-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 6px;
+  height: 6px;
+  border-radius: $r-full;
+  background: var(--b3-theme-primary);
+  pointer-events: none;
+}
+
 // 危险操作分隔线：常规操作与删除之间的视觉分组
 .gp-actions-divider {
   width: 1px;

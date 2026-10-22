@@ -249,15 +249,21 @@
       :title="i18n.editProjectBtn"
       @click="ops.openEditDialog(project)"
     />
-    <!-- 悬停提示："项目脚本（识别/运行）"（自动识别 package.json/.NET/脚本文件命令） -->
-    <Button
-      variant="ghost"
-      size="xsmall"
-      dense
-      icon="scriptLauncher"
-      :title="i18n.scriptRunnerBtn"
-      @click="ops.openScriptRunnerDialog(project)"
-    />
+    <!-- 悬停提示："项目脚本（识别/运行）"（自动识别 package.json/.NET/脚本文件命令；有会话运行中显角标） -->
+    <div class="gp-script-wrap">
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="scriptLauncher"
+        :title="scriptRunning ? i18n.scriptRunnerBtnRunning : i18n.scriptRunnerBtn"
+        @click="ops.openScriptRunnerDialog(project)"
+      />
+      <span
+        v-if="scriptRunning"
+        class="gp-script-dot"
+      />
+    </div>
     <!-- 悬停提示："查看项目 Git 配置" -->
     <Button
       variant="ghost"
@@ -292,6 +298,7 @@ import { openLocalPath, openRepoWebUrl, resolveValidPath } from "../../utils"
 import { useCardActions } from "../../composables/useCardActions"
 import { useCardServices } from "../../composables/useCardServices"
 import { useCardMenu } from "../../composables/useCardMenu"
+import { useScriptSessions } from "../../composables/useScriptSessions"
 import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
 
@@ -313,6 +320,10 @@ const detectedTerminals = shared.detectedTerminals
 
 // 菜单开关（顶栏 platform/ide/refresh 与操作栏 pull/push 共用同一互斥状态）
 const { openMenu, toggleMenu } = useCardMenu()
+
+// 脚本会话运行角标（会话表变更经 version 信号驱动）
+const { hasRunning } = useScriptSessions()
+const scriptRunning = computed(() => hasRunning(props.project.id))
 
 // 卡片本地动作（IDE 删除确认 / 复制链接）
 const {

@@ -61,6 +61,14 @@
           </div>
         </div>
 
+        <!-- 表单项："分类"（原卡片顶栏下拉合并至此，保存时仅在实际变化时经 moveProject 持久化） -->
+        <Select
+          v-model="localCategoryId"
+          :label="i18n.category"
+          size="xsmall"
+          :options="categoryOptions"
+        />
+
         <!-- 表单项："备注" -->
         <Input
           v-model="localNote"
@@ -263,6 +271,7 @@ import type {
   GitProject,
   GitPushManager,
   GitRemoteInfo,
+  ProjectCategory,
 } from "../../types"
 import type { RemoteRowItem } from "./EditableRemoteList.vue"
 import type { SelectOption } from "@/components/Select.vue"
@@ -277,6 +286,7 @@ import {
   watch,
 } from "vue"
 import Input from "@/components/Input.vue"
+import Select from "@/components/Select.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { pickDirectory } from "@/utils/electronDialog"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -339,6 +349,15 @@ const localName = ref("")
 const localStarred = ref(false)
 const localArchived = ref(false)
 const localNote = ref("")
+/** 分类选择（原卡片顶栏下拉合并至此；保存时仅在实际变化时经 moveProject 持久化） */
+const localCategoryId = ref("")
+/** 分类列表（弹窗自包含加载，与 AddProjectDialog 同源 manager.getCategories） */
+const categories = ref<ProjectCategory[]>([])
+
+/** 分类下拉选项（Select 需 { value, label } 结构，与 AddProjectDialog 同款投影） */
+const categoryOptions = computed<SelectOption[]>(() =>
+  categories.value.map((c) => ({ value: c.id, label: c.name })),
+)
 // 平台 URL 输入（键由 PLATFORM_META.urlProp 单一数据源驱动，避免四处硬编码键名）
 const urlInputs = reactive<Record<string, string>>(
   Object.fromEntries(PLATFORM_META.map((pl) => [pl.urlProp, ""])),
@@ -693,6 +712,7 @@ onMounted(async () => {
     localStarred.value = !!p.starred
     localArchived.value = !!p.archived
     localNote.value = p.note || ""
+    localCategoryId.value = p.categoryId
     // 平台 URL 由 PLATFORM_META 单一数据源驱动回填
     for (const pl of PLATFORM_META) {
       urlInputs[pl.urlProp] = p[pl.urlProp] || ""
@@ -703,6 +723,12 @@ onMounted(async () => {
     isInitializingPaths = false
     // 检测远程仓库
     await loadRemotes()
+    // 分类列表（加载失败不阻塞弹窗打开，仅下拉为空）
+    try {
+      categories.value = await props.manager.getCategories()
+    } catch {
+      categories.value = []
+    }
   } catch (e: unknown) {
     if (alive()) {
       showMessage(getErrorMessage(e) || props.i18n.errSaveProject, 4000, "error")
@@ -768,6 +794,10 @@ async function save(): Promise<void> {
     }
     if (!alive()) {
       return
+    }
+    // 分类变更：仅在实际变化时持久化（其余字段已保存成功，此处失败经外层 catch 统一提示）
+    if (localCategoryId.value !== project.value.categoryId) {
+      await props.manager.moveProject(props.projectId, localCategoryId.value)
     }
     // 保存后同步远程映射：路径未变化且已有检测结果时直接复用，否则按新路径检测
     const savedPath = pathPatch.path ?? project.value.path

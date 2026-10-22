@@ -67,7 +67,6 @@ export interface CardDerivedFns {
 /** 卡片操作函数（原 40+ emits 对应的 handler 集群，index.vue 提供） */
 export interface CardOps {
   toggleStar: (id: string) => void
-  moveProject: (id: string, categoryId: string) => void
   switchBranch: (id: string, branch: string) => Promise<void>
   handleRemove: (project: GitProject) => void
   openEditDialog: (project: GitProject) => void

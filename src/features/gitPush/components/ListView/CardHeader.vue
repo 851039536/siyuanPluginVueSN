@@ -145,7 +145,7 @@
         <span>{{ project.note }}</span>
       </div>
     </div>
-    <!-- 操作按钮区（分类/平台链接/IDE/刷新/编辑/Git配置/删除，自包含 services/menu） -->
+    <!-- 操作按钮区（平台链接/IDE/刷新/编辑/Git配置/删除，自包含 services/menu；分类调整在编辑项目弹窗内） -->
     <CardHeaderActions
       :project="project"
       :reload-log="reloadLog"

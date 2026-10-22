@@ -1,17 +1,7 @@
-<!-- gitPush 项目卡片顶栏操作按钮区（分类/平台链接/IDE/刷新/编辑/Git配置/删除，自包含 services/menu） -->
+<!-- gitPush 项目卡片顶栏操作按钮区（平台链接/IDE/刷新/编辑/Git配置/删除，自包含 services/menu；分类调整已合并至编辑项目弹窗） -->
 <template>
-  <!-- 操作按钮区：分类选择/平台链接/IDE/刷新/编辑/Git配置/删除 -->
+  <!-- 操作按钮区：平台链接/IDE/刷新/编辑/Git配置/删除（分类调整已合并至编辑项目弹窗） -->
   <div class="gp-card-actions">
-    <!-- 分类下拉（悬停提示："移动分类"；Select 为纯受控，变更经 handleCategoryChange 派发） -->
-    <Select
-      class="gp-cat-select"
-      size="xsmall"
-      :model-value="project.categoryId"
-      :options="categoryOptions"
-      :aria-label="i18n.moveCategory"
-      :title="i18n.moveCategory"
-      @update:model-value="handleCategoryChange"
-    />
     <!-- 平台链接下拉菜单（本地开关，与 IDE/刷新菜单同模式） -->
     <div class="gp-link-wrap gp-menu-wrap">
       <!-- 悬停提示："平台链接"（图标 + 展开箭头，双图标走默认插槽以保留原有形态） -->
@@ -300,7 +290,6 @@ import { useCardServices } from "../../composables/useCardServices"
 import { useCardMenu } from "../../composables/useCardMenu"
 import { useScriptSessions } from "../../composables/useScriptSessions"
 import Button from "@/components/Button.vue"
-import Select from "@/components/Select.vue"
 
 const props = defineProps<{
   project: GitProject
@@ -313,7 +302,6 @@ const props = defineProps<{
 const { services, isRefreshing } = useCardServices(() => props.project)
 const { shared, ops } = services
 const i18n = shared.i18n
-const categories = shared.categories
 const detectedIdes = shared.detectedIdes
 const customIdes = shared.customIdes
 const detectedTerminals = shared.detectedTerminals
@@ -334,17 +322,6 @@ const {
 /** 当前项目有效路径（多设备路径解析，点击时实时检测磁盘存在性，不用 computed 缓存） */
 function projectPath(): string {
   return resolveValidPath(props.project)
-}
-
-/** 分类下拉选项（Select 需 { value, label } 结构） */
-const categoryOptions = computed(() =>
-  categories.value.map((cat) => ({ value: cat.id, label: cat.name })),
-)
-
-/** 分类下拉变更：Select 为纯受控组件（内部只 emit），取到新分类 id 后派发移动指令 */
-function handleCategoryChange(value: string | number | boolean | null) {
-  if (typeof value !== "string" || value === props.project.categoryId) return
-  ops.moveProject(props.project.id, value)
 }
 
 /** 已配置 URL 的平台链接列表（平台下拉菜单数据源） */

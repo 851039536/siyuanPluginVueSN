@@ -389,7 +389,6 @@ const {
   addCategory: addCategoryFn,
   deleteCategory: deleteCategoryFn,
   updateCategory: updateCategoryFn,
-  moveProject,
   switchBranch,
   startScan,
   importScanResults,
@@ -1557,7 +1556,6 @@ provide(CARD_SERVICES_KEY, {
   },
   ops: {
     toggleStar,
-    moveProject,
     switchBranch: handleSwitchBranch,
     handleRemove,
     openEditDialog,

@@ -109,13 +109,6 @@ export function useProjectCrud(manager: GitPushManager) {
     )
   }
 
-  async function moveProject(projectId: string, categoryId: string) {
-    await manager.moveProject(projectId, categoryId)
-    projects.value = projects.value.map((p) =>
-      p.id === projectId ? { ...p, categoryId } : p,
-    )
-  }
-
   return {
     projects,
     categories,
@@ -129,6 +122,5 @@ export function useProjectCrud(manager: GitPushManager) {
     addCategory,
     deleteCategory,
     updateCategory,
-    moveProject,
   }
 }

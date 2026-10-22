@@ -1295,7 +1295,6 @@
     "commitMessagePlaceholder": "Enter commit message...",
     "category": "Category",
     "manageCategories": "Manage Categories",
-    "moveCategory": "Move to Category",
     "catNamePlaceholder": "Category name",
     "catColorTitle": "Color",
     "noCategories": "No categories",

@@ -1,7 +1,7 @@
 // SuperPanel AI 设置面板样式
 @use "@/variables.scss" as *;
 
-// 通用切换按钮（思考模式开关 / 搜索引擎选择共用）
+// 通用切换按钮（思考模式开关）
 .toggle-btn {
   padding: $s-1 $s-3;
   border-radius: $r-sm;
@@ -56,19 +56,7 @@
   white-space: nowrap;
 }
 
-.search-provider-options {
-  display: flex;
-  gap: $s-1;
-  flex-wrap: wrap;
-}
-
-.setting-link {
-  color: var(--b3-theme-primary);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.jina-hint {
+.deepseek-hint {
   background: rgba(var(--b3-theme-primary-rgb), 0.06);
   border-radius: $r-sm;
   padding: $s-1 $s-2;

@@ -105,8 +105,8 @@ export interface SkillItem {
 
 // ============ 联网搜索相关类型 ============
 
-/** 搜索引擎类型（均为国内可用） */
-export type SearchProvider = "bocha" | "jina"
+/** 搜索引擎类型（DeepSeek 自研搜索引擎，文档 https://api-docs.deepseek.com/zh-cn/api/search/） */
+export type SearchProvider = "deepseek"
 
 /** 搜索结果条目 */
 export interface SearchResult {
@@ -118,16 +118,10 @@ export interface SearchResult {
 
 /** 搜索 API 配置 */
 export interface SearchApiConfig {
-  /** 搜索引擎供应商 */
+  /** 搜索引擎供应商（固定 deepseek） */
   searchProvider: SearchProvider
-  /** 博查 API Key（searchProvider 为 bocha 时必填，注册 https://open.bochaai.com 获取） */
-  bochaApiKey: string
-  /** 搜索语言偏好，如 "zh-CN"、"en"、"auto"，默认 "auto" 不限制语言 */
-  searchLanguage?: string
-  /** 博查 freshness 参数，如 "noLimit"(默认)、"oneWeek"、"oneMonth" */
-  searchFreshness?: string
-  /** Jina API Key（用于 Reranker 重排序，注册 https://jina.ai 获取免费额度） */
-  jinaApiKey?: string
+  /** DeepSeek API Key（复用 DeepSeek 供应商的密钥，deepseek 搜索必填） */
+  deepseekApiKey: string
 }
 
 // ============ AI 配置档案相关类型 ============
@@ -152,10 +146,6 @@ export interface AiProfileConfig {
   customEndpoint: string
   /** DeepSeek 思考模式开关 */
   enableThinking: boolean
-  /** 搜索引擎供应商 */
-  searchProvider: SearchProvider
-  /** 博查 API Key */
-  searchBochaApiKey: string
 }
 
 // ============ 审核相关类型 ============

@@ -15,7 +15,6 @@ import type {
 } from "@/types/ai"
 import {
   formatSearchResults,
-  rerankResults,
   searchWeb,
 } from "@/utils/webSearch"
 
@@ -486,13 +485,8 @@ async function prepareRequest(
       const rawResults = await searchWeb(searchQuery, config.searchConfig)
       // 通知 UI 原始搜索结果
       options?.onSearchResults?.(rawResults)
-      // 语义重排序 + 低分截断（Perplexica 同款方案）
-      const ranked = await rerankResults(
-        searchQuery,
-        rawResults,
-        config.searchConfig.jinaApiKey,
-      )
-      searchContext = formatSearchResults(ranked)
+      // DeepSeek 搜索结果自带 rerank_score 语义排序，无需额外重排序
+      searchContext = formatSearchResults(rawResults)
     } catch (error) {
       const errorMsg = (error as Error).message
       console.warn("联网搜索失败，将不带搜索结果继续生成:", error)
@@ -736,18 +730,10 @@ export function getApiConfigFromPlugin(plugin: any): AiApiConfig {
     ? (settings.aiCustomModel || "")
     : (rawModel === "custom" ? (settings.aiCustomModel || "qwen-plus") : rawModel)
 
-  // 构建搜索配置
-  // 兼容旧配置：已移除的 searxng 供应商降级为 jina
-  // 先以字符串读取旧值再收窄为 SearchProvider，避免联合类型不含旧值导致比较不成立
-  const rawSearchProvider: string = settings.searchProvider || "jina"
+  // 构建搜索配置：固定 DeepSeek Search API，复用 DeepSeek 供应商的 API Key
   const searchConfig: SearchApiConfig = {
-    searchProvider: rawSearchProvider === "searxng"
-      ? "jina"
-      : (rawSearchProvider as SearchApiConfig["searchProvider"]),
-    bochaApiKey: settings.searchBochaApiKey || "",
-    searchLanguage: settings.searchLanguage || "auto",
-    searchFreshness: settings.searchFreshness || "noLimit",
-    jinaApiKey: settings.searchJinaApiKey || "",
+    searchProvider: "deepseek",
+    deepseekApiKey: settings.aiApiKeys?.deepseek || "",
   }
 
   return {

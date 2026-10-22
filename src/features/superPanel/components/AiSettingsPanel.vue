@@ -133,55 +133,11 @@
         <span class="divider-text">{{ i18n.searchSectionTitle }}</span>
       </div>
 
-      <!-- 搜索引擎选择 -->
+      <!-- 搜索引擎说明（固定 DeepSeek Search API，复用 DeepSeek 供应商密钥） -->
       <SettingGroup>
-        <template #label>
-          <!-- 分组标签："搜索引擎" -->
-          {{ i18n.searchEngine }}
-        </template>
-        <div class="search-provider-options">
-          <button
-            v-for="opt in searchProviderOptions"
-            :key="opt.value"
-            class="toggle-btn"
-            :class="{ active: settings.searchProvider === opt.value }"
-            @click="updateSetting('searchProvider', opt.value)"
-          >
-            <!-- 选项文案：如"Jina（免费）"、"博查搜索" -->
-            {{ i18n[opt.labelKey] }}
-          </button>
-        </div>
-      </SettingGroup>
-
-      <!-- 博查 API Key（仅博查搜索时显示） -->
-      <SettingGroup v-if="settings.searchProvider === 'bocha'">
-        <template #label>
-          <!-- 分组标签："博查 API Key" -->
-          {{ i18n.searchBochaApiKeyLabel }}
-        </template>
-        <TextInput
-          :model-value="settings.searchBochaApiKey"
-          type="password"
-          :placeholder="i18n.searchBochaApiKeyPlaceholder"
-          @update:model-value="(v: string) => updateSetting('searchBochaApiKey', v)"
-        />
-        <div class="setting-desc">
-          <!-- 说明文字："注册 博查AI 获取 API Key，免费额度 1000 次/月"（链接拆三段渲染） -->
-          {{ i18n.bochaDescStart }}
-          <a
-            href="https://open.bochaai.com"
-            target="_blank"
-            class="setting-link"
-          >{{ i18n.bochaBrand }}</a>
-          {{ i18n.bochaDescEnd }}
-        </div>
-      </SettingGroup>
-
-      <!-- Jina 搜索提示 -->
-      <SettingGroup v-if="settings.searchProvider === 'jina'">
-        <div class="setting-desc jina-hint">
-          <!-- 提示文案：Jina Search 免费无需 API Key，国内可访问，开箱即用 -->
-          {{ i18n.searchJinaHint }}
+        <div class="setting-desc deepseek-hint">
+          <!-- 说明文字：使用 DeepSeek 自研搜索引擎，复用 DeepSeek 供应商的 API Key -->
+          {{ i18n.searchDeepSeekDesc }}
         </div>
       </SettingGroup>
 
@@ -212,7 +168,6 @@ import type { AiSettings } from "../types"
 import type {
   AiProfileConfig,
   AiProvider,
-  SearchProvider,
 } from "@/types/ai"
 import { showMessage } from "siyuan"
 import {
@@ -264,18 +219,6 @@ const profileList = ref<AiProfileConfig[]>(
   props.profiles ? [...props.profiles] : [],
 )
 
-// labelKey 为 i18n 键名，模板以 i18n[opt.labelKey] 渲染（键值见 superPanel.json）
-const searchProviderOptions: { value: SearchProvider, labelKey: string }[] = [
-  {
-    value: "jina",
-    labelKey: "searchProviderJina",
-  },
-  {
-    value: "bocha",
-    labelKey: "searchProviderBocha",
-  },
-]
-
 const isTestingSearch = ref(false)
 const searchTestResult = ref("")
 const searchTestError = ref(false)
@@ -313,8 +256,6 @@ const handleProfileSave = (name: string) => {
     apiKey: settings.apiKey,
     customEndpoint: settings.customEndpoint,
     enableThinking: settings.enableThinking,
-    searchProvider: settings.searchProvider as SearchProvider,
-    searchBochaApiKey: settings.searchBochaApiKey,
   }
   const next = [...profileList.value]
   const existingIndex = next.findIndex((p) => p.name === trimmed)
@@ -341,8 +282,6 @@ const handleProfileApply = (name: string) => {
   settings.apiKey = profile.apiKey
   settings.customEndpoint = profile.customEndpoint
   settings.enableThinking = profile.enableThinking
-  settings.searchProvider = profile.searchProvider
-  settings.searchBochaApiKey = profile.searchBochaApiKey
   if (profile.apiKey) {
     settings.apiKeys[profile.provider] = profile.apiKey
   } else {
@@ -366,8 +305,8 @@ const testSearch = async () => {
 
   try {
     const results = await searchWeb("今天是几号 最新新闻", {
-      searchProvider: settings.searchProvider as SearchProvider,
-      bochaApiKey: settings.searchBochaApiKey || "",
+      searchProvider: "deepseek",
+      deepseekApiKey: settings.apiKeys["deepseek"] || "",
     })
 
     if (results.length > 0) {

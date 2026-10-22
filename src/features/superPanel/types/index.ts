@@ -67,10 +67,6 @@ export interface AiSettings {
   apiKeys: Record<string, string>
   customEndpoint: string
   enableThinking: boolean
-  /** 搜索引擎供应商 */
-  searchProvider: string
-  /** 博查 API Key */
-  searchBochaApiKey: string
 }
 
 /**
@@ -281,8 +277,6 @@ export class SuperPanelManager {
         aiApiKeys: currentKeys,
         aiCustomEndpoint: aiSettings.customEndpoint,
         aiEnableThinking: aiSettings.enableThinking,
-        searchProvider: aiSettings.searchProvider || "jina",
-        searchBochaApiKey: aiSettings.searchBochaApiKey || "",
       },
       "AI配置已保存",
     )
@@ -332,8 +326,6 @@ export class SuperPanelManager {
         apiKeys: s.aiApiKeys || {},
         customEndpoint: s.aiCustomEndpoint || "",
         enableThinking: s.aiEnableThinking ?? false,
-        searchProvider: s.searchProvider || "jina",
-        searchBochaApiKey: s.searchBochaApiKey || "",
       },
       "profiles": s.aiProfiles || [],
       "i18n": (this.plugin.i18n as any).superPanel || {},

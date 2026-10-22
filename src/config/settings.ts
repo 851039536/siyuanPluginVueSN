@@ -81,9 +81,7 @@ export interface PluginSettings {
   aiCustomEndpoint: string // 自定义API端点(仅在provider为custom时使用)
   aiEnableThinking: boolean // DeepSeek思考模式开关
   aiProfiles: AiProfileConfig[] // AI配置档案（整套AI设置的命名快照，应用时回填激活字段）
-  // 联网搜索配置（RAG 模式）
-  searchProvider: string // 搜索引擎供应商: 'jina' | 'bocha'
-  searchBochaApiKey: string // 博查搜索 API Key
+  // 联网搜索（RAG 模式）固定使用 DeepSeek Search API，密钥复用 aiApiKeys.deepseek，无独立配置项
 }
 
 /**
@@ -157,9 +155,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   aiCustomEndpoint: "",
   aiEnableThinking: false,
   aiProfiles: [],
-  // 联网搜索默认值
-  searchProvider: "jina",
-  searchBochaApiKey: "",
 }
 
 /**
@@ -326,15 +321,13 @@ async function encryptSensitiveFields(
       encrypted.aiApiKeys[provider] = await encryptSetting(key)
     }
   }
-  encrypted.searchBochaApiKey = await encryptSetting(settings.searchBochaApiKey)
-  // 逐份档案加密内部敏感字段（apiKey / searchBochaApiKey），与 aiApiKeys 同机制
+  // 逐份档案加密内部敏感字段（apiKey），与 aiApiKeys 同机制
   const profiles = settings.aiProfiles || []
   if (profiles.length > 0) {
     encrypted.aiProfiles = await Promise.all(
       profiles.map(async (profile) => ({
         ...profile,
         apiKey: await encryptSetting(profile.apiKey || ""),
-        searchBochaApiKey: await encryptSetting(profile.searchBochaApiKey || ""),
       })),
     )
   } else {
@@ -357,7 +350,6 @@ async function decryptSensitiveFields(
       decrypted.aiApiKeys[provider] = await decryptSetting(key)
     }
   }
-  decrypted.searchBochaApiKey = await decryptSetting(settings.searchBochaApiKey)
   // 逐份档案解密内部敏感字段（兼容未加密的旧数据：decryptSetting 对无 enc: 前缀值原样返回）
   const profiles = settings.aiProfiles || []
   if (profiles.length > 0) {
@@ -365,7 +357,6 @@ async function decryptSensitiveFields(
       profiles.map(async (profile) => ({
         ...profile,
         apiKey: await decryptSetting(profile.apiKey || ""),
-        searchBochaApiKey: await decryptSetting(profile.searchBochaApiKey || ""),
       })),
     )
   } else {
@@ -403,7 +394,7 @@ export async function loadSettings(plugin: Plugin): Promise<PluginSettings> {
 /**
  * 保存插件配置
  *
- * 敏感字段 (aiApiKeys, searchBochaApiKey) 在保存前
+ * 敏感字段 (aiApiKeys) 在保存前
  * 会使用 AES-GCM 加密，防止明文泄漏。
  */
 export async function saveSettings(

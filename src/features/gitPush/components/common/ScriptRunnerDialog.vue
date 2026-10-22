@@ -177,6 +177,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue"
 import { DOTNET_VERB_KEYS } from "../../types/scripts"
 import { resolveValidPath, scanProjectScripts } from "../../utils"
 import { runProjectScript, type ScriptRunHandle } from "../../managers/ScriptExecutor"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
 import type { GitProject } from "../../types/storage"
 
@@ -200,8 +201,15 @@ let handle: ScriptRunHandle | null = null
 /** 防 error/exit 双事件重复收尾 */
 let finished = true
 
-/** 日志上限（超出裁掉头部，防长时间运行把内存吃满） */
+/** 日志展示上限与保留水位（超出裁掉头部，防长时间运行把内存吃满） */
 const LOG_CAP = 300_000
+const LOG_KEEP = 250_000
+/** 输出节流间隔：块缓冲 + 定时合并刷新，避免逐 chunk 全量重渲染 */
+const FLUSH_INTERVAL_MS = 80
+const timers = new TimerRegistry()
+let logChunks: string[] = []
+let logLen = 0
+let flushHandle: number | null = null
 
 function rescan() {
   scanning.value = true
@@ -215,10 +223,39 @@ function rescan() {
   }
 }
 
+/** 输出先进块缓冲，由定时器合并刷新（高频输出下避免 O(n) 字符串拷贝与逐块重排） */
 function appendLog(chunk: string) {
-  logText.value += chunk
+  if (!chunk) return
+  logChunks.push(chunk)
+  logLen += chunk.length
+  if (logLen > LOG_CAP) trimBuffer()
+  if (flushHandle === null) {
+    flushHandle = timers.setTimeout(() => {
+      flushHandle = null
+      flushLog()
+    }, FLUSH_INTERVAL_MS)
+  }
+}
+
+/** 裁掉旧块，尾部保留 LOG_KEEP 字符 */
+function trimBuffer() {
+  while (logLen > LOG_KEEP && logChunks.length > 1) {
+    logLen -= logChunks.shift()!.length
+  }
+  if (logChunks.length === 1 && logLen > LOG_KEEP) {
+    logChunks[0] = logChunks[0].slice(logLen - LOG_KEEP)
+    logLen = LOG_KEEP
+  }
+}
+
+/** 合并缓冲写入 logText 并滚到底（每 ~80ms 一次，而非每 chunk 一次） */
+function flushLog() {
+  if (logChunks.length === 0) return
+  logText.value += logChunks.join("")
+  logChunks = []
+  logLen = 0
   if (logText.value.length > LOG_CAP) {
-    logText.value = logText.value.slice(logText.value.length - LOG_CAP + 50_000)
+    logText.value = logText.value.slice(logText.value.length - LOG_KEEP)
   }
   void nextTick(() => {
     const el = consoleEl.value
@@ -227,6 +264,10 @@ function appendLog(chunk: string) {
 }
 
 function clearLog() {
+  timers.clear(flushHandle)
+  flushHandle = null
+  logChunks = []
+  logLen = 0
   logText.value = ""
   exitCode.value = null
   stopped.value = false
@@ -245,6 +286,7 @@ function runScript(script: ProjectScript) {
       finished = true
       runningId.value = ""
       handle = null
+      flushLog()
       exitCode.value = code
     },
   })
@@ -261,6 +303,7 @@ function stopScript() {
     handle.kill()
   } catch { /* 已退出 */ }
   handle = null
+  flushLog()
   // 进程树终止后 exit 事件不一定回来，直接收尾保证 UI 可再运行
   if (!finished) {
     finished = true
@@ -301,7 +344,10 @@ function scriptLabel(kind: ScriptKind, s: ProjectScript): string {
 }
 
 onMounted(rescan)
-onBeforeUnmount(() => { stopScript() })
+onBeforeUnmount(() => {
+  stopScript()
+  timers.clearAll()
+})
 </script>
 
 <style lang="scss" scoped>

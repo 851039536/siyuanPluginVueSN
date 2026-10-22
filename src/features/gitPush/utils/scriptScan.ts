@@ -3,7 +3,6 @@ import type {
   PackageManager,
   ProjectScript,
   ScriptGroup,
-  ScriptKind,
   ScriptScanResult,
 } from "../types/scripts"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
@@ -175,18 +174,16 @@ export function buildScriptFileGroup(root: string, files: string[], platform: st
   })
   return {
     kind: "scriptFile",
-    source: files.length > 0 && files[0].includes("/")
-      ? files[0].slice(0, files[0].lastIndexOf("/"))
-      : ".",
+    source: [...new Set(files.map((f) => (f.includes("/") ? f.slice(0, f.lastIndexOf("/")) : ".")))].join(" · "),
     scripts: items,
   }
 }
 
 /**
- * 按文件名相对路径归类脚本相关文件（纯函数，输入为遍历所得相对路径 + 根文件名）。
- * 过滤规则：跳过 SKIP_DIRS 中任意段；package.json / sln·csproj 全深度，独立脚本文件限 2 层。
+ * 按文件名相对路径归类脚本相关文件（纯函数，输入为遍历所得相对路径）。
+ * 过滤规则：跳过 SKIP_DIRS 中任意段；package.json / sln·csproj 全深度，独立脚本文件限 1 级目录。
  */
-export function classifyScriptFiles(relPaths: string[]): Pick<ScriptFileSet, "packages" | "dotnet" | "scriptFiles"> {
+export function classifyScriptFiles(relPaths: string[]): { packages: string[], dotnet: string[], scriptFiles: string[] } {
   const packages: string[] = []
   const dotnet: string[] = []
   const scriptFiles: string[] = []
@@ -204,11 +201,7 @@ export function classifyScriptFiles(relPaths: string[]): Pick<ScriptFileSet, "pa
       scriptFiles.push(rel)
     }
   }
-  return {
-    packages: packages.map((file) => ({ file, content: "" })),
-    dotnet,
-    scriptFiles,
-  }
+  return { packages, dotnet, scriptFiles }
 }
 
 /** 由识别文件集合构建全部脚本分组（纯聚合，IO 层与单测共用） */
@@ -288,7 +281,7 @@ export function scanProjectScripts(root: string): ScriptScanResult {
     return empty
   }
   const classified = classifyScriptFiles(relPaths)
-  const packages = classified.packages.map(({ file }) => {
+  const packages = classified.packages.map((file) => {
     try {
       return { file, content: fs.readFileSync(`${root}/${file}`, "utf-8") as string }
     } catch {
@@ -303,6 +296,3 @@ export function scanProjectScripts(root: string): ScriptScanResult {
     platform: mods.os.platform(),
   })
 }
-
-/** 分组类别展示顺序（弹窗按此排序） */
-export const SCRIPT_KIND_ORDER: ScriptKind[] = ["package", "dotnet", "scriptFile"]

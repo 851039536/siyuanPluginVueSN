@@ -138,11 +138,11 @@ describe("classifyScriptFiles", () => {
       "src/App/bin/Debug/App.csproj",
       "src/App/obj/App.csproj",
     ])
-    expect(r.packages.map((p) => p.file)).toEqual(["package.json"])
+    expect(r.packages).toEqual(["package.json"])
     expect(r.dotnet).toEqual(["src/MyApp.sln", "src/App/App.csproj"])
   })
 
-  it("独立脚本文件限 2 层深度", () => {
+  it("独立脚本文件限 1 级子目录", () => {
     const r = classifyScriptFiles([
       "run.ps1",
       "scripts/deploy.sh",

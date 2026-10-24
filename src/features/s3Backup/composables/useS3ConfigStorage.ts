@@ -25,6 +25,9 @@ export interface S3ConfigStorageDeps {
 }
 
 export function useS3ConfigStorage(deps: S3ConfigStorageDeps) {
+  /** 保存串行链：双击/并发保存时按调用顺序落盘，避免旧配置晚到覆盖新配置 */
+  let saveChain: Promise<void> = Promise.resolve()
+
   /** 读取并解密已保存配置；失败仅告警，不阻断面板初始化 */
   async function loadS3Config(): Promise<void> {
     const instance = getS3BackupInstance()
@@ -43,10 +46,10 @@ export function useS3ConfigStorage(deps: S3ConfigStorageDeps) {
   }
 
   /**
-   * 加密并保存配置；先落盘成功再应用，避免失败时污染当前运行时配置。
+   * 实际保存流程（由 saveS3Config 串行调用）；先落盘成功再应用，避免失败时污染当前运行时配置。
    * PluginStorage.save 会吞掉异常并返回 false，必须检查返回值。
    */
-  async function saveS3Config(config: S3Config): Promise<SaveS3ConfigResult> {
+  async function doSaveS3Config(config: S3Config): Promise<SaveS3ConfigResult> {
     const instance = getS3BackupInstance()
     if (!instance) {
       return { success: false }
@@ -68,6 +71,14 @@ export function useS3ConfigStorage(deps: S3ConfigStorageDeps) {
       console.error("[S3备份] 保存 S3 配置失败:", err)
       return { success: false, error: getErrorMessage(err) }
     }
+  }
+
+  /** 加密并保存配置（串行执行） */
+  function saveS3Config(config: S3Config): Promise<SaveS3ConfigResult> {
+    const task = saveChain.then(() => doSaveS3Config(config))
+    // 链上兜错，保证一次失败不阻断后续保存
+    saveChain = task.then(() => undefined, () => undefined)
+    return task
   }
 
   return { loadS3Config, saveS3Config }

@@ -275,6 +275,9 @@ export interface RemotePushStatus {
   error?: string
 }
 
+/** 远程同步状态的视图分类（徽章配色与文案判据的唯一真源；空串 = 尚无状态） */
+export type RemoteSyncKind = "ahead" | "behind" | "diverged" | "synced" | ""
+
 /** 项目推送状态汇总 */
 export interface PushStatusInfo {
   /** 当前分支名 */

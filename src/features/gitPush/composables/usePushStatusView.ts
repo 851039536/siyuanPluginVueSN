@@ -1,7 +1,8 @@
-// 推送状态派生视图 composable：由 pushStatuses 派生徽章文案/样式类/推送判定等模板辅助函数
+// 推送状态派生视图 composable：由 pushStatuses 派生徽章文案/状态分类/推送判定等模板辅助函数
 import type { Ref } from "vue"
-import type { PushStatusInfo, RemotePushStatus } from "../types"
-import { isAheadOfRemote } from "../utils"
+// 直连纯模块：桶会转出依赖运行时 "siyuan" 的模块，纯派生逻辑不应被其拖累
+import type { PushStatusInfo, RemotePushStatus, RemoteSyncKind } from "../types/storage"
+import { isAheadOfRemote } from "../utils/platform"
 
 export function usePushStatusView(pushStatuses: Ref<Record<string, PushStatusInfo>>) {
   /** 获取指定项目指定远程的推送状态 */
@@ -21,15 +22,15 @@ export function usePushStatusView(pushStatuses: Ref<Record<string, PushStatusInf
     return parts.join(" ")
   }
 
-  /** 获取状态 badge 的 CSS 类 */
-  function statusBadgeClass(projectId: string, remoteKey: string): string {
+  /** 获取远程同步状态分类（徽章配色与文案判据，供卡片映射一次） */
+  function statusKind(projectId: string, remoteKey: string): RemoteSyncKind {
     const rs = getRemoteStatus(projectId, remoteKey)
     if (!rs) return ""
-    // 分叉优先判断，避免被 ahead 抢先归类为 gp-ahead
-    if (!rs.noUpstream && rs.ahead > 0 && rs.behind > 0) return "gp-diverged"
-    if (isAheadOfRemote(rs)) return "gp-ahead"
-    if (rs.behind > 0) return "gp-behind"
-    return "gp-synced"
+    // 分叉优先判断，避免被 ahead 抢先归类
+    if (!rs.noUpstream && rs.ahead > 0 && rs.behind > 0) return "diverged"
+    if (isAheadOfRemote(rs)) return "ahead"
+    if (rs.behind > 0) return "behind"
+    return "synced"
   }
 
   /** 判断某个远程是否需要推送（本地超前或从未推送） */
@@ -41,7 +42,7 @@ export function usePushStatusView(pushStatuses: Ref<Record<string, PushStatusInf
 
   return {
     statusLabel,
-    statusBadgeClass,
+    statusKind,
     needsPushFor,
   }
 }

@@ -142,3 +142,27 @@ describe("useGitStats —— 需拉取判据", () => {
     expect(needsPullProjects.value.map((i) => i.project.id)).toEqual(["p2"])
   })
 })
+
+describe("useGitStats —— 需推送判据（统一为 isAheadOfRemote）", () => {
+  it("noUpstream（从未推送过）必须进入 needsPushProjects，即使 ahead 为 0", () => {
+    const { needsPushProjects } = setup({
+      projects: [makeProject("p1"), makeProject("p2"), makeProject("p3")],
+      pushStatuses: {
+        // 远程分支尚未建立，但有本地提交
+        p1: makePushStatus("main", {
+          github: { ahead: 3, behind: 0, noUpstream: true },
+        }),
+        // 空仓库：ahead 也是 0，但「从未推送」仍应视为待推送（旧判据会漏掉）
+        p2: makePushStatus("main", {
+          github: { ahead: 0, behind: 0, noUpstream: true },
+        }),
+        // 已同步 → 不应出现
+        p3: makePushStatus("main", {
+          github: { ahead: 0, behind: 0, noUpstream: false },
+        }),
+      },
+    })
+
+    expect(needsPushProjects.value.map((i) => i.project.id)).toEqual(["p1", "p2"])
+  })
+})

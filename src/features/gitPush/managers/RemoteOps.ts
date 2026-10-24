@@ -1,7 +1,6 @@
 // 远程网络操作：push/pull/fetch 全平台与单平台执行、推送状态检查、智能跳过
 import type {
   GitProject,
-  GitRemoteInfo,
   PushStatusInfo,
   RemotePushStatus,
 } from "../types/storage"
@@ -13,9 +12,9 @@ import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 RemoteOps 无法在 Node 单测环境加载（fetchBehind.git.spec.ts 需要真实实例）
-import { getProjectRemoteNames, orderRemotesForPullCheck } from "../utils/platform"
+import { getProjectRemoteNames, isAheadOfRemote, orderRemotesForPullCheck } from "../utils/platform"
 import { parseAheadBehind } from "../utils/gitOutput"
-import { resolveValidPath, resolveValidPathWithSource } from "../utils/project"
+import { resolveValidPathWithSource } from "../utils/project"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 /** 远程操作结果 */
@@ -67,14 +66,6 @@ export class RemoteOps {
   async setPushBranchMode(mode: "all" | "head"): Promise<void> {
     this.pushBranchMode = mode
     await this.storage.pushBranchMode.save(mode)
-  }
-
-  /** 判断远程仓库是否为已知平台 */
-  private isKnownRemote(remote: GitRemoteInfo, platform: PlatformKey): boolean {
-    if (platform === "github") return remote.isGithub
-    if (platform === "gitee") return remote.isGitee
-    if (platform === "cnb") return remote.isCnb
-    return remote.isGitea
   }
 
   /** 获取项目的远程名称（按平台类型，未配置时返回 undefined） */
@@ -239,7 +230,7 @@ export class RemoteOps {
       const rs = cachedStatus.remotes[key]
       if (!rs) return false
       // 状态检查失败（error 字段存在）时不能判定为已同步，否则会静默跳过应推送的远程
-      return !rs.error && rs.ahead === 0 && !rs.noUpstream
+      return !rs.error && !isAheadOfRemote(rs)
     }
 
     // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥
@@ -609,22 +600,22 @@ export class RemoteOps {
       return status
     }
 
-    const results: { key: PlatformKey, result: RemotePushStatus, ahead: number }[] = []
+    const results: { key: PlatformKey, result: RemotePushStatus }[] = []
     for (const { key, remoteName } of remotesToCheck) {
       const refName = `${remoteName}/${status.branch}`
       const counts = aheadBehind.map.get(refName)
       if (counts) {
-        results.push({ key, result: { ahead: counts.ahead, behind: counts.behind, noUpstream: false }, ahead: counts.ahead })
+        results.push({ key, result: { ahead: counts.ahead, behind: counts.behind, noUpstream: false } })
         continue
       }
       // 该远程跟踪 ref 不存在 → noUpstream（与既有语义一致：ahead 取本地提交总数）
       const count = await headCommitCount()
-      results.push({ key, result: { ahead: count, behind: 0, noUpstream: true }, ahead: count })
+      results.push({ key, result: { ahead: count, behind: 0, noUpstream: true } })
     }
 
-    for (const { key, result, ahead } of results) {
+    for (const { key, result } of results) {
       status.remotes[key] = result
-      if (ahead > 0) status.needsPush = true
+      if (isAheadOfRemote(result)) status.needsPush = true
     }
 
     // 缓存用于智能跳过
@@ -632,10 +623,6 @@ export class RemoteOps {
     return status
   }
 
-  /**
-   * 单次 `for-each-ref` 读取全部 `refs/remotes` 的 ahead/behind（相对 HEAD）。
-   * 失败（如路径失效）返回空映射，由调用方回落为 noUpstream 语义。
-   */
   /**
    * 单次 `for-each-ref` 读取全部 `refs/remotes` 的 ahead/behind（相对 HEAD）。
    *
@@ -689,26 +676,5 @@ export class RemoteOps {
   /** 失效推送状态缓存（commit 等改变本地提交的操作后调用，防止智能跳过用到陈旧的 ahead=0） */
   invalidatePushStatusCache(id: string): void {
     delete this.pushStatusCache[id]
-  }
-
-  async checkCanPushToCloud(id: string): Promise<{
-    canPush: boolean
-    github: boolean
-    gitee: boolean
-    gitea: boolean
-    cnb: boolean
-    remotes: GitRemoteInfo[]
-  }> {
-    const project = await this.store.getProjectById(id)
-    if (!project) {
-      return { canPush: false, github: false, gitee: false, gitea: false, cnb: false, remotes: [] }
-    }
-
-    const remotes = await this.store.detectRemotes(resolveValidPath(project))
-    const github = remotes.some((r) => this.isKnownRemote(r, "github"))
-    const gitee = remotes.some((r) => this.isKnownRemote(r, "gitee"))
-    const gitea = remotes.some((r) => this.isKnownRemote(r, "gitea"))
-    const cnb = remotes.some((r) => this.isKnownRemote(r, "cnb"))
-    return { canPush: github || gitee || gitea || cnb, github, gitee, gitea, cnb, remotes }
   }
 }

@@ -11,6 +11,7 @@ import type {
   ProjectCategory,
   PushOutputEntry,
   PushStatusInfo,
+  RemoteSyncKind,
   TerminalEntry,
   WorkingTreeInfo,
 } from "./storage"
@@ -60,7 +61,7 @@ export interface CardDerivedFns {
   isPulling: (id: string, key?: string) => boolean
   isPushing: (id: string) => boolean
   statusLabel: (id: string, key: string) => string
-  statusBadgeClass: (id: string, key: string) => string
+  statusKind: (id: string, key: string) => RemoteSyncKind
   needsPushFor: (id: string, key: string) => boolean
 }
 

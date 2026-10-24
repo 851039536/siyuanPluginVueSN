@@ -866,17 +866,6 @@ export class GitPushManager {
     this.remoteOps.invalidatePushStatusCache(id)
   }
 
-  async checkCanPushToCloud(id: string): Promise<{
-    canPush: boolean
-    github: boolean
-    gitee: boolean
-    gitea: boolean
-    cnb: boolean
-    remotes: GitRemoteInfo[]
-  }> {
-    return this.remoteOps.checkCanPushToCloud(id)
-  }
-
   // ── 工作区本地操作（WorktreeOps；写操作经项目级写锁串行，防 index.lock 竞争）──
 
   async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string, fastWhenClean?: boolean }): Promise<WorkingTreeInfo> {

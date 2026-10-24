@@ -20,6 +20,7 @@ import {
   findProject,
   resolveValidPath,
 } from "../utils/project"
+import { PLATFORM_META } from "../types/meta"
 
 /** 在飞查询 / 新鲜度时间戳的复合键 */
 function queryKey(id: string, kind: ProjectQueryKind): string {
@@ -269,7 +270,8 @@ export function useProjectQueryScheduler(
   /**
    * 统一远程刷新管线。合并此前两条会各自 fetch 的入口
    * （handleFetchAll 直调 fetchAllForProject 与 handleRefreshRemoteStatus 经 checkPushStatus 内部 fetch）：
-   * 单飞后同一项目同时触发两个入口只产生一轮网络 fetch。
+   * 单飞后同一项目同时触发两个 force 入口仍只产生一轮网络 fetch；
+   * 手动 force 会穿透后台非 force 探测（见 opts.force）。
    * 本管线是全局唯一的「fetch 后重查状态」路径，checkPushStatus 不再承担 fetch 职责。
    *
    * @param opts.force `true` 时**强制重新解析分支名**（多付一次 rev-parse）；
@@ -298,11 +300,16 @@ export function useProjectQueryScheduler(
       // 先刷新远程配置（本地 git remote -v），避免后续用陈旧远程名 fetch
       const refreshed = await manager.refreshRemotes(id)
       // store 已更新但 projects Ref 仍指向旧对象（卡片上的远程名会滞后）：
-      // 就地替换保持列表顺序，与 useProjectCrud 的同步口径一致。
+      // 仅在远程配置确实变化时就地替换，保持列表顺序。
+      // 未变化时不替换数组：避免后台批量检查为每个项目触发一次全列表重算，
+      // 也避免覆盖并发产生的非远程字段编辑（如收藏）。
       // 期间被 clearProject（编辑/删除）则跳过，避免把旧快照写回列表。
       if (refreshed && isCurrentGeneration(id, gen)) {
         const idx = projects.value.findIndex((p) => p.id === id)
-        if (idx !== -1) {
+        const current = idx === -1 ? undefined : projects.value[idx]
+        const remotesChanged = !!current
+          && PLATFORM_META.some((pm) => current[pm.remoteProp] !== refreshed[pm.remoteProp])
+        if (current && remotesChanged) {
           projects.value[idx] = refreshed
           projects.value = [...projects.value]
         }

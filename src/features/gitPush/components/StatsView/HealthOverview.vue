@@ -1,7 +1,7 @@
 <!-- gitPush 统计视图健康概览（推送状态分布条 + 精简 KPI 行，替代原「6 张 KPI 卡 + 4 个 chips」的双重计数堆叠） -->
 <template>
   <div class="gps-health">
-    <!-- 推送状态分布：一条按项目数占比分段的横向条（四态合计 = 项目总数），下方为四态图例 -->
+    <!-- 推送状态分布：一条按项目数占比分段的横向条（四态合计 = 已判定项目数；detached / 检查失败的项目不计入），下方为四态图例 -->
     <div
       v-if="visibleSegments.length > 0"
       class="gps-health-bar"
@@ -76,7 +76,7 @@ const STATUS_SEGMENTS = [
   { key: "noRemote", cls: "none", labelKey: "noRemoteLabel" },
 ] as const
 
-/** 分布分段视图：四态计数（label 按 i18n 预渲染），合计即项目总数 */
+/** 分布分段视图：四态计数（label 按 i18n 预渲染），合计 = 已判定项目数（detached / 检查失败不计入） */
 const distribution = computed(() =>
   STATUS_SEGMENTS.map((s) => ({
     key: s.key,

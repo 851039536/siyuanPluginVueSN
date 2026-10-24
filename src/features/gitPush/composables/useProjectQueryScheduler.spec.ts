@@ -245,6 +245,22 @@ describe("useProjectQueryScheduler —— refreshRemote", () => {
     expect(projects.value[0].githubRemote).toBe("github")
   })
 
+  it("远程配置未变时不替换 projects 数组（避免后台批量刷新触发全量重渲染）", async () => {
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(),
+      checkPushStatus: vi.fn(async () => ({ branch: "main", remotes: {}, needsPush: false })),
+      refreshRemotes: vi.fn(async () => ({ ...makeProject() })),
+      fetchAllForProject: vi.fn(async () => ({ fetched: [], errors: [] })),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+    const before = projects.value[0]
+
+    await scheduler.refreshRemote("P1")
+
+    expect(projects.value[0]).toBe(before)
+  })
+
   it("force=true 时忽略缓存分支，重新解析 HEAD", async () => {
     const { manager } = makeRemoteManager()
     const scheduler = useProjectQueryScheduler(manager as any, projects)

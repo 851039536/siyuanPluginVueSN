@@ -71,6 +71,7 @@
       :get-project-file-lines="getProjectFileLines"
       :refresh-project="refreshLineStatsProject"
       @run-analysis="runAnalysis"
+      @commits-rewritten="handleCommitsRewritten"
       @run-line-stats="runLineStatsAnalysis"
       @update-count="setCommitCount"
       @update-view-settings="updateViewSettings"
@@ -1457,6 +1458,16 @@ async function handleEditSaved() {
 /** 仓库链接更新：仅刷新列表，不关闭弹窗 */
 async function handleUrlsUpdated() {
   await loadProjects()
+}
+
+/**
+ * 历史重写（修正/删除提交）后强制重查受影响项目的推送状态。
+ * ahead 计数已随 hash 变化，而 ensure 语义会因已有缓存跳过；纯本地比对不联网，代价一次 for-each-ref。
+ */
+function handleCommitsRewritten(projectIds: string[]) {
+  for (const id of projectIds) {
+    void scheduler.loadPushStatus(id, { force: true }).catch(() => {})
+  }
 }
 
 /** 统一的异步操作错误处理包装器 */

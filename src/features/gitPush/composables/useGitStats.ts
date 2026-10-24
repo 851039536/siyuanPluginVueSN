@@ -23,7 +23,7 @@ import type {
 } from "../types/storage"
 import { DEFAULT_LOCAL_TIMEOUT, DEFAULT_NETWORK_TIMEOUT, UNGROUPED_ID } from "../types/storage"
 // 直连 utils/platform（纯函数模块）而非 "../utils" 桶，理由同上
-import { getProjectRemoteNames, isAheadOfRemote } from "../utils/platform"
+import { getProjectRemoteNames, hasUnpushedCommits } from "../utils/platform"
 
 export function useGitStats(
   manager: GitPushManager,
@@ -147,7 +147,7 @@ export function useGitStats(
         noRemote++
       } else {
         const vals = Object.values(status.remotes)
-        if (vals.some((r) => isAheadOfRemote(r))) ahead++
+        if (vals.some((r) => hasUnpushedCommits(r))) ahead++
         else if (vals.some((r) => r.behind > 0)) behind++
         else synced++
       }
@@ -158,7 +158,7 @@ export function useGitStats(
         const behindByRemote: { key: string; behind: number }[] = []
         for (const pm of PLATFORM_META) {
           const rs = status.remotes[pm.key]
-          if (rs && isAheadOfRemote(rs)) aheadByRemote.push({ key: pm.key, ahead: rs.ahead })
+          if (rs && hasUnpushedCommits(rs)) aheadByRemote.push({ key: pm.key, ahead: rs.ahead })
           if (rs && rs.behind > 0) behindByRemote.push({ key: pm.key, behind: rs.behind })
         }
         if (aheadByRemote.length > 0) {

@@ -357,6 +357,8 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
   /** 打开某项目的行数详情弹窗（行数排行行点击；由 index.vue 设置 lineDetailProjectId） */
   openLineDetail: [projectId: string]
+  /** 历史重写完成（修正/删除/批量修正）：父层据此重查受影响项目的推送状态 */
+  commitsRewritten: [projectIds: string[]]
   closeLineDetail: []
 }>()
 
@@ -485,18 +487,23 @@ function openBatchFix(violations: CommitRuleViolation[]) {
 
 /** 修正成功后关闭弹窗并触发重分析（局部刷新由父层按项目处理） */
 function handleFixSaved() {
+  const projectId = editingViolation.value?.projectId
   editingViolation.value = null
+  if (projectId) emit("commitsRewritten", [projectId])
   emit("runAnalysis")
 }
 
 /** 删除成功后关闭弹窗并触发重分析 */
 function handleDropSaved() {
+  const projectId = droppingViolation.value?.projectId
   droppingViolation.value = null
+  if (projectId) emit("commitsRewritten", [projectId])
   emit("runAnalysis")
 }
 
 /** 批量修正保存完成：重分析受影响项目，弹窗保持打开由"完成"按钮关闭 */
-function handleBatchSaved() {
+function handleBatchSaved(projectIds: string[]) {
+  if (projectIds.length > 0) emit("commitsRewritten", projectIds)
   emit("runAnalysis")
 }
 </script>

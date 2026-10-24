@@ -12,7 +12,7 @@ import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 RemoteOps 无法在 Node 单测环境加载（fetchBehind.git.spec.ts 需要真实实例）
-import { getProjectRemoteNames, isAheadOfRemote, orderRemotesForPullCheck } from "../utils/platform"
+import { getProjectRemoteNames, hasUnpushedCommits, mayAttemptPush, orderRemotesForPullCheck } from "../utils/platform"
 import { parseAheadBehind } from "../utils/gitOutput"
 import { resolveValidPathWithSource } from "../utils/project"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -230,7 +230,7 @@ export class RemoteOps {
       const rs = cachedStatus.remotes[key]
       if (!rs) return false
       // 状态检查失败（error 字段存在）时不能判定为已同步，否则会静默跳过应推送的远程
-      return !rs.error && !isAheadOfRemote(rs)
+      return !rs.error && !mayAttemptPush(rs)
     }
 
     // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥
@@ -615,7 +615,9 @@ export class RemoteOps {
 
     for (const { key, result } of results) {
       status.remotes[key] = result
-      if (isAheadOfRemote(result)) status.needsPush = true
+      // 聚合判据只看「有没有待推送提交」：空仓库（ahead=0 且 noUpstream）没有内容可推，
+      // 不应启用「推送全部 / 强制推送」；单平台按钮仍经 mayAttemptPush 保留尝试能力。
+      if (hasUnpushedCommits(result)) status.needsPush = true
     }
 
     // 缓存用于智能跳过

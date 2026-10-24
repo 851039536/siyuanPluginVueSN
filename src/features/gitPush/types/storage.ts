@@ -284,7 +284,7 @@ export interface PushStatusInfo {
   branch: string
   /** 各远程推送状态（key 为远程名，如 github/gitee） */
   remotes: Record<string, RemotePushStatus>
-  /** 是否有任何远程需要推送（ahead > 0 或 noUpstream） */
+  /** 是否存在待推送的本地提交（ahead > 0；空仓库 && noUpstream 时为 false） */
   needsPush: boolean
 }
 

@@ -3,9 +3,15 @@
 // 背景：同一项目常配置多个平台远程（gitee/cnb/github/gitea）互为镜像。
 // 「需拉取」检查按固定优先级逐个 fetch，**确认某远程有更新即停**，
 // 避免为镜像平台重复付网络往返（实测单项目 12.3s → 2.3s）。
-import type { GitProject } from "../types/storage"
+import type { GitProject, RemotePushStatus } from "../types/storage"
 import { describe, expect, it } from "vitest"
-import { getProjectRemoteNames, orderRemotesForPullCheck, PULL_CHECK_REMOTE_ORDER } from "./platform"
+import {
+  getProjectRemoteNames,
+  hasUnpushedCommits,
+  mayAttemptPush,
+  orderRemotesForPullCheck,
+  PULL_CHECK_REMOTE_ORDER,
+} from "./platform"
 
 function makeProject(overrides: Partial<GitProject> = {}): GitProject {
   return {
@@ -66,5 +72,35 @@ describe("getProjectRemoteNames —— 与短路顺序解耦", () => {
     })
     // PLATFORM_META 顺序：github → gitee → gitea → cnb
     expect(getProjectRemoteNames(project).map((r) => r.key)).toEqual(["github", "gitee", "gitea", "cnb"])
+  })
+})
+
+describe("推送判据拆分 —— 计数口径 vs 尝试口径", () => {
+  const synced: RemotePushStatus = { ahead: 0, behind: 0, noUpstream: false }
+  const ahead: RemotePushStatus = { ahead: 2, behind: 0, noUpstream: false }
+  const behind: RemotePushStatus = { ahead: 0, behind: 3, noUpstream: false }
+  const diverged: RemotePushStatus = { ahead: 2, behind: 3, noUpstream: false }
+  const newBranch: RemotePushStatus = { ahead: 5, behind: 0, noUpstream: true }
+  const emptyRepo: RemotePushStatus = { ahead: 0, behind: 0, noUpstream: true }
+  const errored: RemotePushStatus = { ahead: 0, behind: 0, noUpstream: false, error: "boom" }
+
+  it("hasUnpushedCommits 只看 ahead，空仓库与错误状态均为 false", () => {
+    expect(hasUnpushedCommits(ahead)).toBe(true)
+    expect(hasUnpushedCommits(diverged)).toBe(true)
+    expect(hasUnpushedCommits(newBranch)).toBe(true)
+    expect(hasUnpushedCommits(synced)).toBe(false)
+    expect(hasUnpushedCommits(behind)).toBe(false)
+    expect(hasUnpushedCommits(emptyRepo)).toBe(false)
+    expect(hasUnpushedCommits(errored)).toBe(false)
+  })
+
+  it("mayAttemptPush 对 noUpstream 保持放行（空仓库也可尝试建上游）", () => {
+    expect(mayAttemptPush(ahead)).toBe(true)
+    expect(mayAttemptPush(newBranch)).toBe(true)
+    expect(mayAttemptPush(emptyRepo)).toBe(true)
+    expect(mayAttemptPush(synced)).toBe(false)
+    expect(mayAttemptPush(behind)).toBe(false)
+    // error 由调用方叠加 !error 守卫，本判据本身不看 error
+    expect(mayAttemptPush(errored)).toBe(false)
   })
 })

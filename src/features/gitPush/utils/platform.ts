@@ -112,7 +112,16 @@ export function platformLabel(key: string): string {
   return PLATFORM_META.find((pm) => pm.key === key)?.label ?? key
 }
 
-/** 判断远程是否需要推送（noUpstream 或 ahead > 0，消除多处 .noUpstream || .ahead > 0 重复） */
-export function isAheadOfRemote(rs: RemotePushStatus): boolean {
-  return rs.noUpstream || rs.ahead > 0
+/** 是否存在待推送的本地提交（noUpstream 场景下 ahead 已由 checkPushStatus 填为本地提交总数） */
+export function hasUnpushedCommits(rs: RemotePushStatus): boolean {
+  return rs.ahead > 0
+}
+
+/**
+ * 是否可能仍有内容需要推送：远程分支尚未建立时也放行尝试。
+ * ⚠️ 与 hasUnpushedCommits 的分工：本判据用于「允许尝试 / 是否跳过」，空仓库（ahead=0 且 noUpstream）
+ * 仍可能因 ahead 计数失败而需要一次真实尝试，故不能只看 ahead；计数展示一律用 hasUnpushedCommits。
+ */
+export function mayAttemptPush(rs: RemotePushStatus): boolean {
+  return rs.noUpstream || hasUnpushedCommits(rs)
 }

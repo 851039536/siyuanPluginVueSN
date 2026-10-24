@@ -33,7 +33,7 @@ describe("usePushStatusView —— 状态分类与判定", () => {
     expect(view.needsPushFor("p1", "github")).toBe(true)
   })
 
-  it("noUpstream 视为待推送，文案取 +N；ahead=0 时仍需要推送", () => {
+  it("noUpstream 且有本地提交视为待推送；空仓库不显示徽章但仍允许尝试", () => {
     const view = setup({
       github: { ahead: 4, behind: 0, noUpstream: true },
       gitee: { ahead: 0, behind: 0, noUpstream: true },
@@ -41,7 +41,10 @@ describe("usePushStatusView —— 状态分类与判定", () => {
 
     expect(view.statusKind("p1", "github")).toBe("ahead")
     expect(view.statusLabel("p1", "github")).toBe("+4")
-    expect(view.statusKind("p1", "gitee")).toBe("ahead")
+    // 空仓库：没有可推送的提交，不进入 ahead 分类、不显示 +0 徽章
+    expect(view.statusKind("p1", "gitee")).toBe("synced")
+    expect(view.statusLabel("p1", "gitee")).toBe("")
+    // 但单平台仍放行尝试（远程分支尚未建立）
     expect(view.needsPushFor("p1", "gitee")).toBe(true)
   })
 

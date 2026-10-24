@@ -143,16 +143,16 @@ describe("useGitStats —— 需拉取判据", () => {
   })
 })
 
-describe("useGitStats —— 需推送判据（统一为 isAheadOfRemote）", () => {
-  it("noUpstream（从未推送过）必须进入 needsPushProjects，即使 ahead 为 0", () => {
+describe("useGitStats —— 需推送判据（统一为 hasUnpushedCommits）", () => {
+  it("noUpstream 且有本地提交必须进入 needsPushProjects；空仓库（ahead=0）不得误入", () => {
     const { needsPushProjects } = setup({
       projects: [makeProject("p1"), makeProject("p2"), makeProject("p3")],
       pushStatuses: {
-        // 远程分支尚未建立，但有本地提交
+        // 远程分支尚未建立，但有本地提交 → 需推送
         p1: makePushStatus("main", {
           github: { ahead: 3, behind: 0, noUpstream: true },
         }),
-        // 空仓库：ahead 也是 0，但「从未推送」仍应视为待推送（旧判据会漏掉）
+        // 空仓库：ahead=0，没有任何可推送内容 → 不应出现在待推送列表
         p2: makePushStatus("main", {
           github: { ahead: 0, behind: 0, noUpstream: true },
         }),
@@ -163,6 +163,6 @@ describe("useGitStats —— 需推送判据（统一为 isAheadOfRemote）", ()
       },
     })
 
-    expect(needsPushProjects.value.map((i) => i.project.id)).toEqual(["p1", "p2"])
+    expect(needsPushProjects.value.map((i) => i.project.id)).toEqual(["p1"])
   })
 })

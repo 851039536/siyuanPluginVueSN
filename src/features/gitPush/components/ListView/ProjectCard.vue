@@ -305,10 +305,16 @@ function openCommitFix(entry: CommitLogEntry) {
   }
 }
 
+/** 历史重写后强制重查推送状态（ahead 计数已变；纯本地比对，不联网） */
+function reloadPushStatusAfterRewrite() {
+  void services.scheduler.loadPushStatus(props.project.id, { force: true }).catch(() => {})
+}
+
 /** 修正成功后关闭弹窗并刷新 LOG 数据 */
 function handleFixSaved() {
   fixingEntry.value = null
   void reloadLog()
+  reloadPushStatusAfterRewrite()
 }
 
 /** 当前正在删除的提交条目（null = 未打开删除弹窗） */
@@ -328,6 +334,7 @@ function openCommitDrop(entry: CommitLogEntry) {
 /** 删除成功后刷新 LOG 数据（hash 已变，列表必须重抓）；弹窗停留展示备份路径，关闭交由 close 事件 */
 function handleDropSaved() {
   void reloadLog()
+  reloadPushStatusAfterRewrite()
 }
 
 /** 当前正在查看文件的提交条目（null = 未打开提交文件弹窗） */

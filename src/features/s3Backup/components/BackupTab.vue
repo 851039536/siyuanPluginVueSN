@@ -36,9 +36,7 @@
       :i18n="i18n"
       @perform-backup="orch.performManualBackup()"
       @trigger-zip-backup="orch.triggerZipBackupOnly()"
-      @update:use-date-folder="orch.saveWorkspaceSettings()"
       @update:local-backup-dir="orch.onLocalBackupDirChanged()"
-      @update:s3-sub-prefix="orch.saveWorkspaceSettings()"
     />
 
     <!-- 本地备份列表 -->

@@ -3203,6 +3203,7 @@
   "deleteFailed": "Delete failed",
   "saveConfig": "Save Config",
   "configSaved": "Configuration saved",
+  "configSaveFailed": "Failed to save configuration",
   "scanning": "Scanning files",
   "packing": "Packing files",
   "compressing": "Compressing data",

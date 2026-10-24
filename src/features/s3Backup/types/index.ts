@@ -151,6 +151,9 @@ export const MAX_CHECKSUM_COUNT = 100
 /** 上传来源设备映射最大条目数（超限丢弃最旧条目） */
 export const MAX_UPLOAD_HOST_MAP = 200
 
+/** 自动备份定时器 → 面板 的自定义事件名（index.ts 派发，index.vue 监听） */
+export const AUTO_BACKUP_TRIGGER_EVENT = "autoBackupTrigger"
+
 /** 本地备份目录 / S3 子路径默认值（兜底用） */
 export const DEFAULT_BACKUP_DIR = "data-backup"
 

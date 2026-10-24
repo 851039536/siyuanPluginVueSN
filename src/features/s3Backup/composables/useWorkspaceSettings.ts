@@ -5,7 +5,7 @@
  * 提供路径检测/选择、设置加载/保存与备份完成时间标记能力。
  * 通过 getS3BackupInstance 与插件实例侧的设置存储同步。
  */
-import { reactive, ref } from "vue"
+import { reactive, ref, watch } from "vue"
 import { showMessage } from "siyuan"
 import { getWorkspaceDir } from "@/api"
 import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
@@ -93,6 +93,22 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
 
   // ========== 设置持久化 ==========
 
+  /** 用户可编辑设置的稳定签名：仅变更时才落盘，避免初始化赋值触发回写 */
+  function settingsSignature(): string {
+    return JSON.stringify({
+      useDateFolder: useDateFolder.value,
+      localBackupDir: localBackupDir.value,
+      s3SubPrefix: s3SubPrefix.value,
+      backupMode: { ...backupModeLocal },
+      autoBackupEnabled: autoBackupEnabled.value,
+      backupFrequency: backupFrequency.value,
+      backupTime: backupTime.value,
+      keepBackupCount: keepBackupCount.value,
+    })
+  }
+
+  let persistedSignature = ""
+
   async function loadWorkspaceSettings(): Promise<void> {
     try {
       const instance = getS3BackupInstance()
@@ -125,6 +141,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     } catch (err) {
       console.error("加载工作区设置失败:", err)
     }
+    // 水合完成后再建立基线：阻断初始化赋值被 watch 当作编辑回写
+    persistedSignature = settingsSignature()
   }
 
   /** 构建持久化设置对象（消除 markBackupCompleted 与 saveWorkspaceSettings 的参数重复构造） */
@@ -158,6 +176,13 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     }
   }
 
+  // 用户编辑设置后统一落盘：替代各组件逐个 @update 调用 saveWorkspaceSettings
+  watch(settingsSignature, (next) => {
+    if (next === persistedSignature) { return }
+    persistedSignature = next
+    void saveWorkspaceSettings()
+  })
+
   /** 备份完成后更新上次备份时间并同步定时器防重时间戳 + 持久化（复用 saveWorkspaceSettings 的错误处理，保存失败不向备份流程抛异常） */
   async function markBackupCompleted(): Promise<void> {
     lastBackupTime.value = new Date().toLocaleString()
@@ -181,7 +206,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     selectWorkspacePath,
     openWorkspaceFolder,
     loadWorkspaceSettings,
-    saveWorkspaceSettings,
     markBackupCompleted,
   }
 }

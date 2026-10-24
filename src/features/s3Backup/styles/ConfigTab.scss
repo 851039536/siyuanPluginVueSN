@@ -1,0 +1,10 @@
+/**
+ * 配置 Tab 专属样式
+ *
+ * 仅负责配置保存内联反馈与表单区块的间距。
+ */
+@use '@/variables.scss' as *;
+
+.config-save-feedback {
+  margin-top: $s-3;
+}

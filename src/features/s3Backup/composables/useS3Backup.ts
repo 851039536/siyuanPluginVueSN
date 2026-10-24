@@ -76,10 +76,13 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     initClient(config)
   }
 
-  /** 加载已保存的配置（仅在 endpoint 有效时应用） */
+  /** 加载已保存的配置：endpoint 有效时应用并启用客户端，否则仅回填表单草稿 */
   function loadConfig(config: S3Config): void {
-    if (config && config.endpoint) {
+    if (!config) { return }
+    if (config.endpoint) {
       applyConfig(config)
+    } else {
+      s3Config.value = { ...config }
     }
   }
 

@@ -12,7 +12,7 @@ import { emitCustomEvent } from "@/utils/eventBus"
 import { createModalVueApp } from "@/utils/vueAppHelper"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import S3BackupPanel from "./index.vue"
-import { S3BackupStorage, DEFAULT_BACKUP_SETTINGS } from "./types"
+import { AUTO_BACKUP_TRIGGER_EVENT, S3BackupStorage, DEFAULT_BACKUP_SETTINGS } from "./types"
 import type { BackupSettings, BackupFrequency } from "./types"
 import { getS3BackupInstance, setS3BackupInstance } from "./instance"
 
@@ -169,7 +169,7 @@ export class S3Backup {
       }
 
       if (shouldBackup) {
-        emitCustomEvent("autoBackupTrigger")
+        emitCustomEvent(AUTO_BACKUP_TRIGGER_EVENT)
       }
     }
 

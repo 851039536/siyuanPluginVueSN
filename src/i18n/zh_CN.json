@@ -3203,6 +3203,7 @@
   "deleteFailed": "删除失败",
   "saveConfig": "保存配置",
   "configSaved": "配置已保存",
+  "configSaveFailed": "配置保存失败",
   "scanning": "扫描文件",
   "packing": "打包文件",
   "compressing": "压缩数据",

@@ -59,7 +59,9 @@
 
 因此约定：**关键操作结果必须写回面板内状态**（如下载的 `downloadingKey` 按钮 loading + `lastDownloadResult` 常驻结果条，或 `statusTask` 状态栏），`showMessage` 仅作面板关闭后的补充，不得作为唯一反馈。新增交互时请遵循此约定。
 
-> 已知权衡：`styles/index.scss` 被 11 个子组件以 `scoped` 方式 `@use`，导致 `.card-section` / `.section-header` / `.form-hint` / `.empty-state` 等基座规则在 `dist/index.css` 中重复若干次。这是仓库 84 个组件共用的既有约定，单独调整会造成不一致，故保留现状。
+配置保存已按此约定改为「配置」Tab 内联提示（成功/失败均写回共享 `Message`），不再依赖被遮罩遮挡的全局 toast。
+
+> 已知权衡：`styles/index.scss` 被 14 个子组件以 `scoped` 方式 `@use`，导致 `.card-section` / `.section-header` / `.form-hint` / `.empty-state` 等基座规则在 `dist/index.css` 中重复若干次。这是仓库 84 个组件共用的既有约定，单独调整会造成不一致，故保留现状。
 
 ## S3 兼容性
 
@@ -81,4 +83,5 @@
 - **任务编排**：四个入口（立即备份/压缩包/增量备份/增量还原）共用互斥守卫，运行标志在进入时即置位（含目录选择对话框挂起期间），避免并发空窗
 - **错误本地化**：模块层（`BackupManager` / `backupScanner`）零文案依赖，只抛 `BackupError`（错误码 + 不含文案的技术细节）；视图层经 `utils.localizeBackupError` 按 `BACKUP_ERROR_KEYS` 映射 i18n 键后拼接展示，模块层保持纯净且文案可翻译
 - **代码分层**：纯函数集中在 `utils.ts`（`withRetry` / `capFileList` / `isUnsafeRelativePath` / `resolveBackupDir` / `localizeBackupError` / key 构建等），常量与类型在 `types/index.ts`，实例辅助（`persistS3BackupStorage`）在 `instance.ts`，同一规则全模块只有一处定义
+- **面板结构**：`index.vue` 仅负责头部、Tab 壳与初始化编排；五个 Tab 各自为独立组件（`BackupTab` / `ConfigTab` / `LogTab` / `ChecksumsTab` / `IncrementalTab`），统一接收 `{ orch, i18n }`。操作日志、校验值与 S3 配置的持久化由编排层及其 `useBackupRecords` / `useS3ConfigStorage` 持有
 - **UI**：Vue 3 Modal，Codex 风格；标签栏复用共享组件 `Tabs` 五件套（`lazy` 保持「进入即挂载、离开即卸载」），徽章统一用 `Tag`（日志类型 7 种配色齐全、状态/比对结果走 success/danger），下拉用 `Select`，进度条用 `ProgressBar`（自带 `role="progressbar"` 无障碍语义）

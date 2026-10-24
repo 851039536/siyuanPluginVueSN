@@ -8,10 +8,7 @@
  * 增量备份/还原的触发入口与实验 Tab 专属状态（清单信息/还原目录）由 useIncrementalPanel 提供。
  */
 import type { BackupResult } from "../modules/BackupManager"
-import type {
-  BackupLog,
-  BackupMode,
-} from "../types"
+import type { BackupMode } from "../types"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -21,6 +18,7 @@ import {
 } from "vue"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
 import { getNodeModules } from "@/utils/nodeModules"
+import { getErrorMessage } from "@/utils/stringUtils"
 import {
   getS3BackupInstance,
   persistS3BackupStorage,
@@ -32,27 +30,37 @@ import {
   makeBackupTimestamp,
 } from "../utils"
 import { useAutoBackupTrigger } from "./useAutoBackupTrigger"
+import { useBackupRecords } from "./useBackupRecords"
 import { useCloudBackupActions } from "./useCloudBackupActions"
 import { useFullS3Upload } from "./useFullS3Upload"
 import { useIncrementalPanel } from "./useIncrementalPanel"
 import { useLocalBackupList } from "./useLocalBackupList"
 import { useLocalZipBackup } from "./useLocalZipBackup"
 import { useS3Backup } from "./useS3Backup"
+import { useS3ConfigStorage } from "./useS3ConfigStorage"
 import { useWorkspaceSettings } from "./useWorkspaceSettings"
 
-/** 依赖注入：日志与校验值状态由宿主（index.vue）持有，编排层仅回调 */
+/** 依赖注入：日志/校验值与配置持久化由本层内部 composable 持有 */
 export interface BackupOrchestratorDeps {
   i18n: Record<string, string>
-  addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
-  saveChecksum: (fileName: string, filePath: string, fileSize: number, checksum: string, persistNow?: boolean) => Promise<void>
-  persistChecksums: () => Promise<void>
 }
 
 export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
+  const { i18n } = deps
+
+  // ========== 记录状态（操作日志 / 文件校验值） ==========
+
   const {
-    i18n,
+    backupLogs,
     addLog,
-  } = deps
+    clearLogs,
+    checksums,
+    saveChecksum,
+    persistChecksums,
+    clearChecksums,
+    removeOneChecksum,
+    hydrate: hydrateRecords,
+  } = useBackupRecords()
 
   // ========== 领域 composable 组合 ==========
 
@@ -82,6 +90,14 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     getSubPrefix: () => s3SubPrefix.value,
   })
 
+  // ========== S3 配置持久化（加解密读写，存储键与 enc: 格式保持不变） ==========
+
+  const { loadS3Config, saveS3Config } = useS3ConfigStorage({
+    loadConfig,
+    applyConfig,
+    refreshBackupList: () => refreshBackupList(),
+  })
+
   // ========== 基础状态 ==========
 
   const isZipBackingUp = ref(false)
@@ -108,7 +124,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     selectWorkspacePath,
     openWorkspaceFolder,
     loadWorkspaceSettings,
-    saveWorkspaceSettings,
     markBackupCompleted,
   } = useWorkspaceSettings({
     getBackupManager: () => backupManager,
@@ -211,19 +226,18 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     backupManager.setBackupDir(localBackupDir.value)
   }
 
+  /** 本地备份目录变更：仅同步 BackupManager（持久化由 useWorkspaceSettings 的 watch 统一处理） */
   function onLocalBackupDirChanged(): void {
     if (backupManager) {
       backupManager.setBackupDir(localBackupDir.value)
     }
-    saveWorkspaceSettings()
   }
 
-  /** 备份模式变更：逐字段同步（reactive 定义模型）并持久化 */
+  /** 备份模式变更：逐字段同步（持久化由 useWorkspaceSettings 的 watch 统一处理） */
   function onBackupModeChanged(mode: BackupMode): void {
     backupModeLocal.localZip = mode.localZip
     backupModeLocal.s3Upload = mode.s3Upload
     backupModeLocal.s3Incremental = mode.s3Incremental
-    saveWorkspaceSettings()
   }
 
   /** 确保工作区路径就绪：未设置时提示并弹出目录选择，返回是否就绪（含用户取消） */
@@ -263,6 +277,18 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     i18n,
   })
 
+  /** 水合上传来源设备映射（云端备份列表展示用）；失败仅告警 */
+  async function hydrateUploadHostMap(): Promise<void> {
+    const instance = getS3BackupInstance()
+    if (!instance) { return }
+    try {
+      const data = await instance.getStorage().uploadHostMap.load()
+      if (data?.map) { uploadHostMap.value = data.map }
+    } catch (err: unknown) {
+      console.warn("[S3备份] 加载上传来源映射失败:", getErrorMessage(err))
+    }
+  }
+
   // ========== 本地 ZIP 备份流程（composable） ==========
 
   const {
@@ -277,7 +303,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     keepBackupCount,
     localBackupList,
     persistStorage: persistS3BackupStorage,
-    saveChecksum: deps.saveChecksum,
+    saveChecksum,
     isAnyTaskRunning,
     isZipBackingUp,
     ensureWorkspaceReady,
@@ -295,8 +321,8 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     uploadFileSmart,
     backupProgress,
     addLog: (entry) => addLog(entry),
-    saveChecksum: deps.saveChecksum,
-    persistChecksums: deps.persistChecksums,
+    saveChecksum,
+    persistChecksums,
     recordUploadHosts,
     refreshBackupList: () => refreshBackupList(),
     i18n,
@@ -425,12 +451,14 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   // ========== 初始化序列 ==========
 
-  /** 面板挂载后的初始化：加载设置 → 检测路径 → 解除 watch 阻塞 → 初始化管理器与列表 */
+  /** 面板挂载后的初始化：加载配置/设置 → 检测路径 → 水合记录 → 初始化管理器与列表 */
   async function init(): Promise<void> {
+    await loadS3Config()
     await loadWorkspaceSettings()
     await detectWorkspacePath()
     isInitialLoad.value = false
     initBackupManager()
+    await Promise.all([hydrateRecords(), hydrateUploadHostMap()])
     await loadLocalBackupList()
     if (isConfigured.value) {
       await refreshBackupList()
@@ -474,16 +502,18 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     isLoadingLocal,
     uploadingItems,
     uploadHostMap,
+    backupLogs,
+    checksums,
     // 方法
     testConnection,
-    loadConfig,
-    applyConfig,
+    saveS3Config,
+    clearLogs,
+    clearChecksums,
+    removeOneChecksum,
     selectWorkspacePath,
     openWorkspaceFolder,
-    saveWorkspaceSettings,
     onLocalBackupDirChanged,
     onBackupModeChanged,
-    initBackupManager,
     loadLocalBackupList,
     deleteLocalBackup,
     uploadLocalBackup,

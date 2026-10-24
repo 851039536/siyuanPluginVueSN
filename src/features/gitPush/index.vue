@@ -283,6 +283,7 @@ import {
 } from "vue"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { buildYearOptions, findProject } from "./utils"
+import { fmtTemplate } from "./utils/i18nFormat"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import CategoryDialog from "./components/common/CategoryDialog.vue"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
@@ -335,11 +336,9 @@ const props = defineProps<{
   mode?: "dock" | "tab"
 }>()
 
-/** i18n 取值 + {n} 占位替换（i18n 是唯一文案数据源，不设兜底） */
+/** i18n 取值 + {n} 占位替换（i18n 是唯一文案数据源，不设兜底；占位替换委托 fmtTemplate 单一真源） */
 function tf(key: string, ...args: (string | number)[]): string {
-  let s: string = props.i18n[key]
-  args.forEach((a, i) => { s = s.replace(`{${i}}`, String(a)) })
-  return s
+  return fmtTemplate(props.i18n[key] as string, ...args)
 }
 
 /** 当前是否运行在独立浮动窗口中（思源 getFrontend()：desktop=主窗口 / desktop-window=新窗口） */

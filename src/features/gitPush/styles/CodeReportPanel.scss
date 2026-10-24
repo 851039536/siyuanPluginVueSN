@@ -51,6 +51,14 @@
   opacity: 2.2;
 }
 
+// Pulse 式范围感知汇总头（"N 次提交（范围）"，对齐 GitHub Insights 的区间总计语义）
+.gpr-pulse-summary {
+  margin-bottom: $s-2;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.75;
+}
+
 // 生成失败提示（路径无效/非 git 仓库/无提交）
 .gpr-fail {
   display: flex;

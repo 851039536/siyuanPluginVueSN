@@ -29,15 +29,9 @@ export function formatDateTime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-/** ISO 时间 → YYYY-MM-DD HH:mm（无法解析时降级返回原值） */
+/** ISO 时间 → YYYY-MM-DD HH:mm（无法解析时降级返回原值）；与 formatDateTime 同口径别名（历史两份实现已合一） */
 export function formatLogTime(iso: string): string {
-  try {
-    const d = new Date(iso)
-    const pad = (n: number) => String(n).padStart(2, "0")
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 
 /** 显示设置年份选项：数据年份 ∪ 今年 ∪ 已保存 range 年份，降序（分析视图 popover 与设置汇总弹窗共用） */

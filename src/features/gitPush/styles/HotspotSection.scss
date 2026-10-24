@@ -130,9 +130,10 @@
   transition: color 0.12s ease;
 }
 
-// ── 热度徽章（仅数值，颜色编码等级）──
+// ── 热度徽章（仅数值，颜色编码等级；data-tip 驱动的 CSS 即时 tooltip，对齐 GitHub 贡献图浮层）──
 .gpr-heat-chip {
   display: inline-block;
+  position: relative;
   font-size: $t-2xs;
   font-weight: $fw-bold;
   font-family: $ff-mono;
@@ -140,6 +141,7 @@
   border-radius: $r-sm;
   white-space: nowrap;
   line-height: $lh-normal;
+  cursor: default;
 
   &--hot {
     background: var(--b3-theme-error-lightest);
@@ -159,6 +161,71 @@
   &--cold {
     background: var(--b3-list-hover);
     color: var(--b3-theme-on-surface-light);
+  }
+
+  // 即时 tooltip（无原生 title 的系统延迟；手写无新依赖）
+  &::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: $s-px1 $s-1;
+    border-radius: $r-sm;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    color: var(--b3-theme-on-surface);
+    font-size: $t-2xs;
+    font-weight: $fw-normal;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+    z-index: 1;
+  }
+
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
+// ── 强度图例「少→多」（对齐 GitHub 贡献图 Less→More；置顶作 summary header）──
+.gpr-heat-legend {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  margin-bottom: $s-2;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.gpr-heat-legend-label {
+  margin: 0 $s-1;
+}
+
+.gpr-heat-legend-swatch {
+  width: $s-2;
+  height: $s-2;
+  border-radius: $r-px2;
+
+  &--hot {
+    background: var(--b3-theme-error-lightest);
+    border: 1px solid var(--b3-theme-error);
+  }
+
+  &--warm {
+    background: var(--b3-theme-warning-lightest);
+    border: 1px solid var(--b3-theme-warning);
+  }
+
+  &--cool {
+    background: var(--b3-theme-primary-lightest);
+    border: 1px solid var(--b3-theme-primary);
+  }
+
+  &--cold {
+    background: var(--b3-list-hover);
+    border: 1px solid var(--b3-theme-on-surface-light);
   }
 }
 

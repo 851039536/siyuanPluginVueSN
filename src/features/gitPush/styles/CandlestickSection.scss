@@ -1,6 +1,8 @@
 // gitPush 提交趋势 K 线图分区（图例 + 图表容器 + 迷你节奏图 + 摘要卡片）
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
+// 图表配色单一 SCSS 源（与 REPORT_CHART_COLORS 由 reportChartColors.spec.ts 逐色钉死一致）
+@use "./chartColors" as *;
 
 // ── 图例（涨/跌/平色块 + K 线语义说明）──
 .gpc-legend {
@@ -19,9 +21,7 @@
   gap: $s-1;
 }
 
-// 涨/跌/平色块（与 canvas 实心颜色一致）
-// 下列色值必须与 types/report.ts 的 REPORT_CHART_COLORS 保持一致：
-// canvas 上下文无法解析 CSS 自定义属性，颜色只能在 TS 侧定义，SCSS 侧以同名注释对齐防漂移
+// 涨/跌/平色块（与 canvas 实心颜色一致，色值取 chartColors.scss 单一源）
 .gpc-legend-dot {
   width: $s-2;
   height: $s-2;
@@ -29,15 +29,15 @@
 }
 
 .gpc-legend-dot--up {
-  background: #10b981; // REPORT_CHART_COLORS.up
+  background: $chart-up;
 }
 
 .gpc-legend-dot--down {
-  background: #ef4444; // REPORT_CHART_COLORS.down
+  background: $chart-down;
 }
 
 .gpc-legend-dot--flat {
-  background: #64748b; // REPORT_CHART_COLORS.flat
+  background: $chart-flat;
 }
 
 // 聚合提示（日期数超上限时按连续天数分桶，提示"每根 K 线代表 N 天"）
@@ -158,142 +158,6 @@
 .gpc-legend-line {
   width: 14px;
   height: 2px;
-  background: #f59e0b; // REPORT_CHART_COLORS.ma
+  background: $chart-ma;
   border-radius: 1px;
-}
-
-// ── 提交节奏迷你图（两栏卡片：星期分布 + 时段热力）──
-.gpc-rhythm {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: $s-2;
-  margin-top: $s-2;
-}
-
-// 迷你图卡片（与图表容器同构的边框卡片）
-.gpc-rhythm-card {
-  padding: $s-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-base;
-  background: var(--b3-theme-surface);
-}
-
-// 迷你图卡片标题（两级字号制：辅助标签 + 大写）
-.gpc-rhythm-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $s-2;
-  margin-bottom: $s-2;
-  font-size: $t-2xs;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.6;
-}
-
-// 徽章（最长连续提交 / 高峰时段）
-.gpc-rhythm-badge {
-  padding: $s-px1 $s-2; // 上下 1px 微调（与 gpc-card-value 的 1px 惯例一致）
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-full;
-  font-family: $ff-mono;
-  text-transform: none;
-  letter-spacing: normal;
-  opacity: 1;
-  white-space: nowrap;
-}
-
-// 高峰时段徽章（琥珀色描边强调）
-.gpc-rhythm-badge--accent {
-  border-color: #f59e0b; // REPORT_CHART_COLORS.ma
-  color: #f59e0b;
-}
-
-// ── 星期分布（7 根迷你柱）──
-.gpc-weekdays {
-  display: flex;
-  gap: $s-1;
-  height: 72px;
-}
-
-// 单个星期列（柱 + 标签 + 计数垂直排布；默认 stretch 撑满容器高度，保证轨道有确定高度供柱子百分比解析）
-.gpc-weekday {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $s-px2; // 柱/标签/计数间的微距（小于 $s-1，刻意紧贴）
-  min-width: 0;
-}
-
-// 柱子轨道（flex 撑满剩余高度，柱子在底部对齐；min-height:0 允许轨道被压缩，防止内容撑开破坏高度基准）
-.gpc-weekday-track {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-// 迷你柱（高度由内联 style 按提交占比控制，百分比相对轨道）
-.gpc-weekday-bar {
-  width: 55%;
-  min-height: 2px;
-  border-radius: $r-px2 $r-px2 0 0;
-  background: #64748b; // REPORT_CHART_COLORS.flat（非高峰星期用中性色）
-  transition: background 0.12s;
-}
-
-// 最活跃星期柱高亮（主题色）
-.gpc-weekday-bar--peak {
-  background: var(--b3-theme-primary);
-}
-
-// 星期标签（两级字号制：辅助标签）
-.gpc-weekday-label {
-  font-size: $t-2xs;
-  opacity: 0.6;
-}
-
-// 提交计数（等宽小字）
-.gpc-weekday-count {
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  opacity: 0.8;
-}
-
-// ── 时段热力条（12 格 × 2 小时）──
-.gpc-hourly {
-  display: flex;
-  gap: $s-px2;
-  height: 26px;
-  align-items: stretch;
-}
-
-// 热力格（背景色由内联 style 按频率控制；边框保证无提交格仍可见）
-.gpc-hour-cell {
-  flex: 1;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-px2;
-  cursor: default;
-  transition: opacity 0.12s;
-
-  &:hover {
-    opacity: 0.8;
-  }
-}
-
-// 高峰时段格（琥珀色描边强调）
-.gpc-hour-cell--peak {
-  border-color: #f59e0b; // REPORT_CHART_COLORS.ma
-}
-
-// 时间轴刻度（0/6/12/18/24 时）
-.gpc-hourly-scale {
-  display: flex;
-  justify-content: space-between;
-  margin-top: $s-px2;
-  font-size: $t-2xs;
-  opacity: 0.5;
 }

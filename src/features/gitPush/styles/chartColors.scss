@@ -1,0 +1,23 @@
+// gitPush K 线图配色单一 SCSS 源（与 types/report.ts 的 REPORT_CHART_COLORS 一一对应）
+//
+// 历史问题：同一批色值在 TS 与 SCSS 各写一份、靠注释人工同步，改色必漏。
+// 现在 SCSS 侧只维护本文件的 $chart-* 变量，TS 侧 REPORT_CHART_COLORS 仍是 canvas 权威
+// （canvas 上下文无法解析 CSS 自定义属性）；reportChartColors.spec.ts 逐色钉死两侧一致，
+// 取代手工注释同步。改色请两处同步改，跑 pnpm test 由 spec 校验。
+//
+// ⚠️ 值必须与 types/report.ts 的 REPORT_CHART_COLORS 完全一致（spec 会逐色比对，含 rgba 串）。
+
+/** 涨：较前一活跃日提交量增加 */
+$chart-up: #10b981;
+/** 跌：较前一活跃日提交量减少 */
+$chart-down: #ef4444;
+/** 平：首日或持平 */
+$chart-flat: #64748b;
+/** 7 日均线（与 K 线实体形成对比） */
+$chart-ma: #f59e0b;
+/** 网格线 */
+$chart-grid: rgba(128, 128, 128, 0.12);
+/** 坐标轴刻度（半透明灰，浅/深主题均可见） */
+$chart-axis: rgba(128, 128, 128, 0.8);
+/** 工作时间区（08:00-18:00）底色 */
+$chart-work-bg: rgba(148, 163, 184, 0.08);

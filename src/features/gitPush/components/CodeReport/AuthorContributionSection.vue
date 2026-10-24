@@ -176,6 +176,7 @@
 import { computed, ref, watch } from "vue"
 import type { AuthorReportRow, FileStatRow } from "../../types"
 import { formatIsoDate, maxOf, netClass as sharedNetClass } from "../../utils"
+import { churnText, formatNet } from "../../utils/reportFormat"
 import EmptyState from "../common/EmptyState.vue"
 import FileDetailModal from "./FileDetailModal.vue"
 
@@ -211,16 +212,6 @@ const MEDAL_CLASSES = ["gpr-medal--gold", "gpr-medal--silver", "gpr-medal--bronz
 
 /** 排名行背景强调（前 3 名） */
 const TOP_ROW_CLASSES = ["gpr-author-row--top1", "gpr-author-row--top2", "gpr-author-row--top3"]
-
-/** 净增格式化：正数带 + 前缀便于视觉区分 */
-function formatNet(n: number): string {
-  return n > 0 ? `+${n}` : String(n)
-}
-
-/** 代码流失率 → 百分比文案 */
-function churnText(rate: number): string {
-  return `${Math.round(rate * 100)}%`
-}
 
 /**
  * 净增正负着色类（复用 index.scss 的 .gpr-cell--pos / --neg）。

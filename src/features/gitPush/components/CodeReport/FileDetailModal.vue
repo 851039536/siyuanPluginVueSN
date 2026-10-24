@@ -105,7 +105,7 @@
             <div
               v-if="hiddenDiffCount > 0"
               class="gpr-fm-diff-more"
-            >{{ i18n.reportDiffTruncated.replace("{0}", String(hiddenDiffCount)) }}</div>
+            >{{ fmtTemplate(i18n.reportDiffTruncated, String(hiddenDiffCount)) }}</div>
           </div>
         </div>
       </div>
@@ -116,9 +116,12 @@
 <script setup lang="ts">
 // 文件详情弹窗：受控显示 + 变更 diff 按需懒取（打开时异步加载），ESC/遮罩/关闭按钮触发 close
 import { Icon } from "@iconify/vue"
-import { computed, onBeforeUnmount, ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import type { FileStatRow } from "../../types"
 import { formatIsoDate, parseDiffLines, type DiffLineType } from "../../utils"
+import { fmtTemplate } from "../../utils/i18nFormat"
+import { formatSignedNet } from "../../utils/reportFormat"
+import { useDialogClose } from "../../composables/useDialogClose"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -158,8 +161,7 @@ watch(() => props.fileStat, async (stat) => {
 /** 净增行数（新增 - 删除；fileStat 为 null 时显示 —） */
 const netLines = computed(() => {
   if (!props.fileStat) return "—"
-  const net = props.fileStat.added - props.fileStat.deleted
-  return net >= 0 ? `+${net}` : `${net}`
+  return formatSignedNet(props.fileStat.added - props.fileStat.deleted)
 })
 
 /** diff 行类型 → 行首符号（与 WorkingTreeDiffDialog 展示一致） */
@@ -187,19 +189,12 @@ const diffLines = computed(() => parsedDiffLines.value.slice(0, MAX_DIFF_LINES))
 /** 因超出上限而未渲染的行数（0 表示未截断，模板隐藏提示） */
 const hiddenDiffCount = computed(() => Math.max(0, parsedDiffLines.value.length - MAX_DIFF_LINES))
 
-/** ESC 关闭（Teleport 到 body 后键盘事件在 document 层监听） */
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape" && props.fileStat) emit("close")
-}
-
-// 组件随作者排行表常驻，但弹窗多数时间不可见：按 fileStat 开关注销监听，避免常驻回调
-watch(() => props.fileStat, (stat) => {
-  if (stat) document.addEventListener("keydown", onKeydown)
-  else document.removeEventListener("keydown", onKeydown)
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener("keydown", onKeydown)
+// Esc 关闭统一走 useDialogClose（Teleport 到 body 后键盘事件在 document 层监听）。
+// 组件随作者排行表常驻，但弹窗多数时间不可见：按 fileStat 可见性开关注销监听，避免常驻回调。
+const dialogVisible = computed(() => !!props.fileStat)
+useDialogClose({
+  visible: dialogVisible,
+  onClose: () => { if (props.fileStat) emit("close") },
 })
 </script>
 

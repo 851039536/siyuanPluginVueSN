@@ -118,3 +118,47 @@
   opacity: 0.75;
   @include text-ellipsis;
 }
+
+// ── 过滤 chips + 排序切换工具条（对齐 GitHub Insights 的 summary header 交互）──
+.gpr-debt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  flex-wrap: wrap;
+  margin-bottom: $s-2;
+}
+
+.gpr-debt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px2;
+  padding: $s-px1 $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-full;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $t-2xs;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.is-active {
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+}
+
+.gpr-debt-chip-count {
+  font-family: $ff-mono;
+  opacity: 0.7;
+}
+
+.gpr-debt-sort {
+  display: inline-flex;
+  gap: $s-1;
+  margin-left: auto;
+}

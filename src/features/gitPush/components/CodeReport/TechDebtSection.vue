@@ -20,6 +20,35 @@
         :files="report.debtFiles"
       />
 
+      <!-- 过滤 chips + 组内排序切换（对齐 GitHub Insights 的 summary header 交互） -->
+      <div class="gpr-debt-toolbar">
+        <button
+          v-for="f in filterOptions"
+          :key="f.key"
+          class="gpr-debt-chip"
+          :class="{ 'is-active': filterKey === f.key }"
+          @click="filterKey = f.key"
+        >
+          {{ f.label }}
+          <span
+            v-if="f.count > 0"
+            class="gpr-debt-chip-count"
+          >{{ f.count }}</span>
+        </button>
+        <span class="gpr-debt-sort">
+          <button
+            v-for="s in sortOptions"
+            :key="s.key"
+            class="gpr-debt-chip"
+            :class="{ 'is-active': sortKey === s.key }"
+            :title="i18n.reportSortHint"
+            @click="toggleSort(s.key)"
+          >
+            {{ s.label }}{{ sortKey === s.key ? (sortAsc ? " ▲" : " ▼") : "" }}
+          </button>
+        </span>
+      </div>
+
       <!-- 单表格容器：所有严重度分组连续排布，分组标题作为表内跨行分隔行 -->
       <div class="gpr-table-wrap">
         <!-- 表头：文件（含趋势徽章）/ 修改次数 / 参与人数 / 风险评分 / 最后修改 -->
@@ -119,6 +148,8 @@ import { countDebtFiles } from "../../reportMetrics"
 import { createCoupledIndex, DEBT_TREND_META, inferDebtTrend } from "../../debtInsights"
 import type { DebtTrend } from "../../debtInsights"
 import { relativeTime } from "../../utils"
+import type { DebtSortKey } from "../../utils/reportSort"
+import { compareByDesc } from "../../utils/reportSort"
 import EmptyState from "../common/EmptyState.vue"
 import DebtSummaryBar from "./DebtSummaryBar.vue"
 import DebtFileDetail from "./DebtFileDetail.vue"
@@ -134,6 +165,41 @@ const props = defineProps<{
 /** 问题总数（严重度计数合计，与面板 Tab 徽章共用 countDebtFiles） */
 const totalCount = computed(() => countDebtFiles(props.report.debtSummary))
 
+// ── 过滤 chips（全部/严重/高/中/低）+ 组内排序切换 ──
+
+/** 当前过滤的严重度（"all" = 不过滤） */
+const filterKey = ref<DebtSeverity | "all">("all")
+
+/** 组内排序列（默认 riskScore 降序，与数据层一致） */
+const sortKey = ref<DebtSortKey>("riskScore")
+const sortAsc = ref(false)
+
+function toggleSort(key: DebtSortKey) {
+  if (sortKey.value === key) {
+    sortAsc.value = !sortAsc.value
+    return
+  }
+  sortKey.value = key
+  sortAsc.value = false
+}
+
+/** 过滤 chips 配置（label + 各档计数徽章） */
+const filterOptions = computed(() => [
+  { key: "all" as const, label: props.i18n.reportDebtFilterAll, count: totalCount.value },
+  ...DEBT_SEVERITY_ORDER.map((sev) => ({
+    key: sev,
+    label: props.i18n[DEBT_SEVERITY_META[sev].labelKey] as string,
+    count: props.report.debtSummary[sev] ?? 0,
+  })),
+])
+
+/** 排序 chips 配置 */
+const sortOptions = computed(() => [
+  { key: "riskScore" as const, label: props.i18n.reportScoreCol },
+  { key: "modCount" as const, label: props.i18n.reportModsCol },
+  { key: "lastModified" as const, label: props.i18n.reportLastModifiedCol },
+])
+
 /** 分组内的展示行（DebtFileRow + 预计算的派生展示字段） */
 interface DebtGroupRow extends DebtFileRow {
   /** 趋势方向（详情面板复用，避免二次推断） */
@@ -146,10 +212,11 @@ interface DebtGroupRow extends DebtFileRow {
   lastModifiedText: string
 }
 
-/** 按严重度预分组（单次遍历分桶替代逐严重度 filter；组内保持父级已排序的风险分降序；空分组不渲染） */
+/** 按严重度预分组（单次遍历分桶替代逐严重度 filter；组内按当前排序列排；空分组/被过滤分组不渲染） */
 const groups = computed<Array<{ sev: DebtSeverity, rows: DebtGroupRow[] }>>(() => {
   const buckets = new Map<DebtSeverity, DebtFileRow[]>()
   for (const r of props.report.debtFiles) {
+    if (filterKey.value !== "all" && r.severity !== filterKey.value) continue
     const list = buckets.get(r.severity)
     if (list) list.push(r)
     else buckets.set(r.severity, [r])
@@ -159,19 +226,22 @@ const groups = computed<Array<{ sev: DebtSeverity, rows: DebtGroupRow[] }>>(() =
       sev,
       // 趋势/相对时间一次性预计算：模板只读字段，不调函数，
       // 消除每行每次渲染的 Date.parse 与新 style 对象分配
-      rows: (buckets.get(sev) ?? []).map((row) => {
-        const trend = inferDebtTrend(row)
-        const meta = DEBT_TREND_META[trend]
-        return {
-          ...row,
-          trend,
-          trendStyle: { borderColor: meta.color, color: meta.color },
-          trendText: `${meta.arrow} ${props.i18n[meta.labelKey]}`,
-          lastModifiedText: row.lastModified ? relativeTime(row.lastModified, props.i18n) : "-",
-        }
-      }),
+      rows: (buckets.get(sev) ?? [])
+        .sort(compareByDesc<DebtFileRow>(sortKey.value))
+        .map((row) => {
+          const trend = inferDebtTrend(row)
+          const meta = DEBT_TREND_META[trend]
+          return {
+            ...row,
+            trend,
+            trendStyle: { borderColor: meta.color, color: meta.color },
+            trendText: `${meta.arrow} ${props.i18n[meta.labelKey]}`,
+            lastModifiedText: row.lastModified ? relativeTime(row.lastModified, props.i18n) : "-",
+          }
+        }),
     }))
     .filter((g) => g.rows.length > 0)
+    .map((g) => ({ ...g, rows: sortAsc.value ? g.rows.reverse() : g.rows }))
 })
 
 /** 当前展开的文件路径（手风琴模式：同时只展开一个；重复点击收起） */

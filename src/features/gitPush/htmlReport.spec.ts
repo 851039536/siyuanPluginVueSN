@@ -72,6 +72,11 @@ const i18n = {
   reportHeatCold: "冷门",
   reportFilePathCol: "文件",
   reportHotspotTruncated: "仅展示热度前 {0} 个文件，共分析 {1} 个文件",
+  reportTodayMarker: "今天",
+  reportPulseSummary: "{0} 次提交（{1}）",
+  reportHeatTip: "热度 {0} · 修改 {1} 次 · 参与 {2} 人",
+  reportHeatLegendLess: "少",
+  reportHeatLegendMore: "多",
   reportSugWarning: "热点文件集中，建议优先重构高热度文件",
   reportNoData: "范围内没有数据",
   reportNoDebt: "范围内没有发现技术债务问题",
@@ -316,6 +321,16 @@ describe("buildHtmlReport 空数据与边界", () => {
     }), ctx, i18n)
     expect(html).not.toContain("NaN")
   })
+
+  it("回归：热点截断提示的 {0}/{1} 双占位都必须被替换（历史嵌套 fmt(fmt(...)) 残留 {1}）", () => {
+    const html = buildHtmlReport(report({
+      hotspots: [hotspotRow("a.ts"), hotspotRow("b.ts")],
+      analyzedFiles: 200,
+    }), ctx, i18n)
+    expect(html).toContain("仅展示热度前 2 个文件，共分析 200 个文件")
+    expect(html).not.toContain("{1}")
+    expect(html).not.toContain("{0}")
+  })
 })
 
 describe("buildHtmlReport K 线分桶", () => {
@@ -337,6 +352,26 @@ describe("buildHtmlReport K 线分桶", () => {
   it("短序列不聚合", () => {
     const html = buildHtmlReport(report({ dailyStats: dailySeries(5) }), ctx, i18n)
     expect(html).not.toContain("已按每")
+  })
+})
+
+describe("buildHtmlReport 今日标记", () => {
+  it("dailyStats 含今天时渲染虚线标记与文案（与页面 chart.js 插件语义一致）", () => {
+    const today = new Date()
+    const key = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
+    const html = buildHtmlReport(report({
+      dailyStats: [{ date: key, open: 9, close: 17, high: 17.5, low: 8.5, count: 3 }],
+    }), ctx, i18n)
+    expect(html).toContain('stroke-dasharray="3 3"')
+    expect(html).toContain('今天')
+  })
+
+  it("数据不含今天时不渲染标记（历史范围报告不误标）", () => {
+    const html = buildHtmlReport(report({
+      dailyStats: [{ date: '2024-01-01', open: 9, close: 17, high: 17.5, low: 8.5, count: 3 }],
+    }), ctx, i18n)
+    expect(html).not.toContain('stroke-dasharray')
+    expect(html).not.toContain('今天')
   })
 })
 

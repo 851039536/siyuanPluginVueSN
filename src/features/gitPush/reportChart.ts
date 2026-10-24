@@ -10,7 +10,8 @@ import { REPORT_CHART_COLORS } from "./types/report"
 import { MAX_CANDLES, calcMovingAverage7 } from "./reportMetrics"
 
 // K 线配色（canvas 上下文无法解析 CSS 自定义属性，只能在此集中定义；
-// styles/CandlestickSection.scss 中的图例同色字面量须与 REPORT_CHART_COLORS 保持一致）
+// styles/chartColors.scss 的 $chart-* 变量为 SCSS 侧同值镜像，一致性由
+// reportChartColors.spec.ts 逐色钉死——改色两处同步后跑 pnpm test 校验）
 const UP_COLOR = REPORT_CHART_COLORS.up
 const DOWN_COLOR = REPORT_CHART_COLORS.down
 const FLAT_COLOR = REPORT_CHART_COLORS.flat
@@ -176,11 +177,30 @@ export function buildCandleChartOptions(list: DailyCommitStat[], i18n: Record<st
 }
 
 /**
- * K 线绘制插件：
- * ① beforeDatasetsDraw 画工作时间（08:00-18:00）底色带
- * ② afterDatasetsDraw 画影线（竖线 + 上下端点横线）与日提交数标注
+ * 今天所在桶的下标（-1 = 今天不在图表范围内）。
+ * 未聚合（bucketDays=1）：按本地日期精确匹配；聚合时今天落在末桶（桶以首日为标签），
+ * 仅当今天 ≥ 首个桶日期且 ≥ 末桶日期时定位到末桶（避免旧数据范围误标）。
  */
-export function createCandlestickPlugin(): Plugin {
+function todayBucketIndex(chart: Chart, bucketDays: number): number {
+  const labels = chart.data.labels as string[] | undefined
+  if (!labels || labels.length === 0) return -1
+  const today = new Date()
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+  const exact = labels.indexOf(todayKey)
+  if (exact >= 0) return exact
+  if (bucketDays > 1 && todayKey >= labels[labels.length - 1]) return labels.length - 1
+  return -1
+}
+
+/**
+ * K 线绘制插件：
+ * ① beforeDatasetsDraw 画工作时间（08:00-18:00）底色带 + 今日标记虚线（对齐 GitHub 贡献图的当期语义）
+ * ② afterDatasetsDraw 画影线（竖线 + 上下端点横线）与日提交数标注
+ *
+ * @param bucketDays 每根 K 线代表的天数（>1 时今天落在末桶而非精确日期匹配）
+ * @param todayLabel 今日标记文案（i18n 由调用方传入，canvas 无法取 i18n 上下文）
+ */
+export function createCandlestickPlugin(bucketDays = 1, todayLabel = "Today"): Plugin {
   return {
     id: "gpcWick",
     beforeDatasetsDraw(chart: Chart) {
@@ -188,14 +208,35 @@ export function createCandlestickPlugin(): Plugin {
       // chartArea 在首次布局完成前为 undefined（此处不能靠 !left 判断：left 为 0 是合法值）
       const area = chart.chartArea
       if (!yScale || !area) return
-      const { left, right, top } = area
+      const { left, right, top, bottom } = area
       const yTop = yScale.getPixelForValue(WORK_START_HOUR)
       const yBottom = yScale.getPixelForValue(WORK_END_HOUR)
-      if (yTop < top) return
       const ctx = chart.ctx
+      if (yTop >= top) {
+        ctx.save()
+        ctx.fillStyle = WORK_BG_COLOR
+        ctx.fillRect(left, yTop, right - left, yBottom - yTop)
+        ctx.restore()
+      }
+      // 今日标记虚线（GitHub 贡献图的"当期"语义：今天所在桶高亮定位）
+      const markerIdx = todayBucketIndex(chart, bucketDays)
+      if (markerIdx < 0) return
+      const bar = chart.getDatasetMeta(0).data?.[markerIdx]
+      if (!bar) return
       ctx.save()
-      ctx.fillStyle = WORK_BG_COLOR
-      ctx.fillRect(left, yTop, right - left, yBottom - yTop)
+      ctx.strokeStyle = AXIS_COLOR
+      ctx.setLineDash([3, 3])
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(bar.x, top)
+      ctx.lineTo(bar.x, bottom)
+      ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = AXIS_COLOR
+      ctx.font = LABEL_FONT
+      ctx.textAlign = "center"
+      ctx.textBaseline = "top"
+      ctx.fillText(todayLabel, bar.x, top + 2)
       ctx.restore()
     },
     afterDatasetsDraw(chart: Chart) {

@@ -28,10 +28,12 @@ export function formatLocalDate(d: Date): string {
 }
 
 /**
- * 按本地日期（YYYY-MM-DD）聚合提交条目到最近 days 天的每日桶（缺天补 0），
- * 时间分析：返回从最早到今天的正序桶，供条形图直接渲染。
+ * 按本地日期（YYYY-MM-DD）聚合条目日计数（缺天不补 0；无效日期跳过）。
+ * buildDailyCommitBuckets（补 0 桶）与 buildDayCountMap（热力图/日历）的共用内核。
+ * 注：reportMetrics.aggregateDailyStats 刻意不复用本函数——其输入 NumstatCommit 需同步
+ * 聚合 open/close（首末提交时刻）语义，仅在注释处互指防口径漂移。
  */
-export function buildDailyCommitBuckets(entries: CommitAnalysisEntry[], days = 30): { label: string, count: number }[] {
+export function countByLocalDate(entries: { date: string }[]): Map<string, number> {
   const countByDay = new Map<string, number>()
   for (const e of entries) {
     const d = new Date(e.date)
@@ -39,6 +41,15 @@ export function buildDailyCommitBuckets(entries: CommitAnalysisEntry[], days = 3
     const key = formatLocalDate(d)
     countByDay.set(key, (countByDay.get(key) || 0) + 1)
   }
+  return countByDay
+}
+
+/**
+ * 按本地日期（YYYY-MM-DD）聚合提交条目到最近 days 天的每日桶（缺天补 0），
+ * 时间分析：返回从最早到今天的正序桶，供条形图直接渲染。
+ */
+export function buildDailyCommitBuckets(entries: CommitAnalysisEntry[], days = 30): { label: string, count: number }[] {
+  const countByDay = countByLocalDate(entries)
   const buckets: { label: string, count: number }[] = []
   const today = new Date()
   for (let i = days - 1; i >= 0; i--) {
@@ -51,14 +62,7 @@ export function buildDailyCommitBuckets(entries: CommitAnalysisEntry[], days = 3
 
 /** 按本地日期（YYYY-MM-DD）聚合提交条目为日计数映射（热力图/日历视图共用，缺天不补 0） */
 export function buildDayCountMap(entries: CommitAnalysisEntry[]): Map<string, number> {
-  const countByDay = new Map<string, number>()
-  for (const e of entries) {
-    const d = new Date(e.date)
-    if (Number.isNaN(d.getTime())) continue
-    const key = formatLocalDate(d)
-    countByDay.set(key, (countByDay.get(key) || 0) + 1)
-  }
-  return countByDay
+  return countByLocalDate(entries)
 }
 
 /** 热力等级：按 HEAT_LEVEL_THRESHOLDS 将日提交数映射为 0~4 级（0 次 → 0，≥12 次 → 4） */

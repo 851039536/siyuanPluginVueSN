@@ -100,6 +100,13 @@ export {
 } from "./format"
 
 export {
+  churnText,
+  formatNet,
+  formatSignedNet,
+  splitPath,
+} from "./reportFormat"
+
+export {
   barPct,
   compareProjectLineRank,
   maxOf,

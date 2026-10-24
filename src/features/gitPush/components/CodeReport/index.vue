@@ -91,9 +91,9 @@
             <span
               class="gpr-meta-item"
               :title="report.generatedAt"
-            >{{ i18n.reportGenerated.replace("{0}", relativeTime(report.generatedAt, i18n)) }}</span>
-            <span class="gpr-meta-item">{{ i18n.reportRangeLabel.replace("{0}", report.rangeLabel) }}</span>
-            <span class="gpr-meta-item">{{ i18n.reportFilesAnalyzed.replace("{0}", String(report.analyzedFiles)) }}</span>
+            >{{ fmtTemplate(i18n.reportGenerated, relativeTime(report.generatedAt, i18n)) }}</span>
+            <span class="gpr-meta-item">{{ fmtTemplate(i18n.reportRangeLabel, report.rangeLabel) }}</span>
+            <span class="gpr-meta-item">{{ fmtTemplate(i18n.reportFilesAnalyzed, String(report.analyzedFiles)) }}</span>
             <!-- 后台增量刷新指示（本地索引命中时几乎瞬时，此处仅作可见反馈） -->
             <span
               v-if="refreshing"
@@ -184,6 +184,7 @@ import { Icon } from "@iconify/vue"
 import { computed, ref, watch } from "vue"
 import { REPORT_RANGE_LABEL_KEYS, REPORT_RANGES } from "../../types"
 import { relativeTime } from "../../utils"
+import { fmtTemplate } from "../../utils/i18nFormat"
 import { countDebtFiles } from "../../reportMetrics"
 import AnalysisGate from "../common/AnalysisGate.vue"
 import EmptyState from "../common/EmptyState.vue"

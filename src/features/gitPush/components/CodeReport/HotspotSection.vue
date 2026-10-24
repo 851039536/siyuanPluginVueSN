@@ -13,22 +13,87 @@
       :text="i18n.reportNoData"
     />
 
-    <!-- 纵向两行布局：第一行热点表格（全宽），第二行热度分布汇总 + 优化建议 -->
+    <!-- 纵向两行布局：第一行热度分布图例 + 热点表格（全宽），第二行热度分布汇总 + 优化建议 -->
     <div
       v-else
       class="gpr-hot-grid"
     >
+      <!-- 强度图例「少→多」（对齐 GitHub 贡献图 Less→More 语义；置顶作 summary header） -->
+      <div class="gpr-heat-legend">
+        <span class="gpr-heat-legend-label">{{ i18n.reportHeatLegendLess }}</span>
+        <span
+          v-for="lv in HOTSPOT_LEVEL_ORDER"
+          :key="lv"
+          class="gpr-heat-legend-swatch"
+          :class="`gpr-heat-legend-swatch--${lv}`"
+          :title="i18n[HOTSPOT_LEVEL_META[lv].labelKey]"
+        />
+        <span class="gpr-heat-legend-label">{{ i18n.reportHeatLegendMore }}</span>
+      </div>
+
       <!-- 第一行：热点表格 + 截断提示 -->
       <div class="gpr-hot-main">
         <table class="gpr-hot-table">
           <thead>
             <tr>
-              <th class="gpr-hot-th gpr-hot-th--level">{{ i18n.reportLevelCol }}</th>
-              <th class="gpr-hot-th gpr-hot-th--path">{{ i18n.reportFilePathCol }}</th>
-              <th class="gpr-hot-th gpr-hot-th--num">{{ i18n.reportModsCol }}</th>
-              <th class="gpr-hot-th gpr-hot-th--num">{{ i18n.reportAuthorsCol }}</th>
-              <th class="gpr-hot-th gpr-hot-th--num">{{ i18n.reportLinesCol }}</th>
-              <th class="gpr-hot-th gpr-hot-th--time">{{ i18n.reportLastModifiedCol }}</th>
+              <th
+                class="gpr-hot-th gpr-hot-th--level"
+                :class="{ 'is-sorted': sortKey === 'heat' }"
+                role="button"
+                tabindex="0"
+                :title="i18n.reportSortHint"
+                @click="toggleSort('heat')"
+                @keydown.enter="toggleSort('heat')"
+              >
+                {{ i18n.reportLevelCol }}{{ sortKey === "heat" ? (sortAsc ? " ▲" : " ▼") : "" }}
+              </th>
+              <th class="gpr-hot-th gpr-hot-th--path">
+                {{ i18n.reportFilePathCol }}
+              </th>
+              <th
+                class="gpr-hot-th gpr-hot-th--num"
+                :class="{ 'is-sorted': sortKey === 'modCount' }"
+                role="button"
+                tabindex="0"
+                :title="i18n.reportSortHint"
+                @click="toggleSort('modCount')"
+                @keydown.enter="toggleSort('modCount')"
+              >
+                {{ i18n.reportModsCol }}{{ sortKey === "modCount" ? (sortAsc ? " ▲" : " ▼") : "" }}
+              </th>
+              <th
+                class="gpr-hot-th gpr-hot-th--num"
+                :class="{ 'is-sorted': sortKey === 'authorCount' }"
+                role="button"
+                tabindex="0"
+                :title="i18n.reportSortHint"
+                @click="toggleSort('authorCount')"
+                @keydown.enter="toggleSort('authorCount')"
+              >
+                {{ i18n.reportAuthorsCol }}{{ sortKey === "authorCount" ? (sortAsc ? " ▲" : " ▼") : "" }}
+              </th>
+              <th
+                class="gpr-hot-th gpr-hot-th--num"
+                :class="{ 'is-sorted': sortKey === 'loc' }"
+                role="button"
+                tabindex="0"
+                :title="i18n.reportSortHint"
+                @click="toggleSort('loc')"
+                @keydown.enter="toggleSort('loc')"
+              >
+                {{ i18n.reportLinesCol }}{{ sortKey === "loc" ? (sortAsc ? " ▲" : " ▼") : "" }}
+              </th>
+              <th
+                class="gpr-hot-th gpr-hot-th--time"
+                :class="{ 'is-sorted': sortKey === 'lastModified' }"
+                role="button"
+                tabindex="0"
+                :title="i18n.reportSortHint"
+                @click="toggleSort('lastModified')"
+                @keydown.enter="toggleSort('lastModified')"
+              >
+                {{ i18n.reportLastModifiedCol }}{{ sortKey === "lastModified" ? (sortAsc ? " ▲" : " ▼") : "" }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -37,19 +102,19 @@
               :key="h.path"
               class="gpr-hot-row"
             >
-              <!-- 热度徽章 -->
+              <!-- 热度徽章（CSS 即时 tooltip：热度/修改次数/参与人数，对齐 GitHub 贡献图的即时浮层语义） -->
               <td class="gpr-hot-cell gpr-hot-cell--level">
                 <span
                   class="gpr-heat-chip"
                   :class="`gpr-heat-chip--${h.level}`"
-                  :title="i18n[HOTSPOT_LEVEL_META[h.level].labelKey]"
+                  :data-tip="fmtTemplate(i18n.reportHeatTip, String(h.heat), String(h.modCount), String(h.authorCount))"
                 >{{ h.heat }}</span>
               </td>
               <!-- 文件路径（可点击打开文件管理器） -->
               <td class="gpr-hot-cell gpr-hot-cell--path">
                 <span
                   class="gpr-hot-path"
-                  :title="i18n.reportOpenFileTitle.replace('{0}', h.path)"
+                  :title="fmtTemplate(i18n.reportOpenFileTitle, h.path)"
                   role="button"
                   tabindex="0"
                   @click="openFile(h.path)"
@@ -138,21 +203,16 @@
 <script setup lang="ts">
 // 代码热点分区：热点文件列表（热度/指标/建议）+ 四类汇总表 + 优化建议
 import type { CodeReportData, GitProject } from "../../types"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { Icon } from "@iconify/vue"
-import { HOTSPOT_LEVEL_META } from "../../types"
+import { HOTSPOT_LEVEL_META, HOTSPOT_LEVEL_ORDER } from "../../types"
+import type { HotspotSortKey } from "../../utils/reportSort"
+import { compareByDesc } from "../../utils/reportSort"
+import { fmtTemplate } from "../../utils/i18nFormat"
+import { splitPath } from "../../utils/reportFormat"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { openLocalPath, relativeTime, resolveValidPath } from "../../utils"
 import EmptyState from "../common/EmptyState.vue"
-
-/** 拆分文件路径为目录 + 文件名（dirname 弱化 / basename 强调，便于快速扫描定位文件） */
-function splitPath(path: string): { dir: string, base: string } {
-  const idx = path.lastIndexOf("/")
-  if (idx < 0) {
-    return { dir: "", base: path }
-  }
-  return { dir: path.slice(0, idx + 1), base: path.slice(idx + 1) }
-}
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -162,9 +222,22 @@ const props = defineProps<{
   project: GitProject | null
 }>()
 
-/** 热点行预映射：预先拆分路径为 dir/base 并算好相对时间，避免模板中每行重复求值 */
-const preparedHotspots = computed(() =>
-  props.report.hotspots.map((h) => {
+/** 排序列（默认 heat 降序，与数据层榜单一致）；再次点击同列翻转方向 */
+const sortKey = ref<HotspotSortKey>("heat")
+const sortAsc = ref(false)
+
+function toggleSort(key: HotspotSortKey) {
+  if (sortKey.value === key) {
+    sortAsc.value = !sortAsc.value
+    return
+  }
+  sortKey.value = key
+  sortAsc.value = false
+}
+
+/** 热点行预映射：预先拆分路径为 dir/base 并算好相对时间，避免模板中每行重复求值；按当前列排序 */
+const preparedHotspots = computed(() => {
+  const rows = props.report.hotspots.map((h) => {
     const { dir, base } = splitPath(h.path)
     return {
       ...h,
@@ -172,8 +245,10 @@ const preparedHotspots = computed(() =>
       base,
       lastModifiedText: h.lastModified ? relativeTime(h.lastModified, props.i18n) : "-",
     }
-  }),
-)
+  })
+  rows.sort(compareByDesc<typeof rows[number]>(sortKey.value))
+  return sortAsc.value ? rows.reverse() : rows
+})
 
 /**
  * 分析口径提示文案。
@@ -191,11 +266,9 @@ const analyzedText = computed(() => {
   const shown = props.report.hotspots.length
   if (analyzed <= shown) {
     if (shown === 0) return ""
-    return props.i18n.reportAnalyzedFilesLine.replace("{0}", String(analyzed))
+    return fmtTemplate(props.i18n.reportAnalyzedFilesLine, String(analyzed))
   }
-  return props.i18n.reportHotspotTruncated
-    .replace("{0}", String(shown))
-    .replace("{1}", String(analyzed))
+  return fmtTemplate(props.i18n.reportHotspotTruncated, String(shown), String(analyzed))
 })
 
 /** 点击文件路径：拼接项目根目录后经 shell.openPath 以默认应用打开（浏览器环境无能力打开本地文件，静默忽略） */

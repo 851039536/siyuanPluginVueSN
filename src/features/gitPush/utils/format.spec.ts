@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest"
 import {
   deriveOpOk,
+  formatDateTime,
   formatLogEntryText,
   formatLogTime,
   hasLogDetail,
@@ -183,5 +184,25 @@ describe("logDateLabel", () => {
 
   it("非法输入返回原串", () => {
     expect(logDateLabel("garbage", i18n)).toBe("garbage")
+  })
+})
+
+// ── 时间格式化孪生合一（formatLogTime 委托 formatDateTime，历史两份实现已删） ──
+
+describe("formatDateTime / formatLogTime 同口径", () => {
+  it("有效 ISO 输出一致（YYYY-MM-DD HH:mm）", () => {
+    const iso = "2026-08-12T14:35:09.000Z"
+    expect(formatLogTime(iso)).toBe(formatDateTime(iso))
+    expect(formatLogTime(iso)).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+  })
+
+  it("无效日期降级返回原串（formatLogTime 历史 try/catch 为死分支，new Date 不抛错）", () => {
+    expect(formatLogTime("garbage")).toBe("garbage")
+    expect(formatDateTime("garbage")).toBe("garbage")
+  })
+
+  it("空值返回空串", () => {
+    expect(formatLogTime("")).toBe("")
+    expect(formatDateTime("")).toBe("")
   })
 })

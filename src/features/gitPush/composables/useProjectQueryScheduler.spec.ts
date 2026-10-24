@@ -72,6 +72,15 @@ function makeManager(v2DiscoveredBranch: string) {
   }
 }
 
+/** 手动控制 resolve 时机的 Promise（模拟查询在飞期间 clearProject） */
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((r) => {
+    resolve = r
+  })
+  return { promise, resolve }
+}
+
 describe("useProjectQueryScheduler —— 分支名透传契约", () => {
   let projects: Ref<GitProject[]>
 
@@ -155,5 +164,131 @@ describe("useProjectQueryScheduler —— 分支名透传契约", () => {
     const branch = await scheduler.resolveBranch("P1")
     expect(branch).toBe("main")
     expect(manager.getBranch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("useProjectQueryScheduler —— clearProject 代际守卫", () => {
+  let projects: Ref<GitProject[]>
+
+  beforeEach(() => {
+    projects = ref<GitProject[]>([makeProject()])
+  })
+
+  it("查询在飞时 clearProject：迟到的 pushStatus 不得回写，且不记新鲜度", async () => {
+    const status = deferred<{ branch: string, remotes: Record<string, never>, needsPush: boolean }>()
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(),
+      checkPushStatus: vi.fn(() => status.promise),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    const loading = scheduler.loadPushStatus("P1", { branch: "main" })
+    scheduler.clearProject("P1")
+    status.resolve({ branch: "main", remotes: {}, needsPush: false })
+    await loading
+
+    expect(scheduler.pushStatuses.value.P1).toBeUndefined()
+    // 过期查询不得标记为「已加载」，否则 ensure 会永久跳过该项目
+    expect(scheduler.has("P1", "pushStatus")).toBe(false)
+  })
+
+  it("查询在飞时 clearProject：迟到的 workingTree 与分支名都不得回写", async () => {
+    const tree = deferred<ReturnType<typeof makeWorkingTree>>()
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(() => tree.promise),
+      checkPushStatus: vi.fn(),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    const loading = scheduler.loadWorkingTree("P1")
+    scheduler.clearProject("P1")
+    tree.resolve(makeWorkingTree("main"))
+    await loading
+
+    expect(scheduler.workingTrees.value.P1).toBeUndefined()
+    expect(scheduler.has("P1", "workingTree")).toBe(false)
+    // 分支名缓存也不得被过期结果污染：后续解析必须真正问 git
+    expect(await scheduler.resolveBranch("P1")).toBe("main")
+    expect(manager.getBranch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("useProjectQueryScheduler —— refreshRemote", () => {
+  let projects: Ref<GitProject[]>
+
+  beforeEach(() => {
+    projects = ref<GitProject[]>([makeProject()])
+  })
+
+  function makeRemoteManager() {
+    const updated = { ...makeProject(), githubRemote: "github" } as GitProject
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(),
+      checkPushStatus: vi.fn(async () => ({ branch: "main", remotes: {}, needsPush: false })),
+      refreshRemotes: vi.fn(async () => updated),
+      fetchAllForProject: vi.fn(async () => ({ fetched: [], errors: [] })),
+    }
+    return { manager, updated }
+  }
+
+  it("刷新后把最新项目快照同步回 projects Ref（卡片远程名不滞后）", async () => {
+    const { manager, updated } = makeRemoteManager()
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    await scheduler.refreshRemote("P1")
+
+    // ref 深响应式会把对象包装为 proxy，故比较值而非引用
+    expect(projects.value[0]).toEqual(updated)
+    expect(projects.value[0].githubRemote).toBe("github")
+  })
+
+  it("force=true 时忽略缓存分支，重新解析 HEAD", async () => {
+    const { manager } = makeRemoteManager()
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+    scheduler.setBranch("P1", "cached-old")
+
+    await scheduler.refreshRemote("P1", { force: true })
+
+    expect(manager.getBranch).toHaveBeenCalledTimes(1)
+  })
+
+  it("不传 force 时复用缓存分支（省一次 rev-parse）", async () => {
+    const { manager } = makeRemoteManager()
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+    scheduler.setBranch("P1", "cached-old")
+
+    await scheduler.refreshRemote("P1")
+
+    expect(manager.getBranch).not.toHaveBeenCalled()
+  })
+
+  it("force 刷新可穿透非 force 的在飞刷新（手动不被后台探测吞掉）", async () => {
+    const gate = deferred<{ fetched: string[], errors: string[] }>()
+    let fetchCalls = 0
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(),
+      checkPushStatus: vi.fn(async () => ({ branch: "main", remotes: {}, needsPush: false })),
+      refreshRemotes: vi.fn(async () => makeProject()),
+      fetchAllForProject: vi.fn(() => {
+        fetchCalls++
+        return fetchCalls === 1 ? gate.promise : Promise.resolve({ fetched: [], errors: [] })
+      }),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    const background = scheduler.refreshRemote("P1")
+    const manual = scheduler.refreshRemote("P1", { force: true })
+    await manual
+
+    // 未被后台任务复用：重新 fetch 一次，并强制解析分支
+    expect(manager.fetchAllForProject).toHaveBeenCalledTimes(2)
+    expect(manager.getBranch).toHaveBeenCalledTimes(1)
+
+    gate.resolve({ fetched: [], errors: [] })
+    await background
   })
 })

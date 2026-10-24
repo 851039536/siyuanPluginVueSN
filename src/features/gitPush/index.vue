@@ -1443,14 +1443,12 @@ function openEditDialog(project: GitProject) {
   editDialogProjectId.value = project.id
 }
 
-/** 编辑弹窗保存后同步状态（路径/远程可能已变，清空该项目调度缓存与智能跳过缓存防旧状态短路） */
+/** 编辑弹窗保存后同步状态（路径/远程可能已变，清空该项目调度缓存防 ensure 用旧状态短路；
+ *  智能跳过缓存已由 manager 的 updateProjectMeta/refreshRemotes 统一失效） */
 async function handleEditSaved() {
   const id = editDialogProjectId.value
   editDialogProjectId.value = ""
-  if (id) {
-    scheduler.clearProject(id)
-    props.manager.invalidatePushStatusCache(id)
-  }
+  if (id) scheduler.clearProject(id)
   await loadProjects()
   if (id) void ensureProjectStatus(id)
 }
@@ -1522,8 +1520,8 @@ const settingsYearOptions = computed(() =>
   buildYearOptions(analysisStats.value.entries, analysisViewSettings.value.range),
 )
 
-// 推送状态派生视图（徽章文案/状态分类/推送判定，供 ProjectCard 函数 props）
-const { statusLabel, statusKind, needsPushFor } = usePushStatusView(pushStatuses)
+// 推送状态派生视图（远程同步视图/推送判定，供 ProjectCard 函数 props）
+const { remoteView, needsPushFor } = usePushStatusView(pushStatuses)
 
 // ── 卡片服务注入（五分组契约，消除中间人 props/emits：共享数据 / 响应式 Record / 派生函数 / 操作集群）──
 provide(CARD_SERVICES_KEY, {
@@ -1563,8 +1561,7 @@ provide(CARD_SERVICES_KEY, {
     getPushStatus,
     isPulling,
     isPushing,
-    statusLabel,
-    statusKind,
+    remoteView,
     needsPushFor,
   },
   ops: {

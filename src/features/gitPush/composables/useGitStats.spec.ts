@@ -54,6 +54,7 @@ function setup(opts: {
   needsPullProjects: Ref<{ project: GitProject }[]>
   needsPushProjects: Ref<{ project: GitProject }[]>
   uncommittedProjects: Ref<{ project: GitProject }[]>
+  statsView: Ref<{ pushStatusStats: { ahead: number, behind: number, synced: number, noRemote: number } }>
 } {
   const projects = ref(opts.projects)
   const categories = ref(CATEGORIES)
@@ -70,6 +71,7 @@ function setup(opts: {
     needsPullProjects: stats.needsPullProjects as unknown as Ref<{ project: GitProject }[]>,
     needsPushProjects: stats.needsPushProjects as unknown as Ref<{ project: GitProject }[]>,
     uncommittedProjects: stats.uncommittedProjects as unknown as Ref<{ project: GitProject }[]>,
+    statsView: stats.statsView as unknown as Ref<{ pushStatusStats: { ahead: number, behind: number, synced: number, noRemote: number } }>,
   }
 }
 
@@ -164,5 +166,34 @@ describe("useGitStats —— 需推送判据（统一为 hasUnpushedCommits）",
     })
 
     expect(needsPushProjects.value.map((i) => i.project.id)).toEqual(["p1"])
+  })
+})
+
+describe("useGitStats —— 推送状态统计口径", () => {
+  it("detached（remotes 为空）不算无远程；error 不计入已同步", () => {
+    const withRemote = (id: string): GitProject => ({ ...makeProject(id), githubRemote: "github" } as GitProject)
+    const { statsView } = setup({
+      projects: [withRemote("p1"), withRemote("p2"), withRemote("p3"), makeProject("p4")],
+      pushStatuses: {
+        // p1 detached：有远程但 checkPushStatus 返回空 remotes
+        p1: makePushStatus("", {}),
+        // p2 状态检查失败：ahead/behind 都是 0，但不可判定为已同步
+        p2: makePushStatus("main", {
+          github: { ahead: 0, behind: 0, noUpstream: false, error: "boom" },
+        }),
+        // p3 真正已同步
+        p3: makePushStatus("main", {
+          github: { ahead: 0, behind: 0, noUpstream: false },
+        }),
+        // p4 未配置任何远程
+      },
+    })
+
+    expect(statsView.value.pushStatusStats).toEqual({
+      ahead: 0,
+      behind: 0,
+      synced: 1,
+      noRemote: 1,
+    })
   })
 })

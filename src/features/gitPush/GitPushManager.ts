@@ -751,6 +751,8 @@ export class GitPushManager {
     const project = await this.store.getProjectById(id)
     const paths = project ? [project.path, ...(project.localPaths || [])] : []
     await this.store.removeProject(id)
+    // 智能跳过缓存独立于 store，删除后一并失效，避免残留旧 ahead
+    this.remoteOps.invalidatePushStatusCache(id)
     for (const p of paths) {
       this.invalidateGitDirCache(p)
       clearMarkdownScanCacheFor(p)
@@ -763,6 +765,8 @@ export class GitPushManager {
     const before = pathFieldsChanged ? await this.store.getProjectById(id) : undefined
     const updated = await this.store.updateProjectMeta(id, patch)
     if (pathFieldsChanged) {
+      // 路径已变：旧路径算出的 ahead/behind 不可复用
+      this.remoteOps.invalidatePushStatusCache(id)
       const paths = new Set<string>([
         ...(before ? [before.path, ...(before.localPaths || [])] : []),
         ...(updated ? [updated.path, ...(updated.localPaths || [])] : []),
@@ -787,9 +791,18 @@ export class GitPushManager {
 
   async getAllTags(): Promise<string[]> { return this.store.getAllTags() }
 
-  async refreshRemotes(id: string, path?: string): Promise<GitProject | null> { return this.store.refreshRemotes(id, path) }
+  async refreshRemotes(id: string, path?: string): Promise<GitProject | null> {
+    const updated = await this.store.refreshRemotes(id, path)
+    // 远程名/平台归属可能已变，旧推送状态不再可信
+    if (updated) this.remoteOps.invalidatePushStatusCache(id)
+    return updated
+  }
 
-  async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> { return this.store.applyRemotes(id, remotes) }
+  async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> {
+    const updated = await this.store.applyRemotes(id, remotes)
+    if (updated) this.remoteOps.invalidatePushStatusCache(id)
+    return updated
+  }
 
   async detectRemotes(projectPath: string): Promise<GitRemoteInfo[]> { return this.store.detectRemotes(projectPath) }
 

@@ -52,14 +52,24 @@ export function useProjectQueryScheduler(
   /** 响应式脏信号：任何 invalidate 递增（卡片只 watch 此单值） */
   const epoch = ref(0)
 
-  /** 在飞查询：键 `${id}:${kind}` → Promise（同键并发调用共享之） */
-  const inflight = new Map<string, Promise<unknown>>()
+  /** 在飞查询：键 `${id}:${kind}` → task + 是否 force（同键并发时按 force 语义决定共享或穿透） */
+  const inflight = new Map<string, { task: Promise<unknown>, force: boolean }>()
   /** 各域最后一次成功加载时间戳（ms），支撑 ensure 与节流 */
   const lastLoadedAt = new Map<string, number>()
   /** 分支名缓存：分支名是 pushStatus / workingTree 的共同前置，缓存后每轮至多 1 次 rev-parse */
   const branchCache = new Map<string, string>()
   /** 脏域集合（非响应式；epoch 负责通知，脏集负责「哪些域」） */
   const dirty = new Map<string, Set<ProjectQueryKind>>()
+  /** 每项目查询代数：clearProject 递增，用于丢弃在飞查询的迟到结果（防旧值回写） */
+  const generations = new Map<string, number>()
+
+  function generationOf(id: string): number {
+    return generations.get(id) ?? 0
+  }
+
+  function isCurrentGeneration(id: string, gen: number): boolean {
+    return generationOf(id) === gen
+  }
 
   // ── ① 单飞原语 ──
 
@@ -70,22 +80,23 @@ export function useProjectQueryScheduler(
     opts?: RunQueryOptions,
   ): Promise<T> {
     const key = queryKey(id, kind)
-    if (!opts?.force) {
-      const pending = inflight.get(key) as Promise<T> | undefined
-      if (pending) return pending
-    }
+    // 非 force 请求共享任意在飞任务；force 请求只在在飞任务本身也是 force 时共享，
+    // 否则穿透后台探测的在飞查询，确保手动刷新拿到新分支/新状态（两个 force 仍去重）
+    const pending = inflight.get(key)
+    if (pending && (!opts?.force || pending.force)) return pending.task as Promise<T>
     const task = (async () => {
+      const gen = generationOf(id)
       const result = await load()
-      // 仅成功才刷新时间戳：失败不标记为已加载，保证 ensure 模式下次仍会重试
-      lastLoadedAt.set(key, Date.now())
+      // 查询期间项目被 clearProject（编辑/删除）：不写新鲜度，后续 ensure 仍会重试
+      if (isCurrentGeneration(id, gen)) lastLoadedAt.set(key, Date.now())
       return result
     })()
-    inflight.set(key, task)
+    inflight.set(key, { task, force: !!opts?.force })
     try {
       return await task
     } finally {
       // 失败不缓存：无论成败都清在飞条目，调用方可立即重试
-      if (inflight.get(key) === task) inflight.delete(key)
+      if (inflight.get(key)?.task === task) inflight.delete(key)
     }
   }
 
@@ -127,12 +138,13 @@ export function useProjectQueryScheduler(
       if (cached !== undefined) return cached
     }
     return run(id, "branch", async () => {
+      const gen = generationOf(id)
       const project = findProject(projects, id)
       if (!project) return ""
       const branch = await manager.getBranch(resolveValidPath(project))
       // 仅缓存非空分支：空串代表 detached HEAD / 空仓库 / 路径失效，
       // 缓存会使项目修复后永远拿不到分支名（原实现每次都重试）
-      if (branch) branchCache.set(id, branch)
+      if (branch && isCurrentGeneration(id, gen)) branchCache.set(id, branch)
       return branch
     }, opts)
   }
@@ -145,13 +157,18 @@ export function useProjectQueryScheduler(
 
   async function loadPushStatus(id: string, opts?: LoadStatusOptions): Promise<void> {
     await run(id, "pushStatus", async () => {
+      const gen = generationOf(id)
       const branch = opts?.branch ?? (await resolveBranch(id))
-      pushStatuses.value[id] = await manager.checkPushStatus(id, { branch })
+      const status = await manager.checkPushStatus(id, { branch })
+      // 查询期间项目被编辑/删除：迟到结果不得覆盖新状态
+      if (!isCurrentGeneration(id, gen)) return
+      pushStatuses.value[id] = status
     }, { force: opts?.force })
   }
 
   async function loadWorkingTree(id: string, opts?: LoadStatusOptions): Promise<void> {
     await run(id, "workingTree", async () => {
+      const gen = generationOf(id)
       const project = findProject(projects, id)
       if (!project) return
       // ⚠️ 只有在**调用方显式给了分支名**时才这里解析；否则一律留空交给
@@ -162,10 +179,12 @@ export function useProjectQueryScheduler(
       //    rev-parse，v2 合并省下的进程又被赔回去。缓存命中时看似免费，但
       //    缓存未命中/被 clearProject 后就是一次白跑的进程。
       const branch = opts?.branch
-      workingTrees.value[id] = await manager.getWorkingTreeStatus(resolveValidPath(project), {
+      const tree = await manager.getWorkingTreeStatus(resolveValidPath(project), {
         branch,
         fastWhenClean: opts?.fastWhenClean,
       })
+      if (!isCurrentGeneration(id, gen)) return
+      workingTrees.value[id] = tree
       // 分支名回填缓存 —— **这是本模块唯一的写入点**（另两处曾各写一次，守卫还不一致，
       // 已移除）。理由：只有这里刚读过 HEAD（v2 路径）或由调用方显式提供，
       // 是当前最可信的分支名来源。仅在非空时写：空串代表 detached / 空仓库 / 路径失效，
@@ -253,7 +272,9 @@ export function useProjectQueryScheduler(
    * 单飞后同一项目同时触发两个入口只产生一轮网络 fetch。
    * 本管线是全局唯一的「fetch 后重查状态」路径，checkPushStatus 不再承担 fetch 职责。
    *
-   * @param opts.force `true` 时**强制重新解析分支名**（多付一次 rev-parse）。
+   * @param opts.force `true` 时**强制重新解析分支名**（多付一次 rev-parse）；
+   *   同时让本次刷新穿透「非 force 的在飞刷新」，避免手动操作被后台探测的在飞查询复用。
+   *   （两个 force 刷新仍共享同一任务。）
    *   何时需要：分支可能在面板外被切换，且接下来要拿新分支去比对 refs/remotes。
    *   何时不需要：普通「拉取最新状态」——fetch 不会改 HEAD，复用工作区缓存的分支名即可，
    *   省掉的这次进程在批量场景（N 个项目）下等于 N 次进程创建。
@@ -271,10 +292,21 @@ export function useProjectQueryScheduler(
     opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean },
   ): Promise<{ failures: number, unknown: number } | null> {
     return run(id, "remoteRefresh", async () => {
+      const gen = generationOf(id)
       const project = findProject(projects, id)
       if (!project) return null
       // 先刷新远程配置（本地 git remote -v），避免后续用陈旧远程名 fetch
-      await manager.refreshRemotes(id)
+      const refreshed = await manager.refreshRemotes(id)
+      // store 已更新但 projects Ref 仍指向旧对象（卡片上的远程名会滞后）：
+      // 就地替换保持列表顺序，与 useProjectCrud 的同步口径一致。
+      // 期间被 clearProject（编辑/删除）则跳过，避免把旧快照写回列表。
+      if (refreshed && isCurrentGeneration(id, gen)) {
+        const idx = projects.value.findIndex((p) => p.id === id)
+        if (idx !== -1) {
+          projects.value[idx] = refreshed
+          projects.value = [...projects.value]
+        }
+      }
       let outcome: { failures: number, unknown: number } | null = null
       if (opts?.shortCircuit) {
         // 短路 fetch：无需拉取即停（需拉取则继续下一个平台），并把失败/未知数带回给调用方
@@ -288,6 +320,8 @@ export function useProjectQueryScheduler(
       // 强制 rev-parse（旧实现每次付一次进程，本机实测 0.6~1.3s）。这里复用
       // 「显式入参 > 工作区缓存 > resolveBranch 兜底」三级取值：正常情况缓存已命中，
       // 零进程；缓存缺失时才兜底解析一次。
+      // 期间被 clearProject：停止后续状态重查，避免为已清空的项目重新写入缓存。
+      if (!isCurrentGeneration(id, gen)) return outcome
       const branch = opts?.force
         ? await resolveBranch(id, { force: true })
         : workingTrees.value[id]?.branch || await resolveBranch(id)
@@ -299,7 +333,7 @@ export function useProjectQueryScheduler(
         })
       }
       return outcome
-    })
+    }, opts?.force ? { force: true } : undefined)
   }
 
   // ── 缓存清理 ──
@@ -309,6 +343,8 @@ export function useProjectQueryScheduler(
     delete workingTrees.value[id]
     branchCache.delete(id)
     dirty.delete(id)
+    // 递增代数：在飞查询完成时据此丢弃结果，避免旧路径状态回写
+    generations.set(id, generationOf(id) + 1)
     const prefix = `${id}:`
     for (const key of [...inflight.keys()]) {
       if (key.startsWith(prefix)) inflight.delete(key)

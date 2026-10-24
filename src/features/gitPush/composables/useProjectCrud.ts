@@ -74,18 +74,6 @@ export function useProjectCrud(manager: GitPushManager) {
     }
   }
 
-  async function refreshRemotes(id: string) {
-    const updated = await manager.refreshRemotes(id)
-    if (updated) {
-      const idx = findProjectIndex(projects, id)
-      if (idx !== -1) {
-        projects.value[idx] = updated
-        projects.value = [...projects.value]
-      }
-    }
-    return updated
-  }
-
   // ── 分类操作 ──
   async function addCategory(name: string, color?: string) {
     const cat = await manager.addCategory(name, color)
@@ -118,7 +106,6 @@ export function useProjectCrud(manager: GitPushManager) {
     removeProject,
     updateProjectMeta,
     toggleStar,
-    refreshRemotes,
     addCategory,
     deleteCategory,
     updateCategory,

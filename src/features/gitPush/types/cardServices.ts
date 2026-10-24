@@ -11,7 +11,7 @@ import type {
   ProjectCategory,
   PushOutputEntry,
   PushStatusInfo,
-  RemoteSyncKind,
+  RemoteSyncView,
   TerminalEntry,
   WorkingTreeInfo,
 } from "./storage"
@@ -60,8 +60,8 @@ export interface CardDerivedFns {
   getPushStatus: (id: string, key: string) => string | undefined
   isPulling: (id: string, key?: string) => boolean
   isPushing: (id: string) => boolean
-  statusLabel: (id: string, key: string) => string
-  statusKind: (id: string, key: string) => RemoteSyncKind
+  /** 一次派生远程同步视图（分类 + 徽章文案） */
+  remoteView: (id: string, key: string) => RemoteSyncView
   needsPushFor: (id: string, key: string) => boolean
 }
 

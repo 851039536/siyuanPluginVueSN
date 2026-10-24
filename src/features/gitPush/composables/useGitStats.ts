@@ -142,15 +142,20 @@ export function useGitStats(
       if (remoteCount >= 2) multipleRemote++
 
       // ── Push 状态统计 ──
+      // 判据基于「是否配置了远程」而非 status.remotes：detached HEAD 时 checkPushStatus
+      // 返回空 remotes，若据此判 noRemote 会把有远程的项目误报成无远程。
       const status = pushStatuses.value[p.id]
-      if (!status || Object.keys(status.remotes).length === 0) {
+      if (remoteCount === 0) {
         noRemote++
-      } else {
+      } else if (status && Object.keys(status.remotes).length > 0) {
         const vals = Object.values(status.remotes)
         if (vals.some((r) => hasUnpushedCommits(r))) ahead++
         else if (vals.some((r) => r.behind > 0)) behind++
-        else synced++
+        // 全部 0/0 但存在检查失败：无法确认已同步，故不计入 synced
+        else if (!vals.some((r) => r.error)) synced++
+        // 有错误且无已知差异：三桶都不计（保留「未知」语义，避免虚假「已同步」）
       }
+      // 有远程但状态尚未加载 / detached（remotes 为空）：同样不计入四桶，避免误判
 
       // ── 待推送 / 待拉取项目（同时累积合并条目）──
       if (status) {

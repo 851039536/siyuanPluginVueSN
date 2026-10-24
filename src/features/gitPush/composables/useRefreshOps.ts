@@ -113,8 +113,8 @@ export function useRefreshOps(deps: {
       await runBatchWithProgress([project], tf("refreshingLabel"), async (p) => {
         // 统一远程管线（调度器单飞）：refreshRemotes → fetch → 状态重查。
         // 内含一次 rev-parse 并缓存分支名，供工作区重载复用（不再各自解析）。
-        // 不传 force：与并发的「Fetch」「刷新远程状态」共享同一轮网络请求（去重关键）
-        await scheduler.refreshRemote(p.id)
+        // 手动刷新必须 force：外部（终端）可能已切分支，缓存分支会算错 ahead/behind
+        await scheduler.refreshRemote(p.id, { force: true })
         // 记录刷新前的工作区快照：仅当确实发生变化时才重载卡片自持数据
         const before = snapshotWorkingTree(scheduler, p.id)
         await handleRefreshWorkingTree(p.id)
@@ -153,8 +153,8 @@ export function useRefreshOps(deps: {
     const project = findProject(projects, id)
     if (!project) return
     await withRecordLoading(remoteStatusLoading, id, async () => {
-      // 与 handleFetchAll 共用同一单飞管线且不传 force：同时触发两者只产生一轮网络 fetch
-      await scheduler.refreshRemote(id)
+      // 手动刷新走 force：与 Fetch 共用单飞管线，但分支名必须重新解析
+      await scheduler.refreshRemote(id, { force: true })
     })
   }
 
@@ -162,7 +162,7 @@ export function useRefreshOps(deps: {
   async function handleFetchAll(id: string) {
     await withRecordLoading(fetching, id, async () => {
       try {
-        await scheduler.refreshRemote(id)
+        await scheduler.refreshRemote(id, { force: true })
       } catch (e: unknown) {
         showMessage(getErrorMessage(e) || tf("fetchFailed"), 5000, "error")
       }

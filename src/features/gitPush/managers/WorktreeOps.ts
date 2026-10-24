@@ -376,12 +376,9 @@ export class WorktreeOps {
     }
   }
 
+  /** 当前分支名（detached 归一化为空串；与 RemoteOps 共用 GitExecutor 的单一实现） */
   async getBranch(projectPath: string): Promise<string> {
-    try {
-      return await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
-    } catch {
-      return ""
-    }
+    return this.executor.getCurrentBranch(projectPath)
   }
 
   /** 列出全部远程跟踪分支短名（如 origin/main），供一致性比对（本地读取，失败返回 []） */

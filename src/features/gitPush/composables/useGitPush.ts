@@ -41,7 +41,6 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     removeProject,
     updateProjectMeta: projectCrud.updateProjectMeta,
     toggleStar: projectCrud.toggleStar,
-    refreshRemotes: projectCrud.refreshRemotes,
     addCategory: projectCrud.addCategory,
     deleteCategory: projectCrud.deleteCategory,
     updateCategory: projectCrud.updateCategory,

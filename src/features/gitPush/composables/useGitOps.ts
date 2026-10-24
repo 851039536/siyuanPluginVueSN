@@ -224,11 +224,9 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
 
   // ── 缓存清理 ──
 
-  /** 删除项目时清理全部关联缓存（含进行中操作标记与远程进度/输出） */
+  /** 删除项目时清理全部关联缓存（含进行中操作标记与远程进度/输出；推送缓存由 manager.removeProject 失效） */
   function clearProjectCache(id: string) {
     scheduler.clearProject(id)
-    // 智能跳过缓存与调度缓存分开持有，删除后必须一并失效，避免残留旧 ahead 与内存记录
-    manager.invalidatePushStatusCache(id)
     delete committing.value[id]
     delete stashLoading.value[id]
     remote.clearProject(id)

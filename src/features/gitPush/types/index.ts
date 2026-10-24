@@ -27,6 +27,7 @@ export type {
   PushStatusInfo,
   RemotePushStatus,
   RemoteSyncKind,
+  RemoteSyncView,
   ScannedGitRepo,
   StashEntry,
   TagInfo,

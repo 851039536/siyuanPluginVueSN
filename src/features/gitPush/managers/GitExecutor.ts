@@ -332,6 +332,23 @@ export class GitExecutor {
   }
 
   /**
+   * 解析当前分支名（单一真源）：detached HEAD 归一化为空串；
+   * 空仓库（unborn branch）时 rev-parse 失败，回退 symbolic-ref 取待建立的分支名。
+   */
+  async getCurrentBranch(cwd: string): Promise<string> {
+    try {
+      const branch = await this.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
+      if (branch && branch !== "HEAD") return branch
+    } catch { /* unborn branch：走下方 symbolic-ref 兜底 */ }
+    try {
+      const branch = await this.execGit(cwd, ["symbolic-ref", "--short", "HEAD"])
+      return branch || ""
+    } catch {
+      return ""
+    }
+  }
+
+  /**
    * 执行 git 命令（stdin 流式长驻进程）：全量 input 写入 stdin，进程退出后返回 stdout 原始字节。
    * 供 fast-import / cat-file --batch 等需要 stdin 批量输入的 plumbing 命令使用（历史重写用）；
    * 与 execGit 共用本地并发池与 activeProcesses 生命周期（destroy 时统一 kill）。

@@ -25,14 +25,8 @@ export interface RemoteOpResult {
   skipped?: boolean
 }
 
-/** 全平台操作结果类型 */
-export interface AllPlatformResult {
-  success: boolean
-  github: RemoteOpResult
-  gitee: RemoteOpResult
-  gitea: RemoteOpResult
-  cnb: RemoteOpResult
-}
+/** 全平台操作结果类型（按平台 key 索引 + 总体成功标记，新增平台无需改类型） */
+export type AllPlatformResult = { success: boolean } & Record<PlatformKey, RemoteOpResult>
 
 export class RemoteOps {
   private executor: GitExecutor
@@ -84,19 +78,6 @@ export class RemoteOps {
     stdout: "",
     stderr: "",
     skipped: true,
-  }
-
-  /** 获取当前分支名（detached HEAD 或失败时返回空串） */
-  private async getCurrentBranch(cwd: string): Promise<string> {
-    try {
-      const branch = await this.executor.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
-      if (branch && branch !== "HEAD") return branch
-    } catch { /* 空仓库（unborn branch）时 rev-parse 失败，走下方 symbolic-ref 兜底 */ }
-    try {
-      return await this.executor.execGit(cwd, ["symbolic-ref", "--short", "HEAD"])
-    } catch {
-      return ""
-    }
   }
 
   /** pull 失败时增强错误提示（首次失败与重试失败统一应用） */
@@ -183,13 +164,9 @@ export class RemoteOps {
   /** "项目未找到" 错误结果模板 */
   private get notFoundResult(): AllPlatformResult {
     const err: RemoteOpResult = { ok: false, stdout: "", stderr: "项目未找到" }
-    return {
-      success: false,
-      github: err,
-      gitee: err,
-      gitea: err,
-      cnb: err,
-    }
+    const byPlatform = {} as Record<PlatformKey, RemoteOpResult>
+    for (const pm of PLATFORM_META) byPlatform[pm.key] = err
+    return { success: false, ...byPlatform }
   }
 
   /**
@@ -218,9 +195,9 @@ export class RemoteOps {
     const pathWarning = resolved.source === "fallback"
       ? "⚠ 所有已知路径均不存在，已回退主路径，请检查项目路径配置"
       : ""
-    /** 仅对实际执行的结果前置路径告警（skipped 未执行，不注水） */
+    /** 仅对实际执行且失败的结果前置路径告警（成功说明回退路径可用，无需打扰；与单平台路径一致） */
     const withPathWarning = (r: RemoteOpResult): RemoteOpResult =>
-      pathWarning && !r.skipped ? { ...r, stderr: pathWarning + (r.stderr ? `\n${r.stderr}` : "") } : r
+      pathWarning && !r.skipped && !r.ok ? { ...r, stderr: pathWarning + (r.stderr ? `\n${r.stderr}` : "") } : r
 
     // 智能跳过：推送前检查缓存，跳过 ahead===0 的远程
     const cachedStatus = this.pushStatusCache[id]
@@ -237,8 +214,8 @@ export class RemoteOps {
     return this.writeLock.runExclusive(cwd, () =>
       this.executor.withAbortController(id, action, async (signal) => {
         // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支；强制推送时同样需要分支名
-        const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
-        const forceBranch = action === "push" && forceWithLease ? await this.getCurrentBranch(cwd) : undefined
+        const pullBranch = action === "pull" ? await this.executor.getCurrentBranch(cwd) : undefined
+        const forceBranch = action === "push" && forceWithLease ? await this.executor.getCurrentBranch(cwd) : undefined
         if (forceWithLease && !forceBranch) {
           throw new Error("无法确定当前分支，已取消强制推送")
         }
@@ -289,20 +266,16 @@ export class RemoteOps {
             : RemoteOps.skippedResult
         }
 
-        const github = withPathWarning(build("github"))
-        const gitee = withPathWarning(build("gitee"))
-        const gitea = withPathWarning(build("gitea"))
-        const cnb = withPathWarning(build("cnb"))
+        // 按平台元数据统一投影，避免新增平台时此处漏改
+        const byPlatform = {} as Record<PlatformKey, RemoteOpResult>
+        for (const pm of PLATFORM_META) byPlatform[pm.key] = withPathWarning(build(pm.key))
 
         // push 成功后失效智能跳过缓存，保证下次 shouldSkip 走真实状态检查（commit 路径已失效，但 push 本身也需收尾）
         if (action === "push") { this.invalidatePushStatusCache(id) }
 
         return {
-          success: github.ok || gitee.ok || gitea.ok || cnb.ok,
-          github,
-          gitee,
-          gitea,
-          cnb,
+          success: Object.values(byPlatform).some((r) => r.ok),
+          ...byPlatform,
         }
       }),
     )
@@ -362,7 +335,7 @@ export class RemoteOps {
     return this.writeLock.runExclusive(cwd, () =>
       this.executor.withAbortController(id, action, async (signal) => {
         // pull 时预解析当前分支，显式指定拉取分支
-        const pullBranch = action === "pull" ? await this.getCurrentBranch(cwd) : undefined
+        const pullBranch = action === "pull" ? await this.executor.getCurrentBranch(cwd) : undefined
         const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch)
         // push 成功后失效智能跳过缓存
         if (action === "push") { this.invalidatePushStatusCache(id) }
@@ -414,7 +387,7 @@ export class RemoteOps {
     if (remotes.length === 0) return { moved: false, attempted: 0, failures: 0, unknown: 0 }
 
     // 分支名只解析一次（原来每个平台都调一次 getCurrentBranch = N 次 rev-parse）
-    const branch = await this.getCurrentBranch(cwd)
+    const branch = await this.executor.getCurrentBranch(cwd)
     let attempted = 0
     let failures = 0
     let unknown = 0
@@ -527,7 +500,11 @@ export class RemoteOps {
       needsPush: false,
     }
 
-    if (!project) return emptyResult
+    if (!project) {
+      // 项目已删除：不得保留旧分支的智能跳过状态
+      delete this.pushStatusCache[id]
+      return emptyResult
+    }
 
     const resolved = resolveValidPathWithSource(project)
     const cwd = resolved.path
@@ -542,7 +519,7 @@ export class RemoteOps {
     }
 
     // detached HEAD 时 getCurrentBranch 返回空串并提前返回，避免构造 remote/HEAD...HEAD 触发 ambiguous argument 被误判为 noUpstream（虚假 needsPush）
-    status.branch = opts?.branch ?? await this.getCurrentBranch(cwd)
+    status.branch = opts?.branch ?? await this.executor.getCurrentBranch(cwd)
     if (!status.branch) {
       // 路径回退场景不再静默返回空结果（空态假象）：把告警挂到各已配置远程的 error 字段呈现
       if (pathWarning) {
@@ -550,6 +527,9 @@ export class RemoteOps {
           status.remotes[key] = { ahead: 0, behind: 0, noUpstream: false, error: pathWarning }
         }
       }
+      // detached HEAD / 空仓库：缓存里的旧分支 ahead 已失效，必须清掉，
+      // 否则 pushToAll 的智能跳过会沿用旧分支判断
+      delete this.pushStatusCache[id]
       return status
     }
 

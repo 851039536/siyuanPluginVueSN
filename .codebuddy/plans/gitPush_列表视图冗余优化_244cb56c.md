@@ -51,7 +51,7 @@ todos:
 
 - **策略**：四处文件改动（CardRemotes.vue / ProjectCard.vue / CardHeader.vue 注释）+ 两处死代码同步（usePushStatusView / cardServices / 根 index.vue）+ 两处 props/类型收敛（ListView / ListViewToolbar / 根 index.vue），全部为删减式改动，无新增逻辑分支。
 - **分支名条件显示**：ProjectCard 向 CardRemotes 传 `:branch-row-visible="branches.length > 0"`（branches 来自既有 `useCardData`，零新增查询）；CardRemotes 内 `v-if="pushStatus?.branch && !branchRowVisible"`。懒加载未完成时远程区仍展示分支名，信息不丢失。
-- **警告条合并**：behind 徽章加 `:title="badgeClass === 'gp-behind' ? i18n.conflictWarn : undefined"`（复用既有 i18n 键，不增翻译键），删除 `gp-conflict-warn` 整块模板与 SCSS 规则。
+- **警告条合并**：behind 徽章加 `:title="kind === 'behind' ? i18n.conflictWarn : undefined"`（复用既有 i18n 键，不增翻译键；原 `statusBadgeClass` 已重构为 `statusKind` 语义分类，判据不变），删除 `gp-conflict-warn` 整块模板与 SCSS 规则。
 - **projects prop 移除**：ListViewToolbar 内 `const hasAnyProject = computed(() => groupedProjects.some(g => g.projects.length > 0))` 替换判空；同步删除根 index.vue 对 ListView 的 `:projects` 传参（其他视图不受影响）。
 - **类型收敛**：`GroupedProject` 接口移至 `src/features/gitPush/types/index.ts`，ListView/index.vue 与 ListViewToolbar.vue 均从 types 导入，符合项目「类型定义放 types/index.ts」分层规范。
 

@@ -92,12 +92,12 @@ const remoteRows = computed(() =>
   REMOTES
     .filter((r) => !!props.project[r.remoteProp])
     .map((r) => {
-      const kind = derived.statusKind(props.project.id, r.key)
+      const view = derived.remoteView(props.project.id, r.key)
       return {
         ...r,
-        label: derived.statusLabel(props.project.id, r.key),
-        variant: statusVariant(kind),
-        title: kind === "behind" ? i18n.conflictWarn : undefined,
+        ...view,
+        variant: statusVariant(view.kind),
+        title: view.kind === "behind" ? i18n.conflictWarn : undefined,
       }
     }),
 )

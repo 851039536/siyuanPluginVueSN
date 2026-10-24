@@ -63,11 +63,24 @@
 <script setup lang="ts">
 // 提交节奏迷你图：星期分布（7 根柱）+ 时段热力条（24h 色块）+ streak/peak 徽章
 // （从 CandlestickSection.vue 拆出：与 K 线渲染无关的独立子面板）
-import { computed } from "vue"
+import { computed, onUnmounted, ref } from "vue"
 import type { CommitRhythmStats } from "../../types/report"
-import { WEEKDAY_LABEL_KEYS } from "../../types/report"
+import { REPORT_CHART_COLORS, WEEKDAY_LABEL_KEYS } from "../../types/report"
 import { formatHour } from "../../reportChart"
 import { maxOf } from "../../utils"
+import { TimerRegistry } from "@/utils/timerRegistry"
+
+/** #RRGGBB → rgba(r, g, b, alpha)：热力色取图表「涨」色单一来源，避免另写一份色值 */
+function withAlpha(hex: string, alpha: number): string {
+  const n = Number.parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`
+}
+
+/** 当前小时（每分钟刷新一次：面板常开跨小时后，热力条「当前时段」标记需跟随前进） */
+const currentHour = ref(new Date().getHours())
+const timers = new TimerRegistry()
+timers.setInterval(() => { currentHour.value = new Date().getHours() }, 60 * 1000)
+onUnmounted(() => timers.clearAll())
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -93,13 +106,13 @@ const weekdayBars = computed(() => {
 const hourlyHeat = computed(() => {
   const rhythm = props.rhythm
   const max = maxOf(rhythm.hourly.map((h) => h.count), 1)
-  const nowHour = new Date().getHours()
+  const nowHour = currentHour.value
   return rhythm.hourly.map((h) => ({
     start: h.start,
     count: h.count,
     startLabel: formatHour(h.start),
     endLabel: formatHour(h.end),
-    color: h.count === 0 ? "transparent" : `rgba(16, 185, 129, ${0.12 + 0.88 * (h.count / max)})`,
+    color: h.count === 0 ? "transparent" : withAlpha(REPORT_CHART_COLORS.up, 0.12 + 0.88 * (h.count / max)),
     isPeak: h.start === rhythm.peakHours.start && rhythm.peakHours.count > 0,
     isNow: nowHour >= h.start && nowHour < h.end,
   }))
@@ -110,9 +123,6 @@ const peakHoursText = computed(() => {
   const p = props.rhythm.peakHours
   return `${formatHour(p.start)}-${formatHour(p.end)}`
 })
-
-/** 供父组件摘要卡片复用的高峰时段文本（与卡片渲染同一口径） */
-defineExpose({ peakHoursText })
 </script>
 
 <style lang="scss">

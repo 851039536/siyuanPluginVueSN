@@ -146,6 +146,14 @@
     color: var(--b3-theme-on-surface);
   }
 
+  // 零计数分组不可点（点击只会得到空表且无空状态）
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: var(--b3-border-color);
+    color: var(--b3-theme-on-surface-light);
+  }
+
   &.is-active {
     border-color: var(--b3-theme-primary);
     color: var(--b3-theme-primary);

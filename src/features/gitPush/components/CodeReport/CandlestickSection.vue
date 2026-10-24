@@ -229,7 +229,7 @@ const chartOptions = computed(() =>
  * 其余时段数组引用稳定，不会触发图表重建。
  */
 const chartPlugins = computed<Plugin[]>(() => [
-  createCandlestickPlugin(candles.value.bucketDays, props.i18n.reportTodayMarker ?? "Today"),
+  createCandlestickPlugin(candles.value.bucketDays, props.i18n.reportTodayMarker),
 ])
 
 /** Period totals 头（提交天数/总提交/日均提交/最高单日；真实日历日口径，不随图表分桶变化） */

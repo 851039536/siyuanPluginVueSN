@@ -373,6 +373,19 @@ describe("buildHtmlReport 今日标记", () => {
     expect(html).not.toContain('stroke-dasharray')
     expect(html).not.toContain('今天')
   })
+
+  it("聚合分桶后末桶跨度已结束时不误标今天（旧仓库全量范围）", () => {
+    // 400 个活跃日 → bucketDays=3，末桶首日约 2021-02；今天远在桶尾之后，不得命中末桶
+    const start = Date.UTC(2020, 0, 1)
+    const dailyStats = Array.from({ length: 400 }, (_, i) => {
+      const d = new Date(start + i * 24 * 60 * 60 * 1000)
+      const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
+      return { date, open: 9, close: 17, high: 17.5, low: 8.5, count: 1 }
+    })
+    const html = buildHtmlReport(report({ dailyStats }), ctx, i18n)
+    expect(html).not.toContain('stroke-dasharray')
+    expect(html).not.toContain('今天')
+  })
 })
 
 describe("reportFileName", () => {

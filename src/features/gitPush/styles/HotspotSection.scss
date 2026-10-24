@@ -44,6 +44,25 @@
   text-align: left;
   border-bottom: 2px solid var(--b3-border-color);
 
+  // 可排序列头（带 tabindex）：点击/键盘可切换排序，需给出可交互反馈
+  &[tabindex] {
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+      color: var(--b3-theme-on-surface);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--b3-theme-primary);
+      outline-offset: -2px;
+    }
+  }
+
+  &.is-sorted {
+    color: var(--b3-theme-primary);
+  }
+
   &--level {
     width: 40px;
     text-align: center;

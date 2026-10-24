@@ -8,6 +8,7 @@ import type { Chart, ChartData, ChartOptions, Plugin } from "chart.js"
 import type { DailyCommitStat } from "./types/report"
 import { REPORT_CHART_COLORS } from "./types/report"
 import { MAX_CANDLES, calcMovingAverage7 } from "./reportMetrics"
+import { isDayKeyInBucket, localDayKey } from "./utils/analysis"
 
 // K 线配色（canvas 上下文无法解析 CSS 自定义属性，只能在此集中定义；
 // styles/chartColors.scss 的 $chart-* 变量为 SCSS 侧同值镜像，一致性由
@@ -179,16 +180,15 @@ export function buildCandleChartOptions(list: DailyCommitStat[], i18n: Record<st
 /**
  * 今天所在桶的下标（-1 = 今天不在图表范围内）。
  * 未聚合（bucketDays=1）：按本地日期精确匹配；聚合时今天落在末桶（桶以首日为标签），
- * 仅当今天 ≥ 首个桶日期且 ≥ 末桶日期时定位到末桶（避免旧数据范围误标）。
+ * 且必须落在末桶的日期跨度内 —— 仅比较「今天 ≥ 末桶首日」会把早已结束的旧桶误标为今天。
  */
 function todayBucketIndex(chart: Chart, bucketDays: number): number {
   const labels = chart.data.labels as string[] | undefined
   if (!labels || labels.length === 0) return -1
-  const today = new Date()
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+  const todayKey = localDayKey()
   const exact = labels.indexOf(todayKey)
   if (exact >= 0) return exact
-  if (bucketDays > 1 && todayKey >= labels[labels.length - 1]) return labels.length - 1
+  if (bucketDays > 1 && isDayKeyInBucket(todayKey, labels[labels.length - 1], bucketDays)) return labels.length - 1
   return -1
 }
 

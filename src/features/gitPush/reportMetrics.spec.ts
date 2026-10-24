@@ -401,6 +401,21 @@ describe("buildReportData", () => {
     expect(r.suggestionKey).toBe("reportSugNormal")
   })
 
+  it("建议文案用绝对热度阈值：分位 hot 桶存在但绝对热度不足时不得误报 Warning", () => {
+    // 10 个文件，heat 从 9 递增到 29（均 <75 的绝对热点线）→ 分位分级必然产生 hot 桶
+    const commits: NumstatCommit[] = []
+    for (let i = 0; i < 10; i++) {
+      const path = `src/f${i}.ts`
+      writeFileSync(join(dir, path), "x\n", "utf8")
+      for (let m = 0; m <= i; m++) {
+        commits.push(commit("alice", "2024-01-15T09:00:00", [{ path }]))
+      }
+    }
+    const r = buildReportData(project, commits, "全部")
+    expect(r.hotspots.filter((h) => h.level === "hot").length).toBeGreaterThan(0)
+    expect(r.suggestionKey).not.toBe("reportSugWarning")
+  })
+
   it("fileDetailsMap 由作者 topFiles 派生（含 .md/幽灵，loc 恒 null 由弹窗懒取）", () => {
     const r = buildReportData(project, synthetic(), "全部")
     expect(Object.keys(r.fileDetailsMap).sort()).toEqual([

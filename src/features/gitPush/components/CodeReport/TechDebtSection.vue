@@ -27,6 +27,7 @@
           :key="f.key"
           class="gpr-debt-chip"
           :class="{ 'is-active': filterKey === f.key }"
+          :disabled="f.count === 0"
           @click="filterKey = f.key"
         >
           {{ f.label }}
@@ -250,6 +251,10 @@ const expandedPath = ref<string>("")
 // 报告重新生成（切换项目/时间范围）后收起展开行，避免残留指向上一份报告的路径
 watch(() => props.report, () => {
   expandedPath.value = ""
+  // 报告切换后当前过滤档可能已无数据：回落到「全部」，避免停留在空表
+  if (filterKey.value !== "all" && (props.report.debtSummary[filterKey.value] ?? 0) === 0) {
+    filterKey.value = "all"
+  }
 })
 
 /** 按日期聚类的共变索引（O(n) 建索引；展开行时按需取该文件的共变列表，避免全量预计算） */

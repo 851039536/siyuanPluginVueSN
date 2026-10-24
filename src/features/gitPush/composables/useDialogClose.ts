@@ -10,6 +10,10 @@
 import type { Ref } from "vue"
 import { onBeforeUnmount, watch } from "vue"
 
+// 模块级滚动锁计数：多个弹窗同时开启时，只有最后一个释放才恢复宿主原有的 overflow
+let bodyLockCount = 0
+let prevBodyOverflow = ""
+
 export interface UseDialogCloseOptions {
   /** 弹窗是否可见（true 时才注册监听；变为 false 注销，避免常驻回调） */
   visible: Ref<boolean>
@@ -41,9 +45,18 @@ export function useDialogClose(options: UseDialogCloseOptions): { onMaskClick: (
     guardedClose()
   }
 
+  /** 打开/关闭滚动锁（计数制：避免覆盖宿主既有 overflow，也避免嵌套弹窗互相解锁） */
   function applyLock(locked: boolean) {
     if (!lockBodyScroll) return
-    document.body.style.overflow = locked ? "hidden" : ""
+    if (locked) {
+      if (bodyLockCount++ === 0) {
+        prevBodyOverflow = document.body.style.overflow
+        document.body.style.overflow = "hidden"
+      }
+      return
+    }
+    if (bodyLockCount === 0) return
+    if (--bodyLockCount === 0) document.body.style.overflow = prevBodyOverflow
   }
 
   watch(visible, (v) => {

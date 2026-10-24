@@ -27,6 +27,25 @@ export function formatLocalDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
+/** 今天（或指定时刻）的本地日期键 YYYY-MM-DD，与 formatLocalDate 同口径 */
+export function localDayKey(d: Date = new Date()): string {
+  return formatLocalDate(d)
+}
+
+/**
+ * 日期键是否落在「以 bucketStart 为首日、连续 spanDays 天」的桶内。
+ * 聚合 K 线的「今日」定位必须校验桶尾：仅比较 `今天 ≥ 桶首日` 会把早已结束的旧桶
+ * （全量范围下的历史仓库）误标为今天。
+ */
+export function isDayKeyInBucket(dayKey: string, bucketStart: string, spanDays: number): boolean {
+  const toUtcMs = (key: string): number => {
+    const [y, m, d] = key.split("-").map(Number)
+    return Date.UTC(y, m - 1, d)
+  }
+  const diffDays = Math.round((toUtcMs(dayKey) - toUtcMs(bucketStart)) / (24 * 60 * 60 * 1000))
+  return diffDays >= 0 && diffDays < spanDays
+}
+
 /**
  * 按本地日期（YYYY-MM-DD）聚合条目日计数（缺天不补 0；无效日期跳过）。
  * buildDailyCommitBuckets（补 0 桶）与 buildDayCountMap（热力图/日历）的共用内核。

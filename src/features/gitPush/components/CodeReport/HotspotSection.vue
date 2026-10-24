@@ -39,11 +39,12 @@
               <th
                 class="gpr-hot-th gpr-hot-th--level"
                 :class="{ 'is-sorted': sortKey === 'heat' }"
-                role="button"
                 tabindex="0"
                 :title="i18n.reportSortHint"
+                :aria-sort="sortKey === 'heat' ? (sortAsc ? 'ascending' : 'descending') : 'none'"
                 @click="toggleSort('heat')"
                 @keydown.enter="toggleSort('heat')"
+                @keydown.space.prevent="toggleSort('heat')"
               >
                 {{ i18n.reportLevelCol }}{{ sortKey === "heat" ? (sortAsc ? " ▲" : " ▼") : "" }}
               </th>
@@ -53,44 +54,48 @@
               <th
                 class="gpr-hot-th gpr-hot-th--num"
                 :class="{ 'is-sorted': sortKey === 'modCount' }"
-                role="button"
                 tabindex="0"
                 :title="i18n.reportSortHint"
+                :aria-sort="sortKey === 'modCount' ? (sortAsc ? 'ascending' : 'descending') : 'none'"
                 @click="toggleSort('modCount')"
                 @keydown.enter="toggleSort('modCount')"
+                @keydown.space.prevent="toggleSort('modCount')"
               >
                 {{ i18n.reportModsCol }}{{ sortKey === "modCount" ? (sortAsc ? " ▲" : " ▼") : "" }}
               </th>
               <th
                 class="gpr-hot-th gpr-hot-th--num"
                 :class="{ 'is-sorted': sortKey === 'authorCount' }"
-                role="button"
                 tabindex="0"
                 :title="i18n.reportSortHint"
+                :aria-sort="sortKey === 'authorCount' ? (sortAsc ? 'ascending' : 'descending') : 'none'"
                 @click="toggleSort('authorCount')"
                 @keydown.enter="toggleSort('authorCount')"
+                @keydown.space.prevent="toggleSort('authorCount')"
               >
                 {{ i18n.reportAuthorsCol }}{{ sortKey === "authorCount" ? (sortAsc ? " ▲" : " ▼") : "" }}
               </th>
               <th
                 class="gpr-hot-th gpr-hot-th--num"
                 :class="{ 'is-sorted': sortKey === 'loc' }"
-                role="button"
                 tabindex="0"
                 :title="i18n.reportSortHint"
+                :aria-sort="sortKey === 'loc' ? (sortAsc ? 'ascending' : 'descending') : 'none'"
                 @click="toggleSort('loc')"
                 @keydown.enter="toggleSort('loc')"
+                @keydown.space.prevent="toggleSort('loc')"
               >
                 {{ i18n.reportLinesCol }}{{ sortKey === "loc" ? (sortAsc ? " ▲" : " ▼") : "" }}
               </th>
               <th
                 class="gpr-hot-th gpr-hot-th--time"
                 :class="{ 'is-sorted': sortKey === 'lastModified' }"
-                role="button"
                 tabindex="0"
                 :title="i18n.reportSortHint"
+                :aria-sort="sortKey === 'lastModified' ? (sortAsc ? 'ascending' : 'descending') : 'none'"
                 @click="toggleSort('lastModified')"
                 @keydown.enter="toggleSort('lastModified')"
+                @keydown.space.prevent="toggleSort('lastModified')"
               >
                 {{ i18n.reportLastModifiedCol }}{{ sortKey === "lastModified" ? (sortAsc ? " ▲" : " ▼") : "" }}
               </th>

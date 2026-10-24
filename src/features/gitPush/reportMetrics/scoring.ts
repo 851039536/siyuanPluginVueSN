@@ -118,7 +118,11 @@ export function heatScore(modCount: number, authorCount: number, lastModified: s
   return clamp100(modCount * 2.2 + authorCount * 7 + recencyBonus(lastModified))
 }
 
-/** 优化建议文案（按热点文件数占比阈值选择，返回键由调用方取 i18n） */
+/**
+ * 优化建议文案（按热点文件数占比阈值选择，返回键由调用方取 i18n）。
+ * 入参须为**绝对热度阈值**（FIXED_HEAT_THRESHOLDS）下的占比：
+ * 分位分级（quantileHeatThresholds）是为展示服务的相对口径，据其占比判断会恒为 Warning。
+ */
 export function suggestionKey(hotPct: number, warmPct: number): "reportSugNormal" | "reportSugAttention" | "reportSugWarning" {
   if (hotPct >= 10) return "reportSugWarning"
   if (hotPct > 0 || warmPct >= 20) return "reportSugAttention"

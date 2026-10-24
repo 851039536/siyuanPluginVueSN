@@ -4,7 +4,7 @@
 // UI 依据 totalGroups > rows.length 决定是否显示「仅显示前 N 名（共 M）」——
 // 若该契约破裂，用户会看到排行各行次数之和小于总提交数而被误读为统计错误。
 import { describe, expect, it } from "vitest"
-import { buildDayCell, rankByCount, rankByCountWithTotal } from "./analysis"
+import { buildDayCell, isDayKeyInBucket, rankByCount, rankByCountWithTotal } from "./analysis"
 
 describe("buildDayCell（热力图/日历共用的日格口径）", () => {
   const i18n: Record<string, any> = {
@@ -52,6 +52,24 @@ describe("buildDayCell（热力图/日历共用的日格口径）", () => {
   it("远超阈值（如 1000 次）不越界，仍取最高等级色", () => {
     const top = buildDayCell(i18n, "2026-08-03", 30, "#3b82f6").style.background
     expect(buildDayCell(i18n, "2026-08-03", 1000, "#3b82f6").style.background).toBe(top)
+  })
+})
+
+describe("isDayKeyInBucket（聚合 K 线的「今日」定位）", () => {
+  it("桶内首日与末日都命中", () => {
+    expect(isDayKeyInBucket("2026-10-01", "2026-10-01", 2)).toBe(true)
+    expect(isDayKeyInBucket("2026-10-02", "2026-10-01", 2)).toBe(true)
+  })
+
+  it("桶结束后不再命中（旧数据范围不得标为今天）", () => {
+    expect(isDayKeyInBucket("2026-10-03", "2026-10-01", 2)).toBe(false)
+    expect(isDayKeyInBucket("2026-10-24", "2021-01-01", 2)).toBe(false)
+  })
+
+  it("早于桶首日不命中；跨月/跨年按真实日历天数计算", () => {
+    expect(isDayKeyInBucket("2026-09-30", "2026-10-01", 2)).toBe(false)
+    expect(isDayKeyInBucket("2027-01-01", "2026-12-31", 2)).toBe(true)
+    expect(isDayKeyInBucket("2026-03-01", "2026-02-27", 3)).toBe(true)
   })
 })
 

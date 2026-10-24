@@ -2,6 +2,7 @@
 import type { DailyCommitStat } from "../types/report"
 import { calcMovingAverage7, collapseDailyStats } from "../reportMetrics"
 import { REPORT_CHART_COLORS } from "../types/report"
+import { isDayKeyInBucket, localDayKey } from "../utils/analysis"
 import { escapeHtml, fmt, num, pct, t } from "./format"
 
 /** 排行/分布图条目上限：SVG 条形超过此数量即不可读，故仅取前 N（表格仍输出全量） */
@@ -42,11 +43,11 @@ export function svgCandlestick(list: DailyCommitStat[], i18n: Record<string, any
   // 工作时间区（08:00-18:00）底色
   parts.push(`<rect x="${padL}" y="${yOf(8).toFixed(1)}" width="${plotW}" height="${(yOf(18) - yOf(8)).toFixed(1)}" fill="${REPORT_CHART_COLORS.workBg}" />`)
 
-  // 今日标记虚线（与页面 chart.js 插件语义一致：未聚合精确匹配，聚合时定位末桶）
-  const today = new Date()
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+  // 今日标记虚线（与页面 chart.js 插件语义一致：未聚合精确匹配；聚合时校验末桶日期跨度，防旧数据误标）
+  const todayKey = localDayKey()
   let todayIdx = rows.findIndex((r) => r.date === todayKey)
-  if (todayIdx < 0 && collapsed.bucketDays > 1 && todayKey >= rows[rows.length - 1].date) {
+  if (todayIdx < 0 && collapsed.bucketDays > 1
+    && isDayKeyInBucket(todayKey, rows[rows.length - 1].date, collapsed.bucketDays)) {
     todayIdx = rows.length - 1
   }
   if (todayIdx >= 0) {

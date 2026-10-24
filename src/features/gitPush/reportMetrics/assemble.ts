@@ -126,10 +126,12 @@ export function buildReportData(
     const count = hotspotRows.filter((r) => r.level === level).length
     return { level, count, pct: Math.round((count / pctDenominator) * 100) }
   })
-  // 按等级名查找占比（消除对 HOTSPOT_LEVEL_ORDER 下标的隐式顺序耦合）
-  const pctByLevel = new Map(hotspotSummary.map((s) => [s.level, s.pct]))
-  const hotPct = pctByLevel.get("hot") ?? 0
-  const warmPct = pctByLevel.get("warm") ?? 0
+
+  // 优化建议改用「绝对热度阈值」口径：hotspotSummary 的分位分级是相对本仓库的展示语义，
+  // n≥8 时必然存在 hot 桶（占比恒约 10%+），若据其占比给建议则几乎永远落在 Warning。
+  // 建议文案描述的是绝对 churn 集中度（heat≥75），与相对展示解耦。
+  const absoluteHotCount = hotspotRows.filter((r) => hotspotLevel(r.heat) === "hot").length
+  const absoluteWarmCount = hotspotRows.filter((r) => hotspotLevel(r.heat) === "warm").length
 
   const totalCommits = commits.length
   const totalLines = authors.reduce((sum, a) => sum + a.linesAdded, 0)
@@ -137,7 +139,10 @@ export function buildReportData(
   const debtSummary = emptyDebtSummary()
   debtRows.forEach((r) => { debtSummary[r.severity]++ })
 
-  const suggestionKeyName = suggestionKey(hotPct, warmPct)
+  const suggestionKeyName = suggestionKey(
+    Math.round((absoluteHotCount / pctDenominator) * 100),
+    Math.round((absoluteWarmCount / pctDenominator) * 100),
+  )
 
   return {
     ok: true,

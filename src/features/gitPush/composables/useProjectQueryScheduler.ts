@@ -63,6 +63,8 @@ export function useProjectQueryScheduler(
   const dirty = new Map<string, Set<ProjectQueryKind>>()
   /** 每项目查询代数：clearProject 递增，用于丢弃在飞查询的迟到结果（防旧值回写） */
   const generations = new Map<string, number>()
+  /** 每 (id, kind) 查询序号：仅最新任务允许落库，防止 force 穿透后旧任务晚到覆盖新结果 */
+  const runSeq = new Map<string, number>()
 
   function generationOf(id: string): number {
     return generations.get(id) ?? 0
@@ -77,7 +79,7 @@ export function useProjectQueryScheduler(
   async function run<T>(
     id: string,
     kind: ProjectQueryKind,
-    load: () => Promise<T>,
+    load: (isLatest: () => boolean) => Promise<T>,
     opts?: RunQueryOptions,
   ): Promise<T> {
     const key = queryKey(id, kind)
@@ -85,11 +87,17 @@ export function useProjectQueryScheduler(
     // 否则穿透后台探测的在飞查询，确保手动刷新拿到新分支/新状态（两个 force 仍去重）
     const pending = inflight.get(key)
     if (pending && (!opts?.force || pending.force)) return pending.task as Promise<T>
+
+    // 新建任务即抢占序号：force 穿透后旧任务即使晚到，也不再是最新任务
+    const token = (runSeq.get(key) ?? 0) + 1
+    runSeq.set(key, token)
+    const isLatest = (): boolean => runSeq.get(key) === token
+
     const task = (async () => {
       const gen = generationOf(id)
-      const result = await load()
-      // 查询期间项目被 clearProject（编辑/删除）：不写新鲜度，后续 ensure 仍会重试
-      if (isCurrentGeneration(id, gen)) lastLoadedAt.set(key, Date.now())
+      const result = await load(isLatest)
+      // 查询期间被 clearProject 或被更新的同域查询抢占：不写新鲜度，后续 ensure 仍会重试
+      if (isLatest() && isCurrentGeneration(id, gen)) lastLoadedAt.set(key, Date.now())
       return result
     })()
     inflight.set(key, { task, force: !!opts?.force })
@@ -138,14 +146,14 @@ export function useProjectQueryScheduler(
       const cached = branchCache.get(id)
       if (cached !== undefined) return cached
     }
-    return run(id, "branch", async () => {
+    return run(id, "branch", async (isLatest) => {
       const gen = generationOf(id)
       const project = findProject(projects, id)
       if (!project) return ""
       const branch = await manager.getBranch(resolveValidPath(project))
       // 仅缓存非空分支：空串代表 detached HEAD / 空仓库 / 路径失效，
       // 缓存会使项目修复后永远拿不到分支名（原实现每次都重试）
-      if (branch && isCurrentGeneration(id, gen)) branchCache.set(id, branch)
+      if (branch && isLatest() && isCurrentGeneration(id, gen)) branchCache.set(id, branch)
       return branch
     }, opts)
   }
@@ -157,18 +165,18 @@ export function useProjectQueryScheduler(
   // ── 状态查询 ──
 
   async function loadPushStatus(id: string, opts?: LoadStatusOptions): Promise<void> {
-    await run(id, "pushStatus", async () => {
+    await run(id, "pushStatus", async (isLatest) => {
       const gen = generationOf(id)
       const branch = opts?.branch ?? (await resolveBranch(id))
       const status = await manager.checkPushStatus(id, { branch })
-      // 查询期间项目被编辑/删除：迟到结果不得覆盖新状态
-      if (!isCurrentGeneration(id, gen)) return
+      // 期间被编辑/删除，或被更新的同域查询抢占：迟到结果不得覆盖新状态
+      if (!isLatest() || !isCurrentGeneration(id, gen)) return
       pushStatuses.value[id] = status
     }, { force: opts?.force })
   }
 
   async function loadWorkingTree(id: string, opts?: LoadStatusOptions): Promise<void> {
-    await run(id, "workingTree", async () => {
+    await run(id, "workingTree", async (isLatest) => {
       const gen = generationOf(id)
       const project = findProject(projects, id)
       if (!project) return
@@ -184,7 +192,7 @@ export function useProjectQueryScheduler(
         branch,
         fastWhenClean: opts?.fastWhenClean,
       })
-      if (!isCurrentGeneration(id, gen)) return
+      if (!isLatest() || !isCurrentGeneration(id, gen)) return
       workingTrees.value[id] = tree
       // 分支名回填缓存 —— **这是本模块唯一的写入点**（另两处曾各写一次，守卫还不一致，
       // 已移除）。理由：只有这里刚读过 HEAD（v2 路径）或由调用方显式提供，
@@ -293,7 +301,7 @@ export function useProjectQueryScheduler(
     id: string,
     opts?: { force?: boolean, timeoutMs?: number, shortCircuit?: boolean },
   ): Promise<{ failures: number, unknown: number } | null> {
-    return run(id, "remoteRefresh", async () => {
+    return run(id, "remoteRefresh", async (isLatest) => {
       const gen = generationOf(id)
       const project = findProject(projects, id)
       if (!project) return null
@@ -303,8 +311,8 @@ export function useProjectQueryScheduler(
       // 仅在远程配置确实变化时就地替换，保持列表顺序。
       // 未变化时不替换数组：避免后台批量检查为每个项目触发一次全列表重算，
       // 也避免覆盖并发产生的非远程字段编辑（如收藏）。
-      // 期间被 clearProject（编辑/删除）则跳过，避免把旧快照写回列表。
-      if (refreshed && isCurrentGeneration(id, gen)) {
+      // 期间被 clearProject（编辑/删除）或被更新的刷新抢占则跳过。
+      if (refreshed && isLatest() && isCurrentGeneration(id, gen)) {
         const idx = projects.value.findIndex((p) => p.id === id)
         const current = idx === -1 ? undefined : projects.value[idx]
         const remotesChanged = !!current
@@ -327,11 +335,13 @@ export function useProjectQueryScheduler(
       // 强制 rev-parse（旧实现每次付一次进程，本机实测 0.6~1.3s）。这里复用
       // 「显式入参 > 工作区缓存 > resolveBranch 兜底」三级取值：正常情况缓存已命中，
       // 零进程；缓存缺失时才兜底解析一次。
-      // 期间被 clearProject：停止后续状态重查，避免为已清空的项目重新写入缓存。
-      if (!isCurrentGeneration(id, gen)) return outcome
+      // 期间被 clearProject 或被更新的刷新抢占：停止后续状态重查，避免旧任务派生新查询覆盖新结果。
+      if (!isLatest() || !isCurrentGeneration(id, gen)) return outcome
       const branch = opts?.force
         ? await resolveBranch(id, { force: true })
         : workingTrees.value[id]?.branch || await resolveBranch(id)
+      // 分支解析期间同样可能被抢占：再验一次，避免旧 refresh 触发一次迟到的状态查询
+      if (!isLatest() || !isCurrentGeneration(id, gen)) return outcome
       // 状态重查必须 force：若加入别处在飞的状态查询，会拿到 fetch 之前的旧 ahead/behind
       if (branch) {
         await loadPushStatus(id, {

@@ -17,7 +17,7 @@
 //
 // 用假 manager，不启动任何 git 子进程。
 import type { Ref } from "vue"
-import type { GitProject } from "../types/storage"
+import type { GitProject, PushStatusInfo } from "../types/storage"
 import {
   beforeEach,
   describe,
@@ -306,5 +306,101 @@ describe("useProjectQueryScheduler —— refreshRemote", () => {
 
     gate.resolve({ fetched: [], errors: [] })
     await background
+  })
+})
+
+describe("useProjectQueryScheduler —— 并发顺序守卫（run token）", () => {
+  let projects: Ref<GitProject[]>
+
+  beforeEach(() => {
+    projects = ref<GitProject[]>([makeProject()])
+  })
+
+  it("旧非 force 的 pushStatus 晚到不得覆盖新 force 结果", async () => {
+    const stale = deferred<PushStatusInfo>()
+    const fresh: PushStatusInfo = {
+      branch: "main",
+      remotes: { github: { ahead: 2, behind: 0, noUpstream: false } },
+      needsPush: true,
+    }
+    let calls = 0
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(),
+      checkPushStatus: vi.fn(() => {
+        calls++
+        return calls === 1
+          ? stale.promise
+          : Promise.resolve(fresh)
+      }),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    // 非 force 查询先起飞；force 穿透并先完成
+    const oldLoad = scheduler.loadPushStatus("P1", { branch: "main" })
+    const forceLoad = scheduler.loadPushStatus("P1", { branch: "main", force: true })
+    await forceLoad
+    expect(scheduler.pushStatuses.value.P1).toEqual(fresh)
+
+    // 旧查询现在才完成：必须被 run token 丢弃
+    stale.resolve({
+      branch: "main",
+      remotes: { github: { ahead: 0, behind: 0, noUpstream: false } },
+      needsPush: false,
+    })
+    await oldLoad
+    expect(scheduler.pushStatuses.value.P1).toEqual(fresh)
+  })
+
+  it("被 force 取代的 refresh 在 fetch 后不得再重查状态", async () => {
+    const gate = deferred<{ fetched: string[], errors: string[] }>()
+    let fetchCalls = 0
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(),
+      checkPushStatus: vi.fn(async () => ({ branch: "main", remotes: {}, needsPush: false })),
+      refreshRemotes: vi.fn(async () => makeProject()),
+      fetchAllForProject: vi.fn(() => {
+        fetchCalls++
+        return fetchCalls === 1 ? gate.promise : Promise.resolve({ fetched: [], errors: [] })
+      }),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    const background = scheduler.refreshRemote("P1")
+    const manual = scheduler.refreshRemote("P1", { force: true })
+    await manual
+    // 只有手动刷新触发了状态重查
+    expect(manager.checkPushStatus).toHaveBeenCalledTimes(1)
+
+    gate.resolve({ fetched: [], errors: [] })
+    await background
+    // 被取代的后台刷新不得派生迟到的状态查询
+    expect(manager.checkPushStatus).toHaveBeenCalledTimes(1)
+  })
+
+  it("旧的非 force 分支解析晚到不得覆盖新 force 分支缓存", async () => {
+    const oldBranch = deferred<string>()
+    let calls = 0
+    const manager = {
+      getBranch: vi.fn(() => {
+        calls++
+        return calls === 1 ? oldBranch.promise : Promise.resolve("new-branch")
+      }),
+      getWorkingTreeStatus: vi.fn(),
+      checkPushStatus: vi.fn(),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    const oldResolve = scheduler.resolveBranch("P1")
+    expect(await scheduler.resolveBranch("P1", { force: true })).toBe("new-branch")
+
+    oldBranch.resolve("old-branch")
+    expect(await oldResolve).toBe("old-branch")
+
+    // 缓存必须保留 force 结果，不得再发 git
+    manager.getBranch.mockClear()
+    expect(await scheduler.resolveBranch("P1")).toBe("new-branch")
+    expect(manager.getBranch).not.toHaveBeenCalled()
   })
 })

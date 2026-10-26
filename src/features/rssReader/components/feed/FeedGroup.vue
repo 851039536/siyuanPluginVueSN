@@ -38,11 +38,12 @@
     </div>
 
     <template v-if="!collapsed">
+      <!-- 行不带 role="button"：与行内刷新/移动/删除按钮构成嵌套交互元素属 a11y 反模式；
+           键盘经 Enter 选择 + 行内按钮 Tab 均可达 -->
       <div
         v-for="feed in groupItem.feeds"
         :key="feed.id"
         class="feed-item"
-        role="button"
         tabindex="0"
         @click="emit('selectFeed', feed.id)"
         @keydown.enter.prevent="emit('selectFeed', feed.id)"

@@ -47,9 +47,10 @@ export function exportToOpml(feeds: { title: string, url: string, group?: string
 
 /**
  * 解析 OPML XML 文本，提取订阅源列表
+ * @param errorPrefix 解析失败时的错误前缀（调用方传 i18n，缺省仅兜底）
  */
-export function parseOpml(xml: string): OpmlOutline[] {
-  const doc = parseXmlDocument(xml, "OPML 解析失败")
+export function parseOpml(xml: string, errorPrefix?: string): OpmlOutline[] {
+  const doc = parseXmlDocument(xml, errorPrefix ?? "OPML parse failed")
 
   const outlines: OpmlOutline[] = []
   doc.querySelectorAll("outline").forEach((el) => {

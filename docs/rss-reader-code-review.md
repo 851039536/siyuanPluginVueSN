@@ -112,3 +112,33 @@ function looksLikeXml(text: string): boolean {
 2. **本轮**：P1 的 1/3/4（数据正确性，均为小 diff）、P2-3/P2-8 的 i18n 违规项、P2-10 样式去重。
 3. **择机**：P1-2 并发刷新、P1-7 OPML 导入、P3 写放大与防抖、P4-1 删除确认。
 4. **明确取舍项**：`enabled` 字段（补 UI 或删除）、`loadingStatus` 状态机简化、FeedList 纯转发层（11 个事件逐一转发是分层设计选择，若想瘦身可让 index.vue 直接渲染 FeedGroup）。
+
+---
+
+## 修复实施 OCR 委派审查（commit 1b02ac40）
+
+> `ocr delegate` commit 模式，23/23 可审查文件全覆盖（2 个 md 排除为 unsupported_ext）；机器验证：`i18n:verify` 通过、`pnpm test` 921 用例全过。**结论：无 Critical/High；1 Medium + 4 Low。**
+
+| # | 严重度 | 位置 | 发现 |
+|---|--------|------|------|
+| 1 | Medium (bug) | `useRssReader.ts:366-397` | **并发刷新引入 saveData 写盘乱序竞态**（本次修复新引入）：refreshAllFeeds 并发 3，各 refreshFeed 完成后各自全量 `saveData()`。若 A 发起的写落盘晚于 B 的写（I/O 乱序），磁盘终态缺 B 的新文章而内存齐全——重启后丢失。建议 saveData 加 promise 链互斥，或 refreshFeed 改 deferPersist、refreshAllFeeds 结束统一落盘一次 |
+| 2 | Low (i18n) | `utils/opml.ts:52` | `"OPML 解析失败"` 硬编码中文前缀漏改——parser.ts 同类文案已 i18n 化，此处属同一违规（原报告 P2-3 范畴）。建议 parseOpml 加可选 errorPrefix 参数 |
+| 3 | Low (performance) | `useOpmlTransfer.ts:48-56` | OPML 导入的写盘已合并，但**逐源抓取仍串行**（N 源 = N 次串行 fetch，每源最坏 75s）。可与 #1 一并改受控并发 |
+| 4 | Low (a11y) | `FeedGroup.vue:45` | `role="button"` 内嵌套刷新/移动/删除原生 button——嵌套交互元素是 a11y 反模式（原结构已如此，本次 role 声明使其显式化）。可改仅标题区可点、操作区独立 |
+| 5 | Low (test) | — | clampNumber / looksLikeXml / getPubDateTimestamp 均为纯函数，宜按项目惯例补 `src/**/*.spec.ts` 行为断言（含 NaN/HTML 错误页/无效日期边界） |
+
+**commit message 备注**：scope 拼写 `rss-eader` 应为 `rss-reader`（与历史 super-anel/s3-ackup 同类笔误，commit 未推送可 amend）。
+
+**正确性核对通过项**：sanitizeHtml 接入点正确（懒加载 replace 先于消毒，不影响结果）；looksLikeXml 正则覆盖 RSS/Atom/RDF + XML 声明；worker-pool 队列消费逻辑正确（refreshingFeedIds 防同源重入仍有效）；clampNumber 的 NaN 回退路径正确；sortOrder 白名单 + SettingsPanel `String(v)` 双层防御成立；toggleStar 联合主键两处调用点同步；deferPersist 失败路径不落盘仅 console（与既有 saveData 错误策略一致）；7 个子组件样式去重后全局基座仍由 index.vue 单点引入，无选择器丢失；i18n 合并产物与分片一致、占位符 `{success}/{failed}/{name}` 键拼写无误。
+
+### OCR 发现项修复实施（同日）
+
+| # | 处置 |
+|---|------|
+| 1 Medium 并发写盘乱序 | **已修**：refreshFeed 增加 `deferPersist` 选项，refreshAllFeeds 并发抓取后统一 `saveData()` 一次（单次全量快照天然无乱序）；`saveData` 同时加 promise 链互斥兜底（覆盖删除/编辑等任意交错场景，串行化后每次写盘读取轮到时的最新快照） |
+| 2 Low opml 硬编码 | **已修**：parseOpml 增加可选 `errorPrefix` 参数，useOpmlTransfer 传 i18n `opmlParseFailed`（zh/en 新键 + merge/verify 通过） |
+| 3 Low OPML 串行抓取 | **已修**：importOpml 改 worker-pool 并发 3（addFeed 状态变更段为同步原子段，并发安全）；配套 addFeed 在 fetch 落定后复查 URL 去重，堵并发导入的前置查重竞态窗口 |
+| 4 Low 嵌套交互元素 | **已修**：移除 `role="button"`（消除嵌套交互声明），保留 tabindex + Enter 选择与行内操作按钮可达，注释说明权衡 |
+| 5 Low 测试缺口 | **已修**：`looksLikeXml` 导出、`clampNumber` 提取至 `utils/settings.ts`；新增 `utils/rssUtils.spec.ts` 17 用例（HTML 错误页拒绝、NaN 回退、无效日期、trim 收藏优先、toggleStar 跨源同 link） |
+
+验证：`pnpm i18n:verify` 4743 叶键对齐；`pnpm test` 938 用例全过（58 文件；首轮 1 例失败为 gitPush 真实 git 类 flaky，连续两轮重跑均全量通过）。

@@ -3162,6 +3162,7 @@
     "author": "作者",
     "errorUnrecognizedFormat": "无法识别的Feed格式，请确保URL指向有效的RSS或Atom源",
     "errorXmlParseFailed": "XML解析失败",
+    "opmlParseFailed": "OPML 解析失败",
     "opmlImportResultDetail": "成功 {success} 个，失败 {failed} 个",
     "initFailed": "加载数据失败",
     "clearSearch": "清空搜索",

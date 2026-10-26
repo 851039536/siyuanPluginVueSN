@@ -242,6 +242,13 @@ export function useRssReader(plugin: Plugin) {
 
     try {
       const response = await fetchRss(url)
+
+      // 并发导入时前置查重存在竞态窗口（多个相同 URL 同时通过检查），落定后复查一次
+      if (feeds.value.some((f) => f.url === url)) {
+        if (!options?.silent) showMessage(rssI18n.feedExisted, 3000, "error")
+        return false
+      }
+
       const {
         feed: feedInfo,
         items: parsedItems,
@@ -303,8 +310,9 @@ export function useRssReader(plugin: Plugin) {
 
   /**
    * 刷新单个订阅源
+   * @param options.deferPersist 跳过本次落盘，由调用方批量保存（refreshAllFeeds 用，避免并发写盘乱序 + N 次全量写盘）
    */
-  async function refreshFeed(feedId: string) {
+  async function refreshFeed(feedId: string, options?: { deferPersist?: boolean }) {
     if (refreshingFeedIds.value.has(feedId)) return
     const feed = feeds.value.find((f) => f.id === feedId)
     if (!feed) return
@@ -351,7 +359,9 @@ export function useRssReader(plugin: Plugin) {
       // 限制每个源的文章数
       trimItemsPerFeed(items, settings.value.maxItemsPerFeed)
 
-      await saveData()
+      if (!options?.deferPersist) {
+        await saveData()
+      }
     } catch (err: unknown) {
       showMessage(`${rssI18n.refreshDetailFailed}: ${getErrorMessage(err)}`, 5000, "error")
     } finally {
@@ -373,11 +383,13 @@ export function useRssReader(plugin: Plugin) {
         async () => {
           while (queue.length > 0) {
             const feed = queue.shift()
-            if (feed) await refreshFeed(feed.id)
+            if (feed) await refreshFeed(feed.id, { deferPersist: true })
           }
         },
       )
       await Promise.all(workers)
+      // 并发刷新期间多个源各自变更，统一落盘一次（单次全量快照，天然无写盘乱序）
+      await saveData()
     } finally {
       loadingStatus.value = "idle"
       refreshingAll.value = false
@@ -407,13 +419,19 @@ export function useRssReader(plugin: Plugin) {
   // ========== 内部方法 ==========
 
   /**
-   * 保存数据
+   * 保存数据（promise 链互斥）
+   * 并发场景下（刷新/导入/编辑交错）各调用方快照时序不定，
+   * 串行化后每次写盘都读取"轮到自己时"的最新状态，杜绝 I/O 乱序用旧快照覆盖新快照。
    */
+  let saveChain: Promise<void> = Promise.resolve()
   async function saveData() {
-    await Promise.all([
+    const run = saveChain.then(() => Promise.all([
       storage.feeds.save(feeds.value),
       storage.items.save(items.value),
-    ])
+    ]))
+    // 吞掉失败防止断链（TypedStorage.save 内部已 catch 落日志，此处为兜底）
+    saveChain = run.then(() => undefined, () => undefined)
+    await run
   }
 
   // ========== 设置/分组操作（独立 composable） ==========

@@ -3162,6 +3162,7 @@
     "author": "Author",
     "errorUnrecognizedFormat": "Unrecognized feed format. Make sure the URL points to a valid RSS or Atom feed",
     "errorXmlParseFailed": "XML parse failed",
+    "opmlParseFailed": "OPML parse failed",
     "opmlImportResultDetail": "{success} succeeded, {failed} failed",
     "initFailed": "Failed to load data",
     "clearSearch": "Clear search",

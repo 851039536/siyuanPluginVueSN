@@ -7,6 +7,7 @@ import type {
   RssFeed,
   RssSettings,
 } from "../types"
+import { clampNumber } from "../utils/settings"
 
 export interface SettingsOpsDeps {
   settings: Ref<RssSettings>
@@ -52,14 +53,6 @@ export function useSettingsOps(deps: SettingsOpsDeps) {
       feed.group = group
       await saveData()
     }
-  }
-
-  /**
-   * 数字设置项钳制：NaN 直接回退当前值（Math.max/min 链对 NaN 无效，会原样穿透存盘）
-   */
-  function clampNumber(value: number, min: number, max: number, fallback: number): number {
-    const clamped = Math.max(min, Math.min(max, Math.round(value)))
-    return Number.isNaN(clamped) ? fallback : clamped
   }
 
   /**

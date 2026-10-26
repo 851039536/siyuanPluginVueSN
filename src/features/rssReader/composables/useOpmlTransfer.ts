@@ -32,10 +32,10 @@ export function useOpmlTransfer(deps: OpmlTransferDeps) {
   }
 
   /**
-   * 导入 OPML 文件（逐源抓取校验，全部完成后统一落盘一次）
+   * 导入 OPML 文件（受控并发抓取校验，全部完成后统一落盘一次）
    */
   async function importOpml(xml: string): Promise<{ success: number, failed: number }> {
-    const outlines = parseOpml(xml)
+    const outlines = parseOpml(xml, i18n.opmlParseFailed)
     if (outlines.length === 0) {
       showMessage(i18n.noValidFeeds, 3000, "error")
       return {
@@ -44,17 +44,29 @@ export function useOpmlTransfer(deps: OpmlTransferDeps) {
       }
     }
 
+    /** 导入并发上限（addFeed 的状态变更段为同步原子段，并发安全） */
+    const IMPORT_CONCURRENCY = 3
     let success = 0
     let failed = 0
-    for (const outline of outlines) {
-      try {
-        const ok = await addFeed(outline.url, outline.group, { silent: true, deferPersist: true })
-        if (ok) success++
-        else failed++
-      } catch {
-        failed++
-      }
-    }
+    const queue = [...outlines]
+    const workers = Array.from(
+      { length: Math.min(IMPORT_CONCURRENCY, queue.length) },
+      async () => {
+        while (queue.length > 0) {
+          const outline = queue.shift()
+          if (!outline) break
+          try {
+            const ok = await addFeed(outline.url, outline.group, { silent: true, deferPersist: true })
+            if (ok) success++
+            else failed++
+          } catch {
+            failed++
+          }
+        }
+      },
+    )
+    await Promise.all(workers)
+
     if (success > 0) {
       await persist()
     }

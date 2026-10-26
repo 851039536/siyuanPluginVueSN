@@ -142,3 +142,7 @@ const handleAction = (actionKey: string): void => {
   emit("action", actionKey)
 }
 </script>
+
+<style lang="scss" scoped>
+@use "../styles/feature-card.scss";
+</style>

@@ -1,9 +1,10 @@
-// SuperPanel 主样式
+// SuperPanel 主面板样式（scoped：仅命中本组件模板元素与子组件根元素）
+// 样式分布：header→super-panel-header.scss；功能卡片→feature-card.scss（FeatureCard.vue 引入）；
+// AI 弹窗与 setting-* 表单体系→AiSettingsPanel.scss
 @forward './variables';
 @use './variables' as *;
 @forward './mixins';
 @use './mixins' as *;
-@use './feature-card';
 
 // ==================== 面板容器 ====================
 
@@ -13,131 +14,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-// ==================== 面板头部 ====================
-
-.super-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  flex-shrink: 0;
-}
-
-.super-panel-title {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  font-size: $t-sm;
-  font-weight: $fw-semibold;
-  color: var(--b3-theme-on-background);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: $s-3;
-}
-
-// ==================== AI配置面板 ====================
-
-.ai-settings-panel {
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-  background: var(--b3-theme-surface);
-  flex-shrink: 0;
-  max-height: 80vh;
-  overflow-y: auto;
-  border-radius: $r-md;
-  border: 1px solid var(--b3-border-color);
-}
-
-.ai-settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: $spacing-sm $spacing-lg;
-  font-weight: $fw-semibold;
-  font-size: $t-xs;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border-bottom: 1px solid var(--b3-theme-surface-lighter);
-}
-
-.ai-settings-content {
-  padding: $spacing-md $spacing-lg;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-}
-
-.setting-group {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-}
-
-.setting-label {
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.45;
-}
-
-// ==================== 表单控件 ====================
-
-.setting-select,
-.setting-input {
-  padding: $s-px6 $s-px10;
-  border: 1px solid var(--b3-theme-surface-light);
-  border-radius: $r-sm;
-  background: var(--b3-theme-background);
-  color: var(--b3-theme-on-background);
-  outline: none;
-  font-size: $t-xs;
-
-  &:focus {
-    border-color: var(--b3-theme-primary);
-    outline: 2px solid var(--b3-theme-primary-lightest);
-    outline-offset: 0;
-  }
-}
-
-.setting-select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667' d='M6 9L2 5h8z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
-}
-
-.setting-input-wrapper {
-  display: flex;
-  align-items: center;
-  position: relative;
-
-  .setting-input {
-    flex: 1;
-    border-radius: $r-sm 0 0 $r-sm;
-  }
-}
-
-.setting-desc {
-  font-size: $t-xs;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.6;
-  line-height: 1.4;
 }
 
 // ==================== 搜索栏 ====================
@@ -258,7 +134,7 @@
   opacity: 0.5;
 }
 
-// 功能列表过渡动画
+// 功能列表过渡动画（作用于 FeatureCard 根元素，scoped 下可命中）
 .feature-list-enter-active {
   transition: all 0.2s ease-out;
 }
@@ -279,18 +155,6 @@
 
 .feature-list-move {
   transition: transform 0.2s ease;
-}
-
-// ==================== 响应式 ====================
-
-@include mobile-only {
-  .super-panel-header {
-    padding: $spacing-sm $spacing-md;
-  }
-
-  .super-panel-title {
-    font-size: $t-xs;
-  }
 }
 
 // ==================== 打印 ====================

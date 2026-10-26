@@ -1,5 +1,4 @@
-// SuperPanel 模块专属 Mixins
-// 注意：tablet-only / mobile-only 被 statistics 模块通过 @use 引用，不可删除
+// SuperPanel 模块专属 Mixins（仅保留本模块实际使用的：scrollbar-thin / mobile-only）
 @use './variables' as *;
 
 // 滚动条样式
@@ -22,20 +21,7 @@
   }
 }
 
-// 文本省略
-@mixin text-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// 响应式断点（被 statistics 等模块通过 @use 引用）
-@mixin tablet-only {
-  @media (max-width: 768px) {
-    @content;
-  }
-}
-
+// 响应式断点（窄屏回退单列）
 @mixin mobile-only {
   @media (max-width: 480px) {
     @content;

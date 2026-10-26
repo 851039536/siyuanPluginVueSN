@@ -1,6 +1,5 @@
-// 功能卡片样式（2 列网格卡片，纵向堆叠布局）
+// 功能卡片样式（2 列网格卡片，纵向堆叠布局；FeatureCard.vue scoped 引入）
 @use './variables' as *;
-@use './mixins' as *;
 
 .feature-card {
   display: flex;

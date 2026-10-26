@@ -260,6 +260,7 @@ export default class PluginSample extends Plugin {
    * 更新插件配置
    */
   async updateSettings(newSettings: PluginSettings) {
+    const prev = this.settings
     this.settings = newSettings
     const success = await saveSettings(this, newSettings)
     if (success) {
@@ -267,8 +268,16 @@ export default class PluginSample extends Plugin {
       saveFeatureFlagsSync(newSettings)
       // 广播设置变更，供 statusBar 等独立挂载模块同步功能开关状态
       emitCustomEvent("settingsUpdated")
-      // 主题色支持即时生效：开关或方案变化后立即重建实例
-      this.rebuildThemeColor()
+      // 主题色支持即时生效：仅当主题相关字段变化时重建实例
+      //（超级面板 AI 配置保存等高频路径不触碰主题字段，无需销毁重建）
+      if (
+        !prev
+        || prev.enableThemeColor !== newSettings.enableThemeColor
+        || prev.themeColorScheme !== newSettings.themeColorScheme
+        || prev.customThemeColor !== newSettings.customThemeColor
+      ) {
+        this.rebuildThemeColor()
+      }
     }
     return success
   }

@@ -66,3 +66,7 @@ const actions = computed<HeaderAction[]>(() => [
   },
 ])
 </script>
+
+<style lang="scss" scoped>
+@use "../styles/super-panel-header.scss";
+</style>

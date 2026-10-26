@@ -1,5 +1,8 @@
 // SuperPanel AI 设置面板外壳样式（Tab 分页布局，各分区样式在各自 SCSS 中）
 // 注意：$spacing-* 定义在 superPanel 本模块 variables.scss，不在全局 @/variables.scss
+// setting-* 共享表单体系由全局 index.scss 迁入本 scoped 文件（P2-3），
+// 通过 :deep 穿透 SettingGroup/Select/TextInput/ApiKeyInput 等子组件，
+// 不再全局注入 .setting-* 通用类名
 @use "./variables" as *;
 
 .ai-settings-panel {
@@ -27,3 +30,79 @@
     padding-bottom: $spacing-md;
   }
 }
+
+// ==================== 面板头部 ====================
+
+.ai-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm $spacing-lg;
+  font-weight: $fw-semibold;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+}
+
+// ==================== 共享表单控件体系（setting-*） ====================
+
+:deep(.setting-group) {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+:deep(.setting-label) {
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+}
+
+:deep(.setting-desc) {
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  line-height: 1.4;
+}
+
+:deep(.setting-select),
+:deep(.setting-input) {
+  padding: $s-px6 $s-px10;
+  border: 1px solid var(--b3-theme-surface-light);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  outline: none;
+  font-size: $t-xs;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+    outline: 2px solid var(--b3-theme-primary-lightest);
+    outline-offset: 0;
+  }
+}
+
+:deep(.setting-select) {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667' d='M6 9L2 5h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+:deep(.setting-input-wrapper) {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+:deep(.setting-input-wrapper .setting-input) {
+  flex: 1;
+  border-radius: $r-sm 0 0 $r-sm;
+}
+

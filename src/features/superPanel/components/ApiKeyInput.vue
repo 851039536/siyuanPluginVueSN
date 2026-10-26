@@ -11,7 +11,7 @@
       size="xsmall"
       :icon="visible ? 'eyeOff' : 'eye'"
       :icon-size="14"
-      :title="visible ? '隐藏密钥' : '显示密钥'"
+      :title="visible ? (i18n.hideApiKey || '隐藏密钥') : (i18n.showApiKey || '显示密钥')"
       @click="toggleVisibility"
     />
   </div>
@@ -23,10 +23,7 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import Button from "@/components/Button.vue"
-import {
-  getProviderDisplayName,
-  PROVIDER_MAP,
-} from "./providers"
+import { PROVIDER_MAP } from "./providers"
 import TextInput from "./TextInput.vue"
 
 interface Props {
@@ -51,12 +48,14 @@ const toggleVisibility = () => {
 const getPlaceholder = () => {
   const meta = PROVIDER_MAP[props.provider]
   const i18nPlaceholder = meta ? props.i18n[`${meta.i18nKey}Placeholder`] : undefined
+  // 供应商专属占位 → 通用占位 → 中文兜底
   return i18nPlaceholder
-    || `请输入${getProviderDisplayName(props.provider, props.i18n)}API密钥`
+    || props.i18n.apiKeyPlaceholder
+    || "请输入API密钥"
 }
 
 const getDescription = () => {
-  return `${getProviderDisplayName(props.provider, props.i18n)} API密钥，用于所有AI功能`
+  return props.i18n.apiKeyDesc || "API密钥，用于所有AI功能"
 }
 
 const handleInput = (value: string) => {

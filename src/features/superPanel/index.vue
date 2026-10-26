@@ -4,8 +4,8 @@
   <div class="super-panel-container">
     <!-- 头部 -->
     <SuperPanelHeader
-      :title="i18n.title || '超级面板'"
-      :i18n="i18n"
+      :title="panelI18n.title || '超级面板'"
+      :i18n="panelI18n"
       @toggle-ai-settings="props.onOpenAiSettings?.()"
       @close="emit('close')"
     />
@@ -23,7 +23,7 @@
           v-model="searchQuery"
           class="search-input"
           type="text"
-          :placeholder="i18n.searchPlaceholder || '搜索功能...'"
+          :placeholder="panelI18n.searchPlaceholder || '搜索功能...'"
         >
         <button
           v-if="searchQuery"
@@ -54,7 +54,7 @@
           :size="32"
           class="search-empty-icon"
         />
-        <span class="search-empty-text">{{ i18n.noResults || '未找到匹配的功能' }}</span>
+        <span class="search-empty-text">{{ panelI18n.noResults || '未找到匹配的功能' }}</span>
       </div>
 
       <!-- 功能卡片列表 -->
@@ -114,6 +114,7 @@ import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
 
 interface Props {
+  /** 全根 i18n 对象（FEATURE_CONFIG 的 titleI18nKey 为全根路径）；面板自身文案经 superPanel 命名空间访问 */
   settings: PluginSettings
   i18n: Record<string, any>
   themeColorI18n: Record<string, any>
@@ -144,6 +145,9 @@ const resolveI18n = (obj: Record<string, any>, key: string): any => {
   return key.split(".").reduce((acc, k) => acc?.[k], obj)
 }
 
+// superPanel 命名空间切片（卡片标题/描述的扁平键兜底与面板自身文案都从这里取）
+const panelI18n = computed<Record<string, any>>(() => props.i18n?.superPanel ?? {})
+
 const features = computed<Feature[]>(() =>
   (FEATURE_CONFIG as unknown as FeatureMeta[]).map(({
     id,
@@ -154,11 +158,13 @@ const features = computed<Feature[]>(() =>
     actions,
     subFeatures,
   }) => {
+    const ns = panelI18n.value
     return {
       id,
       iconKey: id as IconKey,
-      title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : props.i18n[id]) || defaultTitle,
-      desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : props.i18n[`${id}Desc`]) || defaultDesc,
+      // 优先走全根点号路径（titleI18nKey），无键的 feature 回退 superPanel 命名空间扁平键
+      title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : ns[id]) || defaultTitle,
+      desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : ns[`${id}Desc`]) || defaultDesc,
       actions: actions || [],
       subFeatures: subFeatures?.map((sub: SubFeatureMeta): SubFeature => ({
         id: sub.id,
@@ -231,7 +237,14 @@ const getColorValue = (featureId: string): string | undefined => {
 
 </script>
 
+<!-- 全局基础样式入口（:root 字号变量桥接 / .vp-modal-mask 基准字号），保持非 scoped 幂等加载 -->
 <style lang="scss">
-@use "@/index.scss" as *;
+@use "@/index.scss";
+</style>
+
+<!-- 主面板模块样式：scoped 化，杜绝 .setting-* 等通用类名全局污染（docs/super-panel-code-review.md P2-3）
+     样式分布：本文件→styles/index.scss（主面板/搜索/列表过渡）；header→super-panel-header.scss；
+     功能卡片→feature-card.scss（FeatureCard.vue scoped 引入）；AI 弹窗表单→AiSettingsPanel.scss -->
+<style lang="scss" scoped>
 @use "./styles/index.scss";
 </style>

@@ -1,0 +1,48 @@
+// SuperPanel 头部（SuperPanelHeader.vue scoped 引入）
+// 由全局 index.scss 迁入：头部内部元素（.super-panel-title 等）不带主面板 scope id，
+// 必须随组件自身 scoped 生效（docs/super-panel-code-review.md P2-3）
+@use './variables' as *;
+@use './mixins' as *;
+
+.super-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  background: var(--b3-theme-surface);
+  flex-shrink: 0;
+}
+
+.super-panel-title {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: $s-3;
+}
+
+// ==================== 响应式 ====================
+
+@include mobile-only {
+  .super-panel-header {
+    padding: $spacing-sm $spacing-md;
+  }
+
+  .super-panel-title {
+    font-size: $t-xs;
+  }
+}

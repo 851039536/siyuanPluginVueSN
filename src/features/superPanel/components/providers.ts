@@ -22,34 +22,35 @@ export interface ProviderMeta {
 
 /**
  * 供应商元数据列表（有序）
+ * defaultModel 派生自 aiModels 清单 common 首项（推荐模型），避免双源硬编码漂移
  */
 export const PROVIDERS: ProviderMeta[] = [
   {
     id: "tongyi",
     i18nKey: "tongyiQianwen",
     fallbackName: "通义千问",
-    defaultModel: "qwen-plus",
+    defaultModel: PROVIDER_MODELS.tongyi.common[0]?.value ?? "",
     models: PROVIDER_MODELS.tongyi,
   },
   {
     id: "deepseek",
     i18nKey: "deepSeek",
     fallbackName: "DeepSeek",
-    defaultModel: "deepseek-v4-flash",
+    defaultModel: PROVIDER_MODELS.deepseek.common[0]?.value ?? "",
     models: PROVIDER_MODELS.deepseek,
   },
   {
     id: "xiaomi",
     i18nKey: "xiaomiMiMo",
     fallbackName: "小米MiMo",
-    defaultModel: "mimo-v2-flash",
+    defaultModel: PROVIDER_MODELS.xiaomi.common[0]?.value ?? "",
     models: PROVIDER_MODELS.xiaomi,
   },
   {
     id: "custom",
     i18nKey: "customApi",
     fallbackName: "自定义API",
-    defaultModel: "",
+    defaultModel: PROVIDER_MODELS.custom.common[0]?.value ?? "",
     models: PROVIDER_MODELS.custom,
   },
 ]

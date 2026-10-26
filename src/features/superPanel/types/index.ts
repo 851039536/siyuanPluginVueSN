@@ -12,7 +12,10 @@ import {
 } from "siyuan"
 import { reactive } from "vue"
 import { FEATURE_ICONS } from "@/config/icons"
-import { featureIdToSettingKey } from "@/config/settings"
+import {
+  DEFAULT_SETTINGS,
+  featureIdToSettingKey,
+} from "@/config/settings"
 import { isThemeColorSchemeId } from "@/features/themeColor"
 import { emitCustomEvent } from "@/utils/eventBus"
 import { replaceTopBarIcon } from "@/utils/iconHelper"
@@ -71,6 +74,8 @@ export interface AiSettings {
 
 /**
  * 统一 action 映射表：action -> 事件配置
+ * 仅收录 FEATURE_CONFIG 中实际声明的 action key（无对应卡片的条目属于死配置，禁止预留）。
+ * ⚠️ "dock-click" 事件当前全仓库无监听者，新增 dock 类 action 前需先在 App.vue 补监听。
  */
 const ACTION_EVENT_MAP: Record<
   string,
@@ -78,15 +83,8 @@ const ACTION_EVENT_MAP: Record<
 > = {
   openVideoManager: { event: "openVideoManager" },
   openEverythingSearch: { event: "openEverythingSearch" },
-  openFlashcardReading: { event: "openFlashcardReading" },
-  openStatistics: { event: "openStatistics" },
-  openDocAnalysis: {
-    event: "dock-click",
-    detail: { dockId: "doc-analysis-dock" },
-  },
   openFormatAssistant: { event: "openFormatAssistant" },
   openBookmarkMarker: { event: "openBookmarkMarker" },
-  openTextDiff: { event: "openTextDiff" },
   openS3FileManager: { event: "openS3FileManager" },
   openGlobalRelations: { event: "toggleGlobalRelations" },
   openMinimalBrowser: { event: "openMinimalBrowser" },
@@ -103,6 +101,8 @@ export class SuperPanelManager {
   private panel: ModalAppInstance
   private aiSettingsModal: ModalAppInstance
   private reactiveSettings: PluginSettings | null = null
+  /** 顶栏图标元素（destroy 时移除，避免插件禁用/重载后残留幽灵图标） */
+  private topBarElement: HTMLElement | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
@@ -115,7 +115,10 @@ export class SuperPanelManager {
       getCloseHandler: () => this.close.bind(this),
       buildProps: () => ({
         settings: this.reactiveSettings!,
-        i18n: (this.plugin.i18n as any).superPanel || {},
+        // 传全根 i18n：FEATURE_CONFIG 的 titleI18nKey/descI18nKey 是全根路径
+        //（如 "statusBar.title"），传命名空间切片会全部解析失败而回退中文（P1-2）。
+        // 主面板自身文案通过 i18n.superPanel 命名空间访问（见 index.vue 的 panelI18n）。
+        i18n: (this.plugin.i18n as any) || {},
         themeColorI18n: (this.plugin.i18n as any).themeColor || {},
         onClose: () => {
           this.close()
@@ -128,7 +131,8 @@ export class SuperPanelManager {
         },
         onToggleSubFeature: async (featureId: string) => {
           const settingKey = featureIdToSettingKey(featureId)
-          const current = (this.reactiveSettings as any)?.[settingKey] ?? false
+          // 默认值与显示端 getFeatureEnabled 的 ?? true 保持一致，避免"显示开、点第一下无效果"
+          const current = (this.reactiveSettings as any)?.[settingKey] ?? true
           await this.handleToggleFeature(featureId, !current)
         },
         onSelectFeature: async (featureId: string, value: string) => {
@@ -170,6 +174,7 @@ export class SuperPanelManager {
         this.toggle()
       },
     })
+    this.topBarElement = topBarElement
 
     // 替换为 Iconify 图标
     const superPanelIcon = FEATURE_ICONS.superPanel
@@ -199,7 +204,9 @@ export class SuperPanelManager {
   }
 
   private open() {
-    this.reactiveSettings = reactive<PluginSettings>((this.plugin as any).settings)
+    const source = (this.plugin as any).settings as PluginSettings | undefined
+    // 兜底：loadAndApplySettings 完成前通过热键打开面板时，避免 reactive(undefined) 导致渲染抛错
+    this.reactiveSettings = reactive<PluginSettings>(source ?? { ...DEFAULT_SETTINGS })
     this.panel.open()
   }
 
@@ -244,7 +251,11 @@ export class SuperPanelManager {
       return
     }
 
-    showMessage("功能开发中...", 2000, "info")
+    showMessage(
+      (this.plugin.i18n as any).superPanel?.featureInDev || "功能开发中...",
+      2000,
+      "info",
+    )
   }
 
   private async handleUpdateAiProfiles(profiles: AiProfileConfig[]) {
@@ -279,7 +290,7 @@ export class SuperPanelManager {
         aiCustomEndpoint: aiSettings.customEndpoint,
         aiEnableThinking: aiSettings.enableThinking,
       },
-      "AI配置已保存",
+      (this.plugin.i18n as any).superPanel?.aiSettingsSavedMsg || "AI配置已保存",
     )
   }
 
@@ -318,7 +329,6 @@ export class SuperPanelManager {
   private buildAiSettingsProps(): Record<string, any> {
     const s = (this.plugin as any).settings || {}
     return {
-      "visible": true,
       "settings": {
         provider: s.aiApiProvider || "tongyi",
         model: s.aiModel || "qwen-plus",
@@ -346,5 +356,7 @@ export class SuperPanelManager {
     this.panel.destroy()
     this.closeAiSettings()
     window.removeEventListener("toggleSuperPanel", this.boundToggleHandler)
+    this.topBarElement?.remove()
+    this.topBarElement = null
   }
 }

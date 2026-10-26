@@ -258,12 +258,12 @@ function getLanguageLabel(language: ScriptLanguage): string {
 function formatLastRun(timestamp: number): string {
   const diff = Date.now() - timestamp
   const minutes = Math.floor(diff / 60000)
-  if (minutes < 1) return "刚刚"
-  if (minutes < 60) return `${minutes}分钟前`
+  if (minutes < 1) return props.i18n.lastRunJustNow ?? "just now"
+  if (minutes < 60) return (props.i18n.lastRunMinutesAgo ?? "{n} min ago").replace("{n}", String(minutes))
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}小时前`
+  if (hours < 24) return (props.i18n.lastRunHoursAgo ?? "{n} hr ago").replace("{n}", String(hours))
   const days = Math.floor(hours / 24)
-  return `${days}天前`
+  return (props.i18n.lastRunDaysAgo ?? "{n} days ago").replace("{n}", String(days))
 }
 </script>
 

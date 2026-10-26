@@ -78,12 +78,21 @@
 
     <ScriptEditor
       :visible="showEditor"
-      :plugin="plugin"
       :i18n="i18n"
       :script="selectedScript"
       :content="editingContent"
       @close="closeEditor"
       @save="handleSave"
+    />
+
+    <ConfirmDialog
+      v-model:visible="deleteConfirmVisible"
+      :header="i18n.deleteScript || ''"
+      :message="i18n.confirmDelete || ''"
+      :accept-label="i18n.deleteScript || ''"
+      :reject-label="i18n.cancel || ''"
+      :accept-loading="deleting"
+      @confirm="confirmDelete"
     />
   </div>
 </template>
@@ -96,6 +105,7 @@ import type {
   Script,
 } from "./types"
 import type { I18n } from "./types/index"
+import type { StopResult } from "./composables/useScriptRunner"
 import { showMessage } from "siyuan"
 import {
   onMounted,
@@ -103,6 +113,7 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
+import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import Switch from "@/components/Switch.vue"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -144,6 +155,7 @@ const {
   stopAllProcesses,
   cleanupOnDestroy,
   restoreProcesses,
+  deactivate,
 } = useScriptLauncher({
   settings,
   processes,
@@ -154,12 +166,11 @@ const {
   persist: {
     load: () => storage.loadRunningProcesses(),
     save: (list) => storage.saveRunningProcesses(list),
-    clear: () => storage.clearRunningProcesses(),
   },
 })
 
 /** 导入文件接受的扩展名 */
-const IMPORT_ACCEPT = ".py,.pyw,.sh,.bash,.ps1,.js,.mjs,.bat,.cmd"
+const IMPORT_ACCEPT = ".py,.pyw,.sh,.bash,.ps1,.js,.mjs,.bat,.cmd,.txt"
 
 const handleSettingsChange = async () => {
   await storage.saveSettings({ ...settings.value })
@@ -170,17 +181,24 @@ const toggleMonitor = async () => {
   await storage.saveSettings({ ...settings.value })
 }
 
-const handleStop = (id: string) => {
-  const result = stopProcess(id)
+/** 停止失败原因码 → 用户提示文案 */
+const stopFailureMessage = (result: StopResult): string => {
+  if (result.reason === "env") return props.i18n.envNotSupported || ""
+  if (result.reason === "notRunning") return props.i18n.processNotRunning || ""
+  return props.i18n.processStopFailed || ""
+}
+
+const handleStop = async (id: string) => {
+  const result = await stopProcess(id)
   if (result.ok) {
     showMessage(props.i18n.processStopped || "", 2000, "info")
-  } else if (result.message) {
-    showMessage(result.message, 3000, "error")
+  } else {
+    showMessage(stopFailureMessage(result), 3000, "error")
   }
 }
 
-const handleStopAll = () => {
-  const count = stopAllProcesses()
+const handleStopAll = async () => {
+  const count = await stopAllProcesses()
   if (count > 0) showMessage(props.i18n.processStopped || "", 2000, "info")
 }
 
@@ -192,11 +210,16 @@ const clearOutputs = () => {
   processes.value = [...processes.value]
 }
 
-const dismissProcess = (id: string) => {
+const dismissProcess = async (id: string) => {
   const target = processes.value.find((p) => p.id === id)
-  // 运行中的条目点“关闭”= 先停止进程，再从列表移除，防止误关留下孤儿进程
+  // 运行中的条目点“关闭”= 先停止进程再移除；停止失败则保留条目，
+  // 避免进程仍在后台跑却脱离监控列表成为孤儿
   if (target && target.status === "running") {
-    stopProcess(id)
+    const result = await stopProcess(id)
+    if (!result.ok) {
+      showMessage(stopFailureMessage(result), 3000, "error")
+      return
+    }
   }
   processes.value = processes.value.filter((p) => p.id !== id)
   // 移除后同步落盘，避免重启后残留“幽灵进程”
@@ -245,12 +268,19 @@ const handleRun = async (script: Script) => {
     showMessage(props.i18n.scriptPathNotFound || "", 3000, "error")
     return
   }
-  const ok = await launchScript(script, filePath)
-  if (ok) {
+  const result = await launchScript(script, filePath)
+  if (result.ok) {
+    // 内置监听模式下监控条目出现即为反馈；系统默认程序打开时给出轻提示
+    if (script.language === "other" || !settings.value.builtinMonitor) {
+      showMessage(props.i18n.openedExternally || "", 2000, "info")
+    }
     await storage.updateLastRun(script.id)
     await loadScripts()
   } else {
-    showMessage(props.i18n.launchFailedEnvNotSupported || "", 3000, "error")
+    const msg = result.reason === "env"
+      ? props.i18n.launchFailedEnvNotSupported
+      : props.i18n.launchFailed
+    showMessage(msg || "", 3000, "error")
   }
 }
 
@@ -279,20 +309,33 @@ const handleSave = async (data: CreateScriptDTO) => {
   }
 }
 
-const handleDelete = async (script: Script) => {
-  // eslint-disable-next-line no-alert
-  if (!window.confirm(props.i18n.confirmDelete || "")) {
-    return
-  }
+// ========== 删除确认（统一 ConfirmDialog，替代 window.confirm） ==========
+
+const deleteConfirmVisible = ref(false)
+const deletePendingScript = ref<Script | null>(null)
+const deleting = ref(false)
+
+const handleDelete = (script: Script) => {
+  deletePendingScript.value = script
+  deleteConfirmVisible.value = true
+}
+
+const confirmDelete = async () => {
+  const script = deletePendingScript.value
+  if (!script || deleting.value) return
+  deleting.value = true
   try {
     await deleteScript(script.id)
     showMessage(props.i18n.deleteSuccess || "", 2000, "info")
+    deleteConfirmVisible.value = false
   } catch (error: unknown) {
     showMessage(
       getErrorMessage(error) || props.i18n.deleteFailed || "",
       3000,
       "error",
     )
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -317,25 +360,35 @@ const handleImportFile = async (event: Event) => {
 }
 
 onMounted(async () => {
-  settings.value = await storage.loadSettings()
-  // 恢复上次会话遗留的进程（思源意外退出后仍在后台跑的进程）
-  const restored = await restoreProcesses()
-  if (restored.length > 0) {
-    processes.value = restored
-    // 恢复后立即落盘（统一 persisted 标记），与内存状态保持一致
-    void storage.saveRunningProcesses(processes.value).catch(() => { /* 落盘失败不影响主流程 */ })
-    const restoredMsg = props.i18n.restoredProcess?.replace("{count}", String(restored.length))
-    if (restoredMsg) showMessage(restoredMsg, 3000, "info")
-  }
-  // 插件卸载：仅落盘进程记录（不再杀进程，让它们继续跑），供下次重启查看
+  // 先同步注册插件卸载钩子，避免快速关闭面板错过注册时机
   ;(props.plugin as any).__scriptLauncher?.setOnDestroy?.(() => {
     cleanupOnDestroy()
   })
+  try {
+    settings.value = await storage.loadSettings()
+  } catch {
+    /* 读取失败时保持默认设置 */
+  }
+  // 恢复上次会话遗留的进程（思源意外退出后仍在后台跑的进程）
+  try {
+    const restored = await restoreProcesses()
+    if (restored.length > 0) {
+      processes.value = restored
+      // 恢复后立即落盘（统一 persisted 标记），与内存状态保持一致
+      void storage.saveRunningProcesses(processes.value).catch(() => { /* 落盘失败不影响主流程 */ })
+      const restoredMsg = props.i18n.restoredProcess?.replace("{count}", String(restored.length))
+      if (restoredMsg) showMessage(restoredMsg, 3000, "info")
+    }
+  } catch {
+    /* 恢复失败不阻塞面板使用 */
+  }
 })
 
 onUnmounted(() => {
+  // 解除活跃面板注册（输出事件静默累积，重开面板由 restore 接回）
+  deactivate()
   // 面板关闭时同步落盘当前进程状态（停止/移除后不残留旧记录）
-  storage.saveRunningProcesses(processes.value)
+  void storage.saveRunningProcesses(processes.value).catch(() => { /* 落盘失败不影响主流程 */ })
   ;(props.plugin as any).__scriptLauncher?.setOnDestroy?.(null)
 })
 </script>

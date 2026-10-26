@@ -3,12 +3,8 @@
     <div
       v-if="visible"
       class="script-editor-mask"
-      @click="handleMaskClick"
     >
-      <div
-        class="script-editor"
-        @click.stop
-      >
+      <div class="script-editor">
         <div class="script-editor__header">
           <h3 class="script-editor__title">
             {{ isEditMode ? i18n.editScript : i18n.addScript }}
@@ -26,7 +22,7 @@
             v-model="form.name"
             :label="i18n.name"
             :placeholder="i18n.name"
-            :error="errors.name"
+            :error="nameError"
             required
           />
 
@@ -89,7 +85,6 @@
 </template>
 
 <script setup lang="ts">
-import type { Plugin } from "siyuan"
 import type { CreateScriptDTO, Script, ScriptLanguage } from "../types"
 import type { I18n } from "../types/index"
 import {
@@ -101,10 +96,10 @@ import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import type { SelectOption } from "@/components/Select.vue"
+import { hasIllegalFileNameChars } from "../utils"
 import { SCRIPT_LANGUAGE_CONFIG } from "../types"
 
 interface Props {
-  plugin: Plugin
   i18n: I18n
   script?: Script | null
   visible?: boolean
@@ -140,7 +135,6 @@ const form = ref<{
 
 const selectedCategory = ref("")
 const customCategory = ref("")
-const errors = ref<Record<string, string>>({})
 
 const isEditMode = computed(() => !!props.script)
 
@@ -166,11 +160,18 @@ const categoryOptions = computed<SelectOption[]>(() => [
   })),
 ])
 
+/** 名称前端校验：脚本名直接用作磁盘文件名，非法字符在保存前拦截 */
+const nameError = computed(() => {
+  const name = form.value.name.trim()
+  if (!name) return ""
+  return hasIllegalFileNameChars(name) ? props.i18n.nameInvalidChars ?? "" : ""
+})
+
 const isValid = computed(() => {
   return (
     form.value.name.trim() !== ""
+    && nameError.value === ""
     && form.value.content.trim() !== ""
-    && Object.keys(errors.value).length === 0
   )
 })
 
@@ -204,7 +205,6 @@ function resetForm() {
     selectedCategory.value = ""
     customCategory.value = ""
   }
-  errors.value = {}
 }
 
 function handleSave() {
@@ -220,9 +220,7 @@ function handleSave() {
   })
 }
 
-function handleMaskClick() {
-  emit("close")
-}
+// 遮罩不响应点击关闭：编辑内容可能未保存，只能通过取消/关闭按钮退出，防误触丢稿
 
 watch(
   () => [props.visible, props.script],

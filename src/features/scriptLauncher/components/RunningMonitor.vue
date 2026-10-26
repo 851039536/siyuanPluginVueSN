@@ -22,7 +22,7 @@
           :variant="runningCount > 0 ? 'success' : 'default'"
           size="xsmall"
         >
-          {{ runningCountLabel }}
+          {{ runningCount }}
         </Badge>
         <span
           v-if="expanded && runningCount > 0"
@@ -180,9 +180,6 @@ const emit = defineEmits<{
 
 const runningCount = computed(() => props.processes.filter((p) => p.status === "running").length)
 
-/** 计数徽标显示运行中数量，与 Badge variant 的 runningCount 判断语义一致 */
-const runningCountLabel = computed(() => String(runningCount.value))
-
 function statusLabel(status: RunningProcess["status"], i18n: I18n): string {
   const map: Record<RunningProcess["status"], string | undefined> = {
     running: i18n.statusRunning,
@@ -194,7 +191,7 @@ function statusLabel(status: RunningProcess["status"], i18n: I18n): string {
   return map[status] || status
 }
 
-function statusVariant(status: RunningProcess["status"]): "success" | "warning" | "danger" | "info" | "default" {
+function statusVariant(status: RunningProcess["status"]): "success" | "warning" | "danger" | "default" {
   if (status === "running") return "success"
   if (status === "error") return "danger"
   if (status === "killed") return "warning"

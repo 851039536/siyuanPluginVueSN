@@ -4,7 +4,6 @@
 import type { Plugin } from "siyuan"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import ScriptLauncherPanel from "../index.vue"
-import { ScriptStorage } from "./storage"
 
 export type ScriptLanguage = "python" | "bash" | "powershell" | "nodejs" | "batch" | "other"
 
@@ -169,24 +168,36 @@ export interface I18n {
   openFailed?: string
   scriptPathNotFound?: string
   launchFailedEnvNotSupported?: string
+  /** 启动失败（内置监听 spawn 失败等，区别于环境不支持） */
+  launchFailed?: string
+  /** 已用系统默认程序打开 */
+  openedExternally?: string
+  /** 停止目标未在运行 */
+  processNotRunning?: string
+  /** 进程停止失败（taskkill/kill 均无效） */
+  processStopFailed?: string
+  /** 相对时间文案（{n} 为数量占位符） */
+  lastRunJustNow?: string
+  lastRunMinutesAgo?: string
+  lastRunHoursAgo?: string
+  lastRunDaysAgo?: string
+  /** 脚本名称含非法文件名字符 */
+  nameInvalidChars?: string
   importSuccess?: string
   importFailed?: string
 }
 
 export class ScriptLauncher {
   private plugin: Plugin
-  private storage: ScriptStorage
   private onDestroy: (() => void) | null = null
 
   constructor(plugin: Plugin) {
     this.plugin = plugin
-    this.storage = new ScriptStorage(plugin, "")
   }
 
-  public async init() {
+  public init() {
     this.registerIcon()
     this.addDock()
-    await this.storage.init()
   }
 
   /** 注册自定义 SVG 图标（思源内置图标系统） */

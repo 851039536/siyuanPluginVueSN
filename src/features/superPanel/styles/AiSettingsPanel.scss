@@ -69,7 +69,7 @@
   line-height: 1.4;
 }
 
-:deep(.setting-select),
+// .setting-input：TextInput 的原生 input，完整盒子样式
 :deep(.setting-input) {
   padding: $s-px6 $s-px10;
   border: 1px solid var(--b3-theme-surface-light);
@@ -86,13 +86,13 @@
   }
 }
 
+// .setting-select：修饰的是共享 Select 组件根容器（.si-select），视觉盒子
+//（边框/背景/圆角/箭头）由组件内部 .si-select__trigger 自带 —— 此处不再叠加，
+// 否则容器与 trigger 叠成双层边框 + 双箭头（原生 <select> 时代的历史遗留样式）。
+// 宽度撑满与 profile-select 惯例及同组 TextInput 对齐
 :deep(.setting-select) {
+  width: 100%;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667' d='M6 9L2 5h8z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px;
 }
 
 :deep(.setting-input-wrapper) {

@@ -86,9 +86,14 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import { computed } from "vue"
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+} from "vue"
 import { useTtsReader } from "../../composables/useTtsReader"
 import { formatRelativeDate } from "../../utils/date"
+import { sanitizeHtml } from "@/utils/mdRenderer"
 import type {
   RssItem,
   RssSettings,
@@ -111,16 +116,24 @@ const emit = defineEmits<{
 
 const { ttsPlaying, speakArticle } = useTtsReader()
 
-// ===== 文章详情内容处理（给图片添加懒加载，避免一次性加载全部图片） =====
+// ===== 文章详情内容处理 =====
+// RSS 正文是第三方不受信内容，v-html 渲染前必须经 DOMPurify 消毒（项目 v-html 规范）
 const processedDetailContent = computed(() => {
   const raw = props.item.content || props.item.description || ""
   if (!raw) return ""
-  return raw.replace(/<img\s+/gi, '<img loading="lazy" ')
+  return sanitizeHtml(raw.replace(/<img\s+/gi, '<img loading="lazy" '))
 })
+
+// ===== Esc 关闭详情 =====
+function onDocKeydown(e: KeyboardEvent) {
+  if (e.key === "Escape") emit("close")
+}
+onMounted(() => document.addEventListener("keydown", onDocKeydown))
+onBeforeUnmount(() => document.removeEventListener("keydown", onDocKeydown))
 
 </script>
 
 <style lang="scss">
+/* 仅引组件自身样式；全局基座由 index.vue 统一引入一次（避免重复输出） */
 @use "../../styles/ArticleDetail.scss";
-@use "../../styles/index.scss";
 </style>

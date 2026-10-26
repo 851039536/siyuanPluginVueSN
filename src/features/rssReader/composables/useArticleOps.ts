@@ -37,11 +37,11 @@ export function useArticleOps(deps: ArticleOpsDeps) {
   }
 
   /**
-   * 切换收藏状态
+   * 切换收藏状态（feedId + link 联合主键：不同订阅源可能转载同一 link，单 link 会错改第一条）
    */
-  async function toggleStar(itemLink: string) {
+  async function toggleStar(feedId: string, itemLink: string) {
     if (!Array.isArray(items.value)) return
-    const item = items.value.find((i) => i.link === itemLink)
+    const item = items.value.find((i) => i.feedId === feedId && i.link === itemLink)
     if (item) {
       item.starred = !item.starred
       await persist()
@@ -70,10 +70,10 @@ export function useArticleOps(deps: ArticleOpsDeps) {
   }
 
   /**
-   * 在浏览器中打开文章
+   * 在浏览器中打开文章（仅放行 http/https，防 javascript: 等伪 scheme）
    */
   function openInBrowser(item: RssItem) {
-    if (item.link) {
+    if (item.link && /^https?:\/\//i.test(item.link)) {
       window.open(item.link, "_blank")
     }
   }

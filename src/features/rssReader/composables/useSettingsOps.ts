@@ -55,14 +55,27 @@ export function useSettingsOps(deps: SettingsOpsDeps) {
   }
 
   /**
-   * 更新设置（含范围校验，自动刷新间隔变更后立即重设定时器）
+   * 数字设置项钳制：NaN 直接回退当前值（Math.max/min 链对 NaN 无效，会原样穿透存盘）
+   */
+  function clampNumber(value: number, min: number, max: number, fallback: number): number {
+    const clamped = Math.max(min, Math.min(max, Math.round(value)))
+    return Number.isNaN(clamped) ? fallback : clamped
+  }
+
+  /**
+   * 更新设置（含范围/枚举校验，自动刷新间隔变更后立即重设定时器）
    */
   async function updateSettings(newSettings: Partial<RssSettings>) {
     if (typeof newSettings.refreshInterval === "number") {
-      newSettings.refreshInterval = Math.max(0, Math.min(1440, Math.round(newSettings.refreshInterval)))
+      newSettings.refreshInterval = clampNumber(newSettings.refreshInterval, 0, 1440, settings.value.refreshInterval)
     }
     if (typeof newSettings.maxItemsPerFeed === "number") {
-      newSettings.maxItemsPerFeed = Math.max(10, Math.min(500, Math.round(newSettings.maxItemsPerFeed)))
+      newSettings.maxItemsPerFeed = clampNumber(newSettings.maxItemsPerFeed, 10, 500, settings.value.maxItemsPerFeed)
+    }
+    if (newSettings.sortOrder !== undefined
+      && newSettings.sortOrder !== "newest"
+      && newSettings.sortOrder !== "oldest") {
+      newSettings.sortOrder = settings.value.sortOrder
     }
     Object.assign(settings.value, newSettings)
     if (typeof newSettings.refreshInterval === "number") {

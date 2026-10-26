@@ -7,7 +7,7 @@ import type {
 import type {
   RssItem,
 } from "../types"
-import { getPubDateTimestamp } from "./parser"
+import { getPubDateTimestamp } from "./date"
 
 /**
  * 限制每个订阅源的文章数量（原地替换 items.value）

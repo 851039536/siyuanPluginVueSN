@@ -79,6 +79,6 @@ function handleNewGroupValueChange(value: string) { emit("newGroupValueChange", 
 </script>
 
 <style lang="scss">
+/* 仅引组件自身样式；全局基座由 index.vue 统一引入一次（避免重复输出） */
 @use "../../styles/FeedList.scss";
-@use "../../styles/index.scss";
 </style>

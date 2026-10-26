@@ -70,7 +70,13 @@
     "feedAddedDetail": "已添加订阅源",
     "newArticlesDetail": "篇新文章",
     "noNewArticlesDetail": "暂无新文章",
-    "author": "作者"
+    "author": "作者",
+    "errorUnrecognizedFormat": "无法识别的Feed格式，请确保URL指向有效的RSS或Atom源",
+    "errorXmlParseFailed": "XML解析失败",
+    "opmlImportResultDetail": "成功 {success} 个，失败 {failed} 个",
+    "initFailed": "加载数据失败",
+    "clearSearch": "清空搜索",
+    "deleteFeedConfirm": "确定删除订阅源「{name}」吗？其已缓存文章将一并删除"
   },
   "enableRssReader": "启用RSS订阅功能",
   "enableRssReaderDesc": "订阅和管理RSS/Atom源，在右侧边栏阅读文章"

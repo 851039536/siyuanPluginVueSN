@@ -33,6 +33,7 @@
         <input
           v-model="group"
           :placeholder="i18n.feedGroupPlaceholder"
+          @keydown.enter="handleAddFeed"
         >
       </div>
     </div>
@@ -79,6 +80,6 @@ function handleAddFeed() {
 </script>
 
 <style lang="scss">
+/* 仅引组件自身样式；全局基座由 index.vue 统一引入一次（避免重复输出） */
 @use "../../styles/AddFeedDialog.scss";
-@use "../../styles/index.scss";
 </style>

@@ -12,14 +12,16 @@ import {
 export interface OpmlTransferDeps {
   feeds: Ref<RssFeed[]>
   i18n: Record<string, string>
-  addFeed: (url: string, group?: string, options?: { silent?: boolean }) => Promise<boolean>
+  addFeed: (url: string, group?: string, options?: { silent?: boolean, deferPersist?: boolean }) => Promise<boolean>
+  /** 批量导入结束后统一落盘 */
+  persist: () => Promise<void>
 }
 
 export function useOpmlTransfer(deps: OpmlTransferDeps) {
   const {
-    feeds,
     i18n,
     addFeed,
+    persist,
   } = deps
 
   /**
@@ -30,7 +32,7 @@ export function useOpmlTransfer(deps: OpmlTransferDeps) {
   }
 
   /**
-   * 导入 OPML 文件
+   * 导入 OPML 文件（逐源抓取校验，全部完成后统一落盘一次）
    */
   async function importOpml(xml: string): Promise<{ success: number, failed: number }> {
     const outlines = parseOpml(xml)
@@ -46,14 +48,20 @@ export function useOpmlTransfer(deps: OpmlTransferDeps) {
     let failed = 0
     for (const outline of outlines) {
       try {
-        const ok = await addFeed(outline.url, outline.group, { silent: true })
+        const ok = await addFeed(outline.url, outline.group, { silent: true, deferPersist: true })
         if (ok) success++
         else failed++
       } catch {
         failed++
       }
     }
-    showMessage(`${i18n.opmlImportResult}: ${success} succeeded, ${failed} failed`, 4000, "info")
+    if (success > 0) {
+      await persist()
+    }
+    const detail = (i18n.opmlImportResultDetail || "{success} succeeded, {failed} failed")
+      .replace(/\{success\}/g, String(success))
+      .replace(/\{failed\}/g, String(failed))
+    showMessage(`${i18n.opmlImportResult}: ${detail}`, 4000, "info")
     return {
       success,
       failed,

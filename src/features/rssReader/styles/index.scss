@@ -48,11 +48,15 @@
 
   // --- 搜索栏 ---
   .rss-search-bar {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
     padding: $s-1 $s-3;
     flex-shrink: 0;
 
     input {
-      width: 100%;
+      flex: 1;
+      min-width: 0;
       padding: $s-1 $s-2;
       border: 1px solid var(--b3-theme-surface-lighter);
       border-radius: $r-base;
@@ -64,6 +68,13 @@
       @include input-focus-ring;
 
       &::placeholder { color: var(--b3-theme-on-surface-muted); font-size: $t-xs; }
+    }
+
+    .rss-search-clear {
+      @include btn-icon-base(24px);
+      color: var(--b3-theme-on-surface);
+      @include btn-hover;
+      flex-shrink: 0;
     }
   }
 

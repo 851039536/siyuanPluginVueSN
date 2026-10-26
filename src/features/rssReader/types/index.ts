@@ -22,8 +22,6 @@ export interface RssFeed {
   addedAt: number
   /** 分组名称 */
   group?: string
-  /** 是否启用 */
-  enabled: boolean
 }
 
 /** RSS文章条目 */
@@ -71,8 +69,8 @@ export interface RssSettings {
 /** 排序方式 */
 export type RssSortOrder = "newest" | "oldest"
 
-/** 查询状态 */
-export type RssLoadingStatus = "idle" | "loading" | "success" | "error"
+/** 查询状态（仅服务于工具栏转圈指示） */
+export type RssLoadingStatus = "idle" | "loading"
 
 /** 分组订阅源列表项 */
 export interface RssGroupItem {

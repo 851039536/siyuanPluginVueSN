@@ -6,17 +6,19 @@ import { showMessage } from "siyuan"
 import {
   computed,
   ref,
+  watch,
 } from "vue"
 import {
   generateId,
-  getPubDateTimestamp,
   parseRssXml,
 } from "../utils/parser"
 import { fetchRss } from "../utils/fetchRss"
 import { trimItemsPerFeed } from "../utils/itemTrim"
 import { normalizeParsedItems } from "../utils/items"
+import { getPubDateTimestamp } from "../utils/date"
 import type {
   RssFeed,
+  RssGroupItem,
   RssItem,
   RssLoadingStatus,
   RssSettings,
@@ -34,6 +36,9 @@ export function useRssReader(plugin: Plugin) {
   const storage = new RssStorage(plugin)
   const rssI18n = (plugin.i18n as any)?.rssReader || {}
 
+  /** 刷新全部时的并发上限（fetchRss 每源最坏 75s，串行会放大数倍） */
+  const REFRESH_CONCURRENCY = 3
+
   // ========== 响应式状态 ==========
   const settings = ref<RssSettings>({ ...DEFAULT_RSS_SETTINGS })
   const feeds = ref<RssFeed[]>([])
@@ -42,6 +47,15 @@ export function useRssReader(plugin: Plugin) {
   const currentFeedFilter = ref<string>("all") // "all" 或 feedId
   const currentGroupFilter = ref<string>("all") // "all" 或 group名
   const searchKeyword = ref("")
+  // 搜索防抖：输入框实时回显，过滤计算延迟生效，避免每键击全量 filter+sort
+  const searchKeywordDebounced = ref("")
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
+  watch(searchKeyword, (v) => {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = setTimeout(() => {
+      searchKeywordDebounced.value = v
+    }, 300)
+  })
   const showStarredOnly = ref(false)
   const showUnreadOnly = ref(false)
   const selectedItem = ref<RssItem | null>(null)
@@ -77,7 +91,7 @@ export function useRssReader(plugin: Plugin) {
       map.get(group)!.push(feed)
     }
 
-    const result: Array<{ group: string, label: string, feeds: RssFeed[] }> = []
+    const result: RssGroupItem[] = []
     // 有分组名称的排前面
     const sortedKeys = Array.from(map.keys()).sort((a, b) => {
       if (!a) return 1
@@ -112,9 +126,9 @@ export function useRssReader(plugin: Plugin) {
       result = result.filter((i) => feedIdsInGroup.includes(i.feedId))
     }
 
-    // 搜索关键词
-    if (searchKeyword.value) {
-      const kw = searchKeyword.value.toLowerCase()
+    // 搜索关键词（防抖值）
+    if (searchKeywordDebounced.value) {
+      const kw = searchKeywordDebounced.value.toLowerCase()
       result = result.filter(
         (i) =>
           i.title?.toLowerCase().includes(kw)
@@ -132,10 +146,20 @@ export function useRssReader(plugin: Plugin) {
       result = result.filter((i) => !i.read)
     }
 
-    // 排序
+    // 排序（pubDate 解析结果按字符串缓存，避免比较器内 O(n log n) 次 Date 解析）
+    const tsCache = new Map<string, number>()
+    const tsOf = (d?: string) => {
+      if (!d) return 0
+      let t = tsCache.get(d)
+      if (t === undefined) {
+        t = getPubDateTimestamp(d)
+        tsCache.set(d, t)
+      }
+      return t
+    }
     result.sort((a, b) => {
-      const dateA = getPubDateTimestamp(a.pubDate)
-      const dateB = getPubDateTimestamp(b.pubDate)
+      const dateA = tsOf(a.pubDate)
+      const dateB = tsOf(b.pubDate)
       return settings.value.sortOrder === "newest"
         ? dateB - dateA
         : dateA - dateB
@@ -173,6 +197,7 @@ export function useRssReader(plugin: Plugin) {
       startAutoRefresh()
     } catch (err) {
       console.error("[RSS] 初始化失败:", err)
+      showMessage(rssI18n.initFailed || "Failed to load data", 3000, "error")
     }
   }
 
@@ -194,8 +219,10 @@ export function useRssReader(plugin: Plugin) {
 
   /**
    * 添加新的RSS订阅源
+   * @param options.silent 静默模式（OPML 批量导入用，不弹提示）
+   * @param options.deferPersist 跳过本次落盘，由调用方批量保存（OPML 导入用，避免 N 次全量写盘）
    */
-  async function addFeed(url: string, group?: string, options?: { silent?: boolean }) {
+  async function addFeed(url: string, group?: string, options?: { silent?: boolean, deferPersist?: boolean }) {
     url = url.trim()
     if (!url) {
       if (!options?.silent) showMessage(rssI18n.feedUrlRequired, 3000, "error")
@@ -213,14 +240,15 @@ export function useRssReader(plugin: Plugin) {
       return false
     }
 
-    loadingStatus.value = "loading"
-
     try {
       const response = await fetchRss(url)
       const {
         feed: feedInfo,
         items: parsedItems,
-      } = parseRssXml(response, url)
+      } = parseRssXml(response, url, {
+        unrecognizedFormat: rssI18n.errorUnrecognizedFormat,
+        xmlParseFailed: rssI18n.errorXmlParseFailed,
+      })
 
       const newFeed: RssFeed = {
         id: generateId(),
@@ -232,20 +260,21 @@ export function useRssReader(plugin: Plugin) {
         lastUpdated: new Date().toISOString(),
         addedAt: Date.now(),
         group: group || "",
-        enabled: true,
       }
 
       const newItems: RssItem[] = normalizeParsedItems(parsedItems, newFeed.id, newFeed.title, rssI18n.untitled)
 
       feeds.value.push(newFeed)
-      items.value.push(...newItems)
+      items.value = items.value.concat(newItems)
+      // 首次导入也可能超过单源上限，添加后立即裁剪（此前仅刷新路径裁剪）
+      trimItemsPerFeed(items, settings.value.maxItemsPerFeed)
 
-      await saveData()
-      loadingStatus.value = "success"
+      if (!options?.deferPersist) {
+        await saveData()
+      }
       if (!options?.silent) showMessage(`${rssI18n.feedAddedDetail}: ${newFeed.title}`, 3000, "info")
       return true
     } catch (err: unknown) {
-      loadingStatus.value = "error"
       if (!options?.silent) showMessage(getErrorMessage(err) || rssI18n.feedAddFailed, 5000, "error")
       return false
     }
@@ -287,7 +316,10 @@ export function useRssReader(plugin: Plugin) {
       const {
         feed: feedInfo,
         items: parsedItems,
-      } = parseRssXml(response, feed.url)
+      } = parseRssXml(response, feed.url, {
+        unrecognizedFormat: rssI18n.errorUnrecognizedFormat,
+        xmlParseFailed: rssI18n.errorXmlParseFailed,
+      })
 
       // 更新订阅源信息
       if (feedInfo.title) feed.title = feedInfo.title
@@ -303,17 +335,17 @@ export function useRssReader(plugin: Plugin) {
           : [],
       )
 
-      const currentFeed = feeds.value.find((f) => f.id === feedId)
-      if (!currentFeed) return
+      // fetch 期间该源可能已被删除，重新校验
+      if (!feeds.value.some((f) => f.id === feedId)) return
 
-      const newItems: RssItem[] = normalizeParsedItems(parsedItems, feedId, currentFeed.title, rssI18n.untitled)
+      const newItems: RssItem[] = normalizeParsedItems(parsedItems, feedId, feed.title, rssI18n.untitled)
         .filter((item) => !existingLinks.has(item.link))
 
       if (newItems.length > 0) {
-        items.value.push(...newItems)
-        showMessage(`${currentFeed.title}: ${newItems.length}${rssI18n.newArticlesDetail}`, 3000, "info")
+        items.value = items.value.concat(newItems)
+        showMessage(`${feed.title}: ${newItems.length}${rssI18n.newArticlesDetail}`, 3000, "info")
       } else {
-        showMessage(`${currentFeed.title}: ${rssI18n.noNewArticlesDetail}`, 2000, "info")
+        showMessage(`${feed.title}: ${rssI18n.noNewArticlesDetail}`, 2000, "info")
       }
 
       // 限制每个源的文章数
@@ -328,18 +360,24 @@ export function useRssReader(plugin: Plugin) {
   }
 
   /**
-   * 刷新所有订阅源
+   * 刷新所有订阅源（受控并发，避免串行放大整体耗时）
    */
   async function refreshAllFeeds() {
     if (refreshingAll.value) return
     refreshingAll.value = true
     loadingStatus.value = "loading"
     try {
-      const enabledFeeds = feeds.value.filter((f) => f.enabled)
-
-      for (const feed of enabledFeeds) {
-        await refreshFeed(feed.id)
-      }
+      const queue = [...feeds.value]
+      const workers = Array.from(
+        { length: Math.min(REFRESH_CONCURRENCY, queue.length) },
+        async () => {
+          while (queue.length > 0) {
+            const feed = queue.shift()
+            if (feed) await refreshFeed(feed.id)
+          }
+        },
+      )
+      await Promise.all(workers)
     } finally {
       loadingStatus.value = "idle"
       refreshingAll.value = false
@@ -403,6 +441,7 @@ export function useRssReader(plugin: Plugin) {
     feeds,
     i18n: rssI18n,
     addFeed,
+    persist: saveData,
   })
 
   return {
@@ -414,6 +453,7 @@ export function useRssReader(plugin: Plugin) {
     currentFeedFilter,
     currentGroupFilter,
     searchKeyword,
+    searchKeywordDebounced,
     showStarredOnly,
     showUnreadOnly,
     selectedItem,

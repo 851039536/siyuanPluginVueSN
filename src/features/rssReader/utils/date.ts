@@ -1,5 +1,5 @@
 /**
- * RSS 日期工具 — 相对时间格式化（列表与详情共用）
+ * RSS 日期工具 — 相对时间格式化 + 发布时间戳提取（列表与详情共用）
  */
 /**
  * 将日期字符串格式化为相对时间
@@ -21,4 +21,13 @@ export function formatRelativeDate(dateStr: string | undefined, i18n: Record<str
   } catch {
     return dateStr
   }
+}
+
+/**
+ * 提取发布时间戳（无效/缺失返回 0，用于排序比较）
+ */
+export function getPubDateTimestamp(dateStr?: string): number {
+  if (!dateStr) return 0
+  const time = new Date(dateStr).getTime()
+  return Number.isNaN(time) ? 0 : time
 }

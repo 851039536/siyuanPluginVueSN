@@ -7,14 +7,22 @@ import type {
 } from "../types"
 import { stripHtml } from "@/utils/stringUtils"
 
+/** 用户可见的解析错误文案（由调用方传入 i18n，缺省仅兜底） */
+export interface RssParseMessages {
+  /** Feed 格式无法识别 */
+  unrecognizedFormat?: string
+  /** XML 解析失败前缀 */
+  xmlParseFailed?: string
+}
+
 /**
  * 解析RSS/Atom XML文本为订阅源和条目
  */
-export function parseRssXml(xml: string, feedUrl: string): {
+export function parseRssXml(xml: string, feedUrl: string, msgs?: RssParseMessages): {
   feed: Partial<RssFeed>
   items: Partial<RssItem>[]
 } {
-  const doc = parseXmlDocument(xml, "XML解析失败")
+  const doc = parseXmlDocument(xml, msgs?.xmlParseFailed ?? "XML parse failed")
 
   // 尝试检测 RSS 或 Atom 格式
   const isAtom = doc.querySelector("feed") !== null
@@ -26,7 +34,7 @@ export function parseRssXml(xml: string, feedUrl: string): {
     return parseRss(doc, feedUrl)
   }
 
-  throw new Error("无法识别的Feed格式，请确保URL指向有效的RSS或Atom源")
+  throw new Error(msgs?.unrecognizedFormat ?? "Unrecognized feed format. Make sure the URL points to a valid RSS or Atom feed")
 }
 
 /**
@@ -42,7 +50,8 @@ function parseRss(doc: Document, feedUrl: string): {
   }
 
   const feed: Partial<RssFeed> = {
-    title: getTextContent(channel, "title") || "未知订阅源",
+    // title 交由调用方兜底（i18n / url），此处不做硬编码文案
+    title: getTextContent(channel, "title"),
     url: feedUrl,
     description: getTextContent(channel, "description"),
     siteUrl: getTextContent(channel, "link"),
@@ -58,7 +67,8 @@ function parseRss(doc: Document, feedUrl: string): {
     const content = getTextContent(item, "content\:encoded") || getTextContent(item, "content")
 
     items.push({
-      title: getTextContent(item, "title") || "无标题",
+      // title 交由 normalizeParsedItems 的 untitledLabel（i18n）兜底
+      title: getTextContent(item, "title"),
       link,
       description: stripHtml(description)?.slice(0, 300),
       pubDate: getTextContent(item, "pubDate"),
@@ -88,7 +98,8 @@ function parseAtom(doc: Document, feedUrl: string): {
   }
 
   const feed: Partial<RssFeed> = {
-    title: getTextContent(feedEl, "title") || "未知订阅源",
+    // title 交由调用方兜底（i18n / url），此处不做硬编码文案
+    title: getTextContent(feedEl, "title"),
     url: feedUrl,
     description: getTextContent(feedEl, "subtitle"),
     siteUrl: getAttributeValue(feedEl, "link[rel='alternate']", "href") || getAttributeValue(feedEl, "link", "href"),
@@ -106,11 +117,13 @@ function parseAtom(doc: Document, feedUrl: string): {
     const rawHtml = content || summary
 
     items.push({
-      title: getTextContent(entry, "title") || "无标题",
+      // title 交由 normalizeParsedItems 的 untitledLabel（i18n）兜底
+      title: getTextContent(entry, "title"),
       link,
       description: stripHtml(summary)?.slice(0, 300),
       pubDate: getTextContent(entry, "published") || getTextContent(entry, "updated"),
-      author: getAttributeValue(entry, "author name", ""),
+      // Atom 作者在 <author><name> 子元素内（部分源直接把文本写在 <author> 里）
+      author: getTextContent(entry, "author name") || getTextContent(entry, "author"),
       content: rawHtml,
       coverImage: extractCoverImage(entry, rawHtml),
       categories: extractCategories(entry),
@@ -205,15 +218,6 @@ export function createRssItemFromParsed(
     coverImage: pi.coverImage,
     categories: pi.categories,
   }
-}
-
-/**
- * 提取发布时间戳（无效/缺失返回 0，用于排序比较）
- */
-export function getPubDateTimestamp(dateStr?: string): number {
-  if (!dateStr) return 0
-  const time = new Date(dateStr).getTime()
-  return Number.isNaN(time) ? 0 : time
 }
 
 /**

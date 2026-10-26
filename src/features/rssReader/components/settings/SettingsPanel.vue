@@ -67,7 +67,7 @@
           :options="sortOrderOptions"
           size="xsmall"
           :aria-label="i18n.sortOrder"
-          @update:model-value="(v) => handleSettingChange('sortOrder', v === null ? '' : String(v))"
+          @update:model-value="(v) => handleSettingChange('sortOrder', String(v))"
         />
       </div>
 
@@ -129,13 +129,11 @@
 <script setup lang="ts">
 import type { RssSettings } from "../../types"
 import { Icon } from "@iconify/vue"
-import { showMessage } from "siyuan"
 import {
   computed,
   ref,
 } from "vue"
 import Select from "@/components/Select.vue"
-import { getErrorMessage } from "@/utils/stringUtils"
 
 interface Props {
   i18n: Record<string, string>
@@ -202,12 +200,11 @@ function handleSettingChange(key: string, value: unknown) {
 async function handleFile(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
+  // 错误提示由父级 handleImportOpml 统一处理（其内部吞掉所有异常，永不 reject），此处只管 importing 状态
   importing.value = true
   try {
     const text = await file.text()
     await props.importOpml(text)
-  } catch (err: unknown) {
-    showMessage(`${props.i18n.opmlImportFailed}: ${getErrorMessage(err)}`, 5000, "error")
   } finally {
     importing.value = false
     if (fileInput.value) fileInput.value.value = ""
@@ -216,6 +213,6 @@ async function handleFile(e: Event) {
 </script>
 
 <style lang="scss">
+/* 仅引组件自身样式；全局基座由 index.vue 统一引入一次（避免重复输出） */
 @use "../../styles/SettingsPanel.scss";
-@use "../../styles/index.scss";
 </style>

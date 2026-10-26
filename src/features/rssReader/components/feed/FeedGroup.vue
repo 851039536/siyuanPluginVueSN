@@ -25,7 +25,7 @@
         <span class="group-label">{{ groupItem.label }}</span>
       </template>
       <span class="group-count">{{ groupItem.feeds.length }}</span>
-      <span class="group-unread">{{ unreadCount || '' }}</span>
+      <span class="group-unread">{{ unreadCount > 99 ? '99+' : (unreadCount || '') }}</span>
       <!-- 重命名分组按钮 -->
       <button
         v-if="groupItem.group"
@@ -42,7 +42,10 @@
         v-for="feed in groupItem.feeds"
         :key="feed.id"
         class="feed-item"
+        role="button"
+        tabindex="0"
         @click="emit('selectFeed', feed.id)"
+        @keydown.enter.prevent="emit('selectFeed', feed.id)"
       >
         <div class="feed-icon">
           <img
@@ -216,6 +219,6 @@ function moveToNewGroup(feedId: string) {
 </script>
 
 <style lang="scss">
+/* 仅引组件自身样式；全局基座由 index.vue 统一引入一次（避免重复输出） */
 @use "../../styles/FeedGroup.scss";
-@use "../../styles/index.scss";
 </style>

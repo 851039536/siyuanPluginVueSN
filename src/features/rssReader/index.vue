@@ -49,7 +49,7 @@
           <span
             v-if="unreadCount > 0"
             class="unread-badge"
-          >{{ unreadCount }}</span>
+          >{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
         </div>
         <!-- 刷新全部按钮 -->
         <button
@@ -95,6 +95,15 @@
           v-model="searchKeyword"
           :placeholder="i18n.searchPlaceholder"
         >
+        <!-- 清空搜索按钮 -->
+        <button
+          v-if="searchKeyword"
+          class="rss-search-clear"
+          :title="i18n.clearSearch"
+          @click="clearSearch"
+        >
+          <Icon icon="mdi:close" />
+        </button>
       </div>
 
       <!-- 过滤标签 -->
@@ -130,7 +139,7 @@
           <button
             class="filter-tag"
             :class="{ active: currentGroupFilter === group }"
-            @click="setGroupFilter(group)"
+            @click="setGroupFilter(currentGroupFilter === group ? 'all' : group)"
           >
             {{ group }}
           </button>
@@ -157,7 +166,7 @@
             @toggle-collapse="toggleGroupCollapse"
             @select-feed="setFeedFilter"
             @refresh-feed="refreshFeed"
-            @delete-feed="removeFeed"
+            @delete-feed="handleRemoveFeed"
             @rename-group="renameGroup"
             @rename-start="startRenameGroup"
             @rename-cancel="cancelRenameGroup"
@@ -177,7 +186,7 @@
             @reset-filters="resetFilters"
             @mark-all-read="markAllAsRead(filteredItems)"
             @open-item="openItemDetail"
-            @toggle-star="toggleStar($event.link)"
+            @toggle-star="item => toggleStar(item.feedId, item.link)"
           />
         </template>
 
@@ -229,6 +238,7 @@ const {
   currentFeedFilter,
   currentGroupFilter,
   searchKeyword,
+  searchKeywordDebounced,
   showStarredOnly,
   showUnreadOnly,
   selectedItem,
@@ -269,7 +279,7 @@ const addingFeed = ref(false)
 
 function handleToggleStar() {
   if (selectedItem.value) {
-    toggleStar(selectedItem.value.link)
+    toggleStar(selectedItem.value.feedId, selectedItem.value.link)
   }
 }
 
@@ -341,20 +351,35 @@ async function handleImportOpml(xml: string) {
   }
 }
 
+// ===== 删除订阅源（带确认，误触会连带删除全部已缓存文章） =====
+async function handleRemoveFeed(feedId: string) {
+  const feed = feeds.value.find((f) => f.id === feedId)
+  const name = feed?.title || feed?.url || ""
+  const text = (props.i18n.deleteFeedConfirm || 'Delete feed "{name}"? Its cached articles will be removed as well.')
+    .replace(/\{name\}/g, name)
+  if (!window.confirm(text)) return
+  await removeFeed(feedId)
+}
+
 // ===== 过滤与工具函数 =====
 const isOverviewMode = computed(
   () =>
     currentFeedFilter.value === "all"
     && currentGroupFilter.value === "all"
-    && !searchKeyword.value
+    && !searchKeywordDebounced.value
     && !showStarredOnly.value
     && !showUnreadOnly.value,
 )
 
+function clearSearch() {
+  searchKeyword.value = ""
+  searchKeywordDebounced.value = ""
+}
+
 function resetFilters() {
   currentFeedFilter.value = "all"
   currentGroupFilter.value = "all"
-  searchKeyword.value = ""
+  clearSearch()
   showStarredOnly.value = false
   showUnreadOnly.value = false
 }

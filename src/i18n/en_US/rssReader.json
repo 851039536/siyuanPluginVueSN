@@ -70,7 +70,13 @@
     "feedAddedDetail": "Feed added",
     "newArticlesDetail": "new articles",
     "noNewArticlesDetail": "No new articles",
-    "author": "Author"
+    "author": "Author",
+    "errorUnrecognizedFormat": "Unrecognized feed format. Make sure the URL points to a valid RSS or Atom feed",
+    "errorXmlParseFailed": "XML parse failed",
+    "opmlImportResultDetail": "{success} succeeded, {failed} failed",
+    "initFailed": "Failed to load data",
+    "clearSearch": "Clear search",
+    "deleteFeedConfirm": "Delete feed \"{name}\"? Its cached articles will be removed as well."
   },
   "enableRssReader": "Enable RSS Reader",
   "enableRssReaderDesc": "Subscribe to and manage RSS/Atom feeds, read articles in the right sidebar"

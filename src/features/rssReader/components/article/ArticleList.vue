@@ -26,23 +26,12 @@
     </div>
 
     <!-- 空状态 -->
-    <div
+    <EmptyState
       v-if="items.length === 0"
-      class="rss-empty-state"
-    >
-      <Icon
-        icon="mdi:file-document-outline"
-        class="empty-icon"
-      />
-      <div class="empty-title">
-        <!-- 空状态标题："暂无文章" -->
-        {{ i18n.noItems }}
-      </div>
-      <div class="empty-desc">
-        <!-- 空状态描述："尝试刷新订阅源或调整过滤条件" -->
-        {{ i18n.noItemsDesc }}
-      </div>
-    </div>
+      icon="mdi:file-document-outline"
+      :title="i18n.noItems"
+      :desc="i18n.noItemsDesc"
+    />
 
     <!-- 文章条目列表 -->
     <div
@@ -87,6 +76,7 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
+import EmptyState from "../common/EmptyState.vue"
 import { formatRelativeDate } from "../../utils/date"
 import type { RssItem } from "../../types"
 
@@ -109,6 +99,7 @@ const emit = defineEmits<{
 </script>
 
 <style lang="scss">
+/* 仅引组件自身样式；全局基座（.rss-reader-panel / .loading-icon 等）由 index.vue 统一引入一次，
+   子组件重复 @use 会使 Sass 独立编译单元重复输出同一份 CSS */
 @use "../../styles/ArticleList.scss";
-@use "../../styles/index.scss";
 </style>

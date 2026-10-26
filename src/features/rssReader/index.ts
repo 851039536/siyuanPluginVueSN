@@ -15,7 +15,7 @@ export function registerRssReader(plugin: Plugin) {
 
   createVueDockApp(plugin, RssReaderPanel, {
     icon: "iconRss",
-    title: (plugin.i18n as any)?.rssReader?.title || "RSS订阅",
+    title: (plugin.i18n as any)?.rssReader?.title || "RSS",
     type: "rss-reader-dock",
     width: 400,
     i18n: (plugin.i18n as any)?.rssReader || {},
@@ -24,7 +24,7 @@ export function registerRssReader(plugin: Plugin) {
   // 注册快捷键命令
   plugin.addCommand({
     langKey: "rssReader",
-    langText: "RSS订阅",
+    langText: "RSS",
     hotkey: "",
     callback: () => {
       emitCustomEvent("dock-click", { dockId: "rss-reader-dock" })

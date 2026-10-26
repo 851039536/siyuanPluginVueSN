@@ -52,10 +52,11 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 }
 
 /**
- * 检测文本是否为有效 XML（以 < 开头）
+ * 检测文本是否为有效 XML 文档（XML 声明 / rss / feed / RDF 根元素）
+ * 注意：不能用「以 < 开头」判断——HTML 错误页同样以 < 开头，会让代理 fallback 链提前中断
  */
 function looksLikeXml(text: string): boolean {
-  return /^\s*</.test(text)
+  return /^\s*(<\?xml|<rss|<feed|<rdf:RDF)/i.test(text)
 }
 
 /**

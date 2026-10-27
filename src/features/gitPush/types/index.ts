@@ -93,7 +93,7 @@ export {
   HEAT_LEVEL_THRESHOLDS,
   readCommitRuleConfig,
 } from "./meta"
-export type { BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FetchFailureKind, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitHeatScaleMode, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FetchFailureKind, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
 
 // ── 重导出查询调度契约（useProjectQueryScheduler 实现，queryScheduler.ts）──
 export type {

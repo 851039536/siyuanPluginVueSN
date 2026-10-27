@@ -4,7 +4,7 @@
 // UI 依据 totalGroups > rows.length 决定是否显示「仅显示前 N 名（共 M）」——
 // 若该契约破裂，用户会看到排行各行次数之和小于总提交数而被误读为统计错误。
 import { describe, expect, it } from "vitest"
-import { buildDayCell, isDayKeyInBucket, rankByCountWithTotal } from "./analysis"
+import { buildDayCell, computeHeatThresholds, HEAT_SCALE_QUANTILES, heatLevel, isDayKeyInBucket, rankByCountWithTotal } from "./analysis"
 
 describe("buildDayCell（热力图/日历共用的日格口径）", () => {
   const i18n: Record<string, any> = {
@@ -52,6 +52,62 @@ describe("buildDayCell（热力图/日历共用的日格口径）", () => {
   it("远超阈值（如 1000 次）不越界，仍取最高等级色", () => {
     const top = buildDayCell(i18n, "2026-08-03", 30, "#3b82f6").style.background
     expect(buildDayCell(i18n, "2026-08-03", 1000, "#3b82f6").style.background).toBe(top)
+  })
+
+  it("传入自适应阈值时按新档位取色（同一天可因档位不同而降级）", () => {
+    // 固定档下 5 次属 level 2（≥3），自适应档 [0,1,2,3,4] 下升到 level 4
+    const fixed = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6").style.background
+    const auto = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6", [0, 1, 2, 3, 4]).style.background
+    expect(auto).not.toBe(fixed)
+  })
+})
+
+describe("computeHeatThresholds（自适应分档）", () => {
+  const FIXED = [0, 1, 3, 6, 12]
+
+  it("返回与固定档同形的 5 项数组（首项 0，供 heatLevel 直接使用）", () => {
+    const t = computeHeatThresholds([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    expect(t).toHaveLength(5)
+    expect(t[0]).toBe(0)
+  })
+
+  it("阈值取非零日的对应分位点（零值日不参与，否则档位被整体压低）", () => {
+    // 非零日 1..10 各一天 → P50=5 / P75=8 / P90=9 / P95=10
+    expect(computeHeatThresholds([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).toEqual([0, 5, 8, 9, 10])
+    // 穿插零值日不改变结果（零值日本身恒为 0 级）
+    expect(computeHeatThresholds([0, 0, 1, 2, 3, 0, 4, 5, 6, 7, 8, 9, 10, 0])).toEqual([0, 5, 8, 9, 10])
+    expect(HEAT_SCALE_QUANTILES).toHaveLength(4)
+  })
+
+  it("观测最大值必落在最高档（阈值钳制在最大值以内，不会出现「谁都到不了 4 级」）", () => {
+    const t = computeHeatThresholds([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    expect(heatLevel(10, t)).toBe(4)
+    expect(heatLevel(0, t)).toBe(0)
+  })
+
+  it("单个尖峰不被平均掉：普通日保持浅色，尖峰日仍是最深一档", () => {
+    // 1 次 × 5 天 + 100 次 × 1 天 → 阈值 [0,1,2,100,100]
+    const t = computeHeatThresholds([1, 1, 1, 1, 1, 100])
+    expect(heatLevel(1, t)).toBe(1)
+    expect(heatLevel(100, t)).toBe(4)
+  })
+
+  it("四档塌成同一级（所有非零日次数相同）时退回固定档，避免整片同色", () => {
+    expect(computeHeatThresholds([1, 1, 1, 1])).toEqual(FIXED)
+    expect(computeHeatThresholds([7])).toEqual(FIXED)
+  })
+
+  it("范围内无提交时退回固定档，且所有格子仍为 0 级", () => {
+    expect(computeHeatThresholds([0, 0, 0])).toEqual(FIXED)
+    expect(computeHeatThresholds([])).toEqual(FIXED)
+    expect(heatLevel(0, computeHeatThresholds([]))).toBe(0)
+  })
+
+  it("阈值单调不减（heatLevel 的逆序扫描依赖该性质）", () => {
+    for (const counts of [[3, 5, 9, 20], [1, 1, 1, 5], [2, 3, 3, 5, 5, 8, 9, 12, 20]]) {
+      const t = computeHeatThresholds(counts)
+      for (let i = 1; i < t.length; i++) expect(t[i]).toBeGreaterThanOrEqual(t[i - 1])
+    }
   })
 })
 

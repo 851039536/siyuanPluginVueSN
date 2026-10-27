@@ -63,6 +63,14 @@
 
 .gpa-cal-day {
   min-height: 24px; // 内容（日号+计数）约 22px，留 2px 余量；行高由内容撑起自动均匀
+  width: 100%;
+  // 日格是 button（可点击钻取当日明细）：清掉浏览器默认内边距/描边/背景，几何与配色交给本规则与行内 style
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
   border-radius: $r-sm;
   display: flex;
   flex-direction: column;
@@ -83,6 +91,12 @@
 
   // 今天描边强调
   &.is-today {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: 1px;
+  }
+
+  // 选中格（点击后展开当日明细；与「今天」同为描边语义，故今天被选中时观感不变）
+  &.is-selected {
     outline: 2px solid var(--b3-theme-primary);
     outline-offset: 1px;
   }

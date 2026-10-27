@@ -53,6 +53,32 @@
       />
     </div>
 
+    <!-- 设置项：分级方式（自适应 = 按范围内非零日分位数；固定 = 1/3/6/12 次） -->
+    <div class="gpa-settings-row">
+      <span
+        class="gpa-settings-label"
+        :title="scaleHint"
+      >{{ i18n.analysisHeatScale }}</span>
+      <div class="gpa-settings-seg">
+        <Button
+          class="gpa-settings-seg-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="viewSettings.heatScale === 'auto'"
+          @click="update({ heatScale: 'auto' })"
+        >{{ i18n.analysisHeatScaleAuto }}</Button>
+        <Button
+          class="gpa-settings-seg-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="viewSettings.heatScale === 'fixed'"
+          @click="update({ heatScale: 'fixed' })"
+        >{{ i18n.analysisHeatScaleFixed }}</Button>
+      </div>
+    </div>
+
     <!-- 设置项：格子颜色（热力主色；共享 ColorField 自绘调色板，思源下原生取色器不弹窗） -->
     <div class="gpa-settings-row">
       <!-- 设置项标签："格子颜色" -->
@@ -105,6 +131,13 @@ const weekStartOptions = computed(() => [
   { value: "1", label: props.i18n.analysisWdMon },
   { value: "0", label: props.i18n.analysisWdSun },
 ])
+
+/** 分级方式的口径说明（挂在标签 title 上，不额外占一行版面） */
+const scaleHint = computed(() =>
+  props.viewSettings.heatScale === "auto"
+    ? props.i18n.analysisHeatScaleAutoHint
+    : props.i18n.analysisHeatScaleFixedHint,
+)
 
 function onRangeChange(v: string | number | boolean | null) {
   if (typeof v !== "string") return

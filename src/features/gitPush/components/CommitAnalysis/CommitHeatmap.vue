@@ -1,4 +1,4 @@
-<!-- 提交热力图：GitHub 风格贡献图，周为列 × 7 天为行，格子按日提交数分级着色（配色/周起始/范围由设置驱动） -->
+<!-- 提交热力图：GitHub 风格贡献图，周为列 × 7 天为行，格子按日提交数分级着色（配色/周起始/范围/分档方式由设置驱动）；点击格子查看当日提交 -->
 <template>
   <div
     class="gpa-heat"
@@ -25,38 +25,55 @@
           >{{ w }}</span>
         </div>
 
-        <!-- 周列 × 7 行网格（grid-auto-flow: column，末尾补齐完整周） -->
-        <div class="gpa-heat-grid">
-          <div
+        <!-- 周列 × 7 行网格（grid-auto-flow: column，末尾补齐完整周）。
+             格子是 button：可点击钻取当日明细；整张网格只占一个 Tab 位（roving tabindex + 方向键移动）。
+             外层用 role="group" 而非 grid：格子是原生 button，套 grid/gridcell 会破坏其按钮语义。 -->
+        <div
+          ref="gridEl"
+          class="gpa-heat-grid"
+          role="group"
+          :aria-label="i18n.analysisHeatTitle"
+          @keydown="onGridKeydown"
+        >
+          <button
             v-for="(cell, idx) in cells"
             :key="cell.date || `pad-${idx}`"
+            type="button"
             class="gpa-heat-cell"
-            :class="{ 'is-empty': !cell.date }"
+            :class="{ 'is-empty': !cell.date, 'is-selected': !!cell.date && cell.date === selectedDate }"
             :style="cell.style"
             :title="cell.tooltip"
+            :aria-label="cell.date ? cell.tooltip : undefined"
+            :aria-pressed="cell.date ? cell.date === selectedDate : undefined"
+            :tabindex="cell.date && idx === focusIndex ? 0 : -1"
+            :data-idx="idx"
+            @click="onCellClick(cell.date)"
           />
         </div>
       </div>
 
-      <!-- 图例：少 [0~4 级] 多 -->
+      <!-- 图例：少 [0~4 级] 多 + 当前分档口径说明 -->
       <div class="gpa-heat-legend">
         <!-- 图例文案："少" -->
         <span class="gpa-heat-legend-text">{{ i18n.analysisLess }}</span>
         <span
-          v-for="lvl in 5"
-          :key="lvl"
+          v-for="lvl in legendCells"
+          :key="lvl.level"
           class="gpa-heat-legend-cell"
-          :style="legendStyles[lvl - 1]"
+          :style="lvl.style"
+          :title="lvl.hint"
         />
         <!-- 图例文案："多" -->
         <span class="gpa-heat-legend-text">{{ i18n.analysisMore }}</span>
+        <span class="gpa-heat-scale-hint">{{ scaleHint }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import type { CommitHeatScaleMode } from "../../types"
+import { computed, ref, watch } from "vue"
 import { buildDayCell, formatLocalDate, heatCellColor } from "../../utils"
 import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS } from "../../types"
 
@@ -71,11 +88,22 @@ const props = defineProps<{
   weekStart: 0 | 1
   /** 热力主色（#RRGGBB） */
   color: string
+  /** 热力档位阈值（首项 0；自适应或固定由父级决定，与日历视图共用同一份以保证同日同色） */
+  thresholds: readonly number[]
+  /** 当前分档方式（仅用于图例右侧口径说明） */
+  scaleMode: CommitHeatScaleMode
+  /** 已选中日期（YYYY-MM-DD，空串 = 未选中） */
+  selectedDate: string
+}>()
+
+const emit = defineEmits<{
+  /** 点击某日格子（再次点击同日取消选中由父级处理） */
+  selectDay: [date: string]
 }>()
 
 /**
  * 周列 × 7 行单元格：起点回退到 weekStart 对齐，范围末尾补齐完整周（空单元格隐藏）。
- * 日格的样式与 tooltip 经 utils.buildDayCell 预计算（与日历视图同一口径）。
+ * 日格的样式与 tooltip 经 utils.buildDayCell 预计算（与日历视图同一口径、同一份阈值）。
  */
 const cells = computed<{ date: string, tooltip: string, style: Record<string, string> | undefined }[]>(() => {
   const [sy, sm, sd] = props.start.split("-").map(Number)
@@ -89,7 +117,7 @@ const cells = computed<{ date: string, tooltip: string, style: Record<string, st
   const cursor = new Date(start)
   while (cursor <= end) {
     const date = formatLocalDate(cursor)
-    list.push(buildDayCell(props.i18n, date, props.dayCounts.get(date) || 0, props.color))
+    list.push(buildDayCell(props.i18n, date, props.dayCounts.get(date) || 0, props.color, props.thresholds))
     cursor.setDate(cursor.getDate() + 1)
   }
   const remainder = list.length % 7
@@ -99,9 +127,20 @@ const cells = computed<{ date: string, tooltip: string, style: Record<string, st
 
 const totalWeeks = computed(() => Math.ceil(cells.value.length / 7))
 
-/** 图例色块（0~4 级）：style 对象预计算，与格子同一套取值口径 */
-const legendStyles = computed(() =>
-  [0, 1, 2, 3, 4].map((level) => ({ background: heatCellColor(level, props.color) })),
+/** 图例色块（0~4 级）：style 预计算 + 各级下界 tooltip（自适应档的下界随数据变化，不能写死） */
+const legendCells = computed(() =>
+  [0, 1, 2, 3, 4].map((level) => ({
+    level,
+    style: { background: heatCellColor(level, props.color) },
+    hint: level === 0
+      ? ""
+      : String(props.i18n.analysisHeatLevelRange || "").replace("{0}", String(props.thresholds[level] ?? "")),
+  })),
+)
+
+/** 图例右侧口径说明（解释「同样 3 次提交，换个范围深浅就变了」） */
+const scaleHint = computed(() =>
+  props.scaleMode === "auto" ? props.i18n.analysisHeatScaleAutoHint : props.i18n.analysisHeatScaleFixedHint,
 )
 
 /** 月份标签：周首格月份变化处落标签（key 含年月保证跨年范围去重） */
@@ -130,6 +169,61 @@ const weekdayLabels = computed(() => {
   const rows = [props.weekStart, (props.weekStart + 2) % 7, (props.weekStart + 4) % 7]
   return rows.map((d) => props.i18n[ANALYSIS_WEEKDAY_KEYS[d]] || "")
 })
+
+// ── 键盘可达：整张网格只占一个 Tab 位，方向键在格间移动焦点（365 个格子各自入 Tab 序会毁掉键盘体验）──
+
+const gridEl = ref<HTMLElement | null>(null)
+
+/** 焦点格下标（roving tabindex 的锚点） */
+const focusIndex = ref(-1)
+
+/** 最后一个有日期的格子下标（今日或范围内最后一天） */
+function lastDatedIndex(list: { date: string }[]): number {
+  for (let i = list.length - 1; i >= 0; i--) if (list[i].date) return i
+  return -1
+}
+
+watch(cells, (list) => {
+  // 范围/周起始变化后格子重建：原焦点格仍有效就保留，否则回落到最后一天
+  if (focusIndex.value >= 0 && list[focusIndex.value]?.date) return
+  focusIndex.value = lastDatedIndex(list)
+}, { immediate: true })
+
+/** 方向键：左/右跨周（∓7），上/下跨星期（∓1），Home/End 跳首尾；遇补齐空格继续按同方向找 */
+function onGridKeydown(e: KeyboardEvent) {
+  const step = e.key === "ArrowLeft"
+    ? -7
+    : e.key === "ArrowRight"
+      ? 7
+      : e.key === "ArrowUp"
+        ? -1
+        : e.key === "ArrowDown" ? 1 : 0
+  const list = cells.value
+  let target = -1
+  if (step !== 0) {
+    for (let i = focusIndex.value + step; i >= 0 && i < list.length; i += step) {
+      if (list[i].date) {
+        target = i
+        break
+      }
+    }
+  } else if (e.key === "Home") {
+    target = list.findIndex((c) => !!c.date)
+  } else if (e.key === "End") {
+    target = lastDatedIndex(list)
+  } else {
+    return
+  }
+  e.preventDefault()
+  if (target < 0) return
+  focusIndex.value = target
+  gridEl.value?.querySelector<HTMLElement>(`[data-idx="${target}"]`)?.focus()
+}
+
+/** 点击格子：空占位格不响应（is-empty 已 pointer-events: none，此处再兜一层） */
+function onCellClick(date: string) {
+  if (date) emit("selectDay", date)
+}
 </script>
 
 <style lang="scss">

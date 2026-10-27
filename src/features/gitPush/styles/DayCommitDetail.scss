@@ -1,0 +1,95 @@
+// 提交分析当日明细面板：标题行（日期 / 摘要 / 关闭）+ 提交列表（时间 | 项目 | 首行信息）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 面板容器：与月卡片同款描边 + 表面色，作为热力图/日历下方的「就地展开」层
+.gpa-day {
+  margin-top: $s-2;
+  padding: $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+}
+
+.gpa-day-head {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  margin-bottom: $s-1;
+}
+
+// 日期：等宽字体与热力图图例/月份标签同一视觉语言
+.gpa-day-date {
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+}
+
+.gpa-day-summary {
+  font-size: $t-2xs;
+  opacity: 0.55;
+}
+
+// 关闭按钮推到右端（几何与图标由共享 Button ghost+xsmall+dense 承担）
+.gpa-day-close {
+  margin-left: auto;
+}
+
+.gpa-day-empty {
+  margin: 0;
+  padding: $s-1 0;
+  font-size: $t-2xs;
+  opacity: 0.45;
+}
+
+// 列表：超高时内部滚动（单日几十条提交不至于把页面撑长）
+.gpa-day-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px; // 无对应 Token（内联明细面板限高）
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: $s-1;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: $r-px2;
+  }
+}
+
+// 行：时间 | 项目 | 提交信息（三列固定 + 1fr，项目名与信息各自省略）
+.gpa-day-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 96px) minmax(0, 1fr);
+  gap: $s-2;
+  align-items: baseline;
+  width: 100%;
+  padding: $s-px3 $s-1;
+  border: none;
+  border-radius: $r-sm;
+  background: transparent;
+  color: inherit;
+  font-size: $t-2xs;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.gpa-day-time {
+  font-family: $ff-mono;
+  opacity: 0.45;
+}
+
+.gpa-day-proj {
+  color: var(--b3-theme-on-surface-light);
+  @include text-ellipsis;
+}
+
+.gpa-day-msg {
+  @include text-ellipsis;
+}

@@ -67,6 +67,7 @@ export type { DayCellView } from "./analysis"
 export {
   buildDayCell,
   buildDayCountMap,
+  computeHeatThresholds,
   formatIsoDate,
   formatLocalDate,
   heatCellColor,

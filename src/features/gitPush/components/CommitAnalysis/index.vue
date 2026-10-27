@@ -126,11 +126,12 @@
               @view-project="emit('viewProject', $event)"
             />
 
-            <!-- 提交热力图 / 日历（日粒度提交分布的唯一出口：范围/视图/周起始/颜色可配） -->
+            <!-- 提交热力图 / 日历（日粒度提交分布的唯一出口：范围/视图/周起始/颜色/分档可配；点击格子展开当日明细） -->
             <HeatmapCalendarSection
               :i18n="i18n"
               :stats="stats"
               :view-settings="viewSettings"
+              @view-project="emit('viewProject', $event)"
             />
           </template>
         </template>

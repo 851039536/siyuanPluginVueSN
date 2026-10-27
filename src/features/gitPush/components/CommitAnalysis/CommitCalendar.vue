@@ -21,33 +21,41 @@
         >{{ w }}</span>
       </div>
 
-      <!-- 日格子：月初偏移空格 + 每日（未来日期弱化，今天描边） -->
+      <!-- 日格子：月初偏移空格 + 每日（未来日期弱化，今天描边，点击查看当日明细） -->
       <div class="gpa-cal-days">
         <span
           v-for="blank in m.offset"
           :key="`b${blank}`"
           class="gpa-cal-day is-blank"
         />
-        <div
+        <button
           v-for="d in m.days"
           :key="d.date"
+          type="button"
           class="gpa-cal-day"
-          :class="{ 'is-future': d.future, 'is-today': d.today }"
+          :class="{ 'is-future': d.future, 'is-today': d.today, 'is-selected': d.date === selectedDate }"
           :style="d.style"
           :title="d.tooltip"
+          :aria-label="d.tooltip"
+          :aria-pressed="d.date === selectedDate"
+          tabindex="-1"
+          @click="emit('selectDay', d.date)"
         >
           <span class="gpa-cal-day-num">{{ d.dayNum }}</span>
           <span
             v-if="d.count > 0"
             class="gpa-cal-day-count"
           >{{ d.count }}</span>
-        </div>
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+// 提交日历：月卡片网格，日格可点击钻取当日明细。
+// 键盘可达性由热力图承担（那边整张网格一个 Tab 位 + 方向键），此处日格 tabindex="-1" 只做鼠标/触摸入口，
+// 避免 365 个按钮各自入 Tab 序把键盘用户困在网格里。
 import { computed } from "vue"
 import { buildDayCell, formatLocalDate } from "../../utils"
 import { ANALYSIS_WEEKDAY_KEYS } from "../../types"
@@ -63,6 +71,15 @@ const props = defineProps<{
   weekStart: 0 | 1
   /** 热力主色（#RRGGBB） */
   color: string
+  /** 热力档位阈值（与热力图共用同一份，保证切换视图后同一天颜色不变） */
+  thresholds: readonly number[]
+  /** 已选中日期（YYYY-MM-DD，空串 = 未选中） */
+  selectedDate: string
+}>()
+
+const emit = defineEmits<{
+  /** 点击某日格子（再次点击同日取消选中由父级处理） */
+  selectDay: [date: string]
 }>()
 
 /** 按 weekStart 排序的星期表头（周一开头或周日开头） */
@@ -113,9 +130,9 @@ const months = computed<MonthCell[]>(() => {
       const date = formatLocalDate(new Date(year, month, d))
       const count = props.dayCounts.get(date) || 0
       total += count
-      // 日格样式与 tooltip 经 utils.buildDayCell 预计算（与热力图同一口径）
+      // 日格样式与 tooltip 经 utils.buildDayCell 预计算（与热力图同一口径、同一份阈值）
       days.push({
-        ...buildDayCell(props.i18n, date, count, props.color),
+        ...buildDayCell(props.i18n, date, count, props.color, props.thresholds),
         dayNum: d,
         // 当前月内超出范围末尾（今天之后）的日期弱化展示
         future: date > endStr,

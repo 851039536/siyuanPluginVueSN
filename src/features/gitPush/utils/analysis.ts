@@ -49,13 +49,48 @@ export function buildDayCountMap(entries: CommitAnalysisEntry[]): Map<string, nu
   return countByDay
 }
 
-/** 热力等级：按 HEAT_LEVEL_THRESHOLDS 将日提交数映射为 0~4 级（0 次 → 0，≥12 次 → 4） */
-export function heatLevel(count: number): number {
+/**
+ * 热力等级：把日提交数映射为 0~4 级（数组下标即等级，首项恒为 0）。
+ * thresholds 缺省用固定档 HEAT_LEVEL_THRESHOLDS；自适应档由 computeHeatThresholds 产出同形数组。
+ */
+export function heatLevel(count: number, thresholds: readonly number[] = HEAT_LEVEL_THRESHOLDS): number {
   let level = 0
-  for (let i = HEAT_LEVEL_THRESHOLDS.length - 1; i > 0; i--) {
-    if (count >= HEAT_LEVEL_THRESHOLDS[i]) { level = i; break }
+  for (let i = thresholds.length - 1; i > 0; i--) {
+    if (count >= thresholds[i]) { level = i; break }
   }
   return level
+}
+
+/** 自适应分档所用的分位点（P50/P75/P90/P95，统计对象是范围内**非零日**——零值日本身恒为 0 级，参与分位会整体压低档位） */
+export const HEAT_SCALE_QUANTILES = [0.5, 0.75, 0.9, 0.95] as const
+
+/**
+ * 自适应热力阈值：按「范围内非零日提交数」的分位点生成 4 档阈值。
+ *
+ * 动机：固定阈值 1/3/6/12 在多个项目合并统计时几乎每格都 ≥12，颜色退化为单色；
+ * 改用分位数后，深浅表达的是「相对自己这段时间的活跃度」，分辨率回到四档。
+ *
+ * 返回数组与 HEAT_LEVEL_THRESHOLDS 同形（首项 0），可直接喂给 heatLevel。
+ * 三条兜底规则：
+ * 1. 阈值钳制在观测最大值以内 —— 否则末尾档位可能高过最大值，「最热的一天」永远到不了 4 级；
+ * 2. 档位按严格递增推进 —— 分位点在集中分布下会塌陷（多个分位取到同一个值），
+ *    逐级 +1 才能分出深浅（如「1 次 × 365 天 + 某天 100 次」时，普通日仍浅、峰值日照样最深）；
+ * 3. 若四档仍塌成同一级（所有非零日次数完全相同）则退回固定档 —— 此时整片格子同色，
+ *    不如沿用固定阈值给出「活动量」的绝对感受。
+ * 无非零日时同样退回固定档（此时全为 0 级，取值不影响观感）。
+ */
+export function computeHeatThresholds(counts: ReadonlyArray<number>): number[] {
+  const nonZero = counts.filter((c) => c > 0).sort((a, b) => a - b)
+  if (nonZero.length === 0) return [...HEAT_LEVEL_THRESHOLDS]
+  const max = nonZero[nonZero.length - 1]
+  const thresholds = [0]
+  for (const q of HEAT_SCALE_QUANTILES) {
+    // 最近秩法（nearest-rank）：下标至少取到末位，避免 q*len 向上取整后越界
+    const picked = nonZero[Math.min(nonZero.length - 1, Math.ceil(q * nonZero.length) - 1)]
+    thresholds.push(Math.min(max, Math.max(picked, thresholds[thresholds.length - 1] + 1)))
+  }
+  if (thresholds[1] === thresholds[4]) return [...HEAT_LEVEL_THRESHOLDS]
+  return thresholds
 }
 
 /** 解析热力图/日历显示范围：最近一年 = 今天−364 天 ~ 今天；年份 N = N-01-01 ~ 今年今天 / N-12-31 */
@@ -113,17 +148,19 @@ export interface DayCellView {
  *
  * 两个组件对同一份 dayCounts 渲染出不同形态（周列网格 vs 月卡片），
  * 但「某一天显示什么颜色、什么 tooltip」的口径必须一致，故收敛到此处。
+ * thresholds 由调用方统一传入（同一份分档喂给两个视图，避免切换视图时同一天换颜色）。
  */
 export function buildDayCell(
   i18n: Record<string, any>,
   date: string,
   count: number,
   color: string,
+  thresholds: readonly number[] = HEAT_LEVEL_THRESHOLDS,
 ): DayCellView {
   return {
     date,
     count,
-    style: { background: heatCellColor(heatLevel(count), color) },
+    style: { background: heatCellColor(heatLevel(count, thresholds), color) },
     tooltip: heatCellTooltip(i18n, date, count),
   }
 }

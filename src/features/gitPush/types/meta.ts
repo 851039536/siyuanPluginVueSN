@@ -496,6 +496,9 @@ export interface LineStatsCache {
   summary?: LineStatsSummary
 }
 
+/** 热力分级方式：auto=按当前范围内非零日的分位数自适应；fixed=固定阈值 HEAT_LEVEL_THRESHOLDS */
+export type CommitHeatScaleMode = "auto" | "fixed"
+
 /** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */
 export interface CommitAnalysisViewSettings {
   /** 视图：热力图 / 日历 */
@@ -506,9 +509,14 @@ export interface CommitAnalysisViewSettings {
   weekStart: 0 | 1
   /** 热力主色（#RRGGBB，格子由主色按等级加透明度渲染） */
   color: string
+  /**
+   * 热力分级方式（旧数据缺该字段时按默认 auto 兜底）。
+   * auto 解决「多项目合并后固定阈值 1/3/6/12 让大片格子顶到最高级、颜色失去分辨率」。
+   */
+  heatScale: CommitHeatScaleMode
 }
 
-/** 热力等级阈值：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */
+/** 热力等级阈值（固定档）：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */
 export const HEAT_LEVEL_THRESHOLDS = [0, 1, 3, 6, 12] as const
 
 /**

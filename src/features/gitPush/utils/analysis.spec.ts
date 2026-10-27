@@ -4,11 +4,22 @@
 // UI 依据 totalGroups > rows.length 决定是否显示「仅显示前 N 名（共 M）」——
 // 若该契约破裂，用户会看到排行各行次数之和小于总提交数而被误读为统计错误。
 import { describe, expect, it } from "vitest"
-import { buildDayCell, computeHeatThresholds, HEAT_SCALE_QUANTILES, heatLevel, isDayKeyInBucket, rankByCountWithTotal } from "./analysis"
+import {
+  buildDayCell,
+  buildDayMetricMap,
+  computeHeatThresholds,
+  HEAT_SCALE_QUANTILES,
+  heatLevel,
+  isDayKeyInBucket,
+  rankByCountWithTotal,
+  summarizeHeatRange,
+} from "./analysis"
 
 describe("buildDayCell（热力图/日历共用的日格口径）", () => {
   const i18n: Record<string, any> = {
-    analysisHeatTooltip: "{0}（{1}）：{2} 次提交",
+    analysisHeatTooltip: "{0}（{1}）：{2} {3}",
+    analysisHeatUnitCommits: "次提交",
+    analysisHeatUnitProjects: "个项目",
     analysisWeekdayMon: "周一",
     analysisWeekdayTue: "周二",
     analysisWeekdayWed: "周三",
@@ -57,8 +68,13 @@ describe("buildDayCell（热力图/日历共用的日格口径）", () => {
   it("传入自适应阈值时按新档位取色（同一天可因档位不同而降级）", () => {
     // 固定档下 5 次属 level 2（≥3），自适应档 [0,1,2,3,4] 下升到 level 4
     const fixed = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6").style.background
-    const auto = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6", [0, 1, 2, 3, 4]).style.background
+    const auto = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6", { thresholds: [0, 1, 2, 3, 4] }).style.background
     expect(auto).not.toBe(fixed)
+  })
+
+  it("tooltip 量词随指标口径替换（{3} 由 unitKey 决定）", () => {
+    expect(buildDayCell(i18n, "2026-08-03", 3, "#3b82f6").tooltip).toContain("次提交")
+    expect(buildDayCell(i18n, "2026-08-03", 3, "#3b82f6", { unitKey: "analysisHeatUnitProjects" }).tooltip).toContain("个项目")
   })
 })
 
@@ -178,5 +194,91 @@ describe("rankByCountWithTotal", () => {
     const { rows, totalGroups } = rankByCountWithTotal(items, (x) => x, 20)
     expect(totalGroups).toBe(3)
     expect(rows.map((r) => r.count)).toEqual([1, 1, 1])
+  })
+})
+
+describe("buildDayMetricMap（热力指标切换的聚合口径）", () => {
+  /** 构造条目（只关心 date / projectId / author 三个字段） */
+  function entry(date: string, projectId: string, author: string) {
+    return {
+      projectId,
+      projectName: projectId,
+      hash: `${projectId}-${date}-${author}`,
+      message: "feat: x",
+      author,
+      date,
+    }
+  }
+
+  const entries = [
+    entry("2026-08-03T09:00:00", "p1", "alice"),
+    entry("2026-08-03T14:00:00", "p1", "alice"),
+    entry("2026-08-03T20:00:00", "p2", "bob"),
+    entry("2026-08-04T10:00:00", "p1", "alice"),
+  ]
+
+  it("commits：按当日提交条数计（同一人同项目两条也算 2）", () => {
+    const map = buildDayMetricMap(entries, "commits")
+    expect(map.get("2026-08-03")).toBe(3)
+    expect(map.get("2026-08-04")).toBe(1)
+  })
+
+  it("projects：按当日去重项目数计", () => {
+    const map = buildDayMetricMap(entries, "projects")
+    expect(map.get("2026-08-03")).toBe(2)
+    expect(map.get("2026-08-04")).toBe(1)
+  })
+
+  it("authors：按当日去重作者数计", () => {
+    const map = buildDayMetricMap(entries, "authors")
+    expect(map.get("2026-08-03")).toBe(2)
+    expect(map.get("2026-08-04")).toBe(1)
+  })
+
+  it("无效日期被跳过，不产生 NaN 键", () => {
+    const map = buildDayMetricMap([entry("not-a-date", "p1", "alice")], "authors")
+    expect(map.size).toBe(0)
+  })
+})
+
+describe("summarizeHeatRange（标题行摘要：连续 / 最长 / 合计）", () => {
+  function toMap(pairs: [string, number][]) {
+    return new Map(pairs)
+  }
+
+  it("连续天数从范围末尾往回数，遇到断档即停", () => {
+    const map = toMap([["2026-08-01", 2], ["2026-08-02", 0], ["2026-08-03", 1], ["2026-08-04", 4]])
+    const s = summarizeHeatRange(map, "2026-08-01", "2026-08-04")
+    expect(s.currentStreak).toBe(2) // 08-03、08-04
+    expect(s.longestStreak).toBe(2)
+    expect(s.activeDays).toBe(3)
+    expect(s.total).toBe(7)
+  })
+
+  it("末尾无数据时当前连续为 0，但最长连续仍取历史最长段", () => {
+    const map = toMap([["2026-08-01", 1], ["2026-08-02", 1], ["2026-08-03", 1]])
+    const s = summarizeHeatRange(map, "2026-08-01", "2026-08-05")
+    expect(s.currentStreak).toBe(0)
+    expect(s.longestStreak).toBe(3)
+  })
+
+  it("中间断档时最长连续取最长的一段", () => {
+    const map = toMap([["2026-08-01", 1], ["2026-08-02", 1], ["2026-08-04", 1]])
+    const s = summarizeHeatRange(map, "2026-08-01", "2026-08-04")
+    expect(s.longestStreak).toBe(2)
+    expect(s.currentStreak).toBe(1)
+  })
+
+  it("只统计范围内的天（范围外的键不计入合计与连续）", () => {
+    const map = toMap([["2026-07-31", 99], ["2026-08-01", 1]])
+    const s = summarizeHeatRange(map, "2026-08-01", "2026-08-01")
+    expect(s.total).toBe(1)
+    expect(s.activeDays).toBe(1)
+    expect(s.currentStreak).toBe(1)
+  })
+
+  it("空范围（起止同一天且无数据）返回全零", () => {
+    const s = summarizeHeatRange(new Map(), "2026-08-01", "2026-08-01")
+    expect(s).toEqual({ total: 0, activeDays: 0, currentStreak: 0, longestStreak: 0 })
   })
 })

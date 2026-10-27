@@ -515,13 +515,14 @@ const DEFAULT_LINE_STATS_CACHE: LineStatsCache = {
   selectedExtensions: [],
 }
 
-/** 提交分析显示设置默认值（热力图 + 最近一年 + 周一起始 + GitHub 绿 + 自适应分级） */
+/** 提交分析显示设置默认值（热力图 + 最近一年 + 周一起始 + GitHub 绿 + 自适应分级 + 提交数指标） */
 export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
   view: "heatmap",
   range: "lastYear",
   weekStart: 1,
   color: "#2ea44f",
   heatScale: "auto",
+  heatMetric: "commits",
 }
 
 /** 提交规则检查偏好默认值（默认过滤全部项目 + 规则配置全默认：过短阈值 10 字 + 可选规则全开） */

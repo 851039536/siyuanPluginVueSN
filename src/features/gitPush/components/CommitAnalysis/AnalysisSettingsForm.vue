@@ -53,6 +53,24 @@
       />
     </div>
 
+    <!-- 设置项：热力指标（格子深浅统计什么：提交数 / 项目数 / 活跃作者，三者同一份抓取数据） -->
+    <div class="gpa-settings-row">
+      <!-- 设置项标签："指标" -->
+      <span class="gpa-settings-label">{{ i18n.analysisHeatMetric }}</span>
+      <div class="gpa-settings-seg">
+        <Button
+          v-for="m in metricOptions"
+          :key="m.value"
+          class="gpa-settings-seg-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="viewSettings.heatMetric === m.value"
+          @click="update({ heatMetric: m.value })"
+        >{{ m.label }}</Button>
+      </div>
+    </div>
+
     <!-- 设置项：分级方式（自适应 = 按范围内非零日分位数；固定 = 1/3/6/12 次） -->
     <div class="gpa-settings-row">
       <span
@@ -100,6 +118,7 @@ import { computed, ref, watch } from "vue"
 import Button from "@/components/Button.vue"
 import ColorField from "@/components/ColorField.vue"
 import Select from "@/components/Select.vue"
+import { COMMIT_HEAT_METRIC_META } from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -137,6 +156,14 @@ const scaleHint = computed(() =>
   props.viewSettings.heatScale === "auto"
     ? props.i18n.analysisHeatScaleAutoHint
     : props.i18n.analysisHeatScaleFixedHint,
+)
+
+/** 热力指标三档（顺序即按钮顺序：提交数 → 项目数 → 活跃作者，由粗到细） */
+const metricOptions = computed(() =>
+  (["commits", "projects", "authors"] as const).map((value) => ({
+    value,
+    label: props.i18n[COMMIT_HEAT_METRIC_META[value].labelKey],
+  })),
 )
 
 function onRangeChange(v: string | number | boolean | null) {

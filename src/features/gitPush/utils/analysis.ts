@@ -1,7 +1,7 @@
 // gitPush 提交分析纯函数：本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
 // 直连 types/meta（纯类型与常量）而非 "../types" 桶：桶含 GitPushManager 等运行时模块，
 // 会把运行时 siyuan 依赖拉进模块图，使本纯函数模块无法在 Node 单测环境加载。
-import type { CommitAnalysisEntry, CommitRuleReasonKey } from "../types/meta"
+import type { CommitAnalysisEntry, CommitHeatMetric, CommitRuleReasonKey } from "../types/meta"
 import { ANALYSIS_WEEKDAY_KEYS, COMMIT_RULE_REASON_META, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
 
 /** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —；报告视图文件详情/活跃范围共用） */
@@ -47,6 +47,82 @@ export function buildDayCountMap(entries: CommitAnalysisEntry[]): Map<string, nu
     countByDay.set(key, (countByDay.get(key) || 0) + 1)
   }
   return countByDay
+}
+
+/**
+ * 按指标口径聚合日值（热力图指标切换的唯一入口）：
+ * - commits：当日提交条数（复用 buildDayCountMap）；
+ * - projects / authors：当日**去重**后的项目数 / 作者数（同一天同一个人提交十次仍算 1）。
+ * 三者共用同一次 commit log 抓取结果，切换指标不额外跑 git。
+ */
+export function buildDayMetricMap(entries: CommitAnalysisEntry[], metric: CommitHeatMetric): Map<string, number> {
+  if (metric === "commits") return buildDayCountMap(entries)
+  const distinctByDay = new Map<string, Set<string>>()
+  for (const e of entries) {
+    const d = new Date(e.date)
+    if (Number.isNaN(d.getTime())) continue
+    const key = formatLocalDate(d)
+    const value = metric === "projects" ? e.projectId : e.author
+    const set = distinctByDay.get(key)
+    if (set) set.add(value)
+    else distinctByDay.set(key, new Set([value]))
+  }
+  const counts = new Map<string, number>()
+  for (const [day, set] of distinctByDay) counts.set(day, set.size)
+  return counts
+}
+
+/** 范围内热力摘要（标题行右侧三个数字；口径跟随当前指标，故字段名不带"提交"字样） */
+export interface HeatRangeSummary {
+  /** 范围内总值（当前指标口径） */
+  total: number
+  /** 有数据的天数 */
+  activeDays: number
+  /** 尾部连续天数：从范围末尾（通常是今天）往回数 */
+  currentStreak: number
+  /** 范围内最长连续天数 */
+  longestStreak: number
+}
+
+/**
+ * 统计范围内的热力摘要（连续天数 / 最长连续 / 合计）。
+ *
+ * 「当前连续」按**范围末尾**往回数，而不是写死「今天」：范围为历史年份时（如 2024 至今的 2024 段），
+ * 以今天为准会把整段历史都算成断档，反而误导；范围末尾与今日一致时语义就是「到今天的连续」。
+ */
+export function summarizeHeatRange(
+  dayCounts: Map<string, number>,
+  start: string,
+  end: string,
+): HeatRangeSummary {
+  const [sy, sm, sd] = start.split("-").map(Number)
+  const [ey, em, ed] = end.split("-").map(Number)
+  const cursor = new Date(sy, sm - 1, sd)
+  const last = new Date(ey, em - 1, ed)
+  const active: boolean[] = []
+  let total = 0
+  let activeDays = 0
+  let longest = 0
+  let run = 0
+  while (cursor <= last) {
+    const count = dayCounts.get(formatLocalDate(cursor)) || 0
+    total += count
+    if (count > 0) {
+      activeDays++
+      run++
+      if (run > longest) longest = run
+    } else {
+      run = 0
+    }
+    active.push(count > 0)
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  let currentStreak = 0
+  for (let i = active.length - 1; i >= 0; i--) {
+    if (!active[i]) break
+    currentStreak++
+  }
+  return { total, activeDays, currentStreak, longestStreak: longest }
 }
 
 /**
@@ -115,15 +191,22 @@ export function heatCellColor(level: number, main: string): string {
 
 /**
  * 热力图/日历格子 tooltip："2026-08-01（周六）：3 次提交"。
- * 两个视图共用同一文案口径（i18n 键 analysisHeatTooltip 占位 {0}日期 {1}星期 {2}次数）。
+ * 两个视图共用同一文案口径（i18n 键 analysisHeatTooltip 占位 {0}日期 {1}星期 {2}数值 {3}量词）。
+ * 量词随指标口径变化（次提交 / 个项目 / 位作者），故由调用方传 unitKey。
  */
-export function heatCellTooltip(i18n: Record<string, any>, date: string, count: number): string {
+export function heatCellTooltip(
+  i18n: Record<string, any>,
+  date: string,
+  count: number,
+  unitKey = "analysisHeatUnitCommits",
+): string {
   const [y, m, d] = date.split("-").map(Number)
   const dow = new Date(y, m - 1, d).getDay()
   return String(i18n.analysisHeatTooltip || "")
     .replace("{0}", date)
     .replace("{1}", i18n[ANALYSIS_WEEKDAY_KEYS[dow]] || "")
     .replace("{2}", String(count))
+    .replace("{3}", i18n[unitKey] || "")
 }
 
 /** 热力图/日历共用：单个日格的展示数据（样式 + tooltip + 计数） */
@@ -142,26 +225,35 @@ export interface DayCellView {
   tooltip: string
 }
 
+/** buildDayCell 的可选项（分档阈值与 tooltip 量词都由调用方按当前视图设置决定） */
+export interface DayCellOptions {
+  /** 分档阈值（首项 0；缺省固定档） */
+  thresholds?: readonly number[]
+  /** tooltip 量词的 i18n 键（缺省提交数口径 analysisHeatUnitCommits） */
+  unitKey?: string
+}
+
 /**
  * 构建单个日格的展示数据（热力图与日历共用，消除两处重复的
  * `heatLevel → heatCellColor` + `heatCellTooltip` 组合）。
  *
  * 两个组件对同一份 dayCounts 渲染出不同形态（周列网格 vs 月卡片），
  * 但「某一天显示什么颜色、什么 tooltip」的口径必须一致，故收敛到此处。
- * thresholds 由调用方统一传入（同一份分档喂给两个视图，避免切换视图时同一天换颜色）。
+ * 阈值与量词由调用方统一传入（同一份分档喂给两个视图，避免切换视图时同一天换颜色）。
  */
 export function buildDayCell(
   i18n: Record<string, any>,
   date: string,
   count: number,
   color: string,
-  thresholds: readonly number[] = HEAT_LEVEL_THRESHOLDS,
+  opts: DayCellOptions = {},
 ): DayCellView {
+  const { thresholds = HEAT_LEVEL_THRESHOLDS, unitKey } = opts
   return {
     date,
     count,
     style: { background: heatCellColor(heatLevel(count, thresholds), color) },
-    tooltip: heatCellTooltip(i18n, date, count),
+    tooltip: heatCellTooltip(i18n, date, count, unitKey),
   }
 }
 

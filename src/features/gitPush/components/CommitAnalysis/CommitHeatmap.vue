@@ -1,4 +1,4 @@
-<!-- 提交热力图：GitHub 风格贡献图，周为列 × 7 天为行，格子按日提交数分级着色（配色/周起始/范围/分档方式由设置驱动）；点击格子查看当日提交 -->
+<!-- 提交热力图：GitHub 风格贡献图，周为列 × 7 天为行，格子按当日指标值分级着色（配色/周起始/范围/指标/分档方式由设置驱动）；点击格子查看当日提交 -->
 <template>
   <div
     class="gpa-heat"
@@ -65,21 +65,24 @@
         />
         <!-- 图例文案："多" -->
         <span class="gpa-heat-legend-text">{{ i18n.analysisMore }}</span>
-        <span class="gpa-heat-scale-hint">{{ scaleHint }}</span>
+        <span
+          class="gpa-heat-scale-hint"
+          :title="scaleHintTitle"
+        >{{ scaleHint }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CommitHeatScaleMode } from "../../types"
+import type { CommitHeatMetric, CommitHeatScaleMode } from "../../types"
 import { computed, ref, watch } from "vue"
 import { buildDayCell, formatLocalDate, heatCellColor } from "../../utils"
-import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS } from "../../types"
+import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS, COMMIT_HEAT_METRIC_META } from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 日计数映射（YYYY-MM-DD → 提交数，buildDayCountMap 产出） */
+  /** 日值映射（YYYY-MM-DD → 当日指标值，buildDayMetricMap 产出；指标可为提交数/项目数/作者数） */
   dayCounts: Map<string, number>
   /** 范围起止（YYYY-MM-DD，resolveAnalysisRange 格式化产出） */
   start: string
@@ -90,8 +93,10 @@ const props = defineProps<{
   color: string
   /** 热力档位阈值（首项 0；自适应或固定由父级决定，与日历视图共用同一份以保证同日同色） */
   thresholds: readonly number[]
-  /** 当前分档方式（仅用于图例右侧口径说明） */
+  /** 当前分档方式（图例右侧口径说明） */
   scaleMode: CommitHeatScaleMode
+  /** 当前指标口径（决定 tooltip 量词与图例文案） */
+  metric: CommitHeatMetric
   /** 已选中日期（YYYY-MM-DD，空串 = 未选中） */
   selectedDate: string
 }>()
@@ -117,7 +122,10 @@ const cells = computed<{ date: string, tooltip: string, style: Record<string, st
   const cursor = new Date(start)
   while (cursor <= end) {
     const date = formatLocalDate(cursor)
-    list.push(buildDayCell(props.i18n, date, props.dayCounts.get(date) || 0, props.color, props.thresholds))
+    list.push(buildDayCell(props.i18n, date, props.dayCounts.get(date) || 0, props.color, {
+      thresholds: props.thresholds,
+      unitKey: COMMIT_HEAT_METRIC_META[props.metric].unitKey,
+    }))
     cursor.setDate(cursor.getDate() + 1)
   }
   const remainder = list.length % 7
@@ -127,19 +135,29 @@ const cells = computed<{ date: string, tooltip: string, style: Record<string, st
 
 const totalWeeks = computed(() => Math.ceil(cells.value.length / 7))
 
-/** 图例色块（0~4 级）：style 预计算 + 各级下界 tooltip（自适应档的下界随数据变化，不能写死） */
-const legendCells = computed(() =>
-  [0, 1, 2, 3, 4].map((level) => ({
+/** 图例色块（0~4 级）：style 预计算 + 各级下界 tooltip（自适应档的下界随数据与指标变化，不能写死） */
+const legendCells = computed(() => {
+  const unit = props.i18n[COMMIT_HEAT_METRIC_META[props.metric].unitKey] || ""
+  return [0, 1, 2, 3, 4].map((level) => ({
     level,
     style: { background: heatCellColor(level, props.color) },
     hint: level === 0
       ? ""
-      : String(props.i18n.analysisHeatLevelRange || "").replace("{0}", String(props.thresholds[level] ?? "")),
-  })),
-)
+      : String(props.i18n.analysisHeatLevelRange || "")
+          .replace("{0}", String(props.thresholds[level] ?? ""))
+          .replace("{1}", unit),
+  }))
+})
 
-/** 图例右侧口径说明（解释「同样 3 次提交，换个范围深浅就变了」） */
-const scaleHint = computed(() =>
+/** 图例右侧口径说明：「项目数 · 自适应」——既交代格子表达什么，也交代深浅怎么分 */
+const scaleHint = computed(() => {
+  const meta = COMMIT_HEAT_METRIC_META[props.metric]
+  const mode = props.scaleMode === "auto" ? props.i18n.analysisHeatScaleAuto : props.i18n.analysisHeatScaleFixed
+  return `${props.i18n[meta.labelKey] || ""} · ${mode || ""}`
+})
+
+/** 口径说明的完整版（hover 展示，避免长文案挤压图例行） */
+const scaleHintTitle = computed(() =>
   props.scaleMode === "auto" ? props.i18n.analysisHeatScaleAutoHint : props.i18n.analysisHeatScaleFixedHint,
 )
 

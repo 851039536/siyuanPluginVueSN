@@ -67,6 +67,7 @@ export type { DayCellView } from "./analysis"
 export {
   buildDayCell,
   buildDayCountMap,
+  buildDayMetricMap,
   computeHeatThresholds,
   formatIsoDate,
   formatLocalDate,
@@ -77,7 +78,9 @@ export {
   resolveAnalysisRange,
   ruleReasonDesc,
   ruleReasonText,
+  summarizeHeatRange,
 } from "./analysis"
+export type { DayCellOptions, HeatRangeSummary } from "./analysis"
 
 export {
   activityLevel,

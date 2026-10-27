@@ -13,7 +13,7 @@
   top: 100%;
   right: 0;
   margin-top: $s-px6;
-  min-width: 200px; // 无对应 Token（浮层最小宽度）
+  min-width: 232px; // 容得下「指标」三档分段控件（提交数/项目数/活跃作者）；无对应 Token（浮层最小宽度）
   gap: $s-1;
 }
 

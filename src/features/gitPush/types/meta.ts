@@ -499,6 +499,19 @@ export interface LineStatsCache {
 /** 热力分级方式：auto=按当前范围内非零日的分位数自适应；fixed=固定阈值 HEAT_LEVEL_THRESHOLDS */
 export type CommitHeatScaleMode = "auto" | "fixed"
 
+/**
+ * 热力指标口径：格子的深浅统计什么。
+ * 三者都来自同一次 commit log 抓取（entries 已含 author / projectId），切换不额外跑 git。
+ */
+export type CommitHeatMetric = "commits" | "projects" | "authors"
+
+/** 热力指标元数据（labelKey = 图例/设置文案，unitKey = 格子 tooltip 的量词） */
+export const COMMIT_HEAT_METRIC_META: Record<CommitHeatMetric, { labelKey: string, unitKey: string }> = {
+  commits: { labelKey: "analysisHeatMetricCommits", unitKey: "analysisHeatUnitCommits" },
+  projects: { labelKey: "analysisHeatMetricProjects", unitKey: "analysisHeatUnitProjects" },
+  authors: { labelKey: "analysisHeatMetricAuthors", unitKey: "analysisHeatUnitAuthors" },
+}
+
 /** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */
 export interface CommitAnalysisViewSettings {
   /** 视图：热力图 / 日历 */
@@ -514,6 +527,8 @@ export interface CommitAnalysisViewSettings {
    * auto 解决「多项目合并后固定阈值 1/3/6/12 让大片格子顶到最高级、颜色失去分辨率」。
    */
   heatScale: CommitHeatScaleMode
+  /** 热力指标口径（旧数据缺该字段时按默认 commits 兜底） */
+  heatMetric: CommitHeatMetric
 }
 
 /** 热力等级阈值（固定档）：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */

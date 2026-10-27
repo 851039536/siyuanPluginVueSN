@@ -60,6 +60,21 @@
   letter-spacing: 0;
 }
 
+// 热力图标题行右侧摘要（连续 / 最长 / 合计）：推到行尾，等宽数字避免刷新时宽度抖动
+.gpa-heat-stats {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.45;
+}
+
 // ── 项目提交排行：徽章式排行行（名次 | 项目名 | 次数徽章 | 占比）──
 // 宽度全部交给 grid 列模板（项目名列 1fr 吸收剩余），不做任何 calc 宽度推算。
 // 历史教训：原「细长条形 + 百分比」方案要用 calc 把轨道算成「可用空间的 80%」，

@@ -7,6 +7,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: $s-2;
+  // 拖拽框选时避免选中页面文字
+  user-select: none;
 }
 
 .gpa-cal-month {
@@ -95,7 +97,13 @@
     outline-offset: 1px;
   }
 
-  // 选中格（点击后展开当日明细；与「今天」同为描边语义，故今天被选中时观感不变）
+  // 区间内的格子（框选后除端点以外的部分）：内阴影圈出范围。
+  // 用 box-shadow 而非 outline：日历里 outline 已被「今天」与端点选中态占用，会互相覆盖。
+  &.is-in-range {
+    box-shadow: inset 0 0 0 1px var(--b3-theme-primary);
+  }
+
+  // 选中格（单选的一天或区间端点：点击后展开明细；与「今天」同为描边语义，故今天被选中时观感不变）
   &.is-selected {
     outline: 2px solid var(--b3-theme-primary);
     outline-offset: 1px;

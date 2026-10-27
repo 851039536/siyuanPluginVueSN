@@ -33,13 +33,20 @@
           :key="d.date"
           type="button"
           class="gpa-cal-day"
-          :class="{ 'is-future': d.future, 'is-today': d.today, 'is-selected': d.date === selectedDate }"
+          :class="{
+            'is-future': d.future,
+            'is-today': d.today,
+            'is-selected': isEndpoint(d.date),
+            'is-in-range': isInRange(d.date),
+          }"
           :style="d.style"
           :title="d.tooltip"
           :aria-label="d.tooltip"
-          :aria-pressed="d.date === selectedDate"
+          :aria-pressed="isInRange(d.date)"
           tabindex="-1"
-          @click="emit('selectDay', d.date)"
+          @mousedown="drag.onDown(d.date, $event)"
+          @click="onCellClick(d.date, $event)"
+          @mouseenter="drag.onEnter(d.date)"
         >
           <span class="gpa-cal-day-num">{{ d.dayNum }}</span>
           <span
@@ -58,6 +65,7 @@
 // 避免 365 个按钮各自入 Tab 序把键盘用户困在网格里。
 import type { CommitHeatMetric } from "../../types"
 import { computed } from "vue"
+import { useDayDragSelect } from "../../composables/useDayDragSelect"
 import { buildDayCell, formatLocalDate } from "../../utils"
 import { ANALYSIS_WEEKDAY_KEYS, COMMIT_HEAT_METRIC_META } from "../../types"
 
@@ -76,14 +84,42 @@ const props = defineProps<{
   thresholds: readonly number[]
   /** 当前指标口径（决定格子 tooltip 的量词） */
   metric: CommitHeatMetric
-  /** 已选中日期（YYYY-MM-DD，空串 = 未选中） */
-  selectedDate: string
+  /** 选中区间起（YYYY-MM-DD，空串 = 未选中；已归一化为 start ≤ end） */
+  selStart: string
+  /** 选中区间止（与 selStart 相同即单选一天） */
+  selEnd: string
 }>()
 
 const emit = defineEmits<{
-  /** 点击某日格子（再次点击同日取消选中由父级处理） */
-  selectDay: [date: string]
+  /** 单击日格：extend=true（Shift）时以当前锚点为另一端扩展成区间 */
+  pick: [date: string, extend: boolean]
+  /** 拖拽起锚 */
+  dragStart: [date: string]
+  /** 拖拽掠过另一日 */
+  dragTo: [date: string]
 }>()
+
+/** 拖拽选区间：与热力图共用同一套状态机（日历日格更大，跨月卡拖动同样成立） */
+const drag = useDayDragSelect({
+  onStart: (date) => emit("dragStart", date),
+  onExtend: (date) => emit("dragTo", date),
+})
+
+/** 是否为区间端点（单选一天时两端重合，只有一个描边） */
+function isEndpoint(date: string): boolean {
+  return !!props.selStart && (date === props.selStart || date === props.selEnd)
+}
+
+/** 是否落在选中区间内（闭区间，端点也算在内） */
+function isInRange(date: string): boolean {
+  return !!props.selStart && date >= props.selStart && date <= props.selEnd
+}
+
+/** 点击日格：拖拽收尾时浏览器会补发一次 click，必须丢掉（否则区间被取消） */
+function onCellClick(date: string, e: MouseEvent) {
+  if (drag.suppressClick.value) return
+  emit("pick", date, e.shiftKey)
+}
 
 /** 按 weekStart 排序的星期表头（周一开头或周日开头） */
 const weekhead = computed(() => {

@@ -1,0 +1,136 @@
+// 提交分析区间统计面板：标题行（区间 / 跨度 / 关闭）+ 汇总格 + 最活跃一天 + 项目/作者双列分布
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 容器：与当日明细面板同款（描边 + 表面色 + 就地展开），两面板不会同时出现
+.gpa-range {
+  margin-top: $s-2;
+  padding: $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+}
+
+.gpa-range-head {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  margin-bottom: $s-2;
+}
+
+// 区间起止：等宽字体（与热力图图例/月份标签同一视觉语言，数字宽度稳定不抖动）
+.gpa-range-span {
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+}
+
+.gpa-range-days {
+  font-size: $t-2xs;
+  opacity: 0.55;
+}
+
+// 关闭按钮推到右端（几何与图标由共享 Button ghost+xsmall+dense 承担）
+.gpa-range-close {
+  margin-left: auto;
+}
+
+.gpa-range-empty {
+  margin: 0;
+  padding: $s-1 0;
+  font-size: $t-2xs;
+  opacity: 0.45;
+}
+
+// 汇总格：auto-fit 让五个数字在窄 Dock 下自动折成两行，不挤成一条压缩饼
+.gpa-range-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(52px, 1fr)); // 无对应 Token（汇总格最小宽度）
+  gap: $s-2;
+  margin-bottom: $s-2;
+}
+
+.gpa-range-stat {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px1;
+}
+
+// 数值：等宽 + 主色（一眼抓总量），标签弱化（次级信息）
+.gpa-range-stat-val {
+  font-family: $ff-mono;
+  font-size: $t-sm;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-primary);
+  line-height: 1.1;
+}
+
+.gpa-range-stat-key {
+  font-size: $t-2xs;
+  opacity: 0.45;
+  @include text-ellipsis;
+}
+
+// 最活跃一天：整行可点（点击收缩为当日明细），hover 给软底反馈
+.gpa-range-busiest {
+  display: block;
+  width: 100%;
+  margin-bottom: $s-2;
+  padding: $s-px3 $s-1;
+  border: none;
+  border-radius: $r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $t-2xs;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+// 双列分布：窄面板自动单列（auto-fit，与项目排行同款栅格策略）
+.gpa-range-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); // 无对应 Token（分布列断点）
+  gap: $s-3;
+}
+
+.gpa-range-col {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px2;
+  min-width: 0;
+}
+
+.gpa-range-col-title {
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.45;
+  margin-bottom: $s-px1;
+}
+
+.gpa-range-row {
+  display: flex;
+  align-items: baseline;
+  gap: $s-2;
+  font-size: $t-2xs;
+}
+
+.gpa-range-row-name {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+  opacity: 0.75;
+}
+
+// 计数：定宽右对齐 + 等宽数字（纵向可比）
+.gpa-range-row-num {
+  flex: 0 0 auto;
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.5;
+}

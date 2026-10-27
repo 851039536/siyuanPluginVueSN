@@ -12,6 +12,7 @@ import {
   heatLevel,
   isDayKeyInBucket,
   rankByCountWithTotal,
+  summarizeCommitRange,
   summarizeHeatRange,
 } from "./analysis"
 
@@ -280,5 +281,86 @@ describe("summarizeHeatRange（标题行摘要：连续 / 最长 / 合计）", (
   it("空范围（起止同一天且无数据）返回全零", () => {
     const s = summarizeHeatRange(new Map(), "2026-08-01", "2026-08-01")
     expect(s).toEqual({ total: 0, activeDays: 0, currentStreak: 0, longestStreak: 0 })
+  })
+})
+
+describe("summarizeCommitRange（框选区间的聚合口径）", () => {
+  /** 构造条目（只关心 date / projectId / projectName / author 四个字段） */
+  function entry(date: string, projectId: string, author: string) {
+    return {
+      projectId,
+      projectName: `${projectId}-name`,
+      hash: `${projectId}-${date}-${author}`,
+      message: "feat: x",
+      author,
+      date,
+    }
+  }
+
+  const entries = [
+    entry("2026-08-01T09:00:00", "p1", "alice"),
+    entry("2026-08-01T10:00:00", "p2", "bob"),
+    entry("2026-08-03T10:00:00", "p1", "alice"),
+    entry("2026-08-03T11:00:00", "p1", "alice"),
+    entry("2026-08-03T12:00:00", "p1", "carol"),
+    entry("2026-08-09T12:00:00", "p2", "bob"), // 区间外
+  ]
+
+  it("按本地日期裁剪闭区间，边界两端都算在内", () => {
+    const s = summarizeCommitRange(entries, "2026-08-01", "2026-08-03")
+    expect(s.total).toBe(5)
+  })
+
+  it("daySpan 为闭区间天数（8/01–8/03 共 3 天，含无提交的 8/02）", () => {
+    expect(summarizeCommitRange(entries, "2026-08-01", "2026-08-03").daySpan).toBe(3)
+    // 单日区间 = 1 天，不能算成 0
+    expect(summarizeCommitRange(entries, "2026-08-01", "2026-08-01").daySpan).toBe(1)
+  })
+
+  it("activeDays 只数有提交的天，与 daySpan 并列才能看出空档", () => {
+    const s = summarizeCommitRange(entries, "2026-08-01", "2026-08-03")
+    expect(s.activeDays).toBe(2)
+  })
+
+  it("项目数 / 作者数按去重计", () => {
+    const s = summarizeCommitRange(entries, "2026-08-01", "2026-08-03")
+    expect(s.projectCount).toBe(2) // p1、p2
+    expect(s.authorCount).toBe(3) // alice、bob、carol
+  })
+
+  it("最活跃一天取提交数最多者", () => {
+    const s = summarizeCommitRange(entries, "2026-08-01", "2026-08-03")
+    expect(s.busiest).toEqual({ date: "2026-08-03", count: 3 })
+  })
+
+  it("最活跃一天并列时取较早的一天（不依赖 Map 插入序）", () => {
+    const tie = [
+      entry("2026-08-05T09:00:00", "p1", "alice"),
+      entry("2026-08-04T09:00:00", "p2", "bob"),
+    ]
+    expect(summarizeCommitRange(tie, "2026-08-01", "2026-08-07").busiest).toEqual({
+      date: "2026-08-04",
+      count: 1,
+    })
+  })
+
+  it("项目 / 作者排行降序并按 rankLimit 截断", () => {
+    const s = summarizeCommitRange(entries, "2026-08-01", "2026-08-03", 1)
+    expect(s.topProjects).toEqual([{ key: "p1", count: 4 }]) // 8/01 一条 + 8/03 三条
+    expect(s.topAuthors).toEqual([{ key: "alice", count: 3 }])
+  })
+
+  it("空区间返回零值，busiest 为 null（不是 {count:0} 的假条目）", () => {
+    const s = summarizeCommitRange(entries, "2026-07-01", "2026-07-31")
+    expect(s.total).toBe(0)
+    expect(s.activeDays).toBe(0)
+    expect(s.busiest).toBeNull()
+    expect(s.topProjects).toEqual([])
+    expect(s.topAuthors).toEqual([])
+  })
+
+  it("无效日期条目被跳过，不会污染统计", () => {
+    const s = summarizeCommitRange([entry("not-a-date", "p1", "alice")], "2026-08-01", "2026-08-03")
+    expect(s.total).toBe(0)
   })
 })

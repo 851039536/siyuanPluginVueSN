@@ -19,6 +19,7 @@ export interface OpmlTransferDeps {
 
 export function useOpmlTransfer(deps: OpmlTransferDeps) {
   const {
+    feeds,
     i18n,
     addFeed,
     persist,

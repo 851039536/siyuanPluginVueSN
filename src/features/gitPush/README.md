@@ -88,6 +88,7 @@ src/features/gitPush/
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   ├── useProjectQueryScheduler.ts  # 项目查询调度器（单飞去重 + 分支名复用 + 新鲜度节流 + 脏标记，查询调度唯一权威）
 │   ├── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
+│   ├── useDayDragSelect.ts          # 日格拖拽选区状态机（热力图/日历共用：起锚 → 掠过扩展 → mouseup 收尾并抑制补发 click）
 │   └── useReportExport.ts           # 报告导出编排（校验 → 保存对话框 → 渲染 → 写盘 → 提示并打开）
 ├── components/
 │   ├── common/                      # 复用组件（跨 ≥2 个视图引用，29 个；二次确认统一用共享 ConfirmDialog）
@@ -153,12 +154,13 @@ src/features/gitPush/
 │   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
 │   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
 │   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
-│   ├── CommitAnalysis/              # 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行；9 个）
+│   ├── CommitAnalysis/              # 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行；10 个）
 │   │   ├── index.vue                # 视图入口容器（三 Tab 编排 + 共用工具条/四态门；规则检查与行数排行的区块在此组合）
 │   │   ├── AnalysisTabs.vue         # 三视角切换条（三者同属一次 runCore 抓取的不同切面）
 │   │   ├── ProjectRankingSection.vue# 项目提交排行区块（条形 + 百分比，点击跳转）
-│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（指标/分档阈值/摘要/当日明细选中态，日粒度分布唯一出口）
-│   │   ├── DayCommitDetail.vue      # 当日明细面板（点击日格展开：时间/项目/首行信息，行可跳列表视图）
+│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（指标/分档阈值/摘要/选区状态，日粒度分布唯一出口）
+│   │   ├── DayCommitDetail.vue      # 当日明细面板（单击日格展开：时间/项目/首行信息，行可跳列表视图）
+│   │   ├── RangeCommitDetail.vue    # 区间统计面板（拖拽/Shift 框选展开：汇总 + 最活跃一天 + 项目/作者分布）
 │   │   ├── CommitAnalysisSettings.vue# 分析设置（齿轮 popover 薄壳，表单复用 AnalysisSettingsForm）
 │   │   ├── AnalysisSettingsForm.vue # 分析显示设置表单（视图/范围/周起始/颜色/指标/密度/分级方式，popover 与设置汇总弹窗共用）
 │   │   ├── CommitCalendar.vue       # 提交日历
@@ -201,6 +203,7 @@ src/features/gitPush/
     ├── CommitHeatmap.scss           # 提交热力图样式（CSS 变量驱动格子密度 + 分级着色 + 图例 + 选中/焦点环 + 自绘 tooltip）
     ├── CommitCalendar.scss          # 提交日历网格样式（月卡 + 日格 + 今天/未来/选中态）
     ├── DayCommitDetail.scss         # 当日明细面板样式（标题行 + 时间/项目/信息三列行）
+    ├── RangeCommitDetail.scss       # 区间统计面板样式（汇总格 auto-fit + 最活跃一天 + 双列分布）
     ├── CommitRuleCheckPanel.scss    # 提交规则检查面板样式
     ├── CommitFixDialog.scss         # 提交信息修正弹窗样式
     ├── DropCommitDialog.scss        # 删除历史提交弹窗样式

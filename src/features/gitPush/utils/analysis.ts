@@ -280,6 +280,78 @@ export function rankByCountWithTotal<T>(
   return { rows: sorted.slice(0, limit), totalGroups: sorted.length }
 }
 
+/** 区间统计（热力图/日历框选一段日期后的聚合口径） */
+export interface CommitRangeSummary {
+  /** 区间内提交总数（按条目计，不受热力指标影响） */
+  total: number
+  /** 有提交的天数 */
+  activeDays: number
+  /** 区间总天数（含无提交日，闭区间） */
+  daySpan: number
+  /** 去重项目数 */
+  projectCount: number
+  /** 去重作者数 */
+  authorCount: number
+  /** 最活跃的一天（并列取较早的一天；区间无提交时为 null） */
+  busiest: { date: string, count: number } | null
+  /** 项目排行（降序，已按 rankLimit 截断） */
+  topProjects: { key: string, count: number }[]
+  /** 作者排行（降序，已按 rankLimit 截断） */
+  topAuthors: { key: string, count: number }[]
+}
+
+/**
+ * 区间统计：按本地日期把条目裁剪到 [start, end] 后聚合。
+ *
+ * 与 `summarizeHeatRange` 的分工：后者吃「日值映射」，故 total 是**当前指标之和**
+ * （选「活跃作者」时是每日去重作者数累加，不是提交数），用于标题行的口径跟随；
+ * 本函数吃原始条目，total 恒为提交条数，用于框选后的区间面板。
+ * 两者刻意不复用，避免「同一段文字在标题与面板里指的却不是一件事」。
+ */
+export function summarizeCommitRange(
+  entries: CommitAnalysisEntry[],
+  start: string,
+  end: string,
+  rankLimit = 3,
+): CommitRangeSummary {
+  const inRange = entries.filter((e) => {
+    const d = new Date(e.date)
+    if (Number.isNaN(d.getTime())) return false
+    const key = formatLocalDate(d)
+    return key >= start && key <= end
+  })
+
+  const byDay = new Map<string, number>()
+  for (const e of inRange) {
+    const key = formatLocalDate(new Date(e.date))
+    byDay.set(key, (byDay.get(key) || 0) + 1)
+  }
+  // 并列时取较早的一天：Map 迭代序为插入序，不能依赖，故显式比较日期
+  let busiest: { date: string, count: number } | null = null
+  for (const [date, count] of byDay) {
+    if (!busiest || count > busiest.count || (count === busiest.count && date < busiest.date)) {
+      busiest = { date, count }
+    }
+  }
+
+  const toUtcMs = (key: string): number => {
+    const [y, m, d] = key.split("-").map(Number)
+    return Date.UTC(y, m - 1, d)
+  }
+
+  return {
+    total: inRange.length,
+    activeDays: byDay.size,
+    // +1 是因为闭区间（同一天起止 = 1 天）
+    daySpan: Math.round((toUtcMs(end) - toUtcMs(start)) / 86_400_000) + 1,
+    projectCount: new Set(inRange.map((e) => e.projectId)).size,
+    authorCount: new Set(inRange.map((e) => e.author)).size,
+    busiest,
+    topProjects: rankByCountWithTotal(inRange, (e) => e.projectId, rankLimit).rows,
+    topAuthors: rankByCountWithTotal(inRange, (e) => e.author, rankLimit).rows,
+  }
+}
+
 // ── 提交规则原因文案（元数据只存 i18n 键，文案由视图层经 i18n 解析；四处标签共用）──
 
 /**

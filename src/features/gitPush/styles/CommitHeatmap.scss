@@ -76,6 +76,8 @@ $gpa-weekday-col: 28px;
   grid-template-rows: repeat(7, var(--gpa-heat-cell));
   grid-auto-flow: column;
   gap: $s-px3;
+  // 拖拽框选时避免选中页面文字（格子本身是 button 不参与选择，但父容器会）
+  user-select: none;
 }
 
 .gpa-heat-cell {
@@ -99,7 +101,14 @@ $gpa-weekday-col: 28px;
     outline-offset: 1px;
   }
 
-  // 选中格：主色描边（与「今天」在日历视图的描边同语义），再次点击可取消
+  // 区间内的格子（框选后除端点以外的部分）：内阴影圈出范围。
+  // 用 box-shadow 而非 outline：outline 与 hover / 键盘焦点环 / 端点选中态共用同一个属性，会互相覆盖；
+  // 且只描不填——填充色仍只表示数值，两个维度不互相污染。
+  &.is-in-range {
+    box-shadow: inset 0 0 0 1px var(--b3-theme-primary);
+  }
+
+  // 选中格（单选的一天，或区间的两个端点）：主色粗描边，再次点击可取消
   &.is-selected {
     outline: 2px solid var(--b3-theme-primary);
     outline-offset: 1px;

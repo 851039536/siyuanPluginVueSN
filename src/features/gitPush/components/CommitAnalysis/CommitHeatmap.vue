@@ -44,14 +44,19 @@
             :key="cell.date || `pad-${idx}`"
             type="button"
             class="gpa-heat-cell"
-            :class="{ 'is-empty': !cell.date, 'is-selected': !!cell.date && cell.date === selectedDate }"
+            :class="{
+              'is-empty': !cell.date,
+              'is-selected': !!cell.date && isEndpoint(cell.date),
+              'is-in-range': !!cell.date && isInRange(cell.date),
+            }"
             :style="cell.style"
             :aria-label="cell.date ? cell.tooltip : undefined"
-            :aria-pressed="cell.date ? cell.date === selectedDate : undefined"
+            :aria-pressed="cell.date ? isInRange(cell.date) : undefined"
             :tabindex="cell.date && idx === focusIndex ? 0 : -1"
             :data-idx="idx"
-            @click="onCellClick(cell.date)"
-            @mouseenter="showTip($event, cell)"
+            @mousedown="drag.onDown(cell.date, $event)"
+            @click="onCellClick(cell.date, $event)"
+            @mouseenter="onCellEnter($event, cell)"
             @mouseleave="hideTip"
             @focus="showTip($event, cell)"
             @blur="hideTip"
@@ -97,6 +102,7 @@
 <script setup lang="ts">
 import type { CommitHeatDensity, CommitHeatMetric, CommitHeatScaleMode } from "../../types"
 import { computed, ref, watch } from "vue"
+import { useDayDragSelect } from "../../composables/useDayDragSelect"
 import { buildDayCell, formatLocalDate, heatCellColor } from "../../utils"
 import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS, COMMIT_HEAT_METRIC_META, HEAT_CELL_SIZES } from "../../types"
 
@@ -119,14 +125,26 @@ const props = defineProps<{
   metric: CommitHeatMetric
   /** 格子密度（12px / 14px；由 CSS 变量 --gpa-heat-cell 驱动整张网格） */
   density: CommitHeatDensity
-  /** 已选中日期（YYYY-MM-DD，空串 = 未选中） */
-  selectedDate: string
+  /** 选中区间起（YYYY-MM-DD，空串 = 未选中；已归一化为 start ≤ end） */
+  selStart: string
+  /** 选中区间止（与 selStart 相同即单选一天） */
+  selEnd: string
 }>()
 
 const emit = defineEmits<{
-  /** 点击某日格子（再次点击同日取消选中由父级处理） */
-  selectDay: [date: string]
+  /** 单击日格：extend=true（Shift）时以当前锚点为另一端扩展成区间 */
+  pick: [date: string, extend: boolean]
+  /** 拖拽起锚 */
+  dragStart: [date: string]
+  /** 拖拽掠过另一日 */
+  dragTo: [date: string]
 }>()
+
+/** 拖拽选区间（状态机在 composable 里：按下起锚 → 掠过扩展 → mouseup 收尾并抑制补发的 click） */
+const drag = useDayDragSelect({
+  onStart: (date) => emit("dragStart", date),
+  onExtend: (date) => emit("dragTo", date),
+})
 
 /**
  * 周列 × 7 行单元格：起点回退到 weekStart 对齐，范围末尾补齐完整周（空单元格隐藏）。
@@ -185,7 +203,8 @@ function weekdayOf(date: string): string {
 
 /** 悬停/聚焦时定位 tooltip：用 rect 差值而非 offsetLeft——格子位于横向滚动容器内，offset 不随滚动位移 */
 function showTip(e: Event, cell: { date: string, count: number }) {
-  if (!cell.date || !rootEl.value) return
+  // 拖拽中不弹浮层：它会盖住正被掠过的格子，且区间在实时变化，读数没有意义
+  if (!cell.date || !rootEl.value || drag.dragging.value) return
   const cellRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
   const rootRect = rootEl.value.getBoundingClientRect()
   const center = cellRect.left - rootRect.left + cellRect.width / 2
@@ -282,7 +301,8 @@ watch(cells, (list) => {
   focusIndex.value = lastDatedIndex(list)
 }, { immediate: true })
 
-/** 方向键：左/右跨周（∓7），上/下跨星期（∓1），Home/End 跳首尾；遇补齐空格继续按同方向找 */
+/** 方向键：左/右跨周（∓7），上/下跨星期（∓1），Home/End 跳首尾；遇补齐空格继续按同方向找。
+ *  Shift + 方向键 = 把区间另一端推到新焦点（与 Shift+点击 同一语义，键盘也能框选）。 */
 function onGridKeydown(e: KeyboardEvent) {
   const step = e.key === "ArrowLeft"
     ? -7
@@ -311,11 +331,35 @@ function onGridKeydown(e: KeyboardEvent) {
   if (target < 0) return
   focusIndex.value = target
   gridEl.value?.querySelector<HTMLElement>(`[data-idx="${target}"]`)?.focus()
+  if (e.shiftKey && list[target].date) emit("pick", list[target].date, true)
 }
 
 /** 点击格子：空占位格不响应（is-empty 已 pointer-events: none，此处再兜一层） */
-function onCellClick(date: string) {
-  if (date) emit("selectDay", date)
+function onCellClick(date: string, e: MouseEvent) {
+  if (!date) return
+  // 拖拽收尾时浏览器补发的 click：丢掉，否则「拖回起点」会把刚选好的区间又取消
+  if (drag.suppressClick.value) return
+  emit("pick", date, e.shiftKey)
+}
+
+/** 掠过格子：拖拽中交给 composable 扩展区间，否则照常显示 tooltip */
+function onCellEnter(e: Event, cell: { date: string, count: number }) {
+  if (drag.dragging.value) {
+    drag.onEnter(cell.date)
+    hideTip()
+    return
+  }
+  showTip(e, cell)
+}
+
+/** 是否为区间端点（单选一天时两端重合，只有一个描边） */
+function isEndpoint(date: string): boolean {
+  return !!props.selStart && (date === props.selStart || date === props.selEnd)
+}
+
+/** 是否落在选中区间内（闭区间，端点也算在内） */
+function isInRange(date: string): boolean {
+  return !!props.selStart && date >= props.selStart && date <= props.selEnd
 }
 </script>
 

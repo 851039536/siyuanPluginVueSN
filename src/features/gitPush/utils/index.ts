@@ -78,9 +78,10 @@ export {
   resolveAnalysisRange,
   ruleReasonDesc,
   ruleReasonText,
+  summarizeCommitRange,
   summarizeHeatRange,
 } from "./analysis"
-export type { DayCellOptions, HeatRangeSummary } from "./analysis"
+export type { CommitRangeSummary, DayCellOptions, HeatRangeSummary } from "./analysis"
 
 export {
   activityLevel,

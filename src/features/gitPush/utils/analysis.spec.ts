@@ -7,13 +7,20 @@ import { describe, expect, it } from "vitest"
 import {
   buildDayCell,
   buildDayMetricMap,
+  buildHeatBucketCell,
+  buildHeatBuckets,
+  buildHeatMetricMap,
   computeHeatThresholds,
+  fixedHeatThresholds,
   HEAT_SCALE_QUANTILES,
+  heatBucketKey,
   heatLevel,
   isDayKeyInBucket,
   rankByCountWithTotal,
+  resolveHeatGranularity,
   summarizeCommitRange,
   summarizeHeatRange,
+  summarizeHeatStreak,
 } from "./analysis"
 
 describe("buildDayCell（热力图/日历共用的日格口径）", () => {
@@ -21,13 +28,13 @@ describe("buildDayCell（热力图/日历共用的日格口径）", () => {
     analysisHeatTooltip: "{0}（{1}）：{2} {3}",
     analysisHeatUnitCommits: "次提交",
     analysisHeatUnitProjects: "个项目",
-    analysisWeekdayMon: "周一",
-    analysisWeekdayTue: "周二",
-    analysisWeekdayWed: "周三",
-    analysisWeekdayThu: "周四",
-    analysisWeekdayFri: "周五",
-    analysisWeekdaySat: "周六",
-    analysisWeekdaySun: "周日",
+    analysisWdMon: "周一",
+    analysisWdTue: "周二",
+    analysisWdWed: "周三",
+    analysisWdThu: "周四",
+    analysisWdFri: "周五",
+    analysisWdSat: "周六",
+    analysisWdSun: "周日",
   }
 
   it("返回 date/count/style/tooltip 四项（两个视图据此渲染不同形态）", () => {
@@ -362,5 +369,227 @@ describe("summarizeCommitRange（框选区间的聚合口径）", () => {
   it("无效日期条目被跳过，不会污染统计", () => {
     const s = summarizeCommitRange([entry("not-a-date", "p1", "alice")], "2026-08-01", "2026-08-03")
     expect(s.total).toBe(0)
+  })
+})
+
+// ── 粒度（日 / 周 / 月）：跨度决定一格代表多久 ──
+
+/** 日期文本 + n 天（测试内自用，避免依赖 lib 的 formatLocalDate） */
+function shiftDays(key: string, n: number): string {
+  const [y, m, d] = key.split("-").map(Number)
+  const dt = new Date(y, m - 1, d + n)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`
+}
+
+describe("resolveHeatGranularity（跨度 → 粒度）", () => {
+  it("≤371 天按日（与「最近一年」默认范围对齐）", () => {
+    expect(resolveHeatGranularity("2026-01-01", "2026-12-31")).toBe("day") // 365 天
+    expect(resolveHeatGranularity("2025-08-01", shiftDays("2025-08-01", 370))).toBe("day") // 恰好 371 天
+  })
+
+  it("372 天起按周，912 天仍按周（边界不多不少）", () => {
+    expect(resolveHeatGranularity("2025-08-01", shiftDays("2025-08-01", 371))).toBe("week")
+    expect(resolveHeatGranularity("2025-08-01", shiftDays("2025-08-01", 911))).toBe("week")
+  })
+
+  it("913 天起按月（约 2.5 年以上：周条带也会长得无法阅读）", () => {
+    expect(resolveHeatGranularity("2025-08-01", shiftDays("2025-08-01", 912))).toBe("month")
+    expect(resolveHeatGranularity("2020-01-01", "2026-12-31")).toBe("month")
+  })
+
+  it("单日 / 当月都属于日粒度", () => {
+    expect(resolveHeatGranularity("2026-08-03", "2026-08-03")).toBe("day")
+  })
+})
+
+describe("heatBucketKey（日期 → 所属格子键）", () => {
+  it("日粒度就是当天本身", () => {
+    expect(heatBucketKey("2026-08-05", "day")).toBe("2026-08-05")
+  })
+
+  it("月粒度归到当月 1 日", () => {
+    expect(heatBucketKey("2026-08-05", "month")).toBe("2026-08-01")
+    expect(heatBucketKey("2026-08-31", "month")).toBe("2026-08-01")
+  })
+
+  it("周粒度按 weekStart 对齐（2026-08-05 是周三）", () => {
+    expect(heatBucketKey("2026-08-05", "week", 1)).toBe("2026-08-03") // 周一起：本周一
+    expect(heatBucketKey("2026-08-05", "week", 0)).toBe("2026-08-02") // 周日起：上周日
+  })
+
+  it("周一当天与周日当天都不会归到错误的周（跨月边界）", () => {
+    expect(heatBucketKey("2026-08-03", "week", 1)).toBe("2026-08-03")
+    expect(heatBucketKey("2026-08-02", "week", 1)).toBe("2026-07-27") // 周一起：上一个周一（跨月）
+    expect(heatBucketKey("2026-08-02", "week", 0)).toBe("2026-08-02") // 周日起：当天即周首
+  })
+})
+
+describe("buildHeatBuckets（按粒度切分格子区间）", () => {
+  it("日粒度逐日一段，首尾闭合", () => {
+    const buckets = buildHeatBuckets("day", "2026-08-01", "2026-08-03")
+    expect(buckets).toEqual([
+      { start: "2026-08-01", end: "2026-08-01" },
+      { start: "2026-08-02", end: "2026-08-02" },
+      { start: "2026-08-03", end: "2026-08-03" },
+    ])
+  })
+
+  it("周粒度：首尾被范围截断，中间是完整 7 天", () => {
+    const buckets = buildHeatBuckets("week", "2026-08-05", "2026-08-31", 1)
+    // 首格只覆盖 08-05~08-09（08-03 在范围外）
+    expect(buckets[0]).toEqual({ start: "2026-08-05", end: "2026-08-09" })
+    // 第二格起是完整周
+    expect(buckets[1]).toEqual({ start: "2026-08-10", end: "2026-08-16" })
+    // 末格被范围截断
+    expect(buckets[buckets.length - 1].end).toBe("2026-08-31")
+  })
+
+  it("周粒度的桶首尾相接、无空洞无重叠，且总天数等于区间天数", () => {
+    /** 两个日期文本之间的天数差（UTC 计算，避免夏令时） */
+    const dayDiff = (a: string, b: string) => {
+      const toMs = (k: string) => {
+        const [y, m, d] = k.split("-").map(Number)
+        return Date.UTC(y, m - 1, d)
+      }
+      return Math.round((toMs(b) - toMs(a)) / 86_400_000)
+    }
+    const buckets = buildHeatBuckets("week", "2026-02-11", "2026-05-20", 1)
+    for (let i = 1; i < buckets.length; i++) {
+      expect(buckets[i].start).toBe(shiftDays(buckets[i - 1].end, 1))
+    }
+    const covered = buckets.reduce((n, b) => n + dayDiff(b.start, b.end) + 1, 0)
+    expect(covered).toBe(99) // 2026-02-11 ~ 2026-05-20 共 99 天
+  })
+
+  it("月粒度：自然月为一段，首尾被范围截断", () => {
+    const buckets = buildHeatBuckets("month", "2026-08-15", "2026-10-02")
+    expect(buckets).toEqual([
+      { start: "2026-08-15", end: "2026-08-31" },
+      { start: "2026-09-01", end: "2026-09-30" },
+      { start: "2026-10-01", end: "2026-10-02" },
+    ])
+  })
+
+  it("月粒度跨年不串月（12 月 → 次年 1 月）", () => {
+    const buckets = buildHeatBuckets("month", "2025-11-01", "2026-02-28")
+    expect(buckets.map((b) => b.start)).toEqual(["2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01"])
+    expect(buckets[1].end).toBe("2025-12-31") // 31 天的月份不能算成 30 天
+    expect(buckets[3].end).toBe("2026-02-28") // 平年 2 月
+  })
+})
+
+describe("buildHeatMetricMap（桶级聚合，去重口径跨天成立）", () => {
+  function entry(date: string, projectId: string, author: string) {
+    return {
+      projectId,
+      projectName: projectId,
+      hash: `${projectId}-${date}-${author}`,
+      message: "feat: x",
+      author,
+      date,
+    }
+  }
+
+  const entries = [
+    entry("2026-08-01T09:00:00", "p1", "alice"),
+    entry("2026-08-20T09:00:00", "p1", "alice"),
+    entry("2026-08-05T09:00:00", "p2", "bob"),
+    entry("2026-09-03T09:00:00", "p2", "carol"),
+  ]
+
+  it("月粒度的作者数是**月内去重**，不是逐日相加（alice 两天活跃仍算 1）", () => {
+    const map = buildHeatMetricMap(entries, "month", "authors")
+    expect(map.get("2026-08-01")).toBe(2) // alice + bob
+    expect(map.get("2026-09-01")).toBe(1) // carol
+  })
+
+  it("月粒度的项目数同样去重", () => {
+    const map = buildHeatMetricMap(entries, "month", "projects")
+    expect(map.get("2026-08-01")).toBe(2) // p1 + p2
+  })
+
+  it("月粒度的提交数按条累加（去重只作用于 projects/authors）", () => {
+    const map = buildHeatMetricMap(entries, "month", "commits")
+    expect(map.get("2026-08-01")).toBe(3)
+  })
+
+  it("周粒度按 weekStart 归桶（2026-08-01 周六 → 周一 07-27 那一周）", () => {
+    const map = buildHeatMetricMap(entries, "week", "commits", 1)
+    expect(map.get("2026-08-01")).toBeUndefined()
+    expect(map.get("2026-07-27")).toBe(1) // 08-01 归到 07-27 起的周
+  })
+
+  it("日粒度与 buildDayMetricMap 完全一致（包装层不改变口径）", () => {
+    expect(buildHeatMetricMap(entries, "day", "authors")).toEqual(buildDayMetricMap(entries, "authors"))
+    expect(buildHeatMetricMap(entries, "day", "commits")).toEqual(buildDayMetricMap(entries, "commits"))
+  })
+
+  it("无效日期被跳过（不会产生 NaN 键）", () => {
+    expect(buildHeatMetricMap([entry("not-a-date", "p1", "alice")], "month", "commits").size).toBe(0)
+  })
+})
+
+describe("fixedHeatThresholds（固定档按粒度折算）", () => {
+  it("日粒度原样返回 1/3/6/12", () => {
+    expect(fixedHeatThresholds("day")).toEqual([0, 1, 3, 6, 12])
+  })
+
+  it("周 ×7、月 ×30：否则周/月视图几乎每格都顶到最高档", () => {
+    expect(fixedHeatThresholds("week")).toEqual([0, 7, 21, 42, 84])
+    expect(fixedHeatThresholds("month")).toEqual([0, 30, 90, 180, 360])
+  })
+
+  it("首项恒为 0（无提交恒为 0 级），且严格递增", () => {
+    for (const g of ["day", "week", "month"] as const) {
+      const t = fixedHeatThresholds(g)
+      expect(t[0]).toBe(0)
+      for (let i = 2; i < t.length; i++) expect(t[i]).toBeGreaterThan(t[i - 1])
+    }
+  })
+})
+
+describe("summarizeHeatStreak（按格子序列求摘要，单位随粒度）", () => {
+  it("连续格数从序列末尾往回数", () => {
+    expect(summarizeHeatStreak([1, 0, 2, 3])).toEqual({ total: 6, activeDays: 3, currentStreak: 2, longestStreak: 2 })
+  })
+
+  it("末尾为 0 时当前连续为 0，但最长连续仍取历史最长段", () => {
+    expect(summarizeHeatStreak([1, 1, 1, 0])).toEqual({ total: 3, activeDays: 3, currentStreak: 0, longestStreak: 3 })
+  })
+
+  it("空序列返回全零（范围为空时不抛错）", () => {
+    expect(summarizeHeatStreak([])).toEqual({ total: 0, activeDays: 0, currentStreak: 0, longestStreak: 0 })
+  })
+})
+
+describe("buildHeatBucketCell（格子 tooltip 随粒度变）", () => {
+  const i18n: Record<string, any> = {
+    analysisHeatTooltip: "{0}（{1}）：{2} {3}",
+    analysisHeatTooltipSpan: "{0} – {1}：{2} {3}",
+    analysisHeatUnitCommits: "次提交",
+    analysisWdMon: "周一",
+    analysisWdTue: "周二",
+    analysisWdWed: "周三",
+    analysisWdThu: "周四",
+    analysisWdFri: "周五",
+    analysisWdSat: "周六",
+    analysisWdSun: "周日",
+  }
+
+  it("日粒度带星期", () => {
+    const cell = buildHeatBucketCell(i18n, { start: "2026-08-03", end: "2026-08-03" }, 3, "#3b82f6", "day")
+    expect(cell.tooltip).toBe("2026-08-03（周一）：3 次提交")
+    expect(cell.value).toBe(3)
+  })
+
+  it("周/月粒度带区间（一个 20px 的格子说不清自己覆盖了哪几天）", () => {
+    const week = buildHeatBucketCell(i18n, { start: "2026-08-03", end: "2026-08-09" }, 5, "#3b82f6", "week")
+    expect(week.tooltip).toBe("2026-08-03 – 2026-08-09：5 次提交")
+  })
+
+  it("样式按阈值分档（与日格同一套 heatCellColor）", () => {
+    const low = buildHeatBucketCell(i18n, { start: "2026-08-01", end: "2026-08-31" }, 1, "#3b82f6", "month")
+    const high = buildHeatBucketCell(i18n, { start: "2026-08-01", end: "2026-08-31" }, 100, "#3b82f6", "month")
+    expect(low.style.background).not.toBe(high.style.background)
   })
 })

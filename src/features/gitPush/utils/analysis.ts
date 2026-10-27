@@ -1,8 +1,8 @@
 // gitPush 提交分析纯函数：本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
 // 直连 types/meta（纯类型与常量）而非 "../types" 桶：桶含 GitPushManager 等运行时模块，
 // 会把运行时 siyuan 依赖拉进模块图，使本纯函数模块无法在 Node 单测环境加载。
-import type { CommitAnalysisEntry, CommitHeatMetric, CommitRuleReasonKey } from "../types/meta"
-import { ANALYSIS_WEEKDAY_KEYS, COMMIT_RULE_REASON_META, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
+import type { CommitAnalysisEntry, CommitHeatGranularity, CommitHeatMetric, CommitRuleReasonKey } from "../types/meta"
+import { ANALYSIS_WEEKDAY_KEYS, COMMIT_RULE_REASON_META, HEAT_BUCKET_DAYS, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
 
 /** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —；报告视图文件详情/活跃范围共用） */
 export function formatIsoDate(iso: string): string {
@@ -54,58 +54,181 @@ export function buildDayCountMap(entries: CommitAnalysisEntry[]): Map<string, nu
  * - commits：当日提交条数（复用 buildDayCountMap）；
  * - projects / authors：当日**去重**后的项目数 / 作者数（同一天同一个人提交十次仍算 1）。
  * 三者共用同一次 commit log 抓取结果，切换指标不额外跑 git。
+ *
+ * 日粒度是 buildHeatMetricMap 的一层薄包装：日历视图只按天渲染，读起来比传三个参数轻。
  */
 export function buildDayMetricMap(entries: CommitAnalysisEntry[], metric: CommitHeatMetric): Map<string, number> {
-  if (metric === "commits") return buildDayCountMap(entries)
-  const distinctByDay = new Map<string, Set<string>>()
+  return buildHeatMetricMap(entries, "day", metric)
+}
+
+// ── 粒度：一个格子代表多久（日 / 周 / 月）──
+
+/** 跨度 ≤ 371 天（约 53 周）按日：再多就横向撑爆，且与「最近一年」的默认范围对齐 */
+export const HEAT_GRANULARITY_DAY_MAX_DAYS = 371
+/** 跨度 ≤ 912 天（约 2.5 年）按周；更久按月（30 年也只有 360 格） */
+export const HEAT_GRANULARITY_WEEK_MAX_DAYS = 912
+
+/** 日期文本 → 自 epoch 起的天序号（UTC 计算，避免本地时区的夏令时让差值变成 6.96 天） */
+function dayIndex(key: string): number {
+  const [y, m, d] = key.split("-").map(Number)
+  return Math.round(Date.UTC(y, m - 1, d) / 86_400_000)
+}
+
+/** 闭区间天数（同一天 = 1 天） */
+function inclusiveDays(start: string, end: string): number {
+  return dayIndex(end) - dayIndex(start) + 1
+}
+
+/**
+ * 按显示范围跨度决定格子粒度。
+ *
+ * 不开放成设置项：粒度是「跨度 → 可读形态」的换算结果，用户设成「按月 + 最近一周」只会得到一格，
+ * 反而要自己理解两者冲突。范围选择器已经表达了用户的意图，粒度是它的必然推论。
+ */
+export function resolveHeatGranularity(start: string, end: string): CommitHeatGranularity {
+  const days = inclusiveDays(start, end)
+  if (days <= HEAT_GRANULARITY_DAY_MAX_DAYS) return "day"
+  if (days <= HEAT_GRANULARITY_WEEK_MAX_DAYS) return "week"
+  return "month"
+}
+
+/**
+ * 日期 → 所属格子的键（日=当天；周=对齐到 weekStart 的那一天；月=当月 1 日）。
+ * 键始终是 YYYY-MM-DD 且落在范围内，故可继续用字符串比较做区间过滤。
+ */
+export function heatBucketKey(dateKey: string, granularity: CommitHeatGranularity, weekStart: 0 | 1 = 1): string {
+  if (granularity === "day") return dateKey
+  const [y, m, d] = dateKey.split("-").map(Number)
+  if (granularity === "month") return `${y}-${String(m).padStart(2, "0")}-01`
+  const cursor = new Date(y, m - 1, d)
+  // 取模而非 while 自减：weekStart 来自持久化设置，被污染成非 0/1 时 while 永不满足会死循环
+  const offset = (cursor.getDay() - weekStart + 7) % 7
+  cursor.setDate(cursor.getDate() - offset)
+  return formatLocalDate(cursor)
+}
+
+/** 一个格子代表的日期区间（首尾可能被范围边界截断，故不一定是整周/整月） */
+export interface HeatBucketSpan {
+  /** 区间首日（YYYY-MM-DD） */
+  start: string
+  /** 区间末日（与 start 相同即单日） */
+  end: string
+}
+
+/** 日期文本（YYYY-MM-DD）→ 本地 Date（不经过 Date 构造函数解析字符串：那会按 UTC 解析并在西半球时区跨日回退） */
+function parseLocalDate(key: string): Date {
+  const [y, m, d] = key.split("-").map(Number)
+  return new Date(y, m - 1, d)
+}
+
+/** 日期文本 + 天数 → 新日期文本（负数为向过去偏移） */
+function addDays(key: string, days: number): string {
+  const cursor = parseLocalDate(key)
+  cursor.setDate(cursor.getDate() + days)
+  return formatLocalDate(cursor)
+}
+
+/** 日期文本所在月的最后一天（YYYY-MM-DD） */
+function monthEnd(dateKey: string): string {
+  const [y, m] = dateKey.split("-").map(Number)
+  return formatLocalDate(new Date(y, m, 0))
+}
+
+/**
+ * 把 [start, end] 切成连续的格子区间。
+ *
+ * 周/月的**首尾桶会被范围截断**：范围从周三开始时，第一格只覆盖 周三~周日，
+ * 这样「格子代表的日期」与 tooltip 文案一致，聚合也不会把范围外的提交算进来。
+ */
+export function buildHeatBuckets(
+  granularity: CommitHeatGranularity,
+  start: string,
+  end: string,
+  weekStart: 0 | 1 = 1,
+): HeatBucketSpan[] {
+  const spans: HeatBucketSpan[] = []
+  let cursor = heatBucketKey(start, granularity, weekStart)
+  while (cursor <= end) {
+    const bucketEnd = granularity === "day"
+      ? cursor
+      : granularity === "week" ? addDays(cursor, 6) : monthEnd(cursor)
+    spans.push({
+      start: cursor < start ? start : cursor,
+      end: bucketEnd > end ? end : bucketEnd,
+    })
+    // 下一桶首日 = 本桶末日的次日（日粒度即 +1 天；周 +7 天；月到次月 1 日）
+    cursor = addDays(bucketEnd, 1)
+  }
+  return spans
+}
+
+/**
+ * 按「粒度 + 指标」聚合条目（热力图格子值的唯一来源）。
+ *
+ * 为什么不能把日值映射按桶相加：projects / authors 是**去重计数**，
+ * 「每天的活跃作者数」相加会把连续活跃 10 天的人算成 10 个。
+ * 故这里直接按桶收集集合，与 buildDayMetricMap 的口径逐字对齐（day 粒度下结果完全一致）。
+ */
+export function buildHeatMetricMap(
+  entries: CommitAnalysisEntry[],
+  granularity: CommitHeatGranularity,
+  metric: CommitHeatMetric,
+  weekStart: 0 | 1 = 1,
+): Map<string, number> {
+  if (granularity === "day" && metric === "commits") return buildDayCountMap(entries)
+  const counts = new Map<string, number>()
+  const distinct = new Map<string, Set<string>>()
   for (const e of entries) {
     const d = new Date(e.date)
     if (Number.isNaN(d.getTime())) continue
-    const key = formatLocalDate(d)
+    const key = heatBucketKey(formatLocalDate(d), granularity, weekStart)
+    if (metric === "commits") {
+      counts.set(key, (counts.get(key) || 0) + 1)
+      continue
+    }
     const value = metric === "projects" ? e.projectId : e.author
-    const set = distinctByDay.get(key)
+    const set = distinct.get(key)
     if (set) set.add(value)
-    else distinctByDay.set(key, new Set([value]))
+    else distinct.set(key, new Set([value]))
   }
-  const counts = new Map<string, number>()
-  for (const [day, set] of distinctByDay) counts.set(day, set.size)
+  if (metric === "commits") return counts
+  for (const [key, set] of distinct) counts.set(key, set.size)
   return counts
+}
+
+/**
+ * 固定档阈值的粒度折算：1/3/6/12 是「按日」量级，一周/一月的提交量本该是它的 7/30 倍左右。
+ * 不折算的话周/月视图下几乎每格都顶到最高档，颜色退化成单色（与自适应档要解决的正是同一个问题）。
+ * 首项 0（=无提交）不参与折算。
+ */
+export function fixedHeatThresholds(granularity: CommitHeatGranularity): number[] {
+  const scale = HEAT_BUCKET_DAYS[granularity]
+  return HEAT_LEVEL_THRESHOLDS.map((t, i) => (i === 0 ? 0 : t * scale))
 }
 
 /** 范围内热力摘要（标题行右侧三个数字；口径跟随当前指标，故字段名不带"提交"字样） */
 export interface HeatRangeSummary {
   /** 范围内总值（当前指标口径） */
   total: number
-  /** 有数据的天数 */
+  /** 有数据的**格子数**（日粒度=天数；周/月粒度=周数/月数） */
   activeDays: number
-  /** 尾部连续天数：从范围末尾（通常是今天）往回数 */
+  /** 尾部连续格数：从范围末尾（通常是今天）往回数 */
   currentStreak: number
-  /** 范围内最长连续天数 */
+  /** 范围内最长连续格数 */
   longestStreak: number
 }
 
 /**
- * 统计范围内的热力摘要（连续天数 / 最长连续 / 合计）。
- *
- * 「当前连续」按**范围末尾**往回数，而不是写死「今天」：范围为历史年份时（如 2024 至今的 2024 段），
- * 以今天为准会把整段历史都算成断档，反而误导；范围末尾与今日一致时语义就是「到今天的连续」。
+ * 对**已按范围顺序排好**的格子值序列求摘要（连续 / 最长 / 合计）。
+ * 单位随粒度变化（天 / 周 / 月），故这里只数格子，文案的单位由调用方按粒度拼。
  */
-export function summarizeHeatRange(
-  dayCounts: Map<string, number>,
-  start: string,
-  end: string,
-): HeatRangeSummary {
-  const [sy, sm, sd] = start.split("-").map(Number)
-  const [ey, em, ed] = end.split("-").map(Number)
-  const cursor = new Date(sy, sm - 1, sd)
-  const last = new Date(ey, em - 1, ed)
-  const active: boolean[] = []
+export function summarizeHeatStreak(values: ReadonlyArray<number>): HeatRangeSummary {
   let total = 0
   let activeDays = 0
   let longest = 0
   let run = 0
-  while (cursor <= last) {
-    const count = dayCounts.get(formatLocalDate(cursor)) || 0
+  const active: boolean[] = []
+  for (const count of values) {
     total += count
     if (count > 0) {
       activeDays++
@@ -115,7 +238,6 @@ export function summarizeHeatRange(
       run = 0
     }
     active.push(count > 0)
-    cursor.setDate(cursor.getDate() + 1)
   }
   let currentStreak = 0
   for (let i = active.length - 1; i >= 0; i--) {
@@ -126,7 +248,27 @@ export function summarizeHeatRange(
 }
 
 /**
- * 热力等级：把日提交数映射为 0~4 级（数组下标即等级，首项恒为 0）。
+ * 统计范围内**按天**的热力摘要（日粒度视图用）。
+ *
+ * 「当前连续」按**范围末尾**往回数，而不是写死「今天」：范围为历史年份时（如 2024 至今的 2024 段），
+ * 以今天为准会把整段历史都算成断档，反而误导；范围末尾与今日一致时语义就是「到今天的连续」。
+ */
+export function summarizeHeatRange(
+  dayCounts: Map<string, number>,
+  start: string,
+  end: string,
+): HeatRangeSummary {
+  const values: number[] = []
+  let cursor = start
+  while (cursor <= end) {
+    values.push(dayCounts.get(cursor) || 0)
+    cursor = addDays(cursor, 1)
+  }
+  return summarizeHeatStreak(values)
+}
+
+/**
+ * 热力等级：把格子值映射为 0~4 级（数组下标即等级，首项恒为 0）。
  * thresholds 缺省用固定档 HEAT_LEVEL_THRESHOLDS；自适应档由 computeHeatThresholds 产出同形数组。
  */
 export function heatLevel(count: number, thresholds: readonly number[] = HEAT_LEVEL_THRESHOLDS): number {
@@ -254,6 +396,47 @@ export function buildDayCell(
     count,
     style: { background: heatCellColor(heatLevel(count, thresholds), color) },
     tooltip: heatCellTooltip(i18n, date, count, unitKey),
+  }
+}
+
+/** 热力格子（任意粒度）的展示数据：日/周/月共用同一分档口径，只有 tooltip 文案随粒度变 */
+export interface HeatBucketCellView {
+  /** 格子代表的区间首日（YYYY-MM-DD） */
+  start: string
+  /** 区间末日（单日时与 start 相同） */
+  end: string
+  /** 聚合值（按当前指标口径） */
+  value: number
+  style: Record<string, string>
+  tooltip: string
+}
+
+/**
+ * 构建单个热力格子。
+ * 日粒度的 tooltip 带星期（"2026-08-03（周一）：3 次提交"），周/月粒度带区间
+ * （"2026-08-03 – 2026-08-09：5 次提交"）——否则一个 20px 的格子说不清自己覆盖了哪几天。
+ */
+export function buildHeatBucketCell(
+  i18n: Record<string, any>,
+  span: HeatBucketSpan,
+  value: number,
+  color: string,
+  granularity: CommitHeatGranularity,
+  opts: DayCellOptions = {},
+): HeatBucketCellView {
+  const { thresholds = HEAT_LEVEL_THRESHOLDS, unitKey = "analysisHeatUnitCommits" } = opts
+  return {
+    start: span.start,
+    end: span.end,
+    value,
+    style: { background: heatCellColor(heatLevel(value, thresholds), color) },
+    tooltip: granularity === "day"
+      ? heatCellTooltip(i18n, span.start, value, unitKey)
+      : String(i18n.analysisHeatTooltipSpan || "")
+          .replace("{0}", span.start)
+          .replace("{1}", span.end)
+          .replace("{2}", String(value))
+          .replace("{3}", i18n[unitKey] || ""),
   }
 }
 

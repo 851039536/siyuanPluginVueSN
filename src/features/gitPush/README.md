@@ -158,13 +158,13 @@ src/features/gitPush/
 │   │   ├── index.vue                # 视图入口容器（三 Tab 编排 + 共用工具条/四态门；规则检查与行数排行的区块在此组合）
 │   │   ├── AnalysisTabs.vue         # 三视角切换条（三者同属一次 runCore 抓取的不同切面）
 │   │   ├── ProjectRankingSection.vue# 项目提交排行区块（条形 + 百分比，点击跳转）
-│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（指标/分档阈值/摘要/选区状态，日粒度分布唯一出口）
+│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（粒度/指标/分档阈值/摘要/选区状态，日粒度分布唯一出口）
 │   │   ├── DayCommitDetail.vue      # 当日明细面板（单击日格展开：时间/项目/首行信息，行可跳列表视图）
 │   │   ├── RangeCommitDetail.vue    # 区间统计面板（拖拽/Shift 框选展开：汇总 + 最活跃一天 + 项目/作者分布）
 │   │   ├── CommitAnalysisSettings.vue# 分析设置（齿轮 popover 薄壳，表单复用 AnalysisSettingsForm）
 │   │   ├── AnalysisSettingsForm.vue # 分析显示设置表单（视图/范围/周起始/颜色/指标/密度/分级方式，popover 与设置汇总弹窗共用）
 │   │   ├── CommitCalendar.vue       # 提交日历
-│   │   └── CommitHeatmap.vue        # 提交热力图
+│   │   └── CommitHeatmap.vue        # 提交热力图（粒度随跨度自适应：≤1 年按日 / ≤2.5 年按周 / 更久按月）
 │   ├── CommitRuleCheck/             # 规则检查视角的区块组件（无独立入口，由 CommitAnalysis 组合）
 │   │   ├── RuleCheckOverview.vue    # 总览区块（检查数/不合规/合规率卡片 + 规则提示）
 │   │   ├── ReasonDistributionSection.vue # 违规类型分布区块（紧凑 chips：标题与计数圆片同行）
@@ -200,7 +200,7 @@ src/features/gitPush/
     ├── StatsPanel.scss              # 统计视图样式
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
     ├── CommitAnalysisSettings.scss  # 提交分析显示设置样式（齿轮浮层 + 设置表单）
-    ├── CommitHeatmap.scss           # 提交热力图样式（CSS 变量驱动格子密度 + 分级着色 + 图例 + 选中/焦点环 + 自绘 tooltip）
+    ├── CommitHeatmap.scss           # 提交热力图样式（CSS 变量驱动行列数与密度 + 三种粒度栅格 + 分级着色 + 选中/焦点环 + 自绘 tooltip）
     ├── CommitCalendar.scss          # 提交日历网格样式（月卡 + 日格 + 今天/未来/选中态）
     ├── DayCommitDetail.scss         # 当日明细面板样式（标题行 + 时间/项目/信息三列行）
     ├── RangeCommitDetail.scss       # 区间统计面板样式（汇总格 auto-fit + 最活跃一天 + 双列分布）

@@ -68,20 +68,29 @@ export {
   buildDayCell,
   buildDayCountMap,
   buildDayMetricMap,
+  buildHeatBucketCell,
+  buildHeatBuckets,
+  buildHeatMetricMap,
   computeHeatThresholds,
+  fixedHeatThresholds,
   formatIsoDate,
   formatLocalDate,
+  heatBucketKey,
   heatCellColor,
   heatCellTooltip,
   heatLevel,
+  HEAT_GRANULARITY_DAY_MAX_DAYS,
+  HEAT_GRANULARITY_WEEK_MAX_DAYS,
   rankByCountWithTotal,
   resolveAnalysisRange,
+  resolveHeatGranularity,
   ruleReasonDesc,
   ruleReasonText,
   summarizeCommitRange,
   summarizeHeatRange,
+  summarizeHeatStreak,
 } from "./analysis"
-export type { CommitRangeSummary, DayCellOptions, HeatRangeSummary } from "./analysis"
+export type { CommitRangeSummary, DayCellOptions, HeatBucketCellView, HeatBucketSpan, HeatRangeSummary } from "./analysis"
 
 export {
   activityLevel,

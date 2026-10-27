@@ -515,6 +515,20 @@ export const COMMIT_HEAT_METRIC_META: Record<CommitHeatMetric, { labelKey: strin
 /** 热力格子密度：compact=12px（一屏更宽）/ normal=14px（大屏更舒适） */
 export type CommitHeatDensity = "compact" | "normal"
 
+/**
+ * 热力格子粒度：一个格子代表多久。
+ * 由显示范围跨度自动决定（见 utils.resolveHeatGranularity），不开放给用户设置——
+ * 跨度越长格子必须越粗，否则 200 周 × 12px 直接把面板撑成横向长条且失去可读性。
+ */
+export type CommitHeatGranularity = "day" | "week" | "month"
+
+/** 各粒度下单格的折算天数（仅用于固定阈值的量级折算与文案，非精确历法换算） */
+export const HEAT_BUCKET_DAYS: Record<CommitHeatGranularity, number> = {
+  day: 1,
+  week: 7,
+  month: 30,
+}
+
 /** 热力格子边长（px，随密度档位）：网格列宽/行高、格子尺寸、图例色块共用同一来源 */
 export const HEAT_CELL_SIZES: Record<CommitHeatDensity, number> = {
   compact: 12,

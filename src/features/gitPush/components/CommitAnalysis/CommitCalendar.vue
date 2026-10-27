@@ -91,18 +91,18 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  /** 单击日格：extend=true（Shift）时以当前锚点为另一端扩展成区间 */
-  pick: [date: string, extend: boolean]
+  /** 单击日格：extend=true（Shift）时以当前锚点为另一端扩展成区间；span 首尾相同（日历恒为日粒度） */
+  pick: [span: { start: string, end: string }, extend: boolean]
   /** 拖拽起锚 */
-  dragStart: [date: string]
+  dragStart: [span: { start: string, end: string }]
   /** 拖拽掠过另一日 */
-  dragTo: [date: string]
+  dragTo: [span: { start: string, end: string }]
 }>()
 
 /** 拖拽选区间：与热力图共用同一套状态机（日历日格更大，跨月卡拖动同样成立） */
 const drag = useDayDragSelect({
-  onStart: (date) => emit("dragStart", date),
-  onExtend: (date) => emit("dragTo", date),
+  onStart: (date) => emit("dragStart", { start: date, end: date }),
+  onExtend: (date) => emit("dragTo", { start: date, end: date }),
 })
 
 /** 是否为区间端点（单选一天时两端重合，只有一个描边） */
@@ -118,7 +118,7 @@ function isInRange(date: string): boolean {
 /** 点击日格：拖拽收尾时浏览器会补发一次 click，必须丢掉（否则区间被取消） */
 function onCellClick(date: string, e: MouseEvent) {
   if (drag.suppressClick.value) return
-  emit("pick", date, e.shiftKey)
+  emit("pick", { start: date, end: date }, e.shiftKey)
 }
 
 /** 按 weekStart 排序的星期表头（周一开头或周日开头） */

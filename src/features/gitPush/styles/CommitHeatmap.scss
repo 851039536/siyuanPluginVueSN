@@ -1,35 +1,50 @@
-// 提交热力图样式：GitHub 风格贡献图（周为列 × 7 天为行）；格子边长由密度档位经 --gpa-heat-cell 驱动
+// 提交热力图样式：贡献图。三种粒度共用同一套尺寸变量——
+// 日（周列 × 7 行）/ 周（单行条带）/ 月（年行 × 12 月），只有栅格流向与行列数不同。
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// 星期标签列宽度：月份标签行的左内边距与主体首列必须取同一个值，
-// 否则月份标签与周列错位，提取为变量杜绝两处硬编码漂移。
+// 行标签列宽度：列标签行（.gpa-heat-head）与主体（.gpa-heat-body）的左侧列必须取同一个值，
+// 否则列标签与格子错位，提取为变量杜绝两处硬编码漂移。
 $gpa-weekday-col: 28px;
 
-// 热力图容器（周数与格子边长由行内 CSS 变量驱动：--gpa-heat-weeks / --gpa-heat-cell；
-// position: relative 是自绘 tooltip 的定位基准）
+// 热力图容器（行列数 / 格子边长 / 行标签列宽由行内 CSS 变量驱动：
+// --gpa-heat-cols / --gpa-heat-rows / --gpa-heat-cell；position: relative 是自绘 tooltip 的定位基准）
 .gpa-heat {
   position: relative;
   margin-bottom: $s-2;
-  --gpa-heat-cell: 12px; // 兜底值（组件总会行内覆盖，此处只在变量缺失时保布局）
+  // 兜底值（组件总会行内覆盖，此处只在变量缺失时保布局）
+  --gpa-heat-cell: 12px;
+  --gpa-heat-cols: 53;
+  --gpa-heat-rows: 7;
 }
 
-// 横向滚动容器（最近一年约 53 周 ≈ 790px，窄面板可横向滚动）
+// 横向滚动容器（按日一年约 53 周 ≈ 790px，窄面板可横向滚动；周/月粒度通常不需滚动）
 .gpa-heat-scroll {
   overflow-x: auto;
   @include hide-h-scrollbar;
 }
 
-// 月份标签行（gridColumn 由行内样式对齐到周列；标签可溢出列宽，与 GitHub 一致）
-.gpa-heat-months {
+// 列标签行：与主体共用同一套栅格（有行标签时左侧放一个同宽空位），
+// 这样列标签永远与格子列对齐，不必手写 padding 去凑行标签列宽
+.gpa-heat-head {
   display: grid;
-  grid-template-columns: repeat(var(--gpa-heat-weeks), var(--gpa-heat-cell));
+  grid-template-columns: 1fr;
   gap: $s-px3;
-  padding-left: calc(#{$gpa-weekday-col} + #{$s-px3}); // 对齐星期标签列 + 网格 gap
   margin-bottom: $s-1;
+
+  &.is-with-side {
+    grid-template-columns: $gpa-weekday-col 1fr;
+  }
 }
 
-.gpa-heat-month {
+.gpa-heat-col-labels {
+  display: grid;
+  grid-template-columns: repeat(var(--gpa-heat-cols), var(--gpa-heat-cell));
+  gap: $s-px3;
+}
+
+// 通用标签（列=月份 / 月序号，行=星期 / 年份）
+.gpa-heat-label {
   font-family: $ff-mono;
   font-size: $t-2xs;
   font-weight: $fw-bold;
@@ -40,44 +55,48 @@ $gpa-weekday-col: 28px;
   white-space: nowrap;
 }
 
-// 主体：星期标签列 + 周网格（同 gap 同尺寸，行对齐）
+// 主体：行标签列 + 网格（同 gap 同尺寸，行对齐）
 .gpa-heat-body {
   display: grid;
-  grid-template-columns: $gpa-weekday-col 1fr;
+  grid-template-columns: 1fr;
   gap: $s-px3;
+
+  // 有行标签时（日/月粒度）左侧留出标签列；周粒度是单行条带，没有行维
+  &.is-with-side {
+    grid-template-columns: $gpa-weekday-col 1fr;
+  }
 }
 
-// 星期标签列（3 个标签定位到第 1/3/5 行，与格子行严格对齐）
-.gpa-heat-weekdays {
+// 行标签列（标签定位到具体行：日粒度第 1/3/5 行，月粒度每年一行）
+.gpa-heat-row-labels {
   display: grid;
-  grid-template-rows: repeat(7, var(--gpa-heat-cell));
+  grid-template-rows: repeat(var(--gpa-heat-rows), var(--gpa-heat-cell));
   gap: $s-px3;
+
+  .gpa-heat-label {
+    line-height: var(--gpa-heat-cell);
+  }
 }
 
-.gpa-heat-weekday {
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface-light);
-  opacity: 0.45;
-  line-height: var(--gpa-heat-cell);
-
-  &:nth-child(1) { grid-row: 1; }
-  &:nth-child(2) { grid-row: 3; }
-  &:nth-child(3) { grid-row: 5; }
-}
-
-// 周网格：单元格列宽 × 7 行，列优先填充
+// 格子网格：列数/行数由变量给出，流向按粒度切换
 .gpa-heat-grid {
   display: grid;
-  grid-template-columns: repeat(var(--gpa-heat-weeks), var(--gpa-heat-cell));
-  grid-template-rows: repeat(7, var(--gpa-heat-cell));
-  grid-auto-flow: column;
+  grid-template-columns: repeat(var(--gpa-heat-cols), var(--gpa-heat-cell));
+  grid-template-rows: repeat(var(--gpa-heat-rows), var(--gpa-heat-cell));
   gap: $s-px3;
   // 拖拽框选时避免选中页面文字（格子本身是 button 不参与选择，但父容器会）
   user-select: none;
+
+  // 日（周列 × 7 行）与周（单行条带）：列优先填充，逐列向右推进
+  &.is-day,
+  &.is-week {
+    grid-auto-flow: column;
+  }
+
+  // 月（年 × 12 月）：行优先填充，每年占满一行后换年
+  &.is-month {
+    grid-auto-flow: row;
+  }
 }
 
 .gpa-heat-cell {

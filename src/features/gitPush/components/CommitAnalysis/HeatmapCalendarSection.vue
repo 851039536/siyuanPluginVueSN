@@ -22,6 +22,7 @@
       :thresholds="thresholds"
       :scale-mode="viewSettings.heatScale"
       :metric="viewSettings.heatMetric"
+      :density="viewSettings.heatDensity"
       :selected-date="selectedDate"
       @select-day="onSelectDay"
     />

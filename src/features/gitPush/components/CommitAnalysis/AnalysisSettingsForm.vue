@@ -71,6 +71,33 @@
       </div>
     </div>
 
+    <!-- 设置项：格子密度（仅热力图有意义；日历是自适应列宽的月度网格） -->
+    <div
+      v-if="viewSettings.view === 'heatmap'"
+      class="gpa-settings-row"
+    >
+      <!-- 设置项标签："密度" -->
+      <span class="gpa-settings-label">{{ i18n.analysisHeatDensity }}</span>
+      <div class="gpa-settings-seg">
+        <Button
+          class="gpa-settings-seg-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="viewSettings.heatDensity === 'compact'"
+          @click="update({ heatDensity: 'compact' })"
+        >{{ i18n.analysisHeatDensityCompact }}</Button>
+        <Button
+          class="gpa-settings-seg-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="viewSettings.heatDensity === 'normal'"
+          @click="update({ heatDensity: 'normal' })"
+        >{{ i18n.analysisHeatDensityNormal }}</Button>
+      </div>
+    </div>
+
     <!-- 设置项：分级方式（自适应 = 按范围内非零日分位数；固定 = 1/3/6/12 次） -->
     <div class="gpa-settings-row">
       <span

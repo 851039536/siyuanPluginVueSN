@@ -1,10 +1,14 @@
 <!-- 提交热力图：GitHub 风格贡献图，周为列 × 7 天为行，格子按当日指标值分级着色（配色/周起始/范围/指标/分档方式由设置驱动）；点击格子查看当日提交 -->
 <template>
   <div
+    ref="rootEl"
     class="gpa-heat"
-    :style="{ '--gpa-heat-weeks': String(totalWeeks) }"
+    :style="{ '--gpa-heat-weeks': String(totalWeeks), '--gpa-heat-cell': `${cellSizePx}px` }"
   >
-    <div class="gpa-heat-scroll">
+    <div
+      class="gpa-heat-scroll"
+      @scroll="hideTip"
+    >
       <!-- 月份标签行（gridColumn 对齐到对应周列首格） -->
       <div class="gpa-heat-months">
         <span
@@ -42,12 +46,15 @@
             class="gpa-heat-cell"
             :class="{ 'is-empty': !cell.date, 'is-selected': !!cell.date && cell.date === selectedDate }"
             :style="cell.style"
-            :title="cell.tooltip"
             :aria-label="cell.date ? cell.tooltip : undefined"
             :aria-pressed="cell.date ? cell.date === selectedDate : undefined"
             :tabindex="cell.date && idx === focusIndex ? 0 : -1"
             :data-idx="idx"
             @click="onCellClick(cell.date)"
+            @mouseenter="showTip($event, cell)"
+            @mouseleave="hideTip"
+            @focus="showTip($event, cell)"
+            @blur="hideTip"
           />
         </div>
       </div>
@@ -71,14 +78,27 @@
         >{{ scaleHint }}</span>
       </div>
     </div>
+
+    <!-- 自绘 tooltip（替代原生 title：即刻出现、可放多行、深色主题下样式可控；pointer-events 关掉避免遮住相邻格） -->
+    <div
+      v-if="tip"
+      class="gpa-heat-tip"
+      :class="{ 'is-below': tip.flip }"
+      :style="{ left: `${tip.left}px`, top: `${tip.top}px` }"
+      role="tooltip"
+    >
+      <span class="gpa-heat-tip-date">{{ tip.date }} · {{ tip.weekday }}</span>
+      <span class="gpa-heat-tip-value">{{ tip.value }}</span>
+      <span class="gpa-heat-tip-hint">{{ i18n.analysisHeatTipHint }}</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { CommitHeatMetric, CommitHeatScaleMode } from "../../types"
+import type { CommitHeatDensity, CommitHeatMetric, CommitHeatScaleMode } from "../../types"
 import { computed, ref, watch } from "vue"
 import { buildDayCell, formatLocalDate, heatCellColor } from "../../utils"
-import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS, COMMIT_HEAT_METRIC_META } from "../../types"
+import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS, COMMIT_HEAT_METRIC_META, HEAT_CELL_SIZES } from "../../types"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -97,6 +117,8 @@ const props = defineProps<{
   scaleMode: CommitHeatScaleMode
   /** 当前指标口径（决定 tooltip 量词与图例文案） */
   metric: CommitHeatMetric
+  /** 格子密度（12px / 14px；由 CSS 变量 --gpa-heat-cell 驱动整张网格） */
+  density: CommitHeatDensity
   /** 已选中日期（YYYY-MM-DD，空串 = 未选中） */
   selectedDate: string
 }>()
@@ -110,7 +132,7 @@ const emit = defineEmits<{
  * 周列 × 7 行单元格：起点回退到 weekStart 对齐，范围末尾补齐完整周（空单元格隐藏）。
  * 日格的样式与 tooltip 经 utils.buildDayCell 预计算（与日历视图同一口径、同一份阈值）。
  */
-const cells = computed<{ date: string, tooltip: string, style: Record<string, string> | undefined }[]>(() => {
+const cells = computed<{ date: string, count: number, tooltip: string, style: Record<string, string> }[]>(() => {
   const [sy, sm, sd] = props.start.split("-").map(Number)
   const [ey, em, ed] = props.end.split("-").map(Number)
   const start = new Date(sy, sm - 1, sd)
@@ -118,7 +140,7 @@ const cells = computed<{ date: string, tooltip: string, style: Record<string, st
   // 取模而非 while 自减：weekStart 若被异常值污染（设置来自持久化存储，非 0/1 时 while 永不满足）会死循环卡死页面
   const offset = (start.getDay() - props.weekStart + 7) % 7
   start.setDate(start.getDate() - offset)
-  const list: { date: string, tooltip: string, style: Record<string, string> }[] = []
+  const list: { date: string, count: number, tooltip: string, style: Record<string, string> }[] = []
   const cursor = new Date(start)
   while (cursor <= end) {
     const date = formatLocalDate(cursor)
@@ -129,11 +151,64 @@ const cells = computed<{ date: string, tooltip: string, style: Record<string, st
     cursor.setDate(cursor.getDate() + 1)
   }
   const remainder = list.length % 7
-  for (let i = 0; i < (7 - remainder) % 7; i++) list.push({ date: "", tooltip: "", style: {} })
+  for (let i = 0; i < (7 - remainder) % 7; i++) list.push({ date: "", count: 0, tooltip: "", style: {} })
   return list
 })
 
 const totalWeeks = computed(() => Math.ceil(cells.value.length / 7))
+
+/** 格子边长（px）：密度档位唯一的尺寸来源，同时喂给 CSS 变量 --gpa-heat-cell */
+const cellSizePx = computed(() => HEAT_CELL_SIZES[props.density])
+
+// ── 自绘 tooltip（原生 title 约 1s 延迟、不能多行、深色主题下样式不可控）──
+
+interface HeatTip {
+  /** 相对 .gpa-heat 的定位（px） */
+  left: number
+  top: number
+  /** true = 显示在格子下方（上方空间不足时翻转，避免被面板滚动区裁掉） */
+  flip: boolean
+  date: string
+  weekday: string
+  /** "3 次提交" / "2 个项目" */
+  value: string
+}
+
+const rootEl = ref<HTMLElement | null>(null)
+const tip = ref<HeatTip | null>(null)
+
+/** 星期文案（按日期文本解析，避免 UTC 解析在西半球时区跨日偏移） */
+function weekdayOf(date: string): string {
+  const [y, m, d] = date.split("-").map(Number)
+  return props.i18n[ANALYSIS_WEEKDAY_KEYS[new Date(y, m - 1, d).getDay()]] || ""
+}
+
+/** 悬停/聚焦时定位 tooltip：用 rect 差值而非 offsetLeft——格子位于横向滚动容器内，offset 不随滚动位移 */
+function showTip(e: Event, cell: { date: string, count: number }) {
+  if (!cell.date || !rootEl.value) return
+  const cellRect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const rootRect = rootEl.value.getBoundingClientRect()
+  const center = cellRect.left - rootRect.left + cellRect.width / 2
+  // tooltip 半宽的粗估值：仅用于贴边收敛，宁可略保守也不让它溢出面板
+  const halfWidth = 64
+  // 顶部空间不足（工具提示高约 56px）时翻到格子下方，否则会被 Dock 的滚动区裁掉
+  const flip = cellRect.top - rootRect.top < 60
+  tip.value = {
+    left: Math.min(Math.max(center, halfWidth), Math.max(halfWidth, rootRect.width - halfWidth)),
+    top: flip ? cellRect.bottom - rootRect.top + 4 : cellRect.top - rootRect.top - 4,
+    flip,
+    date: cell.date,
+    weekday: weekdayOf(cell.date),
+    value: `${cell.count} ${props.i18n[COMMIT_HEAT_METRIC_META[props.metric].unitKey] || ""}`,
+  }
+}
+
+function hideTip() {
+  tip.value = null
+}
+
+// 数据/设置变更后格子重建，旧 tooltip 指向的日期可能已不在此范围
+watch(cells, hideTip)
 
 /** 图例色块（0~4 级）：style 预计算 + 各级下界 tooltip（自适应档的下界随数据与指标变化，不能写死） */
 const legendCells = computed(() => {

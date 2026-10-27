@@ -512,6 +512,15 @@ export const COMMIT_HEAT_METRIC_META: Record<CommitHeatMetric, { labelKey: strin
   authors: { labelKey: "analysisHeatMetricAuthors", unitKey: "analysisHeatUnitAuthors" },
 }
 
+/** 热力格子密度：compact=12px（一屏更宽）/ normal=14px（大屏更舒适） */
+export type CommitHeatDensity = "compact" | "normal"
+
+/** 热力格子边长（px，随密度档位）：网格列宽/行高、格子尺寸、图例色块共用同一来源 */
+export const HEAT_CELL_SIZES: Record<CommitHeatDensity, number> = {
+  compact: 12,
+  normal: 14,
+}
+
 /** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */
 export interface CommitAnalysisViewSettings {
   /** 视图：热力图 / 日历 */
@@ -529,6 +538,8 @@ export interface CommitAnalysisViewSettings {
   heatScale: CommitHeatScaleMode
   /** 热力指标口径（旧数据缺该字段时按默认 commits 兜底） */
   heatMetric: CommitHeatMetric
+  /** 热力格子密度（旧数据缺该字段时按默认 compact 兜底） */
+  heatDensity: CommitHeatDensity
 }
 
 /** 热力等级阈值（固定档）：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */

@@ -1,10 +1,9 @@
-// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/内容类型/作者排行；
+// 提交分析 — 批量读取各项目提交日志，聚合时间分布/提交次数/项目排行；
 // 行数排行改为「存量规模 + 生命周期」视图，只扫已跟踪文件行数与首/末次提交（不再抓全历史 numstat）
 import type { Ref } from "vue"
 import type {
   CommitAnalysisEntry,
   CommitAnalysisStats,
-  CommitAnalysisType,
   CommitAnalysisViewSettings,
   CommitRuleCheckStats,
   CommitRuleConfig,
@@ -34,10 +33,8 @@ import {
   classifyFetchFailure,
   compareProjectLineRank,
   fetchFailureReason,
-  parseCommitAnalysisType,
   poolProcess,
   ProjectFetchError,
-  rankByCount,
   rankByCountWithTotal,
   resolveValidPath,
 } from "../utils"
@@ -47,9 +44,8 @@ export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200, 300, 500, "all"] as const
 /** 提交抓取条数类型（数字 = 条数上限；"all" = 全部提交） */
 export type CommitCount = number | "all"
 
-/** 项目提交数排行上限 / 作者行数排行上限（仅提交数排行与作者行数排行截断；项目代码行数排行已显示全部，不再截断） */
+/** 项目提交数排行上限（仅项目提交数排行截断；项目代码行数排行已显示全部，不再截断） */
 const PROJECT_RANK_LIMIT = 20
-const AUTHOR_RANK_LIMIT = 10
 
 /** 行数统计可选的常见文件扩展名（配置弹窗多选排除列表，空数组 = 不过滤） */
 export const LINE_STATS_EXTENSIONS = [
@@ -728,7 +724,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     return perProjectFileLines.value.get(projectId) ?? new Map<string, number | null>()
   }
 
-  /** 分析聚合视图（CommitAnalysisPanel 唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
+  /** 分析聚合视图（提交分析面板唯一数据 prop，新增维度只需改这里 + 类型 + 面板三处） */
   const analysisStats = computed<CommitAnalysisStats>(() => {
     // 实时过滤已删除项目的条目（项目删除后缓存/内存中的残留数据不参与统计与展示）
     const list = entries.value.filter((e) => validProjectIds.value.has(e.projectId))
@@ -736,7 +732,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     // 排行取「截断后行 + 截断前分组数」：UI 据此在截断时提示「仅显示前 N 名（共 M 名）」，
     // 避免各行次数之和小于 totalCommits 时被误读为统计错误
     const projectRank = rankByCountWithTotal(list, (e) => e.projectId, PROJECT_RANK_LIMIT)
-    const authorRank = rankByCountWithTotal(list, (e) => e.author, AUTHOR_RANK_LIMIT)
     return {
       totalCommits: list.length,
       projectCount: projects.value.length,
@@ -750,15 +745,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         count: r.count,
       })),
       projectRankingTotal: projectRank.totalGroups,
-      typeDistribution: rankByCount(list, (e) => parseCommitAnalysisType(e.message), 20).map((r) => ({
-        type: r.key as CommitAnalysisType,
-        count: r.count,
-      })),
-      authorRanking: authorRank.rows.map((r) => ({
-        author: r.key,
-        count: r.count,
-      })),
-      authorRankingTotal: authorRank.totalGroups,
     }
   })
 

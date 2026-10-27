@@ -1,21 +1,8 @@
-// gitPush 提交分析纯函数：类型前缀解析、本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
+// gitPush 提交分析纯函数：本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
 // 直连 types/meta（纯类型与常量）而非 "../types" 桶：桶含 GitPushManager 等运行时模块，
 // 会把运行时 siyuan 依赖拉进模块图，使本纯函数模块无法在 Node 单测环境加载。
-import type { CommitAnalysisEntry, CommitAnalysisType, CommitRuleReasonKey } from "../types/meta"
-import { ANALYSIS_WEEKDAY_KEYS, COMMIT_ANALYSIS_TYPE_META, COMMIT_RULE_REASON_META, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
-
-/**
- * 解析 Conventional Commits 提交信息前缀类型（feat/fix/docs 等），无前缀或未知前缀返回 other。
- * 提交内容分析用；与 storage.ts 的 COMMIT_TYPE_VALUES（提交模板类型）各自独立。
- */
-export function parseCommitAnalysisType(message: string): CommitAnalysisType {
-  const match = /^([a-z]+)(?:\([^)]*\))?!?:\s/.exec(message || "")
-  if (match) {
-    const t = match[1] as CommitAnalysisType
-    if (t in COMMIT_ANALYSIS_TYPE_META) return t
-  }
-  return "other"
-}
+import type { CommitAnalysisEntry, CommitRuleReasonKey } from "../types/meta"
+import { ANALYSIS_WEEKDAY_KEYS, COMMIT_RULE_REASON_META, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
 
 /** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —；报告视图文件详情/活跃范围共用） */
 export function formatIsoDate(iso: string): string {
@@ -163,17 +150,11 @@ export function buildDayCell(
   }
 }
 
-/** 通用计数排行：按 keyFn 分组计数，降序取前 limit 条（项目/作者/类型排行共用） */
-export function rankByCount<T>(items: T[], keyFn: (item: T) => string, limit: number): { key: string, count: number }[] {
-  return rankByCountWithTotal(items, keyFn, limit).rows
-}
-
 /**
- * 同 rankByCount，但额外返回截断前的**完整分组数**（totalGroups）。
+ * 通用计数排行：按 keyFn 分组计数，降序取前 limit 条，并额外返回截断前的**完整分组数**（totalGroups）。
  *
  * 用途：排行区在截断时须向用户交代「仅显示前 N 名（共 M 名）」——否则各行次数之和会**小于**
  * 顶部 KPI 卡的总提交数，看起来像统计出错（项目数 > PROJECT_RANK_LIMIT 时必然发生）。
- * 返回 rows 的形状与 rankByCount 完全一致，故原调用方可按需改用本函数而不改渲染。
  */
 export function rankByCountWithTotal<T>(
   items: T[],

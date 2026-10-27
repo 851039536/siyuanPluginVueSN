@@ -1,7 +1,7 @@
 // gitPush 指标与条形宽度计算（纯函数）：百分比、最大值、净增语义 class、行数排行预计算
 import type { ProjectLineRankItem } from "../types"
 
-/** 条形宽度百分比（相对最大值，消除 CommitAnalysisPanel 中 4 个 computed 内的重复计算） */
+/** 条形宽度百分比（相对最大值，消除各视图 computed 内的重复计算） */
 export function barPct(count: number, max: number): string {
   return `${Math.round((count / max) * 100)}%`
 }

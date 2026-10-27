@@ -138,12 +138,6 @@
               :i18n="i18n"
               :stats="stats"
             />
-
-            <!-- 双栏：作者提交排行 | 提交内容类型 -->
-            <AuthorTypeSection
-              :i18n="i18n"
-              :stats="stats"
-            />
           </template>
         </template>
 
@@ -301,7 +295,6 @@ import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
 import { buildYearOptions } from "../../utils"
 import AnalysisTabs from "./AnalysisTabs.vue"
-import AuthorTypeSection from "./AuthorTypeSection.vue"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import DailyTrendSection from "./DailyTrendSection.vue"
 import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"

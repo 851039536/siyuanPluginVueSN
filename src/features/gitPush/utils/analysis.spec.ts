@@ -4,7 +4,7 @@
 // UI 依据 totalGroups > rows.length 决定是否显示「仅显示前 N 名（共 M）」——
 // 若该契约破裂，用户会看到排行各行次数之和小于总提交数而被误读为统计错误。
 import { describe, expect, it } from "vitest"
-import { buildDayCell, isDayKeyInBucket, rankByCount, rankByCountWithTotal } from "./analysis"
+import { buildDayCell, isDayKeyInBucket, rankByCountWithTotal } from "./analysis"
 
 describe("buildDayCell（热力图/日历共用的日格口径）", () => {
   const i18n: Record<string, any> = {
@@ -122,19 +122,5 @@ describe("rankByCountWithTotal", () => {
     const { rows, totalGroups } = rankByCountWithTotal(items, (x) => x, 20)
     expect(totalGroups).toBe(3)
     expect(rows.map((r) => r.count)).toEqual([1, 1, 1])
-  })
-})
-
-describe("rankByCount（向后兼容）", () => {
-  it("与 rankByCountWithTotal 的 rows 完全一致", () => {
-    const items = Array.from({ length: 30 }, (_, i) => `p${i % 7}`)
-    const plain = rankByCount(items, (x) => x, 5)
-    const { rows } = rankByCountWithTotal(items, (x) => x, 5)
-    expect(plain).toEqual(rows)
-  })
-
-  it("仍按 limit 截断", () => {
-    const items = Array.from({ length: 30 }, (_, i) => `p${i}`)
-    expect(rankByCount(items, (x) => x, 5)).toHaveLength(5)
   })
 })

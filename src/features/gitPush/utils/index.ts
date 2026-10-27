@@ -73,8 +73,6 @@ export {
   heatCellColor,
   heatCellTooltip,
   heatLevel,
-  parseCommitAnalysisType,
-  rankByCount,
   rankByCountWithTotal,
   resolveAnalysisRange,
   ruleReasonDesc,

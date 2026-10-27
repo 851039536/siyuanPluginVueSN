@@ -15,23 +15,8 @@
   margin-bottom: $s-3;
 }
 
-// ── 双栏区块（项目排行+最近记录 / 作者+内容类型 同排）──
-// auto-fit + minmax：窄 Dock 下自动降为单列。原先写死两列时，窄面板每栏仅约 140px，
-// 而条形行固定占掉 72px 标签 + 24px 计数 + 16px 间距，轨道只剩不到 30px，项目名几乎全是省略号。
-.gpa-pair {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); // 无对应 Token（栅格断点）
-  gap: $s-3;
-  margin-bottom: $s-3;
-
-  > .gpa-section {
-    margin-bottom: 0; // 网格内由 gap 控制间距，不叠加底部 margin
-  }
-}
-
-// ── 限高区块（Pair 1 双栏：内容超高时列表内部滚动，标题保持可见）──
-// 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白；
-// 网格 align 默认为 stretch，两栏仍以较高一侧为准，等高观感不变。
+// ── 限高区块（项目提交排行：内容超高时列表内部滚动，标题保持可见）──
+// 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白。
 .gpa-section--scroll {
   max-height: 320px; // 上限约 8 行，超出内部滚动；无对应 Token（区块限高）
   display: flex;
@@ -41,8 +26,7 @@
     flex-shrink: 0; // 标题不随滚动区压缩
   }
 
-  // 滚动内容容器：条形列表（作者/类型分布）/ 徽章排行列表（项目排行）
-  > .gpa-bar-list,
+  // 滚动内容容器：徽章排行列表（项目排行）
   > .gpa-rank-list {
     flex: 1;
     min-height: 0; // 允许 flex 子项收缩，触发内部滚动
@@ -60,11 +44,6 @@
   }
 }
 
-// 固定高度窄列内收敛条形标签列（轨道可读），不影响 Pair 2 全宽布局
-.gpa-section--scroll .gpa-bar-label {
-  flex-basis: 72px; // 无对应 Token（窄列标签宽度）
-}
-
 // 区块标题（与其余四个分析类视图共用 gp-section-title-base）
 .gpa-section-title {
   @include gp-section-title-base;
@@ -80,83 +59,6 @@
   opacity: 0.45;
   text-transform: none;
   letter-spacing: 0;
-}
-
-// 标题计数徽章：底色/文字/几何由共享 Tag（primary + xsmall + square）承担，
-// 等宽数字沿用原徽章观感（4 类 = (0,4,0)，压过 Tag 的 xsmall/square 档位声明）
-.gpa-panel .gpa-section-title .gpa-section-count.si-tag {
-  font-family: $ff-mono;
-  font-variant-numeric: tabular-nums;
-  font-weight: $fw-semibold;
-  letter-spacing: 0;
-}
-
-// ── 水平条形（排行/类型分布共用：标签 + 轨道 + 计数）──
-.gpa-bar-list {
-  display: flex;
-  flex-direction: column;
-  gap: $s-2;
-}
-
-.gpa-bar-row {
-  display: flex;
-  align-items: center;
-  gap: $s-2;
-  font-size: $t-xs;
-}
-
-// 排行行（整行可点击）：共享 Button（ghost + xsmall + dense）承担交互、尺寸与键盘可达性；
-// Button 会把默认插槽包进 .si-button__text，故行内三列布局下沉到该容器。
-// 5 类 = (0,5,0)，压过 dense 档位的 padding/圆角/字号与根类 justify-content: center
-.gpa-panel .gpa-bar-list .gpa-bar-row.si-button {
-  width: 100%;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  font-size: $t-xs;
-  justify-content: flex-start;
-}
-
-.gpa-panel .gpa-bar-list .gpa-bar-row.si-button .si-button__text {
-  flex: 1;
-  gap: $s-2;
-}
-
-// 行悬停：标签列转主色（行本身的软底反馈由共享 Button 的 ghost 悬停提供）
-.gpa-panel .gpa-bar-list .gpa-bar-row--clickable:hover .gpa-bar-label {
-  color: var(--b3-theme-primary);
-}
-
-.gpa-bar-label {
-  flex: 0 0 88px; // 固定标签列宽，保证轨道对齐；无对应 Token
-  @include text-ellipsis;
-  opacity: 0.75;
-  transition: color 0.12s;
-}
-
-.gpa-bar-track {
-  flex: 1;
-  height: $s-1;
-  background: var(--b3-theme-surface);
-  border-radius: $r-px2;
-  overflow: hidden;
-}
-
-.gpa-bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: $r-px2;
-  background: var(--b3-theme-primary);
-}
-
-.gpa-bar-num {
-  flex: 0 0 auto;
-  min-width: $s-6;
-  text-align: right;
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  opacity: 0.5;
 }
 
 // ── 项目提交排行：徽章式排行行（名次 | 项目名 | 次数徽章 | 占比）──

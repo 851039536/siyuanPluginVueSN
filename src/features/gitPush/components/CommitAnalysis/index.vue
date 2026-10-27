@@ -126,17 +126,11 @@
               @view-project="emit('viewProject', $event)"
             />
 
-            <!-- 提交热力图 / 日历 -->
+            <!-- 提交热力图 / 日历（日粒度提交分布的唯一出口：范围/视图/周起始/颜色可配） -->
             <HeatmapCalendarSection
               :i18n="i18n"
               :stats="stats"
               :view-settings="viewSettings"
-            />
-
-            <!-- 最近 30 天提交趋势 -->
-            <DailyTrendSection
-              :i18n="i18n"
-              :stats="stats"
             />
           </template>
         </template>
@@ -296,7 +290,6 @@ import DropCommitDialog from "../common/DropCommitDialog.vue"
 import { buildYearOptions } from "../../utils"
 import AnalysisTabs from "./AnalysisTabs.vue"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
-import DailyTrendSection from "./DailyTrendSection.vue"
 import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"
 import ProjectRankingSection from "./ProjectRankingSection.vue"
 import ExtFilterDialog from "../LineStats/ExtFilterDialog.vue"

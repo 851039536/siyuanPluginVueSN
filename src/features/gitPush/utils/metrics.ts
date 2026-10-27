@@ -1,32 +1,5 @@
-// gitPush 指标与条形宽度计算（纯函数）：百分比、最大值、净增语义 class、行数排行预计算
+// gitPush 指标计算（纯函数）：最大值、净增语义 class、行数排行占比与排序
 import type { ProjectLineRankItem } from "../types"
-
-/** 条形宽度百分比（相对最大值，消除各视图 computed 内的重复计算） */
-export function barPct(count: number, max: number): string {
-  return `${Math.round((count / max) * 100)}%`
-}
-
-/** 计数占比百分比（count/total，total=0 兜底 0%），统计视图远程覆盖率等条形区块共用 */
-export function ratioPct(count: number, total: number): string {
-  if (total === 0) { return "0%" }
-  return `${Math.round((count / total) * 100)}%`
-}
-
-/**
- * 为排行条目预计算条形宽度百分比。
- * max 取所有行中的最大值（兼容已排序降序的排行数据以及未排序的时间序列如 dailyCommits）。
- * zeroAsEmpty 为 true 时 count=0 的项返回 "0%"（如 dailyRows 留空柱）。
- */
-export function withBarPct<T extends { count: number }>(
-  rows: T[],
-  opts?: { zeroAsEmpty?: boolean },
-): (T & { pct: string })[] {
-  const max = maxOf(rows.map((r) => r.count), 1)
-  return rows.map((r) => ({
-    ...r,
-    pct: opts?.zeroAsEmpty && r.count === 0 ? "0%" : barPct(r.count, max),
-  }))
-}
 
 /** 净增行语义 class：正→`<prefix>--pos` / 负→`<prefix>--neg` / 零→`<prefix>--zero`（zeroSuffix 传空串时零值返回空串，不追加 class） */
 export function netClass(net: number, prefix: string, zeroSuffix = "--zero"): string {

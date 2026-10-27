@@ -213,19 +213,19 @@ export type CommitAnalysisType =
   | "feat" | "fix" | "docs" | "refactor" | "perf" | "style"
   | "test" | "build" | "ci" | "chore" | "other"
 
-/** 提交类型元数据（labelKey 对应 i18n 键 commitTypeFeat 等，color 用于条形/徽章着色） */
-export const COMMIT_ANALYSIS_TYPE_META: Record<CommitAnalysisType, { labelKey: string, color: string }> = {
-  feat: { labelKey: "commitTypeFeat", color: "#10b981" },
-  fix: { labelKey: "commitTypeFix", color: "#ef4444" },
-  docs: { labelKey: "commitTypeDocs", color: "#3b82f6" },
-  refactor: { labelKey: "commitTypeRefactor", color: "#8b5cf6" },
-  perf: { labelKey: "commitTypePerf", color: "#f59e0b" },
-  style: { labelKey: "commitTypeStyle", color: "#ec4899" },
-  test: { labelKey: "commitTypeTest", color: "#14b8a6" },
-  build: { labelKey: "commitTypeBuild", color: "#f97316" },
-  ci: { labelKey: "commitTypeCi", color: "#06b6d4" },
-  chore: { labelKey: "commitTypeChore", color: "#64748b" },
-  other: { labelKey: "commitTypeOther", color: "#9ca3af" },
+/** 提交类型元数据（labelKey 对应 i18n 键 commitTypeFeat 等；提交类型按钮与规则提示共用同一份文案口径） */
+export const COMMIT_ANALYSIS_TYPE_META: Record<CommitAnalysisType, { labelKey: string }> = {
+  feat: { labelKey: "commitTypeFeat" },
+  fix: { labelKey: "commitTypeFix" },
+  docs: { labelKey: "commitTypeDocs" },
+  refactor: { labelKey: "commitTypeRefactor" },
+  perf: { labelKey: "commitTypePerf" },
+  style: { labelKey: "commitTypeStyle" },
+  test: { labelKey: "commitTypeTest" },
+  build: { labelKey: "commitTypeBuild" },
+  ci: { labelKey: "commitTypeCi" },
+  chore: { labelKey: "commitTypeChore" },
+  other: { labelKey: "commitTypeOther" },
 }
 
 // ── 提交规则检查（useCommitAnalysis 产出 / CommitRuleCheckPanel 消费）──
@@ -408,8 +408,6 @@ export interface CommitAnalysisStats {
   failedCount: number
   /** 跨项目合并的原始条目 */
   entries: CommitAnalysisEntry[]
-  /** 最近 30 天每日提交数（缺天补 0，label 为 YYYY-MM-DD） */
-  dailyCommits: { label: string, count: number }[]
   /** 项目提交次数排行（降序，已按 PROJECT_RANK_LIMIT 截断） */
   projectRanking: { id: string, name: string, count: number }[]
   /** 项目排行的截断前项目总数（> projectRanking.length 时 UI 须提示「仅显示前 N 名」） */

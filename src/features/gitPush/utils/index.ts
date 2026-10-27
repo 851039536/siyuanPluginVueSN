@@ -65,7 +65,6 @@ export type { WorktreeStatusParse, WorktreeStatusV2Parse } from "./gitOutput"
 export type { DayCellView } from "./analysis"
 
 export {
-  buildDailyCommitBuckets,
   buildDayCell,
   buildDayCountMap,
   formatIsoDate,
@@ -106,12 +105,9 @@ export {
 } from "./reportFormat"
 
 export {
-  barPct,
   compareProjectLineRank,
   maxOf,
   netClass,
-  ratioPct,
-  withBarPct,
   withLineShare,
 } from "./metrics"
 

@@ -29,7 +29,6 @@ import {
   readCommitRuleConfig,
 } from "../types"
 import {
-  buildDailyCommitBuckets,
   classifyFetchFailure,
   compareProjectLineRank,
   fetchFailureReason,
@@ -738,7 +737,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       analyzedCount: projects.value.length - failedCount.value,
       failedCount: failedCount.value,
       entries: list,
-      dailyCommits: buildDailyCommitBuckets(list, 30),
       projectRanking: projectRank.rows.map((r) => ({
         id: r.key,
         name: nameById.get(r.key) || r.key,

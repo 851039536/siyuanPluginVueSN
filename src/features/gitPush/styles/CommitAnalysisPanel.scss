@@ -49,9 +49,8 @@
   @include gp-section-title-base;
 }
 
-// 排行截断提示 / 固定范围说明（次级信息：弱化色 + 常规字重，紧贴区块标题，不争夺视觉权重）
-.gpa-rank-hint,
-.gpa-daily-range-hint {
+// 排行截断提示（次级信息：弱化色 + 常规字重，紧贴区块标题，不争夺视觉权重）
+.gpa-rank-hint {
   margin-left: $s-2;
   font-size: $t-2xs;
   font-weight: $fw-normal;
@@ -134,37 +133,3 @@
   text-align: right;
   opacity: 0.5;
 }
-
-// ── 最近 30 天提交趋势（纵向条形图：底部对齐，hover 显示日期与次数）──
-.gpa-daily {
-  display: flex;
-  align-items: flex-end;
-  gap: $s-px2;
-  height: $s-16; // 条形图固定高度，视觉稳定
-  padding: $s-1 0 0;
-  border-bottom: 1px solid var(--b3-border-color);
-}
-
-.gpa-daily-col {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  height: 100%;
-  cursor: default;
-}
-
-.gpa-daily-bar {
-  width: 60%;
-  min-height: $s-px2; // 零值日保留 2px 底线，图表可读
-  background: var(--b3-theme-primary);
-  border-radius: $r-px1 $r-px1 0 0;
-  transition: background 0.12s;
-
-  .gpa-daily-col:hover & {
-    background: var(--b3-theme-primary-lightest);
-  }
-}
-
-// ── 最近提交记录列表样式已随 RecentCommitsSection 移除 ──
-

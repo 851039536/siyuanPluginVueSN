@@ -153,12 +153,11 @@ src/features/gitPush/
 │   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
 │   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
 │   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
-│   ├── CommitAnalysis/              # 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行；9 个）
+│   ├── CommitAnalysis/              # 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行；8 个）
 │   │   ├── index.vue                # 视图入口容器（三 Tab 编排 + 共用工具条/四态门；规则检查与行数排行的区块在此组合）
 │   │   ├── AnalysisTabs.vue         # 三视角切换条（三者同属一次 runCore 抓取的不同切面）
 │   │   ├── ProjectRankingSection.vue# 项目提交排行区块（条形 + 百分比，点击跳转）
-│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（viewSettings 切换）
-│   │   ├── DailyTrendSection.vue    # 最近 30 天提交趋势区块（每日柱状）
+│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（viewSettings 切换，日粒度提交分布唯一出口）
 │   │   ├── CommitAnalysisSettings.vue# 分析设置（齿轮 popover 薄壳，表单复用 AnalysisSettingsForm）
 │   │   ├── AnalysisSettingsForm.vue # 分析显示设置表单（视图/范围/周起始/颜色，popover 与设置汇总弹窗共用）
 │   │   ├── CommitCalendar.vue       # 提交日历

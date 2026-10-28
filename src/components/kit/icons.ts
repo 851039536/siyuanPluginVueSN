@@ -924,6 +924,10 @@ export const COMMON_ICONS = {
   columns: {
     icon: "mdi:view-column",
   },
+  /** 手风琴布局（卡片一次只展开一张） */
+  viewAccordion: {
+    icon: "mdi:view-agenda-outline",
+  },
 
   // 通用动作补充：列表 / 编辑 / 状态 / 归档场景（供共享 Button 的 icon prop 使用）
   unfoldMoreHorizontal: {

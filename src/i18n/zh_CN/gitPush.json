@@ -998,6 +998,11 @@
     "cardTabLog": "日志",
     "cardTabStash": "储藏",
     "cardTabTag": "标签",
+    "cardExpand": "展开详情",
+    "cardCollapse": "收起详情",
+    "cardLayoutAccordion": "手风琴模式（一次只展开一张卡片）",
+    "cardLayoutDetailed": "详细模式（所有卡片展开）",
+    "pushAllNoPending": "没有待推送的提交",
     "commitLogCountLabel": "显示条数",
 
     "fileTreeOpenButton": "目录树视图",

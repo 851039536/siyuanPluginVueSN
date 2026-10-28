@@ -55,27 +55,12 @@
 <script setup lang="ts">
 // gitPush 项目卡片远程状态区（已配置远程列表 + 状态徽章；behind 行动建议并入徽章悬停提示）
 import type { GitProject } from "../../types"
-import type { RemoteSyncKind } from "../../types/storage"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
-import { REMOTES } from "../../types"
+import { REMOTES, REMOTE_SYNC_VARIANT } from "../../types"
 import { useCardServices } from "../../composables/useCardServices"
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
-
-/** 远程同步状态分类 → 共享 Tag 的 variant */
-function statusVariant(kind: RemoteSyncKind): "primary" | "warning" | "danger" | "success" {
-  switch (kind) {
-    case "ahead":
-      return "primary"
-    case "behind":
-      return "warning"
-    case "diverged":
-      return "danger"
-    default:
-      return "success"
-  }
-}
 
 const props = defineProps<{
   project: GitProject
@@ -96,7 +81,7 @@ const remoteRows = computed(() =>
       return {
         ...r,
         ...view,
-        variant: statusVariant(view.kind),
+        variant: view.kind ? REMOTE_SYNC_VARIANT[view.kind] : "success",
         title: view.kind === "behind" ? i18n.conflictWarn : undefined,
       }
     }),

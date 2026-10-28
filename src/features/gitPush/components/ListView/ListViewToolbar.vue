@@ -49,6 +49,17 @@
         :aria-label="i18n.gitOpsPauseTip"
         :title="gitOpsPaused ? i18n.gitOpsPausedTip : i18n.gitOpsPauseTip"
       />
+      <!-- 卡片布局切换（手风琴：一次只展开一张卡片；关闭 = 详细模式全部展开） -->
+      <ToggleButton
+        v-model="accordionMode"
+        class="gp-ft-btn"
+        size="xsmall"
+        dense
+        on-icon="viewAccordion"
+        off-icon="viewAccordion"
+        :aria-label="i18n.cardLayoutAccordion"
+        :title="accordionMode ? i18n.cardLayoutAccordion : i18n.cardLayoutDetailed"
+      />
     </div>
   </div>
 
@@ -121,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GroupedProject, ViewMode } from "../../types"
+import type { CardLayout, GroupedProject, ViewMode } from "../../types"
 import { VIEW_MODE_META, VIEW_MODES } from "../../types"
 import { computed, onBeforeUnmount, ref, watch } from "vue"
 import type { IconKey } from "@/components/kit/icons"
@@ -163,6 +174,15 @@ const viewMode = defineModel<ViewMode>("viewMode", { required: true })
 const activeCategory = defineModel<string>("activeCategory", { required: true })
 const showArchived = defineModel<boolean>("showArchived", { required: true })
 const gitOpsPaused = defineModel<boolean>("gitOpsPaused", { required: true })
+const cardLayout = defineModel<CardLayout>("cardLayout", { required: true })
+
+/** 卡片布局是否手风琴（ToggleButton 是布尔开关，字符串模型在此折叠） */
+const accordionMode = computed({
+  get: () => cardLayout.value === "accordion",
+  set: (on: boolean) => {
+    cardLayout.value = on ? "accordion" : "detailed"
+  },
+})
 
 /**
  * TAB 栏滚轮横滑。

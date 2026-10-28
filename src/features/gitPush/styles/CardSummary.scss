@@ -1,0 +1,80 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// ========== 手风琴收起态摘要行 ==========
+// 收起态：压缩纵向内边距（卡片只剩单行摘要）
+.gp-card.gp-card--collapsed {
+  padding-top: $s-px6;
+  padding-bottom: $s-px6;
+}
+
+// 卡片根容器沿用 .gp-card 的边框/内边距，摘要行本身只负责单行排布
+.gp-summary {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  min-width: 0;
+  width: 100%;
+}
+
+// 展开按钮：几何由共享 Button 承担，这里只做弱化
+.git-push-panel .gp-summary .gp-summary-expand.si-button {
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 0.12s;
+
+  &:hover { opacity: 0.9; }
+}
+
+// 项目名：唯一可压缩项（其余元素 flex-shrink:0，避免被挤爆）
+.gp-summary-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 42%;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  @include text-ellipsis;
+}
+
+// 当前分支（等宽字体，弱化展示）
+.gp-summary-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px3;
+  flex-shrink: 0;
+  max-width: 26%;
+  overflow: hidden;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  white-space: nowrap;
+  opacity: 0.55;
+}
+
+// 待提交变更数
+.gp-summary-metric {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px2;
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.6;
+}
+
+// 单个远程的同步徽章（平台图标 + ↑N/↓N 标签）
+.gp-summary-remote {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px2;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.gp-summary-spacer {
+  flex: 1;
+}
+
+// 主推送按钮不参与压缩
+.gp-summary .gp-action-btn.si-button {
+  flex-shrink: 0;
+}

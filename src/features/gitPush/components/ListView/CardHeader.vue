@@ -3,6 +3,19 @@
   <div class="gp-card-top">
     <div class="gp-card-info">
       <div class="gp-card-name-row">
+        <!-- 收起按钮（仅手风琴模式展开时显示；tooltip："收起详情"） -->
+        <Button
+          v-if="collapsible"
+          class="gp-collapse-btn"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
+          icon="chevronUp"
+          :title="i18n.cardCollapse"
+          aria-expanded="true"
+          @click.stop="emit('toggleCollapse')"
+        />
         <!-- 收藏星标（悬停提示："取消收藏"/"收藏置顶"；text 外观保留原有的无边框弱化形态） -->
         <Button
           class="gp-star-btn"
@@ -206,6 +219,12 @@ const props = defineProps<{
   reloadLog: (count?: number | "all") => Promise<void>
   /** 刷新菜单"刷新标签"（卡内重载，编排层传入） */
   refreshTags: () => Promise<void>
+  /** 手风琴模式下是否显示「收起」按钮（展开态） */
+  collapsible?: boolean
+}>()
+
+const emit = defineEmits<{
+  toggleCollapse: []
 }>()
 
 const { services } = useCardServices(() => props.project)

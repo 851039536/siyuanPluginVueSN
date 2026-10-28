@@ -7,6 +7,7 @@
 - **项目映射**：添加本地 Git 项目路径，持久化保存（不影响项目本身）
 - **远程检测**：自动检测 `github.com`、`gitee.com`、`gitcode.com`、Gitea 远程仓库，支持远程名称辅助识别（不区分大小写）
 - **多平台推送/拉取**：一键推送到/拉取自 GitHub / Gitee / Gitea，或全部操作，并发信号量限流
+- **卡片布局（详细 / 手风琴）**：工具栏一键切换。手风琴模式把每张卡收起为单行摘要（名称 / 分支 / 变更数 / 冲突提示 / 各远程 ↑↓ 状态 / 主推送按钮），一次只展开一张卡片；偏好跨会话保存
 - **路径检查**：添加时检查路径是否为合法 Git 仓库
 - **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改；摘要条「目录树视图」按钮可打开**变更目录树弹窗**（VS Code 源代码管理风格：「已暂存 / 未暂存」两分区各自成树（部分暂存文件两侧分区都出现，勾选后数据驱动自动跨区移动）、变更文件按目录分组折叠、路径关键词筛选、全部展开/收起、行内暂存/丢弃/查看差异与分区级暂存全部/取消暂存全部，目录行显示子树变更计数；操作全部桥接回面板既有链路——暂存/丢弃确认/差异弹窗缓存零复制）
 - **差异查看弹窗**：着色 diff + 词级高亮 + 行号双列；新增/未跟踪文件同样展示完整内容（`git diff` 对未跟踪文件恒为空，数据层回退 `git diff --no-index`）；「已暂存且工作区又改动」的文件可切换查看暂存区/工作区两份差异（另一份后台预取）；取差异期间显示加载态（不再与空态混淆）；标题含全路径 tooltip、文件状态与重命名原路径；支持复制差异全文/文件路径；Esc 关闭、←/→ 切换文件
@@ -77,6 +78,7 @@ src/features/gitPush/
 │   ├── meta.ts                      # PLATFORM_META/FILE_STATUS_META 等共享常量（独立模块切断循环引用）
 │   ├── indexCache.ts                # 本地提交索引的记录形状与元数据常量（零依赖，保证引擎可在 Node 单测加载）
 │   ├── queryScheduler.ts            # 查询调度契约（ProjectQueryKind/ProjectQueryScheduler，切断 cardServices ↔ composable 循环）
+│   ├── cardTab.ts                   # 卡片面板 Tab ID 类型（CardTabs 与 ProjectCard 共用）
 │   └── storage.ts                   # 类型定义 + TypedStorage 持久化
 ├── composables/
 │   ├── useGitPush.ts                # Vue 3 响应式状态层（聚合入口）
@@ -86,6 +88,8 @@ src/features/gitPush/
 │   ├── useGitStats.ts               # 统计视图 computed
 │   ├── useCardServices.ts           # 卡片服务注入（inject CARD_SERVICES_KEY + 按项目 id 派生单项目 computed）
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
+│   ├── useCardAccordion.ts          # 卡片布局上下文（手风琴：一次只展开一张，ListView provide）
+│   ├── useCardLayout.ts             # 卡片布局偏好读写（详细 / 手风琴，持久化）
 │   ├── useProjectQueryScheduler.ts  # 项目查询调度器（单飞去重 + 分支名复用 + 新鲜度节流 + 脏标记，查询调度唯一权威）
 │   ├── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 │   ├── useDayDragSelect.ts          # 日格拖拽选区状态机（热力图/日历共用：起锚 → 掠过扩展 → mouseup 收尾并抑制补发 click）
@@ -122,11 +126,13 @@ src/features/gitPush/
 │   │   ├── TagCommitDialog.vue      # 标签提交弹窗
 │   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/新建日期/最后修改/占比/总行数；clickable 时原生 button 可键盘激活；项目代码行数排行专用）
 │   │   └── LineShareBar.vue         # 行数占比迷你条（轨道 + 填充 + 百分比文本；详情弹窗文件明细占比列用）
-│   ├── ListView/                    # 列表视图专属（16 个）
-│   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染）
-│   │   ├── ListViewToolbar.vue      # 列表工具栏
+│   ├── ListView/                    # 列表视图专属（18 个）
+│   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染；提供手风琴上下文）
+│   │   ├── ListViewToolbar.vue      # 列表工具栏（视图模式/归档/暂停/卡片布局/标签筛选）
 │   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入 + CardTabs 面板切换）
-│   │   ├── CardHeader.vue           # 卡片顶栏信息区（星标/名称/路径/md 徽章/分支/备注；操作按钮区委托 CardHeaderActions）
+│   │   ├── CardSummary.vue          # 手风琴收起态摘要行（名称/分支/变更/冲突/同步状态/主推送）
+│   │   ├── CardPushAllButton.vue    # 主推送按钮（推送全部 / 取消；操作栏与摘要行共用）
+│   │   ├── CardHeader.vue           # 卡片顶栏信息区（星标/名称/路径/md 徽章/分支/标签/备注；操作按钮区委托 CardHeaderActions）
 │   │   ├── CardHeaderActions.vue    # 卡片顶栏操作按钮区（分类/平台/IDE/刷新/编辑/Git配置/删除，自包含 services/menu）
 │   │   ├── CardRemotes.vue          # 远程仓库状态 + 冲突警告
 │   │   ├── CardActionBar.vue        # 拉取/推送操作栏（单远程/推送全部/强制推送/Fetch）
@@ -195,6 +201,7 @@ src/features/gitPush/
     ├── CardHeader.scss              # 卡片顶栏信息区样式（操作按钮区 → CardHeaderActions.scss）
     ├── CardHeaderActions.scss       # 卡片顶栏操作按钮区样式（自 CardHeader.scss 迁出）
     ├── CardTabs.scss                # 多面板 Tab 切换条样式（自 index.scss 迁出）
+    ├── CardSummary.scss             # 手风琴收起态摘要行样式
     ├── CardRemotes.scss             # 远程状态区样式（从 index.scss 提取）
     ├── CardActionBar.scss           # 操作栏样式（从 index.scss 提取）
     ├── StatsPanel.scss              # 统计视图样式
@@ -313,6 +320,7 @@ GitPushManager (facade)
 - `git-push-projects`：项目列表
 - `git-push-categories`：分类列表
 - `git-push-concurrency`：Git 并发数配置
+- `git-push-card-layout`：卡片布局（`detailed` 全部展开 / `accordion` 手风琴，默认 `detailed`）
 - `git-push-report-cache`：代码统计报告结果缓存（秒开上次结果；数据新鲜度由提交索引的后台增量刷新保证）
 - `git-push-index-meta`：本地提交索引元数据（每项目的仓库身份/HEAD 判据、截断游标、覆盖范围）
 - `git-push-index-enabled`：提交索引总开关（默认开启；关闭后统计路径全部回退直接跑 git）

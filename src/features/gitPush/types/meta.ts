@@ -1,5 +1,5 @@
 // gitPush 平台、状态、文件变更的元数据常量（独立模块，切断 types/index ↔ GitPushManager 循环引用）
-import type { FileChangeStatus, GitProject } from "./storage"
+import type { FileChangeStatus, GitProject, RemoteSyncKind } from "./storage"
 
 // ── 远程平台元数据（共享常量）──
 export const PLATFORM_META = [
@@ -578,6 +578,17 @@ export const ANALYSIS_MONTH_KEYS = [
 /** 项目列表视图模式（单一事实源，ViewMode 联合类型由此推导） */
 export const VIEW_MODES = ["all", "needsPush", "needsPull", "uncommitted", "starred", "archived"] as const
 export type ViewMode = typeof VIEW_MODES[number]
+
+/** 卡片布局：detailed = 全部展开（现状）；accordion = 手风琴（一次只展开一张） */
+export type CardLayout = "detailed" | "accordion"
+
+/** 远程同步状态分类 → 共享 Tag 的 variant（远程状态徽章与手风琴摘要共用；空分类由调用方兜底） */
+export const REMOTE_SYNC_VARIANT: Record<Exclude<RemoteSyncKind, "">, "primary" | "warning" | "danger" | "success"> = {
+  ahead: "primary",
+  behind: "warning",
+  diverged: "danger",
+  synced: "success",
+}
 
 /** 智能视图模式元数据（i18n 标签键 + 图标），Record<ViewMode> 保证键与联合类型编译期对齐 */
 export const VIEW_MODE_META: Record<ViewMode, { labelKey: string, icon: string }> = {

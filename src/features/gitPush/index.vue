@@ -117,6 +117,7 @@
       v-model:active-category="activeCategory"
       v-model:show-archived="showArchived"
       v-model:git-ops-paused="gitOpsPaused"
+      v-model:card-layout="cardLayout"
       :i18n="i18n"
       :grouped-projects="groupedProjects"
       :filtered-groups="filteredGroups"
@@ -315,6 +316,7 @@ import { useIdeManagement } from "./composables/useIdeManagement"
 import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
+import { useCardLayout } from "./composables/useCardLayout"
 import { useScanImport } from "./composables/useScanImport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
@@ -599,6 +601,9 @@ const {
 
 /** 已选标签（Set → 数组，供列表工具栏 chips 做包含判断） */
 const selectedTagList = computed(() => [...selectedTags.value])
+
+/** 卡片布局偏好（详细 / 手风琴，持久化；工具栏切换即保存） */
+const { cardLayout, loadCardLayout } = useCardLayout(props.manager.storage.cardLayout)
 
 /**
  * 「需拉取」视图的专用补载。
@@ -1192,6 +1197,7 @@ onMounted(async () => {
   scanTerminals() // 扫描当前平台可用的内置终端
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
+  await loadCardLayout() // 从持久化存储恢复卡片布局（详细 / 手风琴）
   loadGitConcurrency()
   loadNetworkTimeout()
   loadLocalTimeout()

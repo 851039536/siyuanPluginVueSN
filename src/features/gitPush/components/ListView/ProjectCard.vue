@@ -2,25 +2,38 @@
 <template>
   <div
     class="gp-card"
+    :class="{ 'gp-card--collapsed': collapsed }"
     @click.capture="handleCardClick"
   >
-    <!-- 卡片顶栏：信息区 + 操作按钮区 -->
+    <!-- 手风琴收起态：单行摘要（名称/分支/变更/同步状态/主推送），点击展开详情 -->
+    <CardSummary
+      v-if="collapsed"
+      :project="project"
+      @expand="expand"
+    />
+
+    <!-- 卡片顶栏：信息区 + 操作按钮区（手风琴模式下额外提供"收起"按钮） -->
     <CardHeader
+      v-if="!collapsed"
       :project="project"
       :branches="branches"
       :md-files="mdFiles"
       :reload-log="reloadLog"
       :refresh-tags="refreshTags"
+      :collapsible="isAccordion"
+      @toggle-collapse="toggle"
     />
 
     <!-- 远程仓库状态 + 冲突警告（branchRowVisible：顶栏分支行就绪后远程区不再重复展示当前分支名） -->
     <CardRemotes
+      v-if="!collapsed"
       :project="project"
       :branch-row-visible="branches.length > 0"
     />
 
     <!-- 多面板 Tab 切换（工作区 / 提交日志 / Stash / Tag）；面板经具名插槽下发，未激活面板不挂载 -->
     <CardTabs
+      v-if="!collapsed"
       v-model="stashTagTab"
       :i18n="i18n"
       :changes-count="(workingTree?.stagedCount || 0) + (workingTree?.unstagedCount || 0) + (workingTree?.untrackedCount || 0)"
@@ -111,6 +124,7 @@
 
     <!-- 冲突区（合并冲突的列表 + 解决操作） -->
     <ConflictSection
+      v-if="!collapsed"
       :conflicts="conflicts"
       :i18n="i18n"
       @resolve-conflict="(file: string, strategy: 'theirs' | 'ours') => ops.handleResolveConflict(project.id, file, strategy)"
@@ -118,10 +132,14 @@
     />
 
     <!-- 操作栏：拉取 / 推送 -->
-    <CardActionBar :project="project" />
+    <CardActionBar
+      v-if="!collapsed"
+      :project="project"
+    />
 
     <!-- 拉取/推送输出（运行中显示逐平台过程行；失败时内置 AI 分析入口；右上角可关闭结果） -->
     <OutputPanel
+      v-if="!collapsed"
       :entries="pullOutputs"
       :running-states="pullRunningStates"
       :i18n="i18n"
@@ -130,6 +148,7 @@
       @clear="ops.clearRemoteOutput(project.id, 'pull')"
     />
     <OutputPanel
+      v-if="!collapsed"
       :entries="pushOutputs"
       :running-states="pushRunningStates"
       :i18n="i18n"
@@ -190,6 +209,7 @@ import {
   watch,
 } from "vue"
 import { checkCommitRule } from "../../commitRuleChecker"
+import { useCardAccordion } from "../../composables/useCardAccordion"
 import { getCardTab, rememberCardTab, useCardData } from "../../composables/useCardData"
 import { provideCardMenu } from "../../composables/useCardMenu"
 import { useCardServices } from "../../composables/useCardServices"
@@ -205,6 +225,7 @@ import BranchCommitList from "./BranchCommitList.vue"
 import CardActionBar from "./CardActionBar.vue"
 import CardHeader from "./CardHeader.vue"
 import CardRemotes from "./CardRemotes.vue"
+import CardSummary from "./CardSummary.vue"
 import CardTabs from "./CardTabs.vue"
 import ConflictSection from "./ConflictSection.vue"
 import OutputPanel from "./OutputPanel.vue"
@@ -240,6 +261,11 @@ const i18n = shared.i18n
 
 // 卡片内联下拉菜单（顶栏与操作栏共享互斥状态，行为与拆分前一致）
 provideCardMenu()
+
+// 手风琴 / 详细布局（上下文由 ListView 提供；未提供时退化为始终展开）
+const { isAccordion, isExpanded, expand, toggle } = useCardAccordion(() => props.project.id)
+/** 收起态：仅手风琴模式且未展开时为 true（详细模式恒为 false） */
+const collapsed = computed(() => !isExpanded.value)
 
 // ── 卡片自持 Tab 数据（log/branches/stash/tags/冲突/diff/md，经 manager 直取 + 父层信号重载）──
 const {

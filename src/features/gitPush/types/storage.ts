@@ -1,6 +1,6 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { BfgPrefs, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, DropCommitPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
+import type { BfgPrefs, CardLayout, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, DropCommitPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
 import { DEFAULT_COMMIT_RULE_CONFIG } from "./meta"
 import type { IndexMeta } from "./indexCache"
 import { DEFAULT_INDEX_MAX_COMMITS, DEFAULT_INDEX_META } from "./indexCache"
@@ -569,6 +569,8 @@ export class GitPushStorage {
   readonly showArchived: TypedStorage<boolean>
   /** 推送分支模式：all=全部分支, head=仅当前分支（持久化） */
   readonly pushBranchMode: TypedStorage<"all" | "head">
+  /** 卡片布局：detailed=全部展开, accordion=手风琴（一次只展开一张，持久化） */
+  readonly cardLayout: TypedStorage<CardLayout>
   /** 操作日志（环形上限 300 条，防抖落盘） */
   readonly opLogs: TypedStorage<GitOpLogEntry[]>
   /** 提交分析结果缓存（跨会话复用，进入分析视图直接展示上次结果，手动重新分析后更新） */
@@ -623,6 +625,7 @@ export class GitPushStorage {
     this.gitOpsPaused = new TypedStorage(storage, "git-push-ops-paused", false)
     this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
+    this.cardLayout = new TypedStorage<CardLayout>(storage, "git-push-card-layout", "detailed")
     this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
     this.lineStatsCache = new TypedStorage(storage, "git-push-line-stats-cache", DEFAULT_LINE_STATS_CACHE)

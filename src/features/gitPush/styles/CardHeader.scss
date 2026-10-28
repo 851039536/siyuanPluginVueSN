@@ -213,6 +213,14 @@
   margin-bottom: $s-px2;
 }
 
+// 收起按钮（手风琴展开态）：与星标同档弱化
+.git-push-panel .gp-card-name-row .gp-collapse-btn.si-button {
+  opacity: 0.35;
+  transition: opacity 0.12s;
+
+  &:hover { opacity: 0.85; }
+}
+
 // 收藏星标：text 外观由共享 Button 承担，此处仅保留弱化与按压反馈
 .git-push-panel .gp-card-name-row .gp-star-btn.si-button {
   opacity: 0.3;

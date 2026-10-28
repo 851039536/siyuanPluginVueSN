@@ -103,28 +103,8 @@
     <!-- 弹性间隔：主操作靠右 -->
     <div class="gp-actions-spacer" />
 
-    <!-- 推送全部（主操作）："推送全部" / 推送中切换为"取消" -->
-    <Button
-      v-if="!derived.isPushing(project.id)"
-      class="gp-action-btn"
-      variant="primary"
-      size="xsmall"
-      dense
-      :disabled="!hasAnyRemote(project) || derived.isPulling(project.id) || !pushStatus?.needsPush"
-      @click="ops.pushToAll(project.id)"
-    >
-      {{ i18n.pushAll }}
-    </Button>
-    <Button
-      v-else
-      class="gp-action-btn"
-      variant="danger"
-      size="xsmall"
-      dense
-      @click="ops.cancelPush(project.id)"
-    >
-      {{ i18n.cancel }}
-    </Button>
+    <!-- 推送全部（主操作）："推送全部" / 推送中切换为"取消"（与手风琴摘要共用同一按钮组件） -->
+    <CardPushAllButton :project="project" />
   </div>
 </template>
 
@@ -137,6 +117,7 @@ import { hasAnyRemote } from "../../utils"
 import { useCardServices } from "../../composables/useCardServices"
 import { useCardMenu } from "../../composables/useCardMenu"
 import Button from "@/components/Button.vue"
+import CardPushAllButton from "./CardPushAllButton.vue"
 
 const props = defineProps<{
   project: GitProject

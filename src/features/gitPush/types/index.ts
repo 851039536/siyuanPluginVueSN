@@ -86,6 +86,7 @@ export {
   PLATFORM_META,
   FILE_STATUS_META,
   REMOTES,
+  REMOTE_SYNC_VARIANT,
   VIEW_MODE_META,
   VIEW_MODES,
   COMMIT_ANALYSIS_TYPE_META,
@@ -96,7 +97,7 @@ export {
   HEAT_LEVEL_THRESHOLDS,
   readCommitRuleConfig,
 } from "./meta"
-export type { BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitHeatDensity, CommitHeatGranularity, CommitHeatMetric, CommitHeatScaleMode, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FetchFailureKind, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CardLayout, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitHeatDensity, CommitHeatGranularity, CommitHeatMetric, CommitHeatScaleMode, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, FetchFailureKind, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoScanResult, StatsView, UncommittedItem, ViewMode } from "./meta"
 
 // ── 重导出查询调度契约（useProjectQueryScheduler 实现，queryScheduler.ts）──
 export type {

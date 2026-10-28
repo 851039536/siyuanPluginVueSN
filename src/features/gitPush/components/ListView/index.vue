@@ -6,6 +6,7 @@
     v-model:active-category="activeCategory"
     v-model:show-archived="showArchived"
     v-model:git-ops-paused="gitOpsPaused"
+    v-model:card-layout="cardLayout"
     :i18n="i18n"
     :grouped-projects="groupedProjects"
     :all-tags="allTags"
@@ -42,10 +43,11 @@
 
 <script setup lang="ts">
 // 列表视图容器（纯渲染，卡片数据与操作全部经 useCardServices 注入，无领域状态）
-import type { GroupedProject, ViewMode } from "../../types"
+import type { CardLayout, GroupedProject, ViewMode } from "../../types"
 import EmptyState from "../common/EmptyState.vue"
 import ListViewToolbar from "./ListViewToolbar.vue"
 import ProjectCard from "./ProjectCard.vue"
+import { provideCardAccordion } from "../../composables/useCardAccordion"
 
 defineProps<{
   i18n: Record<string, any>
@@ -68,6 +70,10 @@ const viewMode = defineModel<ViewMode>("viewMode", { required: true })
 const activeCategory = defineModel<string>("activeCategory", { required: true })
 const showArchived = defineModel<boolean>("showArchived", { required: true })
 const gitOpsPaused = defineModel<boolean>("gitOpsPaused", { required: true })
+const cardLayout = defineModel<CardLayout>("cardLayout", { required: true })
+
+/** 手风琴上下文：一次只展开一张卡片（状态随列表视图实例存活） */
+provideCardAccordion(() => cardLayout.value)
 </script>
 
 <style lang="scss">

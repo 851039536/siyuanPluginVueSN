@@ -4,6 +4,7 @@
  */
 import type { ComputedRef } from "vue"
 import type {
+  CacheCleanMode,
   CacheCleanResult,
   CacheCleanSettings,
   CacheEntry,
@@ -49,6 +50,8 @@ export interface UseCacheCleanDeps {
   updateSettings: <K extends keyof CacheCleanSettings>(key: K, value: CacheCleanSettings[K]) => void
   /** 记录某分类的显式勾选偏好（缺省项由 CACHE_ROOTS[].defaultEnabled 决定） */
   setRootEnabled: (id: CacheRootId, enabled: boolean) => void
+  /** 清理完成后追加历史记录（可选，由 useCleanHistory 提供） */
+  onCleaned?: (result: CacheCleanResult, mode: CacheCleanMode) => void
 }
 
 export function useCacheClean(deps: UseCacheCleanDeps) {
@@ -171,6 +174,7 @@ export function useCacheClean(deps: UseCacheCleanDeps) {
     selectedEntries: () => selectedEntries.value,
     abortHolder,
     clearFeedbackTimer,
+    onCleaned: deps.onCleaned,
     scheduleFeedbackClear: (callback: () => void, delayMs: number) => {
       feedbackTimer = timerRegistry.setTimeout(() => {
         feedbackTimer = null

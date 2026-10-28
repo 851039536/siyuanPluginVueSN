@@ -5,6 +5,7 @@ import type {
   ShallowRef,
 } from "vue"
 import type {
+  CacheCleanMode,
   CacheCleanResult,
   CacheCleanSettings,
   CacheEntry,
@@ -72,6 +73,8 @@ export interface CacheTaskRuntime {
   clearFeedbackTimer: () => void
   /** 注册「成功提示自动消失」定时器 */
   scheduleFeedbackClear: (callback: () => void, delayMs: number) => void
+  /** 清理完成后追加历史记录（可选；不 await，失败由存储层降级） */
+  onCleaned?: (result: CacheCleanResult, mode: CacheCleanMode) => void
 }
 
 /**
@@ -169,6 +172,11 @@ export async function runClean(rt: CacheTaskRuntime): Promise<void> {
         )
       }
       state.selected.value = new Set()
+    }
+    // 历史只记完整跑完的任务（取消时删了多少无从对账），且至少动过一个条目
+    const cleanMode = rt.settings().mode
+    if (!result.cancelled && (result.deleted > 0 || result.failed > 0)) {
+      rt.onCleaned?.(result, cleanMode)
     }
     rt.scheduleFeedbackClear(() => {
       // 成功提示自动消失；失败信息保留给用户排查

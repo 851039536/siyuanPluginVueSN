@@ -4,6 +4,7 @@
  */
 import type { Plugin } from "siyuan"
 import { ref } from "vue"
+import { closeCacheCleanHistory } from "./cacheScan/history"
 import { EverythingSearchManager } from "./types"
 
 // ============================================================
@@ -47,6 +48,7 @@ export function registerEverythingSearch(plugin: Plugin) {
     openFloating: () => void manager.openFloating(),
     destroy: () => {
       manager.destroy()
+      closeCacheCleanHistory()
     },
   }
 }

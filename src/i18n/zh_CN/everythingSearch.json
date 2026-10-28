@@ -131,6 +131,10 @@
     "cacheRootBrowserCache": "浏览器缓存",
     "cacheRootCrashDumps": "崩溃转储文件",
     "cacheRootNpmCache": "npm 缓存",
-    "cacheRootDevCache": "开发缓存目录"
+    "cacheRootDevCache": "开发缓存目录",
+    "cacheStatsTotal": "累计清理 {count} 次 · {entries} 个条目 · 释放 {size}",
+    "cacheHistoryTitle": "清理历史",
+    "cacheHistoryEmpty": "暂无清理记录",
+    "cacheHistoryItemFailed": "{failed} 项失败"
   }
 }

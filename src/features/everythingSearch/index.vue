@@ -92,6 +92,7 @@
             :settings="cacheSettings"
             :update-settings="updateCacheSettings"
             :set-root-enabled="setCacheRootEnabled"
+            :history="historyStorage"
           />
         </div>
       </div>
@@ -114,6 +115,7 @@ import {
   watch,
 } from "vue"
 import { usePlugin } from "@/main"
+import { getCacheCleanHistory } from "./cacheScan/history"
 import AdvancedHelpPanel from "./components/AdvancedHelpPanel.vue"
 import CacheCleanPanel from "./components/cacheClean/index.vue"
 import DialogFooter from "./components/DialogFooter.vue"
@@ -149,6 +151,9 @@ const searchBarRef = ref<InstanceType<typeof SearchBar> | null>(null)
 
 // 获取插件实例
 const plugin = usePlugin()
+
+/** 清理历史共享存储（模块级单例；首次使用缓存清理面板时建库） */
+const historyStorage = getCacheCleanHistory(plugin)
 
 // everythingSearch 命名空间的 i18n 文案（传递给各子组件）
 const i18n = computed(() => plugin.i18n.everythingSearch as unknown as Record<string, string>)

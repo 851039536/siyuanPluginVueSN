@@ -1,0 +1,73 @@
+/**
+ * CacheCleanHistory — 缓存清理历史
+ * 累计统计行 + 折叠的最近记录列表
+ */
+
+@use "@/variables.scss" as *;
+@use "./mixins" as m;
+
+.cc-history {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+
+  &__stats {
+    padding: $s-1 $s-4;
+    font-size: $t-xs;
+    line-height: $lh-normal;
+    opacity: 0.7;
+  }
+
+  &__empty {
+    padding: $s-1 0;
+    font-size: $t-xs;
+    opacity: 0.45;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    font-size: $t-xs;
+    line-height: $lh-normal;
+  }
+
+  &__time {
+    flex: 0 0 auto;
+    opacity: 0.6;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__mode {
+    flex: 0 0 auto;
+    opacity: 0.6;
+  }
+
+  &__count {
+    flex: 0 0 auto;
+    min-width: 2.5em;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__size {
+    flex: 1 1 auto;
+    text-align: right;
+    opacity: 0.8;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__failed {
+    flex: 0 0 auto;
+    color: var(--b3-theme-warning, #d97706);
+  }
+}

@@ -131,6 +131,10 @@
     "cacheRootBrowserCache": "Browser cache",
     "cacheRootCrashDumps": "Crash dumps",
     "cacheRootNpmCache": "npm cache",
-    "cacheRootDevCache": "Dev cache folders"
+    "cacheRootDevCache": "Dev cache folders",
+    "cacheStatsTotal": "Cleaned {count} times · {entries} items · {size} freed",
+    "cacheHistoryTitle": "Clean history",
+    "cacheHistoryEmpty": "No clean history yet",
+    "cacheHistoryItemFailed": "{failed} failed"
   }
 }

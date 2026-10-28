@@ -141,6 +141,14 @@
       @update-max-entries="setMaxEntries"
     />
 
+    <!-- 清理历史与累计统计（存储未就绪时整节隐藏） -->
+    <CacheCleanHistory
+      v-if="historyStats"
+      :stats="historyStats"
+      :records="historyRecords"
+      :i18n="i18n"
+    />
+
     <!-- 确认弹窗（受控；confirm 不自动关闭，由 doClean 决定时机） -->
     <ConfirmDialog
       v-model:visible="confirmVisible"
@@ -160,6 +168,7 @@
 
 <script setup lang="ts">
 import type { ComputedRef } from "vue"
+import type { CacheCleanHistoryStorage } from "../../cacheScan/history"
 import type {
   CacheCleanSettings,
   CacheRootId,
@@ -176,6 +185,8 @@ import Message from "@/components/Message.vue"
 import ProgressBar from "@/components/ProgressBar.vue"
 import { openPathInShell } from "@/utils/electronDialog"
 import { useCacheClean } from "../../composables/useCacheClean"
+import { useCleanHistory } from "../../composables/useCleanHistory"
+import CacheCleanHistory from "./CacheCleanHistory.vue"
 import CacheCleanOptions from "./CacheCleanOptions.vue"
 import CacheEntryList from "./CacheEntryList.vue"
 import CacheRootList from "./CacheRootList.vue"
@@ -190,6 +201,8 @@ interface Props {
   updateSettings: <K extends keyof CacheCleanSettings>(key: K, value: CacheCleanSettings[K]) => void
   /** 记录某分类的显式勾选偏好 */
   setRootEnabled: (id: CacheRootId, enabled: boolean) => void
+  /** 清理历史共享存储（父层单例；null = 未接线，历史整节隐藏） */
+  history: CacheCleanHistoryStorage | null
 }
 
 const props = defineProps<Props>()
@@ -198,6 +211,9 @@ const props = defineProps<Props>()
 const i18n = computed<Record<string, string>>(() => (
   isRef(props.i18n) ? props.i18n.value : props.i18n
 ))
+
+/** 清理历史（统计与最近记录；存储不可用时 stats 保持 null，整节隐藏） */
+const cleanHistory = useCleanHistory({ storage: props.history })
 
 const {
   rootRows,
@@ -238,7 +254,10 @@ const {
   settings: props.settings,
   updateSettings: props.updateSettings,
   setRootEnabled: props.setRootEnabled,
+  onCleaned: cleanHistory.recordClean,
 })
+
+const { stats: historyStats, records: historyRecords } = cleanHistory
 
 /** 扫描中（Button/进度条共用，避免模板里反复比较字符串） */
 const scanning = computed(() => scanStatus.value === "scanning")

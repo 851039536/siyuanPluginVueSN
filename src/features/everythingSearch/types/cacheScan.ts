@@ -152,3 +152,29 @@ export interface CacheCleanResult {
 
 /** 清理方式：移入回收站（默认，可还原）/ 永久删除 */
 export type CacheCleanMode = "recycle" | "permanent"
+
+/** 一条清理历史记录（对应 `es_clean_history` 表的一行） */
+export interface CleanHistoryRecord {
+  /** 清理完成时间（毫秒时间戳） */
+  cleanedAt: number
+  /** 清理方式 */
+  mode: CacheCleanMode
+  /** 成功删除的条目数 */
+  entries: number
+  /** 失败条目数 */
+  failed: number
+  /** 释放的字节数 */
+  freed: number
+}
+
+/** 清理历史的累计统计（全表聚合） */
+export interface CleanHistoryStats {
+  /** 清理次数 */
+  count: number
+  /** 累计删除条目数 */
+  entries: number
+  /** 累计失败条目数 */
+  failed: number
+  /** 累计释放字节数 */
+  freed: number
+}

@@ -59,7 +59,7 @@
 
         <!-- 右侧内容区 -->
         <div class="gp-settings-content">
-          <!-- ── 常规分区：并发数 + 推送分支模式 ── -->
+          <!-- ── 常规分区：并发数 + 推送分支模式 + PR 基线分支 ── -->
           <template v-if="activeSection === 'general'">
             <!-- 并发数设置行 -->
             <div class="gp-set-row">
@@ -115,6 +115,32 @@
             <!-- 提示文案："仅当前分支模式更快，避免推送无变更的其他分支" -->
             <div class="gp-set-hint">
               {{ i18n.pushBranchHint }}
+            </div>
+            <!-- Compare 基线分支设置行（Compare / 创建 PR 深链使用） -->
+            <div class="gp-set-row gp-set-row--spaced">
+              <!-- 设置项标签："PR 基线分支" -->
+              <label class="gp-set-label">{{ i18n.compareBaseLabel }}</label>
+              <div class="gp-set-input-row">
+                <Input
+                  :model-value="localCompareBase"
+                  size="xsmall"
+                  class="gp-set-concurrency-input"
+                  :placeholder="i18n.compareBasePlaceholder"
+                  @update:model-value="localCompareBase = String($event)"
+                  @keydown.enter="saveCompareBase"
+                />
+                <button
+                  class="vp-btn vp-btn--primary vp-btn--sm"
+                  @click="saveCompareBase"
+                >
+                  <!-- 按钮文案："保存" -->
+                  {{ i18n.save }}
+                </button>
+              </div>
+            </div>
+            <!-- 提示文案："Compare 深链使用的基线分支（默认 main）" -->
+            <div class="gp-set-hint">
+              {{ i18n.compareBaseHint }}
             </div>
             <!-- 网络超时设置行 -->
             <div class="gp-set-row gp-set-row--spaced">
@@ -535,6 +561,8 @@ const props = defineProps<{
   /** 提交规则配置（最短描述阈值 + 可选规则开关） */
   ruleConfig: CommitRuleConfig
   pushBranchMode: "all" | "head"
+  /** Compare / 创建 PR 深链的基线分支（默认 main） */
+  compareBaseBranch: string
   /** 提交分析显示设置（父级预载后下发，与 popover 入口同源） */
   viewSettings: CommitAnalysisViewSettings
   /** 显示设置年份选项（数据年份 ∪ 今年 ∪ 已保存年份） */
@@ -553,6 +581,8 @@ const emit = defineEmits<{
   /** 提交规则配置局部更新（开关即时/阈值保存按钮与 Enter 键共用） */
   saveRuleConfig: [patch: Partial<CommitRuleConfig>]
   saveBranchMode: [mode: "all" | "head"]
+  /** Compare / 创建 PR 深链的基线分支（保存按钮触发） */
+  saveCompareBase: [value: string]
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
   /** 实时探测配置变更（即时保存并让运行中的探测按新配置重排） */
   saveProbeConfig: [config: ProbeConfig]
@@ -588,6 +618,13 @@ const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubj
 const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBodyLineLength))
 const localDiffContextBudget = ref(clampDiffContextBudget(props.ruleConfig.diffContextBudget))
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
+/** Compare 基线分支本地编辑态（显式保存，空值回退 main） */
+const localCompareBase = ref(props.compareBaseBranch || "main")
+
+/** 保存 Compare 基线分支（空值回退 main，避免生成坏链接） */
+function saveCompareBase() {
+  emit("saveCompareBase", localCompareBase.value.trim() || "main")
+}
 
 // ── 实时探测（三层）本地编辑态：改动即时保存并下发父级重排运行中的探测 ──
 

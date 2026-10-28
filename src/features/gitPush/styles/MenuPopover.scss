@@ -1,0 +1,18 @@
+@use "@/variables.scss" as *;
+
+// ========== 统一菜单容器 ==========
+// 键盘聚焦指示：菜单项由 MenuPopover 统一管理焦点，这里只负责可见焦点环
+// （用 outline 而非边框，避免改变项尺寸导致菜单抖动）
+.gp-menu-popover [role="menuitem"]:focus,
+.gp-menu-popover [role="menuitem"]:focus-visible {
+  outline: 1px solid var(--b3-theme-primary);
+  outline-offset: -1px;
+  border-radius: $r-sm;
+}
+
+// 自定义 IDE 行由 button 改为 div[role=menuitem] 后需补指针/对齐，
+// 其余外观沿用 .gp-ide-item 的既有样式
+.gp-menu-popover .gp-ide-item--custom[role="menuitem"] {
+  cursor: pointer;
+  box-sizing: border-box;
+}

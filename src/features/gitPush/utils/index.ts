@@ -22,6 +22,7 @@ export {
 export {
   findPlatformRemote,
   getProjectRemoteNames,
+  buildCompareUrl,
   hasAnyRemote,
   hasPlatformRemote,
   hasUnpushedCommits,

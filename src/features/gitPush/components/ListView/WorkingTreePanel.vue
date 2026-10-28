@@ -200,6 +200,27 @@
         v-if="hasStaged"
         class="wt-commit-form"
       >
+        <!-- 提交模板：选择即套用（{branch} / {files} 自动替换）；齿轮打开模板管理 -->
+        <div class="wt-commit-template">
+          <Select
+            :model-value="templatePick"
+            :options="templateOptions"
+            size="xsmall"
+            class="wt-template-select"
+            :placeholder="i18n.templateSelectPlaceholder"
+            :aria-label="i18n.templateSelectLabel"
+            filterable
+            @update:model-value="applyTemplate"
+          />
+          <Button
+            variant="ghost"
+            size="xsmall"
+            dense
+            icon="cogOutline"
+            :title="i18n.manageTemplates"
+            @click.stop="showTemplatesDialog = true"
+          />
+        </div>
         <!-- 常规提交类型快速选择：按钮显示中文（title 提示标准单词），写入提交信息的前缀仍是 Conventional Commit 标准单词 -->
         <div class="wt-commit-types">
           <Button
@@ -283,6 +304,15 @@
         <pre>{{ commitOutput }}</pre>
       </div>
     </div>
+
+    <!-- 提交模板管理弹窗（自包含编辑态，保存后回传整表） -->
+    <CommitTemplatesDialog
+      v-if="showTemplatesDialog"
+      :i18n="i18n"
+      :templates="commitTemplates"
+      @close="showTemplatesDialog = false"
+      @saved="handleTemplatesSaved"
+    />
   </div>
 </template>
 
@@ -292,6 +322,8 @@ import type {
   FileChange,
   WorkingTreeInfo,
 } from "../../types"
+import type { CommitTemplate } from "../../types/storage"
+import type { SelectOption } from "@/components/Select.vue"
 import type { TimerHandle } from "@/utils/timerRegistry"
 import {
   computed,
@@ -304,7 +336,9 @@ import {
 import Button from "@/components/Button.vue"
 import Checkbox from "@/components/Checkbox.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
+import Select from "@/components/Select.vue"
 import Textarea from "@/components/Textarea.vue"
+import CommitTemplatesDialog from "../common/CommitTemplatesDialog.vue"
 import {
 
   TimerRegistry,
@@ -343,6 +377,8 @@ const props = defineProps<{
   gitOpLoading: boolean
   /** 工作区刷新加载中 */
   refreshingWorkingTree?: boolean
+  /** 提交模板（卡内共享数据下发；空数组 = 未配置模板） */
+  commitTemplates: CommitTemplate[]
 }>()
 
 const emit = defineEmits<{
@@ -365,6 +401,8 @@ const emit = defineEmits<{
   refreshWorkingTree: []
   /** 自动刷新工作区（pointerdown 触发，可复用调度器在飞单飞结果） */
   autoRefreshWorkingTree: []
+  /** 保存提交模板（模板管理弹窗保存后整表回传） */
+  saveCommitTemplates: [templates: CommitTemplate[]]
 }>()
 
 /** 已写入的 Conventional Commit 前缀：type + 可选 scope + 可选 `!` 破坏性标记 */
@@ -375,6 +413,14 @@ const INCOMPLETE_COMMIT_RE = /^(?:[A-Z]+(?:\([^)]*\))?!?:\s*)?$/i
 
 const commitType = ref("chore")
 const commitMessage = ref("")
+/** 提交模板选择（空串 = 未选择；选中后立即套用并复位） */
+const templatePick = ref<string | number>("")
+/** 模板管理弹窗开关 */
+const showTemplatesDialog = ref(false)
+/** 模板下拉选项（来自卡内共享的 commitTemplates） */
+const templateOptions = computed<SelectOption[]>(() =>
+  props.commitTemplates.map((t) => ({ value: t.id, label: t.name })),
+)
 const activeDiffFile = ref<FileChange | null>(null)
 /** 变更目录树弹窗开关（VS Code 源代码管理风格浏览面；打开期间暂停 pointerdown 自动刷新） */
 const showTreeDialog = ref(false)
@@ -631,6 +677,36 @@ function handleCommit() {
   emit("commit", commitMessage.value.trim())
 }
 
+/**
+ * 套用提交模板：已有 Conventional 前缀则替换（保留其后的描述），否则前置；
+ * `{branch}` 替换为当前分支、`{files}` 替换为暂存文件数。
+ */
+async function applyTemplate(value: string | number | boolean | null) {
+  const id = typeof value === "string" ? value : String(value ?? "")
+  const tpl = props.commitTemplates.find((t) => t.id === id)
+  // 无论是否命中都复位下拉，保证同一模板可连续选择
+  templatePick.value = ""
+  if (!tpl) return
+  const branch = props.tree?.branch || ""
+  const files = props.tree?.stagedCount ?? 0
+  const pattern = tpl.pattern
+    .replace(/\{branch\}/g, branch)
+    .replace(/\{files\}/g, String(files))
+  const current = commitMessage.value
+  const matched = current.match(TYPE_PREFIX_RE)
+  commitMessage.value = matched
+    ? pattern + current.slice(matched[0].length)
+    : pattern + current
+  await nextTick()
+  textareaEl.value?.focus()
+}
+
+/** 模板管理弹窗保存：关闭弹窗并把整表交给父级持久化 */
+function handleTemplatesSaved(list: CommitTemplate[]) {
+  showTemplatesDialog.value = false
+  emit("saveCommitTemplates", list)
+}
+
 // 提交成功后清空输入与类型选择：成功的判据是「暂存区已空」（挂在 v-if="hasStaged" 上的表单随之消失），
 // 而失败时暂存区仍有内容、输入保留供用户修改重试。
 // 此前把 clear() 经 defineExpose 暴露出去但无人调用，导致下一轮提交会看到上一轮的旧信息。
@@ -638,6 +714,7 @@ watch(hasStaged, (nowStaged, wasStaged) => {
   if (wasStaged && !nowStaged) {
     commitMessage.value = ""
     commitType.value = "chore"
+    templatePick.value = ""
   }
 })
 </script>

@@ -8,6 +8,8 @@
 - **远程检测**：自动检测 `github.com`、`gitee.com`、`gitcode.com`、Gitea 远程仓库，支持远程名称辅助识别（不区分大小写）
 - **多平台推送/拉取**：一键推送到/拉取自 GitHub / Gitee / Gitea，或全部操作，并发信号量限流
 - **卡片布局（详细 / 手风琴）**：工具栏一键切换。手风琴模式把每张卡收起为单行摘要（名称 / 分支 / 变更数 / 冲突提示 / 各远程 ↑↓ 状态 / 主推送按钮），一次只展开一张卡片；偏好跨会话保存
+- **Compare / 创建 PR 深链**：推送下拉内按平台（GitHub / Gitee / Gitea）直达 Compare 页面，基线分支可在设置「常规」分区配置（默认 `main`）；CNB 暂不提供
+- **提交模板**：提交表单可选模板一键套用（支持 `{branch}` / `{files}` 占位符），旁边的齿轮打开管理弹窗增删改；模板持久化并跨卡片共享
 - **路径检查**：添加时检查路径是否为合法 Git 仓库
 - **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改；摘要条「目录树视图」按钮可打开**变更目录树弹窗**（VS Code 源代码管理风格：「已暂存 / 未暂存」两分区各自成树（部分暂存文件两侧分区都出现，勾选后数据驱动自动跨区移动）、变更文件按目录分组折叠、路径关键词筛选、全部展开/收起、行内暂存/丢弃/查看差异与分区级暂存全部/取消暂存全部，目录行显示子树变更计数；操作全部桥接回面板既有链路——暂存/丢弃确认/差异弹窗缓存零复制）
 - **差异查看弹窗**：着色 diff + 词级高亮 + 行号双列；新增/未跟踪文件同样展示完整内容（`git diff` 对未跟踪文件恒为空，数据层回退 `git diff --no-index`）；「已暂存且工作区又改动」的文件可切换查看暂存区/工作区两份差异（另一份后台预取）；取差异期间显示加载态（不再与空态混淆）；标题含全路径 tooltip、文件状态与重命名原路径；支持复制差异全文/文件路径；Esc 关闭、←/→ 切换文件
@@ -90,15 +92,16 @@ src/features/gitPush/
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   ├── useCardAccordion.ts          # 卡片布局上下文（手风琴：一次只展开一张，ListView provide）
 │   ├── useCardLayout.ts             # 卡片布局偏好读写（详细 / 手风琴，持久化）
+│   ├── useCompareBaseBranch.ts      # Compare / 创建 PR 深链的基线分支读写（持久化）
 │   ├── useProjectQueryScheduler.ts  # 项目查询调度器（单飞去重 + 分支名复用 + 新鲜度节流 + 脏标记，查询调度唯一权威）
 │   ├── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 │   ├── useDayDragSelect.ts          # 日格拖拽选区状态机（热力图/日历共用：起锚 → 掠过扩展 → mouseup 收尾并抑制补发 click）
 │   └── useReportExport.ts           # 报告导出编排（校验 → 保存对话框 → 渲染 → 写盘 → 提示并打开）
 ├── components/
-│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，29 个；二次确认统一用共享 ConfirmDialog）
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，31 个；二次确认统一用共享 ConfirmDialog）
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
-│   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理；导航底部=管理分类入口）
+│   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式+PR 基线分支 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理；导航底部=管理分类入口）
 │   │   ├── GitConfigSection.vue     # Git 配置管理面板（查看/编辑/新增/删除，全局/项目级）
 │   │   ├── IdeManagementDialog.vue  # IDE 管理弹窗
 │   │   ├── ScanImportDialog.vue     # 扫描导入弹窗
@@ -112,6 +115,8 @@ src/features/gitPush/
 │   │   ├── EmptyState.vue           # 空态提示（无项目/无数据）
 │   │   ├── LoadMoreButton.vue       # 加载更多按钮
 │   │   ├── CommitFixDialog.vue      # 提交信息修正弹窗（HEAD amend + AI 生成，列表 LOG Tab 与规则检查共用）
+│   │   ├── CommitTemplatesDialog.vue# 提交模板管理弹窗（名称/内容增删改，内容支持 {branch}/{files} 占位符）
+│   │   ├── MenuPopover.vue          # 统一内联菜单容器（role=menu、↑↓/Home/End、打开聚焦首项、Esc 上报）
 │   │   ├── DropCommitDialog.vue     # 删除历史提交弹窗（四项前置校验 + bundle 备份 + fast-import 历史重建删除，LOG Tab 与规则检查共用）
 │   │   ├── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
 │   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换 + 批量旋转进度指示器）
@@ -202,6 +207,8 @@ src/features/gitPush/
     ├── CardHeaderActions.scss       # 卡片顶栏操作按钮区样式（自 CardHeader.scss 迁出）
     ├── CardTabs.scss                # 多面板 Tab 切换条样式（自 index.scss 迁出）
     ├── CardSummary.scss             # 手风琴收起态摘要行样式
+    ├── MenuPopover.scss              # 统一菜单容器的键盘焦点环与自定义项几何
+    ├── CommitTemplatesDialog.scss    # 提交模板管理弹窗样式
     ├── CardRemotes.scss             # 远程状态区样式（从 index.scss 提取）
     ├── CardActionBar.scss           # 操作栏样式（从 index.scss 提取）
     ├── StatsPanel.scss              # 统计视图样式
@@ -321,6 +328,7 @@ GitPushManager (facade)
 - `git-push-categories`：分类列表
 - `git-push-concurrency`：Git 并发数配置
 - `git-push-card-layout`：卡片布局（`detailed` 全部展开 / `accordion` 手风琴，默认 `detailed`）
+- `git-push-compare-base`：Compare / 创建 PR 深链的基线分支（默认 `main`）
 - `git-push-report-cache`：代码统计报告结果缓存（秒开上次结果；数据新鲜度由提交索引的后台增量刷新保证）
 - `git-push-index-meta`：本地提交索引元数据（每项目的仓库身份/HEAD 判据、截断游标、覆盖范围）
 - `git-push-index-enabled`：提交索引总开关（默认开启；关闭后统计路径全部回退直接跑 git）

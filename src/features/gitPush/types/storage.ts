@@ -571,6 +571,8 @@ export class GitPushStorage {
   readonly pushBranchMode: TypedStorage<"all" | "head">
   /** 卡片布局：detailed=全部展开, accordion=手风琴（一次只展开一张，持久化） */
   readonly cardLayout: TypedStorage<CardLayout>
+  /** Compare / 创建 PR 深链的基线分支（默认 main；仓库默认分支为 master 时可改） */
+  readonly compareBaseBranch: TypedStorage<string>
   /** 操作日志（环形上限 300 条，防抖落盘） */
   readonly opLogs: TypedStorage<GitOpLogEntry[]>
   /** 提交分析结果缓存（跨会话复用，进入分析视图直接展示上次结果，手动重新分析后更新） */
@@ -626,6 +628,7 @@ export class GitPushStorage {
     this.showArchived = new TypedStorage(storage, "git-push-show-archived", false)
     this.pushBranchMode = new TypedStorage<"all" | "head">(storage, "git-push-branch-mode", "all")
     this.cardLayout = new TypedStorage<CardLayout>(storage, "git-push-card-layout", "detailed")
+    this.compareBaseBranch = new TypedStorage(storage, "git-push-compare-base", "main")
     this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
     this.lineStatsCache = new TypedStorage(storage, "git-push-line-stats-cache", DEFAULT_LINE_STATS_CACHE)

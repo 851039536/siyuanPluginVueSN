@@ -34,6 +34,8 @@
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
           :class="{ active: currentView === tab.view }"
           :title="i18n[tab.labelKey]"
+          :aria-label="i18n[tab.labelKey]"
+          :aria-pressed="currentView === tab.view"
           @click="currentView = tab.view"
         >
           <Icon
@@ -49,6 +51,8 @@
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm gp-platform-dropdown-btn"
           :title="i18n.platformSites"
+          aria-haspopup="menu"
+          :aria-expanded="showPlatformMenu"
           @click.stop="showPlatformMenu = !showPlatformMenu"
         >
           <Icon
@@ -61,15 +65,17 @@
             class="gp-platform-caret"
           />
         </button>
-        <div
+        <MenuPopover
           v-if="showPlatformMenu"
           class="gp-platform-popover"
-          @click.stop
+          :aria-label="i18n.platformSites"
+          @escape="showPlatformMenu = false"
         >
           <button
             v-for="pl in PLATFORM_META"
             :key="pl.key"
             class="gp-platform-item"
+            role="menuitem"
             @click="showPlatformMenu = false; emit('openWeb', pl.webUrl)"
           >
             <Icon
@@ -78,7 +84,7 @@
             />
             <span>{{ pl.label }}</span>
           </button>
-        </div>
+        </MenuPopover>
       </div>
       <span class="gp-header-sep" />
       <!-- 按钮（tooltip："远程与本地一致性分析"） -->
@@ -119,6 +125,8 @@
       <div class="gp-add-wrap">
         <button
           class="vp-btn vp-btn--ghost gp-add-dropdown-btn"
+          aria-haspopup="menu"
+          :aria-expanded="showAddMenu"
           @click.stop="showAddMenu = !showAddMenu"
         >
           <Icon
@@ -126,14 +134,16 @@
             height="12"
           />
         </button>
-        <div
+        <MenuPopover
           v-if="showAddMenu"
           class="gp-add-popover"
-          @click.stop
+          :aria-label="i18n.addProject"
+          @escape="showAddMenu = false"
         >
           <!-- 菜单项："添加" -->
           <button
             class="gp-add-item"
+            role="menuitem"
             @click="showAddMenu = false; emit('openAddProject')"
           >
             <Icon
@@ -145,6 +155,7 @@
           <!-- 菜单项："导入" -->
           <button
             class="gp-add-item"
+            role="menuitem"
             @click="showAddMenu = false; emit('openScan')"
           >
             <Icon
@@ -153,7 +164,7 @@
             />
             <span>{{ i18n.importProject }}</span>
           </button>
-        </div>
+        </MenuPopover>
       </div>
 
       <!-- 项目搜索框（placeholder："搜索项目..."） -->
@@ -179,6 +190,7 @@ import { Icon } from "@iconify/vue"
 import Input from "@/components/Input.vue"
 import { PLATFORM_META, type PanelView } from "../../types"
 import type { LoadProgress } from "../../types/batchProgress"
+import MenuPopover from "./MenuPopover.vue"
 
 withDefaults(defineProps<{
   i18n: Record<string, any>

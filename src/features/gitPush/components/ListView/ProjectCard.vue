@@ -55,6 +55,7 @@
           :diff-loading="diffLoading"
           :git-op-loading="gitOpLoading || false"
           :refreshing-working-tree="refreshingWorkingTree || false"
+          :commit-templates="commitTemplates"
           @stage-file="(file: string) => ops.stageItem(project.id, file)"
           @unstage-file="(file: string) => ops.unstageItem(project.id, file)"
           @stage-all="ops.stageAllItems(project.id)"
@@ -67,6 +68,7 @@
           @discard-file="(file: string, staged: boolean, status: string) => ops.handleDiscard(project.id, file, staged, status)"
           @refresh-working-tree="ops.handleRefreshWorkingTree(project.id)"
           @auto-refresh-working-tree="ops.handleRefreshWorkingTree(project.id, { force: false })"
+          @save-commit-templates="handleSaveCommitTemplates"
         />
       </template>
 
@@ -199,6 +201,7 @@
 import type {
   CommitFixTarget,
   CommitLogEntry,
+  CommitTemplate,
   GitProject,
 } from "../../types"
 import type { CardTabId } from "../../types/cardTab"
@@ -208,6 +211,8 @@ import {
   ref,
   watch,
 } from "vue"
+import { showMessage } from "siyuan"
+import { getErrorMessage } from "@/utils/stringUtils"
 import { checkCommitRule } from "../../commitRuleChecker"
 import { useCardAccordion } from "../../composables/useCardAccordion"
 import { getCardTab, rememberCardTab, useCardData } from "../../composables/useCardData"
@@ -258,6 +263,8 @@ const {
   ops,
 } = services
 const i18n = shared.i18n
+/** 提交模板（顶层 ref 绑定，模板中自动解包后下发给工作区面板） */
+const commitTemplates = shared.commitTemplates
 
 // 卡片内联下拉菜单（顶栏与操作栏共享互斥状态，行为与拆分前一致）
 provideCardMenu()
@@ -342,6 +349,16 @@ function handleFixSaved() {
   fixingEntry.value = null
   void reloadLog()
   reloadPushStatusAfterRewrite()
+}
+
+/** 保存提交模板：写盘后同步共享列表（所有卡片的下拉即时更新） */
+async function handleSaveCommitTemplates(list: CommitTemplate[]) {
+  try {
+    await services.manager.saveCommitTemplates(list)
+    shared.commitTemplates.value = list
+  } catch (e: unknown) {
+    showMessage(`${i18n.saveTemplatesFailed}: ${getErrorMessage(e)}`, 4000, "error")
+  }
 }
 
 /** 当前正在删除的提交条目（null = 未打开删除弹窗） */

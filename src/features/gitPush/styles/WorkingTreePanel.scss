@@ -182,6 +182,18 @@
   flex-wrap: wrap;
 }
 
+// 提交模板行：模板下拉 + 管理按钮（下拉占满剩余宽度）
+.wt-commit-template {
+  display: flex;
+  align-items: center;
+  gap: $s-px3;
+}
+
+.wt-commit-template .wt-template-select {
+  flex: 1;
+  min-width: 0;
+}
+
 // commit type 分段按钮：交互与 aria-pressed 由共享 Button 承担，此处仅保留等宽字体与选中态配色
 .wt-commit-types .wt-type-btn.si-button {
   font-family: $ff-mono;

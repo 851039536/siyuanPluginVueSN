@@ -4,6 +4,7 @@ import type { GitProject, GitRemoteInfo, RemotePushStatus } from "../types/stora
 // 桶里的 `export { GitPushManager }` 是值导出，会把 "siyuan" 运行时依赖拉进 Node 单测环境
 import type { PlatformKey } from "../types/meta"
 import { PLATFORM_META } from "../types/meta"
+import { gitUrlToWebUrl } from "./project"
 
 /** 平台 key → GitRemoteInfo 检测标志属性名映射（供 ProjectStore.applyRemotesToProject 等按检测标志匹配复用） */
 export const PLATFORM_FLAG_BY_KEY: Record<PlatformKey, "isGithub" | "isGitee" | "isGitea" | "isCnb"> = {
@@ -36,6 +37,40 @@ export function hasPlatformRemote(remotes: GitRemoteInfo[], key: PlatformKey): b
 /** 向则项目是否配置了任何远程仓库 */
 export function hasAnyRemote(project: GitProject): boolean {
   return PLATFORM_META.some((pm) => !!project[pm.remoteProp])
+}
+
+/** 分支名允许包含 `/`：保留分隔符，其余字符按 URL 规则编码（如 `#`、空格） */
+function encodeRef(ref: string): string {
+  return encodeURIComponent(ref).replace(/%2F/g, "/")
+}
+
+/**
+ * 各平台 Compare 页面路径构造器（web 根之后的部分）。
+ * CNB 未提供：其 Compare 路径与 Gitea 不保证一致，宁可不显示入口也不生成坏链接。
+ */
+const COMPARE_PATH_BUILDERS: Partial<Record<PlatformKey, (base: string, head: string) => string>> = {
+  github: (base, head) => `/compare/${encodeRef(base)}...${encodeRef(head)}?expand=1`,
+  gitee: (base, head) => `/compare/${encodeRef(base)}...${encodeRef(head)}`,
+  gitea: (base, head) => `/compare/${encodeRef(base)}...${encodeRef(head)}`,
+}
+
+/**
+ * 构造「Compare / 创建 PR」深链。
+ * 输入仓库 URL 可为 https 或 scp 短形式（经 gitUrlToWebUrl 归一化）；任何缺失或不支持的平台返回 null。
+ */
+export function buildCompareUrl(
+  platformKey: PlatformKey,
+  repoUrl: string | undefined,
+  baseBranch: string,
+  headBranch: string,
+): string | null {
+  const builder = COMPARE_PATH_BUILDERS[platformKey]
+  if (!builder) return null
+  const base = baseBranch.trim()
+  const head = headBranch.trim()
+  if (!repoUrl?.trim() || !base || !head) return null
+  const webRoot = gitUrlToWebUrl(repoUrl.trim()).replace(/\/+$/, "")
+  return `${webRoot}${builder(base, head)}`
 }
 
 /**

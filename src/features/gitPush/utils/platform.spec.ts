@@ -6,6 +6,7 @@
 import type { GitProject, RemotePushStatus } from "../types/storage"
 import { describe, expect, it } from "vitest"
 import {
+  buildCompareUrl,
   getProjectRemoteNames,
   hasUnpushedCommits,
   mayAttemptPush,
@@ -102,5 +103,36 @@ describe("推送判据拆分 —— 计数口径 vs 尝试口径", () => {
     expect(mayAttemptPush(behind)).toBe(false)
     // error 由调用方叠加 !error 守卫，本判据本身不看 error
     expect(mayAttemptPush(errored)).toBe(false)
+  })
+})
+
+describe("buildCompareUrl —— Compare / 创建 PR 深链", () => {
+  it("GitHub：https 地址去 .git，并附加 expand=1", () => {
+    expect(buildCompareUrl("github", "https://github.com/o/r.git", "main", "feat/x"))
+      .toBe("https://github.com/o/r/compare/main...feat/x?expand=1")
+  })
+
+  it("Gitee / Gitea：支持 scp 短形式地址", () => {
+    expect(buildCompareUrl("gitee", "git@gitee.com:o/r.git", "master", "dev"))
+      .toBe("https://gitee.com/o/r/compare/master...dev")
+    expect(buildCompareUrl("gitea", "git@gitea.example.com:o/r.git", "main", "dev"))
+      .toBe("https://gitea.example.com/o/r/compare/main...dev")
+  })
+
+  it("分支名保留斜杠，其余特殊字符编码", () => {
+    expect(buildCompareUrl("github", "https://github.com/o/r", "main", "fix/#12"))
+      .toBe("https://github.com/o/r/compare/main...fix/%2312?expand=1")
+  })
+
+  it("仓库地址带尾部斜杠时不产生双斜杠", () => {
+    expect(buildCompareUrl("gitee", "https://gitee.com/o/r/", "main", "dev"))
+      .toBe("https://gitee.com/o/r/compare/main...dev")
+  })
+
+  it("不支持的平台或缺失参数返回 null", () => {
+    expect(buildCompareUrl("cnb", "https://cnb.cool/o/r", "main", "dev")).toBeNull()
+    expect(buildCompareUrl("github", undefined, "main", "dev")).toBeNull()
+    expect(buildCompareUrl("github", "https://github.com/o/r", "", "dev")).toBeNull()
+    expect(buildCompareUrl("github", "https://github.com/o/r", "main", "  ")).toBeNull()
   })
 })

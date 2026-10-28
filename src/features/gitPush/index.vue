@@ -159,6 +159,7 @@
         :local-timeout="localTimeout"
         :rule-config="ruleConfig"
         :push-branch-mode="pushBranchMode"
+      :compare-base-branch="compareBaseBranch"
         :view-settings="analysisViewSettings"
         :year-options="settingsYearOptions"
         :probe-config="probeConfig"
@@ -169,6 +170,7 @@
         @save-local-timeout="setLocalTimeout"
         @save-rule-config="updateCommitRuleConfig"
         @save-branch-mode="handleSaveBranchMode"
+        @save-compare-base="setCompareBaseBranch"
         @update-view-settings="updateViewSettings"
         @save-probe-config="saveProbeConfig"
         @probe-now="handleProbeNow"
@@ -317,6 +319,7 @@ import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
 import { useCardLayout } from "./composables/useCardLayout"
+import { useCompareBaseBranch } from "./composables/useCompareBaseBranch"
 import { useScanImport } from "./composables/useScanImport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
@@ -604,6 +607,11 @@ const selectedTagList = computed(() => [...selectedTags.value])
 
 /** 卡片布局偏好（详细 / 手风琴，持久化；工具栏切换即保存） */
 const { cardLayout, loadCardLayout } = useCardLayout(props.manager.storage.cardLayout)
+
+/** Compare / 创建 PR 深链的基线分支（设置弹窗内显式保存） */
+const { compareBaseBranch, loadCompareBaseBranch, setCompareBaseBranch } = useCompareBaseBranch(
+  props.manager.storage.compareBaseBranch,
+)
 
 /**
  * 「需拉取」视图的专用补载。
@@ -1198,6 +1206,7 @@ onMounted(async () => {
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
   await loadCardLayout() // 从持久化存储恢复卡片布局（详细 / 手风琴）
+  await loadCompareBaseBranch() // 恢复 Compare 深链基线分支（默认 main）
   loadGitConcurrency()
   loadNetworkTimeout()
   loadLocalTimeout()
@@ -1555,6 +1564,7 @@ provide(CARD_SERVICES_KEY, {
     detectedTerminals,
     commitTemplates,
     searchQuery,
+    compareBaseBranch,
   },
   records: {
     pushStatuses,

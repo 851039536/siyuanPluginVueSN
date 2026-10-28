@@ -25,6 +25,8 @@ export interface CardSharedData {
   detectedTerminals: Ref<TerminalEntry[]>
   commitTemplates: Ref<CommitTemplate[]>
   searchQuery: Ref<string>
+  /** Compare / 创建 PR 深链基线分支（默认 main，设置弹窗可改） */
+  compareBaseBranch: Ref<string>
 }
 
 /** 父层响应式 Record（原 props 的切片类，卡片经 useCardServices 派生单项目值） */

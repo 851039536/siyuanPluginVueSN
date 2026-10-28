@@ -10,6 +10,8 @@
         size="xsmall"
         dense
         :title="i18n.platformLinks"
+        aria-haspopup="menu"
+        :aria-expanded="openMenu === 'platform'"
         @click.stop="toggleMenu('platform')"
       >
         <Icon
@@ -22,15 +24,16 @@
           class="gp-caret-icon"
         />
       </Button>
-      <div
+      <MenuPopover
         v-if="openMenu === 'platform'"
         class="gp-link-popover"
-        @click.stop
+        :aria-label="i18n.platformLinks"
       >
         <!-- 空态项："未配置平台链接" -->
         <button
           v-if="platformLinks.length === 0"
           class="gp-link-item gp-link-item--none"
+          role="menuitem"
           disabled
         >
           <Icon
@@ -44,6 +47,7 @@
           v-for="pl in platformLinks"
           :key="pl.key"
           class="gp-link-item"
+          role="menuitem"
           :title="i18n.openPlatformHint.replace('{0}', pl.label)"
           @click="openRepoWebUrl(pl.url); openMenu = null"
           @contextmenu.prevent="handleCopyUrl(pl.url)"
@@ -54,7 +58,7 @@
           />
           <span>{{ pl.label }}</span>
         </button>
-      </div>
+      </MenuPopover>
     </div>
     <!-- IDE 打开菜单（本地开关，与拉取/推送菜单同模式） -->
     <div class="gp-ide-wrap gp-menu-wrap">
@@ -64,6 +68,8 @@
         size="xsmall"
         dense
         :title="i18n.openProject"
+        aria-haspopup="menu"
+        :aria-expanded="openMenu === 'ide'"
         @click.stop="toggleMenu('ide')"
       >
         <Icon
@@ -76,14 +82,15 @@
           class="gp-caret-icon"
         />
       </Button>
-      <div
+      <MenuPopover
         v-if="openMenu === 'ide'"
         class="gp-ide-popover"
-        @click.stop
+        :aria-label="i18n.openProject"
       >
         <!-- 菜单项："打开文件夹" -->
         <button
           class="gp-ide-item"
+          role="menuitem"
           @click="openLocalPath(projectPath()); openMenu = null"
         >
           <Icon
@@ -97,6 +104,7 @@
           v-for="t in detectedTerminals"
           :key="`terminal-${t.name}`"
           class="gp-ide-item"
+          role="menuitem"
           :title="i18n.openTerminalHint?.replace('{0}', t.name) ?? t.name"
           @click="ops.handleOpenTerminal(projectPath(), t); openMenu = null"
         >
@@ -106,11 +114,15 @@
           />
           <span>{{ t.name }}</span>
         </button>
-        <div class="gp-ide-divider" />
+        <div
+          class="gp-ide-divider"
+          role="separator"
+        />
         <!-- 空态项："未检测到 IDE" -->
         <button
           v-if="detectedIdes.length === 0 && customIdes.length === 0"
           class="gp-ide-item gp-ide-item--none"
+          role="menuitem"
           disabled
         >
           <Icon
@@ -123,6 +135,7 @@
           v-for="ide in detectedIdes"
           :key="`detected-${ide.name}`"
           class="gp-ide-item"
+          role="menuitem"
           @click="ops.handleOpenIde(projectPath(), ide); openMenu = null"
         >
           <Icon
@@ -131,12 +144,17 @@
           />
           <span>{{ ide.name }}</span>
         </button>
-        <button
+        <!-- 自定义 IDE：外层为 div[role=menuitem]（原 button 内嵌删除按钮属非法嵌套，且会吞掉键盘激活） -->
+        <div
           v-for="custom in uniqueCustomIdes"
           :key="`custom-${custom.name}`"
           class="gp-ide-item gp-ide-item--custom"
+          role="menuitem"
+          tabindex="0"
           :title="custom.paths.join('\n')"
           @click="ops.handleOpenCustomIde(projectPath(), custom.name); openMenu = null"
+          @keydown.enter.prevent="ops.handleOpenCustomIde(projectPath(), custom.name); openMenu = null"
+          @keydown.space.prevent="ops.handleOpenCustomIde(projectPath(), custom.name); openMenu = null"
         >
           <Icon
             icon="mdi:application-brackets"
@@ -170,11 +188,15 @@
               height="12"
             />
           </button>
-        </button>
-        <div class="gp-ide-divider" />
+        </div>
+        <div
+          class="gp-ide-divider"
+          role="separator"
+        />
         <!-- 菜单项："管理 IDE..." -->
         <button
           class="gp-ide-item gp-ide-item--add"
+          role="menuitem"
           @click.stop="ops.showIdeDialog(); openMenu = null"
         >
           <Icon
@@ -183,7 +205,7 @@
           />
           <span>{{ i18n.manageIde }}</span>
         </button>
-      </div>
+      </MenuPopover>
     </div>
     <!-- 刷新选项菜单（本地开关，与拉取/推送菜单同模式） -->
     <div class="gp-refresh-wrap gp-menu-wrap">
@@ -195,40 +217,65 @@
         icon="refresh"
         :loading="isRefreshing"
         :title="i18n.refreshOptions"
+        aria-haspopup="menu"
+        :aria-expanded="openMenu === 'refresh'"
         @click.stop="toggleMenu('refresh')"
       />
-      <div
+      <MenuPopover
         v-if="openMenu === 'refresh'"
         class="gp-refresh-popover"
-        @click.stop
+        :aria-label="i18n.refreshOptions"
       >
         <!-- 菜单项："刷新工作空间" -->
-        <button class="gp-refresh-item" @click="ops.handleRefreshWorkingTree(project.id); openMenu = null">
+        <button
+          class="gp-refresh-item"
+          role="menuitem"
+          @click="ops.handleRefreshWorkingTree(project.id); openMenu = null"
+        >
           <Icon icon="mdi:file-tree" height="12" />
           <span>{{ i18n.refreshWorkingTree }}</span>
         </button>
         <!-- 菜单项："刷新提交日志"（日志已下沉卡片，直调卡内重载） -->
-        <button class="gp-refresh-item" @click="reloadLog(); openMenu = null">
+        <button
+          class="gp-refresh-item"
+          role="menuitem"
+          @click="reloadLog(); openMenu = null"
+        >
           <Icon icon="mdi:history" height="12" />
           <span>{{ i18n.refreshCommitLog }}</span>
         </button>
         <!-- 菜单项："刷新标签"（标签已下沉卡片，直调卡内重载） -->
-        <button class="gp-refresh-item" @click="refreshTags(); openMenu = null">
+        <button
+          class="gp-refresh-item"
+          role="menuitem"
+          @click="refreshTags(); openMenu = null"
+        >
           <Icon icon="mdi:tag-outline" height="12" />
           <span>{{ i18n.refreshTags }}</span>
         </button>
         <!-- 菜单项："刷新远程状态" -->
-        <button class="gp-refresh-item" @click="ops.handleRefreshRemoteStatus(project.id); openMenu = null">
+        <button
+          class="gp-refresh-item"
+          role="menuitem"
+          @click="ops.handleRefreshRemoteStatus(project.id); openMenu = null"
+        >
           <Icon icon="mdi:cloud-refresh-outline" height="12" />
           <span>{{ i18n.refreshRemoteStatus }}</span>
         </button>
-        <div class="gp-refresh-divider" />
+        <div
+          class="gp-refresh-divider"
+          role="separator"
+        />
         <!-- 菜单项："全部刷新" -->
-        <button class="gp-refresh-item gp-refresh-item--all" @click="ops.handleRefresh(project.id); openMenu = null">
+        <button
+          class="gp-refresh-item gp-refresh-item--all"
+          role="menuitem"
+          @click="ops.handleRefresh(project.id); openMenu = null"
+        >
           <Icon icon="mdi:refresh-circle" height="12" />
           <span>{{ i18n.refreshAll }}</span>
         </button>
-      </div>
+      </MenuPopover>
     </div>
     <!-- 悬停提示："编辑项目（标签/备注）" -->
     <Button
@@ -290,6 +337,7 @@ import { useCardServices } from "../../composables/useCardServices"
 import { useCardMenu } from "../../composables/useCardMenu"
 import { useScriptSessions } from "../../composables/useScriptSessions"
 import Button from "@/components/Button.vue"
+import MenuPopover from "../common/MenuPopover.vue"
 
 const props = defineProps<{
   project: GitProject

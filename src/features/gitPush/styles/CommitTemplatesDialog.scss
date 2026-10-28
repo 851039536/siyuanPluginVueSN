@@ -1,0 +1,41 @@
+@use "@/variables.scss" as *;
+
+// ========== 提交模板管理弹窗 ==========
+.gp-tpl-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  min-width: 0;
+}
+
+// 说明文案（占位符用法）
+.gp-tpl-hint {
+  margin: 0;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+// 空态
+.gp-tpl-empty {
+  padding: $s-2 0;
+  text-align: center;
+  font-size: $t-2xs;
+  opacity: 0.5;
+}
+
+// 单行：名称 + 内容 + 删除
+.gp-tpl-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: $s-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  padding: $s-1;
+}
+
+.gp-tpl-name,
+.gp-tpl-pattern {
+  min-width: 0;
+}

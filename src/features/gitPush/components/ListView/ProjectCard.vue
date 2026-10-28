@@ -182,14 +182,15 @@ import type {
   CommitLogEntry,
   GitProject,
 } from "../../types"
-import type { CardTabId } from "./CardTabs.vue"
+import type { CardTabId } from "../../types/cardTab"
 import {
   computed,
+  onMounted,
   ref,
   watch,
 } from "vue"
 import { checkCommitRule } from "../../commitRuleChecker"
-import { useCardData } from "../../composables/useCardData"
+import { getCardTab, rememberCardTab, useCardData } from "../../composables/useCardData"
 import { provideCardMenu } from "../../composables/useCardMenu"
 import { useCardServices } from "../../composables/useCardServices"
 import {
@@ -265,8 +266,8 @@ const {
   setLogLimit,
 } = useCardData(() => props.project)
 
-/** Stash / Tag 面板 Tab 切换 */
-const stashTagTab = ref<CardTabId>("worktree")
+/** Stash / Tag 面板 Tab 切换（恢复该项目上次激活的 Tab，切分类 / 切视图后不丢） */
+const stashTagTab = ref<CardTabId>(getCardTab(props.project.id))
 
 /** 项目已配置的远程名列表（Tag 推送远程选择用） */
 const remoteNames = computed(() => getProjectRemoteNames(props.project).map((r) => r.name))
@@ -398,6 +399,8 @@ function handleLogCountReload(count: number | "all") {
 // 切回 worktree 时刷新工作区（refresh 语义 + 最小间隔节流由调度器裁决，避免与面板内操作重复发 git）；
 // 切到 log 时懒加载该项的高代价统计（--shortstat），切到 tag 时懒加载网络 ls-remote 状态
 watch(stashTagTab, (val) => {
+  // 记忆本次选择：卡片卸载（切分类 / 切智能视图）后重挂载时恢复
+  rememberCardTab(props.project.id, val)
   if (val === "worktree") {
     void ops.refreshProjectStatus(props.project.id)
     return
@@ -405,6 +408,14 @@ watch(stashTagTab, (val) => {
   void ensureDetailsLoaded()
   if (val === "log") ensureLogStats()
   if (val === "tag") ensureRemoteTags()
+})
+
+// 恢复的非工作区 Tab 需要在挂载时补齐其懒加载域（重挂载不会有点击事件）
+onMounted(() => {
+  if (stashTagTab.value === "worktree") return
+  void ensureDetailsLoaded()
+  if (stashTagTab.value === "log") ensureLogStats()
+  else if (stashTagTab.value === "tag") ensureRemoteTags()
 })
 
 /** 点击卡片任意位置时补齐当前项目数据（幂等：状态按 ensure + 详情在途共享，重复点击不产生额外查询） */

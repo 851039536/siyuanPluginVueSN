@@ -184,6 +184,28 @@
 }
 
 // ========== 卡片增强（顶栏信息区专属） ==========
+// 项目标签行（与分支行同构：图标 + 可换行 chips）
+.gp-card-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $s-px3;
+  margin-top: $s-px3;
+  opacity: 0.75;
+
+  > svg {
+    flex-shrink: 0;
+    opacity: 0.55;
+  }
+}
+
+// 标签折叠按钮（"+N" / "−"）：几何由共享 Button 承担，此处只做弱化
+.gp-card-tags .gp-tag-more.si-button {
+  opacity: 0.6;
+
+  &:hover { opacity: 1; }
+}
+
 .gp-card-name-row {
   display: flex;
   align-items: center;

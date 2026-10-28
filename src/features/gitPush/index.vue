@@ -121,6 +121,10 @@
       :grouped-projects="groupedProjects"
       :filtered-groups="filteredGroups"
       :empty-hint="listEmptyHint"
+      :all-tags="allTags"
+      :selected-tags="selectedTagList"
+      @toggle-tag="toggleTag"
+      @clear-tag-filter="clearTags"
     />
     <!-- 列表视图结束 -->
 
@@ -437,6 +441,7 @@ const {
   clearOpLogs,
   // 项目聚合管理
   starredProjects,
+  allTags,
   updateProjectMeta,
   toggleStar,
 } = useGitPush(props.manager, props.i18n)
@@ -577,6 +582,9 @@ const {
   filteredGroups,
   loadGitOpsPaused,
   loadShowArchived,
+  selectedTags,
+  toggleTag,
+  clearTags,
 } = useProjectFilters({
   gitOpsPausedStorage: props.manager.storage.gitOpsPaused,
   showArchivedStorage: props.manager.storage.showArchived,
@@ -588,6 +596,9 @@ const {
   visibleGroups,
   allGroups: groupedProjects,
 })
+
+/** 已选标签（Set → 数组，供列表工具栏 chips 做包含判断） */
+const selectedTagList = computed(() => [...selectedTags.value])
 
 /**
  * 「需拉取」视图的专用补载。

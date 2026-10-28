@@ -57,6 +57,53 @@
   flex-shrink: 0;
 }
 
+// ========== 标签筛选栏 ==========
+// 标签较多时横向滚动（与分类 TAB 同策略），不换行挤占列表高度
+.gp-tag-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: $s-px3;
+  margin-bottom: $s-px6;
+  min-width: 0;
+  overflow-x: auto;
+  @include hide-h-scrollbar;
+}
+
+.gp-tag-filter-label {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+
+// 标签 chip：共享 Button 承担交互/无障碍，此处只补「未选中弱化、选中主色」两态
+.git-push-panel .gp-tag-filter-bar .gp-tag-filter-chip.si-button {
+  flex-shrink: 0;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  opacity: 0.55;
+  transition: opacity 0.12s, border-color 0.12s, color 0.12s;
+
+  &:hover {
+    opacity: 0.85;
+    border-color: var(--b3-theme-primary);
+  }
+
+  &[aria-pressed="true"] {
+    opacity: 1;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.gp-tag-filter-clear.si-button {
+  flex-shrink: 0;
+  opacity: 0.5;
+
+  &:hover { opacity: 0.9; }
+}
+
 // ========== 分类 TAB 导航栏 ==========
 // 宽度不足时横向滚动：滚动条隐藏，用鼠标滚轮横滑（见 ListViewToolbar 的 onTabsWheel）。
 .gp-tabs {

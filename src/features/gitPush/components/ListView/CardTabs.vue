@@ -39,14 +39,15 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import type { CardTabId } from "../../types/cardTab"
 import Tabs from "@/components/Tabs.vue"
 import TabList from "@/components/TabList.vue"
 import Tab from "@/components/Tab.vue"
 import TabPanels from "@/components/TabPanels.vue"
 import TabPanel from "@/components/TabPanel.vue"
 
-/** 卡片面板 Tab ID（与编排层 stashTagTab 状态同值域，同时作为面板插槽名） */
-export type CardTabId = "worktree" | "log" | "stash" | "tag"
+/** 卡片面板 Tab ID（单一真源在 types/cardTab，此处重导出以保持既有导入路径） */
+export type { CardTabId }
 
 /** Tab 元数据表（labelKey 指向 i18n 键，countKey 指向 props 对应计数字段） */
 const TABS: { id: CardTabId, labelKey: string, countKey: keyof CardCounts }[] = [

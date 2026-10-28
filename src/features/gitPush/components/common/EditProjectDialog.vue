@@ -78,6 +78,13 @@
           :rows="3"
           :placeholder="i18n.notePlaceholder"
         />
+        <!-- 表单项："标签"（逗号分隔，用于列表视图的标签筛选） -->
+        <Input
+          v-model="localTagsText"
+          :label="i18n.tagsLabel"
+          size="xsmall"
+          :placeholder="i18n.tagsPlaceholder"
+        />
         <!-- 本地路径区块（多设备路径行） -->
         <div class="gp-form-group">
           <!-- 标签："本地路径（跨设备适配）" -->
@@ -349,6 +356,8 @@ const localName = ref("")
 const localStarred = ref(false)
 const localArchived = ref(false)
 const localNote = ref("")
+/** 标签输入文本（逗号分隔；保存时解析为去重数组） */
+const localTagsText = ref("")
 /** 分类选择（原卡片顶栏下拉合并至此；保存时仅在实际变化时经 moveProject 持久化） */
 const localCategoryId = ref("")
 /** 分类列表（弹窗自包含加载，与 AddProjectDialog 同源 manager.getCategories） */
@@ -712,6 +721,7 @@ onMounted(async () => {
     localStarred.value = !!p.starred
     localArchived.value = !!p.archived
     localNote.value = p.note || ""
+    localTagsText.value = (p.tags || []).join(", ")
     localCategoryId.value = p.categoryId
     // 平台 URL 由 PLATFORM_META 单一数据源驱动回填
     for (const pl of PLATFORM_META) {
@@ -773,6 +783,19 @@ onUnmounted(() => {
 })
 
 // ── 保存 ──
+/** 解析逗号分隔的标签文本（中英文逗号均可；去空白、去重、忽略空项） */
+function parseTags(text: string): string[] {
+  const seen = new Set<string>()
+  return text
+    .split(/[,，]/)
+    .map((t) => t.trim())
+    .filter((t) => {
+      if (!t || seen.has(t)) return false
+      seen.add(t)
+      return true
+    })
+}
+
 async function save(): Promise<void> {
   if (!project.value || saving.value) {
     return
@@ -786,6 +809,7 @@ async function save(): Promise<void> {
       starred: localStarred.value,
       archived: localArchived.value,
       note: localNote.value,
+      tags: parseTags(localTagsText.value),
       ...pathPatch,
     })
     if (!updated) {

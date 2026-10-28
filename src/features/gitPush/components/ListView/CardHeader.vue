@@ -132,6 +132,36 @@
           {{ b.name }}
         </Button>
       </div>
+      <!-- 项目标签（前 3 个直接展示，其余折叠为 "+N"；筛选入口在列表工具栏） -->
+      <div
+        v-if="project.tags?.length"
+        class="gp-card-tags"
+      >
+        <Icon
+          icon="mdi:tag-outline"
+          height="11"
+        />
+        <Tag
+          v-for="t in visibleTags"
+          :key="t"
+          size="xsmall"
+          variant="secondary"
+          :content="t"
+          :title="t"
+        />
+        <Button
+          v-if="hiddenTagCount > 0"
+          class="gp-tag-more"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
+          :title="tagsExpanded ? i18n.mdFilesCollapse : i18n.tagsExpand.replace('{0}', String(hiddenTagCount))"
+          @click.stop="tagsExpanded = !tagsExpanded"
+        >
+          {{ tagsExpanded ? "−" : `+${hiddenTagCount}` }}
+        </Button>
+      </div>
       <!-- 备注 -->
       <div
         v-if="project.note"
@@ -197,6 +227,19 @@ const visibleMdFiles = computed(() =>
 )
 /** 被折叠的 Markdown 文件数量（<=0 时不显示折叠按钮） */
 const hiddenMdCount = computed(() => props.mdFiles.length - MD_VISIBLE_LIMIT)
+
+// ── 项目标签折叠（与 MD 徽章同款：默认展示前 3 个）──
+/** 默认直接展示的标签数量上限 */
+const TAG_VISIBLE_LIMIT = 3
+/** 是否已展开全部标签 */
+const tagsExpanded = ref(false)
+/** 实际展示的标签列表 */
+const visibleTags = computed(() => {
+  const tags = props.project.tags ?? []
+  return tagsExpanded.value ? tags : tags.slice(0, TAG_VISIBLE_LIMIT)
+})
+/** 被折叠的标签数量（<=0 时不显示折叠按钮） */
+const hiddenTagCount = computed(() => (props.project.tags?.length ?? 0) - TAG_VISIBLE_LIMIT)
 
 // ── 分支切换（切分支含 checkout + 两次状态重载，耗时可达数秒）──
 /** 正在切换的目标分支名（空串 = 空闲）；用于按钮转圈与防重复提交 */

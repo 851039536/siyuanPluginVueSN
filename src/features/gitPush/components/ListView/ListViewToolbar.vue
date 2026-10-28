@@ -52,6 +52,47 @@
     </div>
   </div>
 
+  <!-- 标签筛选（点击切换多选；无标签项目时不渲染） -->
+  <div
+    v-if="allTags.length > 0"
+    class="gp-tag-filter-bar"
+  >
+    <span
+      class="gp-tag-filter-label"
+      :title="i18n.tagsFilter"
+    >
+      <Icon
+        icon="mdi:tag-outline"
+        height="12"
+      />
+    </span>
+    <Button
+      v-for="tag in allTags"
+      :key="tag"
+      class="gp-tag-filter-chip"
+      variant="ghost"
+      size="xsmall"
+      dense
+      :aria-pressed="selectedTags.includes(tag)"
+      :title="tag"
+      @click="emit('toggleTag', tag)"
+    >
+      {{ tag }}
+    </Button>
+    <!-- 清除标签筛选（仅在已选中标签时出现；文案："清除标签筛选"） -->
+    <Button
+      v-if="selectedTags.length > 0"
+      class="gp-tag-filter-clear"
+      variant="ghost"
+      size="xsmall"
+      dense
+      :title="i18n.clearTagFilter"
+      @click="emit('clearTagFilter')"
+    >
+      {{ i18n.clearTagFilter }}
+    </Button>
+  </div>
+
   <!-- 分类 TAB 导航（仅 all 模式显示；宽度不足时用鼠标滚轮横滑） -->
   <div
     v-if="viewMode === 'all' && groupedProjects.length > 0"
@@ -84,6 +125,7 @@ import type { GroupedProject, ViewMode } from "../../types"
 import { VIEW_MODE_META, VIEW_MODES } from "../../types"
 import { computed, onBeforeUnmount, ref, watch } from "vue"
 import type { IconKey } from "@/components/kit/icons"
+import { Icon } from "@iconify/vue"
 import Button from "@/components/Button.vue"
 import ToggleButton from "@/components/ToggleButton.vue"
 
@@ -100,6 +142,15 @@ const VIEW_MODE_ICONS: Record<ViewMode, IconKey> = {
 const props = defineProps<{
   i18n: Record<string, any>
   groupedProjects: GroupedProject[]
+  /** 全部项目标签（筛选 chips 数据源） */
+  allTags: string[]
+  /** 已选标签（多选，空数组 = 不筛选） */
+  selectedTags: string[]
+}>()
+
+const emit = defineEmits<{
+  toggleTag: [tag: string]
+  clearTagFilter: []
 }>()
 
 /**

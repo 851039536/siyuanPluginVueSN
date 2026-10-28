@@ -8,6 +8,10 @@
     v-model:git-ops-paused="gitOpsPaused"
     :i18n="i18n"
     :grouped-projects="groupedProjects"
+    :all-tags="allTags"
+    :selected-tags="selectedTags"
+    @toggle-tag="emit('toggleTag', $event)"
+    @clear-tag-filter="emit('clearTagFilter')"
   />
 
   <!-- 空态提示：未选择分类时引导用户点选上方 TAB（首次进入不自动选择，避免加载全部项目的 git 状态）。
@@ -47,8 +51,17 @@ defineProps<{
   i18n: Record<string, any>
   groupedProjects: GroupedProject[]
   filteredGroups: GroupedProject[]
+  /** 全部项目标签（工具栏筛选 chips 数据源） */
+  allTags: string[]
+  /** 已选标签（多选，空数组 = 不筛选） */
+  selectedTags: string[]
   /** 空态提示文案（null = 不显示空态，走卡片列表；由 index.vue 综合视图模式与搜索词计算） */
   emptyHint: string | null
+}>()
+
+const emit = defineEmits<{
+  toggleTag: [tag: string]
+  clearTagFilter: []
 }>()
 
 const viewMode = defineModel<ViewMode>("viewMode", { required: true })

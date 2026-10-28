@@ -167,12 +167,14 @@
             <button
               class="gp-ide-del-yes"
               @click.stop="ops.removeCustomIdeByName(custom.name); confirmingDelName = ''"
+              @keydown.stop
             >
               {{ i18n.yes }}
             </button>
             <button
               class="gp-ide-del-no"
               @click.stop="confirmingDelName = ''"
+              @keydown.stop
             >
               {{ i18n.no }}
             </button>
@@ -182,6 +184,7 @@
             class="gp-ide-item-del"
             :title="i18n.deleteCustomIde"
             @click.stop="confirmingDelName = custom.name"
+            @keydown.stop
           >
             <Icon
               icon="mdi:delete-outline"

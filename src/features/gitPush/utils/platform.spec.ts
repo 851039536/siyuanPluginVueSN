@@ -129,9 +129,16 @@ describe("buildCompareUrl —— Compare / 创建 PR 深链", () => {
       .toBe("https://gitee.com/o/r/compare/main...dev")
   })
 
+  it("ssh:// 形式地址归一化为 https（含端口与 .git）", () => {
+    expect(buildCompareUrl("github", "ssh://git@github.com:22/o/r.git", "main", "feat/x"))
+      .toBe("https://github.com/o/r/compare/main...feat/x?expand=1")
+  })
+
   it("不支持的平台或缺失参数返回 null", () => {
     expect(buildCompareUrl("cnb", "https://cnb.cool/o/r", "main", "dev")).toBeNull()
     expect(buildCompareUrl("github", undefined, "main", "dev")).toBeNull()
+    expect(buildCompareUrl("github", "", "main", "dev")).toBeNull()
+    expect(buildCompareUrl("github", "git://github.com/o/r.git", "main", "dev")).toBeNull()
     expect(buildCompareUrl("github", "https://github.com/o/r", "", "dev")).toBeNull()
     expect(buildCompareUrl("github", "https://github.com/o/r", "main", "  ")).toBeNull()
   })

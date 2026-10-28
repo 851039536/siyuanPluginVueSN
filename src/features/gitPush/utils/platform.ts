@@ -55,8 +55,21 @@ const COMPARE_PATH_BUILDERS: Partial<Record<PlatformKey, (base: string, head: st
 }
 
 /**
+ * 仓库地址 → 浏览器可用的 web 根（无尾斜杠）。
+ * scp 短形式与 https 交给 gitUrlToWebUrl；`ssh://` 形式它不处理，这里单独归一化；
+ * 其余协议（git:// 等）返回 null —— 不生成无法在浏览器打开的坏链接。
+ */
+function resolveWebRoot(repoUrl: string): string | null {
+  const web = gitUrlToWebUrl(repoUrl)
+  if (/^https?:\/\//i.test(web)) return web.replace(/\/+$/, "")
+  const ssh = repoUrl.match(/^ssh:\/\/(?:[^@/]+@)?([^/:]+)(?::\d+)?\/(.+?)(?:\.git)?\/?$/)
+  return ssh ? `https://${ssh[1]}/${ssh[2].replace(/\/+$/, "")}` : null
+}
+
+/**
  * 构造「Compare / 创建 PR」深链。
- * 输入仓库 URL 可为 https 或 scp 短形式（经 gitUrlToWebUrl 归一化）；任何缺失或不支持的平台返回 null。
+ * 输入仓库 URL 可为 https / scp 短形式 / ssh://（经 resolveWebRoot 归一化）；
+ * 任何缺失、协议不支持或平台不支持的组合返回 null。
  */
 export function buildCompareUrl(
   platformKey: PlatformKey,
@@ -69,7 +82,8 @@ export function buildCompareUrl(
   const base = baseBranch.trim()
   const head = headBranch.trim()
   if (!repoUrl?.trim() || !base || !head) return null
-  const webRoot = gitUrlToWebUrl(repoUrl.trim()).replace(/\/+$/, "")
+  const webRoot = resolveWebRoot(repoUrl.trim())
+  if (!webRoot) return null
   return `${webRoot}${builder(base, head)}`
 }
 

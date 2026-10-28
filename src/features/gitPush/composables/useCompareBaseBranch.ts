@@ -15,7 +15,8 @@ export function useCompareBaseBranch(storage: TypedStorage<string>): {
   const compareBaseBranch = ref("main")
 
   async function loadCompareBaseBranch(): Promise<void> {
-    compareBaseBranch.value = await storage.loadOrDefault()
+    // 与 setter 同口径：历史值若为空串也回退 main，避免 Compare 入口整体消失
+    compareBaseBranch.value = (await storage.loadOrDefault()).trim() || "main"
   }
 
   function setCompareBaseBranch(branch: string): void {

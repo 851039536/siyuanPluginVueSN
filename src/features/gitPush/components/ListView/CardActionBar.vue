@@ -183,21 +183,23 @@ function pushBtnText(status: string | undefined, label: string): string {
 
 /**
  * Compare / 创建 PR 深链（每个已配置且受支持的平台一项）。
- * 当前分支未知或等于基线分支时不展示（自己和自己比较没有意义）。
+ * 当前分支未知、等于基线分支，或远程分支尚未建立（noUpstream，比较页无 head 可比 ⇒ 死链）时不展示。
  */
 const compareLinks = computed(() => {
   const branch = pushStatus.value?.branch?.trim()
   const base = shared.compareBaseBranch.value.trim()
   if (!branch || branch === base) return []
   return PLATFORM_META.flatMap((pm) => {
+    const remote = pushStatus.value?.remotes[pm.key]
+    if (!remote || remote.noUpstream) return []
     const url = buildCompareUrl(pm.key, props.project[pm.urlProp], base, branch)
     return url ? [{ key: pm.key, label: pm.label, url }] : []
   })
 })
 
-/** 在浏览器打开 Compare 页面并关闭菜单 */
+/** 在浏览器打开 Compare 页面并关闭菜单（打开失败静默：系统浏览器不可用时无处提示，避免未处理拒绝） */
 function openCompare(url: string) {
-  void openRepoWebUrl(url)
+  void openRepoWebUrl(url).catch(() => {})
   openMenu.value = null
 }
 </script>

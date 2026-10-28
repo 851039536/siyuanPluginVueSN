@@ -159,7 +159,7 @@
         :local-timeout="localTimeout"
         :rule-config="ruleConfig"
         :push-branch-mode="pushBranchMode"
-      :compare-base-branch="compareBaseBranch"
+        :compare-base-branch="compareBaseBranch"
         :view-settings="analysisViewSettings"
         :year-options="settingsYearOptions"
         :probe-config="probeConfig"

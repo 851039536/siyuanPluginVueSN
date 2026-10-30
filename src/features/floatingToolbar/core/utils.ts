@@ -181,6 +181,51 @@ export function getI18nText(
 }
 
 /**
+ * 查找节点所在的 protyle 容器
+ * @param startNode 起始节点
+ * @returns protyle 元素或 null
+ */
+export function findProtyleContainer(startNode: Node): Element | null {
+  // 对于 Element，使用 closest
+  if (startNode instanceof Element) {
+    const protyle = startNode.closest(".protyle")
+    if (protyle) return protyle
+  }
+
+  // 尝试通过 parentNode 查找（对于文本节点）
+  let node: Node | null = startNode
+  while (node) {
+    if (node instanceof Element && node.classList.contains("protyle")) {
+      return node
+    }
+    node = node.parentNode
+  }
+
+  return null
+}
+
+/**
+ * 获取编辑器内当前选中的文本（供浮动工具栏按钮与右键菜单共用）
+ * 优先取文本选区；无文本选区时回退到块多选（.protyle-wysiwyg--select）内容
+ * @param protyle protyle 容器元素
+ * @returns 选中文本，无选中时为空串
+ */
+export function getSelectionText(protyle: Element): string {
+  const selection = window.getSelection()?.toString().trim()
+  if (selection) return selection
+
+  // 处理多选块
+  const selects = protyle.querySelectorAll(".protyle-wysiwyg--select")
+  if (selects.length > 0) {
+    return Array.from(selects)
+      .map((block) => block.textContent || "")
+      .join("\n")
+  }
+
+  return ""
+}
+
+/**
  * 对话框 Action 配置
  */
 export interface DialogActionConfig {

@@ -8,8 +8,11 @@ import { HeatmapMarker } from "./HeatmapMarker"
 import { WordPracticeCache } from "./wordCache"
 import {
   debounce,
+  findProtyleContainer,
+  getSelectionText,
   showI18nMessage,
 } from "./utils"
+import { SelectionContextMenu } from "./SelectionContextMenu"
 
 /**
  * 浮动工具栏增强类
@@ -20,6 +23,7 @@ export class FloatingToolbar {
   private actionManager: ToolbarActionManager
   private wordCache: WordPracticeCache
   private heatmapMarker: HeatmapMarker
+  private contextMenu: SelectionContextMenu
   private lastSelectionText: string = ""
   private observers: Map<HTMLElement, MutationObserver> = new Map()
   private isProcessing: boolean = false
@@ -32,6 +36,9 @@ export class FloatingToolbar {
     this.actionManager = new ToolbarActionManager()
     this.wordCache = new WordPracticeCache(plugin)
     this.heatmapMarker = new HeatmapMarker(this.wordCache)
+    this.contextMenu = new SelectionContextMenu(
+      () => this.actionManager.getAllActions(),
+    )
     // 防抖处理选择事件，避免频繁触发
     this.debouncedHandleMouseUp = debounce(
       this.handleSelectionChange.bind(this),
@@ -47,6 +54,8 @@ export class FloatingToolbar {
     this.registerBuiltinActions()
     // 绑定事件监听器
     this.bindEvents()
+    // 选中内容右键菜单
+    this.contextMenu.init()
     // 添加样式（仅添加一次）
     this.ensureStyles()
   }
@@ -187,7 +196,7 @@ export class FloatingToolbar {
 
       // 查找选择范围内的 protyle 容器
       const range = selection.getRangeAt(0)
-      const protyle = this.findProtyleContainer(range.commonAncestorContainer)
+      const protyle = findProtyleContainer(range.commonAncestorContainer)
 
       if (protyle) {
         this.processToolbar(protyle)
@@ -198,30 +207,6 @@ export class FloatingToolbar {
         this.isProcessing = false
       })
     }
-  }
-
-  /**
-   * 查找 protyle 容器
-   * @param startNode 起始节点
-   * @returns protyle 元素或 null
-   */
-  private findProtyleContainer(startNode: Node): Element | null {
-    // 对于 Element，使用 closest
-    if (startNode instanceof Element) {
-      const protyle = startNode.closest(".protyle")
-      if (protyle) return protyle
-    }
-
-    // 尝试通过 parentNode 查找（对于文本节点）
-    let node: Node | null = startNode
-    while (node) {
-      if (node instanceof Element && node.classList.contains("protyle")) {
-        return node
-      }
-      node = node.parentNode
-    }
-
-    return null
   }
 
   /**
@@ -321,7 +306,7 @@ export class FloatingToolbar {
         // 隐藏工具栏
         toolbar.classList.add("fn__none")
         // 获取选中的文本
-        const selectedText = this.getSelection(protyle)
+        const selectedText = getSelectionText(protyle)
         // 执行按钮功能
         try {
           await action.handler(selectedText)
@@ -365,24 +350,6 @@ export class FloatingToolbar {
     })
 
     this.observers.set(toolbar, observer)
-  }
-
-  /**
-   * 获取选中的文本
-   */
-  private getSelection(protyle: Element): string {
-    const selection = window.getSelection()?.toString().trim()
-    if (selection) return selection
-
-    // 处理多选块
-    const selects = protyle.querySelectorAll(".protyle-wysiwyg--select")
-    if (selects.length > 0) {
-      return Array.from(selects)
-        .map((block) => block.textContent || "")
-        .join("\n")
-    }
-
-    return ""
   }
 
   /**
@@ -439,6 +406,9 @@ export class FloatingToolbar {
   destroy() {
     // 移除事件监听
     document.removeEventListener("mouseup", this.handleDocumentMouseUp)
+
+    // 销毁选中内容右键菜单
+    this.contextMenu.destroy()
 
     // 复用统一的清理逻辑
     this.cleanupAllToolbars()

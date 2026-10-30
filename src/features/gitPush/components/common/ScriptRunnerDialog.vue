@@ -168,9 +168,11 @@
           >
             {{ notice }}
           </div>
+          <!-- data-selection-menu：接入 floatingToolbar 的选中内容右键菜单（复制 / 生成二维码等） -->
           <div
             ref="consoleEl"
             class="gp-sr-console"
+            data-selection-menu
           >
             <pre>{{ logText }}</pre>
           </div>

@@ -1,16 +1,19 @@
 // 选中内容右键菜单：编辑器内有选中文本时以插件菜单替换思源原生菜单，无选中时放行原生菜单
 import type { ToolbarAction } from "../types"
-import { findProtyleContainer, getSelectionText } from "./utils"
+import { getSelectionText } from "./utils"
 
 const STYLE_ID = "floating-toolbar-ctx-menu-styles"
+
+/** 支持右键菜单的容器：思源编辑器 protyle + 显式标记 [data-selection-menu] 的输出区等 */
+const MENU_HOST_SELECTOR = ".protyle, [data-selection-menu]"
 
 /**
  * 选中内容右键菜单
  *
  * 监听 window 捕获阶段的 contextmenu（保证先于思源自身的处理器执行）：
- * - 事件目标在 protyle 内且存在选中文本（或块多选）→ 阻止原生菜单，弹出插件功能菜单，
- *   菜单项复用浮动工具栏已注册的 actions（复制 / 二维码 / 翻译等）
- * - 无选中或不在编辑器内 → 不拦截，思源原生菜单照常弹出
+ * - 事件目标在 protyle 或 [data-selection-menu] 容器内且存在选中文本（编辑器内还回退块多选）
+ *   → 阻止原生菜单，弹出插件功能菜单，菜单项复用浮动工具栏已注册的 actions（复制 / 二维码 / 翻译等）
+ * - 无选中或不在支持区域内 → 不拦截，原生菜单照常弹出
  */
 export class SelectionContextMenu {
   private menuEl: HTMLElement | null = null
@@ -39,10 +42,10 @@ export class SelectionContextMenu {
     const target = e.target
     if (!(target instanceof Element)) return
 
-    const protyle = findProtyleContainer(target)
-    if (!protyle) return
+    const host = target.closest(MENU_HOST_SELECTOR)
+    if (!host) return
 
-    const selectedText = getSelectionText(protyle)
+    const selectedText = getSelectionText(host)
     if (!selectedText) return
 
     e.preventDefault()

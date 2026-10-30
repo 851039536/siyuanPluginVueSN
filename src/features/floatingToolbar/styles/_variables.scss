@@ -19,10 +19,10 @@ $transition-fast: 0.15s ease !default;
 $transition-base: 0.2s ease !default;
 $transition-slow: 0.3s ease !default;
 
-// Z-index 层级
-$z-overlay: 1000 !default;
-$z-dialog: 1001 !default;
-$z-dropdown: 1100 !default;
+// Z-index 层级（全屏遮罩对齐仓库规范 10000，保证可叠在 gitPush 弹窗等其它层级之上）
+$z-overlay: 10000 !default;
+$z-dialog: 10001 !default;
+$z-dropdown: 10100 !default;
 
 // ========================================
 // 对话框变量

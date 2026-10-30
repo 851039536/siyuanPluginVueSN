@@ -1,6 +1,7 @@
 /**
  * 二维码生成弹窗样式 - Codex 简约风格
- * 平面头部 + 预览画布 + 单行设置 + 内联操作行（无底部按钮条）
+ * 头部（surface 底 + 分隔线）/ 内容区 / 页脚操作栏三段，圆角统一 Codex 标准 6px
+ * 遮罩层级 10100：高于其它功能弹窗（gitPush 等使用 10000），从运行输出右键打开时不被遮挡
  */
 
 @use "../styles" as ft;
@@ -11,37 +12,61 @@
 // ========================================
 .qrcode-overlay {
   @include ft.dialog-overlay;
+  z-index: 10100;
 }
 
 .qrcode-dialog {
-  @include ft.dialog-container(400px);
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--b3-theme-background);
+  border: 1px solid var(--b3-border-color);
+  border-radius: g.$r-base;
 }
 
 // ========================================
-// 头部（平面风格）
+// 头部
 // ========================================
-.dialog-header {
-  @include ft.dialog-header(false);
-  padding: g.$s-3 g.$s-4;
-}
-
-.dialog-title {
-  @include ft.dialog-title(false);
-  font-size: g.$t-sm;
+.qrcode-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: g.$s-2;
+  padding: g.$s-3 g.$s-4;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
 }
 
-.dialog-icon {
-  @include ft.dialog-icon(18px, false);
+.qrcode-head-title {
+  display: flex;
+  align-items: center;
+  gap: g.$s-2;
+  min-width: 0;
+  font-size: g.$t-xs;
+  font-weight: g.$fw-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+.qrcode-head-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-primary);
 }
 
 // ========================================
 // 内容主体
 // ========================================
-.dialog-body {
-  @include ft.dialog-body;
-  padding: g.$s-4;
+.qrcode-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   gap: g.$s-3;
+  padding: g.$s-4;
   @include ft.custom-scrollbar;
 
   @media (max-width: ft.$breakpoint-md) {
@@ -52,9 +77,13 @@
 // ========================================
 // 码类型切换（一组互斥选项：Button 分组 + aria-pressed）
 // ========================================
-.code-type-row {
+.qrcode-type-switch {
   display: flex;
   gap: g.$s-2;
+
+  .qrcode-type-btn {
+    flex: 1;
+  }
 
   // 按下态与未按下态只靠底色/描边区分，不加尺寸差异以免行高跳动
   [aria-pressed="true"] {
@@ -65,25 +94,28 @@
 }
 
 // ========================================
-// 二维码 / 条形码预览
+// 预览区：固定白底保证扫码对比；画布按容器等比缩放
 // ========================================
 .qrcode-preview {
-  @include ft.flex-center;
-  min-height: 180px;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: g.$s-4;
+  background: #ffffff;
+  border: 1px solid var(--b3-border-color);
   border-radius: g.$r-sm;
-  padding: g.$s-3;
 
   // 画布由 QRCode.toCanvas / JsBarcode 运行时创建，无 scope 属性，需用 :deep 穿透
   :deep(canvas) {
     max-width: 100%;
+    max-height: 240px;
     height: auto;
   }
 
   @media (max-width: ft.$breakpoint-md) {
-    min-height: 160px;
-    padding: g.$s-2;
+    min-height: 170px;
+    padding: g.$s-3;
   }
 }
 
@@ -91,18 +123,30 @@
 .qrcode-preview--barcode {
   min-height: 120px;
 
+  :deep(canvas) {
+    max-height: 140px;
+  }
+
   @media (max-width: ft.$breakpoint-md) {
     min-height: 100px;
   }
 }
 
-// 空状态（复用预览容器尺寸，虚线边框区分）
-.qrcode-empty {
-  border-style: dashed;
+// 空状态：与预览同尺寸，弱化图标 + 提示文字
+.qrcode-preview--empty {
+  flex-direction: column;
+  gap: g.$s-2;
+  background: var(--b3-theme-surface);
+  font-size: g.$t-xs;
+  color: var(--b3-theme-on-surface);
+
+  .qrcode-empty-icon {
+    color: var(--b3-theme-on-surface);
+    opacity: 0.35;
+  }
 
   span {
-    font-size: g.$t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    opacity: 0.7;
   }
 }
 
@@ -154,10 +198,35 @@
 }
 
 // ========================================
-// 操作行：复制 / 下载
+// 页脚操作栏：复制 / 下载
 // ========================================
-.actions-row {
+.qrcode-footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
   gap: g.$s-2;
+  padding: g.$s-3 g.$s-4;
+  background: var(--b3-theme-surface);
+  border-top: 1px solid var(--b3-border-color);
+}
+
+// ========================================
+// 过渡：0.12s ease，淡入 + 卡片轻微缩放（与共享 Dialog 同口径）
+// ========================================
+.qrcode-fade-enter-active,
+.qrcode-fade-leave-active {
+  transition: opacity 0.12s ease;
+
+  .qrcode-dialog {
+    transition: transform 0.12s ease;
+  }
+}
+
+.qrcode-fade-enter-from,
+.qrcode-fade-leave-to {
+  opacity: 0;
+
+  .qrcode-dialog {
+    transform: scale(0.98);
+  }
 }

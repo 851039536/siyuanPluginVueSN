@@ -1,183 +1,196 @@
 <!-- 二维码 / 条形码生成对话框：输入内容生成码图，支持类型切换、参数调节、复制和下载 -->
 <template>
-  <div
-    v-if="visible"
-    class="qrcode-overlay"
-    @click.self="closeDialog"
-  >
-    <div class="qrcode-dialog">
-      <!-- 对话框头部 -->
-      <div class="dialog-header">
-        <div class="dialog-title">
-          <IconWrapper
-            :name="codeType === 'qrcode' ? 'qrCode' : 'barcode'"
-            color="inherit"
-            class="dialog-icon"
-          />
-          <!-- 弹窗标题："生成二维码" / "生成条形码" -->
-          <span>{{ codeType === 'qrcode' ? t('qrcodeGenerate', '生成二维码') : t('barcodeGenerate', '生成条形码') }}</span>
-        </div>
-        <Button
-          variant="ghost"
-          size="xsmall"
-          icon="x"
-          :title="t('close', '关闭')"
-          @click="closeDialog"
-        />
-      </div>
-
-      <!-- 对话框内容 -->
-      <div class="dialog-body">
-        <!-- 码类型切换（一组互斥选项，用 Button 分组 + aria-pressed） -->
-        <div
-          class="code-type-row"
-          role="group"
-          :aria-label="t('qrcodeCodeType', '码类型')"
-        >
-          <Button
-            variant="secondary"
-            size="small"
-            icon="qrCode"
-            :aria-pressed="codeType === 'qrcode'"
-            @click="switchCodeType('qrcode')"
-          >
-            {{ t('qrcodeTabQrcode', '二维码') }}
-          </Button>
-          <Button
-            variant="secondary"
-            size="small"
-            icon="barcode"
-            :aria-pressed="codeType === 'barcode'"
-            @click="switchCodeType('barcode')"
-          >
-            {{ t('qrcodeTabBarcode', '条形码') }}
-          </Button>
-        </div>
-
-        <!-- 输入内容 -->
-        <Textarea
-          v-model="inputContent"
-          :placeholder="codeType === 'qrcode'
-            ? t('qrcodePlaceholder', '输入或选择内容生成二维码...')
-            : t('barcodePlaceholder', '输入数字或字母生成条形码...')"
-          :rows="3"
-          :error="validationMessage || undefined"
-          @input="debouncedRegenerate"
-        />
-
-        <!-- 码图预览（无输入时显示空状态） -->
-        <div
-          v-if="inputContent"
-          ref="qrcodeContainer"
-          class="qrcode-preview"
-          :class="{ 'qrcode-preview--barcode': codeType === 'barcode' }"
-        ></div>
-        <div
-          v-else
-          class="qrcode-preview qrcode-empty"
-        >
-          <!-- 空状态提示："请先生成二维码" / "请先生成条形码" -->
-          <span>{{ codeType === 'qrcode' ? t('qrcodeNotGenerated', '请先生成二维码') : t('barcodeNotGenerated', '请先生成条形码') }}</span>
-        </div>
-
-        <!-- 设置行：二维码参数（大小 + 纠错级别） -->
-        <div
-          v-if="codeType === 'qrcode'"
-          class="settings-row"
-        >
-          <Slider
-            v-model="qrcodeSize"
-            class="setting-size"
-            :label="t('qrcodeSize', '大小')"
-            :min="100"
-            :max="500"
-            :step="10"
-            :showValue="true"
-            :formatValue="v => `${v}px`"
-            size="xsmall"
-            @input="debouncedRegenerate"
-          />
-          <Select
-            v-model="errorCorrection"
-            class="setting-level"
-            :label="t('qrcodeErrorCorrection', '纠错级别')"
-            :options="errorCorrectionOptions"
-            @change="debouncedRegenerate"
-          />
-        </div>
-
-        <!-- 设置行：条形码参数（格式 + 条宽 + 高度 + 显示文字） -->
-        <template v-else>
-          <div class="settings-row">
-            <Select
-              v-model="barcodeFormat"
-              class="setting-level setting-format"
-              :label="t('barcodeFormat', '格式')"
-              :options="barcodeFormatOptions"
-              @change="debouncedRegenerate"
-            />
-            <Slider
-              v-model="barcodeWidth"
-              class="setting-size"
-              :label="t('barcodeWidth', '条宽')"
-              :min="barcodeWidthRange.min"
-              :max="barcodeWidthRange.max"
-              :step="barcodeWidthRange.step"
-              :showValue="true"
+  <!-- Teleport 到 body：逃逸 .plugin-app-main（position:absolute + z-index:4）的层叠上下文，
+       否则会被 gitPush 等功能的遮罩（页面根层 10000）整层压住，内部 z-index 调多高都无效 -->
+  <Teleport to="body">
+    <Transition name="qrcode-fade">
+      <div
+        v-if="visible"
+        class="qrcode-overlay"
+        @click.self="closeDialog"
+      >
+        <div class="qrcode-dialog">
+          <!-- 头部：图标 + 标题 + 关闭 -->
+          <div class="qrcode-header">
+            <div class="qrcode-head-title">
+              <IconWrapper
+                :name="codeType === 'qrcode' ? 'qrCode' : 'barcode'"
+                class="qrcode-head-icon"
+              />
+              <!-- 弹窗标题："生成二维码" / "生成条形码" -->
+              <span>{{ codeType === 'qrcode' ? t('qrcodeGenerate', '生成二维码') : t('barcodeGenerate', '生成条形码') }}</span>
+            </div>
+            <Button
+              variant="ghost"
               size="xsmall"
-              @input="debouncedRegenerate"
+              icon="x"
+              :title="t('close', '关闭')"
+              @click="closeDialog"
             />
           </div>
-          <div class="settings-row">
-            <Slider
-              v-model="barcodeHeight"
-              class="setting-size"
-              :label="t('barcodeHeight', '高度')"
-              :min="barcodeHeightRange.min"
-              :max="barcodeHeightRange.max"
-              :step="barcodeHeightRange.step"
-              :showValue="true"
-              :formatValue="v => `${v}px`"
-              size="xsmall"
+
+          <div class="qrcode-body">
+            <!-- 码类型切换（一组互斥选项，用 Button 分组 + aria-pressed） -->
+            <div
+              class="qrcode-type-switch"
+              role="group"
+              :aria-label="t('qrcodeCodeType', '码类型')"
+            >
+              <Button
+                class="qrcode-type-btn"
+                variant="secondary"
+                size="small"
+                icon="qrCode"
+                :aria-pressed="codeType === 'qrcode'"
+                @click="switchCodeType('qrcode')"
+              >
+                {{ t('qrcodeTabQrcode', '二维码') }}
+              </Button>
+              <Button
+                class="qrcode-type-btn"
+                variant="secondary"
+                size="small"
+                icon="barcode"
+                :aria-pressed="codeType === 'barcode'"
+                @click="switchCodeType('barcode')"
+              >
+                {{ t('qrcodeTabBarcode', '条形码') }}
+              </Button>
+            </div>
+
+            <!-- 输入内容 -->
+            <Textarea
+              v-model="inputContent"
+              :placeholder="codeType === 'qrcode'
+                ? t('qrcodePlaceholder', '输入或选择内容生成二维码...')
+                : t('barcodePlaceholder', '输入数字或字母生成条形码...')"
+              :rows="2"
+              :error="validationMessage || undefined"
               @input="debouncedRegenerate"
             />
-            <div class="setting-toggle">
-              <Switch
-                v-model="barcodeDisplayValue"
-                :label="t('barcodeDisplayValue', '显示文字')"
+
+            <!-- 码图预览（无输入时显示空状态） -->
+            <div
+              v-if="inputContent"
+              ref="qrcodeContainer"
+              class="qrcode-preview"
+              :class="{ 'qrcode-preview--barcode': codeType === 'barcode' }"
+            ></div>
+            <div
+              v-else
+              class="qrcode-preview qrcode-preview--empty"
+              :class="{ 'qrcode-preview--barcode': codeType === 'barcode' }"
+            >
+              <IconWrapper
+                :name="codeType === 'qrcode' ? 'qrCode' : 'barcode'"
+                class="qrcode-empty-icon"
+              />
+              <!-- 空状态提示："请先生成二维码" / "请先生成条形码" -->
+              <span>{{ codeType === 'qrcode' ? t('qrcodeNotGenerated', '请先生成二维码') : t('barcodeNotGenerated', '请先生成条形码') }}</span>
+            </div>
+
+            <!-- 设置行：二维码参数（大小 + 纠错级别） -->
+            <div
+              v-if="codeType === 'qrcode'"
+              class="settings-row"
+            >
+              <Slider
+                v-model="qrcodeSize"
+                class="setting-size"
+                :label="t('qrcodeSize', '大小')"
+                :min="100"
+                :max="500"
+                :step="10"
+                :showValue="true"
+                :formatValue="v => `${v}px`"
+                size="xsmall"
+                @input="debouncedRegenerate"
+              />
+              <Select
+                v-model="errorCorrection"
+                class="setting-level"
                 size="small"
+                :label="t('qrcodeErrorCorrection', '纠错级别')"
+                :options="errorCorrectionOptions"
                 @change="debouncedRegenerate"
               />
             </div>
-          </div>
-        </template>
 
-        <!-- 操作行：复制 / 下载 -->
-        <div class="actions-row">
-          <!-- 按钮："复制图片" -->
-          <Button
-            variant="secondary"
-            size="small"
-            icon="copy"
-            :disabled="!canExport"
-            @click="copyCode"
-          >
-            {{ t('qrcodeCopy', '复制图片') }}
-          </Button>
-          <!-- 按钮："下载" -->
-          <Button
-            variant="primary"
-            size="small"
-            icon="download"
-            :disabled="!canExport"
-            @click="downloadCode"
-          >
-            {{ t('qrcodeDownload', '下载') }}
-          </Button>
+            <!-- 设置行：条形码参数（格式 + 条宽 + 高度 + 显示文字） -->
+            <template v-else>
+              <div class="settings-row">
+                <Select
+                  v-model="barcodeFormat"
+                  class="setting-level setting-format"
+                  size="small"
+                  :label="t('barcodeFormat', '格式')"
+                  :options="barcodeFormatOptions"
+                  @change="debouncedRegenerate"
+                />
+                <Slider
+                  v-model="barcodeWidth"
+                  class="setting-size"
+                  :label="t('barcodeWidth', '条宽')"
+                  :min="barcodeWidthRange.min"
+                  :max="barcodeWidthRange.max"
+                  :step="barcodeWidthRange.step"
+                  :showValue="true"
+                  size="xsmall"
+                  @input="debouncedRegenerate"
+                />
+              </div>
+              <div class="settings-row">
+                <Slider
+                  v-model="barcodeHeight"
+                  class="setting-size"
+                  :label="t('barcodeHeight', '高度')"
+                  :min="barcodeHeightRange.min"
+                  :max="barcodeHeightRange.max"
+                  :step="barcodeHeightRange.step"
+                  :showValue="true"
+                  :formatValue="v => `${v}px`"
+                  size="xsmall"
+                  @input="debouncedRegenerate"
+                />
+                <div class="setting-toggle">
+                  <Switch
+                    v-model="barcodeDisplayValue"
+                    :label="t('barcodeDisplayValue', '显示文字')"
+                    size="small"
+                    @change="debouncedRegenerate"
+                  />
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- 底部操作栏：复制 / 下载 -->
+          <div class="qrcode-footer">
+            <!-- 按钮："复制图片" -->
+            <Button
+              variant="secondary"
+              size="small"
+              icon="copy"
+              :disabled="!canExport"
+              @click="copyCode"
+            >
+              {{ t('qrcodeCopy', '复制图片') }}
+            </Button>
+            <!-- 按钮："下载" -->
+            <Button
+              variant="primary"
+              size="small"
+              icon="download"
+              :disabled="!canExport"
+              @click="downloadCode"
+            >
+              {{ t('qrcodeDownload', '下载') }}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">

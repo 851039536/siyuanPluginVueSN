@@ -1584,6 +1584,7 @@
     "scriptStop": "停止",
     "scriptOutput": "运行输出",
     "scriptClearOutput": "清空输出",
+    "scriptCopyOutput": "复制输出",
     "scriptExitOk": "已结束（退出码 0）",
     "scriptExitFail": "已结束（退出码 {0}）",
     "scriptStopped": "已手动停止",

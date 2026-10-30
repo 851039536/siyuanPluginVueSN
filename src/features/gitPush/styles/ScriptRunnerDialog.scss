@@ -233,6 +233,9 @@
   min-height: 120px;
   border: none;
   border-radius: 0;
+  // 宿主继承链上有 user-select:none，须显式放行才能选中复制（同 MarkdownPreviewDialog 的处理）
+  user-select: text;
+  -webkit-user-select: text;
 
   pre {
     min-height: 100%;

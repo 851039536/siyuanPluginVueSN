@@ -146,6 +146,16 @@
               variant="ghost"
               size="xsmall"
               dense
+              :icon="copied ? 'check' : 'contentCopy'"
+              :title="i18n.scriptCopyOutput"
+              :disabled="!logText"
+              @click="handleCopy"
+            />
+            <Button
+              class="gp-sr-clear-btn"
+              variant="ghost"
+              size="xsmall"
+              dense
               icon="deleteOutline"
               :title="i18n.scriptClearOutput"
               :disabled="!logText"
@@ -189,6 +199,8 @@ import { DOTNET_VERB_KEYS } from "../../types/scripts"
 import { resolveValidPath, scanProjectScripts } from "../../utils"
 import { MAX_RUNNING_SCRIPTS } from "../../managers/ScriptSessionStore"
 import { useScriptSessions } from "../../composables/useScriptSessions"
+import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import { copyToClipboard } from "@/utils/domUtils"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
 import type { GitProject } from "../../types/storage"
@@ -203,6 +215,7 @@ const emit = defineEmits<{
 }>()
 
 const { sessionVersion, sessionsOf, sessionOf, store } = useScriptSessions()
+const { copied, notifyCopied } = useCopyFeedback()
 
 const scanning = ref(false)
 const groups = ref<ScriptGroup[]>([])
@@ -237,8 +250,15 @@ function attachedSession(): ScriptSession | undefined {
   return sessionOf(props.project.id, attachedScriptId.value)
 }
 
+/** 用户是否正在控制台内选中文本（选中期间暂停镜像，避免日志刷新打断复制） */
+function hasConsoleSelection(): boolean {
+  const sel = window.getSelection()
+  return !!consoleEl.value && !!sel && !sel.isCollapsed && consoleEl.value.contains(sel.anchorNode)
+}
+
 /** 把会话日志镜像到展示区并滚到底 */
 function syncNow() {
+  if (hasConsoleSelection()) return
   logText.value = attachedSession()?.log ?? ""
   void nextTick(() => {
     const el = consoleEl.value
@@ -285,6 +305,13 @@ function clearLog() {
   notice.value = ""
   if (attachedScriptId.value) store.clearLog(props.project.id, attachedScriptId.value)
   syncNow()
+}
+
+async function handleCopy() {
+  const text = attachedSession()?.log ?? logText.value
+  if (!text) return
+  const ok = await copyToClipboard(text)
+  if (ok) notifyCopied()
 }
 
 function handleClose() {

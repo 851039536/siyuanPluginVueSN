@@ -6,7 +6,7 @@
 .gp-sr-dialog {
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
-  border-radius: $r-md;
+  border-radius: $r-base;
   width: min(680px, 92vw);
   height: min(640px, 82vh);
   display: flex;
@@ -17,6 +17,7 @@
 // ── 头部 ──
 .gp-sr-header {
   @include dialog-header;
+  background: var(--b3-theme-surface);
 }
 
 .gp-sr-title {
@@ -26,6 +27,11 @@
   font-size: $t-xs;
   font-weight: $fw-semibold;
   color: var(--b3-theme-on-background);
+
+  // 标题图标取主题色，与其它弹窗头部一致
+  svg {
+    color: var(--b3-theme-primary);
+  }
 }
 
 // 项目名弱化为副标题
@@ -133,6 +139,11 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
+  transition: background 0.12s, border-color 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
 
   &.gp-sr-row--running {
     border-color: var(--b3-theme-primary);
@@ -201,6 +212,7 @@
 
 .gp-sr-console-head {
   @include dialog-footer;
+  background: var(--b3-theme-surface);
   border-top: none;
   border-bottom: 1px solid var(--b3-border-color);
 }
@@ -240,10 +252,35 @@
   pre {
     min-height: 100%;
   }
+
+  // 输出中的 http(s) 链接：主题色 + 下划线提示可点击
+  .gp-sr-link {
+    color: var(--b3-theme-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+// 无输出时的占位提示
+.gp-sr-console-empty {
+  height: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
 }
 
 // ── 底部 ──
 .gp-sr-footer {
   @include dialog-footer;
   justify-content: flex-end;
+  background: var(--b3-theme-surface);
 }

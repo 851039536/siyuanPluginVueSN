@@ -174,7 +174,23 @@
             class="gp-sr-console"
             data-selection-menu
           >
-            <pre>{{ logText }}</pre>
+            <!-- 输出内容：http(s) 链接按段渲染为可点击链接（点击经系统浏览器打开） -->
+            <pre v-if="logText"><template
+              v-for="(seg, i) in logSegments"
+              :key="i"
+            ><a
+              v-if="seg.url"
+              class="gp-sr-link"
+              :href="seg.url"
+              :title="seg.url"
+              @click.stop.prevent="openLogLink(seg.url)"
+            >{{ seg.text }}</a><template v-else>{{ seg.text }}</template></template></pre>
+            <div
+              v-else
+              class="gp-sr-console-empty"
+            >
+              {{ i18n.scriptNoOutput }}
+            </div>
           </div>
         </div>
       </div>
@@ -198,11 +214,12 @@ import type { ScriptSession } from "../../managers/ScriptSessionStore"
 import { Icon } from "@iconify/vue"
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { DOTNET_VERB_KEYS } from "../../types/scripts"
-import { resolveValidPath, scanProjectScripts } from "../../utils"
+import { resolveValidPath, scanProjectScripts, splitLogLinks } from "../../utils"
 import { MAX_RUNNING_SCRIPTS } from "../../managers/ScriptSessionStore"
 import { useScriptSessions } from "../../composables/useScriptSessions"
 import { useCopyFeedback } from "../../composables/useCopyFeedback"
 import { copyToClipboard } from "@/utils/domUtils"
+import { getElectronModules } from "@/utils/nodeModules"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
 import type { GitProject } from "../../types/storage"
@@ -226,6 +243,24 @@ const attachedScriptId = ref("")
 const logText = ref("")
 const notice = ref("")
 const consoleEl = ref<HTMLElement | null>(null)
+
+/** 输出分段：http(s) 链接单独成段，模板据此渲染可点击链接 */
+const logSegments = computed(() => splitLogLinks(logText.value))
+
+/** 在系统浏览器打开输出中的链接（Electron 走 shell.openExternal，降级 window.open） */
+async function openLogLink(url?: string) {
+  if (!url) return
+  const shell = getElectronModules()?.shell
+  if (shell?.openExternal) {
+    try {
+      await shell.openExternal(url)
+      return
+    } catch {
+      // 打开失败时降级到 window.open
+    }
+  }
+  window.open(url, "_blank", "noopener,noreferrer")
+}
 
 /** 会话日志镜像节流：store 通知高频（每 chunk），写 logText 限频 80ms */
 const FLUSH_INTERVAL_MS = 80
@@ -258,13 +293,16 @@ function hasConsoleSelection(): boolean {
   return !!consoleEl.value && !!sel && !sel.isCollapsed && consoleEl.value.contains(sel.anchorNode)
 }
 
-/** 把会话日志镜像到展示区并滚到底 */
-function syncNow() {
+/** 把会话日志镜像到展示区并滚到底（force=false 时仅在用户停留在底部才自动跟随） */
+function syncNow(force = false) {
   if (hasConsoleSelection()) return
+  const el = consoleEl.value
+  const stickToBottom = force || !el || el.scrollHeight - el.scrollTop - el.clientHeight < 24
   logText.value = attachedSession()?.log ?? ""
+  if (!stickToBottom) return
   void nextTick(() => {
-    const el = consoleEl.value
-    if (el) el.scrollTop = el.scrollHeight
+    const node = consoleEl.value
+    if (node) node.scrollTop = node.scrollHeight
   })
 }
 
@@ -284,7 +322,7 @@ function attachTo(script: ProjectScript) {
   if (!rowSession(script)) return
   attachedScriptId.value = script.id
   notice.value = ""
-  syncNow()
+  syncNow(true)
 }
 
 function runScript(script: ProjectScript) {
@@ -295,7 +333,7 @@ function runScript(script: ProjectScript) {
     return
   }
   attachedScriptId.value = script.id
-  syncNow()
+  syncNow(true)
 }
 
 function stopScript(script: ProjectScript) {
@@ -306,7 +344,7 @@ function stopScript(script: ProjectScript) {
 function clearLog() {
   notice.value = ""
   if (attachedScriptId.value) store.clearLog(props.project.id, attachedScriptId.value)
-  syncNow()
+  syncNow(true)
 }
 
 async function handleCopy() {
@@ -365,7 +403,7 @@ onMounted(() => {
   const pick = list.find((s) => s.status === "running")
     ?? [...list].sort((a, b) => b.startedAt - a.startedAt)[0]
   if (pick) attachedScriptId.value = pick.script.id
-  syncNow()
+  syncNow(true)
 })
 
 // 卸载只摘视图：进程与日志留在会话表继续跑（显式「停止」才杀进程树）

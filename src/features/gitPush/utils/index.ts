@@ -156,3 +156,5 @@ export {
 export type { PackageJsonEntry, ScriptFileSet } from "./scriptScan"
 export { createScriptOutputDecoder } from "./scriptDecode"
 export type { ScriptOutputDecoder } from "./scriptDecode"
+export { splitLogLinks } from "./logLinks"
+export type { LogLinkSegment } from "./logLinks"

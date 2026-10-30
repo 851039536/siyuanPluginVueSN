@@ -1585,6 +1585,7 @@
     "scriptOutput": "Output",
     "scriptClearOutput": "Clear output",
     "scriptCopyOutput": "Copy output",
+    "scriptNoOutput": "No output yet",
     "scriptExitOk": "Finished (exit code 0)",
     "scriptExitFail": "Finished (exit code {0})",
     "scriptStopped": "Stopped manually",

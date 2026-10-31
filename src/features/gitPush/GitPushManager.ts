@@ -85,6 +85,7 @@ import { clampProbeConfig } from "./types/probeConfig"
 import { GitPushStorage } from "./types/storage"
 import {
   DEFAULT_LOG_LIMIT,
+  getCurrentDeviceName,
   poolProcess,
   resolveValidPath,
 } from "./utils"
@@ -1111,6 +1112,35 @@ export class GitPushManager {
 
   async cloneRepo(parentDir: string, url: string, onOutput?: (chunk: string) => void): Promise<string> {
     return this.repoOps.cloneRepo(parentDir, url, onOutput)
+  }
+
+  /**
+   * 克隆远程仓库到 parentDir，并把新路径并入项目。
+   *
+   * 与弹窗生命周期解耦：关闭编辑弹窗不中断克隆，结果也不会因弹窗卸载而丢失。
+   * 路径以持久化数据为准追加（不覆盖弹窗内未保存的路径草稿），按主路径是否为空决定写入位置。
+   * 克隆失败抛错；路径持久化失败不抛错，以 persisted=false 返回（克隆目录已存在，由调用方提示）。
+   */
+  async cloneRepoToProject(
+    projectId: string,
+    parentDir: string,
+    url: string,
+    onOutput?: (chunk: string) => void,
+  ): Promise<{ path: string, persisted: boolean }> {
+    const path = await this.repoOps.cloneRepo(parentDir, url, onOutput)
+    const project = await this.store.getProjectById(projectId)
+    if (!project) return { path, persisted: false }
+    const existing = [project.path, ...(project.localPaths || [])].filter(Boolean)
+    if (existing.includes(path)) return { path, persisted: true }
+    const device = getCurrentDeviceName()
+    const pathDevices = device
+      ? { ...(project.pathDevices || {}), [path]: device }
+      : project.pathDevices
+    const patch = project.path
+      ? { localPaths: [...(project.localPaths || []), path], pathDevices }
+      : { path, pathDevices }
+    const updated = await this.updateProjectMeta(projectId, patch)
+    return { path, persisted: !!updated }
   }
 
   async getGitGlobalConfig(): Promise<string> { return this.repoOps.getGitGlobalConfig() }

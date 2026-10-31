@@ -1,4 +1,4 @@
-<!-- 编辑 Git 项目弹窗（自包含：自行加载/保存/远程操作） -->
+<!-- 编辑 Git 项目弹窗（自包含：加载/保存项目资料，链接与远程的即时操作由 composable 承担） -->
 <template>
   <div
     ref="rootRef"
@@ -13,6 +13,7 @@
         <span class="gp-dialog-title">{{ i18n.editProjectTitlePrefix }} — {{ project?.name }}</span>
         <button
           class="vp-btn vp-btn--ghost vp-btn--xs"
+          :title="i18n.close"
           @click="$emit('close')"
         >
           <Icon
@@ -39,6 +40,7 @@
               <button
                 class="gp-toggle-chip"
                 :class="{ active: localStarred }"
+                :aria-pressed="localStarred"
                 @click="localStarred = !localStarred"
               >
                 <Icon
@@ -50,6 +52,7 @@
               <button
                 class="gp-toggle-chip"
                 :class="{ active: localArchived }"
+                :aria-pressed="localArchived"
                 @click="localArchived = !localArchived"
               >
                 <Icon
@@ -61,7 +64,7 @@
           </div>
         </div>
 
-        <!-- 表单项："分类"（原卡片顶栏下拉合并至此，保存时仅在实际变化时经 moveProject 持久化） -->
+        <!-- 表单项："分类"（保存时仅在实际变化时经 moveProject 持久化） -->
         <Select
           v-model="localCategoryId"
           :label="i18n.category"
@@ -70,9 +73,8 @@
         />
 
         <!-- 表单项："备注" -->
-        <Input
+        <Textarea
           v-model="localNote"
-          type="textarea"
           :label="i18n.noteLabel"
           size="xsmall"
           :rows="3"
@@ -85,73 +87,26 @@
           size="xsmall"
           :placeholder="i18n.tagsPlaceholder"
         />
-        <!-- 本地路径区块（多设备路径行） -->
+
+        <!-- 本地路径区块（多设备路径行，与添加弹窗共用编辑器） -->
         <div class="gp-form-group">
           <!-- 标签："本地路径（跨设备适配）" -->
           <label class="gp-label">{{ i18n.localPathTitle }} <span class="gp-label-hint">{{ i18n.crossDeviceHint }}</span></label>
-          <div class="gp-edit-paths">
-            <div
-              v-for="(entry, idx) in allPathsList"
-              :key="idx"
-              class="gp-edit-path-row"
-            >
-              <Input
-                v-model="entry.path"
-                size="xsmall"
-                :placeholder="i18n.devicePathPlaceholder.replace('{0}', String(idx + 1))"
-                :disabled="cloning"
-                @keydown.enter="save()"
-              />
-              <!-- 设备电脑名（可选）：占位符"电脑名（可选）"，新增路径时自动填入当前主机名 -->
-              <div class="gp-path-device">
-                <Input
-                  v-model="entry.device"
-                  size="xsmall"
-                  :placeholder="i18n.deviceNamePlaceholder"
-                  :disabled="cloning"
-                />
-              </div>
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--xs"
-                :title="i18n.selectDir"
-                :disabled="cloning"
-                @click="pickLocalPath(idx)"
-              >
-                <Icon
-                  icon="mdi:folder-outline"
-                  height="10"
-                />
-              </button>
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--xs"
-                :title="i18n.removePath"
-                :disabled="cloning || allPathsList.length <= 1"
-                @click="removeLocalPath(idx)"
-              >
-                <Icon
-                  icon="mdi:delete-outline"
-                  height="10"
-                />
-              </button>
-            </div>
-          </div>
-          <!-- 按钮："添加本地路径" -->
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--xs gp-add-path-btn"
+          <PathRowsEditor
+            :rows="allPathsList"
+            :i18n="i18n"
             :disabled="cloning"
-            @click="addLocalPath"
-          >
-            <Icon
-              icon="mdi:plus"
-              height="10"
-            />
-            <span>{{ i18n.addLocalPath }}</span>
-          </button>
+            @add="addLocalPath"
+            @remove="removeLocalPath"
+            @pick="pickLocalPath"
+            @submit="save()"
+          />
         </div>
-        <!-- 仓库链接区块（手动输入的平台 URL，持久化存储） -->
+
+        <!-- 仓库链接区块（手动输入的平台 URL；修改后立即持久化） -->
         <div class="gp-form-group">
           <!-- 标签："仓库链接（手动输入，用于跨设备持久化）" -->
-          <label class="gp-label">{{ i18n.repoLinkLabel }} <span class="gp-label-hint">{{ i18n.repoLinkHint }}</span></label>
+          <label class="gp-label">{{ i18n.repoLinkLabel }} <span class="gp-label-hint">{{ i18n.repoLinkHint }}{{ i18n.immediateSaveHint }}</span></label>
           <EditableRemoteList
             :rows="repoLinkRows"
             :add-options="linkAddOptions"
@@ -173,10 +128,11 @@
             @clear="cloneLog.clear"
           />
         </div>
-        <!-- Git 远程仓库区块（从 .git/config 自动检测，可编辑/增删） -->
+
+        <!-- Git 远程仓库区块（从 .git/config 自动检测，可编辑/增删；修改后立即生效） -->
         <div class="gp-form-group">
           <!-- 标签："Git 远程仓库（编辑/增删）" -->
-          <label class="gp-label">{{ i18n.gitRemoteLabel }}</label>
+          <label class="gp-label">{{ i18n.gitRemoteLabel }} <span class="gp-label-hint">{{ i18n.immediateSaveHint }}</span></label>
           <EditableRemoteList
             :rows="remoteRows"
             :add-options="remoteOptions"
@@ -193,66 +149,7 @@
       </div>
       <!-- 底部操作栏 -->
       <div class="gp-dialog-footer">
-        <div class="gp-help-wrap">
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--xs gp-help-btn"
-            :title="i18n.help"
-            @click="showHelp = !showHelp"
-          >
-            <Icon
-              icon="mdi:help-circle-outline"
-              height="10"
-            />
-          </button>
-          <!-- 帮助说明弹层 -->
-          <div
-            v-if="showHelp"
-            class="gp-help-popover"
-            @click.stop
-          >
-            <div class="gp-help-header">
-              <Icon
-                icon="mdi:information-outline"
-                height="12"
-              />
-              <!-- 弹层标题："帮助说明" -->
-              <span>{{ i18n.help }}</span>
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--xs gp-help-close"
-                @click="showHelp = false"
-              >
-                <Icon
-                  icon="mdi:close"
-                  height="10"
-                />
-              </button>
-            </div>
-            <div class="gp-help-body">
-              <div
-                v-for="item in helpItems"
-                :key="item.icon"
-                class="gp-help-item"
-              >
-                <Icon
-                  :icon="item.icon"
-                  height="12"
-                  class="gp-help-item-icon"
-                />
-                <!-- 帮助条目正文（本地路径/仓库链接/Git 远程/数据持久化说明） -->
-                <p>{{ item.text }}</p>
-              </div>
-            </div>
-            <div class="gp-help-footer">
-              <!-- 按钮："知道了" -->
-              <button
-                class="vp-btn vp-btn--primary vp-btn--xs"
-                @click="showHelp = false"
-              >
-                {{ i18n.gotIt }}
-              </button>
-            </div>
-          </div>
-        </div>
+        <HelpPopover :i18n="i18n" />
         <!-- 按钮："取消" -->
         <button
           class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -260,10 +157,10 @@
         >
           {{ i18n.cancel }}
         </button>
-        <!-- 按钮："保存" -->
+        <!-- 按钮："保存"（克隆进行中 / 名称或路径为空时禁用） -->
         <button
           class="vp-btn vp-btn--primary vp-btn--sm"
-          :disabled="saving"
+          :disabled="saving || cloning || !localName.trim() || !hasValidPath"
           @click="save"
         >
           {{ i18n.save }}
@@ -274,43 +171,29 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  GitProject,
-  GitPushManager,
-  GitRemoteInfo,
-  ProjectCategory,
-} from "../../types"
-import type { RemoteRowItem } from "./EditableRemoteList.vue"
-import type { SelectOption } from "@/components/Select.vue"
+import type { GitProject, GitPushManager, ProjectCategory } from "../../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
-import {
-  computed,
-  onMounted,
-  onUnmounted,
-  reactive,
-  ref,
-  watch,
-} from "vue"
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import { copyToClipboard } from "@/utils/domUtils"
+import Textarea from "@/components/Textarea.vue"
 import { pickDirectory } from "@/utils/electronDialog"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { useCloneLog } from "../../composables/useCloneLog"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import { usePathRows } from "../../composables/usePathRows"
-import { PLATFORM_META } from "../../types"
+import { useProjectRemotes } from "../../composables/useProjectRemotes"
+import { useRepoLinks } from "../../composables/useRepoLinks"
 import {
   getCurrentDeviceName,
-  hasPlatformRemote,
-  resolveRemotePlatform,
-  resolveValidPath,
+  parseProjectTags,
   resolveValidPathFromPaths,
 } from "../../utils"
 import CloneLogPanel from "./CloneLogPanel.vue"
 import EditableRemoteList from "./EditableRemoteList.vue"
-
+import HelpPopover from "./HelpPopover.vue"
+import PathRowsEditor from "./PathRowsEditor.vue"
 
 const props = defineProps<{
   projectId: string
@@ -325,8 +208,6 @@ const emit = defineEmits<{
 }>()
 
 // 弹窗打开时自动聚焦遮罩，使 Esc 关闭生效
-// ⚠️ `rootRef` 必须保留为本地绑定：模板 `ref="rootRef"` 依赖它把根节点交给 composable 聚焦。
-// TS 看不到「模板里的使用」，故以 void 显式消费，避免 noUnusedLocals 误判（下同各弹窗）。
 const { rootRef } = useDialogKeyboard()
 void rootRef
 
@@ -334,43 +215,29 @@ void rootRef
 const isUnmounted = ref(false)
 const cloning = ref(false)
 const saving = ref(false)
-// 递增序号：丢弃过期/乱序的远程检测结果
-let remoteDetectSeq = 0
-// 最近一次已写入 remoteList 的检测路径（相同路径不重复执行 git remote -v）
-let lastDetectedPath = ""
-// 初始化填充路径行时跳过 watch 触发，避免与 onMounted 的显式 loadRemotes 重复
-let isInitializingPaths = false
+/** 初始化路径行期间抑制路径 watch（避免与显式 loadRemotes 重复） */
+const isInitializingPaths = ref(false)
 
 /** 组件仍挂载时返回 true（异步落点的统一守卫） */
 function alive(): boolean {
   return !isUnmounted.value
 }
 
-// ── 项目数据（从 manager 加载） ──
 const project = ref<GitProject | null>(null)
-const remoteList = ref<GitRemoteInfo[]>([])
-const remoteError = ref("")
 
 // ── 表单本地状态 ──
 const localName = ref("")
 const localStarred = ref(false)
 const localArchived = ref(false)
 const localNote = ref("")
-/** 标签输入文本（逗号分隔；保存时解析为去重数组） */
 const localTagsText = ref("")
-/** 分类选择（原卡片顶栏下拉合并至此；保存时仅在实际变化时经 moveProject 持久化） */
 const localCategoryId = ref("")
-/** 分类列表（弹窗自包含加载，与 AddProjectDialog 同源 manager.getCategories） */
 const categories = ref<ProjectCategory[]>([])
 
-/** 分类下拉选项（Select 需 { value, label } 结构，与 AddProjectDialog 同款投影） */
-const categoryOptions = computed<SelectOption[]>(() =>
+const categoryOptions = computed(() =>
   categories.value.map((c) => ({ value: c.id, label: c.name })),
 )
-// 平台 URL 输入（键由 PLATFORM_META.urlProp 单一数据源驱动，避免四处硬编码键名）
-const urlInputs = reactive<Record<string, string>>(
-  Object.fromEntries(PLATFORM_META.map((pl) => [pl.urlProp, ""])),
-)
+
 // 本地路径行（共享 composable：增删行、目录选择、载荷构建）
 const {
   rows: allPathsList,
@@ -378,134 +245,61 @@ const {
   addRow: addLocalPath,
   removeRow: removeLocalPath,
   pickRow: pickLocalPath,
+  hasValidPath,
   toPayload: pathsToPayload,
-} = usePathRows(() => props.i18n.selectLocalPath)
-const showHelp = ref(false)
+} = usePathRows(() => props.i18n.selectDir)
 
-// ── 路径候选（currentRepoPath 与防抖 watch 共用，避免重复 map）──
+/** 路径候选（仓库路径解析与防抖检测共用） */
 const pathCandidates = computed(() => allPathsList.value.map((r) => r.path))
 
-// ── 仓库链接（EditableRemoteList 数据源与操作回调）──
-const repoLinkError = ref("")
+// ── 仓库链接（即时持久化）──
+const {
+  error: repoLinkError,
+  rows: repoLinkRows,
+  addOptions: linkAddOptions,
+  initFrom: initRepoLinks,
+  upsert: upsertRepoLink,
+  remove: removeRepoLink,
+  copy: copyRepoLink,
+} = useRepoLinks({
+  projectId: () => props.projectId,
+  manager: () => props.manager,
+  i18n: () => props.i18n,
+  alive,
+  onUpdated: () => emit("urlsUpdated"),
+})
+
+// ── Git 远程仓库（检测 + 即时增删改）──
+const {
+  rows: remoteRows,
+  addOptions: remoteOptions,
+  error: remoteError,
+  load: loadRemotes,
+  add: addRemote,
+  update: updateRemoteUrl,
+  remove: removeRemote,
+  copy: copyRemoteUrl,
+  syncAfterSave,
+} = useProjectRemotes({
+  projectId: () => props.projectId,
+  manager: () => props.manager,
+  i18n: () => props.i18n,
+  alive,
+  project: () => project.value,
+  getPath: strict => resolveValidPathFromPaths(pathCandidates.value, { strict }),
+  pathKey: () => pathCandidates.value.join("\n"),
+  enabled: () => !!project.value && !isInitializingPaths.value,
+})
+
 // 克隆实时日志（\r 进度行原地刷新由 composable 解析）
 const cloneLog = useCloneLog()
 
-const repoLinkRows = computed<RemoteRowItem[]>(() =>
-  PLATFORM_META
-    .filter((pl) => urlInputs[pl.urlProp])
-    .map((pl) => ({
-      key: pl.key,
-      name: pl.label,
-      icon: pl.icon,
-      url: urlInputs[pl.urlProp],
-    })),
-)
-
-// 平台下拉仅列出尚未配置 URL 的平台
-const linkAddOptions = computed<SelectOption[]>(() =>
-  PLATFORM_META
-    .filter((pl) => !urlInputs[pl.urlProp])
-    .map((pl) => ({
-      value: pl.key,
-      label: `${pl.label}${props.i18n.notConfiguredSuffix}`,
-    })),
-)
-
-/** 将 urlInputs 全量持久化，返回是否成功（失败写入 repoLinkError） */
-async function persistUrls(): Promise<boolean> {
-  if (!project.value || !alive()) {
-    return false
-  }
-  try {
-    // 键由 PLATFORM_META 单一数据源推导，避免硬编码 Pick 重复维护
-    const patch = {} as Partial<Record<(typeof PLATFORM_META)[number]["urlProp"], string>>
-    for (const pl of PLATFORM_META) {
-      patch[pl.urlProp] = urlInputs[pl.urlProp] || undefined
-    }
-    const updated = await props.manager.updateProjectMeta(props.projectId, patch)
-    if (!updated) {
-      if (alive()) {
-        repoLinkError.value = props.i18n.errSaveRepoLinks
-      }
-      return false
-    }
-    if (!alive()) {
-      return false
-    }
-    repoLinkError.value = ""
-    emit("urlsUpdated")
-    return true
-  } catch (e: unknown) {
-    if (alive()) {
-      repoLinkError.value = getErrorMessage(e) || props.i18n.errSaveRepoLinks
-    }
-    return false
-  }
-}
-
-/** 添加与编辑共用：写入平台 URL 后持久化 */
-async function upsertRepoLink(platform: string, url: string): Promise<boolean> {
-  const pl = PLATFORM_META.find((p) => p.key === platform)
-  if (!pl) {
-    return false
-  }
-  urlInputs[pl.urlProp] = url
-  return persistUrls()
-}
-
-async function removeRepoLink(platform: string): Promise<boolean> {
-  return upsertRepoLink(platform, "")
-}
-
-/** 复制 URL 到剪贴板并提示（仓库链接/Git 远程共用） */
-function copyUrlToClipboard(url: string): void {
-  if (!url) {
-    return
-  }
-  void copyToClipboard(url)
-  showMessage(props.i18n.copiedLink, 2000, "info")
-}
-
-/** 复制仓库链接地址到剪贴板 */
-function copyRepoLink(platform: string): void {
-  const pl = PLATFORM_META.find((p) => p.key === platform)
-  copyUrlToClipboard(pl ? urlInputs[pl.urlProp] : "")
-}
-
 /**
- * 构建路径持久化载荷（save 与克隆后持久化共用）。
- * - 有有效路径行：使用实时载荷；
- * - 无有效路径行且传 clonedPath：仅保存克隆路径（含设备名）；
- * - 均无：回退原主路径与设备映射（避免误清）。
+ * 下载（克隆）仓库链接：选目录 → 克隆 → 由 manager 按持久化数据并入项目路径。
+ * 克隆编排在 manager 内完成，弹窗中途关闭也不会丢失结果；本方法只负责日志与行内 UI 同步。
  */
-function buildPathPatch(clonedPath?: string, deviceName?: string): Partial<Pick<GitProject, "path" | "localPaths" | "pathDevices">> {
-  const payload = pathsToPayload()
-  if (payload) {
-    return {
-      path: payload.path,
-      localPaths: payload.localPaths,
-      pathDevices: payload.pathDevices,
-    }
-  }
-  if (clonedPath) {
-    const device = deviceName ?? getCurrentDeviceName()
-    return {
-      path: clonedPath,
-      localPaths: undefined,
-      pathDevices: device ? { [clonedPath]: device } : undefined,
-    }
-  }
-  return {
-    path: project.value?.path ?? "",
-    localPaths: undefined,
-    pathDevices: project.value?.pathDevices,
-  }
-}
-
-/** 下载（克隆）仓库链接：选目录 → clone 到同名子目录（实时日志）→ 新路径追加到路径行并立即持久化 */
 async function downloadRepoLink(platform: string): Promise<boolean> {
-  const pl = PLATFORM_META.find((p) => p.key === platform)
-  const url = pl ? urlInputs[pl.urlProp] : ""
+  const url = repoLinkRows.value.find((r) => r.key === platform)?.url ?? ""
   if (!url) {
     return false
   }
@@ -517,40 +311,29 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
   cloneLog.start(`$ git clone --progress ${url}`)
   cloning.value = true
   try {
-    const clonedPath = await props.manager.cloneRepo(dir, url, (chunk) => {
-      if (alive()) {
-        cloneLog.append(chunk)
-      }
-    })
+    const { path: clonedPath, persisted } = await props.manager.cloneRepoToProject(
+      props.projectId,
+      dir,
+      url,
+      (chunk) => {
+        if (alive()) {
+          cloneLog.append(chunk)
+        }
+      },
+    )
     if (!alive()) {
+      // 弹窗已关闭：manager 已完成路径落库，无需再更新 UI
+      return persisted
+    }
+    if (!persisted) {
+      const persistErr = props.i18n.errSavePathsFailed
+      repoLinkError.value = persistErr
+      cloneLog.finish(`${persistErr}: ${clonedPath}`)
       return false
     }
-    const deviceName = getCurrentDeviceName()
-    allPathsList.value.push({
-      path: clonedPath,
-      device: deviceName,
-    })
-    // 立即持久化全部路径行（首行为主路径），并通知父组件刷新列表
-    const patch = buildPathPatch(clonedPath, deviceName)
-    try {
-      const updated = await props.manager.updateProjectMeta(props.projectId, patch)
-      if (!updated) {
-        throw new Error(props.i18n.errSavePathsFailed)
-      }
-    } catch (e: unknown) {
-      // 克隆本身已成功，仅持久化失败：提示路径保存错误，不误报克隆失败
-      const persistErr = getErrorMessage(e) || props.i18n.errSavePathsFailed
-      if (alive()) {
-        repoLinkError.value = persistErr
-        cloneLog.finish(`${props.i18n.errSavePathsFailed}: ${persistErr}`)
-      }
-      return false
-    }
-    if (!alive()) {
-      return false
-    }
+    // 同步到当前路径行（持久化已由 manager 完成，避免草稿覆盖）
+    allPathsList.value.push({ path: clonedPath, device: getCurrentDeviceName() })
     emit("urlsUpdated")
-    // 克隆完成：日志收尾 + 全局提示（含克隆到的完整路径）
     const doneMsg = props.i18n.cloneSuccess.replace("{0}", clonedPath)
     cloneLog.finish(doneMsg)
     showMessage(doneMsg, 4000, "info")
@@ -569,144 +352,6 @@ async function downloadRepoLink(platform: string): Promise<boolean> {
   }
 }
 
-// ── Git 远程仓库（EditableRemoteList 数据源与操作回调）──
-// 识别为平台的远程用统一 label + icon 展示（与仓库链接列表一致），key 仍为真实远程名供 git 操作；
-// origin/upstream 等未识别为平台的自定义远程回退显示原始名
-const remoteRows = computed<RemoteRowItem[]>(() =>
-  remoteList.value.map((r) => {
-    const pm = resolveRemotePlatform(r)
-    return {
-      key: r.name,
-      name: pm ? pm.label : r.name,
-      url: r.url,
-      icon: pm?.icon,
-    }
-  }),
-)
-
-// 平台下拉仅列出尚未添加的平台（已存在的远程如 GitHub 不允许重复添加）
-const remoteOptions = computed<SelectOption[]>(() =>
-  PLATFORM_META
-    .filter((pl) => !hasPlatformRemote(remoteList.value, pl.key))
-    .map((pl) => ({
-      value: pl.key,
-      label: pl.label,
-    })),
-)
-
-/** 当前编辑表单解析出的有效仓库路径（基于实时路径行，而非已持久化的 project，确保输入路径后立即用于远程检测） */
-function currentRepoPath(strict = false): string {
-  return resolveValidPathFromPaths(pathCandidates.value, { strict })
-}
-
-async function loadRemotes(): Promise<void> {
-  if (!project.value) {
-    return
-  }
-  const seq = ++remoteDetectSeq
-  const path = currentRepoPath()
-  // 无有效路径时清空远程列表（避免沿用旧路径的检测结果）
-  if (!path) {
-    if (seq === remoteDetectSeq) {
-      remoteList.value = []
-      remoteError.value = ""
-      lastDetectedPath = ""
-    }
-    return
-  }
-  // 同一路径已有最新检测结果时跳过重复检测（打开弹窗/路径变化/远程操作后的重复调用）
-  if (lastDetectedPath === path) {
-    return
-  }
-  try {
-    const list = await props.manager.detectRemotes(path)
-    // 丢弃过期结果；组件已卸载时也不写状态
-    if (seq !== remoteDetectSeq || !alive()) {
-      return
-    }
-    remoteList.value = list
-    remoteError.value = ""
-    lastDetectedPath = path
-  } catch (e: unknown) {
-    if (seq !== remoteDetectSeq || !alive()) {
-      return
-    }
-    remoteError.value = getErrorMessage(e) || props.i18n.errDetectRemotes
-  }
-}
-
-/** 统一远程操作骨架：清错 → 严格路径校验 → 执行 → 单次重新检测并写回，失败写入 remoteError，返回是否成功 */
-async function runRemoteOp(fallbackMsg: string, op: (repoPath: string) => Promise<void>): Promise<boolean> {
-  if (!project.value) {
-    return false
-  }
-  remoteError.value = ""
-  const repoPath = currentRepoPath(true)
-  if (!repoPath) {
-    remoteError.value = props.i18n.errNoValidPath
-    return false
-  }
-  try {
-    await op(repoPath)
-    // 单次检测同时刷新界面列表；路径与持久化路径一致时再写回项目远程映射，
-    // 路径草稿未保存时只更新 UI，留到 save() 成功后统一写回
-    const list = await props.manager.detectRemotes(repoPath)
-    if (!alive()) {
-      return false
-    }
-    remoteList.value = list
-    remoteError.value = ""
-    lastDetectedPath = repoPath
-    if (repoPath === resolveValidPath(project.value)) {
-      await props.manager.applyRemotes(props.projectId, list)
-    }
-    return true
-  } catch (e: unknown) {
-    if (alive()) {
-      remoteError.value = getErrorMessage(e) || fallbackMsg
-    }
-    return false
-  }
-}
-
-function addRemote(name: string, url: string): Promise<boolean> {
-  return runRemoteOp(props.i18n.errAddRemote, (repoPath) => props.manager.addRemote(repoPath, name, url))
-}
-
-function updateRemoteUrl(name: string, url: string): Promise<boolean> {
-  return runRemoteOp(props.i18n.errUpdateRemote, (repoPath) => props.manager.setRemoteUrl(repoPath, name, url))
-}
-
-function removeRemote(name: string): Promise<boolean> {
-  return runRemoteOp(props.i18n.errRemoveRemote, (repoPath) => props.manager.removeRemote(repoPath, name))
-}
-
-/** 复制远程仓库 URL 到剪贴板（按远程名在检测列表中查找） */
-function copyRemoteUrl(name: string): void {
-  const url = remoteList.value.find((r) => r.name === name)?.url || ""
-  copyUrlToClipboard(url)
-}
-
-// ── 帮助项（文案来自 i18n 分片 gitPush.json 的 help* 键）──
-const helpItems = [
-  {
-    icon: "mdi:folder-outline",
-    text: props.i18n.helpLocalPaths,
-  },
-  {
-    icon: "mdi:link-variant",
-    text: props.i18n.helpRepoLinks,
-  },
-  {
-    icon: "mdi:source-repository",
-    text: props.i18n.helpGitRemotes,
-  },
-  {
-    icon: "mdi:database-outline",
-    text: props.i18n.helpPersistence,
-  },
-]
-
 // ── 初始化：从 manager 加载项目数据 ──
 onMounted(async () => {
   try {
@@ -716,29 +361,22 @@ onMounted(async () => {
       return
     }
     project.value = p
-    // 填充表单
     localName.value = p.name
     localStarred.value = !!p.starred
     localArchived.value = !!p.archived
     localNote.value = p.note || ""
     localTagsText.value = (p.tags || []).join(", ")
     localCategoryId.value = p.categoryId
-    // 平台 URL 由 PLATFORM_META 单一数据源驱动回填
-    for (const pl of PLATFORM_META) {
-      urlInputs[pl.urlProp] = p[pl.urlProp] || ""
-    }
-    // 填充路径行时抑制 watch，由下方显式 loadRemotes 完成初始检测
-    isInitializingPaths = true
+    initRepoLinks(p)
+    // 路径行填充后等一次 watch 刷新再放开自动检测，由下方显式 loadRemotes 完成初始检测
+    isInitializingPaths.value = true
     initPathRows(p.path, p.localPaths, p.pathDevices)
-    isInitializingPaths = false
-    // 检测远程仓库
+    await nextTick()
+    isInitializingPaths.value = false
+    // 远程检测与分类加载互不依赖，并行执行；分类失败不阻塞弹窗打开
+    const catsPromise = props.manager.getCategories().catch(() => [] as ProjectCategory[])
     await loadRemotes()
-    // 分类列表（加载失败不阻塞弹窗打开，仅下拉为空）
-    try {
-      categories.value = await props.manager.getCategories()
-    } catch {
-      categories.value = []
-    }
+    categories.value = await catsPromise
   } catch (e: unknown) {
     if (alive()) {
       showMessage(getErrorMessage(e) || props.i18n.errSaveProject, 4000, "error")
@@ -747,69 +385,46 @@ onMounted(async () => {
   }
 })
 
-// 仓库链接编辑时清除旧错误提示，避免失败后残留错误
-watch(
-  () => PLATFORM_META.map((pl) => urlInputs[pl.urlProp]).join("\n"),
-  () => {
-    if (repoLinkError.value) {
-      repoLinkError.value = ""
-    }
-  },
-)
-
-// 路径行变动时防抖重新检测远程（输入本地路径后无需关闭重开，Git 远程列表即时刷新）
-let remoteDetectTimer: ReturnType<typeof setTimeout> | null = null
-watch(
-  () => pathCandidates.value.join("\n"),
-  () => {
-    if (!project.value || isInitializingPaths) {
-      return
-    }
-    remoteError.value = ""
-    if (remoteDetectTimer) {
-      clearTimeout(remoteDetectTimer)
-    }
-    remoteDetectTimer = setTimeout(() => {
-      void loadRemotes()
-    }, 500)
-  },
-)
 onUnmounted(() => {
   isUnmounted.value = true
-  if (remoteDetectTimer) {
-    clearTimeout(remoteDetectTimer)
-    remoteDetectTimer = null
-  }
 })
 
 // ── 保存 ──
-/** 解析逗号分隔的标签文本（中英文逗号均可；去空白、去重、忽略空项） */
-function parseTags(text: string): string[] {
-  const seen = new Set<string>()
-  return text
-    .split(/[,，]/)
-    .map((t) => t.trim())
-    .filter((t) => {
-      if (!t || seen.has(t)) return false
-      seen.add(t)
-      return true
-    })
+/** 由实时路径行构建持久化载荷（无有效路径时返回 null，由调用方拦截） */
+function buildPathPatch() {
+  const payload = pathsToPayload()
+  if (!payload) {
+    return null
+  }
+  return {
+    path: payload.path,
+    localPaths: payload.localPaths,
+    pathDevices: payload.pathDevices,
+  }
 }
 
 async function save(): Promise<void> {
-  if (!project.value || saving.value) {
+  if (!project.value || saving.value || cloning.value) {
+    return
+  }
+  const name = localName.value.trim()
+  if (!name) {
+    showMessage(props.i18n.errNeedName, 3000, "error")
+    return
+  }
+  const pathPatch = buildPathPatch()
+  if (!pathPatch) {
+    showMessage(props.i18n.errNeedPath, 3000, "error")
     return
   }
   saving.value = true
   try {
-    // 路径字段与 buildPathPatch 共用单一构建逻辑
-    const pathPatch = buildPathPatch()
     const updated = await props.manager.updateProjectMeta(props.projectId, {
-      name: localName.value.trim() || project.value.name,
+      name,
       starred: localStarred.value,
       archived: localArchived.value,
       note: localNote.value,
-      tags: parseTags(localTagsText.value),
+      tags: parseProjectTags(localTagsText.value),
       ...pathPatch,
     })
     if (!updated) {
@@ -819,20 +434,18 @@ async function save(): Promise<void> {
     if (!alive()) {
       return
     }
-    // 分类变更：仅在实际变化时持久化（其余字段已保存成功，此处失败经外层 catch 统一提示）
+    // 分类变更：主资料已保存成功，此处失败只提示为部分成功，不误报整体失败
     if (localCategoryId.value !== project.value.categoryId) {
-      await props.manager.moveProject(props.projectId, localCategoryId.value)
-    }
-    // 保存后同步远程映射：路径未变化且已有检测结果时直接复用，否则按新路径检测
-    const savedPath = pathPatch.path ?? project.value.path
-    try {
-      if (lastDetectedPath === savedPath) {
-        await props.manager.applyRemotes(props.projectId, remoteList.value)
-      } else {
-        await props.manager.refreshRemotes(props.projectId, savedPath)
+      try {
+        await props.manager.moveProject(props.projectId, localCategoryId.value)
+      } catch {
+        showMessage(props.i18n.errMoveCategoryPartial, 4000, "error")
       }
-    } catch {
-      // 保存本身成功，远程刷新失败不阻塞关闭
+    }
+    // 保存后同步远程映射：失败不阻塞关闭，但需提示，避免映射与实际 .git/config 不一致
+    const synced = await syncAfterSave(pathPatch.path)
+    if (!synced) {
+      showMessage(props.i18n.errRefreshRemotes, 4000, "error")
     }
     if (!alive()) {
       return

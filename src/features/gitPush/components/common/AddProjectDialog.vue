@@ -28,58 +28,18 @@
           :placeholder="i18n.namePlaceholder"
           @keydown="$event.key === 'Enter' && submit()"
         />
-        <!-- 多设备路径行（与编辑弹窗共用 usePathRows） -->
+        <!-- 多设备路径行（与编辑弹窗共用 PathRowsEditor） -->
         <div class="gp-form-group">
           <!-- 标签："项目路径（跨设备适配）" -->
           <label class="gp-label">{{ i18n.projectPath }} <span class="gp-label-hint">{{ i18n.crossDeviceHint }}</span></label>
-          <div class="gp-edit-paths">
-            <div
-              v-for="(entry, idx) in rows"
-              :key="idx"
-              class="gp-edit-path-row"
-            >
-              <!-- 路径输入占位符："设备 {n} 的本地路径..." -->
-              <Input
-                v-model="entry.path"
-                size="xsmall"
-                :placeholder="i18n.devicePathPlaceholder.replace('{0}', String(idx + 1))"
-                @keydown="$event.key === 'Enter' && submit()"
-              />
-              <!-- 设备电脑名（可选）：占位符"电脑名（可选）"，新增行自动填入当前主机名 -->
-              <div class="gp-path-device">
-                <Input
-                  v-model="entry.device"
-                  size="xsmall"
-                  :placeholder="i18n.deviceNamePlaceholder"
-                />
-              </div>
-              <!-- 按钮提示："选择目录" -->
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
-                :title="i18n.selectDir"
-                @click="pickRow(idx)"
-              >
-                <Icon icon="mdi:folder-open" height="12" />
-              </button>
-              <!-- 按钮提示："移除此路径" -->
-              <button
-                class="vp-btn vp-btn--ghost vp-btn--sm"
-                :title="i18n.removePath"
-                :disabled="rows.length <= 1"
-                @click="removeRow(idx)"
-              >
-                <Icon icon="mdi:delete-outline" height="12" />
-              </button>
-            </div>
-          </div>
-          <!-- 按钮："添加路径" -->
-          <button
-            class="vp-btn vp-btn--ghost vp-btn--sm gp-add-path-btn"
-            @click="addRow"
-          >
-            <Icon icon="mdi:plus" height="12" />
-            <span>{{ i18n.addLocalPath }}</span>
-          </button>
+          <PathRowsEditor
+            :rows="rows"
+            :i18n="i18n"
+            @add="addRow"
+            @remove="removeRow"
+            @pick="pickRow"
+            @submit="submit"
+          />
         </div>
         <!-- 分类下拉："分类" -->
         <Select
@@ -121,6 +81,7 @@ import Select from "@/components/Select.vue"
 import { UNGROUPED_ID } from "../../types"
 import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import { usePathRows } from "../../composables/usePathRows"
+import PathRowsEditor from "./PathRowsEditor.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>

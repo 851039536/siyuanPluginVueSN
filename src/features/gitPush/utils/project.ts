@@ -3,6 +3,7 @@ import type { Ref } from "vue"
 // 直连 types/storage 而非 "../types" 桶：桶含 GitPushManager 等运行时模块（需 require 运行时
 // siyuan 包），会使本纯函数模块无法在 Node 单测环境加载，进而拖累 reportMetrics 等被测模块。
 import type { GitProject } from "../types/storage"
+import { openExternalUrl } from "@/utils/domUtils"
 import { getElectronModules, getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** 按 ID 查找项目（消除散落在各处的 projects.value.find 重复） */
@@ -142,11 +143,5 @@ export async function openLocalPath(path: string): Promise<void> {
 
 /** 在浏览器中打开远程仓库网页（Electron 用系统浏览器，降级 window.open） */
 export async function openRepoWebUrl(url: string): Promise<void> {
-  const webUrl = gitUrlToWebUrl(url)
-  const shell = getElectronModules()?.shell
-  if (shell?.openExternal) {
-    await shell.openExternal(webUrl)
-    return
-  }
-  window.open(webUrl, "_blank")
+  await openExternalUrl(gitUrlToWebUrl(url))
 }

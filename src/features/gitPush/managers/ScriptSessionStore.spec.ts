@@ -143,6 +143,63 @@ describe("createScriptSessionStore", () => {
     expect(ids).toEqual(["s1", "s2", "s3"])
   })
 
+  it("淘汰按项目隔离：别的项目结束会话不挤掉本项目的输出", () => {
+    const { runner, calls } = makeFakeRunner()
+    const store = createScriptSessionStore(runner)
+    for (let i = 0; i < 4; i++) {
+      store.start("p1", makeScript(`a${i}`))
+      calls[i].opts.onExit(0)
+    }
+    for (let i = 0; i < 4; i++) {
+      store.start("p2", makeScript(`b${i}`))
+      calls[i + 4].opts.onExit(0)
+    }
+    expect(store.listByProject("p1").map((s) => s.script.label)).toEqual(["a1", "a2", "a3"])
+    expect(store.listByProject("p2").map((s) => s.script.label)).toEqual(["b1", "b2", "b3"])
+  })
+
+  it("stopByProject 只停止该项目会话，其它项目保持运行", () => {
+    const { runner, calls } = makeFakeRunner()
+    const store = createScriptSessionStore(runner)
+    store.start("p1", makeScript("a"))
+    store.start("p2", makeScript("b"))
+    store.stopByProject("p1")
+    expect(calls[0].handle.killed).toBe(true)
+    expect(calls[1].handle.killed).toBe(false)
+    expect(store.getState("p1", "package:package.json:a")?.status).toBe("stopped")
+    expect(store.getState("p2", "package:package.json:b")?.status).toBe("running")
+  })
+
+  it("执行器返回 null 且未回调 onExit 时兜底为 exited(-1)，不滞留 running", () => {
+    const store = createScriptSessionStore(() => null)
+    const s = store.start("p1", makeScript("dev"))
+    expect(s?.status).toBe("exited")
+    expect(s?.exitCode).toBe(-1)
+    expect(store.hasRunningByProject("p1")).toBe(false)
+  })
+
+  it("重跑后旧进程的迟到退出事件不得覆盖新会话状态", () => {
+    const { runner, calls } = makeFakeRunner()
+    const store = createScriptSessionStore(runner)
+    store.start("p1", makeScript("dev"))
+    calls[0].opts.onExit(0)
+    store.start("p1", makeScript("dev"))
+    // 旧进程退出事件迟到（引用已淘汰的旧 rec）
+    calls[0].opts.onExit(1)
+    expect(store.getState("p1", "package:package.json:dev")?.status).toBe("running")
+  })
+
+  it("getState 返回轻量状态且随停止更新", () => {
+    const { runner } = makeFakeRunner()
+    const store = createScriptSessionStore(runner)
+    store.start("p1", makeScript("dev"))
+    const state = store.getState("p1", "package:package.json:dev")
+    expect(state?.status).toBe("running")
+    expect(state && "log" in state).toBe(false)
+    store.stop("p1", "package:package.json:dev")
+    expect(store.getState("p1", "package:package.json:dev")?.status).toBe("stopped")
+  })
+
   it("destroyAll 杀全部运行中会话并清空", () => {
     const { runner, calls } = makeFakeRunner()
     const store = createScriptSessionStore(runner)

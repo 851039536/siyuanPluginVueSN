@@ -3,6 +3,7 @@
  *
  * 消除各功能模块中重复的剪贴板、下载、样式注入等 DOM 操作模式。
  */
+import { getElectronModules } from "./nodeModules"
 
 /**
  * 降级复制到剪贴板（当 navigator.clipboard 不可用时）
@@ -205,4 +206,23 @@ export function getCurrentBlockId(): string | null {
 export function openBlock(blockId: string): void {
   if (!blockId) return
   window.open(`siyuan://blocks/${blockId}`)
+}
+
+/**
+ * 在系统浏览器打开 http(s) 链接（Electron 走 shell.openExternal，降级 window.open）。
+ * 收敛各 feature 中重复的「shell.openExternal + window.open 兜底」写法。
+ * @param url 仅接受 http/https，其余协议直接忽略
+ */
+export async function openExternalUrl(url: string): Promise<void> {
+  if (!/^https?:\/\//i.test(url)) return
+  const shell = getElectronModules()?.shell
+  if (shell?.openExternal) {
+    try {
+      await shell.openExternal(url)
+      return
+    } catch {
+      // 打开失败时降级到 window.open
+    }
+  }
+  window.open(url, "_blank", "noopener,noreferrer")
 }

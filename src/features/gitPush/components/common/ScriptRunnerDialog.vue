@@ -82,10 +82,10 @@
                 :key="s.id"
                 class="gp-sr-row"
                 :class="{
-                  'gp-sr-row--running': rowSession(s)?.status === 'running',
-                  'gp-sr-row--attachable': !!rowSession(s),
+                  'gp-sr-row--running': rowState(s)?.status === 'running',
+                  'gp-sr-row--attachable': !!rowState(s),
                 }"
-                :title="rowSession(s) ? i18n.scriptViewOutput : ''"
+                :title="rowState(s) ? i18n.scriptViewOutput : ''"
                 @click="attachTo(s)"
               >
                 <div class="gp-sr-row-info">
@@ -106,7 +106,7 @@
                 </div>
                 <!-- 悬停提示："运行" / "停止"（运行经会话托管，关窗不中断） -->
                 <Button
-                  v-if="rowSession(s)?.status !== 'running'"
+                  v-if="rowState(s)?.status !== 'running'"
                   variant="ghost"
                   size="xsmall"
                   dense
@@ -141,6 +141,16 @@
               class="gp-sr-status"
               :class="{ 'gp-sr-status--fail': attachedState?.status === 'exited' && attachedState.exitCode !== 0 }"
             >{{ exitLabel }}</span>
+            <Button
+              v-if="attachedState?.status === 'running'"
+              class="gp-sr-clear-btn"
+              variant="ghost"
+              size="xsmall"
+              dense
+              icon="stop"
+              :title="i18n.scriptStop"
+              @click="stopAttached"
+            />
             <Button
               class="gp-sr-clear-btn"
               variant="ghost"
@@ -189,7 +199,7 @@
               v-else
               class="gp-sr-console-empty"
             >
-              {{ i18n.scriptNoOutput }}
+              {{ attachedScriptId ? i18n.scriptNoOutput : i18n.scriptSelectHint }}
             </div>
           </div>
         </div>
@@ -218,22 +228,49 @@ import { resolveValidPath, scanProjectScripts, splitLogLinks } from "../../utils
 import { MAX_RUNNING_SCRIPTS } from "../../managers/ScriptSessionStore"
 import { useScriptSessions } from "../../composables/useScriptSessions"
 import { useCopyFeedback } from "../../composables/useCopyFeedback"
-import { copyToClipboard } from "@/utils/domUtils"
-import { getElectronModules } from "@/utils/nodeModules"
+import { copyToClipboard, openExternalUrl } from "@/utils/domUtils"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
 import type { GitProject } from "../../types/storage"
 
+/** 弹窗 i18n 文案（键与 src/i18n 分片 gitPush.json 对应） */
+interface ScriptRunnerI18n {
+  close?: string
+  scriptDialogTitle?: string
+  scriptRescan?: string
+  scriptScanning?: string
+  scriptEmpty?: string
+  scriptEmptyHint?: string
+  scriptGroupPackage?: string
+  scriptGroupDotnet?: string
+  scriptGroupFiles?: string
+  scriptRun?: string
+  scriptRunning?: string
+  scriptStop?: string
+  scriptOutput?: string
+  scriptClearOutput?: string
+  scriptCopyOutput?: string
+  scriptNoOutput?: string
+  scriptSelectHint?: string
+  scriptExitOk?: string
+  scriptExitFail?: string
+  scriptExitSignaled?: string
+  scriptStopped?: string
+  scriptTooManySessions?: string
+  scriptViewOutput?: string
+  [key: string]: string | undefined
+}
+
 const props = defineProps<{
   project: GitProject
-  i18n: Record<string, any>
+  i18n: ScriptRunnerI18n
 }>()
 
 const emit = defineEmits<{
   close: []
 }>()
 
-const { sessionVersion, sessionsOf, sessionOf, store } = useScriptSessions()
+const { sessionVersion, statusVersion, sessionsOf, sessionOf, stateOf, store } = useScriptSessions()
 const { copied, notifyCopied } = useCopyFeedback()
 
 const scanning = ref(false)
@@ -247,19 +284,10 @@ const consoleEl = ref<HTMLElement | null>(null)
 /** 输出分段：http(s) 链接单独成段，模板据此渲染可点击链接 */
 const logSegments = computed(() => splitLogLinks(logText.value))
 
-/** 在系统浏览器打开输出中的链接（Electron 走 shell.openExternal，降级 window.open） */
-async function openLogLink(url?: string) {
+/** 在系统浏览器打开输出中的链接（统一走 @/utils/domUtils 的 openExternalUrl） */
+function openLogLink(url?: string) {
   if (!url) return
-  const shell = getElectronModules()?.shell
-  if (shell?.openExternal) {
-    try {
-      await shell.openExternal(url)
-      return
-    } catch {
-      // 打开失败时降级到 window.open
-    }
-  }
-  window.open(url, "_blank", "noopener,noreferrer")
+  void openExternalUrl(url)
 }
 
 /** 会话日志镜像节流：store 通知高频（每 chunk），写 logText 限频 80ms */
@@ -269,18 +297,14 @@ let syncHandle: number | null = null
 
 function rescan() {
   scanning.value = true
-  try {
-    const root = resolveValidPath(props.project)
-    groups.value = scanProjectScripts(root).groups
-  } catch {
-    groups.value = []
-  } finally {
-    scanning.value = false
-  }
+  // scanProjectScripts 内部已兜底（不可用/读取失败返回空结果），此处无需再包 try/catch
+  groups.value = scanProjectScripts(resolveValidPath(props.project)).groups
+  scanning.value = false
 }
 
-function rowSession(script: ProjectScript): ScriptSession | undefined {
-  return sessionOf(props.project.id, script.id)
+/** 轻量行状态：不含日志 join，避免高频渲染时逐行重建整段输出 */
+function rowState(script: ProjectScript) {
+  return stateOf(props.project.id, script.id)
 }
 
 function attachedSession(): ScriptSession | undefined {
@@ -319,7 +343,7 @@ watch(sessionVersion, scheduleSync)
 
 /** 点击行接入该会话的输出（运行中实时续传，已结束可回看） */
 function attachTo(script: ProjectScript) {
-  if (!rowSession(script)) return
+  if (!rowState(script)) return
   attachedScriptId.value = script.id
   notice.value = ""
   syncNow(true)
@@ -341,6 +365,13 @@ function stopScript(script: ProjectScript) {
   syncNow()
 }
 
+/** 停止控制台当前接入的运行中会话（脚本列表变化后仍可收尾） */
+function stopAttached() {
+  if (!attachedScriptId.value) return
+  store.stop(props.project.id, attachedScriptId.value)
+  syncNow(true)
+}
+
 function clearLog() {
   notice.value = ""
   if (attachedScriptId.value) store.clearLog(props.project.id, attachedScriptId.value)
@@ -358,9 +389,10 @@ function handleClose() {
   emit("close")
 }
 
+/** 控制台头部状态：轻量状态（不触发日志 join），只随状态信号重算 */
 const attachedState = computed(() => {
-  void sessionVersion.value
-  return attachedSession()
+  void statusVersion.value
+  return stateOf(props.project.id, attachedScriptId.value)
 })
 
 const attachedLabel = computed(() => {
@@ -372,9 +404,10 @@ const exitLabel = computed(() => {
   const ss = attachedState.value
   if (!ss || ss.status === "running") return ""
   if (ss.status === "stopped") return String(props.i18n.scriptStopped)
+  if (ss.exitCode === null) return String(props.i18n.scriptExitSignaled)
   return ss.exitCode === 0
     ? String(props.i18n.scriptExitOk)
-    : String(props.i18n.scriptExitFail).replace("{0}", String(ss.exitCode ?? -1))
+    : String(props.i18n.scriptExitFail).replace("{0}", String(ss.exitCode))
 })
 
 function groupIcon(kind: ScriptKind): string {

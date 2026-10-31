@@ -17,6 +17,15 @@ export interface ScriptSession {
   log: string
 }
 
+/** 轻量会话状态（不含日志拼接，供高频渲染路径使用） */
+export interface ScriptSessionState {
+  script: ProjectScript
+  status: ScriptSessionStatus
+  pid: number | undefined
+  exitCode: number | null
+  endedAt: number | null
+}
+
 /** 执行器注入接口（与 ScriptExecutor.runProjectScript 同形，单测可替换为假实现） */
 export type ScriptRunnerFn = (
   script: ProjectScript,
@@ -27,13 +36,19 @@ export interface ScriptSessionStore {
   /** 启动一条脚本会话；同脚本已在跑则幂等返回现有会话；超出并发上限返回 null */
   start: (projectId: string, script: ProjectScript) => ScriptSession | null
   get: (projectId: string, scriptId: string) => ScriptSession | undefined
+  /** 轻量状态（不含日志 join）：高频渲染路径用 */
+  getState: (projectId: string, scriptId: string) => ScriptSessionState | undefined
   listByProject: (projectId: string) => ScriptSession[]
   hasRunningByProject: (projectId: string) => boolean
   /** 显式停止（杀进程树）；仅对 running 会话生效 */
   stop: (projectId: string, scriptId: string) => void
+  /** 停止某项目的全部运行中会话（删除项目等场景收尾，防孤儿进程失去 UI 入口） */
+  stopByProject: (projectId: string) => void
   clearLog: (projectId: string, scriptId: string) => void
   /** 注册全局变更回调（日志追加/状态迁移/淘汰），返回退订函数 */
   onChange: (cb: () => void) => () => void
+  /** 仅在状态迁移（启动/停止/退出/淘汰）时通知；日志追加不触发（卡片角标等低频信号） */
+  onStatusChange: (cb: () => void) => () => void
   /** 运行中会话的进程 pid（供持久化落盘与下次启动清扫） */
   listRunningPids: () => number[]
   /** 仅在 pid 集合变化（启动/停止/退出/清空）时通知；日志追加不触发（持久化订阅用） */
@@ -61,9 +76,17 @@ interface SessionRec {
   endedAt: number | null
   logChunks: string[]
   logLen: number
+  /** 日志代际：追加/清空时 +1，快照据此复用上次 join 结果 */
+  logGen: number
+  cachedLog: string
+  cachedLogGen: number
 }
 
 function snapshot(rec: SessionRec): ScriptSession {
+  if (rec.cachedLogGen !== rec.logGen) {
+    rec.cachedLog = rec.logChunks.join("")
+    rec.cachedLogGen = rec.logGen
+  }
   return {
     id: rec.id,
     projectId: rec.projectId,
@@ -73,29 +96,37 @@ function snapshot(rec: SessionRec): ScriptSession {
     exitCode: rec.exitCode,
     startedAt: rec.startedAt,
     endedAt: rec.endedAt,
-    log: rec.logChunks.join(""),
+    log: rec.cachedLog,
+  }
+}
+
+/** 轻量状态投影（不触碰日志，供卡片角标 / 行状态等高频路径） */
+function toState(rec: SessionRec): ScriptSessionState {
+  return {
+    script: rec.script,
+    status: rec.status,
+    pid: rec.pid,
+    exitCode: rec.exitCode,
+    endedAt: rec.endedAt,
   }
 }
 
 export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionStore {
   const recs = new Map<string, SessionRec>()
   const handles = new Map<string, { pid: number | undefined, kill: () => void }>()
-  /** 用户主动停止的会话 key（区分 stopped / 自然 exited） */
-  const killed = new Set<string>()
   const listeners = new Set<() => void>()
+  const statusListeners = new Set<() => void>()
   const pidListeners = new Set<() => void>()
 
   const key = (projectId: string, scriptId: string) => `${projectId}\u0000${scriptId}`
-  const notify = () => {
-    for (const cb of [...listeners]) {
+  const notifyAll = (set: Set<() => void>) => {
+    for (const cb of [...set]) {
       try { cb() } catch { /* 单个订阅者异常不影响其余 */ }
     }
   }
-  const notifyPids = () => {
-    for (const cb of [...pidListeners]) {
-      try { cb() } catch { /* 单个订阅者异常不影响其余 */ }
-    }
-  }
+  const notify = () => notifyAll(listeners)
+  const notifyStatus = () => notifyAll(statusListeners)
+  const notifyPids = () => notifyAll(pidListeners)
   const runningCount = () => {
     let n = 0
     for (const rec of recs.values()) {
@@ -103,20 +134,28 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
     }
     return n
   }
-  /** 已结束会话按结束时间保留最近 MAX_FINISHED 个 */
+  /** 每个项目各自保留最近 MAX_FINISHED 个已结束会话（避免别的项目结束会话挤掉当前查看的输出） */
   const evict = () => {
-    const finished = [...recs.values()]
-      .filter((r) => r.status !== "running")
-      .sort((a, b) => (a.endedAt ?? a.startedAt) - (b.endedAt ?? b.startedAt))
-    while (finished.length > MAX_FINISHED) {
-      const old = finished.shift()!
-      recs.delete(key(old.projectId, old.script.id))
+    const finishedByProject = new Map<string, SessionRec[]>()
+    for (const rec of recs.values()) {
+      if (rec.status === "running") continue
+      const list = finishedByProject.get(rec.projectId) ?? []
+      list.push(rec)
+      finishedByProject.set(rec.projectId, list)
+    }
+    for (const list of finishedByProject.values()) {
+      list.sort((a, b) => (a.endedAt ?? a.startedAt) - (b.endedAt ?? b.startedAt))
+      while (list.length > MAX_FINISHED) {
+        const old = list.shift()!
+        recs.delete(key(old.projectId, old.script.id))
+      }
     }
   }
   /** 块缓冲 + 裁头保尾：避免高频输出下整段字符串反复拷贝 */
   const appendLog = (rec: SessionRec, chunk: string) => {
     rec.logChunks.push(chunk)
     rec.logLen += chunk.length
+    rec.logGen++
     while (rec.logLen > LOG_CAP && rec.logChunks.length > 1) {
       rec.logLen -= rec.logChunks.shift()!.length
     }
@@ -124,6 +163,19 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
       rec.logChunks[0] = rec.logChunks[0].slice(rec.logLen - LOG_KEEP)
       rec.logLen = LOG_KEEP
     }
+  }
+  /** 停止单条运行中会话（stop / stopByProject 共用） */
+  const stopRec = (rec: SessionRec) => {
+    if (rec.status !== "running") return
+    const k = key(rec.projectId, rec.script.id)
+    rec.status = "stopped"
+    rec.endedAt = Date.now()
+    const handle = handles.get(k)
+    if (handles.delete(k)) notifyPids()
+    try { handle?.kill() } catch { /* 已退出 */ }
+    evict()
+    notifyStatus()
+    notify()
   }
 
   return {
@@ -144,24 +196,28 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
         endedAt: null,
         logChunks: [],
         logLen: 0,
+        logGen: 0,
+        cachedLog: "",
+        cachedLogGen: -1,
       }
       recs.set(k, rec)
-      killed.delete(k)
       const handle = runner(script, {
         onOutput: (chunk) => {
+          // rec 身份校验：旧进程在重跑后的迟到事件不得写入新会话
           const cur = recs.get(k)
-          if (!cur || cur.status !== "running") return
-          appendLog(cur, chunk)
+          if (cur !== rec || rec.status !== "running") return
+          appendLog(rec, chunk)
           notify()
         },
         onExit: (code) => {
           const cur = recs.get(k)
-          if (!cur || cur.status !== "running") return
-          cur.status = killed.has(k) ? "stopped" : "exited"
-          cur.exitCode = code
-          cur.endedAt = Date.now()
+          if (cur !== rec || rec.status !== "running") return
+          rec.status = "exited"
+          rec.exitCode = code
+          rec.endedAt = Date.now()
           if (handles.delete(k)) notifyPids()
           evict()
+          notifyStatus()
           notify()
         },
       })
@@ -169,13 +225,24 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
         rec.pid = handle.pid
         handles.set(k, handle)
         notifyPids()
+      } else if (rec.status === "running") {
+        // 执行器未回调 onExit 就返回 null：兜底收尾，避免会话永远停在 running 占并发位
+        rec.status = "exited"
+        rec.exitCode = -1
+        rec.endedAt = Date.now()
+        evict()
       }
+      notifyStatus()
       notify()
       return snapshot(rec)
     },
     get(projectId, scriptId) {
       const rec = recs.get(key(projectId, scriptId))
       return rec ? snapshot(rec) : undefined
+    },
+    getState(projectId, scriptId) {
+      const rec = recs.get(key(projectId, scriptId))
+      return rec ? toState(rec) : undefined
     },
     listByProject(projectId) {
       return [...recs.values()]
@@ -190,27 +257,29 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
       return false
     },
     stop(projectId, scriptId) {
-      const k = key(projectId, scriptId)
-      const rec = recs.get(k)
-      if (!rec || rec.status !== "running") return
-      killed.add(k)
-      rec.status = "stopped"
-      rec.endedAt = Date.now()
-      const handle = handles.get(k)
-      if (handles.delete(k)) notifyPids()
-      try { handle?.kill() } catch { /* 已退出 */ }
-      notify()
+      const rec = recs.get(key(projectId, scriptId))
+      if (rec) stopRec(rec)
+    },
+    stopByProject(projectId) {
+      const targets = [...recs.values()]
+        .filter((r) => r.projectId === projectId && r.status === "running")
+      for (const rec of targets) stopRec(rec)
     },
     clearLog(projectId, scriptId) {
       const rec = recs.get(key(projectId, scriptId))
       if (!rec) return
       rec.logChunks = []
       rec.logLen = 0
+      rec.logGen++
       notify()
     },
     onChange(cb) {
       listeners.add(cb)
       return () => { listeners.delete(cb) }
+    },
+    onStatusChange(cb) {
+      statusListeners.add(cb)
+      return () => { statusListeners.delete(cb) }
     },
     listRunningPids() {
       const pids: number[] = []
@@ -224,16 +293,15 @@ export function createScriptSessionStore(runner: ScriptRunnerFn): ScriptSessionS
       return () => { pidListeners.delete(cb) }
     },
     destroyAll() {
-      for (const [k, handle] of handles) {
-        killed.add(k)
+      for (const handle of handles.values()) {
         try { handle.kill() } catch { /* 已退出 */ }
       }
       const hadRunning = handles.size > 0
       handles.clear()
       recs.clear()
-      killed.clear()
       // 订阅关系保留（模块单例跨插件禁用/启用存活）；仅重置数据
       if (hadRunning) notifyPids()
+      notifyStatus()
       notify()
     },
   }

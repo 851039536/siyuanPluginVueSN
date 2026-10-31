@@ -1586,6 +1586,8 @@
     "scriptClearOutput": "Clear output",
     "scriptCopyOutput": "Copy output",
     "scriptNoOutput": "No output yet",
+    "scriptSelectHint": "Run a script or click an existing session to view output",
+    "scriptExitSignaled": "Finished (terminated)",
     "scriptExitOk": "Finished (exit code 0)",
     "scriptExitFail": "Finished (exit code {0})",
     "scriptStopped": "Stopped manually",

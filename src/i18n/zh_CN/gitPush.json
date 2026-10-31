@@ -327,6 +327,8 @@
     "scriptClearOutput": "清空输出",
     "scriptCopyOutput": "复制输出",
     "scriptNoOutput": "暂无输出",
+    "scriptSelectHint": "运行脚本或点击已有会话查看输出",
+    "scriptExitSignaled": "已结束（被终止）",
     "scriptExitOk": "已结束（退出码 0）",
     "scriptExitFail": "已结束（退出码 {0}）",
     "scriptStopped": "已手动停止",

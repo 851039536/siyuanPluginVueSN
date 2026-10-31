@@ -751,6 +751,8 @@ export class GitPushManager {
     const project = await this.store.getProjectById(id)
     const paths = project ? [project.path, ...(project.localPaths || [])] : []
     await this.store.removeProject(id)
+    // 项目删除后卡片消失，运行中的脚本会话将失去停止入口，必须一并结束
+    scriptSessions.stopByProject(id)
     // 智能跳过缓存独立于 store，删除后一并失效，避免残留旧 ahead
     this.remoteOps.invalidatePushStatusCache(id)
     for (const p of paths) {

@@ -73,6 +73,8 @@ function isUtf8Prefix(bytes: Uint8Array): boolean {
 export function createScriptOutputDecoder(): ScriptOutputDecoder {
   let mode: "undecided" | "utf8" | "gbk" = "undecided"
   let pending: Uint8Array = new Uint8Array(0)
+  // 全 ASCII 路径高频命中，解码器复用避免每 chunk 新建
+  const asciiDecoder = new TextDecoder("utf-8")
   const utf8Stream = new TextDecoder("utf-8", { fatal: false })
   const gbkStream = new TextDecoder("gbk")
 
@@ -84,7 +86,7 @@ export function createScriptOutputDecoder(): ScriptOutputDecoder {
       pending = concatBytes(pending, bytes)
       // 全 ASCII：两码制解码一致，直接放行，避免小输出滞留到 flush
       if (countHighBytes(pending) === 0) {
-        const text = new TextDecoder("utf-8").decode(pending)
+        const text = asciiDecoder.decode(pending)
         pending = new Uint8Array(0)
         return cleanAnsi(text)
       }
@@ -109,7 +111,7 @@ export function createScriptOutputDecoder(): ScriptOutputDecoder {
       if (pending.length === 0) return ""
       const verdict = tryStrictUtf8(pending)
       const text = verdict.ok
-        ? new TextDecoder("utf-8", { fatal: false }).decode(pending)
+        ? asciiDecoder.decode(pending)
         : gbkStream.decode(pending, { stream: true })
       pending = new Uint8Array(0)
       return cleanAnsi(text)

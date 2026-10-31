@@ -1,5 +1,6 @@
 // gitPush 功能注册入口与图标注入
 import type { Plugin } from "siyuan"
+import { getFrontend } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { killOrphanPid } from "./managers/ScriptExecutor"
 import { installScriptSessionPageGuard, scriptSessions } from "./managers/ScriptSessionStore"
@@ -30,7 +31,9 @@ export function registerGitPush(plugin: Plugin): void {
   })
   ;(plugin as any).__gitPush = manager
 
-  void initScriptPidPersistence(plugin)
+  // pid 落盘与启动清扫只由主窗口负责：浮动窗口的会话表是独立实例，
+  // 若它也执行清扫/写盘，会误杀主窗口正在运行的会话并用空列表覆盖落盘 pid
+  if (getFrontend() === "desktop") void initScriptPidPersistence(plugin)
 }
 
 /** 启动清扫上次遗留的会话进程（崩溃/强杀兜底），并把运行中 pid 持续落盘 */

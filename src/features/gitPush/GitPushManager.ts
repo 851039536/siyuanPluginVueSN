@@ -117,8 +117,10 @@ export class GitPushManager {
   private pushProfiles: PushProfileStore
   /** Git 是否支持 GIT_CONFIG_COUNT（≥2.31）；null = 尚未探测 */
   private gitConfigEnvSupported: boolean | null = null
-  /** 版本探测进行中（阻止探测命令自身再次触发环境解析） */
+  /** 版本探测进行中（仅用于让探测命令自身跳过环境解析，防止递归） */
   private gitVersionChecking = false
+  /** 在途版本探测 Promise（并发的网络命令共享同一次探测结果） */
+  private gitVersionProbe: Promise<boolean> | null = null
   /** 令牌因 Git 版本过低被跳过时只告警一次 */
   private warnedTokenSkipped = false
   private remoteOps: RemoteOps
@@ -800,22 +802,33 @@ export class GitPushManager {
   /** 探测 Git 是否支持 GIT_CONFIG_COUNT（≥2.31）；探测失败不缓存，下次网络操作重试 */
   private async ensureGitConfigEnvSupported(cwd: string): Promise<boolean> {
     if (this.gitConfigEnvSupported !== null) return this.gitConfigEnvSupported
-    if (this.gitVersionChecking) return false
-    this.gitVersionChecking = true
+    // 并发的网络命令共享同一次探测：先到的发起探测、后到的等结果。
+    // 否则「推送所有待推送项目」这类并发场景下，探测期间启动的推送拿不到结论，
+    // 会把令牌当「版本过低」静默跳过，回退到系统凭据 —— 可能用错账号推送且无任何报错。
+    if (this.gitVersionProbe) return this.gitVersionProbe
+    const probe = (async () => {
+      this.gitVersionChecking = true
+      try {
+        const out = await this.executor.execGit(cwd, ["--version"])
+        const match = out.match(/(\d+)\.(\d+)/)
+        if (!match) return false
+        const major = Number(match[1])
+        const minor = Number(match[2])
+        const supported = major > GIT_CONFIG_ENV_MIN_MAJOR
+          || (major === GIT_CONFIG_ENV_MIN_MAJOR && minor >= GIT_CONFIG_ENV_MIN_MINOR)
+        this.gitConfigEnvSupported = supported
+        return supported
+      } catch {
+        return false
+      } finally {
+        this.gitVersionChecking = false
+      }
+    })()
+    this.gitVersionProbe = probe
     try {
-      const out = await this.executor.execGit(cwd, ["--version"])
-      const match = out.match(/(\d+)\.(\d+)/)
-      if (!match) return false
-      const major = Number(match[1])
-      const minor = Number(match[2])
-      const supported = major > GIT_CONFIG_ENV_MIN_MAJOR
-        || (major === GIT_CONFIG_ENV_MIN_MAJOR && minor >= GIT_CONFIG_ENV_MIN_MINOR)
-      this.gitConfigEnvSupported = supported
-      return supported
-    } catch {
-      return false
+      return await probe
     } finally {
-      this.gitVersionChecking = false
+      if (this.gitVersionProbe === probe) this.gitVersionProbe = null
     }
   }
 

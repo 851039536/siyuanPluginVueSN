@@ -3,6 +3,7 @@ import type { ChildProcess } from "node:child_process"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
 import { clampGitConcurrency, clampLocalTimeout, clampNetworkTimeout, DEFAULT_GIT_CONCURRENCY, DEFAULT_LOCAL_TIMEOUT, DEFAULT_NETWORK_TIMEOUT } from "../types/storage"
+import { isNetworkGitCommand } from "../utils/pushProfile"
 
 /** 等待队列条目（本地池/网络池共用结构） */
 interface WaitQueueItem {
@@ -10,6 +11,15 @@ interface WaitQueueItem {
   reject: (e: Error) => void
   signal?: AbortSignal
 }
+
+/**
+ * git 子进程环境解析器（由 GitPushManager 注入）。
+ * 按 cwd 与命令参数返回账号环境；返回 undefined 表示不覆盖父进程环境。
+ */
+export type GitEnvResolver = (
+  cwd: string,
+  args: string[],
+) => Promise<Record<string, string> | undefined> | Record<string, string> | undefined
 
 export class GitExecutor {
   private storage: GitPushStorage
@@ -23,8 +33,8 @@ export class GitExecutor {
   private localTimeoutMs = DEFAULT_LOCAL_TIMEOUT * 1000
   /** 等待队列（关联 signal + reject 以便 abort/destroy 时精准拒绝） */
   private gitWaitQueue: WaitQueueItem[] = []
-  /** 识别网络 IO 类 git 命令，自动路由到独立并发池 */
-  private static readonly NETWORK_COMMANDS = new Set(["fetch", "push", "pull", "clone", "ls-remote"])
+  /** 账号环境解析器（推送账号按项目路径注入 GIT_CONFIG_COUNT / GIT_SSH_COMMAND 等） */
+  private envResolver: GitEnvResolver | null = null
   /** 网络命令当前并发（动态跟随 gitMaxConcurrent；双池分离使本地命令洪流不挤占 push/fetch 通道） */
   private networkRunning = 0
   /** 网络命令等待队列 */
@@ -98,6 +108,22 @@ export class GitExecutor {
     await this.storage.localTimeout.save(clamped)
   }
 
+  /** 设置账号环境解析器（传 null 取消；插件卸载时由 destroy 自行失效） */
+  setEnvResolver(resolver: GitEnvResolver | null): void {
+    this.envResolver = resolver
+  }
+
+  /** 解析环境：解析器异常不能阻断 git 命令（回退系统配置，交由 git 自身报错） */
+  private async resolveEnv(cwd: string, args: string[]): Promise<Record<string, string> | undefined> {
+    if (!this.envResolver) return undefined
+    try {
+      return await this.envResolver(cwd, args)
+    } catch (e) {
+      console.warn("[gitPush] 解析推送账号环境失败，本次使用系统 Git 配置", e)
+      return undefined
+    }
+  }
+
   /** 获取 child_process 模块（简写） */
   private getProcess() {
     return getNodeProcessModules()?.child_process
@@ -151,22 +177,6 @@ export class GitExecutor {
   }
 
   /**
-   * 从 args 中提取实际命令名（跳过前导 -c <value> / -C <value> 全局参数对，
-   * 以及 --no-pager / --no-optional-locks 等无参数前导选项）
-   */
-  private static getCommandName(args: string[]): string {
-    let i = 0
-    while (i < args.length && (args[i] === "-c" || args[i] === "-C")) {
-      i += 2
-    }
-    // 跳过无参数的前导选项（以 -- 开头且不包含 =），避免网络命令被误判为本地命令
-    while (i < args.length && /^--[^=]+$/.test(args[i])) {
-      i++
-    }
-    return args[i] || ""
-  }
-
-  /**
    * 调度队列中下一个可运行项（跳过并 reject 已中止项，防止池饥饿/死锁）
    */
   private scheduleNext(isNetwork: boolean): void {
@@ -202,8 +212,13 @@ export class GitExecutor {
     },
   ): Promise<string> {
     if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
-    const isNetwork = GitExecutor.NETWORK_COMMANDS.has(GitExecutor.getCommandName(args))
+    const isNetwork = isNetworkGitCommand(args)
     const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : this.localTimeoutMs)
+    // 账号环境在排队前快照：入队后项目绑定被修改不应影响已提交的命令
+    const resolverEnv = await this.resolveEnv(cwd, args)
+    const mergedEnv = resolverEnv || options?.env
+      ? { ...process.env, ...resolverEnv, ...options?.env }
+      : undefined
 
     return new Promise<string>((resolve, reject) => {
       let killed = false
@@ -242,7 +257,7 @@ export class GitExecutor {
             encoding: "utf8",
             windowsHide: true,
             maxBuffer: GitExecutor.MAX_BUFFER,
-            ...(options?.env ? { env: { ...process.env, ...options.env } } : {}),
+            ...(mergedEnv ? { env: mergedEnv } : {}),
           },
           (error: (Error & { code?: number | string, killed?: boolean }) | null, stdout: string, stderr: string) => {
             if (isNetwork) {

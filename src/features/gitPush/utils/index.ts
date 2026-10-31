@@ -1,7 +1,7 @@
 // gitPush 工具函数汇聚入口（按域拆分到同名模块，导出面与拆分前一致；消费方仍从 "../utils" 导入）
 // 域划分：project 项目与路径 / platform 平台与远程 / fileStatus 文件状态标记 / diffText 差异文本
 //        gitOutput git 输出解析 / analysis 提交分析 / format 展示格式化 / metrics 指标计算
-//        search 搜索高亮 / runtime 缓存与并发 / errors 失败分类
+//        search 搜索高亮 / runtime 缓存与并发 / errors 失败分类 / pushProfile 推送账号环境
 
 export {
   findProject,
@@ -159,3 +159,13 @@ export type { ScriptOutputDecoder } from "./scriptDecode"
 export { splitLogLinks } from "./logLinks"
 export type { LogLinkSegment } from "./logLinks"
 export { parseProjectTags } from "./projectForm"
+export {
+  buildPushProfileEnv,
+  buildSshCommand,
+  gitCommandName,
+  isNetworkGitCommand,
+  NETWORK_GIT_COMMANDS,
+  normalizePathKey,
+  normalizePushHost,
+} from "./pushProfile"
+export type { PushEnvBuildOptions, PushEnvBuildResult } from "./pushProfile"

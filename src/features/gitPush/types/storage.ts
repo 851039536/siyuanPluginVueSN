@@ -10,6 +10,7 @@ import type { CodeReportData, CodeReportPrefs } from "./report"
 import { DEFAULT_REPORT_PREFS } from "./report"
 import type { ProbeConfig } from "./probeConfig"
 import { DEFAULT_PROBE_CONFIG } from "./probeConfig"
+import type { PushProfile } from "./pushProfile"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -217,6 +218,12 @@ export interface GitProject {
   localPaths?: string[]
   /** 路径 → 设备电脑名映射（可选标注，键为路径原文；旧数据无此字段，向后兼容） */
   pathDevices?: Record<string, string>
+  /**
+   * 绑定的推送账号 ID。
+   * 空串 / 未设置 = 跟随全局默认账号；PUSH_PROFILE_SYSTEM_ID = 强制使用系统 Git 配置；
+   * 其他值 = 指定账号（账号已删除时回退全局默认，不阻断操作）。
+   */
+  pushProfileId?: string
 }
 
 /** 新增项目时的多设备路径附加信息（备选路径 + 设备名映射） */
@@ -541,6 +548,9 @@ const DEFAULT_REPO_CLEAN_PREFS: RepoCleanPrefs = { projectId: "", thresholdMb: 1
 /** BFG 运行时路径覆盖默认值（空 = 自动探测 java + 默认缓存 jar） */
 const DEFAULT_BFG_PREFS: BfgPrefs = { javaPath: "", jarPath: "" }
 
+/** 推送账号默认值（空列表；默认账号 ID 空串 = 不套用任何账号） */
+const DEFAULT_PUSH_PROFILES: PushProfile[] = []
+
 /** 代码统计报告结果缓存默认值（无缓存时按 null 语义处理，见 useCodeReport） */
 const DEFAULT_REPORT_CACHE: ReportCacheEntry = { projectId: "", range: "6m", generatedAt: "", report: null }
 
@@ -612,6 +622,10 @@ export class GitPushStorage {
   readonly scanDir: TypedStorage<string>
   /** 实时探测配置（文件监听 / 工作区轮询 / 网络轮询三层，持久化） */
   readonly probeConfig: TypedStorage<ProbeConfig>
+  /** 推送账号列表（令牌密文落盘，明文只在运行时内存中） */
+  readonly pushProfiles: TypedStorage<PushProfile[]>
+  /** 全局默认推送账号 ID（空串 = 不套用任何账号，使用系统 Git 配置） */
+  readonly defaultPushProfileId: TypedStorage<string>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -646,6 +660,8 @@ export class GitPushStorage {
     this.indexMaxCommits = new TypedStorage(storage, "git-push-index-max-commits", DEFAULT_INDEX_MAX_COMMITS)
     this.scanDir = new TypedStorage(storage, "git-push-scan-dir", "")
     this.probeConfig = new TypedStorage(storage, "git-push-probe-config", DEFAULT_PROBE_CONFIG)
+    this.pushProfiles = new TypedStorage(storage, "git-push-profiles", DEFAULT_PUSH_PROFILES)
+    this.defaultPushProfileId = new TypedStorage(storage, "git-push-default-profile", "")
   }
 
   async init(): Promise<void> {

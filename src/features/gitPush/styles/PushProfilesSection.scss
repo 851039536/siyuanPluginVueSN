@@ -1,0 +1,166 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 推送账号设置区块：列表 + 内联编辑表单（Codex 边框优先，无阴影）
+
+.gp-pp {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  margin-top: $s-2;
+}
+
+.gp-pp-header {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+}
+
+.gp-pp-desc {
+  font-size: $t-2xs;
+  line-height: 1.5;
+  opacity: 0.55;
+}
+
+.gp-pp-warn {
+  padding: $s-1 $s-2;
+  font-size: $t-2xs;
+  color: var(--b3-theme-error);
+  background: var(--b3-theme-error-lightest);
+  border: 1px solid var(--b3-theme-error);
+  border-radius: $r-sm;
+}
+
+.gp-pp-hint {
+  font-size: $t-2xs;
+  opacity: 0.45;
+}
+
+.gp-pp-error {
+  font-size: $t-2xs;
+  color: var(--b3-theme-error);
+}
+
+// ── 编辑表单 ──
+.gp-pp-form {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  padding: $s-2;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+}
+
+.gp-pp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s-2;
+}
+
+.gp-pp-creds {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  padding-top: $s-1;
+  border-top: 1px dashed var(--b3-border-color);
+}
+
+.gp-pp-creds-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+}
+
+// 主机 / 用户名 / 令牌 / 删除（令牌列最宽）
+.gp-pp-cred {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1.4fr auto;
+  gap: $s-1;
+  align-items: center;
+}
+
+.gp-pp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s-2;
+}
+
+// ── 列表 ──
+.gp-pp-empty {
+  padding: $s-4 0;
+  text-align: center;
+  font-size: $t-xs;
+  opacity: 0.5;
+}
+
+.gp-pp-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px; // 账号较多时滚动，避免设置弹窗过高
+  overflow-y: auto;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+}
+
+.gp-pp-item {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-2;
+  font-size: $t-2xs;
+  @include row-divider;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.gp-pp-item-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: $r-px2;
+  min-width: 0;
+}
+
+.gp-pp-item-title {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+}
+
+.gp-pp-item-label {
+  font-size: $t-xs;
+  font-weight: $fw-medium;
+  @include text-ellipsis;
+}
+
+.gp-pp-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $s-2;
+  opacity: 0.55;
+}
+
+.gp-pp-host {
+  padding: 0 $s-1;
+  font-family: $ff-mono;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+}
+
+.gp-pp-item-actions {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  flex-shrink: 0;
+}
+
+// 二次确认态：删除按钮转为错误色
+.gp-pp-danger {
+  color: var(--b3-theme-error);
+}

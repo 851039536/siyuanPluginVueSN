@@ -30,6 +30,7 @@
 - **行数统计的增量刷新（SQLite）**：逐文件行数连同 `(mtime, size)` 一起落 `plugin.db` 的 `gp_file_lines` 表。重新分析时逐文件 `statSync` 比对判据，**只重读内容变化过的文件**；`HEAD` 与 `gitdir` 都未变的项目直接复用 `gp_project_stats` 汇总行，零 git 调用、零读盘。原实现每次分析都要 `readFileSync` 每个文件全文（只为数 `\n`），且判据是 `rootHash`（一次提交即全仓库重读），这是「行数分析慢」的唯一根因
 - **本地提交索引（增量刷新）**：插件数据目录下的 NDJSON 提交索引，使统计视图「秒开 + 后台增量」而非每次重跑全量 `git log`。HEAD 未变的项目零 git 调用、零逐文件读盘；索引不可用时全部路径自动回退直接扫描 git（详见「性能优化 § 本地提交索引」）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
+- **推送账号（多账号认证）**：同一平台可配置多个账号（HTTPS 令牌 / SSH 私钥 / 提交身份覆盖），项目可绑定账号或跟随全局默认；git 子进程环境按需注入，**不修改任何 .gitconfig**（详见「§ 推送账号」）
 - **远程配置**：添加/编辑/删除远程仓库，支持行内编辑 URL
 - **独立窗口承载**：面板头部「在独立窗口打开」按钮，将面板弹出为独立浮动窗口（`addTab + openTab + openWindow` 官方 API，浮动窗口内自动隐藏该按钮）
 
@@ -334,6 +335,24 @@ GitPushManager (facade)
 - `git-push-index-enabled`：提交索引总开关（默认开启；关闭后统计路径全部回退直接跑 git）
 - `git-push-index-max-commits`：单项目索引提交上限（默认 20000，钳位 1000~100000）
 - `git-push-scan-dir`：上次「导入」使用的扫描目录（下次打开弹窗预填，仅在扫描成功后写入）
+- `git-push-profiles`：推送账号列表（HTTPS 令牌以 `enc:` 密文落盘，明文只在运行时内存）
+- `git-push-default-profile`：全局默认推送账号 ID（空串 = 不套用任何账号）
+
+## 推送账号（多账号认证）
+
+设置弹窗「推送账号」分区管理账号；「编辑项目」弹窗把项目绑定到某个账号（或「使用系统 Git 配置」强制不套用）。
+
+**账号能力**（三者至少填一项）：
+
+| 能力 | 机制 | 说明 |
+|------|------|------|
+| 提交身份 | `GIT_AUTHOR_*` / `GIT_COMMITTER_*` 环境变量 | 所有 Git 版本可用；只影响本项目新建的提交/标注 tag |
+| SSH 私钥 | `GIT_SSH_COMMAND`（`-i <path> -o IdentitiesOnly=yes -o BatchMode=yes`） | 仅对 SSH 远程生效；无 agent 时快速失败而非挂起，首次连接需已在终端接受主机指纹 |
+| HTTPS 令牌 | `GIT_CONFIG_COUNT` 注入 `http.https://<host>/.extraheader`（Basic 认证头） | 令牌**只发送到对应主机**，且只进环境变量、**绝不进 argv**（防进程列表泄露）；Git ≥ 2.31（低于此版本令牌跳过并在设置中提示，提交身份与 SSH 仍生效） |
+
+**解析顺序**（`GitPushManager.resolveGitEnv` → `GitExecutor` 注入的环境解析器）：git 子进程 cwd → 项目路径（含多设备备选路径，Windows 大小写不敏感）→ 项目绑定（`PUSH_PROFILE_SYSTEM_ID` 强制系统配置；绑定账号已删除回退全局默认）→ 环境变量。认证类变量只对网络命令（push/pull/fetch/ls-remote）注入，本地命令不携带令牌。
+
+**安全边界**：令牌经 `encryptSettingStrict`（AES-GCM）加密落盘，解密失败该主机凭据静默跳过（回退系统凭据）；保存时令牌留空 = 保留原密文；删除账号会同时清空仍绑定它的项目；全程不写 `.gitconfig`、不改 credential helper。
 
 > **索引数据本体不走 `loadData`**：提交与文件变更存在插件数据目录
 > `<workspace>/data/storage/petal/<plugin.name>/git-push-index/` 下的 NDJSON 追加日志中，

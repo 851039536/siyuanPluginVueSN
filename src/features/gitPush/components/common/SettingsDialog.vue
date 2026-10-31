@@ -1,4 +1,4 @@
-<!-- gitPush 设置汇总弹窗：左侧分区导航（常规=并发数+分支模式 / 显示=分析显示设置 / Git 配置=全局配置管理） -->
+<!-- gitPush 设置汇总弹窗：左侧分区导航（常规=并发数+分支模式 / 显示=分析显示设置 / 推送账号=多账号认证 / Git 配置=全局配置管理） -->
 <template>
   <div
     ref="rootRef"
@@ -503,6 +503,13 @@
             />
           </template>
 
+          <!-- ── 推送账号分区：多账号认证 + 提交身份覆盖（自包含 CRUD）── -->
+          <PushProfilesSection
+            v-else-if="activeSection === 'accounts'"
+            :i18n="i18n"
+            :manager="manager"
+          />
+
           <!-- ── Git 配置分区：全局 Git 配置管理（自包含，直接写入 ~/.gitconfig）── -->
           <GitConfigSection
             v-else
@@ -547,8 +554,9 @@ import {
 import { clampProbeConfig } from "../../types/probeConfig"
 import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
 import GitConfigSection from "./GitConfigSection.vue"
+import PushProfilesSection from "./PushProfilesSection.vue"
 
-type SettingsSection = "general" | "display" | "gitconfig"
+type SettingsSection = "general" | "display" | "accounts" | "gitconfig"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -603,6 +611,11 @@ const sections: { id: SettingsSection, icon: string, labelKey: string }[] = [
     id: "display",
     icon: "mdi:eye-outline",
     labelKey: "settingsSectionDisplay",
+  },
+  {
+    id: "accounts",
+    icon: "mdi:account-key-outline",
+    labelKey: "settingsSectionAccounts",
   },
   {
     id: "gitconfig",

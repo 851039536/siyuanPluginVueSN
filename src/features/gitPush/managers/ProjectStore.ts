@@ -12,6 +12,7 @@ import { PLATFORM_META } from "../types/meta"
 import { UNGROUPED_ID } from "../types/storage"
 import {
   getCurrentDeviceName,
+  normalizePathKey,
   PLATFORM_FLAG_BY_KEY,
   resolveValidPath,
 } from "../utils"
@@ -62,6 +63,21 @@ export class ProjectStore {
     // 缓存未初始化则全量加载
     await this.getProjects()
     return this.projectCache.get(id)
+  }
+
+  /**
+   * 按本地路径查找项目（git 子进程 cwd → 项目，供推送账号环境解析）。
+   * 同时匹配主路径与多设备备选路径；比较键忽略斜杠方向与 Windows 大小写差异。
+   */
+  async findProjectByPath(path: string): Promise<GitProject | undefined> {
+    const key = normalizePathKey(path)
+    if (!key) return undefined
+    const projects = await this.getProjects()
+    for (const p of projects) {
+      if (normalizePathKey(p.path) === key) return p
+      if (p.localPaths?.some((lp) => normalizePathKey(lp) === key)) return p
+    }
+    return undefined
   }
 
   /** 获取项目列表的可写浅克隆副本（写操作基于此，避免污染缓存 + save 失败时缓存不变脏） */
@@ -151,7 +167,7 @@ export class ProjectStore {
   /**
    * 更新项目元信息
    */
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices" | "pushProfileId">>): Promise<GitProject | null> {
     return this.serializeWrite(async () => {
       // patch 中的数组/对象先浅拷贝：避免 Object.assign 后项目与调用方 patch 共享引用，外部改动穿透污染缓存
       const normalized: typeof patch = { ...patch }

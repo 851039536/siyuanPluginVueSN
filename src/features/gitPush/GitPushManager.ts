@@ -16,6 +16,8 @@ import type {
   RepoScanResult,
 } from "./types/meta"
 import type { ProbeConfig } from "./types/probeConfig"
+import type { PushProfileInput, PushProfileView } from "./types/pushProfile"
+import { GIT_CONFIG_ENV_MIN_MAJOR, GIT_CONFIG_ENV_MIN_MINOR } from "./types/pushProfile"
 import type {
   BranchInfo,
   CommitLogEntry,
@@ -71,6 +73,7 @@ import {
 } from "./managers/LineStatsStore"
 import { ProjectStore } from "./managers/ProjectStore"
 import { ProjectWriteLock } from "./managers/ProjectWriteLock"
+import { PushProfileStore } from "./managers/PushProfileStore"
 import { RemoteOps } from "./managers/RemoteOps"
 import { RepoCleanOps } from "./managers/RepoCleanOps"
 import { RepoOps } from "./managers/RepoOps"
@@ -84,6 +87,7 @@ import {
 import { clampProbeConfig } from "./types/probeConfig"
 import { GitPushStorage } from "./types/storage"
 import {
+  buildPushProfileEnv,
   DEFAULT_LOG_LIMIT,
   getCurrentDeviceName,
   poolProcess,
@@ -109,6 +113,14 @@ export class GitPushManager {
   storage: GitPushStorage
   private executor: GitExecutor
   private store: ProjectStore
+  /** 推送账号（全局默认 + 项目绑定；git 子进程环境解析的数据源） */
+  private pushProfiles: PushProfileStore
+  /** Git 是否支持 GIT_CONFIG_COUNT（≥2.31）；null = 尚未探测 */
+  private gitConfigEnvSupported: boolean | null = null
+  /** 版本探测进行中（阻止探测命令自身再次触发环境解析） */
+  private gitVersionChecking = false
+  /** 令牌因 Git 版本过低被跳过时只告警一次 */
+  private warnedTokenSkipped = false
   private remoteOps: RemoteOps
   private worktreeOps: WorktreeOps
   private repoOps: RepoOps
@@ -168,6 +180,7 @@ export class GitPushManager {
     this.storage = new GitPushStorage(plugin)
     this.executor = new GitExecutor(this.storage)
     this.store = new ProjectStore(this.storage, this.executor)
+    this.pushProfiles = new PushProfileStore(this.storage)
     this.remoteOps = new RemoteOps(this.executor, this.store, this.storage, this.writeLock)
     this.worktreeOps = new WorktreeOps(this.executor)
     this.repoOps = new RepoOps(this.executor)
@@ -532,10 +545,13 @@ export class GitPushManager {
   async init() {
     if (this.destroyed) return
     await this.storage.init()
+    await this.pushProfiles.load()
     await this.executor.loadGitConcurrency()
     await this.executor.loadNetworkTimeout()
     await this.executor.loadLocalTimeout()
     await this.remoteOps.loadPushBranchMode()
+    // 账号环境按项目路径解析：push/pull/fetch/tag 等全部 go through execGit，无需逐调用点传参
+    this.executor.setEnvResolver((cwd, args) => this.resolveGitEnv(cwd, args))
     // 卸载竞态：await 期间插件可能已被卸载（onunload → destroy）。此时再挂 Dock 会创建一个
     // 无人再销毁的 Vue app + 探测链，正是本次要消除的泄漏类型。
     if (this.destroyed) return
@@ -568,6 +584,7 @@ export class GitPushManager {
     this.dockHandle = null
     this.unmountTabPanel()
     this.writeLock.destroy()
+    this.executor.setEnvResolver(null)
     this.executor.destroy()
     // 杀掉托管中的脚本会话进程（dev server 等长驻脚本关弹窗不杀，但卸载必须清，防孤儿）
     scriptSessions.destroyAll()
@@ -700,6 +717,108 @@ export class GitPushManager {
   /** 设置本地命令超时（秒）并持久化 */
   async setLocalTimeout(n: number): Promise<void> { return this.executor.setLocalTimeout(n) }
 
+  // ── 推送账号（多账号认证 + 提交身份覆盖；不改写任何 .gitconfig）──
+
+  /** 账号视图列表（不含令牌明文） */
+  async getPushProfileViews(): Promise<PushProfileView[]> {
+    await this.pushProfiles.load()
+    return this.pushProfiles.getViews()
+  }
+
+  /** 全局默认账号 ID（空串 = 不套用，使用系统 Git 配置） */
+  async getDefaultPushProfileId(): Promise<string> {
+    await this.pushProfiles.load()
+    return this.pushProfiles.getDefaultId()
+  }
+
+  /** 全局默认账号显示名（空串 = 系统 Git 配置） */
+  async getDefaultPushProfileLabel(): Promise<string> {
+    await this.pushProfiles.load()
+    return this.pushProfiles.getDefaultLabel()
+  }
+
+  /** 新建或更新账号（令牌留空且主机已存在时保留原密文） */
+  async savePushProfile(input: PushProfileInput): Promise<PushProfileView> {
+    await this.pushProfiles.load()
+    return this.pushProfiles.saveProfile(input)
+  }
+
+  /** 删除账号，并清空仍绑定它的项目（避免项目停留在失效绑定上） */
+  async deletePushProfile(id: string): Promise<void> {
+    await this.pushProfiles.load()
+    const projects = await this.store.getProjects()
+    const affected = projects.filter((p) => p.pushProfileId === id)
+    await this.pushProfiles.deleteProfile(id)
+    for (const p of affected) {
+      await this.updateProjectMeta(p.id, { pushProfileId: "" })
+    }
+  }
+
+  /** 设置全局默认账号（空串 = 不套用；不存在的 ID 视为清空） */
+  async setDefaultPushProfileId(id: string): Promise<void> {
+    await this.pushProfiles.load()
+    await this.pushProfiles.setDefaultId(id)
+  }
+
+  /** Git 是否支持 GIT_CONFIG_COUNT（null = 尚未探测过；false 时令牌凭据不生效） */
+  getGitConfigEnvSupported(): boolean | null {
+    return this.gitConfigEnvSupported
+  }
+
+  /** 主动探测 Git 版本（设置面板展示令牌可用性；无项目时用进程工作目录） */
+  async checkGitConfigEnvSupport(): Promise<boolean> {
+    if (this.gitConfigEnvSupported !== null) return this.gitConfigEnvSupported
+    const projects = await this.store.getProjects()
+    const cwd = projects[0]?.path || process.cwd()
+    return this.ensureGitConfigEnvSupported(cwd)
+  }
+
+  /**
+   * 解析 git 子进程账号环境（GitExecutor 注入的 resolver）。
+   * 顺序：项目路径 → 项目绑定（或全局默认）→ 环境变量。
+   */
+  private async resolveGitEnv(cwd: string, args: string[]): Promise<Record<string, string> | undefined> {
+    if (this.destroyed || this.gitVersionChecking || !this.pushProfiles.hasAny()) return undefined
+    const project = await this.store.findProjectByPath(cwd)
+    if (!project) return undefined
+    const profile = this.pushProfiles.resolveForProject(project)
+    if (!profile) return undefined
+    const configEnvSupported = profile.credentials.length > 0
+      ? await this.ensureGitConfigEnvSupported(cwd)
+      : true
+    const { env, skippedCredentialHosts } = buildPushProfileEnv(profile, args, { configEnvSupported })
+    if (skippedCredentialHosts.length && !this.warnedTokenSkipped) {
+      this.warnedTokenSkipped = true
+      console.warn(
+        `[gitPush] 当前 Git 版本低于 ${GIT_CONFIG_ENV_MIN_MAJOR}.${GIT_CONFIG_ENV_MIN_MINOR}，`
+        + `账号令牌凭据不会生效（${skippedCredentialHosts.join(", ")}）；提交身份仍生效，升级 Git 后自动恢复`,
+      )
+    }
+    return Object.keys(env).length > 0 ? env : undefined
+  }
+
+  /** 探测 Git 是否支持 GIT_CONFIG_COUNT（≥2.31）；探测失败不缓存，下次网络操作重试 */
+  private async ensureGitConfigEnvSupported(cwd: string): Promise<boolean> {
+    if (this.gitConfigEnvSupported !== null) return this.gitConfigEnvSupported
+    if (this.gitVersionChecking) return false
+    this.gitVersionChecking = true
+    try {
+      const out = await this.executor.execGit(cwd, ["--version"])
+      const match = out.match(/(\d+)\.(\d+)/)
+      if (!match) return false
+      const major = Number(match[1])
+      const minor = Number(match[2])
+      const supported = major > GIT_CONFIG_ENV_MIN_MAJOR
+        || (major === GIT_CONFIG_ENV_MIN_MAJOR && minor >= GIT_CONFIG_ENV_MIN_MINOR)
+      this.gitConfigEnvSupported = supported
+      return supported
+    } catch {
+      return false
+    } finally {
+      this.gitVersionChecking = false
+    }
+  }
+
   /** 上次扫描导入使用的目录（空串 = 从未扫描过，弹窗保持占位符提示） */
   async getScanDir(): Promise<string> { return this.storage.scanDir.loadOrDefault() }
 
@@ -762,7 +881,7 @@ export class GitPushManager {
     }
   }
 
-  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices">>): Promise<GitProject | null> {
+  async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices" | "pushProfileId">>): Promise<GitProject | null> {
     // 路径类字段变更后必须失效 gitdir 缓存：否则探测层会继续监听旧目录（最长 5 分钟 TTL）
     const pathFieldsChanged = patch.path !== undefined || patch.localPaths !== undefined
     const before = pathFieldsChanged ? await this.store.getProjectById(id) : undefined

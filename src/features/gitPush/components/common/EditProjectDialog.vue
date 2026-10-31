@@ -72,6 +72,19 @@
           :options="categoryOptions"
         />
 
+        <!-- 表单项："推送账号"（空 = 跟随全局默认；系统配置 = 不套用任何账号） -->
+        <div class="gp-form-group">
+          <label class="gp-label">
+            {{ i18n.pushProfileBound }}
+            <span class="gp-label-hint">{{ i18n.pushProfileHint }}</span>
+          </label>
+          <Select
+            v-model="localPushProfileId"
+            size="xsmall"
+            :options="pushProfileOptions"
+          />
+        </div>
+
         <!-- 表单项："备注" -->
         <Textarea
           v-model="localNote"
@@ -171,7 +184,8 @@
 </template>
 
 <script setup lang="ts">
-import type { GitProject, GitPushManager, ProjectCategory } from "../../types"
+import type { GitProject, GitPushManager, ProjectCategory, PushProfileView } from "../../types"
+import { PUSH_PROFILE_SYSTEM_ID } from "../../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import { computed, nextTick, onMounted, onUnmounted, ref } from "vue"
@@ -233,10 +247,30 @@ const localNote = ref("")
 const localTagsText = ref("")
 const localCategoryId = ref("")
 const categories = ref<ProjectCategory[]>([])
+const localPushProfileId = ref("")
+const pushProfileViews = ref<PushProfileView[]>([])
+const defaultPushProfileLabel = ref("")
 
 const categoryOptions = computed(() =>
   categories.value.map((c) => ({ value: c.id, label: c.name })),
 )
+
+/** 账号选项：跟随默认 / 系统配置 / 已配置账号（绑定已失效时补占位项，避免下拉显示空白） */
+const pushProfileOptions = computed(() => {
+  const followLabel = defaultPushProfileLabel.value
+    ? props.i18n.pushProfileFollowDefaultLabel.replace("{0}", defaultPushProfileLabel.value)
+    : props.i18n.pushProfileFollowDefaultNone
+  const options = [
+    { value: "", label: followLabel },
+    { value: PUSH_PROFILE_SYSTEM_ID, label: props.i18n.pushProfileUseSystem },
+    ...pushProfileViews.value.map((p) => ({ value: p.id, label: p.label })),
+  ]
+  const current = localPushProfileId.value
+  if (current && current !== PUSH_PROFILE_SYSTEM_ID && !pushProfileViews.value.some((p) => p.id === current)) {
+    options.push({ value: current, label: props.i18n.pushProfileInvalid })
+  }
+  return options
+})
 
 // 本地路径行（共享 composable：增删行、目录选择、载荷构建）
 const {
@@ -367,16 +401,22 @@ onMounted(async () => {
     localNote.value = p.note || ""
     localTagsText.value = (p.tags || []).join(", ")
     localCategoryId.value = p.categoryId
+    localPushProfileId.value = p.pushProfileId || ""
     initRepoLinks(p)
     // 路径行填充后等一次 watch 刷新再放开自动检测，由下方显式 loadRemotes 完成初始检测
     isInitializingPaths.value = true
     initPathRows(p.path, p.localPaths, p.pathDevices)
     await nextTick()
     isInitializingPaths.value = false
-    // 远程检测与分类加载互不依赖，并行执行；分类失败不阻塞弹窗打开
+    // 远程检测与分类 / 账号加载互不依赖，并行执行；分类与账号失败不阻塞弹窗打开
     const catsPromise = props.manager.getCategories().catch(() => [] as ProjectCategory[])
+    const profilesPromise = props.manager.getPushProfileViews().catch(() => [] as PushProfileView[])
+    const defaultLabelPromise = props.manager.getDefaultPushProfileLabel().catch(() => "")
     await loadRemotes()
-    categories.value = await catsPromise
+    const [cats, profiles, defaultLabel] = await Promise.all([catsPromise, profilesPromise, defaultLabelPromise])
+    categories.value = cats
+    pushProfileViews.value = profiles
+    defaultPushProfileLabel.value = defaultLabel
   } catch (e: unknown) {
     if (alive()) {
       showMessage(getErrorMessage(e) || props.i18n.errSaveProject, 4000, "error")
@@ -425,6 +465,7 @@ async function save(): Promise<void> {
       archived: localArchived.value,
       note: localNote.value,
       tags: parseProjectTags(localTagsText.value),
+      pushProfileId: localPushProfileId.value,
       ...pathPatch,
     })
     if (!updated) {

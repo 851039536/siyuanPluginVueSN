@@ -60,6 +60,23 @@ export {
   UNGROUPED_ID,
 } from "./storage"
 
+// ── 推送账号（多账号认证 + 提交身份覆盖）──
+export {
+  DEFAULT_TOKEN_USERNAME,
+  GIT_CONFIG_ENV_MIN_MAJOR,
+  GIT_CONFIG_ENV_MIN_MINOR,
+  PUSH_PROFILE_SYSTEM_ID,
+} from "./pushProfile"
+export type {
+  PushProfile,
+  PushProfileCredential,
+  PushProfileCredentialView,
+  PushProfileInput,
+  PushProfileView,
+  ResolvedPushCredential,
+  ResolvedPushProfile,
+} from "./pushProfile"
+
 // ── 重导出卡片注入契约（provide/inject 消除中间人 props/emits）──
 export { CARD_SERVICES_KEY } from "./cardServices"
 export type {

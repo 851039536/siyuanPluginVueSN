@@ -494,7 +494,7 @@ const preloadState = getDockPreloadState('statistics')
 
 ### AI 调用
 
-完整用法见 [docs/ai-api-usage.md](./docs/ai-api-usage.md)（唯一 AI 调用参考文档）。
+完整用法见 [docs/参考/ai-api-usage.md](./docs/参考/ai-api-usage.md)（唯一 AI 调用参考文档）。
 
 ```typescript
 // 推荐入口 callAISmart：传 onChunk 自动走流式，否则走非流式
@@ -702,7 +702,7 @@ openWindow({ tab, width?, height?, position?: { x, y } })
 
 ## 强制规则：AI 调用
 
-所有 AI 调用必须遵循以下规则，完整 API 用法见 [docs/ai-api-usage.md](./docs/ai-api-usage.md)。
+所有 AI 调用必须遵循以下规则，完整 API 用法见 [docs/参考/ai-api-usage.md](./docs/参考/ai-api-usage.md)。
 
 1. **统一入口**：AI 调用必须走 `@/utils/aiApi` 导出的 `callAI` / `callAISmart` / `callAIStream` / `callAIChat`。禁止在功能模块中直接 `fetch` 第三方 LLM API。
 2. **禁止硬编码**：禁止硬编码 API Key、模型名、端点 URL。必须通过 `getApiConfigFromPlugin(plugin)` 读取超级面板设置（含迁移降级：openai/zhipu → tongyi）。

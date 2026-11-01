@@ -1,5 +1,10 @@
 # 双击高亮功能开发文档
 
+> **归档说明（2026-11-01）**：本文描述的 `src/features/highlight/index.ts` 已于提交 `7ac8100c`（2026-04-16「refactor(highlight): 重构高亮功能至设置组件」）删除，功能与逻辑整体并入
+> [`src/features/generalSettings/components/HighlightSettings.vue`](../../src/features/generalSettings/components/HighlightSettings.vue)。
+> 双击高亮**功能仍在**，只是实现位置变了；下文「文件结构」「核心文件」等段落已失效，
+> 逻辑原理部分仍可参考。**不再更新**，改动请直接看上述组件。
+
 ## 功能概述
 
 双击高亮功能允许用户在思源笔记编辑器中双击选中文本，自动高亮文档中所有匹配的文本，并显示匹配数量提示。

@@ -287,7 +287,7 @@ db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
 | 存储模式 | **纯 SQLite**，无 JSON 回退分支 |
 | 迁移脚本 | 已完成使命并删除；新功能不需要它 |
 
-> 迁移背景与实测数据见 [docs/sqlite-persistence-review.md](./docs/sqlite-persistence-review.md)。
+> 迁移背景与实测数据见 [docs/completed/sqlite-persistence-review.md](./docs/completed/sqlite-persistence-review.md)。
 
 ---
 
@@ -429,7 +429,7 @@ db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
 - **字号层级规范**：两级字号制（`$font-size-xs` 12px / `$font-size-2xs` 10px），根容器显式设置基准字号。详见 [AGENTS_STYLE.md § 强制规则：字号层级与全局基准字号](./AGENTS_STYLE.md#强制规则字号层级与全局基准字号)
 - **背景与过渡 gitPush 范式**：弹窗/面板底色 `background` + 卡片 `surface` 凸出；遮罩 `rgba(0,0,0,0.5)` 禁 `backdrop-filter`；过渡统一 0.12s ease（fade + scale 0.98），禁自定义缓动与装饰性 `letter-spacing`；全屏遮罩 `z-index: 10000`。详见 [AGENTS_STYLE.md § 强制规则：背景与过渡对齐 gitPush 范式](./AGENTS_STYLE.md#强制规则背景与过渡对齐-gitpush-范式2026-09-02)
 - **Dock 面板侧边栏间距**：滚动内容不得紧贴侧边栏，根容器必须 `padding-right` ≥ `$spacing-2`。详见 [AGENTS_STYLE.md § 强制规则：Dock 面板侧边栏间距](./AGENTS_STYLE.md#强制规则dock-面板侧边栏间距)
-- **AI 调用统一入口**：必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，禁止直接 `fetch` 或硬编码 Key/端点。详见 [AGENTS_API.md § 强制规则：AI 调用](./AGENTS_API.md#强制规则ai-调用) 与 [docs/ai-api-usage.md](./docs/ai-api-usage.md)
+- **AI 调用统一入口**：必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，禁止直接 `fetch` 或硬编码 Key/端点。详见 [AGENTS_API.md § 强制规则：AI 调用](./AGENTS_API.md#强制规则ai-调用) 与 [docs/参考/ai-api-usage.md](./docs/参考/ai-api-usage.md)
 - **定时任务统一入口**：新增定时任务必须走 `@/utils/timerRegistry` 的 `TimerRegistry`（`setInterval` / `setTimeout` / `clear` / `clearAll`），禁止裸 `setInterval` / `setTimeout`；句柄类型统一为 `TimerHandle`（`ReturnType<typeof setInterval>`），动态启停必须通过 `clear(handle)` / `clearAll()`，生命周期随功能实例 destroy/stop 清理。详见 [AGENTS_API.md § 定时器](./AGENTS_API.md#定时器)
 - **Dock 预加载统一入口**：需要启动预载的 Dock 功能必须通过 `@/utils/dockPreload` 的 `registerDockPreload` 注册（labels 从 `plugin.i18n.<feature>` 提取），启动预载由插件启动链路 `runAllDockPreloads()` 统一执行；手动/定时刷新走 `refreshDockPreload(id)`（带状态栏三态与 loading 防重），面板打开用 `getDockPreloadState(id)` 分流（ready→直接用 / loading→等待 / idle|error→兜底刷新），禁止在 register/init 中自行散落预载逻辑或面板打开时重复全量刷新。详见 [AGENTS_API.md § Dock 预加载](./AGENTS_API.md#dock-预加载)
 - **禁止 i18n 硬编码兜底**：`{{ i18n.xxx || '中文兜底' }}` 模式禁止使用。详见 [AGENTS_I18N.md § 强制规则：禁止 i18n 硬编码兜底值](./AGENTS_I18N.md#强制规则禁止-i18n-硬编码兜底值)
@@ -654,5 +654,37 @@ src/
 | [AGENTS_ARCH.md](./AGENTS_ARCH.md) | Composable 提取、文件头注释、单文件行数上限、模块提取判定标准、组件文件夹组织标准 | 代码组织、组件拆分、目录结构规划时 |
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、单元测试（Vitest）、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程、编写/维护单元测试时 |
-| [docs/ai-api-usage.md](./docs/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
+| [docs/参考/ai-api-usage.md](./docs/参考/ai-api-usage.md) | 完整 AI 调用用法（标准/流式/思考模式/RAG/多轮对话 + 调用方清单） | 需要实现 AI 功能时（唯一 AI 调用参考文档） |
 | [src/features/componentPreview/README.md](./src/features/componentPreview/README.md) | 共享组件预览面板机制（52 个组件的用法快照、受控示例可交互、组件尺寸档位、`sizeable`/`resolveProps`、复合示例 `render`、具名/作用域插槽 `slots`、弹层类沙箱覆盖、清单扩展指南） | 使用共享组件前查用法、或改共享组件 API 后同步预览清单时 |
+
+## 文档规范（docs，强制，2026-11-01 起生效）
+
+索引：[`docs/README.md`](./docs/README.md)（文档清单、归档台账、已知缺陷，**唯一可信来源**）。
+
+**位置由状态决定**
+
+| 位置 | 放什么 |
+|---|---|
+| `docs/参考/` | 长期技术参考（API/组件用法、规范映射表）。内容须与当前代码一致，随代码更新 |
+| `docs/` 根 | 未完成的计划、待办、审查报告。**新建计划默认放这里** |
+| `docs/completed/` | 已归档：审查报告（处理完）、已失效的实现文档、已作废方向。不再更新 |
+
+规则分片 `AGENTS_*.md` 与 `src/features/*/README.md` 是长期规则/模块说明，**原地维护，不进 docs**。
+
+**四条硬规则**
+
+1. **归档 ≠ 删除**：文档失效时 `git mv` 进 `docs/completed/`，文件头加
+   `> **归档说明（日期）**：为什么归档 + 被什么替代`。**禁止 `rm`**——2026-10-28 那批 20 份报告被直接删除后
+   仍有 23 处代码/README 引用，2026-11-01 才逐份从 git 恢复，代价远高于归档。
+2. **归档前查引用**：`grep -rn "docs/<文件名>"`（含 `.ts/.vue/.md`）；有依赖的先改引用再归档，改完复检断链。
+3. **一个结论只写一处**：同一份清单/流程/数字不要在多处重复，引用写 `见 xxx.md §y`。
+   规则写进 `AGENTS_*.md`，背景与记录写进 `docs/`，两者不互抄。
+4. **增删改同步索引**：新增 / 归档 / 恢复 docs 文档，都要更新 `docs/README.md` 对应表格。
+
+**审查报告约定**：命名 `<模块>-<类型>.md`（`review` 审查 / `audit` 审计 / `diagnosis` 诊断 / `implementation` 实施记录），
+放 `docs/` 根；问题修完（或明确不修）后按第 1 条归档，并在 `docs/README.md` 归档表登记引用点。
+
+**已知缺陷提醒**：`AGENTS_STYLE.md` 的设计 Token 名 100% 失效（2026-09 已改短名制），
+照它写 SCSS 会编译失败；**写样式时以 `src/components/kit/variables.scss` 实际定义为准**，
+旧名→新名映射见 [`docs/参考/token-shorthand.md`](./docs/参考/token-shorthand.md)。
+迁移工作登记在 `docs/README.md`「已知文档缺陷」DOC-1。

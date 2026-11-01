@@ -87,4 +87,4 @@ pnpm validate:icons  # 图标注册有效性
 npx tsc --noEmit     # TypeScript 类型检查
 ```
 
-人工回归要点见 `docs/bookmark-marker-component-audit.md` 的「验收清单」。
+人工回归要点见 `docs/completed/bookmark-marker-component-audit.md` 的「验收清单」。

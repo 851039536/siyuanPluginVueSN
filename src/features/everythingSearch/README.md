@@ -61,4 +61,4 @@ src/features/everythingSearch/
 
 ## 审查记录
 
-模块的冗余专项审查与安全整改详见 [docs/everything-search-redundancy-review.md](../../docs/everything-search-redundancy-review.md)。
+模块的冗余专项审查与安全整改详见 [docs/completed/everything-search-redundancy-review.md](../../../docs/completed/everything-search-redundancy-review.md)。

@@ -49,7 +49,7 @@ aiContentGenerator/
 ### Skills 管理子模块（原 skillsViewer）
 
 原独立功能「Skills 查看器」已整体并入本模块（评审记录见
-`docs/ai-content-generator-skills-merge-review.md`）：
+`docs/completed/ai-content-generator-skills-merge-review.md`）：
 
 - **入口**：斜杠命令「Skills 查看器」由 `registerAIContentGenerator` 一并注册；
   面板技能选择区的「管理技能」按钮（`SkillSection.vue`）也可打开管理弹窗。
@@ -133,4 +133,4 @@ pnpm validate:icons  # 图标注册有效性
 npx tsc --noEmit     # TypeScript 类型检查
 ```
 
-人工回归要点见 `docs/ai-content-generator-component-audit.md` 的「验收清单」。
+人工回归要点见 `docs/completed/ai-content-generator-component-audit.md` 的「验收清单」。

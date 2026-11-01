@@ -2,6 +2,20 @@
 
  UI 风格 Codex、设计 Token、字号层级、SCSS 分离与内置字体规范。
 
+> ⚠️ **本文的 Token 名为旧长名，已全部失效（2026-11-01 静态校验）**
+>
+> `src/components/kit/variables.scss` 自 2026-09 起改为**短名制**，其文件头明确写着"旧长名已全部移除，
+> 不保留别名"。校验结果：本文出现的 **43 个完整旧变量名在当前真源中一个都不存在**，照本文抄 SCSS 会报
+> `Undefined variable` 编译失败。
+>
+> 短名映射见 [`docs/参考/token-shorthand.md`](./docs/参考/token-shorthand.md)：
+> `$spacing-*`→`$s-*`、`$radius-*`→`$r-*`、`$font-size-*`→`$t-*`、`$font-weight-*`→`$fw-*`、
+> `$line-height-*`→`$lh-*`、`$color-*`→`$c-*`、`$vp-mono`→`$ff-mono`、`$vp-radius`→`$r-base`。
+>
+> **本文尚未完成迁移**，逐条方案与验收脚本见
+> [`docs/DOC-FIX-PLAN-2026-11-01.md`](./docs/DOC-FIX-PLAN-2026-11-01.md)。
+> 迁移完成前：**以 `variables.scss` 的实际定义为准**，不要照本文的 `$` 名直接抄。
+
 ## UI 风格：Codex
 
 **强制规则**：所有新增 feature 的 UI 必须遵循 Codex 风格，使用设计 Token，禁止硬编码。

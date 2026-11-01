@@ -396,7 +396,7 @@ GitPushManager (facade)
 2. **mtime 预筛**（第 2 层）：先用一次 `fs.stat` 比对 `.git/index` 的 mtime（微秒级、**零子进程**），未变则跳过本轮 `git status`。
    判据同时含 `.git/HEAD` 文件文本（覆盖切分支 / checkout / detached 切换等不动 index 的场景）；
    **HEAD 判据是读文件、不是跑 `rev-parse`** —— 旧实现每轮每项目 spawn 一次 `git rev-parse HEAD`，
-   空闲 CPU 与「0 进程」承诺直接矛盾（已于 2026-10-19 修复，见 `docs/gitPush-memory-cpu-review.md` §P0-3）。
+   空闲 CPU 与「0 进程」承诺直接矛盾（已于 2026-10-19 修复，见 `docs/completed/gitPush-memory-cpu-review.md` §P0-3）。
    预筛是**保守**设计：任何不确定路径（`.git` 非目录、index/HEAD 不存在、stat/read 抛错）一律交回 git 定夺，正确性不依赖预筛。
 3. **指数退避**：连续无变化时间隔翻倍（15s → 30s → 60s → 上限 120s），一旦发现变化立即回到基准。
    多项目各项目独立退避，整轮节奏取**最小间隔**，故「有一个项目近期动过」时整体仍按快节奏跑。
@@ -480,7 +480,7 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 - **远程刷新单管线**：`refreshRemote` 统一「刷新远程配置 → fetch 一次 → 状态重查」，原先「Fetch」与「刷新远程状态」两条各自 fetch 的路径合并为同一单飞键，同时触发只产生一轮网络请求
 - **共享 rev-parse**：统计视图与列表视图经调度器 `loadStatus` 单次获取分支名分发给 pushStatus + workingTree
 - **进入页面降峰（2026-10-19）**：针对「每次进入页面 CPU 暴涨」完成一轮修复，详见
-  [`docs/gitPush-memory-cpu-review.md`](../../../docs/gitPush-memory-cpu-review.md)。要点：
+  [`docs/completed/gitPush-memory-cpu-review.md`](../../../docs/completed/gitPush-memory-cpu-review.md)。要点：
   - 删除每张卡片的 `window focus` 监听（原 N 卡获焦即 N 路 force 查询），窗口获焦统一由探测层处理并 2s 合并；
   - 预筛的 HEAD 判据改为读 `.git/HEAD` 文件（每轮每项目 0 次 `rev-parse`）；
   - 退避推进与「是否真查」解耦；面板隐藏（按根元素真实可见性）即暂停轮询；

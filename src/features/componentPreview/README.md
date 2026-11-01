@@ -64,7 +64,7 @@
 - 首帧由 `mountSectionsInViewport()` 按几何位置同步挂载可视区附近的分区 —— IO 首次回调是异步的，不做这一步打开面板会先白屏。
 - **锚点跳转**（点击左侧导航）与**搜索命中**都会先 `forceMount(id)`，避免目标分区仍停在占位态；搜索过滤后观察目标会随 DOM 变化重建。
 - 卡片本体拆到 `components/PreviewCard.vue`：`resolvedProps` 用 computed **只解析一次**，组件本体与复合示例的 `render` 共用同一对象（此前模板里两次调用会每帧多分配一轮）；受控值由 `components/PreviewStage.ts` 持有并回写，**同值写回会被守卫拦下**（原始值走 `Object.is`，数组按内容浅比较）—— 这是防止 `emit → 写回 → 重渲染 → 再 emit` 自激循环的关键。
-- 排查内存异常时的采样脚本与二分定位步骤见 [docs/component-preview-memory-diagnosis.md](../../../docs/component-preview-memory-diagnosis.md)。
+- 排查内存异常时的采样脚本与二分定位步骤见 [docs/completed/component-preview-memory-diagnosis.md](../../../docs/completed/component-preview-memory-diagnosis.md)。
 - **样式归属**：`styles/index.scss`（面板外壳 / 头部 / 档位切换器 / 内容区）只由根组件 `index.vue` 引入一次；`styles/PreviewSection.scss`（分区外壳 / import 行 / 网格 / 跨列 / 卸载占位）由 `PreviewSection.vue` 引入；`styles/PreviewCard.scss`（卡片外壳 / 舞台与分档 / 弹层沙箱覆盖 / 各类演示宿主类）由 `PreviewCard.vue` 引入；`NavSidebar.scss`、`CodeBlock.scss` 各归其组件。⚠️ 子组件**不要再引 `styles/index.scss`** —— 那会让同一批选择器在产物里重复输出数份。
 
 ## 弹层类组件的预览沙箱

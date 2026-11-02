@@ -17,6 +17,16 @@
         :aria-label="i18n.statsStatusTab"
       >
         <template #controls>
+          <!-- 未加载态也保留分支一致性入口（加载后入口在平台区块标题右侧，避免同屏重复） -->
+          <Button
+            v-if="!loaded"
+            variant="ghost"
+            size="xsmall"
+            icon="sourceBranchCheck"
+            :title="i18n.consistencyTitle"
+            :aria-label="i18n.consistencyTitle"
+            @click="emit('openConsistency')"
+          />
           <Button
             variant="ghost"
             size="xsmall"

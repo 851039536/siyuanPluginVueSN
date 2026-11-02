@@ -1373,6 +1373,11 @@ let statsLoadAborted = false
 /** 统计页预算定时器（与「需拉取」预算独立；随组件卸载清理） */
 const statsLoadTimers = new TimerRegistry()
 
+/** 统计视图全量刷新中（工具条刷新按钮转圈禁用） */
+const statsRefreshing = ref(false)
+/** 统计视图上次加载/刷新完成时间（ISO，空串 = 本次会话尚未成功加载过；工具条状态文案数据源） */
+const statsRefreshedAt = ref("")
+
 /** 预算等待器：返回可取消的 Promise，work 先完成时清掉定时器 */
 function createBudgetWaiter(ms: number): { promise: Promise<void>, cancel: () => void } {
   let handle: TimerHandle | null = null
@@ -1441,6 +1446,11 @@ async function ensureStatsDataLoadedBudgeted(budgetMs: number): Promise<void> {
     })
     .finally(() => {
       statsLoading.value = false
+      // 仅在真实完成（未暂停/未卸载）时记录刷新时间：纯缓存命中不产生 git，
+      // 不应把「上次刷新」伪装成刚刚；暂停/卸载导致的半途中断同理不记账。
+      if (!gitOpsPaused.value && !statsLoadAborted) {
+        statsRefreshedAt.value = new Date().toISOString()
+      }
       if (statsLoadFull === work) statsLoadFull = null
     })
   statsLoadFull = work
@@ -1461,10 +1471,11 @@ let statsAuditPending = false
  *
  * 它与状态加载共用同一个本地 git 池，进入即跑会让首屏峰值从 2N 变成 3N，
  * 且与状态查询互相抢槽位。这里改为等状态全量加载完成后再后台跑；
- * 期间用户离开统计页则跳过（runAudit 的 enabled 门控也会兜底）。
+ * 由于是用户手动加载触发的链路，即使期间切走统计页也会跑完（force 绕过 enabled）。
  */
 function scheduleStatsAudit(): void {
-  if (statsAuditPending) return
+  // 已在审计中则不重复排队（在飞审计完成后以 audited 状态为准）
+  if (statsAuditPending || auditing.value) return
   statsAuditPending = true
   const full = statsLoadFull ?? Promise.resolve()
   void (async () => {
@@ -1474,18 +1485,12 @@ function scheduleStatsAudit(): void {
       // 状态加载失败不影响审计（审计自身按项目隔离失败）
     }
     statsAuditPending = false
-    if (currentView.value !== "stats" || gitOpsPaused.value || audited.value) return
-    void runAudit().catch((e: unknown) => {
+    if (gitOpsPaused.value || audited.value) return
+    void runAudit({ force: true }).catch((e: unknown) => {
       console.warn("[gitPush] 仓库链接一致性校验失败", e)
     })
   })()
 }
-
-/** 统计视图快照刷新中（工具条刷新按钮转圈禁用） */
-const statsRefreshing = ref(false)
-
-/** 统计视图上次快照刷新完成时间（ISO，空串 = 本次会话尚未手动刷新过；工具条状态文案数据源） */
-const statsRefreshedAt = ref("")
 
 /**
  * 手动加载项目状态（进入页面不自动加载）。
@@ -1499,13 +1504,6 @@ async function loadStatsData() {
   }
   statsLoaded.value = true
   await ensureStatsDataLoadedBudgeted(STATS_RENDER_BUDGET_MS)
-  // 记录加载完成时间（工具条「上次刷新」文案）；预算到期后仍在后台补齐时等全量完成
-  const full = statsLoadFull
-  if (full) {
-    void full.then(() => { statsRefreshedAt.value = new Date().toISOString() })
-  } else {
-    statsRefreshedAt.value = new Date().toISOString()
-  }
   scheduleStatsAudit()
 }
 

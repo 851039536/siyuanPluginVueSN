@@ -75,9 +75,13 @@ export function useRepoLinkAudit(
    *
    * 只校验「启用且未暂停」的场景；并发用 poolProcess 压到 6（全并发会把 N 个
    * `git remote -v` 一次性塞进共享本地池，挤占探测/卡片查询）。
+   *
+   * @param opts.force 绕过 enabled 门控（仅用于用户手动触发的加载链路：
+   *   即使期间切走统计页，也应把这次审计跑完；自动项目变更仍走 enabled 门控）
    */
-  async function runAudit() {
-    if (cancelled || !enabled() || isPaused()) { return }
+  async function runAudit(opts?: { force?: boolean }) {
+    if (cancelled || isPaused()) { return }
+    if (!opts?.force && !enabled()) { return }
     // 在途期间又来请求（项目变更 watcher）：标记 pending，结束后补跑，
     // 不能直接丢弃——否则新加/改链接的项目要等用户离开统计视图再进才会被校验
     if (auditing.value) {

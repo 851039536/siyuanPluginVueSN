@@ -1,4 +1,4 @@
-<!-- gitPush 代码统计报告：团队总览分区（Pulse 式汇总头 + KPI 卡片：团队成员/总提交数/总代码量/最活跃贡献者） -->
+<!-- gitPush 代码统计报告：团队总览分区（Pulse 式汇总头 + KPI 卡片：团队成员/总提交数/新增行数合计/最活跃贡献者） -->
 <template>
   <div class="gpr-section">
     <!-- Pulse 式范围感知汇总头（"N 次提交（范围）"，对齐 GitHub Insights 的区间总计语义；组件派生，不进 CodeReportData） -->

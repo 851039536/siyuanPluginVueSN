@@ -1,4 +1,4 @@
-<!-- gitPush 通用空状态占位组件（icon + 文案，消除跨 6 文件重复） -->
+<!-- gitPush 通用空状态占位组件（icon + 文案 + 可选操作，消除跨 6 文件重复） -->
 <template>
   <div class="gp-empty">
     <div class="gp-empty-icon">
@@ -13,6 +13,8 @@
     <div class="gp-empty-text">
       {{ text }}
     </div>
+    <!-- 可选操作（如手动加载按钮；不传则不渲染） -->
+    <slot name="action" />
   </div>
 </template>
 

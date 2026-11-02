@@ -1,10 +1,6 @@
 <!-- gitPush 代码统计报告：团队总览分区（Pulse 式汇总头 + KPI 卡片：团队成员/总提交数/总代码量/最活跃贡献者） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："团队总览" -->
-    <div class="gpr-section-title">
-      {{ i18n.reportTeamTitle }}
-    </div>
     <!-- Pulse 式范围感知汇总头（"N 次提交（范围）"，对齐 GitHub Insights 的区间总计语义；组件派生，不进 CodeReportData） -->
     <div class="gpr-pulse-summary">
       {{ pulseSummary }}

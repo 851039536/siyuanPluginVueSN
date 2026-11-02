@@ -109,25 +109,11 @@
           </div>
 
           <!-- 分区 Tab 栏（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势） -->
-          <div class="gpr-tabs">
-            <button
-              v-for="tab in reportTabs"
-              :key="tab.id"
-              class="gpr-tab"
-              :class="{ active: activeTab === tab.id }"
-              @click="activeTab = tab.id"
-            >
-              <Icon
-                :icon="tab.icon"
-                height="12"
-              />
-              {{ i18n[tab.labelKey] }}
-              <span
-                v-if="tab.count > 0"
-                class="gpr-tab-count"
-              >{{ tab.count }}</span>
-            </button>
-          </div>
+          <SectionTabs
+            v-model="activeTab"
+            :items="reportTabItems"
+            :aria-label="i18n.reportView"
+          />
 
           <!-- 分区内容（v-if 首次激活后才挂载 + v-show 显隐保留内部状态；团队总览与代码贡献度合并展示：KPI 卡片 + 作者排行表） -->
 
@@ -185,9 +171,10 @@ import { computed, ref, watch } from "vue"
 import { REPORT_RANGE_LABEL_KEYS, REPORT_RANGES } from "../../types"
 import { relativeTime } from "../../utils"
 import { fmtTemplate } from "../../utils/i18nFormat"
-import { countDebtFiles } from "../../reportMetrics"
+import type { SectionTabItem } from "../common/sectionTabs"
 import AnalysisGate from "../common/AnalysisGate.vue"
 import EmptyState from "../common/EmptyState.vue"
+import SectionTabs from "../common/SectionTabs.vue"
 import Select from "@/components/Select.vue"
 import TeamOverviewSection from "./TeamOverviewSection.vue"
 import AuthorContributionSection from "./AuthorContributionSection.vue"
@@ -231,15 +218,15 @@ const emit = defineEmits<{
 type ReportTabId = "overview" | "debt" | "hotspot" | "candlestick"
 
 /**
- * 分区 Tab 配置（labelKey 为 i18n 键，count 为分区条数徽章）。
- * count 口径必须与分区内实际可见条目数一致：
- * 总览=贡献作者数，债务=问题数，热点=榜单条目数（HOTSPOT_LIMIT 截断后，非全量 analyzedFiles），趋势=提交天数。
+ * 分区 Tab 配置（label 已渲染为 i18n 文案）。
+ * 刻意不显示角标：作者数 / 债务数 / 热点数 / 提交天数均已由各分区内的
+ * KPI 卡、汇总条、表格行或「全部」筛选 chips 承担，角标与之同屏重复。
  */
-const reportTabs = computed<ReadonlyArray<{ id: ReportTabId, labelKey: string, icon: string, count: number }>>(() => [
-  { id: "overview", labelKey: "reportTabOverview", icon: "mdi:account-group", count: props.report.authors.length },
-  { id: "debt", labelKey: "reportTabDebt", icon: "mdi:alert-octagon-outline", count: countDebtFiles(props.report.debtSummary) },
-  { id: "hotspot", labelKey: "reportTabHotspot", icon: "mdi:fire", count: props.report.hotspots.length },
-  { id: "candlestick", labelKey: "reportTabCandlestick", icon: "mdi:chart-finance", count: props.report.dailyStats.length },
+const reportTabItems = computed<SectionTabItem<ReportTabId>[]>(() => [
+  { id: "overview", label: props.i18n.reportTabOverview, icon: "accountGroup" },
+  { id: "debt", label: props.i18n.reportTabDebt, icon: "alertCircleOutline" },
+  { id: "hotspot", label: props.i18n.reportTabHotspot, icon: "fire" },
+  { id: "candlestick", label: props.i18n.reportTabCandlestick, hint: props.i18n.reportTabCandlestickHint, icon: "chartCandlestick" },
 ])
 
 /** 当前分区 Tab */

@@ -47,6 +47,11 @@
   margin-bottom: $s-2;
 }
 
+// 空状态内的可选操作（如「加载项目状态」按钮）
+.gp-empty-action {
+  margin-top: $s-2;
+}
+
 // loading 态：为常驻动画 Loader 提供受限的定位容器，避免其绝对定位逃逸到视口中心
 .gp-loading {
   position: relative;

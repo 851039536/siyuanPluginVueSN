@@ -999,6 +999,9 @@ export const COMMON_ICONS = {
   sourceBranch: {
     icon: "mdi:source-branch",
   },
+  sourceBranchCheck: {
+    icon: "mdi:source-branch-check",
+  },
   sourceCommit: {
     icon: "mdi:source-commit",
   },

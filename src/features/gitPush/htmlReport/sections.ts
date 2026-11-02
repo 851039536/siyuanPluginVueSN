@@ -78,7 +78,7 @@ export function renderAuthors(report: CodeReportData, i18n: Record<string, any>)
 <th class="num">${escapeHtml(t(i18n, "reportRankCol"))}</th>
 <th>${escapeHtml(t(i18n, "reportTopAuthor"))}</th>
 <th class="num">${escapeHtml(t(i18n, "reportCommitsCol"))}</th>
-<th class="num">${escapeHtml(t(i18n, "reportLinesCol"))}</th>
+<th class="num">${escapeHtml(t(i18n, "reportAddedLinesCol"))}</th>
 <th class="num">${escapeHtml(t(i18n, "reportDeletedLinesCol"))}</th>
 <th class="num">${escapeHtml(t(i18n, "reportNetCol"))}</th>
 <th class="num">${escapeHtml(t(i18n, "reportAvgSizeCol"))}</th>
@@ -112,7 +112,7 @@ ${tdNum(`${Math.round(a.churnRate * 100)}%`)}
     value: a.linesAdded,
   })), i18n)
   return `<table><thead>${head}</thead><tbody>${body}</tbody></table>
-<h3>${escapeHtml(t(i18n, "reportLinesCol"))}</h3>${bars}`
+<h3>${escapeHtml(t(i18n, "reportAddedLinesCol"))}</h3>${bars}`
 }
 
 /** 技术债务：严重度分布甜甜圈 + 分组明细表 */

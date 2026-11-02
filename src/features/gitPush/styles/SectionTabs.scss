@@ -1,0 +1,48 @@
+// gitPush 视图内分区切换条（提交分析 / 代码报告 / 统计中心共用）
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// ── 分段控件观感：外框 + 内部按钮分组，与顶栏 .gp-view-toggle 同一范式 ──
+.gp-sectiontabs {
+  display: inline-flex;
+  align-self: flex-start;
+  max-width: 100%;
+  gap: $s-px2;
+  margin-bottom: $s-3;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// 统计中心的一级 Tab：位于面板滚动区之外，与下方面板内容同起点
+.gp-sectiontabs.gp-statistics-tabs {
+  margin-top: $s-1;
+  margin-bottom: $s-2;
+}
+
+// Tab 按钮：共享 Button（ghost + xsmall + dense）承担交互与键盘可达性；
+// 4 类 = (0,4,0)，压过 dense 档位的圆角/字号与根类的 justify-content: center
+.gp-sectiontabs .gp-sectiontab.si-button {
+  flex-shrink: 0;
+  border-radius: 0;
+  border: none;
+  padding: $s-1 $s-2;
+  opacity: 0.55;
+
+  &:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  // 激活态：主题色浅底 + 主题色文字（与顶栏视图切换同观感）
+  &[aria-pressed="true"] {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    font-weight: $fw-semibold;
+  }
+}

@@ -1,6 +1,6 @@
 # Git 推送 (gitPush)
 
-完整的 Git 图形界面：推送/拉取/暂存/提交/差异/分支切换/提交搜索/统计视图，持久化项目路径映射。
+完整的 Git 图形界面：推送/拉取/暂存/提交/差异/分支切换/提交搜索/统计中心，持久化项目路径映射。
 
 ## 功能
 
@@ -22,13 +22,13 @@
 - **标签/备注**：项目标签（编辑弹窗内逗号分隔录入，卡片展示前 3 个并可展开，列表工具栏按标签多选筛选）、收藏/归档标记、项目备注与多设备路径备注
 - **提交规则检查**：校验各项目提交信息是否符合 Conventional Commits 规则（type 限 feat/fix/chore/docs/style/refactor/test）与 GitHub 提交建议（scope 仅小写字母/数字/连字符、描述不以句号结尾、描述不少于最短字数、多行消息正文前空行），集中展示不合规提交及原因；「描述过短」阈值可在设置弹窗「常规」分区自定义（默认 10 字）；另含 3 条可选规则（默认开启，可在设置中单独关闭）：描述首字母大写（仅小写英文字母开头判违规）、WIP 临时提交检测（描述以 wip/todo/fixme/tbd 开头判违规）、正文行长限制（body 每行超限判违规，阈值默认 72 可配）；支持 AI 生成修正建议，并可修正 HEAD 或任意本地历史提交（个人项目版，历史重写后需自行 force push）；支持多选违规提交进行批量修正（批量弹窗内 AI 逐条生成 + 逐条保存，同项目内按新→旧顺序处理保证链式违规不丢修正）；违规行支持直接删除历史提交（与 LOG Tab 共用 DropCommitDialog：记录级删除、内容不变语义，merge/HEAD/rebase 残留拦截，bundle 备份可恢复且「删除前自动备份」开关持久化）
 - **仓库清理视图**：两段式 — ① 仓库体检（纯 git：.git 打包体积/对象总数 + 可达大文件 Top 50 与占比条形，非本地引用锚定的残留标注「远程引用/其他引用」徽章）；② BFG 历史清理（[BFG Repo-Cleaner](https://github.com/rtyley/bfg-repo-cleaner)）：大文件阈值清理 / 按名删除文件·文件夹 / 敏感文本全历史替换，走 mirror 裸仓库安全工作流（bundle 全量备份 → clone --mirror → BFG → gc → CAS 回写），六步步骤条 + 实时日志；Java 运行时自动探测，bfg.jar 首次使用自动下载（Maven Central 主源 + GitHub 备源），结果页一键强推远端（强推后自动 fetch --prune + gc 收尾，清除本地残留）
-- **统计视图**：远程覆盖率、待处理项目合并视图（推送状态概览 + 待推送/暂存/未暂存表格）、平台配置状态
-- **报告一键导出 HTML**：统计报告视图工具条「导出HTML」按钮，把当前项目 + 当前时间范围的报告导出为**单个自包含 HTML 文件**（内联 CSS + 内联 SVG 图表，零外部依赖、断网可打开、可直接分享或存档）；覆盖团队总览 / 代码贡献度 / 技术债务 / 代码热点 / 提交趋势五个分区全部内容，K 线图按 `MAX_CANDLES` 分桶压缩保证宽度有界；弹原生保存对话框选定路径，写盘后自动打开；未生成/git 失败/零提交时不产出空文件
+- **统计中心**：面板顶栏「统计」入口内含三个分区——**项目状态**（远程覆盖率、待处理项目合并视图、平台配置与链接校验）、**提交分析**（提交概览[全部项目日分布] / 规则检查 / 行数排行）、**代码报告**（团队总览 / 技术债务 / 代码热点 / 提交趋势[单项目区间]）；原「统计视图 / 提交分析 / 统计报告」三个并列入口收敛为一处，避免同名统计入口并存
+- **报告一键导出 HTML**：代码报告分区工具条「导出HTML」按钮，把当前项目 + 当前时间范围的报告导出为**单个自包含 HTML 文件**（内联 CSS + 内联 SVG 图表，零外部依赖、断网可打开、可直接分享或存档）；覆盖团队总览 / 代码贡献度 / 技术债务 / 代码热点 / 提交趋势五个分区全部内容，K 线图按 `MAX_CANDLES` 分桶压缩保证宽度有界；弹原生保存对话框选定路径，写盘后自动打开；未生成/git 失败/零提交时不产出空文件
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
 - **行数排行视图**：「提交分析」视图内的内部 Tab，展示各项目**当前代码行数**（存量口径：工作区已跟踪文件的实际行数）排行，并给出**新建日期**（仓库首次提交）与**最后修改**（最后一次提交），可按文件格式过滤（扩展名多选排除列表）。列表只保留存量口径——不再展示历史累计的「新增/删除/净增」，因此分析**完全不抓取全历史 numstat**，只做 `git ls-files` + 文件行数统计，这是本视图刷新速度的关键前提
   - ⚠️ **「新建日期」口径**：`rev-list --max-parents=0`（历史根提交，多根时取最早那个）——**不是** `git log --reverse -1`（该写法恒返回 HEAD 时间，会让两列日期永远相同，详见 §行数统计快路径）
 - **行数统计的增量刷新（SQLite）**：逐文件行数连同 `(mtime, size)` 一起落 `plugin.db` 的 `gp_file_lines` 表。重新分析时逐文件 `statSync` 比对判据，**只重读内容变化过的文件**；`HEAD` 与 `gitdir` 都未变的项目直接复用 `gp_project_stats` 汇总行，零 git 调用、零读盘。原实现每次分析都要 `readFileSync` 每个文件全文（只为数 `\n`），且判据是 `rootHash`（一次提交即全仓库重读），这是「行数分析慢」的唯一根因
-- **本地提交索引（增量刷新）**：插件数据目录下的 NDJSON 提交索引，使统计视图「秒开 + 后台增量」而非每次重跑全量 `git log`。HEAD 未变的项目零 git 调用、零逐文件读盘；索引不可用时全部路径自动回退直接扫描 git（详见「性能优化 § 本地提交索引」）
+- **本地提交索引（增量刷新）**：插件数据目录下的 NDJSON 提交索引，使统计中心「秒开 + 后台增量」而非每次重跑全量 `git log`。HEAD 未变的项目零 git 调用、零逐文件读盘；索引不可用时全部路径自动回退直接扫描 git（详见「性能优化 § 本地提交索引」）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
 - **推送账号（多账号认证）**：同一平台可配置多个账号（HTTPS 令牌 / SSH 私钥 / 提交身份覆盖），项目可绑定账号或跟随全局默认；git 子进程环境按需注入，**不修改任何 .gitconfig**（详见「§ 推送账号」）
 - **远程配置**：添加/编辑/删除远程仓库，支持行内编辑 URL
@@ -39,7 +39,7 @@
 ```
 src/features/gitPush/
 ├── index.ts                         # registerGitPush() 入口
-├── index.vue                        # 主面板（Dock / 独立窗口 tab 双形态，列表/统计/日志/分析/行数统计/报告多视图）
+├── index.vue                        # 主面板（Dock / 独立窗口 tab 双形态；列表 + 统计中心 + 日志 + 清理四入口）
 ├── GitPushManager.ts                # 门面：组合 managers/ 协作者 + addTab/openWindow 独立窗口承载
 ├── reportMetrics.ts                 # 代码统计报告纯函数层：numstat 解析 + 作者/文件聚合 + 债务/热点评分 + K 线分桶压缩
 ├── reportChart.ts                   # 提交 K 线图绘制配置：chart.js 数据集/坐标轴/影线插件（自 CandlestickSection 迁出）
@@ -88,7 +88,7 @@ src/features/gitPush/
 │   ├── useProjectCrud.ts            # 项目 CRUD 响应式封装
 │   ├── useGitOps.ts                 # 推送/拉取/工作区/stash 响应式封装
 │   ├── useGitTagsConflicts.ts       # Tag/冲突/模板/扫描导入
-│   ├── useGitStats.ts               # 统计视图 computed
+│   ├── useGitStats.ts               # 统计中心 · 项目状态分区 computed
 │   ├── useCardServices.ts           # 卡片服务注入（inject CARD_SERVICES_KEY + 按项目 id 派生单项目 computed）
 │   ├── useCardMenu.ts               # 卡片内联下拉菜单共享（provide/inject，顶栏与操作栏菜单互斥）
 │   ├── useCardAccordion.ts          # 卡片布局上下文（手风琴：一次只展开一张，ListView provide）
@@ -99,7 +99,7 @@ src/features/gitPush/
 │   ├── useDayDragSelect.ts          # 日格拖拽选区状态机（热力图/日历共用：起锚 → 掠过扩展 → mouseup 收尾并抑制补发 click）
 │   └── useReportExport.ts           # 报告导出编排（校验 → 保存对话框 → 渲染 → 写盘 → 提示并打开）
 ├── components/
-│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，31 个；二次确认统一用共享 ConfirmDialog）
+│   ├── common/                      # 复用组件（跨 ≥2 个视图引用，32 个；二次确认统一用共享 ConfirmDialog）
 │   │   ├── AddProjectDialog.vue     # 添加项目弹窗
 │   │   ├── CategoryDialog.vue       # 分类管理弹窗
 │   │   ├── SettingsDialog.vue       # 设置汇总弹窗（左侧分区导航：常规=并发数+分支模式+PR 基线分支 / 显示=分析显示设置 / Git 配置=全局 Git 配置管理；导航底部=管理分类入口）
@@ -120,9 +120,10 @@ src/features/gitPush/
 │   │   ├── MenuPopover.vue          # 统一内联菜单容器（role=menu、↑↓/Home/End、打开聚焦首项、Esc 上报）
 │   │   ├── DropCommitDialog.vue     # 删除历史提交弹窗（四项前置校验 + bundle 备份 + fast-import 历史重建删除，LOG Tab 与规则检查共用）
 │   │   ├── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
-│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 视图切换 + 批量旋转进度指示器）
+│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 四入口视图切换 + 批量旋转进度指示器）
+│   │   ├── SectionTabs.vue          # 视图内分区切换条（提交分析 / 代码报告 / 统计中心共用）
 │   │   ├── CommitCountSelect.vue    # 分析条数选择下拉（共享 Select xsmall 档，提交分析与规则检查工具条共用）
-│   │   ├── AnalysisToolbar.vue      # 分析类视图统一工具条（状态文案 + run 按钮 + controls 插槽；提交分析/规则检查/行数统计共用）
+│   │   ├── AnalysisToolbar.vue      # 分析/统计类视图统一工具条（状态文案 + 控件插槽 + 可选运行按钮）
 │   │   ├── AnalysisGate.vue         # 分析类视图状态门（分析中占位/未分析空态/失败提示条 + 默认插槽；四分析视图共用）
 │   │   ├── StatCardGrid.vue         # KPI 卡片网格（数值+标签+语义色，stat-card mixin 驱动；五处总览卡片共用）
 │   │   ├── CommitFilesDialog.vue    # 提交文件列表弹窗
@@ -152,12 +153,11 @@ src/features/gitPush/
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
 │   │   ├── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
 │   │   └── WorkingTreeTreeDialog.vue# 变更目录树弹窗（VS Code 源代码管理风格：目录分组折叠 + 路径筛选 + 行内暂存/丢弃，操作桥接回 WorkingTreePanel）
-│   ├── StatsView/                   # 统计视图专属（3 层信息架构 + common/ 共享组件）
-│   │   ├── index.vue               # 统计视图入口容器（空态 + 工具条 + 概览/行动/明细三层编排）
-│   │   ├── StatsToolbar.vue        # 顶部工具条（快照状态文案 + 刷新全部；与提交分析 AnalysisToolbar 同构）
+│   ├── StatsView/                   # 统计中心 · 项目状态分区（3 层信息架构 + common/ 共享组件）
+│   │   ├── index.vue               # 分区入口容器（空态 + 统一工具条 + 概览/行动/明细三层编排）
 │   │   ├── HealthOverview.vue      # 健康概览（推送状态分布条 + 四态图例 + 精简 KPI 行）
 │   │   ├── PendingProjectsSection.vue # 待处理项目区块（全站唯一一份待处理清单表格）
-│   │   ├── PlatformSection.vue     # 平台区块（覆盖率行内汇总 + 一致性问题汇总 + 每项目平台配置/一致性矩阵）
+│   │   ├── PlatformSection.vue     # 平台区块（覆盖率行内汇总 + 链接校验问题 + 每项目平台配置/一致性矩阵 + 分支一致性入口）
 │   │   └── common/                 # 统计区块共享组件（StatsSection 区块包裹器 / PlatformTable 平台矩阵表格 / AllClear 全部正常空态）
 │   ├── LogPanel/                    # 操作日志视图专属（6 个）
 │   │   ├── index.vue                # 操作日志视图入口容器（筛选/分页/日期分组编排 + 区块组合）
@@ -166,9 +166,8 @@ src/features/gitPush/
 │   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
 │   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
 │   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
-│   ├── CommitAnalysis/              # 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行；10 个）
+│   ├── CommitAnalysis/              # 统计中心 · 提交分析分区（三视角 Tab：提交概览 / 规则检查 / 行数排行；9 个）
 │   │   ├── index.vue                # 视图入口容器（三 Tab 编排 + 共用工具条/四态门；规则检查与行数排行的区块在此组合）
-│   │   ├── AnalysisTabs.vue         # 三视角切换条（三者同属一次 runCore 抓取的不同切面）
 │   │   ├── ProjectRankingSection.vue# 项目提交排行区块（条形 + 百分比，点击跳转）
 │   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（粒度/指标/分档阈值/摘要/选区状态，日粒度分布唯一出口）
 │   │   ├── DayCommitDetail.vue      # 当日明细面板（单击日格展开：时间/项目/首行信息，行可跳列表视图）
@@ -192,9 +191,9 @@ src/features/gitPush/
 │       ├── ExtFilterDialog.vue      # 文件格式过滤配置弹窗（扩展名多选排除列表）
 │       ├── ProjectLineDetail.vue    # 项目行数详情弹窗（该项目的文件存量行数明细）
 │       └── FetchFailuresDialog.vue  # 项目抓取失败明细弹窗（项目名 + 本地路径 + 原因分类 + 原始报错）
-│   └── CodeReport/                  # 代码统计报告视图专属（9 个；分区首次激活后才挂载）
-│       ├── index.vue                # 报告视图入口容器（项目/时间范围选择 + 分区 Tab 编排）
-│       ├── TeamOverviewSection.vue  # 团队总览分区（KPI 卡片：成员/总提交/总代码量/最活跃）
+│   └── CodeReport/                  # 统计中心 · 代码报告分区（9 个；分区首次激活后才挂载）
+│       ├── index.vue                # 代码报告分区入口容器（项目/时间范围选择 + 分区 Tab 编排）
+│       ├── TeamOverviewSection.vue  # 团队总览分区（KPI 卡片：成员/总提交/新增行数合计/最活跃）
 │       ├── AuthorContributionSection.vue # 代码贡献度分区（作者贡献排行 + 文件详情弹窗）
 │       ├── TechDebtSection.vue      # 技术债务分区（债务摘要 + 严重度分组列表）
 │       ├── HotspotSection.vue       # 代码热点分区（热点文件）
@@ -212,7 +211,7 @@ src/features/gitPush/
     ├── CommitTemplatesDialog.scss    # 提交模板管理弹窗样式
     ├── CardRemotes.scss             # 远程状态区样式（从 index.scss 提取）
     ├── CardActionBar.scss           # 操作栏样式（从 index.scss 提取）
-    ├── StatsPanel.scss              # 统计视图样式
+    ├── StatsPanel.scss              # 统计中心 · 项目状态分区样式
     ├── CommitAnalysisPanel.scss     # 提交分析面板样式
     ├── CommitAnalysisSettings.scss  # 提交分析显示设置样式（齿轮浮层 + 设置表单）
     ├── CommitHeatmap.scss           # 提交热力图样式（CSS 变量驱动行列数与密度 + 三种粒度栅格 + 分级着色 + 选中/焦点环 + 自绘 tooltip）
@@ -225,7 +224,8 @@ src/features/gitPush/
     ├── BatchFixDialog.scss          # 提交信息批量修正弹窗样式
     ├── RepoCleanPanel.scss          # 仓库清理面板样式（体检卡片 + 大文件列表 + BFG 向导弹窗）
     ├── LineStatsPanel.scss          # 行数统计面板样式（面板基座 + 单栏堆叠；工具条/汇总卡片/失败提示已收敛至共享）
-    ├── AnalysisToolbar.scss         # 分析类视图统一工具条样式（三视图共用）
+    ├── AnalysisToolbar.scss         # 分析/统计类视图统一工具条样式
+    ├── SectionTabs.scss             # 视图内分区切换条样式（提交分析 / 代码报告 / 统计中心共用）
     ├── AnalysisGate.scss            # 分析类视图状态门样式（失败提示条 .gp-analysishint）
     ├── StatCardGrid.scss            # KPI 卡片网格样式（五视图共用；原 .gp-stat-card/.gpa-card/.grc-card/.gls-card/.gpr-card 五份合一）
     ├── LineRankRow.scss             # 行数排行行样式（列模板单点定义 + 表头吸顶 + 数字列）
@@ -314,9 +314,9 @@ GitPushManager (facade)
 2. 点击「添加项目」，输入名称和选择项目路径
 3. 面板自动检测 GitHub/Gitee/Gitea 远程
 4. **列表视图**：打开面板不自动选择分类（显示「请选择分类」提示，零 git 调用）；点选顶部分类 TAB 后加载该分类下项目的工作区变更与推送状态
-5. **统计视图**：查看远程覆盖率、待处理项目汇总、平台配置状态
-6. **行数统计视图**：点击「开始行数分析」统计各项目/作者的代码新增/删除/净增行数排行；可按需点击过滤按钮勾选要排除的文件格式
-7. **代码统计报告**：进入视图即展示**上次结果**（毫秒级，头部标注生成时间）并在后台增量刷新——
+5. **统计中心 · 项目状态**：进入不会自动加载，点击「加载项目状态」后才读取全部项目状态（同会话内再次进入直接展示缓存）；查看远程覆盖率、待处理项目汇总、平台配置与链接校验；区块标题右侧可打开分支一致性分析
+6. **统计中心 · 提交分析**：提交概览 / 规则检查 / 行数排行三个内部 Tab；行数排行可按需勾选要排除的文件格式
+7. **统计中心 · 代码报告**：进入视图即展示**上次结果**（毫秒级，头部标注生成时间）并在后台增量刷新——
    仓库 HEAD 未变的项目不产生任何 `git log`；有提交的项目只补抓新增提交。切换时间范围/项目会立即重算并刷新
 8. 使用拉取/推送按钮同步远程仓库
 9. 暂存文件 → 生成/输入提交信息 → 提交
@@ -471,6 +471,7 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 
 - **并发信号量**：git 命令并发上限可配置（**默认 10**，范围 1~10，设置页修改；实测 10 是拐点，12/16 反而回落，详见「行数统计的增量刷新」），本地命令与网络命令独立双池且各自受该上限约束（双池分离使本地命令洪流不挤占 push/fetch 通道），批量加载/刷新的批内并发跟随该设置
 - **批次加载**：打开列表视图不加载任何项目（未选择分类 = 零 git 调用），点选分类后仅加载该分类的项目状态；提交日志/分支/Stash 按展开懒加载
+- **统计页手动加载**：进入「项目状态」**不会自动刷新**（不发起任何 git）；同会话内已加载过则直接展示缓存，否则显示未加载空态，由用户点击「加载项目状态」触发。加载按 **800ms 渲染预算**先出一部分，其余转后台独立并发池补齐（不占全局批次锁，切视图不被长任务堵住）；链接一致性审计在状态加载完成后才跑。暂停/卸载后剩余项目不再发起
 - **卡片态会话缓存**（`useCardData` 模块级 LRU，键为 `项目 id + 主路径`，上限 32）：切分类 / 切智能视图会卸载卡片，回到原分类时直接命中缓存（日志/分支/Stash/Tag/差异缓存、显示条数、在途查询与失败冷却全部保留），不再重跑 4~5 次 git；卡片 Tab 选择也按项目记忆，重挂载时恢复
 - **查询调度器**（`useProjectQueryScheduler`，查询调度的唯一权威，三档职责互不重叠）：
   - **单飞**：同 `(项目, 查询域)` 在飞时共享同一 Promise，任何入口的并发调用都不产生额外 git 子进程；失败不缓存，允许立即重试
@@ -478,14 +479,14 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
   - **新鲜度节流**：成功后记录时间戳，`ensure` 模式跳过已有缓存的项目，`minIntervalMs` 抑制自动刷新的重复查询
   - **脏标记**：父层写操作标脏 + 单值 `epoch` 递增，卡片消费脏集按需重载（取代原先每卡片 5 个 watch 读取同一个 Record 的 O(卡片数 × 域数) 求值）
 - **远程刷新单管线**：`refreshRemote` 统一「刷新远程配置 → fetch 一次 → 状态重查」，原先「Fetch」与「刷新远程状态」两条各自 fetch 的路径合并为同一单飞键，同时触发只产生一轮网络请求
-- **共享 rev-parse**：统计视图与列表视图经调度器 `loadStatus` 单次获取分支名分发给 pushStatus + workingTree
+- **共享 rev-parse**：统计中心与列表视图经调度器 `loadStatus` 单次获取分支名分发给 pushStatus + workingTree
 - **进入页面降峰（2026-10-19）**：针对「每次进入页面 CPU 暴涨」完成一轮修复，详见
   [`docs/completed/gitPush-memory-cpu-review.md`](../../../docs/completed/gitPush-memory-cpu-review.md)。要点：
   - 删除每张卡片的 `window focus` 监听（原 N 卡获焦即 N 路 force 查询），窗口获焦统一由探测层处理并 2s 合并；
   - 预筛的 HEAD 判据改为读 `.git/HEAD` 文件（每轮每项目 0 次 `rev-parse`）；
   - 退避推进与「是否真查」解耦；面板隐藏（按根元素真实可见性）即暂停轮询；
   - Dock 建监听不再逐项目额外跑一次 `rev-parse HEAD`，gitdir 解析带 5 分钟缓存 + 并发 6；
-  - `probe.start()` 幂等、轮询在途合并；`useRepoLinkAudit` 改为进入统计视图才跑且 6 并发；
+  - `probe.start()` 幂等、轮询在途合并；`useRepoLinkAudit` 改为进入统计中心才跑且 6 并发；
   - Dock 面板注册 `destroy` 且 `init` 幂等卸载（旧实现只 mount 不 unmount，插件重载后探测链/f`fs.watch` 残留）；
   - `GitExecutor` 增加销毁守卫、`LineStatsStore` 增加 `close()`、`CommitIndex` 落地段上限淘汰。
 - **刷新不白跑**（`useRefreshOps.handleRefresh`）：刷新前后各取一次工作区快照，仅在**确实变化**时才标脏 `log/branches/stash`。

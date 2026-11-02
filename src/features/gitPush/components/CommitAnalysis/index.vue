@@ -10,10 +10,10 @@
 
     <template v-else>
       <!-- 三视角切换条（三个视角同属一次 runCore 抓取，各占一个顶部入口会误以为要分别分析三次） -->
-      <AnalysisTabs
+      <SectionTabs
         v-model="activeTab"
-        :i18n="i18n"
-        :counts="tabCounts"
+        :items="tabItems"
+        :aria-label="i18n.analysisView"
       />
 
       <!-- 顶部工具条：状态文案 + 视角特有控件 + 分析按钮（三视角共用同一个运行入口） -->
@@ -272,10 +272,10 @@
 // gitPush 提交分析视图入口容器：三视角 Tab（提交概览 / 规则检查 / 行数排行）。
 // 三者同属一次 runCore 抓取（entries 供概览与规则检查，numstat/totalLines 供行数排行），
 // 故合并为一个视图 + 内部 Tab：运行按钮只有一个，Tab 切换只切视角不重跑 git。
-import type { AnalysisTabId } from "./AnalysisTabs.vue"
 import type { CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
 import type { StatCardItem } from "../common/StatCardGrid.vue"
+import type { SectionTabItem } from "../common/sectionTabs"
 import { computed, ref } from "vue"
 import Badge from "@/components/Badge.vue"
 import Button from "@/components/Button.vue"
@@ -284,12 +284,12 @@ import EmptyState from "../common/EmptyState.vue"
 import AnalysisGate from "../common/AnalysisGate.vue"
 import AnalysisToolbar from "../common/AnalysisToolbar.vue"
 import CommitCountSelect from "../common/CommitCountSelect.vue"
+import SectionTabs from "../common/SectionTabs.vue"
 import StatCardGrid from "../common/StatCardGrid.vue"
 import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
 import { buildYearOptions } from "../../utils"
-import AnalysisTabs from "./AnalysisTabs.vue"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"
 import ProjectRankingSection from "./ProjectRankingSection.vue"
@@ -300,6 +300,9 @@ import ProjectLineDetail from "../LineStats/ProjectLineDetail.vue"
 import ReasonDistributionSection from "../CommitRuleCheck/ReasonDistributionSection.vue"
 import RuleCheckOverview from "../CommitRuleCheck/RuleCheckOverview.vue"
 import ViolationListSection from "../CommitRuleCheck/ViolationListSection.vue"
+
+/** 提交分析内部视角 id（概览 / 规则检查 / 行数排行） */
+type AnalysisTabId = "overview" | "rulecheck" | "linestats"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -383,17 +386,15 @@ const tabRunning = computed(() =>
 )
 
 /**
- * Tab 角标计数：规则检查=违规数，行数排行=项目数。
- *
- * 概览视角刻意传 0（不显示角标）：其「总提交次数」已由总览 KPI 卡片承载，
- * 角标与 KPI 卡在概览视角下紧邻同屏，是同一数字的重复渲染。
- * 另两个角标保留 —— 它们提示「有多少待处理内容」，属行动信息而非纯计数。
+ * 三视角配置（label 已渲染为 i18n 文案，hint 为悬停说明）。
+ * 刻意不显示角标：三个视角的主计数均已由各自面板内的 KPI 卡 / 汇总卡 / 列表承担，
+ * Tab 角标与之同屏重复（同一数字渲染两次）。
  */
-const tabCounts = computed(() => ({
-  overview: 0,
-  rulecheck: props.ruleCheckStats.violationCount,
-  linestats: props.projectRanking.length,
-}))
+const tabItems = computed<SectionTabItem<AnalysisTabId>[]>(() => [
+  { id: "overview", label: props.i18n.analysisTabOverview, hint: props.i18n.analysisTabOverviewHint, icon: "chartTimelineVariant" },
+  { id: "rulecheck", label: props.i18n.analysisTabRuleCheck, hint: props.i18n.ruleCheckView, icon: "clipboardCheckOutline" },
+  { id: "linestats", label: props.i18n.analysisTabLineStats, hint: props.i18n.lineStatsView, icon: "codeTags" },
+])
 
 /** 运行按钮：按当前视角触发对应的抓取（行数排行抓 numstat，其余抓 commit log） */
 function runCurrentTab() {
@@ -499,6 +500,5 @@ function handleBatchSaved(projectIds: string[]) {
 @use "../../styles/CommitAnalysisPanel.scss";
 @use "../../styles/CommitRuleCheckPanel.scss";
 @use "../../styles/LineStatsPanel.scss";
-@use "../../styles/AnalysisTabs.scss";
 @use "../../styles/index.scss";
 </style>

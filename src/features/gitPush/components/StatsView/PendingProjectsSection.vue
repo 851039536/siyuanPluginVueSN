@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图待处理项目区块（全站唯一的待处理清单：表格含推送/拉取/变更三组计数 + 远程明细徽章） -->
+<!-- gitPush 统计中心 · 项目状态分区待处理项目区块（全站唯一的待处理清单：表格含推送/拉取/变更三组计数 + 远程明细徽章） -->
 <template>
   <StatsSection
     :title="i18n.pendingProjects"
@@ -12,9 +12,10 @@
       @view-project="emit('viewProject', $event)"
     >
       <template #head>
-        <span class="gps-table-cell gps-table-cell--num">{{ i18n.needsPushShort }}</span>
-        <!-- 表头："待拉取" -->
-        <span class="gps-table-cell gps-table-cell--num">{{ i18n.needsPullShort }}</span>
+        <!-- 表头："待推送提交"（列内为提交数徽章；与健康概览的「待推送项目」同词不同单位，故显式区分） -->
+        <span class="gps-table-cell gps-table-cell--num">{{ i18n.pendingAheadCol }}</span>
+        <!-- 表头："待拉取提交" -->
+        <span class="gps-table-cell gps-table-cell--num">{{ i18n.pendingBehindCol }}</span>
         <!-- 表头三列：已暂存/未暂存/未跟踪（field 同时作为 i18n 键） -->
         <span
           v-for="col in COUNT_COLUMNS"

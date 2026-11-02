@@ -18,11 +18,19 @@
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
       @open-web="openRepoWebUrl"
-      @open-consistency="showConsistencyDialog = true"
       @open-floating="openFloatingWindow"
     />
 
-    <!-- ========== 统计视图 ========== -->
+    <!-- 统计中心内部分区（项目状态 / 提交分析 / 代码报告；各页内部二级 Tab 保留） -->
+    <SectionTabs
+      v-if="isStatisticsView"
+      v-model="statisticsTab"
+      class="gp-statistics-tabs"
+      :items="statisticsTabItems"
+      :aria-label="i18n.statsGroup"
+    />
+
+    <!-- ========== 统计中心 · 项目状态 ========== -->
     <StatsPanel
       v-if="currentView === 'stats'"
       :i18n="i18n"
@@ -30,9 +38,14 @@
       :audit-rows="auditRows"
       :auditing="auditing"
       :refreshing="statsRefreshing"
+      :loading="statsLoading"
+      :loading-progress="statsLoadProgress"
+      :loaded="statsLoaded"
       :refreshed-at="statsRefreshedAt"
       @view-project="onViewProject"
       @refresh="refreshStatsData"
+      @load="loadStatsData"
+      @open-consistency="showConsistencyDialog = true"
     />
 
     <!-- ========== 操作日志视图 ========== -->
@@ -45,7 +58,7 @@
       @view-project="onViewProject"
     />
 
-    <!-- ========== 提交分析视图（三视角 Tab：提交概览 / 规则检查 / 行数排行） ========== -->
+    <!-- ========== 统计中心 · 提交分析（三视角 Tab：提交概览 / 规则检查 / 行数排行） ========== -->
     <CommitAnalysisPanel
       v-if="currentView === 'analysis'"
       :i18n="i18n"
@@ -82,7 +95,7 @@
       @close-line-detail="lineDetailProjectId = ''"
     />
 
-    <!-- ========== 代码统计报告视图 ========== -->
+    <!-- ========== 统计中心 · 代码报告 ========== -->
     <CodeReportPanel
       v-if="currentView === 'report'"
       :i18n="i18n"
@@ -292,6 +305,7 @@ import {
 import { getErrorMessage } from "@/utils/stringUtils"
 import { buildYearOptions, findProject } from "./utils"
 import { fmtTemplate } from "./utils/i18nFormat"
+import type { SectionTabItem } from "./components/common/sectionTabs"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import CategoryDialog from "./components/common/CategoryDialog.vue"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
@@ -302,6 +316,7 @@ import ListView from "./components/ListView/index.vue"
 import MarkdownPreviewDialog from "./components/common/MarkdownPreviewDialog.vue"
 import PanelHeader from "./components/common/PanelHeader.vue"
 import ScanImportDialog from "./components/common/ScanImportDialog.vue"
+import SectionTabs from "./components/common/SectionTabs.vue"
 import SettingsDialog from "./components/common/SettingsDialog.vue"
 import StatsPanel from "./components/StatsView/index.vue"
 import LogPanel from "./components/LogPanel/index.vue"
@@ -563,8 +578,33 @@ async function runProjectLoadBatch(
   })
 }
 
-/** 当前视图: 'list' | 'stats' | 'log' */
+/** 当前视图（顶层入口：列表 / 统计 / 日志 / 清理；统计中心内含 stats / analysis / report 三分区） */
 const currentView = ref<PanelView>("list")
+
+/** 统计中心覆盖的三个分区视图 */
+type StatisticsTabId = "stats" | "analysis" | "report"
+const STATISTICS_VIEWS: readonly StatisticsTabId[] = ["stats", "analysis", "report"]
+
+/** 当前是否处于统计中心（决定是否渲染内部分区 Tab 条） */
+const isStatisticsView = computed(() =>
+  (STATISTICS_VIEWS as readonly PanelView[]).includes(currentView.value),
+)
+
+/** 统计中心分区配置（label 已渲染为 i18n 文案） */
+const statisticsTabItems = computed<SectionTabItem<StatisticsTabId>[]>(() => [
+  { id: "stats", label: props.i18n.statsStatusTab, icon: "chartLine" },
+  { id: "analysis", label: props.i18n.analysisView, icon: "chartTimelineVariant" },
+  { id: "report", label: props.i18n.reportView, icon: "chartCandlestick" },
+])
+
+/** 统计中心分区的 v-model 代理：当前视图属于统计组时同步，否则回落项目状态 */
+const statisticsTab = computed<StatisticsTabId>({
+  get: () => (isStatisticsView.value ? currentView.value as StatisticsTabId : "stats"),
+  set: (view) => { currentView.value = view },
+})
+
+/** 项目状态是否已由用户手动加载（进入页面不自动加载；同一面板会话内保持） */
+const statsLoaded = ref(false)
 /** 日志视图首次读盘加载态（供 LogPanel 展示加载中占位，避免闪现空态） */
 const opLogsLoading = ref(false)
 /** 当前选中的分类 ID（空串 = 用户尚未选择，此时不加载任何项目；每次打开面板均从空串开始） */
@@ -838,7 +878,8 @@ const {
   audited,
   runAudit,
 } = useRepoLinkAudit(props.manager, projects, {
-  enabled: () => currentView.value === "stats",
+  // 手动加载模式：用户尚未点击加载时不跑链接审计（进入页面零自动 git 调用）
+  enabled: () => currentView.value === "stats" && statsLoaded.value,
   isPaused: () => gitOpsPaused.value,
 })
 
@@ -1231,6 +1272,9 @@ onUnmounted(() => {
   needsPullAborted = true
   // 预算定时器随卸载清理（避免卸载后回调仍触发）
   needsPullTimers.clearAll()
+  // 统计页后台状态加载：置中断标记并清理预算定时器（在飞 git 调用自然结束，剩余不再发起）
+  statsLoadAborted = true
+  statsLoadTimers.clearAll()
   // 探测持有 fs.watch 句柄与定时器，必须随组件卸载释放（否则多窗口/反复开关面板会累积泄漏）
   gitProbe.destroy()
 })
@@ -1304,11 +1348,139 @@ watch(activeCategory, async (catId) => {
   await loadCurrentCategoryList()
 })
 
-/** 补齐所有项目的统计最小数据集（统计视图与智能视图共用，未缓存的项目才入队）。
- * 开启干净工作区快速路径：批量场景下面向的大多是「无未提交变更」的项目，收益显著且失败可降级。 */
+/** 补齐所有项目的统计最小数据集（智能视图共用；统计页走 ensureStatsDataLoadedBudgeted）。
+ * 若统计页已在后台加载，先复用同一轮，避免两套批次重复遍历。 */
 async function ensureStatsDataLoaded() {
+  if (statsLoadFull) await statsLoadFull
   await ensureStatusFor(projects.value, true)
 }
+
+/**
+ * 统计页首屏渲染预算（ms）。
+ * 与「需拉取」视图同一取舍：全量 await 会让人误以为切视图卡死；
+ * 而完全不加载又会让统计数字明显偏低。折中是预算内完成的先参与渲染，其余后台补齐。
+ */
+const STATS_RENDER_BUDGET_MS = 800
+
+/** 统计页后台状态加载中（工具条状态文案 + 刷新按钮禁用） */
+const statsLoading = ref(false)
+/** 统计页后台加载进度（已尝试/总数；仅状态文案使用） */
+const statsLoadProgress = ref({ done: 0, total: 0 })
+/** 在途的全量加载 Promise（重复进入 / 智能视图复用，避免重复派发） */
+let statsLoadFull: Promise<void> | null = null
+/** 卸载标记：卸载后剩余项目不再发起 git 查询（已完成结果仍有效） */
+let statsLoadAborted = false
+/** 统计页预算定时器（与「需拉取」预算独立；随组件卸载清理） */
+const statsLoadTimers = new TimerRegistry()
+
+/** 预算等待器：返回可取消的 Promise，work 先完成时清掉定时器 */
+function createBudgetWaiter(ms: number): { promise: Promise<void>, cancel: () => void } {
+  let handle: TimerHandle | null = null
+  const promise = new Promise<void>((resolve) => {
+    handle = statsLoadTimers.setTimeout(resolve, ms)
+  })
+  return {
+    promise,
+    cancel: () => {
+      if (handle !== null) {
+        statsLoadTimers.clear(handle)
+        handle = null
+      }
+    },
+  }
+}
+
+/**
+ * 统计页状态加载（缓存优先 + 渲染预算）。
+ *
+ * 关键点：
+ * - 已有缓存的项目直接参与渲染，不等待任何 git；
+ * - 未缓存项目用**独立并发池**加载，不占 useBatchProgress 的全局批次锁
+ *   （否则切到列表/分析时，新批次会排队等这批长任务完成）；
+ * - 预算到期即返回（剩余项目后台继续），调用方据此立即恢复视图切换能力。
+ */
+async function ensureStatsDataLoadedBudgeted(budgetMs: number): Promise<void> {
+  if (gitOpsPaused.value) return
+  const list = projects.value
+  if (list.length === 0) return
+  markProjectsDisplayed(list.map((p) => p.id))
+
+  // 已有在途后台加载：复用同一轮，不再派发第二批
+  if (statsLoadFull) {
+    const waiter = createBudgetWaiter(budgetMs)
+    try {
+      await Promise.race([statsLoadFull, waiter.promise])
+    } finally {
+      waiter.cancel()
+    }
+    return
+  }
+
+  const pending = list.filter((p) => !(scheduler.has(p.id, "pushStatus") && scheduler.has(p.id, "workingTree")))
+  if (pending.length === 0) return
+
+  statsLoading.value = true
+  statsLoadProgress.value = { done: 0, total: pending.length }
+  const concurrency = Math.max(1, props.manager.getGitConcurrency())
+  const work = poolProcess(pending, concurrency, async (p) => {
+    // 暂停/卸载后不再发起剩余项目（已完成的结果仍保留）
+    if (gitOpsPaused.value || statsLoadAborted) return
+    try {
+      await ensureProjectStatus(p.id, true)
+    } catch {
+      // 单项目失败静默：不阻断其余项目（失败详情由卡片/统计刷新入口呈现）
+    } finally {
+      statsLoadProgress.value = {
+        ...statsLoadProgress.value,
+        done: statsLoadProgress.value.done + 1,
+      }
+    }
+  })
+    .catch((e: unknown) => {
+      console.warn("[gitPush] 项目状态后台加载失败", e)
+    })
+    .finally(() => {
+      statsLoading.value = false
+      if (statsLoadFull === work) statsLoadFull = null
+    })
+  statsLoadFull = work
+
+  const waiter = createBudgetWaiter(budgetMs)
+  try {
+    await Promise.race([work, waiter.promise])
+  } finally {
+    waiter.cancel()
+  }
+}
+
+/** 链接审计排队中（同一轮只排一次） */
+let statsAuditPending = false
+
+/**
+ * 链接一致性审计：不再进入即跑。
+ *
+ * 它与状态加载共用同一个本地 git 池，进入即跑会让首屏峰值从 2N 变成 3N，
+ * 且与状态查询互相抢槽位。这里改为等状态全量加载完成后再后台跑；
+ * 期间用户离开统计页则跳过（runAudit 的 enabled 门控也会兜底）。
+ */
+function scheduleStatsAudit(): void {
+  if (statsAuditPending) return
+  statsAuditPending = true
+  const full = statsLoadFull ?? Promise.resolve()
+  void (async () => {
+    try {
+      await full
+    } catch {
+      // 状态加载失败不影响审计（审计自身按项目隔离失败）
+    }
+    statsAuditPending = false
+    if (currentView.value !== "stats" || gitOpsPaused.value || audited.value) return
+    void runAudit().catch((e: unknown) => {
+      console.warn("[gitPush] 仓库链接一致性校验失败", e)
+    })
+  })()
+}
+
 /** 统计视图快照刷新中（工具条刷新按钮转圈禁用） */
 const statsRefreshing = ref(false)
 
@@ -1316,37 +1488,61 @@ const statsRefreshing = ref(false)
 const statsRefreshedAt = ref("")
 
 /**
- * 统计视图"刷新"：强制重查全部项目的状态最小数据集（pushStatus + workingTree）。
- * 与 ensureStatsDataLoaded 的区别是不走缓存短路——调度器 loadStatus 的 refresh 模式会强制重查，
+ * 手动加载项目状态（进入页面不自动加载）。
+ * 首次加载与全量刷新都由用户点击触发；同一面板会话内已加载过则再次进入直接展示缓存。
+ */
+async function loadStatsData() {
+  if (statsLoading.value || statsRefreshing.value) return
+  if (gitOpsPaused.value) {
+    showMessage(props.i18n.gitOpsPausedTip, 3000, "info")
+    return
+  }
+  statsLoaded.value = true
+  await ensureStatsDataLoadedBudgeted(STATS_RENDER_BUDGET_MS)
+  // 记录加载完成时间（工具条「上次刷新」文案）；预算到期后仍在后台补齐时等全量完成
+  const full = statsLoadFull
+  if (full) {
+    void full.then(() => { statsRefreshedAt.value = new Date().toISOString() })
+  } else {
+    statsRefreshedAt.value = new Date().toISOString()
+  }
+  scheduleStatsAudit()
+}
+
+/**
+ * 手动全量刷新（已加载状态下点击工具条）：强制重查全部项目的状态最小数据集。
+ * 与首次加载的区别是不走缓存短路——调度器 refresh 模式会强制重查，
  * 批内并发仍受 git 并发设置约束，进度经 runBatchWithProgress 复用头部旋转指示器。
  */
 async function refreshStatsData() {
   if (statsRefreshing.value || projects.value.length === 0) return
+  if (gitOpsPaused.value) {
+    showMessage(props.i18n.gitOpsPausedTip, 3000, "info")
+    return
+  }
+  statsLoaded.value = true
   statsRefreshing.value = true
   try {
+    // 后台首次加载仍在跑时先等它：同一批项目被两套批次重复遍历没有收益
+    const inFlight = statsLoadFull
+    if (inFlight) await inFlight
     markProjectsDisplayed(projects.value.map((p) => p.id))
     await runBatchWithProgress(projects.value, tf("refreshingLabel"), async (p) => {
       // 显式刷新同样开快速路径：批量重查全部项目，干净工作区的比例通常很高
       await scheduler.loadStatus(p.id, { mode: "refresh", fastWhenClean: true })
     })
     statsRefreshedAt.value = new Date().toISOString()
+    scheduleStatsAudit()
   } finally {
     statsRefreshing.value = false
   }
 }
 
-/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→全量统计；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
+/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→不自动加载（由用户点击）；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
 watch(currentView, async (view) => {
   if (view === "list") await loadCurrentCategoryList()
-  if (view === "stats") {
-    // 统计视图的平台矩阵需要一致性校验数据：进入时按需跑一次（约 6 路并发 git remote -v）。
-    // 只在「本次会话尚未成功校验」时跑，避免每次 stats/list 来回切换都重发 N 个进程
-    // （项目变更由 composable 内部的签名 watch 负责补跑）。
-    if (!audited.value) void runAudit().catch((e: unknown) => {
-      console.warn("[gitPush] 仓库链接一致性校验失败", e)
-    })
-    await ensureStatsDataLoaded()
-  }
+  // 项目状态采用手动加载模式：进入只展示会话内已有数据或未加载空态，
+  // 不发起任何 git（含链接审计）；由用户点击「加载项目状态」触发。
   if (view === "log") {
     opLogsLoading.value = true
     try {
@@ -1395,20 +1591,17 @@ watch(gitOpsPaused, async (paused) => {
     await ensureReport()
     return
   }
+  // 项目状态采用手动加载：恢复暂停不自动加载（需用户重新点击加载/刷新）
+  if (currentView.value === "stats") return
+  // 其余非列表视图没有需要补载的状态数据
+  if (currentView.value !== "list") return
   // 需拉取视图：暂停期间可能连 fetch 都没做过，恢复后走专用补载（含首次远程刷新）
   if (viewMode.value === "needsPull") {
     await ensureNeedsPullData()
     return
   }
-  // 统计视图 / 其他智能视图需要全量状态数据
-  if (currentView.value === "stats" || viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
-    // 暂停期间进入统计视图时 audit 被跳过（audited 仍为 false），恢复后必须补跑，
-    // 否则平台矩阵会一直显示「未校验」直到用户离开再进统计视图
-    if (currentView.value === "stats" && !audited.value) {
-      void runAudit().catch((e: unknown) => {
-        console.warn("[gitPush] 仓库链接一致性校验失败", e)
-      })
-    }
+  // 其他智能视图需要全量状态数据
+  if (viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
     await ensureStatsDataLoaded()
     return
   }

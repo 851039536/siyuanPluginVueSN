@@ -3,7 +3,7 @@
 
 // ── 仓库清理视图（RepoCleanPanel + CleanWizardDialog，前缀 grcp-）──
 
-// 面板根容器（六视图共用 panel-base：滚动 + 右侧留白）
+// 面板根容器（各视图共用 panel-base：滚动 + 右侧留白）
 .grcp-panel {
   @include panel-base;
 }

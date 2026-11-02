@@ -1,7 +1,7 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// ── 面板基座（六视图共用 panel-base：独立滚动 + 上下留白 + 右侧间距）──
+// ── 面板基座（各视图共用 panel-base：独立滚动 + 上下留白 + 右侧间距）──
 .gpa-panel {
   @include panel-base;
 }

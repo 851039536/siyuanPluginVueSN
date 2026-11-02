@@ -1,4 +1,4 @@
-// gitPush 统计视图（gps-）——三层信息架构：健康概览 / 待处理清单 / 平台矩阵。
+// gitPush 统计中心 · 项目状态分区（gps-）——三层信息架构：健康概览 / 待处理清单 / 平台矩阵。
 // 区块内部沿用共享 Tag / StatCardGrid 与 gps-table 表格；原 gps-bar-* 条形族与
 // gps-status-chip 双计数体系已随「概览/明细」分层重构移除（同源计数不再重复渲染）。
 @use "@/variables.scss" as *;
@@ -131,6 +131,13 @@
 // 标题计数徽章（等宽数字沿用原统计徽章观感）
 .gps-section-count {
   @include gp-section-count-base;
+}
+
+// 标题右侧操作（分支一致性分析入口）：推到行尾
+.gps-section-action {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
 }
 
 // ══ 覆盖率行内汇总（平台区块表头上方）══

@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图健康概览（推送状态分布条 + 精简 KPI 行，替代原「6 张 KPI 卡 + 4 个 chips」的双重计数堆叠） -->
+<!-- gitPush 统计中心 · 项目状态分区健康概览（推送状态分布条 + 精简 KPI 行，替代原「6 张 KPI 卡 + 4 个 chips」的双重计数堆叠） -->
 <template>
   <div class="gps-health">
     <!-- 推送状态分布：一条按项目数占比分段的横向条（四态合计 = 已判定项目数；detached / 检查失败的项目不计入），下方为四态图例 -->
@@ -68,10 +68,11 @@ const props = defineProps<{
   stats: StatsView
 }>()
 
-// 推送状态四态配置：顺序 = 分布条从左到右的分段顺序（问题态在前，一眼先看到需要处理的部分）
+// 推送状态四态配置：顺序 = 分布条从左到右的分段顺序（问题态在前，一眼先看到需要处理的部分）。
+// 计数单位为「项目数」，故标签显式带“项目”，与待处理表格的「提交数」列区分。
 const STATUS_SEGMENTS = [
-  { key: "ahead", cls: "ahead", labelKey: "needsPush" },
-  { key: "behind", cls: "behind", labelKey: "needsPullShort" },
+  { key: "ahead", cls: "ahead", labelKey: "healthAheadLabel" },
+  { key: "behind", cls: "behind", labelKey: "healthBehindLabel" },
   { key: "synced", cls: "synced", labelKey: "synced" },
   { key: "noRemote", cls: "none", labelKey: "noRemoteLabel" },
 ] as const

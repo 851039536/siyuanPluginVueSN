@@ -1,11 +1,6 @@
 <!-- gitPush 代码统计报告：代码热点分区（第一行热点表格 + 第二行统计摘要） -->
 <template>
   <div class="gpr-section">
-    <!-- 区块标题："代码热点分析"（榜单条目数由分区 Tab 角标承担；全量分析文件数见下方截断提示） -->
-    <div class="gpr-section-title">
-      {{ i18n.reportHeatTitle }}
-    </div>
-
     <!-- 空状态：范围内无文件 -->
     <EmptyState
       v-if="report.hotspots.length === 0"

@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图"全部正常"空态（勾选图标 + 文案） -->
+<!-- gitPush 统计中心 · 项目状态分区"全部正常"空态（勾选图标 + 文案） -->
 <template>
   <div class="gps-status-all-clear">
     <Icon

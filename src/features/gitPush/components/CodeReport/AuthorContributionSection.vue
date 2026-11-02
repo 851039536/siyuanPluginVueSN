@@ -27,8 +27,8 @@
             <th class="gpr-author-th">{{ i18n.reportAuthorCol }}</th>
             <!-- 表头："提交次数" -->
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportCommitsCol }}</th>
-            <!-- 表头："新增行数" -->
-            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportLinesCol }}</th>
+            <!-- 表头："新增行数"（区间内新增；与热点表的「代码行数」LOC 口径不同，勿复用同一 key） -->
+            <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportAddedLinesCol }}</th>
             <!-- 表头："删除行数" -->
             <th class="gpr-author-th gpr-author-th--num">{{ i18n.reportDeletedLinesCol }}</th>
             <!-- 表头："净增行数" -->

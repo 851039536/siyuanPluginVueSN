@@ -26,20 +26,20 @@
     </div>
 
     <div class="gp-header-btns">
-      <!-- 视图切换（六个视图按钮由 VIEW_TABS 配置驱动：差异仅 view/icon/labelKey 三项） -->
+      <!-- 视图切换（四个入口由 VIEW_GROUPS 配置驱动；统计组内含项目状态/提交分析/代码报告三视图） -->
       <div class="gp-view-toggle">
         <button
-          v-for="tab in VIEW_TABS"
-          :key="tab.view"
+          v-for="group in VIEW_GROUPS"
+          :key="group.key"
           class="vp-btn vp-btn--ghost vp-btn--sm gp-view-btn"
-          :class="{ active: currentView === tab.view }"
-          :title="i18n[tab.labelKey]"
-          :aria-label="i18n[tab.labelKey]"
-          :aria-pressed="currentView === tab.view"
-          @click="currentView = tab.view"
+          :class="{ active: isGroupActive(group) }"
+          :title="i18n[group.labelKey]"
+          :aria-label="i18n[group.labelKey]"
+          :aria-pressed="isGroupActive(group)"
+          @click="activateGroup(group)"
         >
           <Icon
-            :icon="tab.icon"
+            :icon="group.icon"
             height="12"
           />
         </button>
@@ -87,17 +87,6 @@
         </MenuPopover>
       </div>
       <span class="gp-header-sep" />
-      <!-- 按钮（tooltip："远程与本地一致性分析"） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
-        :title="i18n.consistencyTitle"
-        @click="emit('openConsistency')"
-      >
-        <Icon
-          icon="mdi:source-branch-check"
-          height="12"
-        />
-      </button>
       <!-- 按钮（tooltip："设置"） -->
       <button
         class="vp-btn vp-btn--ghost vp-btn--sm"
@@ -211,7 +200,6 @@ const showAddMenu = defineModel<boolean>("showAddMenu", { default: false })
 const searchQuery = defineModel<string>("searchQuery", { default: "" })
 
 const emit = defineEmits<{
-  openConsistency: []
   openSettings: []
   openAddProject: []
   openScan: []
@@ -219,20 +207,38 @@ const emit = defineEmits<{
   openFloating: []
 }>()
 
+/** 顶层视图入口（每个入口可覆盖多个 PanelView；统计组内含项目状态/提交分析/代码报告） */
+interface ViewGroup {
+  key: string
+  icon: string
+  labelKey: string
+  views: readonly PanelView[]
+}
+
 /**
- * 视图切换按钮配置（六个视图的唯一事实源）。
+ * 顶层视图入口配置（单一事实源）。
  * 顺序即渲染顺序；icon 为 Iconify 名（本处 raw <button> 直接用 Iconify，不受 IconKey 约束），
- * labelKey 指向 i18n 键并同时作为 hover 提示。
+ * labelKey 指向 i18n 键并同时作为 hover 提示与无障碍名称。
  */
-const VIEW_TABS: { view: PanelView, icon: string, labelKey: string }[] = [
-  { view: "list", icon: "mdi:view-list", labelKey: "listView" },
-  { view: "stats", icon: "mdi:chart-bar", labelKey: "statsView" },
+const VIEW_GROUPS: ViewGroup[] = [
+  { key: "list", icon: "mdi:view-list", labelKey: "listView", views: ["list"] },
   // 规则检查与行数排行为「提交分析」的内部 Tab，不再各占一个入口
-  { view: "analysis", icon: "mdi:chart-timeline-variant", labelKey: "analysisView" },
-  { view: "log", icon: "mdi:history", labelKey: "logView" },
-  { view: "report", icon: "mdi:chart-box", labelKey: "reportView" },
-  { view: "repoclean", icon: "mdi:broom", labelKey: "repoCleanView" },
+  { key: "stats", icon: "mdi:chart-bar", labelKey: "statsGroup", views: ["stats", "analysis", "report"] },
+  { key: "log", icon: "mdi:history", labelKey: "logView", views: ["log"] },
+  { key: "repoclean", icon: "mdi:broom", labelKey: "repoCleanView", views: ["repoclean"] },
 ]
+
+/** 当前视图是否落在该入口覆盖的视图集合内 */
+function isGroupActive(group: ViewGroup): boolean {
+  return group.views.includes(currentView.value)
+}
+
+/** 点击入口：组内已激活时保持当前子视图；跨组进入时落到组内首个视图 */
+function activateGroup(group: ViewGroup): void {
+  if (isGroupActive(group)) return
+  const first = group.views[0]
+  if (first) currentView.value = first
+}
 </script>
 
 <style lang="scss">

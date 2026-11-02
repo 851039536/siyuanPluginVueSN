@@ -71,7 +71,7 @@ export function analysisStatusText(opts: {
  * 统计视图快照状态文案统一："刷新中… / 上次刷新 xx / 共 n 个项目"。
  * 与 analysisStatusText 同源（都走 relativeTime 的三态收敛），差异仅在三态各自取用的 i18n 键：
  * 刷新中取 loadingLabel、有快照取 statsSnapshotAt、从未刷新取 statsProjectCount。
- * 抽出本函数消除 StatsToolbar 内联的同构三元表达式（原与该统一逻辑重复）。
+ * 统计视图经统一工具条（AnalysisToolbar 的 statusText 入口）消费本函数。
  */
 export function statsStatusText(opts: {
   refreshing: boolean

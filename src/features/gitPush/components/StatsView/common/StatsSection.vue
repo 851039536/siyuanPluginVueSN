@@ -1,4 +1,4 @@
-<!-- gitPush 统计视图区块通用包裹器（标题 + 计数徽章 + 操作插槽，与提交分析 .gpa-section 同构） -->
+<!-- gitPush 统计中心 · 项目状态分区区块通用包裹器（标题 + 计数徽章 + 操作插槽，与提交分析 .gpa-section 同构） -->
 <template>
   <div class="gps-section">
     <div class="gps-section-title">
@@ -12,7 +12,13 @@
         size="xsmall"
         shape="square"
       >{{ count }}</Tag>
-      <slot name="action" />
+      <!-- 标题右侧操作（如分支一致性分析入口）：推到行尾，避免与标题文字挤在一起 -->
+      <span
+        v-if="$slots.action"
+        class="gps-section-action"
+      >
+        <slot name="action" />
+      </span>
     </div>
     <slot />
   </div>

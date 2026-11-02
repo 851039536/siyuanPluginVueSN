@@ -1,9 +1,20 @@
-<!-- gitPush 统计视图平台区块（覆盖率行内汇总 + 一致性问题汇总 + 每项目平台配置/一致性矩阵） -->
+<!-- gitPush 统计中心 · 项目状态分区平台区块（覆盖率行内汇总 + 链接校验问题 + 每项目平台配置/一致性矩阵 + 分支一致性入口） -->
 <template>
   <StatsSection
     :title="i18n.platformStatus"
     :count="issueCount > 0 ? issueCount : undefined"
   >
+    <!-- 分支一致性分析入口（原在面板头部；属平台/远程状态范畴，收进本区块标题右侧） -->
+    <template #action>
+      <Button
+        variant="ghost"
+        size="xsmall"
+        icon="sourceBranchCheck"
+        :title="i18n.consistencyTitle"
+        :aria-label="i18n.consistencyTitle"
+        @click="emit('openConsistency')"
+      />
+    </template>
     <!-- 覆盖率行内汇总：原独立条形区块与矩阵表头重复表达同一份 PLATFORM_META，
          改为紧贴表头的一行紧凑统计（平台图标 + 已配置数 / 总数），矩阵单元格仍是明细真源 -->
     <div class="gps-coverage">
@@ -67,6 +78,7 @@
 import type { PlatformTableRowView, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, StatsView } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
+import Button from "@/components/Button.vue"
 import { PLATFORM_META } from "../../types"
 import AllClear from "./common/AllClear.vue"
 import PlatformTable from "./common/PlatformTable.vue"
@@ -84,6 +96,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   viewProject: [projectId: string]
+  /** 打开「分支一致性分析」弹窗（本地/远程分支 ahead-behind 比对，与链接校验口径不同） */
+  openConsistency: []
 }>()
 
 /** 覆盖率条目：四个平台（PLATFORM_META 投影）+ 多远程合计（key 同时作为图标色修饰类后缀） */

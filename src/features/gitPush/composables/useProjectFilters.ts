@@ -9,6 +9,7 @@ import {
 } from "vue"
 import { VIEW_MODE_META } from "../types"
 import { sortProjects } from "../utils"
+import { matchProjectQuery } from "../utils/projectSearch"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import type { TypedStorage } from "@/utils/typedStorage"
 
@@ -81,8 +82,13 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     showArchivedStorage.save(v).catch(() => {})
   })
 
+  /** 生效中的搜索词（与列表高亮、结果统计同源，避免 raw/debounced 两套时间基准） */
+  const activeQuery = computed(() => debouncedQuery.value.trim())
+  /** 是否处于搜索态 */
+  const searchActive = computed(() => activeQuery.value.length > 0)
+
   /**
-   * 按「命中项目集合」筛选并排序（needsPush / needsPull 等共用）。
+   * 按【命中项目集合】筛选并排序（needsPush / needsPull 等共用）。
    * 集合项只需含 project 字段，故对 GitProject 之外的项目项类型同样适用。
    */
   function pickByIds(source: ProjectItemListRef): GitProject[] {
@@ -106,27 +112,42 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     return []
   })
 
-  /** 统一筛选 + 分组管道 */
-  const filteredGroups = computed(() => {
-    const q = debouncedQuery.value.trim().toLowerCase()
+  /** 标签筛选（浏览与搜索共用，避免两条管道各自复制一份判断） */
+  function filterByTags(list: GitProject[]): GitProject[] {
     const tags = selectedTags.value
+    if (tags.size === 0) return list
+    return list.filter((p) => p.tags?.some((t) => tags.has(t)))
+  }
+
+  /**
+   * 全局搜索结果（搜索态唯一数据源）。
+   * 搜索是「查找器」而非「筛选器」：忽略当前智能视图与分类 TAB，并包含归档项目
+   * （归档结果在卡片上已有「归档」角标），避免"换个视图/关着归档就搜不到"。
+   */
+  const searchGroups = computed<ProjectGroup[]>(() => {
+    const q = activeQuery.value
+    return allGroups.value
+      .map((g) => ({
+        ...g,
+        projects: sortProjects(
+          filterByTags(g.projects).filter((p) => matchProjectQuery(p, q, g.category.name)),
+        ),
+      }))
+      .filter((g) => g.projects.length > 0)
+  })
+
+  /** 浏览态分组（无搜索词）：智能视图 / 分类 TAB 按原有范围过滤 */
+  const browseGroups = computed<ProjectGroup[]>(() => {
     const isArchivedView = viewMode.value === "archived"
 
-    const applyFilters = (list: GitProject[]) => {
+    const applyBrowseFilters = (list: GitProject[]) => {
       let r = list
       if (!isArchivedView && !showArchived.value) r = r.filter((p) => !p.archived)
-      if (tags.size > 0) r = r.filter((p) => p.tags?.some((t) => tags.has(t)))
-      if (q) r = r.filter((p) =>
-        p.name.toLowerCase().includes(q)
-        || p.path.toLowerCase().includes(q)
-        || (p.localPaths?.some((lp) => lp.toLowerCase().includes(q)))
-        || (p.tags?.some((t) => t.toLowerCase().includes(q))),
-      )
-      return r
+      return sortProjects(filterByTags(r))
     }
 
     if (viewMode.value !== "all") {
-      const filtered = applyFilters(smartViewProjects.value)
+      const filtered = applyBrowseFilters(smartViewProjects.value)
       if (filtered.length === 0) return []
       const meta = VIEW_MODE_META[viewMode.value]
       return [{
@@ -141,12 +162,18 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
       }]
     }
 
-    // 有搜索词时跨全部分类查找，不受当前分类 TAB 限制
-    const source = q ? allGroups.value : visibleGroups.value
-    return source
-      .map((g) => ({ ...g, projects: sortProjects(applyFilters(g.projects)) }))
+    return visibleGroups.value
+      .map((g) => ({ ...g, projects: applyBrowseFilters(g.projects) }))
       .filter((g) => g.projects.length > 0)
   })
+
+  /** 列表最终数据源：搜索态全局查找，浏览态按视图/分类过滤 */
+  const filteredGroups = computed(() => (searchActive.value ? searchGroups.value : browseGroups.value))
+
+  /** 搜索结果总数（搜索提示条与空态共用，避免各自 reduce 一遍） */
+  const searchResultCount = computed(() =>
+    searchGroups.value.reduce((sum, g) => sum + g.projects.length, 0),
+  )
 
   /** 切换标签筛选（创建新 Set 确保 Vue 响应式） */
   function toggleTag(tag: string) {
@@ -160,16 +187,26 @@ export function useProjectFilters(options: UseProjectFiltersOptions) {
     selectedTags.value = new Set()
   }
 
+  /** 清空搜索词（空态与搜索提示条的一键清除；防抖一并跳过，列表即时恢复） */
+  function clearSearch() {
+    searchTimers.clearAll()
+    debouncedQuery.value = ""
+    searchQuery.value = ""
+  }
+
   return {
     searchQuery,
+    activeQuery,
+    searchActive,
+    searchResultCount,
     viewMode,
     showArchived,
     gitOpsPaused,
     selectedTags,
-    smartViewProjects,
     filteredGroups,
     toggleTag,
     clearTags,
+    clearSearch,
     loadGitOpsPaused,
     loadShowArchived,
   }

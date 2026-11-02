@@ -13,6 +13,7 @@
       :i18n="i18n"
       :project-count="projectCount"
       :is-floating="isFloating"
+      :show-project-search="currentView === 'list'"
       :progress="progressState"
       @open-settings="openSettings"
       @open-add-project="showAddDialog = true"
@@ -137,8 +138,11 @@
       :empty-hint="listEmptyHint"
       :all-tags="allTags"
       :selected-tags="selectedTagList"
+      :search-active="searchActive"
+      :search-result-count="searchResultCount"
       @toggle-tag="toggleTag"
       @clear-tag-filter="clearTags"
+      @clear-search="clearSearch"
     />
     <!-- 列表视图结束 -->
 
@@ -621,6 +625,9 @@ const visibleGroups = computed(() => {
 
 const {
   searchQuery,
+  activeQuery,
+  searchActive,
+  searchResultCount,
   viewMode,
   showArchived,
   gitOpsPaused,
@@ -630,6 +637,7 @@ const {
   selectedTags,
   toggleTag,
   clearTags,
+  clearSearch,
 } = useProjectFilters({
   gitOpsPausedStorage: props.manager.storage.gitOpsPaused,
   showArchivedStorage: props.manager.storage.showArchived,
@@ -856,7 +864,8 @@ const listEmptyHint = computed(() => {
   if (projects.value.length === 0) return null
   // 已有命中项目 → 永远不要遮挡列表（无论后台是否还在检查）
   if (filteredGroups.value.length > 0) return null
-  if (searchQuery.value.trim()) return null
+  // 搜索态零命中：给出明确空态，而不是让列表区空白（历史 bug）
+  if (searchActive.value) return tf("searchNoMatch", activeQuery.value)
   if (viewMode.value === "needsPull") {
     // 四态：正在后台查远程 / 有项目结果不可信 / 已查完且确实为空 / 还没查过
     if (needsPullChecking.value) return tf("needsPullChecking")
@@ -1754,7 +1763,8 @@ provide(CARD_SERVICES_KEY, {
     customIdes,
     detectedTerminals,
     commitTemplates,
-    searchQuery,
+    // 卡片高亮与列表过滤共用防抖后的生效词，避免「高亮已变、列表未变」两套时间基准
+    searchQuery: activeQuery,
     compareBaseBranch,
   },
   records: {

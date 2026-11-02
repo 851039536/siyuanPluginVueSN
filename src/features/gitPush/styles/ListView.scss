@@ -1,0 +1,70 @@
+// gitPush 列表视图：全局搜索提示条 + 搜索结果分类分组头
+@use "@/variables.scss" as *;
+
+// ── 全局搜索提示条（说明搜索已忽略当前视图/分类）──
+.gp-search-scope {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  margin-bottom: $s-px6;
+  padding: $s-px2 $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface-light);
+  font-size: $t-2xs;
+  min-width: 0;
+}
+
+.gp-search-scope-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-search-scope-strong {
+  color: var(--b3-theme-on-surface);
+  font-weight: $fw-semibold;
+}
+
+.gp-search-scope-tag {
+  flex-shrink: 0;
+  color: var(--b3-theme-primary);
+}
+
+.gp-search-scope .si-button {
+  flex-shrink: 0;
+}
+
+// ── 搜索结果分类分组头（.gp-list 是 flex-wrap 容器，需整行占位以开启新行）──
+.gp-group-header {
+  flex: 0 0 100%;
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px2 0 $s-px2 $s-px3;
+  min-width: 0;
+}
+
+.gp-group-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gp-group-name {
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+}
+
+.gp-group-count {
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  color: var(--b3-theme-on-surface-light);
+  opacity: 0.5;
+}

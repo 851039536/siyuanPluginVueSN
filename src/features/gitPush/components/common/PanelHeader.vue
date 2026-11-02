@@ -156,18 +156,14 @@
         </MenuPopover>
       </div>
 
-      <!-- 项目搜索框（placeholder："搜索项目..."） -->
+      <!-- 项目搜索框（placeholder："搜索项目..."；仅在列表视图显示，避免其余视图出现无效输入框） -->
       <div
-        v-if="projectCount > 0"
+        v-if="showProjectSearch && projectCount > 0"
         class="gp-header-search"
       >
-        <Input
+        <SearchBox
           v-model="searchQuery"
-          size="xsmall"
           :placeholder="i18n.searchPlaceholder"
-          prefix-icon="search"
-          clearable
-          autocomplete="off"
         />
       </div>
     </div>
@@ -176,21 +172,24 @@
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue"
-import Input from "@/components/Input.vue"
 import { PLATFORM_META, type PanelView } from "../../types"
 import type { LoadProgress } from "../../types/batchProgress"
 import MenuPopover from "./MenuPopover.vue"
+import SearchBox from "./SearchBox.vue"
 
 withDefaults(defineProps<{
   i18n: Record<string, any>
   projectCount?: number
   /** 当前是否运行在独立浮动窗口中（浮动窗口内隐藏「在独立窗口打开」按钮） */
   isFloating?: boolean
+  /** 是否显示项目搜索框（仅列表视图消费搜索词，其余视图隐藏以免出现无效输入框） */
+  showProjectSearch?: boolean
   /** 批量操作进度状态（运行中/完成时在头部最右侧显示旋转进度指示器） */
   progress?: LoadProgress
 }>(), {
   projectCount: 0,
   isFloating: false,
+  showProjectSearch: false,
 })
 
 // ── 双向绑定（defineModel 收敛 props + update: emit 样板） ──

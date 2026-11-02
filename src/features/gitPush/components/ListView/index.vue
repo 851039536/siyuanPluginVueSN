@@ -15,15 +15,60 @@
     @clear-tag-filter="emit('clearTagFilter')"
   />
 
-  <!-- 空态提示：未选择分类时引导用户点选上方 TAB（首次进入不自动选择，避免加载全部项目的 git 状态）。
-       文案由 index.vue 计算（需综合 viewMode / searchQuery 判据），本组件保持纯渲染 -->
+  <!-- 全局搜索提示条：说明搜索已忽略当前视图/分类，并给出命中数与清除入口 -->
+  <div
+    v-if="searchActive"
+    class="gp-search-scope"
+  >
+    <Icon
+      icon="mdi:magnify"
+      height="12"
+    />
+    <span class="gp-search-scope-text">
+      <span class="gp-search-scope-strong">{{ i18n.searchScopeGlobal }}</span>
+      <!-- 命中数："命中 {0} 个项目" -->
+      · {{ i18n.searchResultCount.replace("{0}", String(searchResultCount)) }}
+      · {{ i18n.searchScopeIgnored }}
+    </span>
+    <!-- 标签叠加提示："已按 {0} 个标签筛选" -->
+    <span
+      v-if="selectedTags.length > 0"
+      class="gp-search-scope-tag"
+    >{{ i18n.searchTagFiltered.replace("{0}", String(selectedTags.length)) }}</span>
+    <!-- 一键清空搜索词 -->
+    <Button
+      variant="ghost"
+      size="xsmall"
+      dense
+      @click="emit('clearSearch')"
+    >
+      {{ i18n.clearSearch }}
+    </Button>
+  </div>
+
+  <!-- 空态提示：搜索零命中 / 未选择分类 / 智能视图为空。文案由 index.vue 计算，本组件保持纯渲染 -->
   <EmptyState
     v-if="emptyHint"
-    icon="mdi:folder-multiple-outline"
+    :icon="searchActive ? 'mdi:file-search-outline' : 'mdi:folder-multiple-outline'"
     :text="emptyHint"
-  />
+  >
+    <!-- 搜索零命中时提供一键清除（其余空态不需要操作） -->
+    <template
+      v-if="searchActive"
+      #action
+    >
+      <Button
+        class="gp-empty-action"
+        variant="ghost"
+        size="xsmall"
+        @click="emit('clearSearch')"
+      >
+        {{ i18n.clearSearch }}
+      </Button>
+    </template>
+  </EmptyState>
 
-  <!-- 分组循环卡片列表 -->
+  <!-- 分组循环卡片列表；搜索态跨分类命中，故补分类分组头 -->
   <div
     v-else
     class="gp-list"
@@ -32,6 +77,17 @@
       v-for="group in filteredGroups"
       :key="group.category.id"
     >
+      <div
+        v-if="searchActive"
+        class="gp-group-header"
+      >
+        <span
+          class="gp-group-dot"
+          :style="{ background: group.category.color }"
+        />
+        <span class="gp-group-name">{{ group.category.name }}</span>
+        <span class="gp-group-count">{{ group.projects.length }}</span>
+      </div>
       <ProjectCard
         v-for="project in group.projects"
         :key="project.id"
@@ -44,6 +100,8 @@
 <script setup lang="ts">
 // 列表视图容器（纯渲染，卡片数据与操作全部经 useCardServices 注入，无领域状态）
 import type { CardLayout, GroupedProject, ViewMode } from "../../types"
+import { Icon } from "@iconify/vue"
+import Button from "@/components/Button.vue"
 import EmptyState from "../common/EmptyState.vue"
 import ListViewToolbar from "./ListViewToolbar.vue"
 import ProjectCard from "./ProjectCard.vue"
@@ -59,11 +117,16 @@ defineProps<{
   selectedTags: string[]
   /** 空态提示文案（null = 不显示空态，走卡片列表；由 index.vue 综合视图模式与搜索词计算） */
   emptyHint: string | null
+  /** 是否处于全局搜索态（决定提示条、分组头与空态图标/操作） */
+  searchActive: boolean
+  /** 全局搜索命中总数（提示条展示） */
+  searchResultCount: number
 }>()
 
 const emit = defineEmits<{
   toggleTag: [tag: string]
   clearTagFilter: []
+  clearSearch: []
 }>()
 
 const viewMode = defineModel<ViewMode>("viewMode", { required: true })
@@ -78,4 +141,5 @@ provideCardAccordion(() => cardLayout.value)
 
 <style lang="scss">
 @use "@/index.scss" as *;
+@use "../../styles/ListView.scss";
 </style>

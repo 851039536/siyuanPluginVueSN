@@ -1,7 +1,7 @@
-<!-- gitPush 提交分析项目提交排行区块（徽章式排行行：名次 + 项目名 + 提交次数 + 占比，行可点击跳转） -->
+<!-- gitPush 项目提交排行（横向进度条行：长度=相对榜首，颜色=项目色；点击跳转列表视图） -->
 <template>
   <div class="gpa-section gpa-section--scroll">
-    <!-- 区块标题："项目提交排行"（数据层按 PROJECT_RANK_LIMIT 截断，截断时补一行说明） -->
+    <!-- 区块标题："项目提交排行"（数据层截断时补一行「仅显示前 N 名」） -->
     <div class="gpa-section-title">
       {{ i18n.analysisProjectRanking }}
       <!-- 截断提示：不加会让各行次数之和小于顶部「总提交次数」，看起来像统计出错 -->
@@ -20,23 +20,32 @@
         size="xsmall"
         dense
         :title="row.title"
+        :style="{
+          '--gpa-rank-pct': row.pct,
+          '--gpa-rank-color': row.color,
+        }"
         @click="emit('viewProject', row.id)"
       >
-        <!-- 名次（前三名主题色强调，其余弱化） -->
+        <!-- 底纹进度条：宽度=该项目次数 / 榜首次数（榜首满格，量级差异一眼可辨） -->
+        <span
+          class="gpa-rank-bar"
+          aria-hidden="true"
+        />
+        <!-- 名次（前三名用项目色强调，其余弱化） -->
         <span
           class="gpa-rank-no"
           :class="{ 'gpa-rank-no--top': i < 3 }"
         >{{ i + 1 }}</span>
+        <!-- 项目色点：与每日堆叠柱的图例同色，跨区块可对照 -->
+        <span
+          class="gpa-rank-dot"
+          aria-hidden="true"
+        />
         <!-- 项目名（自适应列宽，超长省略；完整名称与路径见 hover） -->
         <span class="gpa-rank-name">{{ row.name }}</span>
-        <!-- 提交次数徽章（走共享 Tag，与全站徽章同观感） -->
-        <Tag
-          class="gpa-rank-count"
-          variant="primary"
-          size="xsmall"
-          shape="square"
-        >{{ row.count }}</Tag>
-        <!-- 占比（等宽右对齐，纵向可比；tooltip 保留原始次数） -->
+        <!-- 提交次数（等宽数字，纵向可比） -->
+        <span class="gpa-rank-count">{{ row.count }}</span>
+        <!-- 占比（等宽右对齐；tooltip 保留原始次数） -->
         <span class="gpa-rank-share">{{ row.shareText }}</span>
       </Button>
     </div>
@@ -44,18 +53,20 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 提交分析项目提交排行区块（徽章式排行行，点击跳转列表视图）。
-// 原「细长条形 + 百分比」方案需用 calc 按比例推算轨道宽度，CSS calc 不支持百分比作为乘法因子，
-// 连续三轮出现宽度塌陷/右侧留空；改徽章式布局后宽度全部交给 grid 列模板，零宽度计算。
-import type { CommitAnalysisStats } from "../../types"
+// gitPush 项目提交排行：范围内条目 → 横向进度条行（条宽按榜首归一，颜色按名次分配，与趋势图同序同色）。
+// 刻意不用饼图（20 项不可读）与竖向柱（占高度且项目名要旋转）；条宽写百分比变量，不做 calc 乘法。
+import type { CommitAnalysisEntry } from "../../types"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
-import Tag from "@/components/Tag.vue"
+import {
+  PROJECT_RANK_LIMIT,
+  rankProjectsWithColors,
+} from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 提交分析聚合视图（取 projectRanking + totalCommits） */
-  stats: CommitAnalysisStats
+  /** 已按显示范围裁剪的提交条目（排行与趋势图同源） */
+  entries: CommitAnalysisEntry[]
 }>()
 
 const emit = defineEmits<{
@@ -68,32 +79,43 @@ function formatShare(share: number): string {
   return `${share.toFixed(1).replace(/\.0$/, "")}%`
 }
 
+/** 排行结果：次数 + 占总提交百分比 + 相对榜首条宽 + 按名次分配的色板 */
+const ranking = computed(() => {
+  const {
+    rows,
+    totalGroups,
+  } = rankProjectsWithColors(props.entries, PROJECT_RANK_LIMIT)
+  const total = props.entries.length || 1
+  const max = rows[0]?.count || 1
+  return {
+    totalGroups,
+    rows: rows.map((r) => {
+      const shareText = formatShare((r.count / total) * 100)
+      return {
+        ...r,
+        pct: `${(r.count / max) * 100}%`,
+        shareText,
+        title: String(props.i18n.analysisShareTooltip || "")
+          .replace("{0}", String(r.count))
+          .replace("{1}", shareText),
+      }
+    }),
+  }
+})
+
+const rows = computed(() => ranking.value.rows)
+
 /**
  * 截断提示文案（未截断时为空串不渲染）。
  * 数据层按 PROJECT_RANK_LIMIT 截断，若此处不交代，用户会看到「各行次数之和 < 总提交次数」而误以为统计错误。
  */
 const truncatedHint = computed(() => {
-  const shown = props.stats.projectRanking.length
-  const total = props.stats.projectRankingTotal
+  const shown = ranking.value.rows.length
+  const total = ranking.value.totalGroups
   if (total <= shown) return ""
   return String(props.i18n.analysisRankTruncated || "")
     .replace("{0}", String(shown))
     .replace("{1}", String(total))
-})
-
-/** 排行行视图：提交次数 + 占总提交百分比（tooltip 保留"次数 + 占比"完整口径） */
-const rows = computed(() => {
-  const total = props.stats.totalCommits || 1
-  return props.stats.projectRanking.map((r) => {
-    const shareText = formatShare((r.count / total) * 100)
-    return {
-      ...r,
-      shareText,
-      title: String(props.i18n.analysisShareTooltip || "")
-        .replace("{0}", String(r.count))
-        .replace("{1}", shareText),
-    }
-  })
 })
 </script>
 

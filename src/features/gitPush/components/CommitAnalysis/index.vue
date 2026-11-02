@@ -105,34 +105,53 @@
 
         <!-- ═══ 视角 1：提交概览 ═══ -->
         <template v-if="activeTab === 'overview'">
-          <!-- 总览卡片：总提交次数 / 已分析项目 -->
+          <!-- 总览卡片：范围内提交数 / 已分析项目 / 活跃天数 / 日均提交 -->
           <StatCardGrid
             :min-width="110"
             :cards="overviewCards"
           />
 
-          <!-- 空状态：分析完成但无提交数据 -->
+          <!-- 范围口径：排行、趋势图与 KPI 共用同一份范围内条目 -->
+          <p class="gpa-scope-note">
+            {{ rangeScopeText }}
+          </p>
+
+          <!-- 空状态：所选范围内无提交数据 -->
           <EmptyState
-            v-if="stats.totalCommits === 0"
+            v-if="rangeEntries.length === 0"
             icon="mdi:source-commit"
-            :text="i18n.analysisNoData"
+            :text="i18n.analysisTrendNoData"
           />
 
           <template v-else>
-            <!-- 项目提交排行（原与「最近提交记录」同排双栏，后者已移除 ⇒ 改为全宽独占一行） -->
+            <!-- 每日项目提交趋势：与热力图同粒度的桶 × 项目堆叠柱（点击柱子联动下方明细） -->
+            <ProjectCommitTrend
+              :i18n="i18n"
+              :entries="rangeEntries"
+              :start="rangeBounds.start"
+              :end="rangeBounds.end"
+              :granularity="rangeGranularity"
+              :week-start="viewSettings.weekStart"
+              @pick="onTrendPick"
+            />
+
+            <!-- 项目提交排行：横向进度条（范围内口径，与趋势图同源） -->
             <ProjectRankingSection
               :i18n="i18n"
-              :stats="stats"
+              :entries="rangeEntries"
               @view-project="emit('viewProject', $event)"
             />
 
             <!-- 提交热力图 / 日历（日粒度提交分布的唯一出口：范围/视图/周起始/颜色/分档可配；点击格子展开当日明细） -->
-            <HeatmapCalendarSection
-              :i18n="i18n"
-              :stats="stats"
-              :view-settings="viewSettings"
-              @view-project="emit('viewProject', $event)"
-            />
+            <div ref="heatmapWrapRef">
+              <HeatmapCalendarSection
+                :i18n="i18n"
+                :stats="stats"
+                :view-settings="viewSettings"
+                :focus-request="focusRequest"
+                @view-project="emit('viewProject', $event)"
+              />
+            </div>
           </template>
         </template>
 
@@ -274,9 +293,10 @@
 // 故合并为一个视图 + 内部 Tab：运行按钮只有一个，Tab 切换只切视角不重跑 git。
 import type { CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
+import type { HeatBucketSpan } from "../../utils"
 import type { StatCardItem } from "../common/StatCardGrid.vue"
 import type { SectionTabItem } from "../common/sectionTabs"
-import { computed, ref } from "vue"
+import { computed, nextTick, ref } from "vue"
 import Badge from "@/components/Badge.vue"
 import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
@@ -289,9 +309,17 @@ import StatCardGrid from "../common/StatCardGrid.vue"
 import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
-import { buildYearOptions } from "../../utils"
+import {
+  buildYearOptions,
+  filterEntriesByRange,
+  formatLocalDate,
+  inclusiveDays,
+  resolveAnalysisRange,
+  resolveHeatGranularity,
+} from "../../utils"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"
+import ProjectCommitTrend from "./ProjectCommitTrend.vue"
 import ProjectRankingSection from "./ProjectRankingSection.vue"
 import ExtFilterDialog from "../LineStats/ExtFilterDialog.vue"
 import FetchFailuresDialog from "../LineStats/FetchFailuresDialog.vue"
@@ -405,11 +433,94 @@ function runCurrentTab() {
 /** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（供设置弹窗与设置汇总弹窗共用逻辑） */
 const yearOptions = computed(() => buildYearOptions(props.stats.entries, props.viewSettings.range))
 
-/** 总览卡片：总提交次数 / 已分析项目（失败计数由 AnalysisGate 统一承担，不再重复渲染） */
-const overviewCards = computed<StatCardItem[]>(() => [
-  { key: "commits", value: props.stats.totalCommits, label: props.i18n.analysisTotalCommits },
-  { key: "covered", value: `${props.stats.analyzedCount} / ${props.stats.projectCount}`, label: props.i18n.analysisCoveredProjects },
-])
+/** 显示范围起止（KPI / 排行 / 趋势图共用，与热力图同一份 viewSettings.range） */
+const rangeBounds = computed(() => {
+  const {
+    start,
+    end,
+  } = resolveAnalysisRange(props.viewSettings.range)
+  return {
+    start: formatLocalDate(start),
+    end: formatLocalDate(end),
+  }
+})
+
+/** 范围内条目（排行与趋势图的唯一数据源；热力图内部按同一范围过滤） */
+const rangeEntries = computed(() =>
+  filterEntriesByRange(props.stats.entries, rangeBounds.value.start, rangeBounds.value.end),
+)
+
+/** 趋势图粒度：与热力图同一条「跨度 → 日/周/月」换算 */
+const rangeGranularity = computed(() => resolveHeatGranularity(rangeBounds.value.start, rangeBounds.value.end))
+
+/** 范围天数（闭区间）与活跃天数（有提交的本地日期数） */
+const rangeDaySpan = computed(() => inclusiveDays(rangeBounds.value.start, rangeBounds.value.end))
+const rangeActiveDays = computed(() =>
+  new Set(rangeEntries.value.map((e) => formatLocalDate(new Date(e.date)))).size,
+)
+
+/** 抓取条数口径（数据只覆盖每项目最近 N 条；与范围一起交代，避免 KPI/排行被误读为全量） */
+const capHint = computed(() =>
+  props.commitCount === "all"
+    ? String(props.i18n.analysisTrendCapAll || "")
+    : String(props.i18n.analysisTrendCapHint || "").replace("{0}", String(props.commitCount)),
+)
+
+/** 范围口径说明（KPI 卡片下方一行：范围 + 抓取条数上限） */
+const rangeScopeText = computed(() => {
+  const scope = String(props.i18n.analysisScopeNote || "")
+    .replace("{0}", rangeBounds.value.start)
+    .replace("{1}", rangeBounds.value.end)
+  return [scope, capHint.value].filter(Boolean).join(" · ")
+})
+
+/** 总览卡片：范围内提交数 / 已分析项目 / 活跃天数 / 日均提交（失败计数由 AnalysisGate 统一承担） */
+const overviewCards = computed<StatCardItem[]>(() => {
+  const total = rangeEntries.value.length
+  const avg = rangeDaySpan.value > 0 ? (total / rangeDaySpan.value).toFixed(1) : "0"
+  return [
+    {
+      key: "commits",
+      value: total,
+      label: props.i18n.analysisTotalCommits,
+    },
+    {
+      key: "covered",
+      value: `${props.stats.analyzedCount} / ${props.stats.projectCount}`,
+      label: props.i18n.analysisCoveredProjects,
+    },
+    {
+      key: "activeDays",
+      value: rangeActiveDays.value,
+      label: props.i18n.analysisKpiActiveDays,
+    },
+    {
+      key: "avgDaily",
+      value: avg,
+      label: props.i18n.analysisKpiAvgDaily,
+    },
+  ]
+})
+
+// ── 趋势图 → 热力图选区联动 ──
+
+/** 热力图区块锚点（点击柱子后滚到区块底部，让当日/区间明细可见） */
+const heatmapWrapRef = ref<HTMLElement | null>(null)
+
+/** 选区请求（nonce 保证连续点击同一格也能触发监听） */
+const focusRequest = ref<{ span: HeatBucketSpan, nonce: number } | null>(null)
+let focusNonce = 0
+
+function onTrendPick(span: HeatBucketSpan) {
+  focusRequest.value = {
+    span: { ...span },
+    nonce: ++focusNonce,
+  }
+  void nextTick(() => heatmapWrapRef.value?.scrollIntoView({
+    behavior: "smooth",
+    block: "end",
+  }))
+}
 
 /** 行数汇总卡片：项目数 / 文件数 / 当前总行数（全部为存量口径；增删净已随列表列一并移除） */
 const summaryCards = computed<StatCardItem[]>(() => {

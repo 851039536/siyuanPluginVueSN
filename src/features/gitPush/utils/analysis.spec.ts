@@ -10,13 +10,18 @@ import {
   buildHeatBucketCell,
   buildHeatBuckets,
   buildHeatMetricMap,
+  buildProjectSeries,
   computeHeatThresholds,
+  filterEntriesByRange,
   fixedHeatThresholds,
   HEAT_SCALE_QUANTILES,
   heatBucketKey,
   heatLevel,
+  inclusiveDays,
   isDayKeyInBucket,
+  PROJECT_COMMIT_COLORS,
   rankByCountWithTotal,
+  rankProjectsWithColors,
   resolveHeatGranularity,
   summarizeCommitRange,
   summarizeHeatRange,
@@ -591,5 +596,146 @@ describe("buildHeatBucketCell（格子 tooltip 随粒度变）", () => {
     const low = buildHeatBucketCell(i18n, { start: "2026-08-01", end: "2026-08-31" }, 1, "#3b82f6", "month")
     const high = buildHeatBucketCell(i18n, { start: "2026-08-01", end: "2026-08-31" }, 100, "#3b82f6", "month")
     expect(low.style.background).not.toBe(high.style.background)
+  })
+})
+
+describe("filterEntriesByRange（排行/趋势图的范围口径）", () => {
+  function entry(date: string, projectId = "p1") {
+    return {
+      projectId,
+      projectName: projectId,
+      hash: `${projectId}-${date}`,
+      message: "feat: x",
+      author: "alice",
+      date,
+    }
+  }
+
+  it("闭区间：起止当天都包含，范围外排除", () => {
+    const entries = ["2026-08-02", "2026-08-03", "2026-08-05", "2026-08-06"].map((d) => entry(d))
+    expect(filterEntriesByRange(entries, "2026-08-03", "2026-08-05").map((e) => e.date))
+      .toEqual(["2026-08-03", "2026-08-05"])
+  })
+
+  it("无效日期跳过（不因 NaN 落入任何范围）", () => {
+    const entries = [entry("not-a-date"), entry("2026-08-03")]
+    expect(filterEntriesByRange(entries, "2026-08-01", "2026-08-31")).toHaveLength(1)
+  })
+})
+
+describe("buildProjectSeries（每日项目提交堆叠柱的数据源）", () => {
+  function entry(date: string, projectId: string, projectName = projectId) {
+    return {
+      projectId,
+      projectName,
+      hash: `${projectId}-${date}`,
+      message: "feat: x",
+      author: "alice",
+      date,
+    }
+  }
+
+  it("按项目升序聚合、Top N 之外合并为「其他」，totals 逐桶守恒", () => {
+    const entries = [
+      entry("2026-08-03T09:00:00", "p1"),
+      entry("2026-08-03T10:00:00", "p1"),
+      entry("2026-08-04T09:00:00", "p1"),
+      entry("2026-08-04T10:00:00", "p2"),
+      entry("2026-08-05T09:00:00", "p2"),
+      entry("2026-08-05T10:00:00", "p3"),
+      // 范围外：不得进入任何桶
+      entry("2026-08-06T10:00:00", "p3"),
+    ]
+    const series = buildProjectSeries(entries, "2026-08-03", "2026-08-05", "day", 1, 2)
+
+    expect(series.buckets.map((b) => b.start)).toEqual(["2026-08-03", "2026-08-04", "2026-08-05"])
+    expect(series.projects.map((p) => p.id)).toEqual(["p1", "p2"])
+    // 色板按名次分配：Top 项目与排行条同序同色
+    expect(series.projects.map((p) => p.color)).toEqual(PROJECT_COMMIT_COLORS.slice(0, 2))
+    expect(series.projects[0].counts).toEqual([2, 1, 0])
+    expect(series.projects[0].total).toBe(3)
+    expect(series.projects[1].counts).toEqual([0, 1, 1])
+    expect(series.otherCounts).toEqual([0, 0, 1])
+    expect(series.otherTotal).toBe(1)
+    expect(series.totals).toEqual([2, 2, 2])
+    expect(series.totals.reduce((sum, n) => sum + n, 0)).toBe(6)
+  })
+
+  it("首桶被范围截断时仍能归桶（月粒度从月中开始）", () => {
+    const entries = [
+      entry("2026-08-20T09:00:00", "p1"),
+      entry("2026-09-05T09:00:00", "p1"),
+    ]
+    const series = buildProjectSeries(entries, "2026-08-15", "2026-09-10", "month", 1, 8)
+    expect(series.buckets).toHaveLength(2)
+    expect(series.buckets[0]).toEqual({ start: "2026-08-15", end: "2026-08-31" })
+    expect(series.projects[0].counts).toEqual([1, 1])
+  })
+
+  it("周粒度首桶跨月截断时仍能归桶", () => {
+    const entries = [
+      entry("2025-01-02T09:00:00", "p1"),
+      entry("2025-01-08T09:00:00", "p1"),
+    ]
+    // 2025-01-01 是周三；weekStart=1 时首桶实际从 2024-12-30 起，范围截断到 01-01
+    const series = buildProjectSeries(entries, "2025-01-01", "2025-01-20", "week", 1, 8)
+    expect(series.buckets[0]).toEqual({ start: "2025-01-01", end: "2025-01-05" })
+    expect(series.projects[0].counts[0]).toBe(1)
+  })
+
+  it("无条目时返回空项目、零 totals（不抛错）", () => {
+    const series = buildProjectSeries([], "2026-08-03", "2026-08-05", "day", 1, 8)
+    expect(series.projects).toEqual([])
+    expect(series.otherTotal).toBe(0)
+    expect(series.totals).toEqual([0, 0, 0])
+  })
+})
+
+describe("rankProjectsWithColors（排行条与堆叠柱的共享排序/色板）", () => {
+  function entry(projectId: string, projectName = projectId) {
+    return {
+      projectId,
+      projectName,
+      hash: `${projectId}-${projectName}`,
+      message: "feat: x",
+      author: "alice",
+      date: "2026-08-03T09:00:00",
+    }
+  }
+
+  it("按次数降序，Top N 按名次分配异色", () => {
+    const entries = [
+      entry("p1"),
+      entry("p1"),
+      entry("p1"),
+      entry("p2"),
+      entry("p2"),
+      entry("p3"),
+    ]
+    const { rows, totalGroups } = rankProjectsWithColors(entries, 3)
+    expect(rows.map((r) => r.id)).toEqual(["p1", "p2", "p3"])
+    expect(rows.map((r) => r.count)).toEqual([3, 2, 1])
+    expect(rows.map((r) => r.color)).toEqual(PROJECT_COMMIT_COLORS.slice(0, 3))
+    expect(totalGroups).toBe(3)
+  })
+
+  it("同次数按名称稳定排序（排行与趋势图同序的前提）", () => {
+    const entries = [entry("b-id", "beta"), entry("a-id", "alpha")]
+    const { rows } = rankProjectsWithColors(entries, 10)
+    expect(rows.map((r) => r.name)).toEqual(["alpha", "beta"])
+  })
+
+  it("超出上限时 totalGroups 报截断前完整分组数", () => {
+    const entries = Array.from({ length: 25 }, (_, i) => entry(`p${i}`))
+    const { rows, totalGroups } = rankProjectsWithColors(entries, 20)
+    expect(rows).toHaveLength(20)
+    expect(totalGroups).toBe(25)
+  })
+})
+
+describe("inclusiveDays", () => {
+  it("闭区间天数（同一天 = 1 天）", () => {
+    expect(inclusiveDays("2026-08-03", "2026-08-03")).toBe(1)
+    expect(inclusiveDays("2026-08-01", "2026-08-31")).toBe(31)
   })
 })

@@ -75,7 +75,7 @@ function dayIndex(key: string): number {
 }
 
 /** 闭区间天数（同一天 = 1 天） */
-function inclusiveDays(start: string, end: string): number {
+export function inclusiveDays(start: string, end: string): number {
   return dayIndex(end) - dayIndex(start) + 1
 }
 
@@ -194,6 +194,177 @@ export function buildHeatMetricMap(
   if (metric === "commits") return counts
   for (const [key, set] of distinct) counts.set(key, set.size)
   return counts
+}
+
+// ── 项目提交趋势（排行条形 / 每日堆叠柱共用）──
+
+/** 项目排行显示上限（超出时列表内部滚动，并在标题旁提示截断） */
+export const PROJECT_RANK_LIMIT = 20
+
+/** 项目配色（堆叠柱/排行条/当日分布共用；按名次分配，保证 Top 10 异色） */
+export const PROJECT_COMMIT_COLORS = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+  "#06b6d4",
+  "#84cc16",
+] as const
+
+/** 「其他项目」聚合段颜色（中性灰，避免与具体项目色混淆） */
+export const OTHER_PROJECT_COLOR = "#94a3b8"
+
+/** 项目提交排行行（次数 + 按名次分配的稳定可辨色） */
+export interface ProjectRankItem {
+  id: string
+  name: string
+  count: number
+  color: string
+}
+
+/**
+ * 项目提交排行：按次数降序、同次数按名称稳定排序，色板**按名次**分配。
+ *
+ * 不用 id 哈希取色：10 色板下 Top 8 撞色概率接近 98%，堆叠柱会失去可辨性；
+ * 按名次分配保证 Top 10 异色，且与趋势图（同一排序）逐项同色。
+ */
+export function rankProjectsWithColors(
+  entries: CommitAnalysisEntry[],
+  limit: number,
+): { rows: ProjectRankItem[], totalGroups: number } {
+  const map = new Map<string, { name: string, count: number }>()
+  for (const e of entries) {
+    if (!e.projectId) continue
+    const item = map.get(e.projectId)
+    if (item) {
+      item.count++
+      if (!item.name && e.projectName) item.name = e.projectName
+    }
+    else {
+      map.set(e.projectId, { name: e.projectName || e.projectId, count: 1 })
+    }
+  }
+  const sorted = [...map.entries()]
+    .map(([id, value]) => ({ id, ...value }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  return {
+    rows: sorted.slice(0, Math.max(0, limit)).map((row, i) => ({
+      ...row,
+      color: PROJECT_COMMIT_COLORS[i % PROJECT_COMMIT_COLORS.length],
+    })),
+    totalGroups: sorted.length,
+  }
+}
+
+/** 按本地日期把条目裁剪到闭区间 [start, end]（热力图/排行/趋势图统一口径） */
+export function filterEntriesByRange(
+  entries: CommitAnalysisEntry[],
+  start: string,
+  end: string,
+): CommitAnalysisEntry[] {
+  return entries.filter((e) => {
+    const d = new Date(e.date)
+    if (Number.isNaN(d.getTime())) return false
+    const key = formatLocalDate(d)
+    return key >= start && key <= end
+  })
+}
+
+/** 单个项目在趋势图上的计数序列（数组下标与 buckets 一一对应） */
+export interface ProjectCommitSeriesItem {
+  id: string
+  name: string
+  color: string
+  counts: number[]
+  total: number
+}
+
+/** 按项目拆分的提交趋势（堆叠柱与排行条共用的聚合结果） */
+export interface ProjectCommitSeries {
+  /** 时间桶（首尾可能被范围边界截断） */
+  buckets: HeatBucketSpan[]
+  /** Top N 项目（按范围内总数降序） */
+  projects: ProjectCommitSeriesItem[]
+  /** 其余项目合并后的逐桶计数 */
+  otherCounts: number[]
+  /** 其余项目合计 */
+  otherTotal: number
+  /** 每个桶的提交总数（各项目之和） */
+  totals: number[]
+}
+
+/**
+ * 按「时间桶 × 项目」聚合提交条目（每日项目提交堆叠柱的唯一数据源）。
+ *
+ * 桶与热力图完全同源（buildHeatBuckets + resolveHeatGranularity），
+ * 故趋势图与热力图对「一段时间」的划分一致；Top N 之外的项目合并为「其他」，
+ * 既保留每日总量，又避免几十个项目把图例和堆叠段压成不可读。
+ */
+export function buildProjectSeries(
+  entries: CommitAnalysisEntry[],
+  start: string,
+  end: string,
+  granularity: CommitHeatGranularity,
+  weekStart: 0 | 1 = 1,
+  topN = 8,
+): ProjectCommitSeries {
+  const buckets = buildHeatBuckets(granularity, start, end, weekStart)
+  // 桶键按「桶首日再归桶」得出：首桶被范围截断时 span.start 已不是桶键，直接 get(span.start) 会漏掉首桶
+  const indexByKey = new Map(buckets.map((b, i) => [heatBucketKey(b.start, granularity, weekStart), i]))
+  const countsById = new Map<string, number[]>()
+  const nameById = new Map<string, string>()
+
+  for (const e of filterEntriesByRange(entries, start, end)) {
+    const key = heatBucketKey(formatLocalDate(new Date(e.date)), granularity, weekStart)
+    const idx = indexByKey.get(key)
+    if (idx === undefined) continue
+    let counts = countsById.get(e.projectId)
+    if (!counts) {
+      counts = Array.from({ length: buckets.length }, () => 0)
+      countsById.set(e.projectId, counts)
+    }
+    counts[idx]++
+    if (!nameById.has(e.projectId) && e.projectName) nameById.set(e.projectId, e.projectName)
+  }
+
+  const all = [...countsById.entries()]
+    .map(([id, counts]) => ({
+      id,
+      name: nameById.get(id) || id,
+      counts,
+      total: counts.reduce((sum, n) => sum + n, 0),
+    }))
+    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
+
+  // 色板按名次分配（与 rankProjectsWithColors 同一排序），保证 Top N 异色且跨区块同色
+  const projects = all.slice(0, Math.max(0, topN)).map((item, i) => ({
+    ...item,
+    color: PROJECT_COMMIT_COLORS[i % PROJECT_COMMIT_COLORS.length],
+  }))
+  const otherCounts = Array.from({ length: buckets.length }, () => 0)
+  let otherTotal = 0
+  for (const item of all.slice(projects.length)) {
+    otherTotal += item.total
+    for (const [i, count] of item.counts.entries()) otherCounts[i] += count
+  }
+
+  const totals = Array.from({ length: buckets.length }, () => 0)
+  for (const item of projects) {
+    for (const [i, count] of item.counts.entries()) totals[i] += count
+  }
+  for (const [i, count] of otherCounts.entries()) totals[i] += count
+
+  return {
+    buckets,
+    projects,
+    otherCounts,
+    otherTotal,
+    totals,
+  }
 }
 
 /**
@@ -497,12 +668,7 @@ export function summarizeCommitRange(
   end: string,
   rankLimit = 3,
 ): CommitRangeSummary {
-  const inRange = entries.filter((e) => {
-    const d = new Date(e.date)
-    if (Number.isNaN(d.getTime())) return false
-    const key = formatLocalDate(d)
-    return key >= start && key <= end
-  })
+  const inRange = filterEntriesByRange(entries, start, end)
 
   const byDay = new Map<string, number>()
   for (const e of inRange) {

@@ -93,3 +93,55 @@
 .gpa-day-msg {
   @include text-ellipsis;
 }
+
+// ── 项目分布：当日提交按项目聚合的堆叠条 + 图例（Top 5 + 其他）──
+.gpa-day-projects {
+  margin-bottom: $s-2;
+}
+
+// 整条堆叠条：各段宽度 = 该项目当日次数 / 当日总数，颜色与排行条/趋势图同源
+.gpa-day-project-bar {
+  display: flex;
+  height: 6px;
+  margin-bottom: $s-1;
+  overflow: hidden;
+  border-radius: $r-full;
+  background: var(--b3-theme-surface);
+}
+
+.gpa-day-project-seg {
+  height: 100%;
+  min-width: 2px; // 极少次数的项目也保留可见宽度
+}
+
+.gpa-day-project-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-1 $s-2;
+  font-size: $t-2xs;
+}
+
+.gpa-day-project-item {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px3;
+  min-width: 0;
+  opacity: 0.75;
+}
+
+.gpa-day-project-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: $r-full;
+  flex-shrink: 0;
+}
+
+.gpa-day-project-name {
+  max-width: 110px;
+  @include text-ellipsis;
+}
+
+.gpa-day-project-count {
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+}

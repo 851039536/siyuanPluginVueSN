@@ -17,6 +17,40 @@
       />
     </div>
 
+    <!-- 项目分布：当日提交按项目聚合的堆叠条 + 色点图例（Top 5 + 其他） -->
+    <div
+      v-if="projectSegments.length > 0"
+      class="gpa-day-projects"
+    >
+      <div class="gpa-day-project-bar">
+        <span
+          v-for="seg in projectSegments"
+          :key="seg.id"
+          class="gpa-day-project-seg"
+          :style="{
+            width: seg.width,
+            background: seg.color,
+          }"
+          :title="seg.title"
+        />
+      </div>
+      <div class="gpa-day-project-legend">
+        <span
+          v-for="seg in projectSegments"
+          :key="seg.id"
+          class="gpa-day-project-item"
+          :title="seg.title"
+        >
+          <i
+            class="gpa-day-project-dot"
+            :style="{ background: seg.color }"
+          />
+          <span class="gpa-day-project-name">{{ seg.name }}</span>
+          <span class="gpa-day-project-count">{{ seg.count }}</span>
+        </span>
+      </div>
+    </div>
+
     <!-- 空态：该日无提交（允许选中「空白日」，用户才能确认「这天确实没干活」） -->
     <p
       v-if="rows.length === 0"
@@ -50,6 +84,10 @@ import type { CommitAnalysisEntry } from "../../types"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import { ANALYSIS_WEEKDAY_KEYS } from "../../types"
+import {
+  OTHER_PROJECT_COLOR,
+  PROJECT_COMMIT_COLORS,
+} from "../../utils"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -99,6 +137,48 @@ const weekdayText = computed(() => {
   const [y, m, d] = props.date.split("-").map(Number)
   if (!y || !m || !d) return ""
   return props.i18n[ANALYSIS_WEEKDAY_KEYS[new Date(y, m - 1, d).getDay()]] || ""
+})
+
+/** 项目分布：当日提交按项目计数，Top 5 之外合并为「其他」；width 为占总数的百分比 */
+const projectSegments = computed(() => {
+  const total = props.entries.length
+  if (total === 0) return []
+  const map = new Map<string, { id: string, name: string, count: number }>()
+  for (const e of props.entries) {
+    const item = map.get(e.projectId)
+    if (item) {
+      item.count++
+    }
+    else {
+      map.set(e.projectId, {
+        id: e.projectId,
+        name: e.projectName,
+        count: 1,
+      })
+    }
+  }
+  const sorted = [...map.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+  const rows: { id: string, name: string, count: number, color: string }[] = sorted
+    .slice(0, 5)
+    .map((r, i) => ({
+      ...r,
+      color: PROJECT_COMMIT_COLORS[i % PROJECT_COMMIT_COLORS.length],
+    }))
+  const restCount = sorted.slice(5).reduce((sum, r) => sum + r.count, 0)
+  if (restCount > 0) {
+    rows.push({
+      id: "__other__",
+      name: props.i18n.analysisTrendOther,
+      count: restCount,
+      color: OTHER_PROJECT_COLOR,
+    })
+  }
+  const unit = props.i18n.analysisHeatUnitCommits || ""
+  return rows.map((r) => ({
+    ...r,
+    width: `${(r.count / total) * 100}%`,
+    title: `${r.name}: ${r.count} ${unit}`,
+  }))
 })
 
 /** 摘要："7 次提交 · 2 个项目 · 2 位作者"（作者按邮箱前的姓名去重，与列表展示口径一致） */

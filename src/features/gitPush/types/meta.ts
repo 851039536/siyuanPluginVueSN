@@ -408,10 +408,6 @@ export interface CommitAnalysisStats {
   failedCount: number
   /** 跨项目合并的原始条目 */
   entries: CommitAnalysisEntry[]
-  /** 项目提交次数排行（降序，已按 PROJECT_RANK_LIMIT 截断） */
-  projectRanking: { id: string, name: string, count: number }[]
-  /** 项目排行的截断前项目总数（> projectRanking.length 时 UI 须提示「仅显示前 N 名」） */
-  projectRankingTotal: number
 }
 
 /** 提交分析结果缓存（持久化到插件存储，进入视图直接复用上次结果，避免每次重跑 git log） */

@@ -99,6 +99,11 @@ const props = defineProps<{
   /** 提交分析聚合视图（取 entries 构建日计数与明细） */
   stats: CommitAnalysisStats
   viewSettings: CommitAnalysisViewSettings
+  /** 外部选区请求（趋势图柱点击；nonce 保证连续点击同一格也能触发） */
+  focusRequest?: {
+    span: HeatBucketSpan
+    nonce: number
+  } | null
 }>()
 
 const emit = defineEmits<{
@@ -240,6 +245,16 @@ function clearSelection() {
 watch([range, granularity], ([r]) => {
   if (selStart.value && (selStart.value > r.end || selEnd.value < r.start)) clearSelection()
 })
+
+/** 趋势图点击柱子：把选区设为该时间桶（日粒度=当日明细，周/月=区间明细） */
+watch(
+  () => props.focusRequest,
+  (req) => {
+    if (!req) return
+    anchor.value = { ...req.span }
+    cursor.value = { ...req.span }
+  },
+)
 
 // ── 明细数据 ──
 

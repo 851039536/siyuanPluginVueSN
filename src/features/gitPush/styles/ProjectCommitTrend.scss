@@ -1,0 +1,124 @@
+// 提交分析 · 每日项目提交趋势：堆叠柱滚动区 + 两侧箭头 + 项目色图例
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 标题行右侧口径摘要（粒度 · Top N · 抓取上限）：推到行尾并弱化
+.gpa-trend-sub {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  text-transform: none;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.45;
+}
+
+// 滚动容器：日期多时横向滚动，避免堆叠柱被压成不可读的细线
+.gpa-trend-scroll-area {
+  position: relative;
+}
+
+.gpa-trend-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: $r-px2;
+  }
+}
+
+// 图表卡片：固定高度撑起 canvas；min-width 由行内样式按桶数动态控制
+.gpa-trend-chart {
+  height: 210px;
+  padding: $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+}
+
+// 左右滚动按钮：半透明圆形箭头，hover 高亮；不可滚动时禁用
+.gpa-trend-scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-full;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-size: $t-sm;
+  opacity: 0.45;
+  cursor: pointer;
+  transition:
+    opacity 0.12s ease,
+    background 0.12s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+  }
+
+  &:disabled {
+    opacity: 0.15;
+    cursor: default;
+  }
+}
+
+.gpa-trend-scroll-btn--left {
+  left: 0;
+}
+
+.gpa-trend-scroll-btn--right {
+  right: 0;
+}
+
+// 图例：项目色点 + 名称 + 范围内合计（窄面板自动换行）
+.gpa-trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-1 $s-2;
+  margin-top: $s-2;
+  font-size: $t-2xs;
+  opacity: 0.75;
+}
+
+.gpa-trend-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px3;
+  min-width: 0;
+}
+
+.gpa-trend-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: $r-full;
+  flex-shrink: 0;
+}
+
+.gpa-trend-legend-name {
+  max-width: 110px;
+  @include text-ellipsis;
+}
+
+.gpa-trend-legend-count {
+  font-family: $ff-mono;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}

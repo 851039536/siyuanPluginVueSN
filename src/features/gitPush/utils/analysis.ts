@@ -199,7 +199,7 @@ export function buildHeatMetricMap(
 // ── 项目提交趋势（排行条形 / 每日堆叠柱共用）──
 
 /** 项目排行显示上限（超出时列表内部滚动，并在标题旁提示截断） */
-export const PROJECT_RANK_LIMIT = 20
+export const PROJECT_RANK_LIMIT = 50
 
 /** 项目配色（堆叠柱/排行条/当日分布共用；按名次分配，保证 Top 10 异色） */
 export const PROJECT_COMMIT_COLORS = [

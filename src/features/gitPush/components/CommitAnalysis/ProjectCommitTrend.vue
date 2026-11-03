@@ -1,4 +1,4 @@
-<!-- gitPush 每日项目提交趋势（chart.js 堆叠柱：每根柱=一个时间桶，每段=一个项目；点击柱子联动当日明细） -->
+<!-- gitPush 每日项目提交趋势（chart.js 堆叠柱：每根柱=一个时间桶，每段=一个项目；最新日期在最左；点击柱子联动当日明细） -->
 <template>
   <div class="gpa-section gpa-trend">
     <!-- 区块标题 + 口径摘要（粒度 / Top N / 抓取条数上限） -->
@@ -150,6 +150,23 @@ const series = computed(() => buildProjectSeries(
   8,
 ))
 
+/**
+ * 渲染顺序：时间桶倒序（最新日期在最左），与热力图的正序时间轴刻意不同。
+ * 只翻转渲染层——聚合结果与热力图共用且保持正序，点击回传的仍是真实桶区间，
+ * 故不影响热力图选区；数据变化时 useChartScroll 回到最左 = 直接看见最新一天。
+ */
+const display = computed(() => {
+  const s = series.value
+  const reverse = <T,>(arr: T[]): T[] => [...arr].reverse()
+  return {
+    ...s,
+    buckets: reverse(s.buckets),
+    projects: s.projects.map((p) => ({ ...p, counts: reverse(p.counts) })),
+    otherCounts: reverse(s.otherCounts),
+    totals: reverse(s.totals),
+  }
+})
+
 /** 标题右侧口径摘要：粒度 · Top N（抓取条数上限由页面顶部的范围说明统一交代） */
 const subtitle = computed(() => {
   const grain = {
@@ -175,7 +192,7 @@ function bucketTitle(span: HeatBucketSpan): string {
 
 /** chart.js 堆叠柱数据集（Top N 项目 + 其他；颜色与排行条同源） */
 const chartData = computed<ChartData<"bar">>(() => {
-  const s = series.value
+  const s = display.value
   const datasets: ChartData<"bar">["datasets"] = s.projects.map((p) => ({
     label: p.name,
     data: p.counts,
@@ -247,19 +264,19 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
       callbacks: {
         title: (items) => {
           const i = items[0]?.dataIndex
-          return i === undefined ? "" : bucketTitle(series.value.buckets[i])
+          return i === undefined ? "" : bucketTitle(display.value.buckets[i])
         },
         label: (item) => `${item.dataset.label}: ${item.parsed.y} ${props.i18n.analysisHeatUnitCommits || ""}`,
         footer: (items) => {
           const i = items[0]?.dataIndex
-          return i === undefined ? "" : `${props.i18n.analysisTrendTotal || ""}: ${series.value.totals[i]}`
+          return i === undefined ? "" : `${props.i18n.analysisTrendTotal || ""}: ${display.value.totals[i]}`
         },
       },
     },
   },
   onClick: (_event, elements) => {
     const i = elements[0]?.index
-    const span = i === undefined ? undefined : series.value.buckets[i]
+    const span = i === undefined ? undefined : display.value.buckets[i]
     if (span) emit("pick", { ...span })
   },
   onHover: (event, elements) => {
@@ -292,7 +309,7 @@ const legendItems = computed(() => {
 
 /** 图表最小宽度：桶数 × 每桶最小占地，夹在 [MIN_CHART_WIDTH, MAX_CHART_WIDTH] */
 const minChartWidth = computed(() => Math.min(
-  Math.max(series.value.buckets.length * MIN_WIDTH_PER_BUCKET, MIN_CHART_WIDTH),
+  Math.max(display.value.buckets.length * MIN_WIDTH_PER_BUCKET, MIN_CHART_WIDTH),
   MAX_CHART_WIDTH,
 ))
 
@@ -307,7 +324,7 @@ const {
 } = useChartScroll({
   scrollRef,
   active,
-  dataSource: series,
+  dataSource: display,
   scrollAmount: SCROLL_AMOUNT,
 })
 </script>

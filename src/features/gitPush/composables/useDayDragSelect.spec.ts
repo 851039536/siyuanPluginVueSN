@@ -55,19 +55,20 @@ describe("useDayDragSelect（拖拽框选区间）", () => {
     })
   }
 
-  it("按下主键才起锚；右键/中键不动选区", () => {
+  it("按下主键才进入拖拽态；右键/中键不动选区", () => {
     const s = make()
     s.onDown("2026-08-01", primary)
-    expect(starts).toEqual(["2026-08-01"])
+    // 按下本身不起锚：单击的选择交给后续 click，否则会与「再次点击取消」互相抵消
+    expect(starts).toEqual([])
     expect(s.dragging.value).toBe(true)
 
     const t = make()
     t.onDown("2026-08-02", secondary)
-    expect(starts).toEqual(["2026-08-01"]) // 未新增
+    expect(starts).toEqual([])
     expect(t.dragging.value).toBe(false)
   })
 
-  it("空日期（占位空格）不触发起锚", () => {
+  it("空日期（占位空格）不触发拖拽态", () => {
     const s = make()
     s.onDown("", primary)
     expect(starts).toEqual([])
@@ -80,11 +81,13 @@ describe("useDayDragSelect（拖拽框选区间）", () => {
     expect(extendsTo).toEqual([])
   })
 
-  it("按下后掠过格子逐次扩展另一端", () => {
+  it("按下后掠到另一格才起锚，并逐次扩展另一端", () => {
     const s = make()
     s.onDown("2026-08-01", primary)
+    expect(starts).toEqual([])
     s.onEnter("2026-08-02")
     s.onEnter("2026-08-03")
+    expect(starts).toEqual(["2026-08-01"])
     expect(extendsTo).toEqual(["2026-08-02", "2026-08-03"])
   })
 
@@ -94,6 +97,7 @@ describe("useDayDragSelect（拖拽框选区间）", () => {
     s.onDown("2026-08-01", primary)
     s.onEnter("2026-08-03")
     win.fireMouseUp()
+    expect(starts).toEqual(["2026-08-01"])
     expect(s.dragging.value).toBe(false)
     // mouseup 之后浏览器还会补发 click，此刻必须仍是抑制态
     expect(s.suppressClick.value).toBe(true)
@@ -102,11 +106,22 @@ describe("useDayDragSelect（拖拽框选区间）", () => {
     expect(s.suppressClick.value).toBe(false)
   })
 
-  it("纯单击（按下后没移动）不抑制 click，否则单击会失效", () => {
+  it("纯单击（按下后没移动）不起锚也不抑制 click：选择交给 click 事件", () => {
     const s = make()
     s.onDown("2026-08-01", primary)
     win.fireMouseUp()
+    expect(starts).toEqual([])
     expect(s.suppressClick.value).toBe(false)
+  })
+
+  it("一次拖拽结束后起点被清空，下一次拖拽使用新的起点", () => {
+    const s = make()
+    s.onDown("2026-08-01", primary)
+    s.onEnter("2026-08-02")
+    win.fireMouseUp()
+    s.onDown("2026-08-04", primary)
+    s.onEnter("2026-08-05")
+    expect(starts).toEqual(["2026-08-01", "2026-08-04"])
   })
 
   it("收尾后摘掉 window 上的 mouseup 监听（不残留）", () => {

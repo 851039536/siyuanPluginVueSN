@@ -22,6 +22,13 @@ export function useDayDragSelect(deps: DayDragSelectDeps) {
    * 期间到达的 click 一律丢弃——否则「拖回起点」会把刚选好的区间又取消掉。
    */
   const suppressClick = ref(false)
+  /**
+   * 按下起点（拖到另一格时才正式起锚）。
+   * 不在 mousedown 立即起锚：父级选中后，浏览器补发的 click 会把同一格判为
+   * 「再次点击」而取消——表现为点击日期完全没有反应。单击交给 click 处理，
+   * 只有真正拖到别的格子才由 onStart 起锚。
+   */
+  let startDate = ""
 
   function endDrag() {
     window.removeEventListener("mouseup", endDrag)
@@ -32,6 +39,7 @@ export function useDayDragSelect(deps: DayDragSelectDeps) {
       setTimeout(() => { suppressClick.value = false }, 0)
     }
     moved.value = false
+    startDate = ""
   }
 
   function onDown(date: string, e: MouseEvent) {
@@ -39,13 +47,17 @@ export function useDayDragSelect(deps: DayDragSelectDeps) {
     if (!date || e.button !== 0) return
     dragging.value = true
     moved.value = false
+    startDate = date
     window.addEventListener("mouseup", endDrag)
-    deps.onStart(date)
   }
 
   function onEnter(date: string) {
     if (!dragging.value || !date) return
-    moved.value = true
+    if (!moved.value) {
+      // 首次跨到别的格子：此刻才真正起锚（纯单击不会走到这里）
+      moved.value = true
+      if (startDate) deps.onStart(startDate)
+    }
     deps.onExtend(date)
   }
 

@@ -18,10 +18,21 @@ $gpa-weekday-col: 28px;
   --gpa-heat-rows: 7;
 }
 
-// 横向滚动容器（按日一年约 53 周 ≈ 790px，窄面板可横向滚动；周/月粒度通常不需滚动）
+// 横向滚动容器（按日一年约 53 周 ≈ 790px，窄面板超宽可横向移动；
+// 时间轴最新在左，首次渲染与数据刷新后停在最左即最近日期）
 .gpa-heat-scroll {
   overflow-x: auto;
-  @include hide-h-scrollbar;
+  overscroll-behavior-x: contain;
+
+  // 细滚动条（与趋势图 / K 线同一观感）：既是「可移动」的可见提示，也可直接拖动
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: $r-px2;
+  }
 }
 
 // 列标签行：与主体共用同一套栅格（有行标签时左侧放一个同宽空位），
@@ -87,7 +98,7 @@ $gpa-weekday-col: 28px;
   // 拖拽框选时避免选中页面文字（格子本身是 button 不参与选择，但父容器会）
   user-select: none;
 
-  // 日（周列 × 7 行）与周（单行条带）：列优先填充，逐列向右推进
+  // 日（周列 × 7 行）与周（单行条带）：列优先填充，逐列向右推进（时间由新到旧）
   &.is-day,
   &.is-week {
     grid-auto-flow: column;
@@ -143,6 +154,7 @@ $gpa-weekday-col: 28px;
 // 图例：少 [0~4 级] 多
 .gpa-heat-legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: $s-px3;
@@ -165,6 +177,16 @@ $gpa-weekday-col: 28px;
     margin-left: $s-2;
     font-size: $t-2xs;
     opacity: 0.4;
+  }
+
+  // 横向移动按钮（仅在超宽时渲染）：贴图例行尾，弱化但不至于看不见
+  .gpa-heat-scroll-btn {
+    margin-left: $s-1;
+    opacity: 0.55;
+
+    &:hover:not(:disabled) {
+      opacity: 1;
+    }
   }
 }
 

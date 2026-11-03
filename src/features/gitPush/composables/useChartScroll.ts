@@ -60,12 +60,12 @@ export function useChartScroll(options: UseChartScrollOptions): ChartScrollApi {
     })
   }
 
-  /** 向左平滑滚动（查看更早日期数据） */
+  /** 向左平滑滚动（时间轴图通常为更新的一侧） */
   function handleScrollLeft() {
     scrollRef.value?.scrollBy({ left: -scrollAmount, behavior: "smooth" })
   }
 
-  /** 向右平滑滚动（查看最新日期数据） */
+  /** 向右平滑滚动（时间轴图通常为更早的一侧） */
   function handleScrollRight() {
     scrollRef.value?.scrollBy({ left: scrollAmount, behavior: "smooth" })
   }

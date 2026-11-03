@@ -1,5 +1,6 @@
 <!-- 提交热力图：贡献图。粒度随跨度自动切换——
-     日（周列 × 7 行）/ 周（单行条带）/ 月（年行 × 12 月），配色·周起始·指标·分档方式由设置驱动 -->
+     日（周列 × 7 行）/ 周（单行条带）最新日期在左；月（年行 × 12 月）为日历矩阵，
+     配色·周起始·指标·分档方式由设置驱动；超宽时横向滚动（细滚动条可拖动） -->
 <template>
   <div
     ref="rootEl"
@@ -12,6 +13,7 @@
     }"
   >
     <div
+      ref="scrollEl"
       class="gpa-heat-scroll"
       @scroll="hideTip"
     >
@@ -50,6 +52,7 @@
         </div>
 
         <!-- 格子网格：day/week 列优先（周列 / 单行条带），month 行优先（年行 × 12 月）。
+             day/week 的列自左向右为新→旧（与 newestFirst 的倒序一致）。
              格子是 button：可拖动/点击框选；整张网格只占一个 Tab 位（roving tabindex + 方向键）。
              外层用 role="group" 而非 grid：格子是原生 button，套 grid/gridcell 会破坏其按钮语义。 -->
         <div
@@ -84,25 +87,51 @@
           />
         </div>
       </div>
+    </div>
 
-      <!-- 图例：少 [0~4 级] 多 + 当前口径说明（指标 · 分档 · 粒度） -->
-      <div class="gpa-heat-legend">
-        <!-- 图例文案："少" -->
-        <span class="gpa-heat-legend-text">{{ i18n.analysisLess }}</span>
-        <span
-          v-for="lvl in legendCells"
-          :key="lvl.level"
-          class="gpa-heat-legend-cell"
-          :style="lvl.style"
-          :title="lvl.hint"
-        />
-        <!-- 图例文案："多" -->
-        <span class="gpa-heat-legend-text">{{ i18n.analysisMore }}</span>
-        <span
-          class="gpa-heat-scale-hint"
-          :title="scaleHintTitle"
-        >{{ scaleHint }}</span>
-      </div>
+    <!-- 图例：少 [0~4 级] 多 + 当前口径说明（指标 · 分档 · 粒度）
+         放在滚动容器外：图例不随日期左右滚动而移出视野 -->
+    <div class="gpa-heat-legend">
+      <!-- 图例文案："少" -->
+      <span class="gpa-heat-legend-text">{{ i18n.analysisLess }}</span>
+      <span
+        v-for="lvl in legendCells"
+        :key="lvl.level"
+        class="gpa-heat-legend-cell"
+        :style="lvl.style"
+        :title="lvl.hint"
+      />
+      <!-- 图例文案："多" -->
+      <span class="gpa-heat-legend-text">{{ i18n.analysisMore }}</span>
+      <span
+        class="gpa-heat-scale-hint"
+        :title="scaleHintTitle"
+      >{{ scaleHint }}</span>
+      <!-- 横向移动按钮（仅超宽时出现）：细滚动条之外的第二条可发现路径 -->
+      <Button
+        v-if="canScrollLeft || canScrollRight"
+        class="gpa-heat-scroll-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="chevronLeft"
+        :disabled="!canScrollLeft"
+        :title="i18n.reportScrollLeft"
+        :aria-label="i18n.reportScrollLeft"
+        @click="handleScrollLeft"
+      />
+      <Button
+        v-if="canScrollLeft || canScrollRight"
+        class="gpa-heat-scroll-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="chevronRight"
+        :disabled="!canScrollRight"
+        :title="i18n.reportScrollRight"
+        :aria-label="i18n.reportScrollRight"
+        @click="handleScrollRight"
+      />
     </div>
 
     <!-- 自绘 tooltip（替代原生 title：即刻出现、可放多行、深色主题下样式可控；pointer-events 关掉避免遮住相邻格） -->
@@ -124,6 +153,8 @@
 import type { CommitHeatDensity, CommitHeatGranularity, CommitHeatMetric, CommitHeatScaleMode } from "../../types"
 import type { HeatBucketSpan } from "../../utils"
 import { computed, ref, watch } from "vue"
+import Button from "@/components/Button.vue"
+import { useChartScroll } from "../../composables/useChartScroll"
 import { useDayDragSelect } from "../../composables/useDayDragSelect"
 import { buildHeatBucketCell, buildHeatBuckets, heatCellColor } from "../../utils"
 import { ANALYSIS_MONTH_KEYS, ANALYSIS_WEEKDAY_KEYS, COMMIT_HEAT_METRIC_META, HEAT_CELL_SIZES } from "../../types"
@@ -186,6 +217,21 @@ const spanByKey = computed(() => {
   return map
 })
 
+/**
+ * 时间轴型热力图（日 / 周）最新日期在左。
+ * 月粒度是「年 × 12 月」的日历矩阵（年份成行、月份成列），保持正序——
+ * 倒置会破坏年份行与月份列的语义，且最新月份落在右下角本就是日历的阅读习惯。
+ */
+const newestFirst = computed(() => props.granularity !== "month")
+
+/** 周列倒序：整列搬运，列内 7 天的星期顺序保持不变（否则星期会上下颠倒） */
+function reverseWeekColumns(list: HeatCell[]): HeatCell[] {
+  if (props.granularity !== "day") return [...list].reverse()
+  const columns: HeatCell[][] = []
+  for (let i = 0; i < list.length; i += 7) columns.push(list.slice(i, i + 7))
+  return columns.reverse().flat()
+}
+
 /** 格子网格（含为使行列对齐而补的占位格） */
 const cells = computed<HeatCell[]>(() => {
   const unitKey = COMMIT_HEAT_METRIC_META[props.metric].unitKey
@@ -213,7 +259,7 @@ const cells = computed<HeatCell[]>(() => {
     if (tail > 0) list.push(...Array.from({ length: tail }, blankCell))
   }
   // 周粒度：单行条带，无需补齐
-  return list
+  return newestFirst.value ? reverseWeekColumns(list) : list
 })
 
 /** 列数：日=周数；周=格数；月=固定 12 */
@@ -294,7 +340,7 @@ function isInRange(cell: HeatBucketSpan): boolean {
 
 // ── 拖拽 / 点击 ──
 
-/** 拖拽选区间（状态机在 composable 里：按下起锚 → 掠过扩展 → mouseup 收尾并抑制补发的 click） */
+/** 拖拽选区间（状态机在 composable 里：按下记录起点 → 跨到另一格才起锚并扩展 → mouseup 收尾并抑制补发的 click） */
 const drag = useDayDragSelect({
   // composable 只传日期键，桶区间由 spanByKey 还原（日粒度下两者等价）
   onStart: (key) => emit("dragStart", spanByKey.value.get(key) || { start: key, end: key }),
@@ -347,6 +393,21 @@ interface HeatTip {
 const rootEl = ref<HTMLElement | null>(null)
 const tip = ref<HeatTip | null>(null)
 
+/** 横向滚动状态机（超宽时左右按钮可用态；数据变化自动回最左 = 最新日期） */
+const scrollEl = ref<HTMLElement | null>(null)
+const scrollActive = ref(true)
+const {
+  canScrollLeft,
+  canScrollRight,
+  handleScrollLeft,
+  handleScrollRight,
+} = useChartScroll({
+  scrollRef: scrollEl,
+  active: scrollActive,
+  dataSource: cells,
+  scrollAmount: 200,
+})
+
 /** 星期文案（按日期文本解析，避免 UTC 解析在西半球时区跨日偏移）；日粒度 tooltip 第一行带星期 */
 function weekdayOf(date: string): string {
   const [y, m, d] = date.split("-").map(Number)
@@ -378,6 +439,7 @@ function hideTip() {
 }
 
 // 数据/设置变更后格子重建，旧 tooltip 指向的格子可能已不在此范围
+// （横向偏移由 useChartScroll 的 dataSource 监听归零）
 watch(cells, hideTip)
 
 /** 图例色块（0~4 级）：style 预计算 + 各级下界 tooltip（自适应档的下界随数据、指标与粒度变化，不能写死） */
@@ -418,16 +480,22 @@ const gridEl = ref<HTMLElement | null>(null)
 /** 焦点格下标（roving tabindex 的锚点） */
 const focusIndex = ref(-1)
 
-/** 最后一个有日期的格子下标 */
+/** 第一个有日期的格子下标（日/周时间轴的最新端；Home 的落点） */
+function firstFilledIndex(list: { start: string }[]): number {
+  return list.findIndex((c) => !!c.start)
+}
+
+/** 最后一个有日期的格子下标（日/周的最早端、月粒度矩阵的最新月；End 的落点） */
 function lastFilledIndex(list: { start: string }[]): number {
   for (let i = list.length - 1; i >= 0; i--) if (list[i].start) return i
   return -1
 }
 
 watch(cells, (list) => {
-  // 范围/粒度/周起始变化后格子重建：原焦点格仍有效就保留，否则回落到最后一天
+  // 范围/粒度/周起始变化后格子重建：原焦点格仍有效就保留，否则回落到最新一天
+  // （日/周时间轴最新在左=首格；月粒度是正序日历矩阵，最新在末格）
   if (focusIndex.value >= 0 && list[focusIndex.value]?.start) return
-  focusIndex.value = lastFilledIndex(list)
+  focusIndex.value = newestFirst.value ? firstFilledIndex(list) : lastFilledIndex(list)
 }, { immediate: true })
 
 /**
@@ -458,7 +526,7 @@ function onGridKeydown(e: KeyboardEvent) {
       }
     }
   } else if (e.key === "Home") {
-    target = list.findIndex((c) => !!c.start)
+    target = firstFilledIndex(list)
   } else if (e.key === "End") {
     target = lastFilledIndex(list)
   } else {

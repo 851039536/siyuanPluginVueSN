@@ -171,7 +171,7 @@ src/features/gitPush/
 │   │   ├── index.vue                # 视图入口容器（三 Tab 编排 + 共用工具条/四态门；范围内 KPI/趋势/排行/热力图在此组合）
 │   │   ├── ProjectCommitTrend.vue   # 每日项目提交趋势（chart.js 堆叠柱：与热力图同粒度，Top 8 + 其他，最新日期在最左，点击柱子联动明细）
 │   │   ├── ProjectRankingSection.vue# 项目提交排行区块（横向前 50 名进度条：条宽按榜首归一、颜色按名次分配，与趋势图同序同色）
-│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（粒度/指标/分档阈值/摘要/选区状态，日粒度分布唯一出口）
+│   │   ├── HeatmapCalendarSection.vue# 热力图/日历区块（粒度/指标/分档阈值/摘要/选区状态，日粒度分布唯一出口；热力图日/周最新在左、超宽横向滚动）
 │   │   ├── DayCommitDetail.vue      # 当日明细面板（单击日格展开：项目分布堆叠条 + 时间/项目/首行信息）
 │   │   ├── RangeCommitDetail.vue    # 区间统计面板（拖拽/Shift 框选展开：汇总 + 最活跃一天 + 项目/作者分布）
 │   │   ├── CommitAnalysisSettings.vue# 分析设置（齿轮 popover 薄壳，表单复用 AnalysisSettingsForm）

@@ -168,6 +168,18 @@
               />
               <span>{{ aiError }}</span>
             </div>
+
+            <!-- AI 未返回有效格式、已降级启发式修正的提示（非错误，提醒核对内容） -->
+            <div
+              v-if="aiNote"
+              class="gp-fix-warning"
+            >
+              <Icon
+                icon="mdi:information-outline"
+                height="12"
+              />
+              <span>{{ aiNote }}</span>
+            </div>
           </template>
         </div>
 
@@ -276,6 +288,8 @@ const aiLoading = ref(false)
 /** AI 深度分析中（读取完整 diff 理解实际改动，耗时高于普通生成） */
 const deepLoading = ref(false)
 const aiError = ref("")
+/** AI 未返回有效格式、已降级启发式修正时的提醒（非错误，提醒用户核对） */
+const aiNote = ref("")
 const saving = ref(false)
 /** 历史提交重写进度（{current, total}，null = 尚未开始）；仅历史提交保存时使用 */
 const rewriteProgress = ref<{ current: number, total: number } | null>(null)
@@ -383,10 +397,13 @@ async function runAiFix() {
   if (!projectPath.value || aiLoading.value) return
   aiLoading.value = true
   aiError.value = ""
+  aiNote.value = ""
   try {
     const result = await manager.generateCommitFix(projectPath.value, props.target.hash, fullMessage.value || props.target.message)
     if (result.message) {
       newMessage.value = result.message
+      // 启发式降级说明：让用户知道这条不是 AI 原样产出，需复核（避免误以为"生成没按规则来"）
+      if (result.source === "heuristic") aiNote.value = props.i18n.aiHeuristic
     } else {
       aiError.value = props.i18n.ruleFixAiFailed
     }
@@ -403,10 +420,13 @@ async function runDeepAnalyze() {
   if (!projectPath.value || deepLoading.value) return
   deepLoading.value = true
   aiError.value = ""
+  aiNote.value = ""
   try {
     const result = await manager.deepAnalyzeCommitFix(projectPath.value, props.target.hash, fullMessage.value || props.target.message)
     if (result.message) {
       newMessage.value = result.message
+      // 启发式降级说明：与单行生成同口径，明确告知不是 AI 原样产出
+      if (result.source === "heuristic") aiNote.value = props.i18n.aiHeuristic
     } else {
       aiError.value = props.i18n.ruleFixDeepAnalyzeFailed
     }

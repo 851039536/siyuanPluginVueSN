@@ -42,7 +42,12 @@ export function buildCommitRulePrompt(config: CommitRuleConfig): string {
   if (config.scopeFormatEnabled) {
     parts.splice(1, 0, "scope（可选）仅允许小写字母、数字、连字符；引用模块名时转为小写连字符形式（如 HidHelper → hid-helper）")
   }
-  // 首字母大写规则无需 prompt：描述使用中文即天然合规
+  // 首字母大写规则必须下发：校验对小写英文字母开头的描述一判即违规，
+  // 而"以英文单词起头 + 中文说明"（如 update README 说明）并不违反"描述使用中文"，
+  // 旧注释"中文即天然合规"的判断有误，会导致 AI 偶发产出被校验打回
+  if (config.requireCapitalizedSubject) {
+    parts.push("描述不要以小写英文字母开头（以英文单词开头时首字母大写，建议直接以中文开头）")
+  }
   if (config.detectWipSubject) {
     parts.push("不要以 wip/todo/fixme 等临时标记开头")
   }
@@ -141,25 +146,42 @@ export function analyzeCommitRuleCompliance(
 
 /**
  * 启发式修正提交信息；无法可靠修复时返回空串。
- * 可确定性修正的格式问题（trim、空 scope、多余空格、句号结尾、scope 非法字符）+ 缺少 type（按描述关键词推断 type 补全）；
- * 非法 type / 空描述 / 非中文描述 / 描述过短无法可靠推断，返回空串（交由 AI 生成）。
- * 结果经 checkCommitRule 终验，仅返回完全合规的修正结果。
+ * 可确定性修正的格式问题（trim、代码块/引号包裹、空 scope、多余空格、句号结尾、scope 非法字符、首字母大写）
+ * + 缺少 type（按描述关键词推断 type 补全）；非法 type / 空描述 / 非中文描述 / 描述过短无法可靠推断，返回空串。
+ * 结果经 checkCommitRule 终验，仅返回完全合规的修正结果；原多行正文可随标题一起通过校验时予以保留。
  */
 export function fixCommitMessageHeuristically(
   message: string,
   config: CommitRuleConfig = DEFAULT_COMMIT_RULE_CONFIG,
 ): string {
-  const raw = (message ?? "").trim()
+  const raw = stripWrapping((message ?? "").trim()).replace(/\r\n?/g, "\n")
+  if (!raw) return ""
+
+  const newlineIdx = raw.indexOf("\n")
+  const subjectLine = newlineIdx === -1 ? raw : raw.slice(0, newlineIdx)
+  const bodyRaw = newlineIdx === -1 ? "" : raw.slice(newlineIdx + 1)
+  const fixedSubject = fixSubjectLine(subjectLine, config)
+  if (!fixedSubject) return ""
+  if (bodyRaw) {
+    const rest = bodyRaw.startsWith("\n") ? `\n${bodyRaw}` : `\n\n${bodyRaw}`
+    const withBody = `${fixedSubject}${rest}`
+    // 原正文仍合规时保留（避免多行提交信息被降级成单行）；正文本身违规时退回单行
+    if (checkCommitRule(withBody, config) === null) return withBody
+  }
+  return checkCommitRule(fixedSubject, config) === null ? fixedSubject : ""
+}
+
+/** 启发式修订单行标题：type 补全/小写、scope 规范化、句号去除、首字母大写；返回结果不做终验（由调用方统一校验） */
+function fixSubjectLine(line: string, config: CommitRuleConfig): string {
+  const raw = line.trim()
   if (!raw) return ""
 
   const prefix = /^([A-Za-z]+)(?:\(([^)]*)\))?(!)?:\s*(.*)$/.exec(raw)
   // 缺少 type 前缀：从描述关键词推断 type 补全（描述非中文仍不可修，保持中文强制）
   if (!prefix) {
     if (!HAN_CHAR_REGEX.test(raw)) return ""
-    const subject = raw.replace(/[.。]+$/, "").trim()
-    if (!subject) return ""
-    const fixed = `${inferType(subject)}: ${subject}`
-    return checkCommitRule(fixed, config) === null ? fixed : ""
+    const subject = capitalizeLeadingLatin(raw.replace(/[.。]+$/, "").trim(), config)
+    return subject ? `${inferType(subject)}: ${subject}` : ""
   }
 
   const [, type, scope, bang, rest] = prefix
@@ -168,33 +190,71 @@ export function fixCommitMessageHeuristically(
   if (!ALLOWED_TYPES.has(normalizedType)) return ""
 
   // 去掉结尾句号（可确定性修正），trim 后为空视为不可修
-  const subject = rest.trim().replace(/[.。]+$/, "").trim()
+  const subject = capitalizeLeadingLatin(rest.trim().replace(/[.。]+$/, "").trim(), config)
   if (!subject) return ""
   // 无法自动生成中文描述时视为不可修复，交由 AI 处理
   if (!HAN_CHAR_REGEX.test(subject)) return ""
 
-  // scope 非法字符规范化（大写转小写、非法字符替换为连字符），trim 后为空（如 feat( ):）时省略 scope 段
-  const normalizedScope = scope && scope.trim() ? scope.trim().replace(/[^a-z0-9-]/g, "-").toLowerCase() : ""
-  const scopePart = normalizedScope ? `(${normalizedScope})` : ""
-  const bangPart = bang || ""
-  const fixed = `${normalizedType}${scopePart}${bangPart}: ${subject}`
-  return checkCommitRule(fixed, config) === null ? fixed : ""
+  const scopePart = normalizeScope(scope, config)
+  return `${normalizedType}${scopePart ? `(${scopePart})` : ""}${bang || ""}: ${subject}`
+}
+
+/** 可选规则"首字母大写"的确定性修正：仅当描述以小写英文字母开头时改首字母大写（规则关闭时不改动） */
+function capitalizeLeadingLatin(subject: string, config: CommitRuleConfig): string {
+  if (!config.requireCapitalizedSubject || !SUBJECT_NOT_CAPITALIZED_REGEX.test(subject)) return subject
+  return subject.charAt(0).toUpperCase() + subject.slice(1)
 }
 
 /**
- * AI 输出的确定性后处理：仅对标题行做 type 小写、scope 规范化与句号去除，正文行原样保留；
- * 规范化后仍违规返回空串（交由调用方降级启发式），避免 AI 输出因 scope 大写等可修问题被整体丢弃。
+ * scope 规范化：仅在"scope 格式校验"开启时改写字符集。
+ * 规则关闭时任意写法（大写/中文/下划线）均判合规，保留原样——否则会把 `feat(用户模块)` 改写成
+ * `feat(----)`，与设置里"关闭即不限写法"的承诺相反。
+ * 规则开启时若转换后已无任何字母数字（如全中文 scope），直接省略该 scope，避免产出 `feat(----)` 这类无意义片段。
+ */
+function normalizeScope(scope: string | undefined, config: CommitRuleConfig): string {
+  const trimmed = (scope ?? "").trim()
+  if (!trimmed) return ""
+  if (!config.scopeFormatEnabled) return trimmed
+  // 必须先转小写再替换非法字符：反序会把大写字母本身当成非法字符（HidHelper → -id-elper），
+  // 与 prompt 声明的「HidHelper → hid-helper」相反
+  const normalized = trimmed.toLowerCase().replace(/[^a-z0-9-]/g, "-")
+  return /[a-z0-9]/.test(normalized) ? normalized : ""
+}
+
+/** 去掉 AI 偶发包裹的 Markdown 代码块与成对引号（否则合法提交信息会被误判为"缺少 type"并改写成语义错误的 type） */
+function stripWrapping(raw: string): string {
+  let out = raw.trim()
+  const fence = /^```[a-zA-Z-]*\s*\n([\s\S]*?)\n?```$/.exec(out)
+  if (fence) out = fence[1].trim()
+  if (out.length >= 2) {
+    const pairs: Record<string, string> = { "\"": "\"", "'": "'", "“": "”", "‘": "’" }
+    const closing = pairs[out.charAt(0)]
+    if (closing && out.endsWith(closing)) out = out.slice(1, -1).trim()
+  }
+  return out
+}
+
+/**
+ * AI 输出的确定性后处理：仅对标题行做 type 小写、scope 规范化、句号去除与首字母大写，正文行原样保留；
+ * 标题与正文之间缺失空行时确定性补齐（missingBlankLine 规则），避免多行要点因格式细节被整体丢弃；
+ * 规范化后仍违规返回空串（交由调用方降级启发式）。
  */
 export function normalizeCommitMessageFormat(message: string, config: CommitRuleConfig): string {
-  const raw = (message ?? "").trim()
+  const raw = stripWrapping((message ?? "").replace(/\r\n?/g, "\n").trim())
   if (!raw) return ""
   const newlineIdx = raw.indexOf("\n")
   const subjectLine = newlineIdx === -1 ? raw : raw.slice(0, newlineIdx)
-  const rest = newlineIdx === -1 ? "" : `\n${raw.slice(newlineIdx + 1)}`
+  const bodyRaw = newlineIdx === -1 ? "" : raw.slice(newlineIdx + 1)
   const fixedSubject = fixCommitMessageHeuristically(subjectLine, config)
   if (!fixedSubject) return ""
+  const rest = bodyRaw === ""
+    ? ""
+    : bodyRaw.startsWith("\n") ? `\n${bodyRaw}` : `\n\n${bodyRaw}`
   const fixed = `${fixedSubject}${rest}`
-  return checkCommitRule(fixed, config) === null ? fixed : ""
+  if (checkCommitRule(fixed, config) === null) return fixed
+  // 正文违规（如正文单行超长）时退回合规的标题行：保住 AI 产出的有效标题，
+  // 比整条丢弃、降级到对原提交信息的启发式修正更可靠
+  return checkCommitRule(fixedSubject, config) === null ? fixedSubject : ""
 }
 
 /** 从描述关键词推断 conventional commit type（命中顺序即优先级，无匹配默认 chore） */

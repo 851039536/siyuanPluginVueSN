@@ -1,7 +1,7 @@
 // Git 项目持久化存储与类型定义
 import type { Plugin } from "siyuan"
-import type { BfgPrefs, CardLayout, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, DropCommitPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
-import { DEFAULT_COMMIT_RULE_CONFIG } from "./meta"
+import type { BfgPrefs, CardLayout, CommitAnalysisCache, CommitAnalysisViewSettings, CommitFixPrefs, CommitRuleConfig, DropCommitPrefs, LineStatsCache, PlatformKey, RepoCleanPrefs, RuleCheckPrefs } from "./meta"
+import { DEFAULT_COMMIT_RULE_CONFIG, readCommitRuleConfig } from "./meta"
 import type { IndexMeta } from "./indexCache"
 import { DEFAULT_INDEX_MAX_COMMITS, DEFAULT_INDEX_META } from "./indexCache"
 import type { ConsistencyCache } from "./consistency"
@@ -662,6 +662,14 @@ export class GitPushStorage {
     this.probeConfig = new TypedStorage(storage, "git-push-probe-config", DEFAULT_PROBE_CONFIG)
     this.pushProfiles = new TypedStorage(storage, "git-push-profiles", DEFAULT_PUSH_PROFILES)
     this.defaultPushProfileId = new TypedStorage(storage, "git-push-default-profile", "")
+  }
+
+  /**
+   * 读取提交规则配置（规则偏好 → 规则配置，缺字段逐项回退默认值）。
+   * 规则面板判定、AI 生成与两个修正弹窗共用此入口，避免各处重复组合 loadOrDefault + readCommitRuleConfig。
+   */
+  async getCommitRuleConfig(): Promise<CommitRuleConfig> {
+    return readCommitRuleConfig(await this.ruleCheckPrefs.loadOrDefault())
   }
 
   async init(): Promise<void> {

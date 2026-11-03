@@ -366,16 +366,18 @@
                   class="gp-set-concurrency-input"
                   @update:model-value="localMinSubjectLength = clampMinSubjectLength(Number($event))"
                 />
-                <button
-                  class="vp-btn vp-btn--primary vp-btn--sm"
+                <Button
+                  variant="primary"
+                  size="xsmall"
+                  dense
                   @click="saveMinSubjectLength"
                 >
                   <!-- 按钮文案："保存" -->
                   {{ i18n.save }}
-                </button>
+                </Button>
               </div>
             </div>
-            <!-- 提示文案："提交规则检查中描述少于该字数判为'描述过短'（1~100），修改后需重新分析生效" -->
+            <!-- 提示文案："提交规则检查中描述少于该字数判为'描述过短'（1~100），保存后立即生效" -->
             <div class="gp-set-hint">
               {{ i18n.ruleCheckMinSubjectLengthHint }}
             </div>
@@ -384,11 +386,12 @@
               <!-- 设置项标签："描述首字母大写" -->
               <label class="gp-set-label">{{ i18n.ruleCheckOptCapitalized }}</label>
               <div class="gp-set-input-row">
-                <input
-                  type="checkbox"
-                  class="gp-set-switch"
-                  :checked="ruleConfig.requireCapitalizedSubject"
-                  @change="onRuleToggle('requireCapitalizedSubject', $event)"
+                <Checkbox
+                  size="xsmall"
+                  binary
+                  :model-value="ruleConfig.requireCapitalizedSubject"
+                  :aria-label="i18n.ruleCheckOptCapitalized"
+                  @update:model-value="onRuleToggle('requireCapitalizedSubject', $event)"
                 />
               </div>
             </div>
@@ -401,11 +404,12 @@
               <!-- 设置项标签："WIP 临时提交检测" -->
               <label class="gp-set-label">{{ i18n.ruleCheckOptWip }}</label>
               <div class="gp-set-input-row">
-                <input
-                  type="checkbox"
-                  class="gp-set-switch"
-                  :checked="ruleConfig.detectWipSubject"
-                  @change="onRuleToggle('detectWipSubject', $event)"
+                <Checkbox
+                  size="xsmall"
+                  binary
+                  :model-value="ruleConfig.detectWipSubject"
+                  :aria-label="i18n.ruleCheckOptWip"
+                  @update:model-value="onRuleToggle('detectWipSubject', $event)"
                 />
               </div>
             </div>
@@ -418,11 +422,12 @@
               <!-- 设置项标签："scope 格式校验" -->
               <label class="gp-set-label">{{ i18n.ruleCheckOptScopeFormat }}</label>
               <div class="gp-set-input-row">
-                <input
-                  type="checkbox"
-                  class="gp-set-switch"
-                  :checked="ruleConfig.scopeFormatEnabled"
-                  @change="onRuleToggle('scopeFormatEnabled', $event)"
+                <Checkbox
+                  size="xsmall"
+                  binary
+                  :model-value="ruleConfig.scopeFormatEnabled"
+                  :aria-label="i18n.ruleCheckOptScopeFormat"
+                  @update:model-value="onRuleToggle('scopeFormatEnabled', $event)"
                 />
               </div>
             </div>
@@ -435,11 +440,12 @@
               <!-- 设置项标签："正文行长限制" -->
               <label class="gp-set-label">{{ i18n.ruleCheckOptBodyLineLimit }}</label>
               <div class="gp-set-input-row">
-                <input
-                  type="checkbox"
-                  class="gp-set-switch"
-                  :checked="ruleConfig.bodyLineLimitEnabled"
-                  @change="onRuleToggle('bodyLineLimitEnabled', $event)"
+                <Checkbox
+                  size="xsmall"
+                  binary
+                  :model-value="ruleConfig.bodyLineLimitEnabled"
+                  :aria-label="i18n.ruleCheckOptBodyLineLimit"
+                  @update:model-value="onRuleToggle('bodyLineLimitEnabled', $event)"
                 />
                 <Input
                   :model-value="localMaxBodyLineLength"
@@ -449,13 +455,15 @@
                   :disabled="!ruleConfig.bodyLineLimitEnabled"
                   @update:model-value="localMaxBodyLineLength = clampMaxBodyLineLength(Number($event))"
                 />
-                <button
-                  class="vp-btn vp-btn--primary vp-btn--sm"
+                <Button
+                  variant="primary"
+                  size="xsmall"
+                  dense
                   @click="saveBodyLineLimit"
                 >
                   <!-- 按钮文案："保存" -->
                   {{ i18n.save }}
-                </button>
+                </Button>
               </div>
             </div>
             <!-- 提示文案："多行提交信息正文每行超过该字符数判违规（1~500），空行不检查" -->
@@ -474,13 +482,15 @@
                   class="gp-set-concurrency-input"
                   @update:model-value="localDiffContextBudget = clampDiffContextBudget(Number($event))"
                 />
-                <button
-                  class="vp-btn vp-btn--primary vp-btn--sm"
+                <Button
+                  variant="primary"
+                  size="xsmall"
+                  dense
                   @click="saveDiffContextBudget"
                 >
                   <!-- 按钮文案："保存" -->
                   {{ i18n.save }}
-                </button>
+                </Button>
               </div>
             </div>
             <!-- 提示文案："AI 生成提交信息时按文件分块送入的 diff 字符上限（1000~50000），改动文件较多时可调大" -->
@@ -539,6 +549,8 @@ import {
   ref,
   watch,
 } from "vue"
+import Button from "@/components/Button.vue"
+import Checkbox from "@/components/Checkbox.vue"
 import Input from "@/components/Input.vue"
 import RadioButton from "@/components/RadioButton.vue"
 import ToggleButton from "@/components/ToggleButton.vue"
@@ -630,6 +642,18 @@ const localLocalTimeout = ref(clampLocalTimeout(props.localTimeout))
 const localMinSubjectLength = ref(clampMinSubjectLength(props.ruleConfig.minSubjectLength))
 const localMaxBodyLineLength = ref(clampMaxBodyLineLength(props.ruleConfig.maxBodyLineLength))
 const localDiffContextBudget = ref(clampDiffContextBudget(props.ruleConfig.diffContextBudget))
+
+// 父级规则阈值变化（异步载入完成或其他入口修改）时同步对应草稿；只盯这三个数值，
+// 避免切换可选规则开关时把用户尚未保存的输入覆盖掉
+watch(() => props.ruleConfig.minSubjectLength, (v) => {
+  localMinSubjectLength.value = clampMinSubjectLength(v)
+})
+watch(() => props.ruleConfig.maxBodyLineLength, (v) => {
+  localMaxBodyLineLength.value = clampMaxBodyLineLength(v)
+})
+watch(() => props.ruleConfig.diffContextBudget, (v) => {
+  localDiffContextBudget.value = clampDiffContextBudget(v)
+})
 const localBranchMode = ref<"all" | "head">(props.pushBranchMode)
 /** Compare 基线分支本地编辑态（显式保存，空值回退 main） */
 const localCompareBase = ref(props.compareBaseBranch || "main")
@@ -837,10 +861,10 @@ function saveDiffContextBudget() {
   emit("saveRuleConfig", { diffContextBudget: localDiffContextBudget.value })
 }
 
-/** 可选规则开关切换（checkbox 即时保存，同分支模式 radio 即时语义） */
-function onRuleToggle(key: "requireCapitalizedSubject" | "detectWipSubject" | "scopeFormatEnabled" | "bodyLineLimitEnabled", e: Event) {
+/** 可选规则开关切换（Checkbox 即时保存，同分支模式 radio 即时语义；binary 模式下载荷恒为布尔，类型收窄兜底数组） */
+function onRuleToggle(key: "requireCapitalizedSubject" | "detectWipSubject" | "scopeFormatEnabled" | "bodyLineLimitEnabled", value: boolean | any[]) {
   const patch: Partial<CommitRuleConfig> = {}
-  patch[key] = (e.target as HTMLInputElement).checked
+  patch[key] = Array.isArray(value) ? value.length > 0 : value
   emit("saveRuleConfig", patch)
 }
 

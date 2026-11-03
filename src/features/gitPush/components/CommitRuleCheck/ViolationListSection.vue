@@ -93,7 +93,10 @@
             :title="i18n.dropCommitTitle"
             @click.stop="emit('openDrop', row)"
           />
-          <span class="grc-item-date">{{ relativeTime(row.date, i18n) }}</span>
+          <span
+            class="grc-item-date"
+            :title="`${formatDateTime(row.date)} · ${row.date}`"
+          >{{ relativeTime(row.date, i18n) }}</span>
         </div>
         <div
           class="grc-item-msg"
@@ -101,8 +104,6 @@
         >{{ row.message }}</div>
         <div class="grc-item-meta">
           <span>{{ row.author }}</span>
-          <!-- 提交时间："YYYY-MM-DD HH:mm"（title 保留 ISO 原值） -->
-          <span :title="row.date">{{ formatDateTime(row.date) }}</span>
         </div>
       </div>
     </div>
@@ -155,9 +156,9 @@ const emit = defineEmits<{
   openBatchFix: [violations: CommitRuleViolation[]]
 }>()
 
-/** 违规行唯一键（同一提交可能命中多条规则，故键含 reason）：行 key / 选中集 / 批量筛选三处共用的唯一事实源 */
+/** 违规行唯一键（每条提交至多命中一条规则：checkCommitRule 只返回首个原因）；行 key 与选中集共用 */
 function violationKey(v: CommitRuleViolation): string {
-  return `${v.projectId}-${v.hash}-${v.reason}`
+  return `${v.projectId}-${v.hash}`
 }
 
 /** 违规行视图：预计算唯一 key（violationKey），模板内不再逐行重复拼接 */

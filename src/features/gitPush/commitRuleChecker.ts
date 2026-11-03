@@ -111,15 +111,18 @@ export function checkCommitRule(
   return null
 }
 
-/** 聚合提交条目为提交规则检查统计结果（违规列表按日期降序；merge 提交豁免——消息由 git 自动生成） */
+/** 聚合提交条目为提交规则检查统计结果（违规列表按日期降序；merge 提交豁免且不计入检查数——消息由 git 自动生成） */
 export function analyzeCommitRuleCompliance(
   entries: CommitAnalysisEntry[],
   config: CommitRuleConfig = DEFAULT_COMMIT_RULE_CONFIG,
 ): CommitRuleCheckStats {
   const violations: CommitRuleViolation[] = []
+  /** 实际参与规则判定的提交数（排除 merge：它们既不会被判违规，也不应计入合规率分母） */
+  let checkedCount = 0
   for (const entry of entries) {
     // merge 提交（"Merge branch ..." 等）非用户书写，且线性 rebase 无法修正，不计违规
     if (entry.isMerge) continue
+    checkedCount++
     const reason = checkCommitRule(entry.message, config)
     if (reason) {
       violations.push({ ...entry, reason })
@@ -136,9 +139,9 @@ export function analyzeCommitRuleCompliance(
     .sort((a, b) => b.count - a.count)
 
   return {
-    totalCommits: entries.length,
+    totalCommits: checkedCount,
     violationCount: violations.length,
-    compliantCount: entries.length - violations.length,
+    compliantCount: checkedCount - violations.length,
     byReason,
     violations,
   }

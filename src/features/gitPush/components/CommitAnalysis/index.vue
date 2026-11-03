@@ -157,9 +157,9 @@
 
         <!-- ═══ 视角 2：规则检查 ═══ -->
         <template v-else-if="activeTab === 'rulecheck'">
-          <!-- 空状态：分析完成但无提交数据 -->
+          <!-- 空状态：分析完成但无可检查提交（无条目 / 所选项目无提交 / 仅有 merge 提交） -->
           <EmptyState
-            v-if="ruleCheckStats.totalCommits === 0"
+            v-if="stats.entries.length === 0 || ruleCheckStats.totalCommits === 0"
             icon="mdi:source-commit"
             :text="i18n.ruleCheckNoData"
           />
@@ -169,6 +169,7 @@
             <RuleCheckOverview
               :i18n="i18n"
               :stats="ruleCheckStats"
+              :rule-config="ruleConfig"
             />
 
             <!-- 违规类型分布 -->
@@ -291,7 +292,7 @@
 // gitPush 提交分析视图入口容器：三视角 Tab（提交概览 / 规则检查 / 行数排行）。
 // 三者同属一次 runCore 抓取（entries 供概览与规则检查，numstat/totalLines 供行数排行），
 // 故合并为一个视图 + 内部 Tab：运行按钮只有一个，Tab 切换只切视角不重跑 git。
-import type { CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
+import type { CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleConfig, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
 import type { CommitCount } from "../../composables/useCommitAnalysis"
 import type { HeatBucketSpan } from "../../utils"
 import type { StatCardItem } from "../common/StatCardGrid.vue"
@@ -348,6 +349,8 @@ const props = defineProps<{
   lineAnalyzedAt: string
   commitCount: CommitCount
   viewSettings: CommitAnalysisViewSettings
+  /** 提交规则配置（规则提示文案随可选规则开关变化） */
+  ruleConfig: CommitRuleConfig
   /** 规则检查的项目过滤（"" = 全部项目） */
   ruleCheckProjectId: string
   // ── 行数排行域（独立进度/时间戳/失败计数） ──
@@ -366,7 +369,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  runAnalysis: []
+  runAnalysis: [projectIds?: string | string[]]
   runLineStats: []
   updateCount: [n: CommitCount]
   updateViewSettings: [patch: Record<string, any>]
@@ -584,26 +587,26 @@ function openBatchFix(violations: CommitRuleViolation[]) {
   editingBatch.value = violations
 }
 
-/** 修正成功后关闭弹窗并触发重分析（局部刷新由父层按项目处理） */
+/** 修正成功后关闭弹窗并触发重分析（只重扫受影响项目，避免整轮 git log） */
 function handleFixSaved() {
   const projectId = editingViolation.value?.projectId
   editingViolation.value = null
   if (projectId) emit("commitsRewritten", [projectId])
-  emit("runAnalysis")
+  emit("runAnalysis", projectId)
 }
 
-/** 删除成功后关闭弹窗并触发重分析 */
+/** 删除成功后关闭弹窗并触发重分析（只重扫受影响项目） */
 function handleDropSaved() {
   const projectId = droppingViolation.value?.projectId
   droppingViolation.value = null
   if (projectId) emit("commitsRewritten", [projectId])
-  emit("runAnalysis")
+  emit("runAnalysis", projectId)
 }
 
-/** 批量修正保存完成：重分析受影响项目，弹窗保持打开由"完成"按钮关闭 */
+/** 批量修正保存完成：只重分析受影响项目，弹窗保持打开由"完成"按钮关闭 */
 function handleBatchSaved(projectIds: string[]) {
   if (projectIds.length > 0) emit("commitsRewritten", projectIds)
-  emit("runAnalysis")
+  emit("runAnalysis", projectIds)
 }
 </script>
 

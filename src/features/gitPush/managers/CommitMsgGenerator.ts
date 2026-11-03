@@ -2,7 +2,6 @@
 import type { Plugin } from "siyuan"
 import type { CommitTemplate, FileChange, GitPushStorage } from "../types/storage"
 import type { CommitRuleConfig } from "../types/meta"
-import { readCommitRuleConfig } from "../types/meta"
 import { buildCommitRulePrompt, fixCommitMessageHeuristically, normalizeCommitMessageFormat } from "../commitRuleChecker"
 import { buildDiffContext } from "../utils"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
@@ -22,10 +21,9 @@ export class CommitMsgGenerator {
     this.storage = storage
   }
 
-  /** 读取用户配置的提交规则（最短描述阈值 + 可选规则开关；缺字段回退默认值，prompt 与生成后校验共用同一口径） */
+  /** 读取用户配置的提交规则（统一走 storage 入口；prompt 与生成后校验共用同一口径） */
   private async getRuleConfig(): Promise<CommitRuleConfig> {
-    const prefs = await this.storage.ruleCheckPrefs.loadOrDefault()
-    return readCommitRuleConfig(prefs)
+    return this.storage.getCommitRuleConfig()
   }
 
   /**

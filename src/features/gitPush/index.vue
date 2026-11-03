@@ -72,6 +72,7 @@
       :line-analyzed-at="lineAnalyzedAt"
       :commit-count="analysisCommitCount"
       :view-settings="analysisViewSettings"
+      :rule-config="ruleConfig"
       :rule-check-project-id="effectiveRuleCheckProjectId"
       :project-ranking="projectLineRanking"
       :line-stats-summary="lineStatsSummary"

@@ -243,7 +243,6 @@ import {
   computed,
   inject,
   onMounted,
-  onUnmounted,
   ref,
 } from "vue"
 import Loader from "@/components/Loader.vue"
@@ -251,13 +250,9 @@ import RadioButton from "@/components/RadioButton.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { checkCommitRule } from "../../commitRuleChecker"
+import { useCommitFixCommon, computeCommitBlockedReason } from "../../composables/useCommitFixCommon"
 import { useCopyFeedback } from "../../composables/useCopyFeedback"
-import {
-  CARD_SERVICES_KEY,
-  DEFAULT_COMMIT_RULE_CONFIG,
-  readCommitRuleConfig,
-
-} from "../../types"
+import { CARD_SERVICES_KEY } from "../../types"
 
 import {
   resolveValidPath,
@@ -293,12 +288,18 @@ const aiNote = ref("")
 const saving = ref(false)
 /** 历史提交重写进度（{current, total}，null = 尚未开始）；仅历史提交保存时使用 */
 const rewriteProgress = ref<{ current: number, total: number } | null>(null)
-/** 提交时间策略：true = 保留原始提交时间，false = 按当前时间提交（持久化跨会话恢复） */
-const preserveDate = ref(true)
 const headHash = ref("")
 const workingTreeClean = ref(false)
 /** 仓库是否处于 rebase 中断状态（上次修正失败的残留，此时任何重写都必须阻止） */
 const rebaseStuck = ref(false)
+
+/** 提交时间策略 / 规则配置 / Esc 关闭（与批量修正弹窗共用） */
+const {
+  preserveDate,
+  ruleConfig,
+  loadCommitFixCommonPrefs,
+  onDateChoiceChange,
+} = useCommitFixCommon(manager, () => emit("close"))
 
 const projectPath = computed(() => project.value ? resolveValidPath(project.value) : "")
 
@@ -320,55 +321,25 @@ const isHistoryCommit = computed(() => !!projectPath.value && !!headHash.value &
 /** 是否可执行修正：目标非 merge、项目有效、非 rebase 残留且工作区干净（HEAD 走 amend，历史提交走 rebase） */
 const canAmend = computed(() => !props.target.isMerge && !!projectPath.value && !!headHash.value && workingTreeClean.value && !rebaseStuck.value)
 
-/** 提交规则配置（init 时从规则偏好恢复，与规则检查面板/AI 生成同口径） */
-const ruleConfig = ref({ ...DEFAULT_COMMIT_RULE_CONFIG })
-
 /** 当前新提交信息命中规则问题（合规时为 null） */
 const validationReason = computed(() => checkCommitRule(newMessage.value, ruleConfig.value))
 
-/** 不可保存时的提示文案 */
-const amendBlockedReason = computed(() => {
-  if (props.target.isMerge) {
-    return props.i18n.ruleFixMergeBlocked
-  }
-  if (rebaseStuck.value) {
-    return props.i18n.ruleFixRebaseStuck
-  }
-  if (!headHash.value) {
-    return props.i18n.ruleFixNoHead
-  }
-  if (!workingTreeClean.value) {
-    return props.i18n.ruleFixDirtyWorkingTree
-  }
-  return ""
-})
-
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape") emit("close")
-}
+/** 不可保存时的提示文案（与批量修正弹窗共用判定优先级） */
+const amendBlockedReason = computed(() => computeCommitBlockedReason({
+  isMerge: !!props.target.isMerge,
+  rebaseStuck: rebaseStuck.value,
+  headHash: headHash.value,
+  workingTreeClean: workingTreeClean.value,
+}, props.i18n))
 
 onMounted(() => {
-  window.addEventListener("keydown", handleKeydown)
   void init()
 })
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeydown)
-})
-
-/** 切换提交时间策略并即时持久化（下次打开弹窗恢复选择） */
-async function onDateChoiceChange(preserve: boolean) {
-  preserveDate.value = preserve
-  await manager.storage.commitFixPrefs.save({ preserveDate: preserve })
-}
 
 async function init() {
   try {
-    // 恢复上次选择的提交时间策略（持久化偏好，无记录时默认保留原始时间）
-    const prefs = await manager.storage.commitFixPrefs.loadOrDefault()
-    preserveDate.value = prefs.preserveDate
-    // 恢复提交规则配置（旧数据缺字段时回退默认值，校验与规则检查面板同口径）
-    const rulePrefs = await manager.storage.ruleCheckPrefs.loadOrDefault()
-    ruleConfig.value = readCommitRuleConfig(rulePrefs)
+    // 恢复提交时间策略与规则配置（持久化偏好；旧数据缺字段时回退默认值）
+    await loadCommitFixCommonPrefs()
     const p = await manager.getProjectById(props.target.projectId)
     project.value = p ?? null
     if (!p) return

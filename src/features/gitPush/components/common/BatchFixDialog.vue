@@ -269,18 +269,14 @@ import {
   computed,
   inject,
   onMounted,
-  onUnmounted,
   ref,
 } from "vue"
 import Loader from "@/components/Loader.vue"
 import RadioButton from "@/components/RadioButton.vue"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { checkCommitRule } from "../../commitRuleChecker"
-import {
-  CARD_SERVICES_KEY,
-  DEFAULT_COMMIT_RULE_CONFIG,
-  readCommitRuleConfig,
-} from "../../types"
+import { computeCommitBlockedReason, useCommitFixCommon } from "../../composables/useCommitFixCommon"
+import { CARD_SERVICES_KEY } from "../../types"
 import {
   resolveValidPath,
   ruleReasonDesc,
@@ -333,10 +329,6 @@ const services = inject(CARD_SERVICES_KEY)!
 const { manager } = services
 
 const loading = ref(true)
-/** 提交时间策略：true = 保留原始提交时间，false = 按当前时间提交（持久化跨会话恢复） */
-const preserveDate = ref(true)
-/** 提交规则配置（init 时从规则偏好恢复，与规则检查面板/AI 生成同口径） */
-const ruleConfig = ref({ ...DEFAULT_COMMIT_RULE_CONFIG })
 const items = ref<BatchFixItem[]>([])
 const generating = ref(false)
 const saving = ref(false)
@@ -352,6 +344,14 @@ const currentRewrite = ref<{ current: number, total: number } | null>(null)
 const summary = ref<{ succeeded: number, failed: number, skipped: number } | null>(null)
 
 const busy = computed(() => loading.value || generating.value || saving.value)
+
+/** 提交时间策略 / 规则配置 / Esc 关闭（执行中禁止关闭，与单条修正弹窗共用） */
+const {
+  preserveDate,
+  ruleConfig,
+  loadCommitFixCommonPrefs,
+  onDateChoiceChange,
+} = useCommitFixCommon(manager, () => emit("close"), () => !busy.value)
 
 /** 可修正（未 blocked）且未保存的条目 = AI 生成候选集 */
 const pendingItems = computed(() => items.value.filter((it) => !it.blockedReason && it.status !== "saved"))
@@ -381,45 +381,28 @@ function statusTitle(status: BatchFixItem["status"]): string {
   return ""
 }
 
-function handleKeydown(e: KeyboardEvent) {
-  if (e.key === "Escape" && !busy.value) emit("close")
-}
-
 onMounted(() => {
-  window.addEventListener("keydown", handleKeydown)
   void init()
-})
-onUnmounted(() => {
-  window.removeEventListener("keydown", handleKeydown)
 })
 
 function onMaskClose() {
   if (!busy.value) emit("close")
 }
 
-/** 切换提交时间策略并即时持久化（下次打开弹窗恢复选择） */
-async function onDateChoiceChange(preserve: boolean) {
-  preserveDate.value = preserve
-  await manager.storage.commitFixPrefs.save({ preserveDate: preserve })
-}
-
-/** 计算不可修正原因（merge / rebase 残留 / 无 HEAD / 工作区脏，优先级同单条弹窗） */
+/** 计算不可修正原因（merge / rebase 残留 / 无 HEAD / 工作区脏，与单条弹窗共用判定优先级） */
 function computeBlockedReason(item: Pick<BatchFixItem, "isMerge">, rt: ProjectRuntime): string {
-  if (item.isMerge) return props.i18n.ruleFixMergeBlocked
-  if (rt.rebaseStuck) return props.i18n.ruleFixRebaseStuck
-  if (!rt.headHash) return props.i18n.ruleFixNoHead
-  if (!rt.workingTreeClean) return props.i18n.ruleFixDirtyWorkingTree
-  return ""
+  return computeCommitBlockedReason({
+    isMerge: item.isMerge,
+    rebaseStuck: rt.rebaseStuck,
+    headHash: rt.headHash,
+    workingTreeClean: rt.workingTreeClean,
+  }, props.i18n)
 }
 
 async function init() {
   try {
-    // 恢复上次选择的提交时间策略（持久化偏好，无记录时默认保留原始时间）
-    const prefs = await manager.storage.commitFixPrefs.loadOrDefault()
-    preserveDate.value = prefs.preserveDate
-    // 恢复提交规则配置（旧数据缺字段时回退默认值，校验与规则检查面板同口径）
-    const rulePrefs = await manager.storage.ruleCheckPrefs.loadOrDefault()
-    ruleConfig.value = readCommitRuleConfig(rulePrefs)
+    // 恢复提交时间策略与规则配置（持久化偏好；旧数据缺字段时回退默认值）
+    await loadCommitFixCommonPrefs()
 
     // 按项目分组，每组一次加载 HEAD/工作区/rebase；每条检测 merge
     const byProject = new Map<string, CommitRuleViolation[]>()
@@ -453,7 +436,7 @@ async function init() {
         const isMerge = await manager.isMergeCommit(path, t.hash)
         const isHistory = !!rt.headHash && !rt.headHash.startsWith(t.hash)
         built.push({
-          key: `${t.projectId}-${t.hash}-${t.reason ?? ""}`,
+          key: `${t.projectId}-${t.hash}`,
           projectId: t.projectId,
           projectName: t.projectName,
           hash: t.hash,

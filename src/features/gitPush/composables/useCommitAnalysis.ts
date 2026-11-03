@@ -675,7 +675,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     ruleCheckPrefsLoaded = true
     const saved = await manager.storage.ruleCheckPrefs.loadOrDefault()
     ruleCheckProjectId.value = saved.projectId
-    // 旧数据缺字段时 readCommitRuleConfig 逐字段回退默认值（可选规则全开）
+    // 旧数据缺字段时 readCommitRuleConfig 逐字段回退默认值（与生成/修正弹窗同一口径）
     ruleConfig.value = readCommitRuleConfig(saved)
   }
 

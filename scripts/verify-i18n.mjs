@@ -45,25 +45,67 @@ function findLeafPaths(obj, prefix = '') {
 }
 
 /**
- * 检测 JSON 文件原文中的重复顶层键（JS 对象解析后重复键会被覆盖，需从原始文本检测）
+ * 检测 JSON 原文中的重复键（同一对象作用域内）。
+ * JSON.parse 会把重复键静默覆盖，只能在原始文本上扫描；旧实现只匹配顶层缩进，
+ * 分片文件中嵌套层级（如 gitPush 下）的重复键会漏检，导致合并后无法发现。
+ * 这里按对象/数组作用域栈扫描：仅「字符串后紧跟冒号」才视为键，数组内的字符串值会被忽略。
  */
 function detectDuplicateKeys(filePath) {
   const text = readFileSync(filePath, 'utf-8')
-  const seen = new Map()
   const duplicates = []
-  // 匹配 JSON 顶层键（紧跟在行首 2 空格缩进的双引号键名）
-  const keyRegex = /^ {2}"([^"]+)":/gm
-  // 用 matchAll 迭代，避免 while 中的赋值表达式（no-cond-assign）
-  for (const match of text.matchAll(keyRegex)) {
-    const key = match[1]
-    if (seen.has(key)) {
+  /** 作用域栈：对象 = Set（已见键名），数组 = null（不参与键判定） */
+  const stack = []
+  let i = 0
+  while (i < text.length) {
+    const ch = text[i]
+    if (ch === '{') {
+      stack.push(new Set())
+      i++
+      continue
+    }
+    if (ch === '[') {
+      stack.push(null)
+      i++
+      continue
+    }
+    if (ch === '}' || ch === ']') {
+      stack.pop()
+      i++
+      continue
+    }
+    if (ch !== '"') {
+      i++
+      continue
+    }
+    // 读取字符串（处理反斜杠转义）
+    const start = i
+    i++
+    let str = ''
+    while (i < text.length) {
+      if (text[i] === '\\') {
+        str += text[i + 1] ?? ''
+        i += 2
+        continue
+      }
+      if (text[i] === '"') {
+        i++
+        break
+      }
+      str += text[i++]
+    }
+    // 跳过空白后紧跟冒号才是键
+    let j = i
+    while (j < text.length && /\s/.test(text[j])) j++
+    if (text[j] !== ':') continue
+    const scope = stack[stack.length - 1]
+    if (!scope) continue
+    if (scope.has(str)) {
       duplicates.push({
-        key,
-        firstLine: seen.get(key),
-        duplicateLine: text.substring(0, match.index).split('\n').length,
+        key: str,
+        duplicateLine: text.substring(0, start).split('\n').length,
       })
     } else {
-      seen.set(key, text.substring(0, match.index).split('\n').length)
+      scope.add(str)
     }
   }
   return duplicates
@@ -224,23 +266,29 @@ function main() {
     const zhCN = loadI18n('zh_CN')
     const enUS = loadI18n('en_US')
 
-    // 1. 检测重复键
+    // 1. 检测重复键（扫描分片源文件：合并产物由 JSON.stringify 生成，不会出现重复键）
     console.log('--- Duplicate Keys ---')
-    const zhFile = join(I18N_DIR, 'zh_CN.json')
-    const enFile = join(I18N_DIR, 'en_US.json')
-    const zhDupes = detectDuplicateKeys(zhFile)
-    const enDupes = detectDuplicateKeys(enFile)
-    if (zhDupes.length > 0) {
-      console.warn(`⚠️  zh_CN has ${zhDupes.length} duplicate top-level key(s):`)
-      for (const d of zhDupes) {
-        console.warn(`   "${d.key}" — first at line ${d.firstLine}, duplicate at line ${d.duplicateLine}`)
+    const shardDupes = []
+    for (const lang of ['zh_CN', 'en_US']) {
+      const dir = join(I18N_DIR, lang)
+      if (!existsSync(dir)) continue
+      for (const file of readdirSync(dir).filter((f) => f.endsWith('.json'))) {
+        for (const dup of detectDuplicateKeys(join(dir, file))) {
+          shardDupes.push({
+            file: `${lang}/${file}`,
+            ...dup,
+          })
+        }
       }
     }
-    if (enDupes.length > 0) {
-      console.warn(`⚠️  en_US has ${enDupes.length} duplicate top-level key(s):`)
-      for (const d of enDupes) {
-        console.warn(`   "${d.key}" — first at line ${d.firstLine}, duplicate at line ${d.duplicateLine}`)
+    if (shardDupes.length > 0) {
+      console.error(`❌ ${shardDupes.length} duplicate key(s) in i18n shards:`)
+      for (const d of shardDupes) {
+        console.error(`   ${d.file}: "${d.key}" duplicate at line ${d.duplicateLine}`)
       }
+      errors += shardDupes.length
+    } else {
+      console.log('✅ No duplicate keys in i18n shards')
     }
 
     // 2. 比较叶子键

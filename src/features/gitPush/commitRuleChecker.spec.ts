@@ -6,6 +6,7 @@
 // 3) AI 常见的包裹/换行/空行细节应被确定性修复，而不是整条丢弃。
 import { describe, expect, it } from "vitest"
 import {
+  analyzeCommitRuleCompliance,
   buildCommitRulePrompt,
   checkCommitRule,
   fixCommitMessageHeuristically,
@@ -103,6 +104,30 @@ describe("normalizeCommitMessageFormat", () => {
     expect(normalizeCommitMessageFormat("feat: wip 修复登录接口异常问题", DEFAULT)).toBe("")
     // 非中文描述
     expect(normalizeCommitMessageFormat("feat: fix login crash issue", DEFAULT)).toBe("")
+  })
+})
+
+describe("analyzeCommitRuleCompliance", () => {
+  const entry = (hash: string, message: string, isMerge = false) => ({
+    projectId: "p1",
+    projectName: "项目",
+    hash,
+    message,
+    author: "kai",
+    date: "2026-01-01T00:00:00Z",
+    isMerge,
+  })
+
+  it("merge 提交豁免且不计入检查数（合规率分母不掺 merge）", () => {
+    const stats = analyzeCommitRuleCompliance([
+      entry("a", "feat: 新增登录接口功能并补充参数校验"),
+      entry("b", "Merge branch 'dev'", true),
+      entry("c", "更新"),
+    ], DEFAULT)
+    expect(stats.totalCommits).toBe(2)
+    expect(stats.violationCount).toBe(1)
+    expect(stats.compliantCount).toBe(1)
+    expect(stats.violations.map((v) => v.hash)).toEqual(["c"])
   })
 })
 

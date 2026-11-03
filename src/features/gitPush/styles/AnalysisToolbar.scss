@@ -4,6 +4,16 @@
 
 .gp-analysistoolbar {
   margin-bottom: $s-3;
+
+  // 窄面板：右侧控件放不下时在 end 槽内折行（不改成「状态独占首行」的两行布局，宽面板仍单行）
+  .si-toolbar__end {
+    flex-wrap: wrap;
+    row-gap: $s-1;
+  }
+
+  .si-toolbar__end > * {
+    flex-shrink: 0;
+  }
 }
 
 // 分析状态文案（未分析/分析中/完成；占满 start 槽剩余空间，超长省略避免挤压右侧控件）

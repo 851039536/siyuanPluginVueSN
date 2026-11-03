@@ -458,14 +458,14 @@ const legendCells = computed(() => {
 
 /** 图例右侧口径说明：「项目数 · 自适应 · 按月」——交代格子表达什么、深浅怎么分、一格有多久 */
 const scaleHint = computed(() => {
-  const meta = COMMIT_HEAT_METRIC_META[props.metric]
+  // 指标已由区块标题行的下拉直接展示，图例只交代「分档方式 · 粒度」，避免同一值两处重复
   const mode = props.scaleMode === "auto" ? props.i18n.analysisHeatScaleAuto : props.i18n.analysisHeatScaleFixed
   const grainValue = {
     day: props.i18n.analysisHeatGrainDay,
     week: props.i18n.analysisHeatGrainWeek,
     month: props.i18n.analysisHeatGrainMonth,
   }[props.granularity]
-  return [props.i18n[meta.labelKey], mode, grainValue].filter(Boolean).join(" · ")
+  return [mode, grainValue].filter(Boolean).join(" · ")
 })
 
 /** 口径说明的完整版（hover 展示，避免长文案挤压图例行） */

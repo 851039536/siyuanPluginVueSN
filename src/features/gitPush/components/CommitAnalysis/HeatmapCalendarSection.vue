@@ -1,9 +1,18 @@
 <!-- gitPush 提交分析热力图/日历区块（按 viewSettings 切换视图；单击看当日、拖拽/Shift+点击框选区间看统计） -->
 <template>
   <div class="gpa-section">
-    <!-- 区块标题："提交热力图"/"提交日历" + 范围摘要（连续 / 最长连续 / 合计，口径与单位随粒度与指标） -->
+    <!-- 区块标题："提交热力图"/"提交日历" + 指标切换 + 范围摘要（连续 / 最长连续 / 合计） -->
     <div class="gpa-section-title">
       {{ viewSettings.view === "heatmap" ? i18n.analysisHeatTitle : i18n.analysisCalendarTitle }}
+      <!-- 热力指标（提交数 / 项目数 / 活跃作者；热力图与日历共用同一口径） -->
+      <Select
+        class="gpa-heat-metric"
+        :model-value="viewSettings.heatMetric"
+        size="xsmall"
+        :options="metricOptions"
+        :aria-label="i18n.analysisHeatMetric"
+        @change="onMetricChange"
+      />
       <span class="gpa-heat-stats">
         <span
           v-for="(item, i) in summaryItems"
@@ -77,6 +86,7 @@
 import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../types"
 import type { HeatBucketSpan } from "../../utils"
 import { computed, ref, watch } from "vue"
+import Select from "@/components/Select.vue"
 import {
   buildDayMetricMap,
   buildHeatBuckets,
@@ -89,6 +99,7 @@ import {
   summarizeCommitRange,
   summarizeHeatStreak,
 } from "../../utils"
+import { COMMIT_HEAT_METRIC_META } from "../../types"
 import CommitCalendar from "./CommitCalendar.vue"
 import CommitHeatmap from "./CommitHeatmap.vue"
 import DayCommitDetail from "./DayCommitDetail.vue"
@@ -109,7 +120,24 @@ const props = defineProps<{
 const emit = defineEmits<{
   /** 明细行点击：跳转该项目的列表视图 */
   viewProject: [projectId: string]
+  /** 指标切换（热力指标直接内联在区块标题行） */
+  updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
 }>()
+
+/** 指标三档（顺序：提交数 → 项目数 → 活跃作者，由粗到细） */
+const metricOptions = computed(() =>
+  (["commits", "projects", "authors"] as const).map((value) => ({
+    value,
+    label: props.i18n[COMMIT_HEAT_METRIC_META[value].labelKey],
+  })),
+)
+
+/** 指标切换：只接受已验证的三档值（Select 的 change 载荷为宽类型） */
+function onMetricChange(v: string | number | boolean | null) {
+  if (v === "commits" || v === "projects" || v === "authors") {
+    emit("updateViewSettings", { heatMetric: v })
+  }
+}
 
 /** 当前显示范围起止（YYYY-MM-DD；"all" 用已分析条目推算最早一天） */
 const range = computed(() => {

@@ -1,4 +1,4 @@
-<!-- 提交分析显示设置菜单：齿轮弹出薄壳，表单内容复用 AnalysisSettingsForm（改动即时派发持久化） -->
+<!-- 提交分析显示设置菜单：齿轮弹出低频项（周起始 / 密度 / 分档 / 颜色）；视图与显示范围已内联到分析工具条，指标在热力区块标题行 -->
 <template>
   <div
     ref="wrapEl"
@@ -29,6 +29,7 @@
         :i18n="i18n"
         :view-settings="viewSettings"
         :years="years"
+        omit-primary
         @update="emit('update', $event)"
       />
     </div>

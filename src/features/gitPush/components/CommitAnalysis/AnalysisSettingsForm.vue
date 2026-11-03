@@ -1,8 +1,12 @@
-<!-- gitPush 提交分析显示设置表单（控件走共享库：视图分段/范围/周起始/格子颜色，popover 与设置汇总弹窗复用） -->
+<!-- gitPush 提交分析显示设置表单（控件走共享库：视图/范围/指标/周起始/密度/分档/颜色；
+     popover 隐藏已上提到工具条与区块标题的常用项，设置汇总弹窗展示完整表单） -->
 <template>
   <div class="gpa-settings-form">
-    <!-- 设置项：视图（热力图 / 日历 两段式切换；互斥选项用 Button 分组 + aria-pressed） -->
-    <div class="gpa-settings-row">
+    <!-- 设置项：视图（热力图 / 日历 两段式切换；已上提到分析工具条，popover 内隐藏） -->
+    <div
+      v-if="!omitPrimary"
+      class="gpa-settings-row"
+    >
       <!-- 设置项标签："视图" -->
       <span class="gpa-settings-label">{{ i18n.analysisViewLabel }}</span>
       <div class="gpa-settings-seg">
@@ -25,8 +29,11 @@
       </div>
     </div>
 
-    <!-- 设置项：显示范围（最近一年 / 指定年份至今） -->
-    <div class="gpa-settings-row">
+    <!-- 设置项：显示范围（最近一年 / 全部 / 指定年份；已上提到分析工具条，popover 内隐藏） -->
+    <div
+      v-if="!omitPrimary"
+      class="gpa-settings-row"
+    >
       <!-- 设置项标签："显示范围" -->
       <span class="gpa-settings-label">{{ i18n.analysisRangeLabel }}</span>
       <Select
@@ -53,8 +60,11 @@
       />
     </div>
 
-    <!-- 设置项：热力指标（格子深浅统计什么：提交数 / 项目数 / 活跃作者，三者同一份抓取数据） -->
-    <div class="gpa-settings-row">
+    <!-- 设置项：热力指标（格子深浅统计什么：提交数 / 项目数 / 活跃作者；已上提到热力图区块标题行，popover 内隐藏） -->
+    <div
+      v-if="!omitPrimary"
+      class="gpa-settings-row"
+    >
       <!-- 设置项标签："指标" -->
       <span class="gpa-settings-label">{{ i18n.analysisHeatMetric }}</span>
       <div class="gpa-settings-seg">
@@ -146,6 +156,7 @@ import Button from "@/components/Button.vue"
 import ColorField from "@/components/ColorField.vue"
 import Select from "@/components/Select.vue"
 import { COMMIT_HEAT_METRIC_META } from "../../types"
+import { buildAnalysisRangeOptions } from "./analysisRangeOptions"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -153,6 +164,8 @@ const props = defineProps<{
   viewSettings: CommitAnalysisViewSettings
   /** 年份选项（数据年份 ∪ 今年 ∪ 已保存年份，降序） */
   years: number[]
+  /** 隐藏已上提到工具条/区块标题的常用项（视图 / 显示范围 / 指标）；设置汇总弹窗保留完整表单 */
+  omitPrimary?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -163,21 +176,8 @@ function update(patch: Partial<CommitAnalysisViewSettings>) {
   emit("update", patch)
 }
 
-/** 显示范围选项（"最近一年 / 全部 / 各年份"）：值统一为字符串，与 viewSettings.range 的字符串分支一致 */
-const rangeOptions = computed(() => {
-  const currentYear = new Date().getFullYear()
-  return [
-    { value: "lastYear", label: props.i18n.analysisRangeLastYear },
-    { value: "all", label: props.i18n.analysisRangeAll },
-    ...props.years.map((y) => ({
-      value: String(y),
-      // 过去年份=该年全年；今年=1-1 至今（与 resolveAnalysisRange 的实际口径一致）
-      label: y === currentYear
-        ? String(props.i18n.analysisRangeYear).replace("{0}", String(y))
-        : String(props.i18n.analysisRangeYearFull).replace("{0}", String(y)),
-    })),
-  ]
-})
+/** 显示范围选项（与分析工具条共用同一份构建逻辑，避免顺序/文案漂移） */
+const rangeOptions = computed(() => buildAnalysisRangeOptions(props.i18n, props.years))
 
 /** 每周第一天选项（周一 = 1 / 周日 = 0，与 CommitAnalysisViewSettings.weekStart 的取值同源） */
 const weekStartOptions = computed(() => [

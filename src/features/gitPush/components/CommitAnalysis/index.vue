@@ -31,6 +31,40 @@
         @run="runCurrentTab"
       >
         <template #controls>
+          <!-- 提交概览视角：视图切换（热力图 / 日历；直接内联，避免每次开设置） -->
+          <div
+            v-if="activeTab === 'overview'"
+            class="gpa-toolbar-seg"
+            role="group"
+            :aria-label="i18n.analysisViewLabel"
+          >
+            <Button
+              class="gpa-toolbar-seg-btn"
+              variant="ghost"
+              size="xsmall"
+              dense
+              :aria-pressed="viewSettings.view === 'heatmap'"
+              @click="emit('updateViewSettings', { view: 'heatmap' })"
+            >{{ i18n.analysisViewHeatmap }}</Button>
+            <Button
+              class="gpa-toolbar-seg-btn"
+              variant="ghost"
+              size="xsmall"
+              dense
+              :aria-pressed="viewSettings.view === 'calendar'"
+              @click="emit('updateViewSettings', { view: 'calendar' })"
+            >{{ i18n.analysisViewCalendar }}</Button>
+          </div>
+          <!-- 提交概览视角：显示范围（最近一年 / 全部 / 年份；KPI、排行、趋势与热力图同源） -->
+          <Select
+            v-if="activeTab === 'overview'"
+            class="gpa-toolbar-range"
+            :model-value="String(viewSettings.range)"
+            size="xsmall"
+            :options="rangeOptions"
+            :aria-label="i18n.analysisRangeLabel"
+            @change="onRangeChange"
+          />
           <!-- 规则检查视角：项目过滤下拉（"全部项目"/单个项目，切换即过滤统计结果） -->
           <Select
             v-if="activeTab === 'rulecheck'"
@@ -150,6 +184,7 @@
                 :view-settings="viewSettings"
                 :focus-request="focusRequest"
                 @view-project="emit('viewProject', $event)"
+                @update-view-settings="emit('updateViewSettings', $event)"
               />
             </div>
           </template>
@@ -310,6 +345,7 @@ import StatCardGrid from "../common/StatCardGrid.vue"
 import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
+import { buildAnalysisRangeOptions } from "./analysisRangeOptions"
 import {
   buildYearOptions,
   filterEntriesByRange,
@@ -433,8 +469,21 @@ function runCurrentTab() {
   else emit("runAnalysis")
 }
 
-/** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（供设置弹窗与设置汇总弹窗共用逻辑） */
+/** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（供工具条范围下拉与设置汇总弹窗共用逻辑） */
 const yearOptions = computed(() => buildYearOptions(props.stats.entries, props.viewSettings.range))
+
+/** 工具条显示范围下拉选项（与显示设置表单共用同一份构建逻辑） */
+const rangeOptions = computed(() => buildAnalysisRangeOptions(props.i18n, yearOptions.value))
+
+/** 工具条范围切换（字符串分支固定为 lastYear / all，其余视为年份） */
+function onRangeChange(v: string | number | boolean | null) {
+  if (typeof v !== "string") return
+  if (v === "lastYear" || v === "all") {
+    emit("updateViewSettings", { range: v })
+    return
+  }
+  emit("updateViewSettings", { range: Number(v) })
+}
 
 /** 显示范围起止（KPI / 排行 / 趋势图共用，与热力图同一份 viewSettings.range；"all" 需要条目推算最早一天） */
 const rangeBounds = computed(() => {

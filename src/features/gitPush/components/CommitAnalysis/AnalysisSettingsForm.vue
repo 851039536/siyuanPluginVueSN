@@ -163,14 +163,21 @@ function update(patch: Partial<CommitAnalysisViewSettings>) {
   emit("update", patch)
 }
 
-/** 显示范围选项（"最近一年" + 各年份）：值统一为字符串，与 viewSettings.range 的字符串分支一致 */
-const rangeOptions = computed(() => [
-  { value: "lastYear", label: props.i18n.analysisRangeLastYear },
-  ...props.years.map((y) => ({
-    value: String(y),
-    label: String(props.i18n.analysisRangeYear).replace("{0}", String(y)),
-  })),
-])
+/** 显示范围选项（"最近一年 / 全部 / 各年份"）：值统一为字符串，与 viewSettings.range 的字符串分支一致 */
+const rangeOptions = computed(() => {
+  const currentYear = new Date().getFullYear()
+  return [
+    { value: "lastYear", label: props.i18n.analysisRangeLastYear },
+    { value: "all", label: props.i18n.analysisRangeAll },
+    ...props.years.map((y) => ({
+      value: String(y),
+      // 过去年份=该年全年；今年=1-1 至今（与 resolveAnalysisRange 的实际口径一致）
+      label: y === currentYear
+        ? String(props.i18n.analysisRangeYear).replace("{0}", String(y))
+        : String(props.i18n.analysisRangeYearFull).replace("{0}", String(y)),
+    })),
+  ]
+})
 
 /** 每周第一天选项（周一 = 1 / 周日 = 0，与 CommitAnalysisViewSettings.weekStart 的取值同源） */
 const weekStartOptions = computed(() => [
@@ -195,7 +202,11 @@ const metricOptions = computed(() =>
 
 function onRangeChange(v: string | number | boolean | null) {
   if (typeof v !== "string") return
-  update({ range: v === "lastYear" ? "lastYear" : Number(v) })
+  if (v === "lastYear" || v === "all") {
+    update({ range: v })
+    return
+  }
+  update({ range: Number(v) })
 }
 
 function onWeekStartChange(v: string | number | boolean | null) {

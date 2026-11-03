@@ -518,6 +518,13 @@ export type CommitHeatDensity = "compact" | "normal"
  */
 export type CommitHeatGranularity = "day" | "week" | "month"
 
+/**
+ * 趋势图粒度：在热力粒度之上增加「季度 / 年」。
+ * 热力图/日历最粗只到月（年 × 12 月矩阵可读），而趋势图在多年跨度下若仍按月
+ * 会出现几十根柱挤成一排，故单独提供更粗的两档（见 utils.resolveTrendGranularity）。
+ */
+export type CommitTrendGranularity = CommitHeatGranularity | "quarter" | "year"
+
 /** 各粒度下单格的折算天数（仅用于固定阈值的量级折算与文案，非精确历法换算） */
 export const HEAT_BUCKET_DAYS: Record<CommitHeatGranularity, number> = {
   day: 1,
@@ -535,8 +542,13 @@ export const HEAT_CELL_SIZES: Record<CommitHeatDensity, number> = {
 export interface CommitAnalysisViewSettings {
   /** 视图：热力图 / 日历 */
   view: "heatmap" | "calendar"
-  /** 显示范围："lastYear"=最近一年；number=起始年份，连续显示到今年 */
-  range: "lastYear" | number
+  /**
+   * 显示范围：
+   * - "lastYear"：最近一年
+   * - number：单个年份（过去年份=该年全年；今年=1-1 至今）
+   * - "all"：全部有提交的年份（起始日取已分析条目中最早一天）
+   */
+  range: "lastYear" | "all" | number
   /** 每周第一天（与 Date.getDay 一致）：1=周一, 0=周日 */
   weekStart: 0 | 1
   /** 热力主色（#RRGGBB，格子由主色按等级加透明度渲染） */

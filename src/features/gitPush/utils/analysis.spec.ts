@@ -14,6 +14,7 @@ import {
   computeHeatThresholds,
   filterEntriesByRange,
   fixedHeatThresholds,
+  formatLocalDate,
   HEAT_SCALE_QUANTILES,
   heatBucketKey,
   heatLevel,
@@ -22,7 +23,9 @@ import {
   PROJECT_COMMIT_COLORS,
   rankByCountWithTotal,
   rankProjectsWithColors,
+  resolveAnalysisRange,
   resolveHeatGranularity,
+  resolveTrendGranularity,
   summarizeCommitRange,
   summarizeHeatRange,
   summarizeHeatStreak,
@@ -480,6 +483,79 @@ describe("buildHeatBuckets（按粒度切分格子区间）", () => {
     expect(buckets.map((b) => b.start)).toEqual(["2025-11-01", "2025-12-01", "2026-01-01", "2026-02-01"])
     expect(buckets[1].end).toBe("2025-12-31") // 31 天的月份不能算成 30 天
     expect(buckets[3].end).toBe("2026-02-28") // 平年 2 月
+  })
+})
+
+describe("resolveTrendGranularity（多年跨度向季度/年收敛）", () => {
+  it("沿用日/周/月阈值，超过 5 年按季度、超过 10 年按年", () => {
+    expect(resolveTrendGranularity("2026-01-01", "2026-12-31")).toBe("day")
+    expect(resolveTrendGranularity("2025-08-01", shiftDays("2025-08-01", 371))).toBe("week")
+    expect(resolveTrendGranularity("2025-08-01", shiftDays("2025-08-01", 912))).toBe("month")
+    // 1826 天（含首尾）仍按月；1827 天起按季度
+    expect(resolveTrendGranularity("2010-01-01", shiftDays("2010-01-01", 1825))).toBe("month")
+    expect(resolveTrendGranularity("2010-01-01", shiftDays("2010-01-01", 1826))).toBe("quarter")
+    // 3650 天仍按季度；更久按年
+    expect(resolveTrendGranularity("2010-01-01", shiftDays("2010-01-01", 3649))).toBe("quarter")
+    expect(resolveTrendGranularity("2010-01-01", shiftDays("2010-01-01", 3650))).toBe("year")
+  })
+})
+
+describe("heatBucketKey / buildHeatBuckets（季度与年粒度）", () => {
+  it("季度归到当季首月 1 日，年归到当年 1 月 1 日", () => {
+    expect(heatBucketKey("2026-08-05", "quarter")).toBe("2026-07-01")
+    expect(heatBucketKey("2026-01-01", "quarter")).toBe("2026-01-01")
+    expect(heatBucketKey("2026-08-05", "year")).toBe("2026-01-01")
+  })
+
+  it("季度桶按自然季度切分，首尾被范围截断", () => {
+    const buckets = buildHeatBuckets("quarter", "2026-08-15", "2027-04-02")
+    expect(buckets).toEqual([
+      { start: "2026-08-15", end: "2026-09-30" },
+      { start: "2026-10-01", end: "2026-12-31" },
+      { start: "2027-01-01", end: "2027-03-31" },
+      { start: "2027-04-01", end: "2027-04-02" },
+    ])
+  })
+
+  it("年桶按自然年切分，首尾被范围截断", () => {
+    const buckets = buildHeatBuckets("year", "2024-06-01", "2026-02-01")
+    expect(buckets).toEqual([
+      { start: "2024-06-01", end: "2024-12-31" },
+      { start: "2025-01-01", end: "2025-12-31" },
+      { start: "2026-01-01", end: "2026-02-01" },
+    ])
+  })
+})
+
+describe("resolveAnalysisRange（范围语义）", () => {
+  const currentYear = new Date().getFullYear()
+  const today = formatLocalDate(new Date())
+
+  it("过去年份 = 该年全年（不再延到今年年底）", () => {
+    const { start, end } = resolveAnalysisRange(currentYear - 2)
+    expect(formatLocalDate(start)).toBe(`${currentYear - 2}-01-01`)
+    expect(formatLocalDate(end)).toBe(`${currentYear - 2}-12-31`)
+  })
+
+  it("今年 = 1-1 至今", () => {
+    const { start, end } = resolveAnalysisRange(currentYear)
+    expect(formatLocalDate(start)).toBe(`${currentYear}-01-01`)
+    expect(formatLocalDate(end)).toBe(today)
+  })
+
+  it("全部 = 已分析条目中最早一天至今；无条目时回退最近一年", () => {
+    const all = resolveAnalysisRange("all", [
+      { date: "2019-05-02T10:00:00" },
+      { date: "2023-01-01T10:00:00" },
+    ])
+    expect(formatLocalDate(all.start)).toBe("2019-05-02")
+    expect(formatLocalDate(all.end)).toBe(today)
+
+    const fallback = resolveAnalysisRange("all", [])
+    const expectedStart = new Date()
+    expectedStart.setDate(expectedStart.getDate() - 364)
+    expect(formatLocalDate(fallback.start)).toBe(formatLocalDate(expectedStart))
+    expect(formatLocalDate(fallback.end)).toBe(today)
   })
 })
 

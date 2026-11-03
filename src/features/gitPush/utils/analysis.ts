@@ -1,7 +1,7 @@
 // gitPush 提交分析纯函数：本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
 // 直连 types/meta（纯类型与常量）而非 "../types" 桶：桶含 GitPushManager 等运行时模块，
 // 会把运行时 siyuan 依赖拉进模块图，使本纯函数模块无法在 Node 单测环境加载。
-import type { CommitAnalysisEntry, CommitHeatGranularity, CommitHeatMetric, CommitRuleReasonKey } from "../types/meta"
+import type { CommitAnalysisEntry, CommitHeatGranularity, CommitHeatMetric, CommitRuleReasonKey, CommitTrendGranularity } from "../types/meta"
 import { ANALYSIS_WEEKDAY_KEYS, COMMIT_RULE_REASON_META, HEAT_BUCKET_DAYS, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
 
 /** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —；报告视图文件详情/活跃范围共用） */
@@ -93,12 +93,37 @@ export function resolveHeatGranularity(start: string, end: string): CommitHeatGr
 }
 
 /**
- * 日期 → 所属格子的键（日=当天；周=对齐到 weekStart 的那一天；月=当月 1 日）。
+ * 趋势图粒度：在热力粒度（日/周/月）基础上，多年跨度再向季度/年收敛。
+ * 阈值沿用热力粒度的日/周/月分界（保持两个视图对同一年内的划分一致），
+ * 超过 5 年按月→季度、超过 10 年按季→年，避免几十根柱挤在一条轴上。
+ */
+export const TREND_GRANULARITY_MONTH_MAX_DAYS = 1826
+/** 跨度 ≤ 3650 天（约 10 年）按季度；更久按年（30 年也只有 30 根柱） */
+export const TREND_GRANULARITY_QUARTER_MAX_DAYS = 3650
+
+/** 跨度 → 趋势图粒度（日 / 周 / 月 / 季度 / 年；较热力图多出后两档） */
+export function resolveTrendGranularity(start: string, end: string): CommitTrendGranularity {
+  const days = inclusiveDays(start, end)
+  if (days <= HEAT_GRANULARITY_DAY_MAX_DAYS) return "day"
+  if (days <= HEAT_GRANULARITY_WEEK_MAX_DAYS) return "week"
+  if (days <= TREND_GRANULARITY_MONTH_MAX_DAYS) return "month"
+  if (days <= TREND_GRANULARITY_QUARTER_MAX_DAYS) return "quarter"
+  return "year"
+}
+
+/**
+ * 日期 → 所属格子的键（日=当天；周=对齐到 weekStart 的那一天；月=当月 1 日；
+ * 季度=当季首月 1 日；年=当年 1 月 1 日）。
  * 键始终是 YYYY-MM-DD 且落在范围内，故可继续用字符串比较做区间过滤。
  */
-export function heatBucketKey(dateKey: string, granularity: CommitHeatGranularity, weekStart: 0 | 1 = 1): string {
+export function heatBucketKey(dateKey: string, granularity: CommitTrendGranularity, weekStart: 0 | 1 = 1): string {
   if (granularity === "day") return dateKey
   const [y, m, d] = dateKey.split("-").map(Number)
+  if (granularity === "year") return `${y}-01-01`
+  if (granularity === "quarter") {
+    const quarterStartMonth = Math.floor((m - 1) / 3) * 3 + 1
+    return `${y}-${String(quarterStartMonth).padStart(2, "0")}-01`
+  }
   if (granularity === "month") return `${y}-${String(m).padStart(2, "0")}-01`
   const cursor = new Date(y, m - 1, d)
   // 取模而非 while 自减：weekStart 来自持久化设置，被污染成非 0/1 时 while 永不满足会死循环
@@ -134,14 +159,21 @@ function monthEnd(dateKey: string): string {
   return formatLocalDate(new Date(y, m, 0))
 }
 
+/** 日期文本所在季度的最后一天（YYYY-MM-DD） */
+function quarterEnd(dateKey: string): string {
+  const [y, m] = dateKey.split("-").map(Number)
+  const quarterLastMonth = (Math.floor((m - 1) / 3) + 1) * 3
+  return formatLocalDate(new Date(y, quarterLastMonth, 0))
+}
+
 /**
  * 把 [start, end] 切成连续的格子区间。
  *
- * 周/月的**首尾桶会被范围截断**：范围从周三开始时，第一格只覆盖 周三~周日，
+ * 周/月/季/年的**首尾桶会被范围截断**：范围从周三开始时，第一格只覆盖 周三~周日，
  * 这样「格子代表的日期」与 tooltip 文案一致，聚合也不会把范围外的提交算进来。
  */
 export function buildHeatBuckets(
-  granularity: CommitHeatGranularity,
+  granularity: CommitTrendGranularity,
   start: string,
   end: string,
   weekStart: 0 | 1 = 1,
@@ -151,12 +183,16 @@ export function buildHeatBuckets(
   while (cursor <= end) {
     const bucketEnd = granularity === "day"
       ? cursor
-      : granularity === "week" ? addDays(cursor, 6) : monthEnd(cursor)
+      : granularity === "week"
+        ? addDays(cursor, 6)
+        : granularity === "month"
+          ? monthEnd(cursor)
+          : granularity === "quarter" ? quarterEnd(cursor) : `${cursor.slice(0, 4)}-12-31`
     spans.push({
       start: cursor < start ? start : cursor,
       end: bucketEnd > end ? end : bucketEnd,
     })
-    // 下一桶首日 = 本桶末日的次日（日粒度即 +1 天；周 +7 天；月到次月 1 日）
+    // 下一桶首日 = 本桶末日的次日（日粒度即 +1 天；周 +7 天；月/季/年到下一周期首日）
     cursor = addDays(bucketEnd, 1)
   }
   return spans
@@ -308,7 +344,7 @@ export function buildProjectSeries(
   entries: CommitAnalysisEntry[],
   start: string,
   end: string,
-  granularity: CommitHeatGranularity,
+  granularity: CommitTrendGranularity,
   weekStart: 0 | 1 = 1,
   topN = 8,
 ): ProjectCommitSeries {
@@ -483,16 +519,39 @@ export function computeHeatThresholds(counts: ReadonlyArray<number>): number[] {
 }
 
 /** 解析热力图/日历显示范围：最近一年 = 今天−364 天 ~ 今天；年份 N = N-01-01 ~ 今年今天 / N-12-31 */
-export function resolveAnalysisRange(range: "lastYear" | number): { start: Date, end: Date } {
+/**
+ * 解析显示范围（起止均为本地零点）：
+ * - "lastYear"：最近 365 天（含今天）
+ * - "all"：已分析条目中最早一天 → 今天（无条目时回退最近一年，避免空数据把画布撑爆）
+ * - number：单个年份；过去年份=该年全年（1-1 ~ 12-31），今年=1-1 至今
+ *
+ * 历史缺陷：旧实现对过去年份把结束日设成「今年 12-31」，于是「2020 年」实际跨了 7 年，
+ * 与选项文案「2020 至今」不符，也让所有可视化被迫按多年跨度渲染。
+ */
+export function resolveAnalysisRange(
+  range: "lastYear" | "all" | number,
+  entries: { date: string }[] = [],
+): { start: Date, end: Date } {
   const end = new Date()
   end.setHours(0, 0, 0, 0)
-  if (range === "lastYear") {
+  if (range === "lastYear" || range === "all") {
+    if (range === "all") {
+      let earliest = ""
+      for (const e of entries) {
+        const d = new Date(e.date)
+        if (Number.isNaN(d.getTime())) continue
+        const key = formatLocalDate(d)
+        if (!earliest || key < earliest) earliest = key
+      }
+      if (earliest) return { start: parseLocalDate(earliest), end }
+    }
+    // lastYear 与「all 但无条目」共用回退范围
     const start = new Date(end)
     start.setDate(start.getDate() - 364)
     return { start, end }
   }
   const start = new Date(range, 0, 1)
-  if (range < end.getFullYear()) end.setMonth(11, 31)
+  if (range < end.getFullYear()) return { start, end: new Date(range, 11, 31) }
   return { start, end }
 }
 

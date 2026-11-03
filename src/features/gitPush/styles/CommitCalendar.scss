@@ -2,6 +2,27 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
+// 年份切换（仅多年范围显示；最新年在左）：共享 Button（ghost + xsmall + dense）承担交互与尺寸
+.gpa-cal-yearnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-1;
+  margin-bottom: $s-2;
+}
+
+.gpa-cal-yearnav .gpa-cal-yearnav-btn.si-button {
+  padding: $s-px2 $s-2;
+  border-radius: $r-sm;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $t-2xs;
+}
+
+.gpa-cal-yearnav .gpa-cal-yearnav-btn.si-button[aria-pressed="true"] {
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  font-weight: $fw-semibold;
+}
+
 // 月卡片网格（12 个月约 4 列 × 3 行，窄面板自动换行）
 .gpa-cal {
   display: grid;

@@ -35,7 +35,7 @@ export function formatLogTime(iso: string): string {
 }
 
 /** 显示设置年份选项：数据年份 ∪ 今年 ∪ 已保存 range 年份，降序（分析视图 popover 与设置汇总弹窗共用） */
-export function buildYearOptions(entries: { date: string }[], range: "lastYear" | number): number[] {
+export function buildYearOptions(entries: { date: string }[], range: "lastYear" | "all" | number): number[] {
   const years = new Set<number>([new Date().getFullYear()])
   if (typeof range === "number") years.add(range)
   for (const e of entries) {

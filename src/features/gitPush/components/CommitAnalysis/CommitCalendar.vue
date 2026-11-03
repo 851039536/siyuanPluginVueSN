@@ -1,59 +1,81 @@
-<!-- 提交日历：月卡片网格视图，每日格子显示日号与提交数并按热力等级着色（周起始/配色/范围由设置驱动） -->
+<!-- 提交日历：月卡片网格视图，每日格子显示日号与提交数并按热力等级着色（周起始/配色/范围由设置驱动；
+     多年范围按年份分页，一次只渲染 12 个月，避免几十张月卡把面板挤成一长条） -->
 <template>
-  <div class="gpa-cal">
+  <div class="gpa-cal-wrap">
+    <!-- 年份切换（仅多年范围显示；最新年在左） -->
     <div
-      v-for="m in months"
-      :key="m.key"
-      class="gpa-cal-month"
+      v-if="years.length > 1"
+      class="gpa-cal-yearnav"
+      role="group"
+      :aria-label="i18n.analysisCalYearNav"
     >
-      <!-- 月标题：YYYY-MM + 月提交总数 -->
-      <div class="gpa-cal-month-head">
-        <span class="gpa-cal-month-title">{{ m.title }}</span>
-        <span class="gpa-cal-month-total">{{ m.total }}</span>
-      </div>
+      <Button
+        v-for="y in years"
+        :key="y"
+        class="gpa-cal-yearnav-btn"
+        variant="ghost"
+        size="xsmall"
+        dense
+        :aria-pressed="y === selectedYear"
+        @click="selectedYear = y"
+      >{{ y }}</Button>
+    </div>
 
-      <!-- 星期表头（按 weekStart 排序，周一开头或周日开头） -->
-      <div class="gpa-cal-weekhead">
-        <span
-          v-for="w in m.weekhead"
-          :key="w"
-          class="gpa-cal-weekhead-cell"
-        >{{ w }}</span>
-      </div>
+    <div class="gpa-cal">
+      <div
+        v-for="m in months"
+        :key="m.key"
+        class="gpa-cal-month"
+      >
+        <!-- 月标题：YYYY-MM + 月提交总数 -->
+        <div class="gpa-cal-month-head">
+          <span class="gpa-cal-month-title">{{ m.title }}</span>
+          <span class="gpa-cal-month-total">{{ m.total }}</span>
+        </div>
 
-      <!-- 日格子：月初偏移空格 + 每日（未来日期弱化，今天描边，点击查看当日明细） -->
-      <div class="gpa-cal-days">
-        <span
-          v-for="blank in m.offset"
-          :key="`b${blank}`"
-          class="gpa-cal-day is-blank"
-        />
-        <button
-          v-for="d in m.days"
-          :key="d.date"
-          type="button"
-          class="gpa-cal-day"
-          :class="{
-            'is-future': d.future,
-            'is-today': d.today,
-            'is-selected': isEndpoint(d.date),
-            'is-in-range': isInRange(d.date),
-          }"
-          :style="d.style"
-          :title="d.tooltip"
-          :aria-label="d.tooltip"
-          :aria-pressed="isInRange(d.date)"
-          tabindex="-1"
-          @mousedown="drag.onDown(d.date, $event)"
-          @click="onCellClick(d.date, $event)"
-          @mouseenter="drag.onEnter(d.date)"
-        >
-          <span class="gpa-cal-day-num">{{ d.dayNum }}</span>
+        <!-- 星期表头（按 weekStart 排序，周一开头或周日开头） -->
+        <div class="gpa-cal-weekhead">
           <span
-            v-if="d.count > 0"
-            class="gpa-cal-day-count"
-          >{{ d.count }}</span>
-        </button>
+            v-for="w in m.weekhead"
+            :key="w"
+            class="gpa-cal-weekhead-cell"
+          >{{ w }}</span>
+        </div>
+
+        <!-- 日格子：月初偏移空格 + 每日（未来日期弱化，今天描边，点击查看当日明细） -->
+        <div class="gpa-cal-days">
+          <span
+            v-for="blank in m.offset"
+            :key="`b${blank}`"
+            class="gpa-cal-day is-blank"
+          />
+          <button
+            v-for="d in m.days"
+            :key="d.date"
+            type="button"
+            class="gpa-cal-day"
+            :class="{
+              'is-future': d.future,
+              'is-today': d.today,
+              'is-selected': isEndpoint(d.date),
+              'is-in-range': isInRange(d.date),
+            }"
+            :style="d.style"
+            :title="d.tooltip"
+            :aria-label="d.tooltip"
+            :aria-pressed="isInRange(d.date)"
+            tabindex="-1"
+            @mousedown="drag.onDown(d.date, $event)"
+            @click="onCellClick(d.date, $event)"
+            @mouseenter="drag.onEnter(d.date)"
+          >
+            <span class="gpa-cal-day-num">{{ d.dayNum }}</span>
+            <span
+              v-if="d.count > 0"
+              class="gpa-cal-day-count"
+            >{{ d.count }}</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -64,7 +86,8 @@
 // 键盘可达性由热力图承担（那边整张网格一个 Tab 位 + 方向键），此处日格 tabindex="-1" 只做鼠标/触摸入口，
 // 避免 365 个按钮各自入 Tab 序把键盘用户困在网格里。
 import type { CommitHeatMetric } from "../../types"
-import { computed } from "vue"
+import { computed, ref, watch } from "vue"
+import Button from "@/components/Button.vue"
 import { useDayDragSelect } from "../../composables/useDayDragSelect"
 import { buildDayCell, formatLocalDate } from "../../utils"
 import { ANALYSIS_WEEKDAY_KEYS, COMMIT_HEAT_METRIC_META } from "../../types"
@@ -148,7 +171,22 @@ interface MonthCell {
   days: DayCell[]
 }
 
-/** 逐月卡片：月初到 weekStart 的偏移空格 + 每日格子 + 月提交总数 */
+/** 范围覆盖的年份（降序：最新年在前，与趋势图「最新在左」一致） */
+const years = computed(() => {
+  const first = Number(props.start.slice(0, 4))
+  const last = Number(props.end.slice(0, 4))
+  const list: number[] = []
+  for (let y = last; y >= first; y--) list.push(y)
+  return list
+})
+
+/** 当前展示年份（默认最新年；范围变化后若不在范围内则回落到最新年） */
+const selectedYear = ref(Number(props.end.slice(0, 4)))
+watch(years, (list) => {
+  if (!list.includes(selectedYear.value)) selectedYear.value = list[0] ?? selectedYear.value
+})
+
+/** 逐月卡片：月初到 weekStart 的偏移空格 + 每日格子 + 月提交总数（仅当前选中年份，多年范围按年分页） */
 const months = computed<MonthCell[]>(() => {
   const [sy, sm] = props.start.split("-").map(Number)
   const [ey, em, ed] = props.end.split("-").map(Number)
@@ -161,6 +199,10 @@ const months = computed<MonthCell[]>(() => {
   while (cursor <= end) {
     const year = cursor.getFullYear()
     const month = cursor.getMonth()
+    if (year !== selectedYear.value) {
+      cursor.setMonth(month + 1)
+      continue
+    }
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const offset = (new Date(year, month, 1).getDay() - props.weekStart + 7) % 7
     const days: DayCell[] = []

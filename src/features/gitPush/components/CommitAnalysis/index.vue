@@ -316,7 +316,7 @@ import {
   formatLocalDate,
   inclusiveDays,
   resolveAnalysisRange,
-  resolveHeatGranularity,
+  resolveTrendGranularity,
 } from "../../utils"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
 import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"
@@ -436,12 +436,12 @@ function runCurrentTab() {
 /** 年份选项：数据年份 ∪ 今年 ∪ 已保存年份，降序（供设置弹窗与设置汇总弹窗共用逻辑） */
 const yearOptions = computed(() => buildYearOptions(props.stats.entries, props.viewSettings.range))
 
-/** 显示范围起止（KPI / 排行 / 趋势图共用，与热力图同一份 viewSettings.range） */
+/** 显示范围起止（KPI / 排行 / 趋势图共用，与热力图同一份 viewSettings.range；"all" 需要条目推算最早一天） */
 const rangeBounds = computed(() => {
   const {
     start,
     end,
-  } = resolveAnalysisRange(props.viewSettings.range)
+  } = resolveAnalysisRange(props.viewSettings.range, props.stats.entries)
   return {
     start: formatLocalDate(start),
     end: formatLocalDate(end),
@@ -453,8 +453,8 @@ const rangeEntries = computed(() =>
   filterEntriesByRange(props.stats.entries, rangeBounds.value.start, rangeBounds.value.end),
 )
 
-/** 趋势图粒度：与热力图同一条「跨度 → 日/周/月」换算 */
-const rangeGranularity = computed(() => resolveHeatGranularity(rangeBounds.value.start, rangeBounds.value.end))
+/** 趋势图粒度：多年跨度向季度/年收敛，避免几十根柱挤成一排 */
+const rangeGranularity = computed(() => resolveTrendGranularity(rangeBounds.value.start, rangeBounds.value.end))
 
 /** 范围天数（闭区间）与活跃天数（有提交的本地日期数） */
 const rangeDaySpan = computed(() => inclusiveDays(rangeBounds.value.start, rangeBounds.value.end))

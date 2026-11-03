@@ -111,9 +111,9 @@ const emit = defineEmits<{
   viewProject: [projectId: string]
 }>()
 
-/** 当前显示范围起止（YYYY-MM-DD） */
+/** 当前显示范围起止（YYYY-MM-DD；"all" 用已分析条目推算最早一天） */
 const range = computed(() => {
-  const { start, end } = resolveAnalysisRange(props.viewSettings.range)
+  const { start, end } = resolveAnalysisRange(props.viewSettings.range, props.stats.entries)
   return { start: formatLocalDate(start), end: formatLocalDate(end) }
 })
 

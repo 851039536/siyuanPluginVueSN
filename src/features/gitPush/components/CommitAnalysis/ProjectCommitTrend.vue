@@ -76,7 +76,8 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 每日项目提交趋势：范围内条目 → 与热力图同粒度的桶 × 项目堆叠柱。
+// gitPush 项目提交趋势：范围内条目 → 时间桶 × 项目堆叠柱。
+// 粒度与热力图同源（日/周/月），多年跨度再向季度/年收敛（resolveTrendGranularity），避免几十根柱挤成线。
 // Top N 之外合并为「其他」，既保留每日总量又避免几十个项目把图例压成不可读。
 import type {
   ChartData,
@@ -84,7 +85,7 @@ import type {
 } from "chart.js"
 import type {
   CommitAnalysisEntry,
-  CommitHeatGranularity,
+  CommitTrendGranularity,
 } from "../../types"
 import type { HeatBucketSpan } from "../../utils"
 import { Icon } from "@iconify/vue"
@@ -115,8 +116,8 @@ const props = defineProps<{
   /** 显示范围起止（YYYY-MM-DD） */
   start: string
   end: string
-  /** 与热力图相同的桶粒度（日 / 周 / 月） */
-  granularity: CommitHeatGranularity
+  /** 时间桶粒度（日/周/月/季度/年；多年跨度自动向季度或年收敛） */
+  granularity: CommitTrendGranularity
   /** 每周第一天（1=周一, 0=周日） */
   weekStart: 0 | 1
 }>()
@@ -173,6 +174,8 @@ const subtitle = computed(() => {
     day: props.i18n.analysisHeatGrainDay,
     week: props.i18n.analysisHeatGrainWeek,
     month: props.i18n.analysisHeatGrainMonth,
+    quarter: props.i18n.analysisHeatGrainQuarter,
+    year: props.i18n.analysisHeatGrainYear,
   }[props.granularity]
   const topN = series.value.projects.length > 0
     ? String(props.i18n.analysisTrendTopN || "").replace("{0}", String(series.value.projects.length))
@@ -180,8 +183,18 @@ const subtitle = computed(() => {
   return [grain, topN, props.i18n.analysisTrendHint].filter(Boolean).join(" · ")
 })
 
-/** 单个时间桶的轴标签（日/周取 MM-DD，月取 YYYY-MM） */
+/**
+ * 单个时间桶的轴标签：
+ * 日/周取 MM-DD，月取 YYYY-MM；季度只在 Q1 标年份（其余标 Q2/Q3/Q4）避免标签过长，年直接标 YYYY。
+ * 完整区间由 tooltip（bucketTitle）承担。
+ */
 function bucketLabel(span: HeatBucketSpan): string {
+  if (props.granularity === "year") return span.start.slice(0, 4)
+  if (props.granularity === "quarter") {
+    const month = Number(span.start.slice(5, 7))
+    const quarter = Math.floor((month - 1) / 3) + 1
+    return quarter === 1 ? span.start.slice(0, 4) : `Q${quarter}`
+  }
   return props.granularity === "month" ? span.start.slice(0, 7) : span.start.slice(5)
 }
 

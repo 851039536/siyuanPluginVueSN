@@ -189,9 +189,13 @@ export async function loadBackupZip(
     const entry = zip.file(slot.key)
     if (!entry) continue
     try {
-      payload.slots[slot.key] = JSON.parse(await entry.async("string"))
+      // 备份是插件数据目录的原样打包，不能假定每个槽都是 JSON：
+      // SiYuan saveData 对字符串值原样落盘（如 `xsmall` / `head`），强制 JSON.parse
+      // 会把这类槽误判为损坏，导致整份备份「还原失败」。按原始文本读入，
+      // 写回时 saveData 同样原样落盘，字节一致。
+      payload.slots[slot.key] = await entry.async("string")
     } catch {
-      report.failed.push({ slotId: slot.id, error: "invalidJson" })
+      report.failed.push({ slotId: slot.id, error: "readFailed" })
     }
   }
 

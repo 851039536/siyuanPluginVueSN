@@ -96,6 +96,7 @@
       "invalidJson": "File is not valid JSON",
       "invalidPayload": "Unsupported import format or version",
       "invalidZip": "File is not a valid zip backup",
+      "readFailed": "Failed to read a backup entry",
       "noRestorableData": "The backup contains no restorable plugin data (is it a whole-workspace backup?)",
       "unregisteredKey": "Unregistered storage key",
       "unregisteredTable": "Unregistered database table",

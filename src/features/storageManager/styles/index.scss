@@ -44,33 +44,6 @@
   }
 }
 
-.sm-datadir {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-  min-width: 0;
-  padding: $s-1 $s-2;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  background: var(--b3-theme-surface);
-
-  &__label {
-    flex-shrink: 0;
-    font-size: $t-2xs;
-    color: var(--b3-theme-on-surface);
-  }
-
-  &__path {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: $ff-mono;
-    font-size: $t-2xs;
-  }
-}
-
 // ===== 通用块 =====
 
 .sm-row {

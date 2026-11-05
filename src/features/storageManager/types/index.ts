@@ -13,6 +13,7 @@ import type {
 import {
   createFullBackup as createFullBackupOp,
   deleteBackup as deleteBackupOp,
+  getBackupDir as getBackupDirOp,
   listBackups as listBackupsOp,
   loadBackupZip,
 } from "../modules/backup"
@@ -118,6 +119,11 @@ export class StorageManager {
   /** 列出全量备份 */
   async listBackups(): Promise<PluginBackupListItem[]> {
     return listBackupsOp()
+  }
+
+  /** 备份目录绝对路径（未就绪时为空串） */
+  async getBackupDir(): Promise<string> {
+    return getBackupDirOp()
   }
 
   /** 删除全量备份 */

@@ -4432,6 +4432,8 @@
     "copyPath": "复制路径",
     "copied": "路径已复制",
     "copyFailed": "复制失败",
+    "openFolder": "打开目录",
+    "openFailed": "打开目录失败",
     "refresh": "刷新",
     "loading": "正在统计……",
     "empty": "暂无数据",
@@ -4477,6 +4479,7 @@
     "transfer": {
       "backupTitle": "全量备份",
       "backupDesc": "把整个插件数据目录打包为 zip（SQLite 自动生成一致性快照）。",
+      "backupPath": "备份路径",
       "backupNow": "立即备份",
       "backupDone": "备份完成：{0}",
       "backupFailed": "备份失败：{0}",

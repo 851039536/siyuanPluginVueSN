@@ -21,6 +21,7 @@ import {
 } from "@/utils/settingsBackup"
 import type { SqliteDatabaseSync } from "@/utils/sqliteDb"
 import { getSqlite } from "@/utils/sqliteDb"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { readWorkspaceDir } from "@/utils/workspaceDir"
 import type {
   ImportReport,
@@ -46,6 +47,13 @@ export async function createFullBackup(ctx: StorageContext): Promise<BackupResul
 export async function listBackups(): Promise<PluginBackupListItem[]> {
   const root = await getWorkspaceRoot()
   return root ? listPluginBackups(root) : []
+}
+
+/** 备份目录绝对路径（`<workspace>/data-backup`）；未就绪时为空串 */
+export async function getBackupDir(): Promise<string> {
+  const root = await getWorkspaceRoot()
+  const node = getNodeFsPathOs()
+  return root && node ? node.path.join(root, "data-backup") : ""
 }
 
 /** 删除一个备份 */

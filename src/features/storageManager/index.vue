@@ -26,23 +26,18 @@
       </div>
     </div>
 
-    <!-- 数据目录：绝对路径 + 复制 -->
-    <div class="sm-datadir">
-      <!-- 目录标签："数据目录" -->
-      <span class="sm-datadir__label">{{ t.dataDir }}</span>
-      <span class="sm-datadir__path" :title="inventory?.dataDir || ''">
-        {{ inventory?.dataDir || t.unavailable }}
-      </span>
-      <!-- 复制路径："复制路径" -->
-      <Button
-        variant="ghost"
-        size="xsmall"
-        dense
-        icon="copy"
-        :title="t.copyPath"
-        @click="copyPath"
-      />
-    </div>
+    <!-- 数据目录：绝对路径，点击可打开 / 复制 -->
+    <PathBar
+      :label="t.dataDir"
+      :path="inventory?.dataDir || ''"
+      :empty-text="t.unavailable"
+      :open-label="t.openFolder"
+      :copy-label="t.copyPath"
+      :open-failed-text="t.openFailed"
+      :copied-text="t.copied"
+      :copy-failed-text="t.copyFailed"
+      @notify="(severity, text) => notify(severity, text)"
+    />
 
     <!-- 操作结果提示（成功/失败） -->
     <Message
@@ -120,12 +115,12 @@ import TabPanel from "@/components/TabPanel.vue"
 import TabPanels from "@/components/TabPanels.vue"
 import Tabs from "@/components/Tabs.vue"
 import { getSlot } from "@/config/storage"
-import { copyToClipboard } from "@/utils/domUtils"
 import { useStorageManager } from "./composables/useStorageManager"
 import { formatBytes } from "./utils"
 import BackupTab from "./components/BackupTab.vue"
 import DiagnosticsTab from "./components/DiagnosticsTab.vue"
 import OverviewTab from "./components/OverviewTab.vue"
+import PathBar from "./components/PathBar.vue"
 
 interface Props {
   manager: StorageManager
@@ -179,13 +174,6 @@ async function confirmReset(): Promise<void> {
     resetLoading.value = false
     resetVisible.value = false
   }
-}
-
-async function copyPath(): Promise<void> {
-  const path = inventory.value?.dataDir
-  if (!path) return
-  const ok = await copyToClipboard(path)
-  notify(ok ? "success" : "error", ok ? (t.value.copied || "") : (t.value.copyFailed || ""))
 }
 </script>
 

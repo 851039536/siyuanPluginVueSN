@@ -3,6 +3,19 @@
   <div class="sm-backup">
     <Panel toggleable :header="t.transfer?.backupTitle">
       <p class="sm-desc">{{ t.transfer?.backupDesc }}</p>
+      <!-- 备份路径：绝对路径，点击可打开 / 复制 -->
+      <PathBar
+        class="sm-pathbar-gap"
+        :label="t.transfer?.backupPath"
+        :path="backupDir"
+        :empty-text="t.unavailable"
+        :open-label="t.openFolder"
+        :copy-label="t.copyPath"
+        :open-failed-text="t.openFailed"
+        :copied-text="t.copied"
+        :copy-failed-text="t.copyFailed"
+        @notify="(severity, text) => emit('notify', severity, text)"
+      />
       <div class="sm-row">
         <!-- 立即备份："立即备份" -->
         <Button
@@ -73,6 +86,7 @@ import Panel from "@/components/Panel.vue"
 import { getNodeModules } from "@/utils/nodeModules"
 import BackupListItem from "./BackupListItem.vue"
 import ModuleTransfer from "./ModuleTransfer.vue"
+import PathBar from "./PathBar.vue"
 
 interface Props {
   manager: StorageManager
@@ -87,6 +101,7 @@ const emit = defineEmits<{
 }>()
 
 const backups = ref<PluginBackupListItem[]>([])
+const backupDir = ref("")
 const busy = ref<"" | "backup" | "restore">("")
 const uploadRef = ref<{ clear: () => void } | null>(null)
 
@@ -102,6 +117,7 @@ function errorText(code: string | undefined): string {
 async function loadBackups(): Promise<void> {
   try {
     backups.value = await props.manager.listBackups()
+    backupDir.value = await props.manager.getBackupDir()
   } catch (error) {
     console.error("[storageManager] 读取备份列表失败:", error)
   }

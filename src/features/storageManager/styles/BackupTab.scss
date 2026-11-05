@@ -15,3 +15,8 @@
   gap: $s-1;
   margin-top: $s-2;
 }
+
+// 备份路径紧跟在描述文字之后，描述无外边距，这里补一段间距
+.sm-pathbar-gap {
+  margin-top: $s-2;
+}

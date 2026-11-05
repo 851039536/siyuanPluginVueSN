@@ -51,13 +51,27 @@ async function measureJson(ctx: StorageContext, slot: StorageSlot): Promise<Slot
 function measureFile(ctx: StorageContext, slot: StorageSlot): SlotUsage {
   const usage = emptyUsage(slot)
   const root = ctx.path.join(ctx.dataDir, slot.key)
-  if (!ctx.fs.existsSync(root)) return usage
+
+  let rootStat: import("node:fs").Stats
+  try {
+    rootStat = ctx.fs.statSync(root)
+  } catch {
+    return usage
+  }
+
+  usage.missing = false
+  usage.updatedAt = rootStat.mtimeMs
+  // 文件槽既可能是目录（git-push-index / cover），也可能是单文件（plugin.db / feature-flags.json）
+  if (rootStat.isFile()) {
+    usage.bytes = rootStat.size
+    return usage
+  }
 
   let bytes = 0
   let count = 0
   const walk = (dir: string): void => {
     if (count >= FILE_SCAN_LIMIT) return
-    let entries: any[]
+    let entries: import("node:fs").Dirent[]
     try {
       entries = ctx.fs.readdirSync(dir, { withFileTypes: true })
     } catch {
@@ -101,11 +115,12 @@ async function measureSqlite(ctx: StorageContext): Promise<{ usages: SlotUsage[]
   const usages = SQLITE_SLOTS.map((slot) => emptyUsage(slot))
   const open = await openPluginDatabase(ctx.plugin)
   if (!open.ok) {
-    const reason = open.reason === "no-sqlite"
-      ? "no-sqlite"
-      : open.reason === "path-unresolved"
-        ? "no-data-dir"
-        : "read-failed"
+    let reason = "read-failed"
+    if (open.reason === "no-sqlite") {
+      reason = "no-sqlite"
+    } else if (open.reason === "path-unresolved") {
+      reason = "no-data-dir"
+    }
     for (const usage of usages) usage.unavailableReason = reason
     return { usages, dbBytes: 0 }
   }

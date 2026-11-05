@@ -96,6 +96,7 @@
       "invalidJson": "文件不是有效的 JSON",
       "invalidPayload": "导入文件格式或版本不受支持",
       "invalidZip": "文件不是有效的 zip 备份",
+      "noRestorableData": "备份内没有可还原的插件数据（请确认不是整工作区备份）",
       "unregisteredKey": "未登记的存储键",
       "unregisteredTable": "未登记的数据库表",
       "notExportable": "该槽位不允许导出",

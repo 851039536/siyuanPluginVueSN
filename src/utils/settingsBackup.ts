@@ -13,12 +13,16 @@ import JSZip from "jszip"
 import type { Plugin } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { resolvePluginDataDir } from "@/utils/pluginDataDir"
+import type { DatabaseSnapshotEntry } from "@/utils/sqliteSnapshot"
 import {
   cleanupSnapshotDir,
   isSqliteSidecar,
   sidecarBasePath,
   snapshotDatabasesInDir,
 } from "@/utils/sqliteSnapshot"
+
+type NodeFS = typeof import("node:fs")
+type NodePath = typeof import("node:path")
 
 /** 备份结果 */
 export interface BackupResult {
@@ -57,8 +61,8 @@ function addDirToZip(
   dirPath: string,
   relativePath: string,
   snapshotMap: Map<string, string>,
-  fs: any,
-  path: any,
+  fs: NodeFS,
+  path: NodePath,
 ) {
   const entries = fs.readdirSync(dirPath, { withFileTypes: true })
   for (const entry of entries) {
@@ -86,9 +90,9 @@ function addDirToZip(
  * SQLite 三件套处理：解压回 .db 时若同时存在 -wal/-shm，交由 SQLite 自行完成 WAL 恢复，
  * **禁止**手动删除 -wal（那会丢掉尚未归并的数据）。
  */
-async function extractZipToDir(zip: JSZip, targetDir: string, fs: any, path: any): Promise<number> {
+async function extractZipToDir(zip: JSZip, targetDir: string, fs: NodeFS, path: NodePath): Promise<number> {
   let count = 0
-  for (const [relativePath, zipEntry] of Object.entries(zip.files) as [string, any][]) {
+  for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
     if (zipEntry.dir) continue
     const targetPath = path.join(targetDir, relativePath)
     const targetSubDir = path.dirname(targetPath)
@@ -118,7 +122,7 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
   const backupDir = node.path.join(workspaceRoot, "data-backup")
   const tempDir = node.path.join(backupDir, ".tmp", `snapshot-${now.getTime()}`)
 
-  let snapshots: { relPath: string, snapshotPath: string | null }[] = []
+  let snapshots: DatabaseSnapshotEntry[] = []
   try {
     snapshots = snapshotDatabasesInDir(pluginDataDir, tempDir)
     const snapshotMap = new Map<string, string>()
@@ -146,7 +150,8 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
       createdAt: now.getTime(),
     }
   } finally {
-    if (snapshots.length) cleanupSnapshotDir(tempDir)
+    // 无 .db 时不会创建临时目录；rm -rf 是幂等的
+    cleanupSnapshotDir(tempDir)
   }
 }
 

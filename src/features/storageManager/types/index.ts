@@ -139,8 +139,16 @@ export class StorageManager {
 
     const merged = await applyPayload(ctx, payload, report)
     if (fileSource) {
-      const restoredFiles = await fileSource.write(ctx)
-      if (restoredFiles > 0) merged.applied.push("gitPush.index")
+      try {
+        const restoredFiles = await fileSource.write(ctx)
+        if (restoredFiles > 0) merged.applied.push("gitPush.index")
+      } catch (error) {
+        // 文件槽写失败不回滚已写回的 JSON/SQLite，但必须在报告里显式失败
+        merged.failed.push({
+          slotId: "gitPush.index",
+          error: error instanceof Error ? error.message : "removeFailed",
+        })
+      }
     }
     merged.snapshotPath = backup.filePath
     this.cache = null

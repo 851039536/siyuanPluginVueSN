@@ -26,6 +26,11 @@ const JSON_BY_KEY = new Map(JSON_SLOTS.map((slot) => [slot.key, slot]))
 const SQLITE_BY_KEY = new Map(SQLITE_SLOTS.map((slot) => [slot.key, slot]))
 const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"])
 
+/** 插件实例上可写的运行时设置快照（避免使用 any） */
+interface PluginWithSettings {
+  settings?: unknown
+}
+
 function belongsToOwner(slotOwners: readonly StorageOwner[], owners: StorageOwner[]): boolean {
   return slotOwners.some((owner) => owners.includes(owner))
 }
@@ -87,7 +92,7 @@ export function blobFromPayload(payload: ModuleExportPayload): Blob {
 async function refreshSettingsSnapshot(ctx: StorageContext): Promise<void> {
   try {
     const refreshed = await loadSettings(ctx.plugin)
-    ;(ctx.plugin as any).settings = refreshed
+    ;(ctx.plugin as unknown as PluginWithSettings).settings = refreshed
     saveFeatureFlagsSync(refreshed)
   } catch (error) {
     console.error("[storageManager] 刷新设置快照失败:", error)
@@ -228,7 +233,15 @@ export function parseModulePayload(text: string): { payload: ModuleExportPayload
     return { error: "invalidPayload" }
   }
   const candidate = parsed as Partial<ModuleExportPayload>
-  if (candidate.version !== 1 || typeof candidate.slots !== "object" || typeof candidate.tables !== "object") {
+  if (
+    candidate.version !== 1
+    || !candidate.slots
+    || typeof candidate.slots !== "object"
+    || Array.isArray(candidate.slots)
+    || !candidate.tables
+    || typeof candidate.tables !== "object"
+    || Array.isArray(candidate.tables)
+  ) {
     return { error: "invalidPayload" }
   }
   // 快照之前先拒绝未登记的 key/表，避免「备份已生成但导入整体非法」

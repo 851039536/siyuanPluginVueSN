@@ -126,13 +126,19 @@ async function readSqliteTables(
 
 /** 还原可还原的文件槽（仅 git-push-index；带 zip-slip 防护） */
 async function restoreFileSlots(ctx: StorageContext, zip: JSZip): Promise<number> {
-  let count = 0
-  for (const [rawRel, entry] of Object.entries(zip.files) as [string, any][]) {
-    if (entry.dir) continue
+  const entries = Object.entries(zip.files).filter(([rawRel, entry]) => {
     const rel = rawRel.replace(/\\/g, "/")
-    if (!rel.startsWith(RESTORABLE_FILE_PREFIX)) continue
-    if (rel.includes("..")) continue
+    return !entry.dir && rel.startsWith(RESTORABLE_FILE_PREFIX) && !rel.includes("..")
+  })
+  if (!entries.length) return 0
 
+  // 整目录替换：先清空旧索引，避免新旧文件混合（调用方已完成全量快照）
+  const dirName = RESTORABLE_FILE_PREFIX.replace(/\/$/, "")
+  ctx.fs.rmSync(ctx.path.join(ctx.dataDir, dirName), { recursive: true, force: true })
+
+  let count = 0
+  for (const [rawRel, entry] of entries) {
+    const rel = rawRel.replace(/\\/g, "/")
     const target = ctx.path.join(ctx.dataDir, rel)
     ctx.fs.mkdirSync(ctx.path.dirname(target), { recursive: true })
     ctx.fs.writeFileSync(target, await entry.async("nodebuffer"))
@@ -190,6 +196,18 @@ export async function loadBackupZip(
   }
 
   await readSqliteTables(ctx, zip, payload, report)
+
+  const hasData = Object.keys(payload.slots).length > 0 || Object.keys(payload.tables).length > 0
+  const hasFiles = Object.keys(zip.files).some((rel) => {
+    const normalized = rel.replace(/\\/g, "/")
+    return normalized.startsWith(RESTORABLE_FILE_PREFIX) && zip.files[rel]?.dir !== true
+  })
+  if (!hasData && !hasFiles) {
+    // 常见误选：把「整工作区备份 data-*.zip」当成插件备份上传
+    report.failed.push({ slotId: "*", error: "noRestorableData" })
+    return { payload: null, report, fileSource: null }
+  }
+
   return {
     payload,
     report,

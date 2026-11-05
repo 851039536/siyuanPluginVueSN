@@ -227,6 +227,8 @@ export function saveFeatureFlagsSync(settings: PluginSettings): void {
     const node = getNodeModules()
     if (node) {
       try {
+        // 首次运行时插件数据目录可能尚未创建（saveData 前不存在）
+        node.fs.mkdirSync(_flagsDir, { recursive: true })
         node.fs.writeFileSync(node.path.join(_flagsDir, FEATURE_FLAGS_FILE), json, "utf-8")
         return
       } catch {

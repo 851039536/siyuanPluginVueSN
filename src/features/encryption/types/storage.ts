@@ -9,7 +9,7 @@ import { Plugin } from "siyuan"
 import { PluginStorage } from "@/utils/pluginStorage"
 import {
   decryptSetting,
-  encryptSetting,
+  encryptSettingStrict,
 } from "@/utils/settingsCrypto"
 import { TypedStorage } from "@/utils/typedStorage"
 
@@ -61,9 +61,16 @@ export class EncryptionStorage {
 
   /**
    * 保存密码到存储（加密后落盘）
+   *
+   * 使用严格加密：失败时不回退明文（凭证类数据宁可保存失败，也不能悄悄降级）。
    */
   async save(password: string): Promise<boolean> {
-    return this.passwordData.save({ password: await encryptSetting(password) })
+    try {
+      return await this.passwordData.save({ password: await encryptSettingStrict(password) })
+    } catch (error) {
+      console.error("[encryption] 密码加密失败:", error)
+      return false
+    }
   }
 
   /**

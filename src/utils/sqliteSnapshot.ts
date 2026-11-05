@@ -55,13 +55,12 @@ export function snapshotDatabasesInDir(dirPath: string, tempDir: string): Databa
   if (!node) return []
 
   const { fs, path } = node
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true })
-  }
+  // 惰性创建：没有 .db 时不留空临时目录
+  let tempReady = false
 
   const entries: DatabaseSnapshotEntry[] = []
   const walk = (dir: string): void => {
-    let dirEntries: any[]
+    let dirEntries: import("node:fs").Dirent[]
     try {
       dirEntries = fs.readdirSync(dir, { withFileTypes: true })
     } catch {
@@ -74,6 +73,11 @@ export function snapshotDatabasesInDir(dirPath: string, tempDir: string): Databa
         continue
       }
       if (!entry.name.endsWith(".db")) continue
+
+      if (!tempReady) {
+        fs.mkdirSync(tempDir, { recursive: true })
+        tempReady = true
+      }
 
       const relPath = path.relative(dirPath, fullPath).replace(/\\/g, "/")
       const snapshotPath = path.join(tempDir, `${relPath.replace(/\//g, "__")}`)

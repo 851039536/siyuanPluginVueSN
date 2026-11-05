@@ -4520,6 +4520,7 @@
       "invalidJson": "File is not valid JSON",
       "invalidPayload": "Unsupported import format or version",
       "invalidZip": "File is not a valid zip backup",
+      "noRestorableData": "The backup contains no restorable plugin data (is it a whole-workspace backup?)",
       "unregisteredKey": "Unregistered storage key",
       "unregisteredTable": "Unregistered database table",
       "notExportable": "This slot cannot be exported",

@@ -162,7 +162,7 @@ async function handleRestorePath(filePath: string): Promise<void> {
     return
   }
   try {
-    const buffer = node.fs.readFileSync(filePath)
+    const buffer = await node.fs.promises.readFile(filePath)
     const fileName = node.path.basename(filePath)
     await runRestore(new File([new Uint8Array(buffer)], fileName, { type: "application/zip" }))
   } catch (error) {

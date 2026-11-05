@@ -13,6 +13,7 @@ import type {
 import JSZip from "jszip"
 import {
   getNodeCrypto,
+  getNodeFsPathOs,
   getNodeModules,
   getNodeStream,
 } from "@/utils/nodeModules"
@@ -233,8 +234,11 @@ export class BackupManager {
     const skipDirs = new Set(SKIP_DIRS)
     const zip = new JSZip()
 
-    // SQLite 一致性：先为每个 .db 生成单文件快照（临时目录在 data-backup/.tmp，位于扫描目录之外）
-    const tempDir = this.path.join(this.backupDir, ".tmp", `snapshot-${now.getTime()}`)
+    // SQLite 一致性：先为每个 .db 生成单文件快照。
+    // 临时目录放系统临时目录：用户可把 localBackupDir 配到 data/ 内，放 backupDir 下会被扫描进 zip。
+    const osModules = getNodeFsPathOs()
+    const tempRoot = osModules ? osModules.os.tmpdir() : this.backupDir
+    const tempDir = this.path.join(tempRoot, `siyuan-s3-snapshot-${now.getTime()}`)
     const snapshots = snapshotDatabasesInDir(backupSourcePath, tempDir)
     const snapshotMap = new Map<string, string>()
     for (const entry of snapshots) {
@@ -310,7 +314,7 @@ export class BackupManager {
     try {
       return await this.finalizeAndSaveBackup(zip, backupInfo, useDateFolder, now, onProgress, lazyStreams)
     } finally {
-      if (snapshots.length) cleanupSnapshotDir(tempDir)
+      cleanupSnapshotDir(tempDir)
     }
   }
 

@@ -104,7 +104,7 @@ import {
 } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { featureIdToSettingKey } from "@/config/settings"
-import { FEATURE_CONFIG } from "@/features/config"
+import { DESKTOP_ONLY_FEATURE_IDS, FEATURE_CONFIG, type FeatureId } from "@/features/config"
 import {
   DEFAULT_THEME_SCHEME,
   isThemeColorSchemeId,
@@ -112,6 +112,7 @@ import {
 } from "@/features/themeColor"
 import FeatureCard from "./components/FeatureCard.vue"
 import SuperPanelHeader from "./components/SuperPanelHeader.vue"
+import { isMobileFrontend } from "@/utils/platform"
 
 interface Props {
   /** 全根 i18n 对象（FEATURE_CONFIG 的 titleI18nKey 为全根路径）；面板自身文案经 superPanel 命名空间访问 */
@@ -149,32 +150,35 @@ const resolveI18n = (obj: Record<string, any>, key: string): any => {
 const panelI18n = computed<Record<string, any>>(() => props.i18n?.superPanel ?? {})
 
 const features = computed<Feature[]>(() =>
-  (FEATURE_CONFIG as unknown as FeatureMeta[]).map(({
-    id,
-    defaultTitle,
-    defaultDesc,
-    titleI18nKey,
-    descI18nKey,
-    actions,
-    subFeatures,
-  }) => {
-    const ns = panelI18n.value
-    return {
+  (FEATURE_CONFIG as unknown as FeatureMeta[])
+    // 移动端不展示桌面专属功能的开关卡片（这些功能不会注册，开关无意义）
+    .filter(({ id }) => !(isMobileFrontend() && DESKTOP_ONLY_FEATURE_IDS.has(id as FeatureId)))
+    .map(({
       id,
-      iconKey: id as IconKey,
-      // 优先走全根点号路径（titleI18nKey），无键的 feature 回退 superPanel 命名空间扁平键
-      title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : ns[id]) || defaultTitle,
-      desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : ns[`${id}Desc`]) || defaultDesc,
-      actions: actions || [],
-      subFeatures: subFeatures?.map((sub: SubFeatureMeta): SubFeature => ({
-        id: sub.id,
-        label: (sub.labelI18nKey ? resolveI18n(props.i18n, sub.labelI18nKey) : "") || sub.defaultLabel,
-        icon: sub.icon,
-        color: sub.color,
-        enabled: getFeatureEnabled(sub.id),
-      })),
-    }
-  }),
+      defaultTitle,
+      defaultDesc,
+      titleI18nKey,
+      descI18nKey,
+      actions,
+      subFeatures,
+    }) => {
+      const ns = panelI18n.value
+      return {
+        id,
+        iconKey: id as IconKey,
+        // 优先走全根点号路径（titleI18nKey），无键的 feature 回退 superPanel 命名空间扁平键
+        title: (titleI18nKey ? resolveI18n(props.i18n, titleI18nKey) : ns[id]) || defaultTitle,
+        desc: (descI18nKey ? resolveI18n(props.i18n, descI18nKey) : ns[`${id}Desc`]) || defaultDesc,
+        actions: actions || [],
+        subFeatures: subFeatures?.map((sub: SubFeatureMeta): SubFeature => ({
+          id: sub.id,
+          label: (sub.labelI18nKey ? resolveI18n(props.i18n, sub.labelI18nKey) : "") || sub.defaultLabel,
+          icon: sub.icon,
+          color: sub.color,
+          enabled: getFeatureEnabled(sub.id),
+        })),
+      }
+    }),
 )
 
 const filteredFeatures = computed<Feature[]>(() => {

@@ -2,6 +2,9 @@
 
 管理和运行自定义脚本（Python、Bash、PowerShell、Node.js、Batch）的 Dock 面板工具。支持脚本的增删改查、按语言分类筛选、搜索以及终端式输出显示。脚本文件存储在插件数据目录中，元数据通过 TypedStorage 持久化。
 
+> **平台支持：仅桌面端**。依赖 `child_process` 运行脚本，已登记在
+> `src/features/config.ts` 的 `DESKTOP_ONLY_FEATURE_IDS`，移动端不注册。
+
 ## 可选设置：内置监听
 
 面板工具栏下方提供「内置监听」开关（设置持久化，无需重启）：

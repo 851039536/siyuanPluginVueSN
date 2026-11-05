@@ -2,6 +2,11 @@
 
 完整的 Git 图形界面：推送/拉取/暂存/提交/差异/分支切换/提交搜索/统计中心，持久化项目路径映射。
 
+> **平台支持：仅桌面端**。功能 ID 已登记在 `src/features/config.ts` 的
+> `DESKTOP_ONLY_FEATURE_IDS`，`registerFeatures()` 在移动端（思源移动 App / 移动浏览器）
+> 直接跳过注册：不注册 Dock/Tab 模型、不构造 `GitPushManager`（git 子进程 / `fs.watch` /
+> SQLite 均依赖桌面端能力）、不执行启动清扫。
+
 ## 功能
 
 - **项目映射**：添加本地 Git 项目路径，持久化保存（不影响项目本身）

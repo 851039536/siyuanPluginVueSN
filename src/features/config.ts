@@ -372,3 +372,19 @@ export const FEATURE_CONFIG = [
  * 功能 ID 联合类型 - 由 FEATURE_CONFIG 自动推导
  */
 export type FeatureId = (typeof FEATURE_CONFIG)[number]["id"]
+
+/**
+ * 仅桌面端可用的功能 ID（移动端不注册、不显示入口）。
+ *
+ * 判据：依赖 Node / Electron / git 子进程等桌面能力，移动端无法完成核心操作；
+ * 或核心交互面向桌面场景（本地磁盘、脚本执行、文件资源管理）。
+ * 注册门控见 `src/index.ts` 的 `registerFeatures()`。
+ */
+export const DESKTOP_ONLY_FEATURE_IDS: ReadonlySet<FeatureId> = new Set<FeatureId>([
+  "diskBrowser",
+  "aiContentGenerator",
+  "resourceManager",
+  "apiDebugger",
+  "scriptLauncher",
+  "gitPush",
+])

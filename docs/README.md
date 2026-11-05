@@ -5,7 +5,7 @@
 | 目录 | 放什么 | 判据 |
 |---|---|---|
 | `docs/参考/` | **长期技术参考**：API 用法、组件用法、规范、设计参考 | 内容与当前代码一致、仍被引用；会随代码更新 |
-| `docs/` 根 | **未完成的计划 / 待办** | 有明确未做项，做完即归档。当前为空 |
+| `docs/` 根 | **未完成的计划 / 待办** | 有明确未做项，做完即归档；清单见下方「活跃文档」 |
 | `docs/completed/` | **已归档**：审查报告、已失效的实现文档、已作废方向 | 结论已执行完 / 描述的实现已被重构替代；不再更新 |
 
 > 与规则分片的关系：根目录的 `AGENTS.md` / `AGENTS_API.md` / `AGENTS_STYLE.md` / `AGENTS_ARCH.md` /
@@ -16,6 +16,7 @@
 - [DOC-FIX-PLAN-2026-11-01.md](DOC-FIX-PLAN-2026-11-01.md)（文档缺陷修复计划，含 `AGENTS_STYLE.md` Token 名迁移；状态：待执行）
 - [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
 - [持久化治理与统一数据管理面板.md](持久化治理与统一数据管理面板.md)（本轮实施计划与设计裁决）
+- [mobile-dock-compatibility-plan.md](mobile-dock-compatibility-plan.md)（侧边栏 Dock 功能移动端兼容计划：承载机制、8 个待兼容功能盘点、P0~P4 分阶段任务；状态：待执行）
 
 ## 一、参考文档（`docs/参考/`，8 份）
 

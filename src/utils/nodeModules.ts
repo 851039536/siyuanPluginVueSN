@@ -33,11 +33,22 @@ interface ElectronShell {
   moveItemToTrash?: (path: string) => boolean
 }
 
+/**
+ * 校验 require 返回值确实可用。
+ * 非 Electron 前端（移动端 / 浏览器）没有 window.require，插件的 require 垫片
+ * 对 node:* 返回 undefined 而不抛错，仅靠 try/catch 会得到「非 null 但成员全空」的假模块。
+ */
+function isUsableModule<T extends object>(mod: T | undefined, members: Array<keyof T>): mod is T {
+  if (!mod) return false
+  return members.every((key) => typeof mod[key] === "function")
+}
+
 /** 获取 Node.js 文件系统模块 */
 export function getNodeModules(): { fs: NodeFS, path: NodePath } | null {
   try {
     const fs = require("node:fs") as NodeFS
     const path = require("node:path") as NodePath
+    if (!isUsableModule(fs, ["readFileSync"]) || !isUsableModule(path, ["isAbsolute"])) return null
     return {
       fs,
       path,
@@ -53,6 +64,13 @@ export function getNodeProcessModules(): { child_process: NodeChildProcess, os: 
     const child_process = require("node:child_process") as NodeChildProcess
     const os = require("node:os") as NodeOS
     const util = require("node:util") as NodeUtil
+    if (
+      !isUsableModule(child_process, ["execFile"])
+      || !isUsableModule(os, ["tmpdir"])
+      || !isUsableModule(util, ["promisify"])
+    ) {
+      return null
+    }
     return {
       child_process,
       os,
@@ -69,6 +87,13 @@ export function getNodeFsPathOs(): { fs: NodeFS, path: NodePath, os: NodeOS } | 
     const fs = require("node:fs") as NodeFS
     const os = require("node:os") as NodeOS
     const path = require("node:path") as NodePath
+    if (
+      !isUsableModule(fs, ["readFileSync"])
+      || !isUsableModule(path, ["isAbsolute"])
+      || !isUsableModule(os, ["tmpdir"])
+    ) {
+      return null
+    }
     return {
       fs,
       path,
@@ -83,6 +108,7 @@ export function getNodeFsPathOs(): { fs: NodeFS, path: NodePath, os: NodeOS } | 
 export function getNodeCrypto(): { crypto: NodeCrypto } | null {
   try {
     const crypto = require("node:crypto") as NodeCrypto
+    if (!isUsableModule(crypto, ["createHash"])) return null
     return { crypto }
   } catch {
     return null
@@ -93,6 +119,7 @@ export function getNodeCrypto(): { crypto: NodeCrypto } | null {
 export function getNodeStream(): { stream: NodeStream } | null {
   try {
     const stream = require("node:stream") as NodeStream
+    if (!isUsableModule(stream, ["Readable"])) return null
     return { stream }
   } catch {
     return null
@@ -104,6 +131,7 @@ export function getNodeHttp(): { http: NodeHttp, https: NodeHttps } | null {
   try {
     const http = require("node:http") as NodeHttp
     const https = require("node:https") as NodeHttps
+    if (!isUsableModule(http, ["request"]) || !isUsableModule(https, ["request"])) return null
     return {
       http,
       https,

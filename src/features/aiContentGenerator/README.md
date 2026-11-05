@@ -2,6 +2,9 @@
 
 使用 AI（支持自定义 API）生成 Markdown 格式内容。注册为右侧边栏 Dock 面板，支持自定义对话配置和上下文管理，生成的 AI 内容可直接插入笔记中。
 
+> **平台支持：仅桌面端**。AI 技能目录读写依赖 Node `fs`，已登记在
+> `src/features/config.ts` 的 `DESKTOP_ONLY_FEATURE_IDS`，移动端不注册。
+
 ## 目录结构
 
 ```

@@ -65,6 +65,10 @@ import {
   registerWebsiteNavigation,
 } from "@/features"
 import { applyCompactMode } from "@/features/compactMode"
+import {
+  DESKTOP_ONLY_FEATURE_IDS,
+  type FeatureId,
+} from "@/features/config"
 
 import {
   destroy,
@@ -78,6 +82,7 @@ import {
 
 import { setupIconifyOffline } from "@/utils/iconifySetup"
 import { clearRendererCache } from "@/utils/mdRenderer"
+import { isMobileFrontend } from "@/utils/platform"
 import { resolvePluginDataDir, resolvePluginDataDirSync } from "@/utils/pluginDataDir"
 // ========== 全局样式导入 ==========
 // 使用普通 import 而非 @use，确保 CSS 在插件加载时就注入
@@ -217,6 +222,10 @@ export default class PluginSample extends Plugin {
    */
   private registerFeatures() {
     const s = this.settings
+    const desktopFrontend = !isMobileFrontend()
+    /** 开关打开且当前前端支持该功能时才注册（桌面端专属功能在移动端不加载） */
+    const canRegister = (id: FeatureId, enabled: boolean): boolean =>
+      enabled && (desktopFrontend || !DESKTOP_ONLY_FEATURE_IDS.has(id))
 
     // superPanel 是设置中枢（功能开关的管理入口），不受开关控制，始终注册
     registerSuperPanel(this)
@@ -228,8 +237,8 @@ export default class PluginSample extends Plugin {
     // wordQuery 已迁移至 toolCollection/tools/wordQuery/
     if (s.enableGeneralSettings) registerGeneralSettings(this)
     // unitConverter 已迁移至 toolCollection/tools/unitConverter/
-    if (s.enableDiskBrowser) registerDiskBrowser(this)
-    if (s.enableAIContentGenerator) registerAIContentGenerator(this)
+    if (canRegister("diskBrowser", s.enableDiskBrowser)) registerDiskBrowser(this)
+    if (canRegister("aiContentGenerator", s.enableAIContentGenerator)) registerAIContentGenerator(this)
     if (s.enableImageCreation) registerImageCreation(this)
     if (s.enableStatistics) registerStatistics(this)
     if (s.enableEncryption) registerEncryption(this)
@@ -245,17 +254,17 @@ export default class PluginSample extends Plugin {
     if (s.enableDocAnalysis) registerDocAnalysis(this)
     if (s.enableFormatAssistant) registerFormatAssistant(this)
     if (s.enableHtmlViewer) registerHtmlViewer(this)
-    if (s.enableResourceManager) registerResourceManager(this)
+    if (canRegister("resourceManager", s.enableResourceManager)) registerResourceManager(this)
     if (s.enableRssReader) registerRssReader(this)
     this.rebuildThemeColor() // 主题色（方法内部检查 enableThemeColor 开关）
     if (s.enableBookmarkMarker) registerBookmarkMarker(this)
-    if (s.enableApiDebugger) registerApiDebugger(this)
+    if (canRegister("apiDebugger", s.enableApiDebugger)) registerApiDebugger(this)
     if (s.enableWebsiteNavigation) registerWebsiteNavigation(this)
     if (s.enableMinimalBrowser) registerMinimalBrowser(this)
     if (s.enableComponentPreview) registerComponentPreview(this)
-    if (s.enableScriptLauncher) registerScriptLauncher(this)
+    if (canRegister("scriptLauncher", s.enableScriptLauncher)) registerScriptLauncher(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
-    if (s.enableGitPush) registerGitPush(this)
+    if (canRegister("gitPush", s.enableGitPush)) registerGitPush(this)
     if (s.enableSkillLearning) registerSkillLearning(this)
     if (s.enableToolCollection) registerToolCollection(this)
     if (s.enableS3Backup) registerS3Backup(this)

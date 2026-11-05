@@ -16,7 +16,6 @@
 - [DOC-FIX-PLAN-2026-11-01.md](DOC-FIX-PLAN-2026-11-01.md)（文档缺陷修复计划，含 `AGENTS_STYLE.md` Token 名迁移；状态：待执行）
 - [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
 - [持久化治理与统一数据管理面板.md](持久化治理与统一数据管理面板.md)（本轮实施计划与设计裁决）
-- [mobile-dock-compatibility-plan.md](mobile-dock-compatibility-plan.md)（侧边栏 Dock 功能移动端兼容计划：承载机制、功能盘点、P0~P4 分阶段任务；状态：P0–P3 已执行，待真机回归）
 
 ## 一、参考文档（`docs/参考/`，8 份）
 
@@ -31,10 +30,11 @@
 | [codex-ui-reference.html](参考/codex-ui-reference.html) | Codex UI 视觉参考页（静态 HTML，供截图/对照） | — |
 | [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 持久化规范（强制） |
 
-## 二、归档文档（`docs/completed/`，11 份）
+## 二、归档文档（`docs/completed/`，12 份）
 
-全部为 2026-10-28 提交 `caec10a5`「chore(docs): 清理过期审查报告并归档参考文档至参考目录」删除的审查报告，
-2026-11-01 从 git 历史恢复——**原因是代码/README 仍在引用它们**（引用点已改为指向本目录）：
+前 11 份为 2026-10-28 提交 `caec10a5`「chore(docs): 清理过期审查报告并归档参考文档至参考目录」删除的审查报告，
+2026-11-01 从 git 历史恢复——**原因是代码/README 仍在引用它们**（引用点已改为指向本目录）；
+最后一份是 2026-11-05 执行完成后按规则 2 归档的计划文档。
 
 | 文件 | 主题 | 引用点 |
 |---|---|---|
@@ -49,6 +49,7 @@
 | [ai-content-generator-component-audit.md](completed/ai-content-generator-component-audit.md) | AI 内容生成组件审计（含验收清单） | `aiContentGenerator/README.md` |
 | [ai-content-generator-skills-merge-review.md](completed/ai-content-generator-skills-merge-review.md) | AI 技能合并专项审查 | `aiContentGenerator/README.md` |
 | [highlight-feature.md](completed/highlight-feature.md) | 双击高亮功能实现（**描述的实现已于 `7ac8100c` 并入 `generalSettings/components/HighlightSettings.vue`**） | — |
+| [mobile-dock-compatibility-plan.md](completed/mobile-dock-compatibility-plan.md) | 侧边栏 Dock 移动端兼容计划与执行记录（P0–P3 已落地，P4 真机回归由用户执行） | 无源码引用；规则落在 `DESKTOP_ONLY_FEATURE_IDS`、`.vp-dock-panel` 与各功能 README「平台支持」 |
 
 **源码注释里的旧路径**：`src/features/gitPush/*.ts|vue`（6 处）、`src/features/superPanel/*.vue`（4 处）等
 仍写着 `docs/xxx-review.md`。这些是纯文本引用（不是可点链接），**本轮未改源码**；

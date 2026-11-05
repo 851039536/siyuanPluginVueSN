@@ -31,3 +31,8 @@ src/features/statistics/
 - 主面板 `index.vue` 只负责 Tab 栏、核心数据持有（`useStatistics`/`useHistoryData`）与刷新编排，各 Tab 编排逻辑下放至入口容器；
 - 被 ≥2 个视图复用的组件归入 `common/`；
 - 分布 Tab 数据懒加载（首次切换激活时加载）、hover 联动均自包含于 `NotebookDistribution/index.vue`。
+
+## 平台支持
+
+移动端可用（思源移动 App 的「插件停靠栏」入口）。窄屏适配：头部换行、统计卡两列、历史表格横向滚动、
+悬停才显形的存储路径/刷新间隔控件改为常驻并可点；图表依赖 chart.js 的容器自适应，Dock 打开后随宽度重排。

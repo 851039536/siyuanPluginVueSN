@@ -150,3 +150,21 @@ $stats-header-height: 56px;
   white-space: nowrap;
   cursor: default;
 }
+
+// 移动端无 hover：悬停才显形的控件改为常驻，并放大触摸目标
+@include mobile-only {
+  .storage-toggle-btn {
+    width: 40px;
+    height: 40px;
+    opacity: 0.5;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .refresh-interval-select {
+    opacity: 0.7;
+  }
+}

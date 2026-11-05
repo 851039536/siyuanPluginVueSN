@@ -97,6 +97,7 @@
     gap: $s-px6;
     flex-wrap: wrap;
   }
+
   &__card-category {
     font-size: $t-2xs;
     color: var(--b3-theme-on-surface-variant);
@@ -114,5 +115,21 @@
     align-items: center;
     justify-content: center;
     padding: $s-3 0 $s-1;
+  }
+}
+
+// 移动端：双列卡片在窄屏文字被压成两行截断，改单列；
+// 触摸设备无 hover，删除按钮常驻并放大到可点尺寸
+@media (max-width: $bp-mobile) {
+  .skill-list-view {
+    &__grid {
+      grid-template-columns: 1fr;
+    }
+
+    &__card-delete {
+      width: 32px;
+      height: 32px;
+      opacity: 1;
+    }
   }
 }

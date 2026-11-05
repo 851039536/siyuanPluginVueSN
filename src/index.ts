@@ -272,7 +272,7 @@ export default class PluginSample extends Plugin {
     if (s.enableGlobalRelations) registerGlobalRelations(this)
     if (s.enableQuickNote) registerQuickNote(this)
     if (s.enableIdeaGenerator) registerIdeaGenerator(this)
-    if (s.enableStorageManager) registerStorageManager(this)
+    if (canRegister("storageManager", s.enableStorageManager)) registerStorageManager(this)
   }
 
   /**

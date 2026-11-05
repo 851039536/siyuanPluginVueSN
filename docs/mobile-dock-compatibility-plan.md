@@ -1,8 +1,9 @@
 # 侧边栏（Dock）功能移动端兼容计划
 
-> 状态：待执行 · 创建 2026-11-05
+> 状态：**已执行（2026-11-05）**，P0–P3 代码改动完成，待真机回归（P4）
 > 背景：gitPush、磁盘管理、AI 信息生成、资源管理、接口端点、脚本启动器已在移动端跳过注册；
 > 其余侧边栏功能需要评估「如何在移动端正常显示与使用」。
+> 执行记录见 §8。
 
 ## 1. 结论先行
 
@@ -45,6 +46,7 @@
 | 资源管理 | `resourceManager` | 桌面文件资源管理定位（打开目录/资源引用） |
 | 接口端点 | `apiDebugger` | 面向桌面的开发调试工具，核心交互不适配窄屏 |
 | 脚本启动器 | `scriptLauncher` | `child_process` 执行脚本 |
+| 数据管理 | `storageManager` | 清单/备份/还原/导入导出全部经 Node `fs` 读写数据目录（2026-11-05 追加） |
 
 ### 3.2 待兼容的侧边栏功能（8 个）
 
@@ -61,6 +63,11 @@
 | 技能学习 | `skilllearning-dock` | RightTop / 420 | 无 | 2/3 列网格、代码块横向滚动 | P2 |
 | 数据快照 | `data-snapshot-dock` | RightTop / 400 | 无 | 列表/上传入口在窄屏的排布 | P2 |
 | 数据管理 | `storage-manager-dock` | RightTop / 440 | **fs**（体检/备份/还原） | Node 能力缺失时必须降级或整体隐藏 | P3 |
+
+> 执行结论（2026-11-05）：`storageManager` 的清单盘点、备份/还原、**按模块导入导出**全部经
+> `createStorageContext()` 的 Node `fs` 读写数据目录 —— 计划中的「移动端只保留 JSON 导入导出」
+> 在当前实现下同样不可行（导出要逐个槽位读文件、导入前还要写全量快照）。
+> 故按路线 B 整体登记进 `DESKTOP_ONLY_FEATURE_IDS`，移动端不注册、不显示开关卡片。
 
 ## 4. 分阶段计划
 
@@ -156,3 +163,45 @@
 - 本项目统一挂载入口：`src/utils/vueAppHelper.ts → createVueDockApp`；
 - 桌面专属门控：`src/features/config.ts → DESKTOP_ONLY_FEATURE_IDS`、
   `src/index.ts → registerFeatures()`、`src/features/superPanel/index.vue` 的卡片过滤。
+
+## 8. 执行记录（2026-11-05）
+
+### P0 基础设施
+
+| 改动 | 位置 |
+|---|---|
+| `.vp-dock-root` 统一 `box-sizing: border-box` / `width: 100%` / `min-width: 0` | `src/index.scss` |
+| 新增 `.vp-dock-panel` 标记类，移动端统一预留 `env(safe-area-inset-bottom)`（不波及全局宿主与页签容器） | `src/index.scss` + `src/utils/vueAppHelper.ts` |
+| 弹窗窄屏适配无需改动：`Dialog` / `Drawer` / `ConfirmDialog` 的遮罩已有 `padding: $s-4` 且卡片 `max-width: 100%`，实际可用宽度 = 视口 - 32px | `src/components/styles/_overlay.scss` 等 |
+| 断点统一：新增规则一律用 `$bp-mobile`（768px）；statistics 本地 `mobile-only` 仍为 480px（视口阈值，桌面 Dock 窄但视口宽不会误触发），docAnalysis `SettingsPanel` 的 480 已改为 `$bp-mobile` | 各 feature SCSS |
+
+### P1 首批 3 个
+
+| 功能 | 改动 |
+|---|---|
+| 数据统计 | 悬停才显形的存储路径按钮/刷新间隔改常驻（`opacity`），存储按钮放大到 40px；历史六列表格窄屏改横向滚动（`min-width: 420px`）；柱状图原已横向滚动 |
+| 文档分析 | 筛选条两行允许换行、输入框/笔记本选择保底 140px；平台状态卡两列改单列且行高 ≥40px；概览两列瀑布流改单列；平台规则设置表格已横向滚动（断点提到 768） |
+| RSS 订阅 | 主视图↔详情本来就是单视图切换；顶部工具栏、详情返回/收藏/字号、分组重命名/移动/删除、对话框关闭/底部按钮全部常驻并放大到 40px；`FeedGroup` 的 hover 显形操作改常驻。网络链路未改（直连 → 公共代理 fallback 已带逐项失败原因） |
+
+### P2 其余 4 个
+
+| 功能 | 改动 |
+|---|---|
+| 单词阅读 | 卡片列表两列改单列；卡片操作/单卡操作/导航按钮常驻并放大（`--button-size: 36/40px`）；「打开存储目录」在移动端隐藏，并改走 `getElectronModules()` 统一入口 |
+| 通用设置 | 左右分栏改为「顶部横向分类 + 下方内容」；原有 500/400px 窄屏规则保留但被新布局覆盖 |
+| 技能学习 | 技能列表两列改单列、删除按钮常驻 32px；统计卡改 `repeat(auto-fit, minmax(96px, 1fr))`；顶部 Tab 横向滚动、操作按钮 40px；编辑对话框补 `max-width: 100%` + 遮罩内边距（原固定 504px 会溢出手机屏） |
+| 数据快照 | 创建行允许换行、输入框保底宽度；列表操作按钮 `min-height: 32px` |
+
+### P3 数据管理
+
+按路线 B 处理：`storageManager` 加入 `DESKTOP_ONLY_FEATURE_IDS`，移动端不注册、超级面板隐藏卡片；
+`README.md` 已补「平台支持」说明。原因见 §3.2 执行结论。
+
+### 待真机回归（P4）
+
+- [ ] 移动端菜单「插件停靠栏」能看到 7 个已适配功能，数据管理/gitPush 等 6+1 个桌面专属功能不出现；
+- [ ] 逐个打开/关闭/旋转屏幕，无横向溢出、无按钮被裁；
+- [ ] 数据统计图表在首次打开后尺寸正确；
+- [ ] RSS 在移动网络下的抓取结果（若失败，记录错误信息里的代理尝试原因）；
+- [ ] 通用设置顶部横向分类可滚动、表单可正常编辑；
+- [ ] 桌面端行为无回归（断点只在视口 ≤768px 生效）。

@@ -35,6 +35,7 @@
           @click="$emit('openWindow')"
         />
         <Button
+          v-if="!isMobile"
           variant="ghost"
           size="xsmall"
           icon="folder-open-outline"
@@ -52,6 +53,8 @@ import type { I18n } from "../types"
 import { showMessage } from "siyuan"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
+import { getElectronModules } from "@/utils/nodeModules"
+import { isMobileFrontend } from "@/utils/platform"
 import { resolvePluginDataDirSync } from "@/utils/pluginDataDir"
 import { useI18n } from "../composables/useI18n"
 import { STORAGE_KEY } from "../types/storage"
@@ -76,6 +79,9 @@ defineEmits<{
 
 const t = useI18n(props.i18n)
 
+/** 移动端无 Electron shell，隐藏「打开存储目录」入口 */
+const isMobile = isMobileFrontend()
+
 const storagePath = computed(() => {
   const base = resolvePluginDataDirSync(props.plugin)
   return base
@@ -84,13 +90,15 @@ const storagePath = computed(() => {
 })
 
 const openPath = async () => {
-  if (typeof window.require === "function") {
-    try {
-      const { shell } = window.require("electron")
-      await shell.openPath(storagePath.value)
-    } catch {
-      showMessage(t.value.openFileFailed, 2000, "error")
-    }
+  const electron = getElectronModules()
+  if (!electron) {
+    showMessage(t.value.openFileFailed, 2000, "error")
+    return
+  }
+  try {
+    await electron.shell.openPath(storagePath.value)
+  } catch {
+    showMessage(t.value.openFileFailed, 2000, "error")
   }
 }
 </script>

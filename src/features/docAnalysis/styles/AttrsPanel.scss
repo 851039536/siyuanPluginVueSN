@@ -498,3 +498,18 @@
     }
   }
 }
+
+// 移动端：平台状态两列在窄屏会把平台名/状态/按钮挤成一行窄条，改为单列
+@media (max-width: $bp-mobile) {
+  .publish-status-section {
+    .platform-status-list {
+      grid-template-columns: 1fr;
+      max-height: none;
+
+      .platform-status-item {
+        // 触摸目标：行内操作按钮密集，整行留足高度避免误触
+        min-height: 40px;
+      }
+    }
+  }
+}

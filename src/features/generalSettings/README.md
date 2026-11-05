@@ -13,3 +13,8 @@
 - **加载方式**：`GeneralSettings.init()` 调用 `injectBuiltinFont(plugin.assetsPath)` 循环注入 `@font-face`，`src` 指向 `${assetsPath}/fonts/<文件名>`。
 - **生效条件**：在「文档字体设置」预设下拉中选择「霞鹜文楷 (LXGW WenKai)」或「新晰黑 Code (NeoXiHei)」即可，无需在系统安装字体；系统已安装同名字体时优先使用系统字体。
 - **注意事项**：字体文件会显著增加插件包体积（合计约 33.8MB）；若不再需要某字体可删除 `assets/fonts/` 下对应文件与许可证，并同步移除 `vite.config.ts` 中对应的 `viteStaticCopy` target 与 `styles.ts` 的 `BUILTIN_FONTS` 数组对应条目。
+
+## 平台支持
+
+移动端可用。窄屏适配：设置页左右分栏改为「顶部横向分类 + 下方内容」，避免 150px 固定侧栏把表单压到不可用宽度；
+三列/两列设置网格在窄屏自动收敛为单列。

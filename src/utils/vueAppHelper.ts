@@ -114,7 +114,8 @@ export function createVueDockApp(
       unmount()
       const nextContainer = document.createElement("div")
       // 全局基准字号类：index.scss 中 .vp-dock-root 统一设为 $font-size-xs(12px)
-      nextContainer.classList.add("vp-dock-root")
+      // vp-dock-panel 仅标记 Dock 面板（移动端安全区只应作用于此，不能波及全局宿主与页签容器）
+      nextContainer.classList.add("vp-dock-root", "vp-dock-panel")
       nextContainer.style.height = "100%"
       nextContainer.style.overflow = "hidden"
 

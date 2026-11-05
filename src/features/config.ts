@@ -387,4 +387,7 @@ export const DESKTOP_ONLY_FEATURE_IDS: ReadonlySet<FeatureId> = new Set<FeatureI
   "apiDebugger",
   "scriptLauncher",
   "gitPush",
+  // 数据管理的清单/备份/还原/导入导出全部经 Node fs 读写数据目录，
+  // 无 Node 能力时所有操作都只能失败，故整体不注册（而非半残展示）
+  "storageManager",
 ])

@@ -45,3 +45,10 @@
     margin-bottom: $s-2;
   }
 }
+
+// 移动端：两列瀑布流在窄屏会把表格压到不可读，改为单列
+@media (max-width: $bp-mobile) {
+  .stats-grid {
+    columns: 1;
+  }
+}

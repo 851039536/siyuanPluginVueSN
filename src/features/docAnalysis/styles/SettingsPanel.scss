@@ -372,7 +372,7 @@
 }
 
 // ============ 响应式：窄面板下平台行允许横向滚动 ============
-@media (max-width: 480px) {
+@media (max-width: $bp-mobile) {
   .settings-body {
     overflow-x: auto;
   }

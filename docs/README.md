@@ -16,7 +16,7 @@
 - [DOC-FIX-PLAN-2026-11-01.md](DOC-FIX-PLAN-2026-11-01.md)（文档缺陷修复计划，含 `AGENTS_STYLE.md` Token 名迁移；状态：待执行）
 - [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
 - [持久化治理与统一数据管理面板.md](持久化治理与统一数据管理面板.md)（本轮实施计划与设计裁决）
-- [mobile-dock-compatibility-plan.md](mobile-dock-compatibility-plan.md)（侧边栏 Dock 功能移动端兼容计划：承载机制、8 个待兼容功能盘点、P0~P4 分阶段任务；状态：待执行）
+- [mobile-dock-compatibility-plan.md](mobile-dock-compatibility-plan.md)（侧边栏 Dock 功能移动端兼容计划：承载机制、功能盘点、P0~P4 分阶段任务；状态：P0–P3 已执行，待真机回归）
 
 ## 一、参考文档（`docs/参考/`，8 份）
 

@@ -7,10 +7,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: $s-4;
+  box-sizing: border-box;
   z-index: 99999;
 }
 .skill-dialog {
   width: 504px;
+  max-width: 100%;
   max-height: 85vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);

@@ -9,9 +9,10 @@
   }
 
   // ---- summary cards ----
+  // 自适应列数：窄屏（移动端侧栏）自动折行，不会把数值挤到溢出
   &__summary {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     gap: $s-2;
     margin-bottom: $s-4;
   }

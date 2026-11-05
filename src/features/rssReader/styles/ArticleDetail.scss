@@ -113,3 +113,26 @@
     }
   }
 }
+
+// 移动端：详情页返回/收藏/字号等操作放大到触摸可用尺寸
+@media (max-width: $bp-mobile) {
+  .rss-reader-panel .rss-item-detail {
+    .detail-header {
+      min-height: 44px;
+
+      .back-btn {
+        width: 40px;
+        height: 40px;
+      }
+
+      .detail-actions button {
+        min-height: 40px;
+      }
+    }
+
+    .detail-font-controls .font-btn {
+      width: 40px;
+      height: 40px;
+    }
+  }
+}

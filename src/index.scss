@@ -16,3 +16,20 @@
 .vp-modal-mask {
   font-size: $t-xs;
 }
+
+// 3. Dock 面板基座
+//    桌面端由 addDock 的 size.width 定宽；移动端思源生成 mobileModel，宽度由侧栏控制（近全屏）。
+//    两种形态都要求铺满宿主元素，并允许在 flex 宿主中收缩，避免横向溢出。
+.vp-dock-root {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+// 移动端安全区：刘海屏/全面屏底部指示条会遮住面板底部内容，由挂载容器统一预留。
+// feature 自身的内边距仍保留在内层，两者互不覆盖。
+@media (max-width: $bp-mobile) {
+  .vp-dock-panel {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}

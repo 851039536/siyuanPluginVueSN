@@ -133,3 +133,25 @@
 .loading-icon {
   animation: spin 1s linear infinite;
 }
+
+// 移动端：顶部图标按钮放大到可稳定点按的尺寸（桌面端 26px 对触摸过小）
+@media (max-width: $bp-mobile) {
+  .rss-reader-panel {
+    .rss-toolbar {
+      .rss-toolbar-btn {
+        width: 40px;
+        height: 40px;
+      }
+
+      .rss-toolbar-title {
+        white-space: nowrap;
+        overflow: hidden;
+      }
+    }
+
+    .rss-search-bar .rss-search-clear {
+      width: 40px;
+      height: 40px;
+    }
+  }
+}

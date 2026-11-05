@@ -66,3 +66,8 @@ dataSnapshot/
 2. **快照比较**：`getRepoSnapshotContent` 已封装，可扩展为差异视图（响应中的 `files` / `diff` 字段）
 3. **分页加载**：`getRepoSnapshots(page)` / `getCloudRepoTagSnapshots(page)` 均支持页码，当前仅加载第 1 页
 4. **新增文案**：键集中在 `src/i18n/{zh_CN,en_US}/dataSnapshot.json` 的 `dataSnapshot` 分组（嵌套结构），新增后中英必须同步；`types/i18n.ts` 的 `DataSnapshotI18n` 需一并补键
+
+## 平台支持
+
+移动端可用。快照数据全部经思源内核 API（`@/api` 的 snapshot 封装）读写，不依赖 Node。窄屏适配：
+创建行允许换行、备忘输入保底宽度，列表项操作按钮放大到触摸可用尺寸。

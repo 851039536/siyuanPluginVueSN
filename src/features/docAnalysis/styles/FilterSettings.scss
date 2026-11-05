@@ -117,3 +117,28 @@
     }
   }
 }
+
+// 移动端：搜索行与辅助过滤行允许换行，输入框保底可读宽度（避免被按钮挤压成窄条）
+@media (max-width: $bp-mobile) {
+  .doc-analysis-filter {
+    .filter-row {
+      flex-wrap: wrap;
+    }
+
+    .title-input,
+    .content-input,
+    .bookmark-input {
+      flex: 1 1 140px;
+      min-width: 140px;
+    }
+
+    .filter-group {
+      flex: 1 1 auto;
+    }
+
+    .notebook-select-field {
+      flex: 1 1 140px;
+      min-width: 140px;
+    }
+  }
+}

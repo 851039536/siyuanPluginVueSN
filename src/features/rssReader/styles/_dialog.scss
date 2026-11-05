@@ -90,3 +90,27 @@
     }
   }
 }
+
+// 移动端：对话框关闭按钮与底部操作按钮放大，保证触摸可点
+@media (max-width: $bp-mobile) {
+  .rss-reader-panel {
+    .rss-add-dialog,
+    .rss-settings-panel {
+      .dialog-header,
+      .settings-header {
+        min-height: 44px;
+
+        .close-btn {
+          width: 40px;
+          height: 40px;
+        }
+      }
+
+      .dialog-footer button {
+        min-height: 40px;
+        padding-left: $s-4;
+        padding-right: $s-4;
+      }
+    }
+  }
+}

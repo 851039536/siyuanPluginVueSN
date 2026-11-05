@@ -87,3 +87,33 @@
     font-family: $ff-mono;
   }
 }
+
+// 移动端：顶部 Tab 允许横向滚动，操作按钮放大到触摸可用尺寸
+@media (max-width: $bp-mobile) {
+  .skill-learning-panel {
+    &__header {
+      gap: $s-1;
+    }
+
+    &__tabs {
+      overflow-x: auto;
+      min-width: 0;
+      flex-shrink: 1;
+
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    &__tab {
+      flex-shrink: 0;
+    }
+
+    &__btn {
+      width: 40px;
+      height: 40px;
+    }
+  }
+}

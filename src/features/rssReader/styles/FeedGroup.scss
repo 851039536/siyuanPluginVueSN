@@ -202,3 +202,33 @@
     }
   }
 }
+
+// 移动端：FeedGroup 的操作按钮原为 hover 显形（触摸设备无 hover），改为常驻并放大
+@media (max-width: $bp-mobile) {
+  .rss-reader-panel .rss-feed-list {
+    .feed-group {
+      .feed-group-header {
+        min-height: 44px;
+
+        .group-action-btn {
+          width: 40px;
+          height: 40px;
+          opacity: 1;
+        }
+      }
+
+      .feed-item {
+        min-height: 48px;
+
+        .feed-actions {
+          opacity: 1;
+
+          button {
+            width: 40px;
+            height: 40px;
+          }
+        }
+      }
+    }
+  }
+}

@@ -71,3 +71,9 @@ destroy(): void
 
 - 运行中只做**逻辑还原**，不覆盖活动 `plugin.db`；二进制整库还原需禁用插件后手动进行（见 `docs/参考/persistence.md`）。
 - 敏感槽位（密码哈希、令牌、API Key、请求凭据）导出默认排除，需用户显式勾选；core 槽位与高敏槽位不可清空。
+
+## 平台支持
+
+仅桌面端。清单盘点、备份/还原、按模块导入导出全部经 `createStorageContext()` 的 Node `fs` 读写数据目录，
+移动端没有 Node 能力时所有操作都无法完成，因此在 `src/features/config.ts` 的 `DESKTOP_ONLY_FEATURE_IDS`
+登记为桌面专属：移动端不注册 Dock、超级面板也不显示开关卡片。

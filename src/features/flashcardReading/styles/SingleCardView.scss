@@ -47,3 +47,20 @@
     opacity: 1;
   }
 }
+
+// 移动端：触摸设备无 hover，操作按钮常驻；导航按钮放大
+@media (max-width: $bp-mobile) {
+  .single-card-view {
+    .flashcard-item--single .card-actions {
+      opacity: 1;
+    }
+
+    .card-navigation {
+      gap: $s-2;
+
+      :deep(.si-button) {
+        --button-size: 40px;
+      }
+    }
+  }
+}

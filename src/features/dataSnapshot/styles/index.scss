@@ -230,3 +230,25 @@
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface, $c-fg);
 }
+
+/* ==================== 移动端 ==================== */
+@media (max-width: $bp-mobile) {
+  // 创建行：备忘输入保底宽度，放不下时按钮换行而不是挤压输入框
+  .ds-create {
+    flex-wrap: wrap;
+
+    .si-input {
+      flex: 1 1 160px;
+    }
+  }
+
+  // 触摸目标：头部刷新与页签按钮、列表行内查看/恢复按钮放大
+  .ds-header .si-button,
+  .ds-tabs .si-button {
+    min-height: 32px;
+  }
+
+  .ds-item__actions .si-button {
+    min-height: 32px;
+  }
+}

@@ -146,3 +146,40 @@
     font-size: $t-2xs;
   }
 }
+
+// 移动端：左右分栏改为「顶部横向分类 + 下方内容」。
+// 窄屏保留 150px 侧栏会把表单压到 200px 出头，输入框与开关无法正常使用。
+@media (max-width: $bp-mobile) {
+  .settings-layout {
+    flex-direction: column;
+  }
+
+  .settings-sidebar {
+    width: 100%;
+    max-height: 88px;
+    display: flex;
+    gap: $s-1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: $s-1 $s-2;
+    border-right: none;
+    border-bottom: 1px solid var(--b3-theme-surface-variant);
+  }
+
+  .sidebar-item {
+    flex-shrink: 0;
+    margin: 0;
+    padding: $s-2 $s-3;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+
+    &.active {
+      border-left-color: transparent;
+      border-bottom-color: var(--b3-theme-primary);
+    }
+  }
+
+  .sidebar-title {
+    white-space: nowrap;
+  }
+}

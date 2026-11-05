@@ -1,4 +1,6 @@
 import { Plugin } from "siyuan"
+import type { GlobalPasswordRecord } from "@/utils/globalPassword"
+import { GLOBAL_PASSWORD_KEY } from "@/utils/globalPassword"
 import { PluginStorage } from "@/utils/pluginStorage"
 import {
   hashPassword,
@@ -17,14 +19,7 @@ export interface PageLockInfo {
   updatedAt: number
 }
 
-/** 全局密码存储结构 */
-interface GlobalPasswordData {
-  hash: string
-  salt: string
-}
-
 const STORAGE_KEY = "page-lock-data"
-const GLOBAL_PASSWORD_KEY = "global-password"
 
 /**
  * 页面锁定存储管理类
@@ -121,7 +116,7 @@ export class PageLockStorage {
   /** 加载全局密码数据（仅加载哈希 + 盐值，明文需重新验证获取） */
   async loadGlobalPassword(): Promise<void> {
     try {
-      const data = await this.storage.load<GlobalPasswordData>(
+      const data = await this.storage.load<GlobalPasswordRecord>(
         GLOBAL_PASSWORD_KEY,
       )
       if (data?.hash && data?.salt) {

@@ -19,7 +19,7 @@
  */
 import type { Plugin } from "siyuan"
 import { getNodeFsPathOs } from "./nodeModules"
-import { readWorkspaceDir } from "./workspaceDir"
+import { resolvePluginDataDir } from "./pluginDataDir"
 
 /** node:sqlite 模块类型（结构化声明，避免依赖 @types/node 的版本差异） */
 interface SqliteStatement {
@@ -38,11 +38,6 @@ export interface SqliteDatabaseSync {
 interface SqliteModule {
   DatabaseSync: new (path: string, options?: { readOnly?: boolean }) => SqliteDatabaseSync
   backup: (sourceDb: SqliteDatabaseSync, destPath: string) => void
-}
-
-/** 思源 Plugin 上供本模块使用的字段（dataDir 未在公开类型声明中，显式收窄） */
-interface PluginWithDataDir extends Plugin {
-  dataDir?: string
 }
 
 /**
@@ -88,42 +83,10 @@ export function buildDbPath(dataDir: string, name = PLUGIN_DB_NAME): string {
 }
 
 /**
- * 解析插件数据目录（绝对路径）；无法确定时返回空串。
- *
- * 来源优先级：
- * 1. `plugin.dataDir`（部分思源版本注入，最可靠且无 IO）；
- * 2. `<workspaceDir>/data/storage/petal/<pluginName>`（从内核配置取工作区根）。
- *
- * ⚠️ 时序约束：`onload` 早期内核可能尚未就绪，此时读不到工作区路径。
- * 调用方（如 warmup）应容忍失败并在稍后重试，**不可**退化成相对路径。
- *
- * ⚠️ 模块纯度：这里**不 import `@/api`**。`api.ts` 顶层对 `siyuan` 做值导入，
- * 会把运行时依赖钉进本模块的模块图，使本模块无法在纯 Node 环境（单元测试）中加载；
- * 且 `@/api` 已被其它 feature 静态导入，动态 import 只会得到
- * `INEFFECTIVE_DYNAMIC_IMPORT` 警告（不会分包）。故直接读内核配置。
+ * 插件数据目录解析已迁至 `@/utils/pluginDataDir`（统一入口）。
+ * 此处保留 re-export，避免既有消费方改动导入路径。
  */
-export async function resolvePluginDataDir(plugin: Plugin): Promise<string> {
-  const node = getNodeFsPathOs()
-  if (!node) return ""
-
-  // 1. 思源注入的绝对路径（若存在）
-  const injected = (plugin as PluginWithDataDir).dataDir
-  if (injected && node.path.isAbsolute(injected)) {
-    return injected
-  }
-
-  // 2. 回退：工作区根 + 约定子目录
-  const workspaceDir = await readWorkspaceDir()
-  if (workspaceDir && node.path.isAbsolute(workspaceDir)) {
-    return node.path.join(workspaceDir, "data", "storage", "petal", plugin.name)
-  }
-  return ""
-}
-
-/**
- * 读取工作区根目录：已抽为共享工具 `utils/workspaceDir.ts`（skills 管理等消费方共用），
- * 此处经顶部导入复用。
- */
+export { resolvePluginDataDir }
 
 /**
  * 解析库文件绝对路径（异步便捷入口）。无法确定时返回空串。

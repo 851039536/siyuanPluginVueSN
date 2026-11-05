@@ -1,0 +1,16 @@
+@use "@/variables.scss" as *;
+
+// ===== 总览：分组列表 =====
+
+.sm-overview {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  min-width: 0;
+}
+
+.sm-groups {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+}

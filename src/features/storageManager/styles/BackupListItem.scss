@@ -1,0 +1,44 @@
+@use "@/variables.scss" as *;
+
+// ===== 备份列表项 =====
+
+.sm-backup-item {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-1 0;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: $s-px2;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__name {
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $s-px2;
+    flex-shrink: 0;
+  }
+}

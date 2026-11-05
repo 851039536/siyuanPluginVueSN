@@ -53,6 +53,7 @@ import {
   registerSkillLearning,
   registerStatistics,
   registerStatusBar,
+  registerStorageManager,
   registerSuperPanel,
   registerTableOfContents,
   registerTextDiff,
@@ -77,6 +78,7 @@ import {
 
 import { setupIconifyOffline } from "@/utils/iconifySetup"
 import { clearRendererCache } from "@/utils/mdRenderer"
+import { resolvePluginDataDir, resolvePluginDataDirSync } from "@/utils/pluginDataDir"
 // ========== 全局样式导入 ==========
 // 使用普通 import 而非 @use，确保 CSS 在插件加载时就注入
 // Vite 会将此 CSS 编译到 index.css 并在入口点立即注入
@@ -127,13 +129,15 @@ export default class PluginSample extends Plugin {
     "__componentPreview", // 组件预览（addTab 模型 + 独立窗口 + 全局事件监听）
     "__statusBar", // 状态栏（Vue app + 状态栏 DOM）
     "__gitPush", // Git 推送（Dock/Tab Vue app + 探测链 + fs.watch + SQLite 句柄）
+    "__storageManager", // 数据管理（Dock Vue app + 用量缓存）
   ] as const
 
   onload() {
     setupIconifyOffline() // 预加载 mdi + ph 图标数据，确保断网可用
 
     // 关键：初始化功能开关文件持久化目录（必须在 loadFeatureFlagsSync 之前）
-    setFeatureFlagsDir((this as any).dataDir)
+    // 不能用 (this as any).dataDir —— 运行时为 undefined，会导致 flags 文件永不落盘
+    setFeatureFlagsDir(resolvePluginDataDirSync(this))
 
     // 同步读取功能开关（优先从文件，跨重启可靠）
     // 因为 addDock() 必须在 onload 同步阶段完成，不能等异步 loadData
@@ -163,6 +167,11 @@ export default class PluginSample extends Plugin {
    */
   private async loadAndApplySettings() {
     this.settings = await loadSettings(this)
+    // 启动早期内核可能尚未就绪（同步解析为空）：此处补齐目录并落盘一次
+    const dataDir = await resolvePluginDataDir(this)
+    if (dataDir) {
+      setFeatureFlagsDir(dataDir)
+    }
     // 同步回文件缓存，确保下次 onload 同步阶段能读到最新开关
     saveFeatureFlagsSync(this.settings)
     // 根据真实配置同步紧凑模式 CSS 类（settings 已合并 DEFAULT_SETTINGS，无需兜底默认值）
@@ -254,6 +263,7 @@ export default class PluginSample extends Plugin {
     if (s.enableGlobalRelations) registerGlobalRelations(this)
     if (s.enableQuickNote) registerQuickNote(this)
     if (s.enableIdeaGenerator) registerIdeaGenerator(this)
+    if (s.enableStorageManager) registerStorageManager(this)
   }
 
   /**

@@ -114,6 +114,7 @@ import {
 } from "vue"
 import Loader from "@/components/Loader.vue"
 import { getDockPreloadState } from "@/utils/dockPreload"
+import { resolvePluginDataDirSync } from "@/utils/pluginDataDir"
 import ActivityTab from "./components/NotebookActivity/index.vue"
 import DistributionTab from "./components/NotebookDistribution/index.vue"
 import HeatmapTab from "./components/heatmap/index.vue"
@@ -249,14 +250,14 @@ const heatmapQueries = {
 }
 
 const storagePaths = computed(() => {
-  const dataDir = (props.plugin as any).dataDir || ""
-  const pluginName = props.plugin.name || ""
-  const baseDir = `${dataDir}/storage/petal/${pluginName}`
+  const key = STATISTICS_STORAGE_KEYS.HISTORY
+  // 统一走插件数据目录解析（JSON 槽落盘无扩展名）
+  const baseDir = resolvePluginDataDirSync(props.plugin)
   return [
     {
-      key: STATISTICS_STORAGE_KEYS.HISTORY,
+      key,
       desc: i18n.value.historyStorageDesc,
-      path: `${baseDir}/${STATISTICS_STORAGE_KEYS.HISTORY}.json`,
+      path: baseDir ? `${baseDir}/${key}` : `data/storage/petal/${props.plugin.name}/${key}`,
     },
   ]
 })

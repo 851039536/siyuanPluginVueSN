@@ -31,6 +31,8 @@ export class Encryption {
    * 初始化加密模块
    */
   async init() {
+    // 先完成旧 key 的一次性迁移（幂等），再加载
+    await this.storage.init()
     await this.loadPassword()
     this.registerContextMenu()
   }

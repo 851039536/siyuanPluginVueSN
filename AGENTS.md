@@ -90,12 +90,13 @@ feature/
 - 跨功能调度（App.vue 调用 `plugin.__xxx.toggle()` 等）依赖同一挂载点，挂载时机与调度入口保持一致
 - 参考实现：`src/features/gitPush/index.ts`（Manager 自挂载）、`src/features/toolCollection/index.ts`（包装 destroy）
 
-**验证链条**：完成全部 8 步后，由用户自行验证以下 4 项检查：
+**验证链条**：完成全部 8 步后，由用户自行验证以下 5 项检查：
 ```bash
 pnpm lint           # ESLint 代码规范（用户执行，AI 不运行）
 pnpm i18n:verify    # 中英文键对齐
 pnpm validate:icons # 图标注册有效性
 pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
+pnpm audit:storage  # 存储键 ↔ src/config/storage/ 注册表双向核对
 ```
 > **重要**：AI 不执行 `pnpm vite build` 和 `pnpm lint`。验证由用户自行完成。
 
@@ -103,7 +104,7 @@ pnpm typecheck      # TypeScript 类型检查（= vue-tsc --noEmit）
 > 与上述 `lint` / `vite build` 的禁令无关。改动纯函数（解析 / 换算 / 聚合 / 签名）后应主动跑一次。
 
 > ⛔ **禁止新建临时校验脚本**（`.tmp-*.mjs` / `.tmp-*.js` 等一次性脚本，包括「离线编译 SCSS 校验 Token」这类做法）。
-> 验证只走既有入口：`read_lints`（IDE 诊断）+ `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons` / `pnpm test`；
+> 验证只走既有入口：`read_lints`（IDE 诊断）+ `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons` / `pnpm audit:storage` / `pnpm test`；
 > `pnpm lint` / `pnpm vite build` / SCSS 编译由用户执行。
 > 需要**可复用**的检查能力时：**行为断言写入 `src/**/*.spec.ts`**，静态扫描类仍在 `scripts/` 下以正式名称落地并登记
 > （如 `audit-hardcode.mjs`），不要写成临时文件。
@@ -291,6 +292,56 @@ db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
 
 ---
 
+## 持久化规范（强制，2026-11-05）
+
+完整参考见 [`docs/参考/persistence.md`](./docs/参考/persistence.md)，资产清单与迁移路线见
+[`docs/plugin-persistence-audit.md`](./docs/plugin-persistence-audit.md)。本节只列强制项。
+
+### 分层与判据
+
+| 数据形态 | 方案 |
+|---------|------|
+| 设置项、开关、小对象（< 20 KB，整体读写） | `TypedStorage<T>`（JSON 槽） |
+| 记录集合且**单条改动会重写 > 50 KB**，或体积 > 150 KB | `plugin.db` 表（见 § SQLite 存储规范） |
+| 需条件查询/排序/聚合 | `plugin.db` 表 |
+| 加密单文档（密码箱条目） | `TypedStorage` + 应用层加密，不拆表 |
+| 增量追加日志/索引 | 裸 NDJSON 或 SQLite 表，禁止整份 JSON 重写 |
+
+### 强制规则
+
+1. **槽位必须登记**：新增/修改 JSON 槽、SQLite 表、文件槽、localStorage 键时，必须在
+   `src/config/storage/` 添加/更新元数据（`id` / `owners` / `kind` / `key` / `growth` /
+   `sensitive` / `exportable` / `resettable`），并与功能侧常量同一提交。`pnpm audit:storage` 双向核对。
+2. **命名**：JSON 槽 key 用 kebab-case 且**不带 `.json` 后缀**；SQLite 表名必须由
+   `featureTables()` 生成；文件目录用 kebab-case。存量不合规 key 在注册表标 `legacyName: true` 冻结，
+   改名必须与一次性迁移同批完成。
+3. **写放大**：`growth` 槽若命中「单条改动重写 > 50 KB」或体积 > 150 KB，必须迁 SQLite；
+   存量迁移按 `docs/plugin-persistence-audit.md §4` 的 P0/P1 顺序执行，不得临时起意。
+4. **备份一致性**：任何 zip 备份/导出，SQLite 必须用 `snapshotTo()` / `snapshotDatabaseFile()`
+   生成单文件快照，**禁止直接复制运行中的 `.db`**，**禁止只做 `wal_checkpoint`**；zip 内跳过
+   `-wal` / `-shm`；临时快照放扫描目录之外（如 `data-backup/.tmp/`）并 `finally` 清理。
+5. **还原**：运行中只允许「逻辑还原」（JSON 按 key 写回、SQLite 表 `DELETE + INSERT` 单表事务），
+   覆盖活动库文件必须由用户在**禁用插件后**手动进行。还原前必须先自动全量快照。
+6. **路径**：禁止用 `plugin.dataDir` 直接拼路径（运行时为 `undefined`）。统一走
+   `resolvePluginDataDir()` / `resolvePluginDataDirSync()` / `joinPluginDataPath()`。
+7. **localStorage**：只允许白名单键（`sn-plugin-feature-flags`、`siyuan-ytdlp-path`、
+   `siyuan-ffmpeg-path`），不得存业务数据；新增必须登记并在注册表标 `kind: "localStorage"`。
+8. **README**：新增或修改持久化槽位的功能，其 `src/features/<feature>/README.md` 必须有「存储」章节，
+   列出 key / 表名 / 文件目录 / 增长性与清理方式（存量 README 的补齐见
+   `docs/plugin-persistence-audit.md` 的缺口清单，不要求一次性全量回填）。
+9. **一次性迁移/恢复**：必须由显式操作或一次性 marker 守卫，**禁止每次启动侦测**；
+   迁移不得塞进 `_prepare()`（`_prepare` 只 `CREATE TABLE IF NOT EXISTS` + 播种）。
+10. **敏感数据**：含密码/密钥/令牌/请求凭据的槽位必须标 `sensitive: true` 并走
+    `@/utils/settingsCrypto`；导出默认排除，需用户显式勾选。
+
+### 统一管理入口
+
+存储清单、按模块导出/导入、全量备份/还原、单槽清空由 `storageManager` 功能提供
+（`src/features/storageManager/`），功能面板不再各自实现插件级导出/备份入口；
+局部「清空本功能日志」可以保留，但数据必须来自注册表登记的槽位。
+
+---
+
 ## 共享组件库使用规则（强制）
 
 `src/components/` 是**全项目唯一的 UI 控件来源**（52 个组件）。三条强制要求：**先查用法 → 优先复用 → 改 API 必同步**。
@@ -465,7 +516,7 @@ db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
 - `init()` 先调用 `modal.open()` 再调用 `modal.close()` 来触发 `onMounted`（注册事件监听）同时隐藏 UI
 - `index.ts` 中的 `setInterval` 向持久化实例中的 Vue 组件派发 CustomEvent
 - `destroy()` 调用 `modal.destroy()` + `clearInterval()` → `onUnmounted` 清理监听器
-- 参考实现：`src/features/dataBackup/`
+- 参考实现：`src/features/s3Backup/`（`persistent: true` Modal + `TimerRegistry` 自动备份 + `destroy()` 清理）
 
 > 完整实现步骤与关键点速查表见 [AGENTS_API.md § Vue 实例常驻模式](./AGENTS_API.md#vue-实例常驻模式persistent-modal--customevent--定时器)
 
@@ -601,12 +652,17 @@ src/
 ├── index.ts                # 插件入口（同步读开关 → 条件注册各功能）
 ├── config/
 │   ├── settings.ts         # PluginSettings 接口 + 功能开关持久化
+│   ├── storage/            # 存储槽注册表（元数据单一事实源：JSON/SQLite/文件/localStorage）
 │   └── icons.ts            # FEATURE_ICONS + COMMON_ICONS
 ├── utils/
 │   ├── aiApi.ts            # callAI / callAISmart / callAIChat — 所有 AI 调用唯一入口
 │   ├── eventBus.ts         # emitCustomEvent — 所有自定义事件唯一入口
 │   ├── pluginStorage.ts    # PluginStorage — 统一存储抽象层
 │   ├── typedStorage.ts     # TypedStorage<T> — 类型安全存储槽
+│   ├── pluginDataDir.ts    # resolvePluginDataDir(Sync) / joinPluginDataPath — 插件数据目录唯一解析入口
+│   ├── sqliteDb.ts         # openPluginDatabase / openWithRetry / featureTables / snapshotTo
+│   ├── sqliteSnapshot.ts   # snapshotDatabaseFile / snapshotDatabasesInDir — 一致性备份
+│   ├── sharedStorage/      # 跨功能共享的 SQLite 单例（websiteStorage）
 │   ├── vueAppHelper.ts     # createVueDockApp / createModalVueApp
 │   ├── domUtils.ts         # copyToClipboard / triggerDownload / injectStyle
 │   ├── nodeModules.ts      # getNodeModules / getNodeProcessModules / getNodeFsPathOs
@@ -614,7 +670,7 @@ src/
 │   ├── cryptoPrimitives.ts # deriveAESKey / aesGcmEncrypt / aesGcmDecrypt — 加密基元
 │   ├── iconHelper.ts       # replaceTopBarIcon / createIconElement
 │   ├── mdRenderer.ts       # parseMarkdown / convertHljsToInlineStyles — Markdown 渲染统一入口
-│   └── settingsBackup.ts   # backupPluginData / restoreFromUpload
+│   └── settingsBackup.ts   # backupPluginData / restoreFromUpload / listPluginBackups
 ├── components/             # 共享组件库 52 个（Button/ToggleButton/SpeedDial/Splitter/Paginator/Panel/Input/Textarea/Select/Listbox/Checkbox/RadioButton/DatePicker/ColorField/InputGroup/Dialog/Drawer/ConfirmDialog/ConfirmPopup/MegaMenu/TieredMenu/Message/Toast/Sidebar/SidebarMain/Card/Timeline/Tabs/TabList/Tab/TabPanels/TabPanel/Toolbar/Divider/Chart/Inplace/FocusTrap/MeterGroup/ProgressBar 等）— 使用规则见「共享组件库使用规则」
 ├── features/
 │   ├── statusBar/
@@ -622,6 +678,7 @@ src/
 │   │       └── useStatusBarTask.ts  # 状态栏后台任务（task.progress/complete/fail）
 │   ├── config.ts           # FEATURE_CONFIG — 单一数据源，推导 FeatureId 类型
 │   ├── index.ts            # 功能注册函数统一导出 + 编译时双向断言
+│   ├── storageManager/     # 统一数据管理面板（清单/导出导入/备份还原/重置）
 │   └── <feature>/          # 各功能模块（index.ts + index.vue + types/ + composables/）
 ├── types/
 │   ├── ai.ts               # AI API 类型

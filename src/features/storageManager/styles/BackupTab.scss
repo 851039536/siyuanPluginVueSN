@@ -1,0 +1,17 @@
+@use "@/variables.scss" as *;
+
+// ===== 备份与还原 =====
+
+.sm-backup {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  min-width: 0;
+}
+
+.sm-backup-list {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  margin-top: $s-2;
+}

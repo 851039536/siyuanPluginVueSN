@@ -359,6 +359,13 @@ export const FEATURE_CONFIG = [
       hotkey: "Ctrl+Alt+I",
     }],
   },
+  {
+    id: "storageManager",
+    defaultTitle: "数据管理",
+    defaultDesc: "统一查看、导出、备份与还原插件持久化数据",
+    titleI18nKey: "storageManager.title",
+    descI18nKey: "storageManager.description",
+  },
 ] as const
 
 /**

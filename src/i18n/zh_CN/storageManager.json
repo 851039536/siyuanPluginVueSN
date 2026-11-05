@@ -1,0 +1,116 @@
+{
+  "storageManager": {
+    "title": "数据管理",
+    "description": "统一查看、导出、备份与还原插件持久化数据",
+    "totalUsage": "总占用",
+    "dataDir": "数据目录",
+    "unavailable": "目录未就绪",
+    "copyPath": "复制路径",
+    "copied": "路径已复制",
+    "copyFailed": "复制失败",
+    "refresh": "刷新",
+    "loading": "正在统计……",
+    "empty": "暂无数据",
+    "missing": "未创建",
+    "rows": "行",
+    "confirm": "确定",
+    "cancel": "取消",
+    "tabs": {
+      "overview": "总览",
+      "transfer": "备份与还原",
+      "diagnostics": "诊断"
+    },
+    "summary": {
+      "json": "JSON 槽",
+      "sqlite": "SQLite 库",
+      "file": "文件槽",
+      "localStorage": "浏览器存储",
+      "sensitive": "敏感槽位"
+    },
+    "kinds": {
+      "json": "JSON",
+      "sqlite": "SQLite",
+      "file": "文件",
+      "localStorage": "浏览器"
+    },
+    "tags": {
+      "growth": "增长",
+      "sensitive": "敏感",
+      "legacy": "旧命名"
+    },
+    "owners": {
+      "core": "插件核心"
+    },
+    "actions": {
+      "reset": "清空",
+      "resetConfirm": "确认清空",
+      "resetDone": "已清空"
+    },
+    "reset": {
+      "title": "清空存储槽位",
+      "message": "将删除「{0}」的数据，且不可撤销。是否继续？"
+    },
+    "transfer": {
+      "backupTitle": "全量备份",
+      "backupDesc": "把整个插件数据目录打包为 zip（SQLite 自动生成一致性快照）。",
+      "backupNow": "立即备份",
+      "backupDone": "备份完成：{0}",
+      "backupFailed": "备份失败：{0}",
+      "backupList": "已有备份",
+      "backupEmpty": "暂无备份",
+      "restore": "还原",
+      "restoreConfirm": "将按槽位逻辑写回数据（不会覆盖运行中的数据库文件），并先自动创建一次快照。是否继续？",
+      "restoreUpload": "上传 zip 还原",
+      "restoreUploadDesc": "支持本功能生成的全量备份 zip；还原前会自动快照。",
+      "restoreDone": "还原完成：成功 {0} 项，失败 {1} 项",
+      "restoreFailed": "还原失败：{0}",
+      "delete": "删除",
+      "deleteTitle": "删除备份",
+      "deleteConfirm": "确定删除备份「{0}」？",
+      "deleted": "已删除",
+      "deleteFailed": "删除失败",
+      "moduleTitle": "按模块导出 / 导入",
+      "moduleDesc": "导出为 JSON（JSON 槽 + SQLite 表）；导入只接受注册表内的槽位，未知 key 会被拒绝。",
+      "selectOwners": "选择功能",
+      "includeSensitive": "包含敏感项",
+      "export": "导出",
+      "exportDone": "已导出",
+      "exportFailed": "导出失败：{0}",
+      "import": "导入 JSON",
+      "importDone": "导入完成：成功 {0} 项，失败 {1} 项",
+      "importFailed": "导入失败：{0}",
+      "requiresReload": "建议重载插件后继续使用",
+      "snapshotAt": "导入前快照：{0}"
+    },
+    "diagnostics": {
+      "desc": "增长型槽位超过 150KB 时提示迁移；迁移判据与 P0/P1 路线见 docs/plugin-persistence-audit.md。",
+      "empty": "没有需要处理的告警",
+      "growthLarge": "「{0}」已占用 {1}，建议迁移到 SQLite",
+      "docsHint": "docs/plugin-persistence-audit.md § 4 SQLite 迁移路线"
+    },
+    "errors": {
+      "dataDirUnavailable": "无法解析插件数据目录（工作区未就绪或非 Electron 环境）",
+      "destroyed": "数据管理实例已销毁",
+      "backupFailed": "自动快照失败，操作已中止",
+      "workspaceUnresolved": "无法解析工作区路径",
+      "invalidJson": "文件不是有效的 JSON",
+      "invalidPayload": "导入文件格式或版本不受支持",
+      "invalidZip": "文件不是有效的 zip 备份",
+      "unregisteredKey": "未登记的存储键",
+      "unregisteredTable": "未登记的数据库表",
+      "notExportable": "该槽位不允许导出",
+      "saveFailed": "写入失败",
+      "sqliteUnavailable": "SQLite 不可用",
+      "sqliteWriteFailed": "数据库写入失败",
+      "tableMissing": "备份中缺少该表",
+      "columnMismatch": "表字段与当前版本不匹配",
+      "slotNotRegistered": "槽位未登记",
+      "notResettable": "该槽位不允许清空",
+      "removeFailed": "删除失败",
+      "unsafeTable": "非法的表名",
+      "no-sqlite": "当前环境不支持 SQLite",
+      "no-data-dir": "插件数据目录未就绪",
+      "read-failed": "读取失败"
+    }
+  }
+}

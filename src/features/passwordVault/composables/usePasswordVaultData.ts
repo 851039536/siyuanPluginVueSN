@@ -12,9 +12,11 @@ import {
   ref,
 } from "vue"
 import { triggerBlobDownload } from "@/utils/domUtils"
+import { resolvePluginDataDirSync } from "@/utils/pluginDataDir"
 import {
   DATA_VERSION,
   PasswordVaultStorage,
+  STORAGE_KEYS,
 } from "../types/storage"
 import {
   decryptEntryPayload,
@@ -329,11 +331,12 @@ export function usePasswordVaultData(plugin?: Plugin) {
   }
 
   const storagePath = computed(() => {
-    const dataDir = plugin ? (plugin as any).dataDir || "" : ""
-    const name = plugin?.name || ""
-    return dataDir && name
-      ? `${dataDir}/storage/petal/${name}/password-vault-entries.json`
-      : `data/storage/petal/{plugin}/password-vault-entries.json`
+    if (!plugin) return ""
+    const key = STORAGE_KEYS.ENTRIES
+    const dir = resolvePluginDataDirSync(plugin)
+    return dir
+      ? `${dir}/${key}`
+      : `data/storage/petal/${plugin.name}/${key}`
   })
 
   return {

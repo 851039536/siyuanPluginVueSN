@@ -67,7 +67,7 @@ src/features/gitPush/
 │   ├── CommitIndex.ts               # 本地提交索引引擎（NDJSON 追加写 + 游标查询 + 崩溃丢尾自愈）
 │   ├── indexCoverage.ts             # 索引覆盖范围决策纯函数（能否跳过扫描 / 截断项目不重扫全历史）
 │   ├── indexIo.ts                   # 索引磁盘 IO 抽象（FsIndexIO 生产实现 / 接口注入使纯逻辑可单测）
-│   ├── indexDir.ts                  # 索引目录解析（plugin.dataDir → storage/petal/<plugin>/git-push-index）
+│   ├── indexDir.ts                  # 索引目录解析（resolvePluginDataDir() → <petal>/git-push-index）
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
 │   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志（含历史提交消息重写）
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描

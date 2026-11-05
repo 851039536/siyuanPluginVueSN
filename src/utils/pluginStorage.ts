@@ -88,11 +88,22 @@ export class PluginStorage {
   }
 
   /**
-   * 删除数据（通过保存空字符串实现）
+   * 删除数据（真正移除存储文件）
+   *
+   * 优先走 `plugin.removeData`（siyuan.d.ts:702）；旧版内核不支持时退回写入空串，
+   * 保证「逻辑删除」语义向下兼容（读取侧仍会把 "" 归一为 null）。
    * @param key 存储键名
    * @returns 是否删除成功
    */
   async remove(key: string): Promise<boolean> {
+    try {
+      if (typeof this.plugin.removeData === "function") {
+        await this.plugin.removeData(key)
+        return true
+      }
+    } catch (error) {
+      console.error(`删除数据失败 [${key}]，回退为空串写入:`, error)
+    }
     try {
       await this.plugin.saveData(key, "")
       return true

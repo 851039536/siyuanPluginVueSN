@@ -1,0 +1,10 @@
+@use "@/variables.scss" as *;
+
+// ===== 诊断 =====
+
+.sm-diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  min-width: 0;
+}

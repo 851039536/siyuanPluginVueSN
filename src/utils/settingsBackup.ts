@@ -1,19 +1,24 @@
 /**
  * 插件设置备份/恢复工具
  *
- * 将插件数据目录整体打包为 zip 备份到 workspace/data-backup/，
- * 恢复时解压回原目录。
+ * 将插件数据目录整体打包为 zip 备份到 `<workspace>/data-backup/`。
  *
  * ⚠️ SQLite/WAL 一致性（关键）：
- * 备份目录中可能含 SQLite 库（见 @/utils/sqliteDb）。WAL 模式下已提交数据可能仍在
- * `-wal` 附属文件里（实测主库 4KB / wal 48KB），若逐个 readFileSync 三个文件，
- * 可能抓到「新 .db + 旧 -wal」的错配组合，恢复出损坏库；而用户只取 .db 时更会得到空库。
- * 因此备份前必须先对每个库做 checkpoint（把 WAL 并回主库），使 .db 自包含。
+ * 备份目录中可能含 SQLite 库（`plugin.db`）。WAL 模式下已提交数据可能仍在 `-wal`
+ * 中，直接复制三个文件会得到「新 .db + 旧 -wal」的错配组合，只取 .db 更是空库。
+ * 因此备份前必须用 SQLite 官方在线备份 API 产出单文件快照（见 `@/utils/sqliteSnapshot`），
+ * zip 内用快照替换 `.db` 并**跳过 `-wal` / `-shm`**。
  */
 import JSZip from "jszip"
-import { Plugin } from "siyuan"
+import type { Plugin } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
-import { getSqlite } from "@/utils/sqliteDb"
+import { resolvePluginDataDir } from "@/utils/pluginDataDir"
+import {
+  cleanupSnapshotDir,
+  isSqliteSidecar,
+  sidecarBasePath,
+  snapshotDatabasesInDir,
+} from "@/utils/sqliteSnapshot"
 
 /** 备份结果 */
 export interface BackupResult {
@@ -21,59 +26,57 @@ export interface BackupResult {
   filePath: string
   size: number
   fileCount: number
+  createdAt: number
+}
+
+/** 备份列表项 */
+export interface PluginBackupListItem {
+  fileName: string
+  filePath: string
+  size: number
+  createdAt: number
 }
 
 /** SQLite 附属文件名后缀（WAL 模式产物） */
 const SQLITE_SIDECAR_SUFFIXES = ["-wal", "-shm"] as const
+const BACKUP_FILE_RE = /^sn-plugin-\d{6}-\d{6}\.zip$/
 
-/**
- * 把目录内所有 SQLite 库的 WAL 内容并回主库（best-effort）。
- *
- * 库正被插件持有时无法再开第二个连接，此时由持有方自行 checkpoint；
- * 本函数仅处理「备份时无人持有」的库，失败静默（不影响其余文件备份）。
- */
-function checkpointDatabasesInDir(dirPath: string, fs: any, path: any): void {
-  // 走统一入口（@/utils/sqliteDb），避免在本文件重复 require 与类型推导
-  const sqlite = getSqlite()
-  if (!sqlite) return
-
-  const walk = (dir: string): void => {
-    let entries: any[]
-    try {
-      entries = fs.readdirSync(dir, { withFileTypes: true })
-    } catch {
-      return
-    }
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name)
-      if (entry.isDirectory()) {
-        walk(full)
-        continue
-      }
-      if (!entry.name.endsWith(".db")) continue
-      try {
-        const db = new sqlite.DatabaseSync(full)
-        db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-        db.close()
-      } catch {
-        // 库被占用或损坏：跳过，后续仍按原样打包
-      }
-    }
-  }
-  walk(dirPath)
+/** 生成 `YYMMDD-HHmmss` 时间戳 */
+function makeTimestamp(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${pad(date.getFullYear() % 100)}${pad(date.getMonth() + 1)}${pad(date.getDate())}`
+    + `-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`
 }
 
-/** 递归添加目录到 zip */
-function addDirToZip(zip: JSZip, dirPath: string, relativePath: string, fs: any, path: any) {
+/**
+ * 递归添加目录到 zip。
+ * `.db` 优先用一致性快照；对应快照成功时跳过 `-wal` / `-shm`。
+ */
+function addDirToZip(
+  zip: JSZip,
+  dirPath: string,
+  relativePath: string,
+  snapshotMap: Map<string, string>,
+  fs: any,
+  path: any,
+) {
   const entries = fs.readdirSync(dirPath, { withFileTypes: true })
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry.name)
     const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name
     if (entry.isDirectory()) {
-      addDirToZip(zip, fullPath, relPath, fs, path)
-    } else {
-      zip.file(relPath, fs.readFileSync(fullPath))
+      addDirToZip(zip, fullPath, relPath, snapshotMap, fs, path)
+      continue
     }
+    if (entry.name.endsWith(".db")) {
+      const snapshotPath = snapshotMap.get(relPath)
+      zip.file(relPath, fs.readFileSync(snapshotPath || fullPath))
+      continue
+    }
+    if (isSqliteSidecar(relPath) && snapshotMap.has(sidecarBasePath(relPath))) {
+      continue
+    }
+    zip.file(relPath, fs.readFileSync(fullPath))
   }
 }
 
@@ -105,46 +108,60 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
   const node = getNodeModules()
   if (!node) throw new Error("当前环境不支持文件系统操作")
 
-  const pluginDataDir = `${workspaceRoot}/data/storage/petal/${plugin.name}`
+  const pluginDataDir = await resolvePluginDataDir(plugin)
+  if (!pluginDataDir) throw new Error("无法解析插件数据目录（工作区路径尚未就绪）")
   if (!node.fs.existsSync(pluginDataDir)) {
     throw new Error(`插件数据目录不存在: ${pluginDataDir}`)
   }
 
-  // 先归并 WAL，确保 .db 自包含（否则单独取 .db 会得到空库）
-  checkpointDatabasesInDir(pluginDataDir, node.fs, node.path)
-
-  const zip = new JSZip()
-  addDirToZip(zip, pluginDataDir, "", node.fs, node.path)
-  const content = await zip.generateAsync({ type: "nodebuffer" })
-
-  const backupDir = `${workspaceRoot}/data-backup`
-  if (!node.fs.existsSync(backupDir)) {
-    node.fs.mkdirSync(backupDir, { recursive: true })
-  }
-
   const now = new Date()
-  const pad = (n: number) => String(n).padStart(2, "0")
-  const ts = `${pad(now.getFullYear() % 100)}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-  const fileName = `sn-plugin-${ts}.zip`
-  const filePath = node.path.join(backupDir, fileName)
+  const backupDir = node.path.join(workspaceRoot, "data-backup")
+  const tempDir = node.path.join(backupDir, ".tmp", `snapshot-${now.getTime()}`)
 
-  node.fs.writeFileSync(filePath, content)
-  return {
-    fileName,
-    filePath,
-    size: content.length,
-    fileCount: Object.keys(zip.files).length,
+  let snapshots: { relPath: string, snapshotPath: string | null }[] = []
+  try {
+    snapshots = snapshotDatabasesInDir(pluginDataDir, tempDir)
+    const snapshotMap = new Map<string, string>()
+    for (const entry of snapshots) {
+      if (entry.snapshotPath) snapshotMap.set(entry.relPath, entry.snapshotPath)
+    }
+
+    const zip = new JSZip()
+    addDirToZip(zip, pluginDataDir, "", snapshotMap, node.fs, node.path)
+    const content = await zip.generateAsync({ type: "nodebuffer" })
+
+    if (!node.fs.existsSync(backupDir)) {
+      node.fs.mkdirSync(backupDir, { recursive: true })
+    }
+
+    const fileName = `sn-plugin-${makeTimestamp(now)}.zip`
+    const filePath = node.path.join(backupDir, fileName)
+    node.fs.writeFileSync(filePath, content)
+
+    return {
+      fileName,
+      filePath,
+      size: content.length,
+      fileCount: Object.keys(zip.files).length,
+      createdAt: now.getTime(),
+    }
+  } finally {
+    if (snapshots.length) cleanupSnapshotDir(tempDir)
   }
 }
 
 /**
- * 从上传的 zip 文件恢复插件数据
+ * 从上传的 zip 文件恢复插件数据（**二进制整目录覆盖**）
+ *
+ * ⚠️ 仅适用于插件禁用后的手动恢复；运行中请使用 storageManager 的「逻辑还原」，
+ * 直接覆盖被连接持有的 `plugin.db` 会失败或损坏数据。
  */
 export async function restoreFromUpload(file: File, plugin: Plugin, workspaceRoot: string): Promise<{ restored: number }> {
   const node = getNodeModules()
   if (!node) throw new Error("当前环境不支持文件系统操作")
 
-  const pluginDataDir = `${workspaceRoot}/data/storage/petal/${plugin.name}`
+  const pluginDataDir = (await resolvePluginDataDir(plugin))
+    || node.path.join(workspaceRoot, "data", "storage", "petal", plugin.name)
   const buffer = Buffer.from(await file.arrayBuffer())
   const zip = await JSZip.loadAsync(buffer)
 
@@ -168,4 +185,47 @@ export async function restoreFromUpload(file: File, plugin: Plugin, workspaceRoo
   const restored = await extractZipToDir(zip, pluginDataDir, node.fs, node.path)
 
   return { restored }
+}
+
+/** 列出插件整目录备份（`sn-plugin-*.zip`），按时间倒序 */
+export function listPluginBackups(workspaceRoot: string): PluginBackupListItem[] {
+  const node = getNodeModules()
+  if (!node) return []
+
+  const backupDir = node.path.join(workspaceRoot, "data-backup")
+  if (!node.fs.existsSync(backupDir)) return []
+
+  const items: PluginBackupListItem[] = []
+  for (const name of node.fs.readdirSync(backupDir)) {
+    if (!BACKUP_FILE_RE.test(name)) continue
+    const filePath = node.path.join(backupDir, name)
+    try {
+      const stat = node.fs.statSync(filePath)
+      items.push({
+        fileName: name,
+        filePath,
+        size: stat.size,
+        createdAt: stat.mtimeMs,
+      })
+    } catch {
+      // 文件在扫描后被删除：跳过
+    }
+  }
+  return items.sort((a, b) => b.createdAt - a.createdAt)
+}
+
+/** 删除一个插件整目录备份（只允许 `data-backup` 下的 `sn-plugin-*.zip`） */
+export function deletePluginBackup(workspaceRoot: string, fileName: string): boolean {
+  const node = getNodeModules()
+  if (!node) return false
+  if (node.path.basename(fileName) !== fileName || !BACKUP_FILE_RE.test(fileName)) {
+    return false
+  }
+  try {
+    node.fs.rmSync(node.path.join(workspaceRoot, "data-backup", fileName), { force: true })
+    return true
+  } catch (error) {
+    console.error(`[settingsBackup] 删除备份失败 [${fileName}]:`, error)
+    return false
+  }
 }

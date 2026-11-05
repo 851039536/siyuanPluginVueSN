@@ -64,6 +64,7 @@ export interface PluginSettings {
   enableQuickNoteAutoOpen: boolean // 速记子开关：启动时自动打开速记弹窗
   enableIdeaGenerator: boolean // 是否启用灵感生成器功能
   enableComponentPreview: boolean // 是否启用组件预览功能
+  enableStorageManager: boolean // 是否启用数据管理功能
   themeColorScheme: ThemeColorSchemeId // 主题色方案 ID（内置主题 + "custom"）
   customThemeColor: string // 自定义主题色（schemeId 为 "custom" 时使用）
   videoCategories?: string[] // 视频分类列表
@@ -132,6 +133,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableQuickNoteAutoOpen: false,
   enableIdeaGenerator: true,
   enableComponentPreview: true,
+  enableStorageManager: true,
   themeColorScheme: "orange",
   customThemeColor: "#d97757",
   videoCategories: ["默认分类", "教程", "演示", "其他"],
@@ -176,8 +178,9 @@ let _flagsDir: string | null = null
  * 设置功能开关持久化目录
  * 必须在 onload 中同步调用一次，后续 save/load 默认写入此目录
  */
-export function setFeatureFlagsDir(dir: string): void {
-  _flagsDir = dir
+export function setFeatureFlagsDir(dir: string | null | undefined): void {
+  // 空串等同未解析：调用方在启动早期拿不到工作区路径时不应写相对路径
+  _flagsDir = dir && dir.length > 0 ? dir : null
 }
 
 /**

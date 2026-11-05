@@ -52,6 +52,7 @@ import type { I18n } from "../types"
 import { showMessage } from "siyuan"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
+import { resolvePluginDataDirSync } from "@/utils/pluginDataDir"
 import { useI18n } from "../composables/useI18n"
 import { STORAGE_KEY } from "../types/storage"
 
@@ -76,10 +77,10 @@ defineEmits<{
 const t = useI18n(props.i18n)
 
 const storagePath = computed(() => {
-  const base = (props.plugin as any).getDataDir?.() || ""
+  const base = resolvePluginDataDirSync(props.plugin)
   return base
-    ? `${base.replace(/\/$/, "")}/${STORAGE_KEY}.json`
-    : `storage/petal/siyuan-plugin-vite-vue-sn/${STORAGE_KEY}.json`
+    ? `${base}/${STORAGE_KEY}`
+    : `data/storage/petal/${props.plugin.name}/${STORAGE_KEY}`
 })
 
 const openPath = async () => {

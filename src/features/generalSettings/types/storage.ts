@@ -331,7 +331,6 @@ export class GeneralSettingsStorage {
   readonly docCount: TypedStorage<DocCountSettings>
   readonly tabPin: TypedStorage<TabPinSettings>
   readonly appearance: TypedStorage<Record<string, any>>
-  readonly password: TypedStorage<string>
 
   constructor(plugin: Plugin) {
     const storage = new PluginStorage(plugin)
@@ -346,7 +345,6 @@ export class GeneralSettingsStorage {
     this.docCount = new TypedStorage(storage, "doc-count-settings", DEFAULT_DOC_COUNT_SETTINGS)
     this.tabPin = new TypedStorage(storage, "tabpin-settings", DEFAULT_TABPIN_SETTINGS)
     this.appearance = new TypedStorage(storage, "appearance-settings")
-    this.password = new TypedStorage(storage, "global-password")
   }
 
   /** 加载标题设置（带 colors/fontSizes 深层合并） */
@@ -380,7 +378,7 @@ export class GeneralSettingsStorage {
       this.docCount.remove(),
       this.tabPin.remove(),
       this.appearance.remove(),
-      this.password.remove(),
+      // 注意：global-password 归 pageLock 所有，恢复通用设置默认值时不得删除
     ])
   }
 }

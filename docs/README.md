@@ -12,10 +12,12 @@
 > `AGENTS_BUILD.md` / `AGENTS_I18N.md` 是**长期规则**，不适用本索引的归档规则，原地维护。
 > 功能模块的 `src/features/*/README.md` 同样原地维护，不迁入 docs。
 
-**当前 `docs/` 根下的活跃文档**：[DOC-FIX-PLAN-2026-11-01.md](DOC-FIX-PLAN-2026-11-01.md)
-（文档缺陷修复计划，含 `AGENTS_STYLE.md` Token 名迁移；状态：待执行）
+**当前 `docs/` 根下的活跃文档**：
+- [DOC-FIX-PLAN-2026-11-01.md](DOC-FIX-PLAN-2026-11-01.md)（文档缺陷修复计划，含 `AGENTS_STYLE.md` Token 名迁移；状态：待执行）
+- [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
+- [持久化治理与统一数据管理面板.md](持久化治理与统一数据管理面板.md)（本轮实施计划与设计裁决）
 
-## 一、参考文档（`docs/参考/`，7 份）
+## 一、参考文档（`docs/参考/`，8 份）
 
 | 文件 | 主题 | 被谁引用 |
 |---|---|---|
@@ -26,6 +28,7 @@
 | [IconWrapper.README.md](参考/IconWrapper.README.md) | `IconWrapper` 图标组件用法（封装 `@iconify/vue`、样式与错误处理） | — |
 | [斜杠命令说明.md](参考/斜杠命令说明.md) | 斜杠命令模块（`src/commands/`）与已支持命令清单 | — |
 | [codex-ui-reference.html](参考/codex-ui-reference.html) | Codex UI 视觉参考页（静态 HTML，供截图/对照） | — |
+| [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 持久化规范（强制） |
 
 ## 二、归档文档（`docs/completed/`，11 份）
 

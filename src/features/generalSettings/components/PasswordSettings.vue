@@ -66,8 +66,7 @@ import {
 import IconWrapper from "@/components/IconWrapper.vue"
 import { usePlugin } from "@/main"
 import { emitCustomEvent } from "@/utils/eventBus"
-
-import { GeneralSettingsStorage } from "../types/storage"
+import { readGlobalPasswordRecord } from "@/utils/globalPassword"
 
 interface Props {
   i18n?: Record<string, string>
@@ -80,13 +79,11 @@ withDefaults(defineProps<Props>(), {
 const plugin = usePlugin() as PluginSample
 const hasPassword = ref(false)
 
-const gsStorage = new GeneralSettingsStorage(plugin)
-
-// 检查是否已设置密码
+// 检查是否已设置密码（与 pageLock 共用同一共享槽位，不重复实例化 Storage）
 async function checkPassword() {
   try {
-    const password = await gsStorage.password.load()
-    hasPassword.value = !!password
+    const record = await readGlobalPasswordRecord(plugin)
+    hasPassword.value = !!record
   } catch (error) {
     console.error("检查密码失败:", error)
     hasPassword.value = false

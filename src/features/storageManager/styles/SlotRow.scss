@@ -1,0 +1,66 @@
+@use "@/variables.scss" as *;
+
+// ===== 存储槽位行 =====
+
+.sm-slot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "main actions"
+    "meta meta";
+  gap: $s-px3 $s-2;
+  padding: $s-1 0;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__main {
+    grid-area: main;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $s-px3;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: $t-xs;
+    font-weight: $fw-medium;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  &__meta {
+    grid-area: meta;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $s-1;
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__key {
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  &__missing {
+    color: var(--b3-theme-error);
+  }
+
+  &__actions {
+    grid-area: actions;
+    display: flex;
+    align-items: flex-start;
+  }
+}

@@ -80,6 +80,7 @@ export {
   showPromptsModal,
 } from "./prompts"
 export { registerStatistics } from "./statistics"
+export { registerStorageManager } from "./storageManager"
 export { registerStatusBar } from "./statusBar"
 export { registerSuperPanel } from "./superPanel"
 export { registerTableOfContents } from "./tableOfContents"
@@ -123,6 +124,7 @@ type _Registered =
   | "componentPreview"
   | "quickNote"
   | "ideaGenerator"
+  | "storageManager"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

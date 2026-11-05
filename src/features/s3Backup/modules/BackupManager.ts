@@ -18,6 +18,12 @@ import {
 } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import {
+  cleanupSnapshotDir,
+  isSqliteSidecar,
+  sidecarBasePath,
+  snapshotDatabasesInDir,
+} from "@/utils/sqliteSnapshot"
+import {
   BackupError,
   DEFAULT_BACKUP_DIR,
   MSG_DESKTOP_ONLY,
@@ -64,6 +70,8 @@ interface BackupInfo {
   totalFiles: number
   /** 打包时因无法读取而被跳过的文件相对路径列表 */
   skippedFiles: string[]
+  /** 本次打包使用的 SQLite 一致性快照数量（0 表示无库或快照失败） */
+  dbSnapshots: number
 }
 
 export interface BackupOptions {
@@ -225,6 +233,14 @@ export class BackupManager {
     const skipDirs = new Set(SKIP_DIRS)
     const zip = new JSZip()
 
+    // SQLite 一致性：先为每个 .db 生成单文件快照（临时目录在 data-backup/.tmp，位于扫描目录之外）
+    const tempDir = this.path.join(this.backupDir, ".tmp", `snapshot-${now.getTime()}`)
+    const snapshots = snapshotDatabasesInDir(backupSourcePath, tempDir)
+    const snapshotMap = new Map<string, string>()
+    for (const entry of snapshots) {
+      if (entry.snapshotPath) snapshotMap.set(entry.relPath, entry.snapshotPath)
+    }
+
     // 阶段1：扫描文件
     onProgress?.({
       phase: "scanning",
@@ -249,6 +265,13 @@ export class BackupManager {
     const lazyStreams: { destroy: (err?: Error) => void }[] = []
     for (let i = 0; i < allFiles.length; i++) {
       const file = allFiles[i]
+      const relPath = file.relativePath.replace(/\\/g, "/")
+
+      // 快照成功时跳过 WAL 附属文件：zip 内的 .db 已自包含
+      if (isSqliteSidecar(relPath) && snapshotMap.has(sidecarBasePath(relPath))) {
+        continue
+      }
+
       onProgress?.({
         phase: "packing",
         currentFile: file.relativePath,
@@ -260,7 +283,10 @@ export class BackupManager {
         // 预探测可访问性：无法访问的文件跳过并记录（压缩阶段的残余流错误会使整次备份失败，
         // 对备份工具而言“响亮失败”优于静默丢数据）
         await this.fs.access(file.fullPath)
-        const lazy = createLazyReadStream(this.fsRaw, file.fullPath)
+        const sourcePath = relPath.endsWith(".db")
+          ? (snapshotMap.get(relPath) || file.fullPath)
+          : file.fullPath
+        const lazy = createLazyReadStream(this.fsRaw, sourcePath)
         lazyStreams.push(lazy)
         zip.file(file.relativePath, lazy)
       } catch (err) {
@@ -278,9 +304,14 @@ export class BackupManager {
       backupDir: this.backupDir,
       totalFiles,
       skippedFiles,
+      dbSnapshots: snapshotMap.size,
     }
 
-    return this.finalizeAndSaveBackup(zip, backupInfo, useDateFolder, now, onProgress, lazyStreams)
+    try {
+      return await this.finalizeAndSaveBackup(zip, backupInfo, useDateFolder, now, onProgress, lazyStreams)
+    } finally {
+      if (snapshots.length) cleanupSnapshotDir(tempDir)
+    }
   }
 
   /** 压缩并流式写盘保存备份（公共逻辑）；lazyStreams 供压缩中断时统一销毁 */

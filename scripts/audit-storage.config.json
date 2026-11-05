@@ -1,0 +1,5 @@
+{
+  "comment": "audit:storage 例外清单。ignoreKeys 忽略源码侧误报；ignoreZombie 忽略注册表侧暂未接线的条目。每项都应写清原因（见 docs/参考/persistence.md）。",
+  "ignoreKeys": [],
+  "ignoreZombie": []
+}

@@ -213,7 +213,7 @@ onUnmounted(() => window.removeEventListener("myFeatureTick", handleTick))
 
 ### 参考实现
 
-`src/features/dataBackup/index.ts` + `index.vue` — 完整的持久后台备份实现，包含三种频率策略（minute/hourly/daily）和设置热重启。
+`src/features/s3Backup/index.ts` + `index.vue` — 完整的持久后台备份实现，包含三种频率策略（minute/hourly/daily）和设置热重启。
 
 ### 事件
 

@@ -1,0 +1,15 @@
+@use "@/variables.scss" as *;
+
+// ===== 汇总卡片 =====
+
+.sm-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s-2;
+
+  &__value {
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
+    font-variant-numeric: tabular-nums;
+  }
+}

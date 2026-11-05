@@ -312,6 +312,12 @@ export const FEATURE_ICONS = {
     color: "#f59e0b",
   },
   // 数据快照
+  // 数据管理（统一持久化数据控制台）
+  storageManager: {
+    icon: "mdi:database-cog",
+    color: "#0ea5e9",
+  },
+
   dataSnapshot: {
     icon: "mdi:camera-marker",
     color: "#0ea5e9",

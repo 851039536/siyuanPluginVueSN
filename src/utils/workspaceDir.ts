@@ -8,14 +8,20 @@
  * 会把运行时依赖钉进本模块的模块图，使本模块无法在纯 Node 环境（单元测试）中加载。
  * （原位于 `utils/sqliteDb.ts`，因 skills 管理等消费方需要而抽出共享。）
  */
-export async function readWorkspaceDir(): Promise<string> {
-  // 1. 已加载的配置（思源刷新配置后可用）
+export function readWorkspaceDirSync(): string {
   try {
     const dir = window.siyuan?.config?.system?.workspaceDir
-    if (typeof dir === "string" && dir) return dir
+    return typeof dir === "string" ? dir : ""
   } catch {
-    // window/globalThis 不可用（纯 Node 单测）：继续走下一步
+    // window/globalThis 不可用（纯 Node 单测）
+    return ""
   }
+}
+
+export async function readWorkspaceDir(): Promise<string> {
+  // 1. 已加载的配置（思源刷新配置后可用）
+  const cached = readWorkspaceDirSync()
+  if (cached) return cached
 
   // 2. 回退：直接请求内核配置（与 @/api 的 getConf 等价，但不引入其依赖）
   try {

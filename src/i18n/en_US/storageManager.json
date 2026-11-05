@@ -1,0 +1,116 @@
+{
+  "storageManager": {
+    "title": "Data Manager",
+    "description": "Inspect, export, back up and restore all plugin persisted data",
+    "totalUsage": "Total",
+    "dataDir": "Data dir",
+    "unavailable": "Not ready",
+    "copyPath": "Copy path",
+    "copied": "Path copied",
+    "copyFailed": "Copy failed",
+    "refresh": "Refresh",
+    "loading": "Measuring…",
+    "empty": "No data",
+    "missing": "Not created",
+    "rows": "rows",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "tabs": {
+      "overview": "Overview",
+      "transfer": "Backup & Restore",
+      "diagnostics": "Diagnostics"
+    },
+    "summary": {
+      "json": "JSON slots",
+      "sqlite": "SQLite DB",
+      "file": "File slots",
+      "localStorage": "Web storage",
+      "sensitive": "Sensitive slots"
+    },
+    "kinds": {
+      "json": "JSON",
+      "sqlite": "SQLite",
+      "file": "File",
+      "localStorage": "Web"
+    },
+    "tags": {
+      "growth": "Growing",
+      "sensitive": "Sensitive",
+      "legacy": "Legacy name"
+    },
+    "owners": {
+      "core": "Plugin core"
+    },
+    "actions": {
+      "reset": "Clear",
+      "resetConfirm": "Clear",
+      "resetDone": "Cleared"
+    },
+    "reset": {
+      "title": "Clear storage slot",
+      "message": "Data of \"{0}\" will be deleted and cannot be recovered. Continue?"
+    },
+    "transfer": {
+      "backupTitle": "Full backup",
+      "backupDesc": "Pack the whole plugin data directory into a zip (SQLite uses a consistent snapshot).",
+      "backupNow": "Back up now",
+      "backupDone": "Backup created: {0}",
+      "backupFailed": "Backup failed: {0}",
+      "backupList": "Existing backups",
+      "backupEmpty": "No backups yet",
+      "restore": "Restore",
+      "restoreConfirm": "Data will be written back slot by slot (running database files are not overwritten) and a snapshot is taken first. Continue?",
+      "restoreUpload": "Restore from zip",
+      "restoreUploadDesc": "Accepts a full backup zip created by this panel; a snapshot is taken before restoring.",
+      "restoreDone": "Restore finished: {0} applied, {1} failed",
+      "restoreFailed": "Restore failed: {0}",
+      "delete": "Delete",
+      "deleteTitle": "Delete backup",
+      "deleteConfirm": "Delete backup \"{0}\"?",
+      "deleted": "Deleted",
+      "deleteFailed": "Delete failed",
+      "moduleTitle": "Export / import by module",
+      "moduleDesc": "Exports JSON (JSON slots + SQLite tables); imports only accept registered slots, unknown keys are rejected.",
+      "selectOwners": "Select features",
+      "includeSensitive": "Include sensitive",
+      "export": "Export",
+      "exportDone": "Exported",
+      "exportFailed": "Export failed: {0}",
+      "import": "Import JSON",
+      "importDone": "Import finished: {0} applied, {1} failed",
+      "importFailed": "Import failed: {0}",
+      "requiresReload": "Reload the plugin to continue",
+      "snapshotAt": "Pre-import snapshot: {0}"
+    },
+    "diagnostics": {
+      "desc": "Growing slots over 150KB are flagged for migration; criteria and the P0/P1 roadmap are in docs/plugin-persistence-audit.md.",
+      "empty": "No warnings",
+      "growthLarge": "\"{0}\" occupies {1}; consider migrating to SQLite",
+      "docsHint": "docs/plugin-persistence-audit.md § 4 SQLite migration roadmap"
+    },
+    "errors": {
+      "dataDirUnavailable": "Cannot resolve the plugin data directory (workspace not ready or not Electron)",
+      "destroyed": "Data manager has been destroyed",
+      "backupFailed": "Pre-operation snapshot failed; aborted",
+      "workspaceUnresolved": "Cannot resolve the workspace path",
+      "invalidJson": "File is not valid JSON",
+      "invalidPayload": "Unsupported import format or version",
+      "invalidZip": "File is not a valid zip backup",
+      "unregisteredKey": "Unregistered storage key",
+      "unregisteredTable": "Unregistered database table",
+      "notExportable": "This slot cannot be exported",
+      "saveFailed": "Write failed",
+      "sqliteUnavailable": "SQLite unavailable",
+      "sqliteWriteFailed": "Database write failed",
+      "tableMissing": "Table is missing from the backup",
+      "columnMismatch": "Table columns do not match the current version",
+      "slotNotRegistered": "Slot is not registered",
+      "notResettable": "This slot cannot be cleared",
+      "removeFailed": "Delete failed",
+      "unsafeTable": "Invalid table name",
+      "no-sqlite": "SQLite is not supported in this environment",
+      "no-data-dir": "Plugin data directory is not ready",
+      "read-failed": "Read failed"
+    }
+  }
+}

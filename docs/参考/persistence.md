@@ -34,14 +34,18 @@
 而 Windows 上 SQLite 打开的文件**不带 `FILE_SHARE_DELETE`**，只要连接常驻，rename 就报
 "Access is denied"，整轮同步以「读写文件或访问网络权限不足」失败。
 
-因此 `PluginDatabase`（`src/utils/sqliteDb.ts`）刻意不常驻句柄：
+因此 `PluginDatabase`（`src/utils/sqliteDb.ts` 的会话部分已拆至 `src/utils/sqliteDatabase.ts`，
+对外仍从 `@/utils/sqliteDb` 导入）刻意不常驻句柄：
 
 - 空闲 2s 自动 `close()`，下次访问惰性重开（重放 PRAGMA）；
-- `installSqliteSyncGuard(plugin)` 监听思源 `sync-start` 事件，同步开始时立即释放所有句柄
-  （插件 `onload` 挂载、`onunload` 经 `DESTROYABLE_KEYS` 注销）。
+- `installSqliteSyncGuard(plugin)` 监听思源 `sync-start` / `sync-end` / `sync-fail` 事件，
+  同步开始与结束时都释放所有句柄（插件 `onload` 挂载、`onunload` 经 `DESTROYABLE_KEYS` 注销）。
 
 关闭最后一个连接会顺带把 WAL 归并并删除 `-wal` / `-shm`；dejavu 的忽略规则（仅点号前缀与 `.tmp`）
 不会跳过这两个附属文件，常驻句柄会让它们被同步到其它设备。
+
+**已知限制**：同步进行中若用户打开依赖 SQLite 的面板，句柄会被重新打开，该轮同步仍可能失败
+（下一轮自动恢复）。同步 API 无法阻塞等待同步结束，这是有意的取舍。
 
 **禁止**把 `PluginDatabase` 改回常驻连接或在外部缓存底层句柄 —— 那会重新锁死 `plugin.db`。
 

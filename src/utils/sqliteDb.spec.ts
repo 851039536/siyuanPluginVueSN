@@ -13,6 +13,7 @@ import {
   PluginDatabase,
   resolvePluginDataDir,
 } from "./sqliteDb"
+import { createHandle } from "./sqliteDatabase"
 
 /** 构造一个最小 plugin 桩（本模块只用 name / dataDir） */
 function fakePlugin(dataDir?: unknown): any {
@@ -143,6 +144,25 @@ function fakeSqliteModule() {
   }
 }
 
+describe("createHandle", () => {
+  it("PRAGMA 失败时关闭已打开的连接（避免 Windows 上留下无人释放的文件锁）", () => {
+    const closed: boolean[] = []
+    class FailingDatabase extends FakeDatabase {
+      exec(): void {
+        throw new Error("PRAGMA boom")
+      }
+
+      close(): void {
+        closed.push(true)
+      }
+    }
+    const sqlite = { DatabaseSync: FailingDatabase, backup: async () => {} }
+
+    expect(() => createHandle(sqlite as any, "/tmp/bad.db")).toThrow(/PRAGMA boom/)
+    expect(closed).toEqual([true])
+  })
+})
+
 describe("空闲释放句柄（思源同步兼容）", () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -199,15 +219,21 @@ describe("思源同步守卫", () => {
     const dbB = new PluginDatabase(sqlite as any, second as any, "/tmp/sync-b.db")
 
     let handler: (() => void) | null = null
+    const subscribed: string[] = []
     let offCount = 0
     const plugin = {
       eventBus: {
-        on: (_type: string, listener: () => void) => { handler = listener },
+        on: (type: string, listener: () => void) => {
+          subscribed.push(type)
+          handler = listener
+        },
         off: () => { offCount++ },
       },
     }
 
     const guard = installSqliteSyncGuard(plugin as any)
+    // 事件名是守卫的触发条件：拼错时订阅数不变、手调 handler 也能过，必须逐字锁定
+    expect(subscribed).toEqual(["sync-start", "sync-end", "sync-fail"])
     expect(handler).not.toBeNull()
     handler!()
     expect(first.closed).toBe(true)

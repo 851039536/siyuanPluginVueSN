@@ -661,7 +661,8 @@ src/
 │   ├── pluginStorage.ts    # PluginStorage — 统一存储抽象层
 │   ├── typedStorage.ts     # TypedStorage<T> — 类型安全存储槽
 │   ├── pluginDataDir.ts    # resolvePluginDataDir(Sync) / joinPluginDataPath — 插件数据目录唯一解析入口
-│   ├── sqliteDb.ts         # openPluginDatabase / openWithRetry / featureTables / snapshotTo
+│   ├── sqliteDb.ts         # openPluginDatabase / openWithRetry / featureTables（对外汇聚，re-export 会话能力）
+│   ├── sqliteDatabase.ts   # PluginDatabase 会话 / 空闲释放 / installSqliteSyncGuard / snapshotTo
 │   ├── sqliteSnapshot.ts   # snapshotDatabaseFile / snapshotDatabasesInDir — 一致性备份
 │   ├── sharedStorage/      # 跨功能共享的 SQLite 单例（websiteStorage）
 │   ├── vueAppHelper.ts     # createVueDockApp / createModalVueApp

@@ -111,33 +111,40 @@ class S3FmLogStore {
     `)
   }
 
-  /** 追加一条日志并裁剪到上限；库不可用时静默跳过（内存态日志仍可用） */
+  /**
+   * 追加一条日志并裁剪到上限；库不可用或写入失败时静默跳过（内存态日志仍可用）。
+   * ⚠️ 句柄空闲释放后可能正被思源同步替换：重开失败的异常不得打断主操作。
+   */
   append(log: FileOpLog): void {
     const db = this.db
     if (!db) { return }
-    db.run(
-      `INSERT OR REPLACE INTO ${TABLE.logs}
-        (id, time, type, action, file_name, item_count, file_size, success, message, hostname, detail_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      log.id,
-      Date.parse(log.time),
-      log.type,
-      log.action,
-      log.fileName,
-      log.itemCount ?? null,
-      log.fileSize ?? null,
-      log.success ? 1 : 0,
-      log.message ?? null,
-      log.hostname ?? null,
-      log.detail ? JSON.stringify(log.detail) : null,
-    )
-    // 超出上限裁剪最旧记录（rowid 为插入序，与 addLog 的 unshift 语义一致）
-    db.run(
-      `DELETE FROM ${TABLE.logs} WHERE rowid NOT IN (
-         SELECT rowid FROM ${TABLE.logs} ORDER BY rowid DESC LIMIT ?
-       )`,
-      MAX_DB_LOG_ROWS,
-    )
+    try {
+      db.run(
+        `INSERT OR REPLACE INTO ${TABLE.logs}
+          (id, time, type, action, file_name, item_count, file_size, success, message, hostname, detail_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        log.id,
+        Date.parse(log.time),
+        log.type,
+        log.action,
+        log.fileName,
+        log.itemCount ?? null,
+        log.fileSize ?? null,
+        log.success ? 1 : 0,
+        log.message ?? null,
+        log.hostname ?? null,
+        log.detail ? JSON.stringify(log.detail) : null,
+      )
+      // 超出上限裁剪最旧记录（rowid 为插入序，与 addLog 的 unshift 语义一致）
+      db.run(
+        `DELETE FROM ${TABLE.logs} WHERE rowid NOT IN (
+           SELECT rowid FROM ${TABLE.logs} ORDER BY rowid DESC LIMIT ?
+         )`,
+        MAX_DB_LOG_ROWS,
+      )
+    } catch (error) {
+      console.warn(`${LOG_TAG} 写入操作日志失败:`, error)
+    }
   }
 
   /** 加载全部日志（最新在前，按插入序倒序）；库不可用返回空列表 */

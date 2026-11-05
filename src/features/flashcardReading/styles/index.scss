@@ -364,5 +364,10 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
         --button-size: 36px;
       }
     }
+
+    // 面板头部图标按钮（添加/刷新/独立窗口）同样放大到触摸可用尺寸
+    .panel-header .si-button {
+      --button-size: 32px;
+    }
   }
 }

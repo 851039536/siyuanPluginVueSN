@@ -167,4 +167,9 @@ $stats-header-height: 56px;
   .refresh-interval-select {
     opacity: 0.7;
   }
+
+  // 刷新为纯图标按钮，宽度由 --button-size 决定，仅加 min-height 无法放大
+  .statistics-header .si-button {
+    --button-size: 32px;
+  }
 }

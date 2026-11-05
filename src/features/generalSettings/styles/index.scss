@@ -167,6 +167,9 @@
   }
 
   .sidebar-item {
+    display: flex;
+    align-items: center;
+    min-height: 40px;
     flex-shrink: 0;
     margin: 0;
     padding: $s-2 $s-3;

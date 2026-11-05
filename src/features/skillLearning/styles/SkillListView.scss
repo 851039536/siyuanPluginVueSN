@@ -131,5 +131,10 @@
       height: 32px;
       opacity: 1;
     }
+
+    // 放大的删除按钮为绝对定位（top/right 4px），需给标题行让出同宽避让区，避免压住标题首行
+    &__card-top {
+      padding-right: 34px;
+    }
   }
 }

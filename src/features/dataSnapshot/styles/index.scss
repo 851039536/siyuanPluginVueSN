@@ -242,9 +242,10 @@
     }
   }
 
-  // 触摸目标：头部刷新与页签按钮、列表行内查看/恢复按钮放大
+  // 触摸目标：头部刷新（纯图标，宽度由 --button-size 决定）与页签按钮、列表行内查看/恢复按钮放大
   .ds-header .si-button,
   .ds-tabs .si-button {
+    --button-size: 32px;
     min-height: 32px;
   }
 

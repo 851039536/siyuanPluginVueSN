@@ -239,7 +239,7 @@ export class BackupManager {
     const osModules = getNodeFsPathOs()
     const tempRoot = osModules ? osModules.os.tmpdir() : this.backupDir
     const tempDir = this.path.join(tempRoot, `siyuan-s3-snapshot-${now.getTime()}`)
-    const snapshots = snapshotDatabasesInDir(backupSourcePath, tempDir)
+    const snapshots = await snapshotDatabasesInDir(backupSourcePath, tempDir)
     const snapshotMap = new Map<string, string>()
     for (const entry of snapshots) {
       if (entry.snapshotPath) snapshotMap.set(entry.relPath, entry.snapshotPath)

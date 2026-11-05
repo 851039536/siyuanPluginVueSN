@@ -25,6 +25,18 @@ import { isSafeTableName, type StorageContext } from "./context"
 const JSON_BY_KEY = new Map(JSON_SLOTS.map((slot) => [slot.key, slot]))
 const SQLITE_BY_KEY = new Map(SQLITE_SLOTS.map((slot) => [slot.key, slot]))
 const FORBIDDEN_KEYS = new Set(["__proto__", "constructor", "prototype"])
+const CREATE_TABLE_RE = /^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["`[]?([A-Za-z_][A-Za-z0-9_]*)/i
+
+/**
+ * 只接受「单条、表名与目标槽一致」的 CREATE TABLE 语句。
+ * DDL 来自用户上传的备份，不能把多条语句交给 exec。
+ */
+function safeCreateTableSql(sql: string, table: string): string | null {
+  const trimmed = sql.trim().replace(/;+\s*$/, "")
+  if (trimmed.includes(";")) return null
+  const match = trimmed.match(CREATE_TABLE_RE)
+  return match && match[1] === table ? trimmed : null
+}
 
 /** 插件实例上可写的运行时设置快照（避免使用 any） */
 interface PluginWithSettings {
@@ -44,6 +56,7 @@ export async function buildModulePayload(
   const storage = new PluginStorage(ctx.plugin)
   const slots: Record<string, unknown> = {}
   const tables: Record<string, Record<string, unknown>[]> = {}
+  const schemas: Record<string, string> = {}
 
   for (const slot of JSON_SLOTS) {
     if (!belongsToOwner(slot.owners, owners)) continue
@@ -66,6 +79,11 @@ export async function buildModulePayload(
           )
           if (!exists) continue
           tables[slot.key] = open.db.all<Record<string, unknown>>(`SELECT * FROM "${slot.key}"`)
+          const schema = open.db.get<{ sql?: string }>(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+            slot.key,
+          )
+          if (schema?.sql) schemas[slot.key] = schema.sql
         }
       } finally {
         open.db.close()
@@ -79,6 +97,7 @@ export async function buildModulePayload(
     owners,
     slots,
     tables,
+    schemas,
   }
 }
 
@@ -103,6 +122,7 @@ async function applyJsonSlots(
   ctx: StorageContext,
   payload: ModuleExportPayload,
   report: ImportReport,
+  allowNonExportable: boolean,
 ): Promise<void> {
   const storage = new PluginStorage(ctx.plugin)
   for (const [key, value] of Object.entries(payload.slots || {})) {
@@ -112,7 +132,8 @@ async function applyJsonSlots(
       report.failed.push({ slotId: key, error: "unregisteredKey" })
       continue
     }
-    if (!slot.exportable) {
+    // exportable 是「按模块导出」的约束；全量备份还原应镜像备份内容，不受它限制
+    if (!slot.exportable && !allowNonExportable) {
       report.skipped.push({ slotId: slot.id, reason: "notExportable" })
       continue
     }
@@ -155,8 +176,23 @@ async function applySqliteTables(
         table,
       )
       if (!exists) {
-        report.skipped.push({ slotId: slot.id, reason: "tableMissing" })
-        continue
+        // 全新安装 / 功能从未启用时目标库没有该表：用备份里采集的 DDL 重建，
+        // 否则整表数据会被静默丢弃（正是「备份有、还原无」的根因之一）。
+        const rawSchema = payload.schemas?.[table]
+        const ddl = rawSchema ? safeCreateTableSql(rawSchema, table) : null
+        if (!ddl) {
+          report.skipped.push({ slotId: slot.id, reason: "tableMissing" })
+          continue
+        }
+        try {
+          db.exec(ddl)
+        } catch (error) {
+          report.failed.push({
+            slotId: slot.id,
+            error: error instanceof Error ? error.message : "createTableFailed",
+          })
+          continue
+        }
       }
 
       const dbColumns = new Set(
@@ -195,6 +231,12 @@ async function applySqliteTables(
   }
 }
 
+/** applyPayload 选项 */
+export interface ApplyPayloadOptions {
+  /** 全量备份还原：忽略 JSON 槽的 exportable（镜像备份内容） */
+  allowNonExportable?: boolean
+}
+
 /** 应用载荷（不含自动备份；调用方负责先快照） */
 export async function applyPayload(
   ctx: StorageContext,
@@ -205,14 +247,23 @@ export async function applyPayload(
     failed: [],
     requiresReload: false,
   },
+  options: ApplyPayloadOptions = {},
 ): Promise<ImportReport> {
-  await applyJsonSlots(ctx, payload, report)
+  await applyJsonSlots(ctx, payload, report, options.allowNonExportable === true)
   await applySqliteTables(ctx, payload, report)
 
   if (payload.slots && payload.slots["plugin-settings"] !== undefined) {
     await refreshSettingsSnapshot(ctx)
   }
 
+  return report
+}
+
+/**
+ * 应用完成后的统一收尾：按最终 applied 判定 requiresReload 并广播事件。
+ * 必须在文件槽写回之后调用，否则「只有 git-push-index 被还原」时不会提示重载。
+ */
+export function finalizeReport(report: ImportReport): ImportReport {
   report.requiresReload = report.applied.length > 0
   if (report.applied.length) {
     emitCustomEvent("storageRestored")
@@ -251,6 +302,12 @@ export function parseModulePayload(text: string): { payload: ModuleExportPayload
   for (const table of Object.keys(candidate.tables || {})) {
     if (!SQLITE_BY_KEY.has(table)) return { error: "unregisteredTable" }
   }
+  const schemas: Record<string, string> = {}
+  if (candidate.schemas && typeof candidate.schemas === "object" && !Array.isArray(candidate.schemas)) {
+    for (const [table, ddl] of Object.entries(candidate.schemas)) {
+      if (typeof ddl === "string") schemas[table] = ddl
+    }
+  }
   return {
     payload: {
       version: 1,
@@ -258,6 +315,7 @@ export function parseModulePayload(text: string): { payload: ModuleExportPayload
       owners: Array.isArray(candidate.owners) ? candidate.owners : [],
       slots: candidate.slots || {},
       tables: candidate.tables || {},
+      schemas,
     },
   }
 }

@@ -124,7 +124,7 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
 
   let snapshots: DatabaseSnapshotEntry[] = []
   try {
-    snapshots = snapshotDatabasesInDir(pluginDataDir, tempDir)
+    snapshots = await snapshotDatabasesInDir(pluginDataDir, tempDir)
     const snapshotMap = new Map<string, string>()
     for (const entry of snapshots) {
       if (entry.snapshotPath) snapshotMap.set(entry.relPath, entry.snapshotPath)

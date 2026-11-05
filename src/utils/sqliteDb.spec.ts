@@ -69,26 +69,34 @@ describe("buildDbPath", () => {
 })
 
 describe("snapshotTo 语义", () => {
-  it("是同步方法（不返回 Promise）：失败同步抛出，不会变成无人 await 的 rejection", () => {
-    // 用最小桩验证签名契约，不依赖真实数据库
+  const fakeDb: any = { close: () => {}, exec: () => {}, prepare: () => ({}) }
+
+  it("是异步方法：失败会 reject 且带目标路径上下文", async () => {
     const failingBackup = {
-      backup: () => {
+      backup: async () => {
         throw new Error("driver boom")
       },
     }
-    const fakeDb: any = { close: () => {}, exec: () => {}, prepare: () => ({}) }
     const pdb = new PluginDatabase(failingBackup as any, fakeDb, "/tmp/x.db")
 
-    let thrown: unknown = null
-    try {
-      // 不加 await：若实现是 async，异常会变成 rejected Promise 而此处捕不到
-      pdb.snapshotTo("/tmp/snap.db")
-    } catch (e) {
-      thrown = e
+    await expect(pdb.snapshotTo("/tmp/snap.db")).rejects.toThrow(/\/tmp\/snap\.db/)
+    await expect(pdb.snapshotTo("/tmp/snap.db")).rejects.toThrow(/driver boom/)
+  })
+
+  it("等待 backup 完成后才 resolve（防止读到 0 字节快照）", async () => {
+    let finished = false
+    const slowBackup = {
+      backup: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        finished = true
+      },
     }
-    expect(thrown).toBeInstanceOf(Error)
-    expect(String((thrown as Error).message)).toContain("/tmp/snap.db")
-    expect(String((thrown as Error).message)).toContain("driver boom")
+    const pdb = new PluginDatabase(slowBackup as any, fakeDb, "/tmp/x.db")
+
+    const pending = pdb.snapshotTo("/tmp/snap.db")
+    expect(finished).toBe(false)
+    await pending
+    expect(finished).toBe(true)
   })
 })
 

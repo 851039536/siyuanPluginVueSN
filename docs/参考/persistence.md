@@ -70,6 +70,9 @@ pnpm audit:storage -- --json  # 机器可读
 - 入口：`src/utils/settingsBackup.ts`（`storageManager` 面板调用）。
 - **SQLite 必须用 `snapshotTo()` / `snapshotDatabaseFile()` 生成单文件快照**，
   禁止直接复制运行中的 `.db`，禁止只做 `wal_checkpoint`（并发写时可能 busy 而不截断）。
+- ⚠️ `node:sqlite` 的 `backup()` 返回 Promise：**必须 `await` 后再 close / 读文件**。
+  调用后立即读取会得到 0 字节快照（实测 Node 24.15），zip 里的库因此为空。
+  `snapshotDatabaseFile()` 在 await 后还会校验文件大小 > 0，失败时回退「原库 + sidecar」。
 - zip 内用快照替换 `.db`，**跳过 `-wal` / `-shm`**；临时快照放 `data-backup/.tmp/`（扫描目录之外）。
 - 产物：`<workspace>/data-backup/sn-plugin-<YYMMDD-HHmmss>.zip`。
 
@@ -78,10 +81,13 @@ pnpm audit:storage -- --json  # 机器可读
 Windows 下无法安全覆盖被连接持有的 `plugin.db`，因此运行中还原只做**逻辑写回**：
 
 1. 先自动做一次全量备份（失败即中止）。
-2. JSON 槽：从 zip 顶层按 key 读取 → `saveData`。
-3. SQLite：把 zip 内 `plugin.db` 解压到临时文件 → 用临时连接读表 → 对活动库 `DELETE + INSERT`（单表事务）。
+2. JSON 槽：从 zip 顶层按 key **原样读取文本** → `saveData`（字符串槽不是 JSON，
+   禁止强制 `JSON.parse`）；全量还原不受 `exportable` 限制。
+3. SQLite：把 zip 内 `plugin.db` 解压到临时文件（0 字节或 `quick_check` 失败则显式失败）
+   → 用临时连接读表与 `CREATE TABLE` DDL → 目标库缺表时先建表 → 对活动库 `DELETE + INSERT`（单表事务）。
 4. 文件槽：仅 `git-push-index` 可还原；`bin/`、`bfg-backups/` 跳过。
 5. 完成后 `emitCustomEvent("storageRestored")`，提示用户重载插件；**不自动 reload**。
+6. 报告区分 applied / failed / skipped，部分失败也显示计数与首个错误。
 
 ### 5.3 原始还原（二进制整库）
 

@@ -22,6 +22,7 @@ import {
   applyPayload,
   blobFromPayload,
   buildModulePayload,
+  finalizeReport,
   parseModulePayload,
 } from "../modules/moduleTransfer"
 import { resetSlot as resetSlotOp } from "../modules/reset"
@@ -106,7 +107,7 @@ export class StorageManager {
     const report = await applyPayload(ctx, parsed.payload)
     report.snapshotPath = backup.filePath
     this.cache = null
-    return report
+    return finalizeReport(report)
   }
 
   /** 创建全量备份 */
@@ -137,7 +138,7 @@ export class StorageManager {
       return emptyReport("backupFailed")
     }
 
-    const merged = await applyPayload(ctx, payload, report)
+    const merged = await applyPayload(ctx, payload, report, { allowNonExportable: true })
     if (fileSource) {
       try {
         const restoredFiles = await fileSource.write(ctx)
@@ -152,7 +153,7 @@ export class StorageManager {
     }
     merged.snapshotPath = backup.filePath
     this.cache = null
-    return merged
+    return finalizeReport(merged)
   }
 
   /** 清空/恢复单个槽位 */

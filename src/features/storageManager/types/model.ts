@@ -70,6 +70,8 @@ export interface ModuleExportPayload {
   slots: Record<string, unknown>
   /** SQLite 表：表名 → 行数组 */
   tables: Record<string, Record<string, unknown>[]>
+  /** SQLite 建表语句：表名 → CREATE TABLE DDL（用于目标库缺表时重建） */
+  schemas?: Record<string, string>
 }
 
 /** 导入/还原报告 */

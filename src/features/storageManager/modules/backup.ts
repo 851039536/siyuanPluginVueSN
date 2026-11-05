@@ -74,7 +74,14 @@ async function readSqliteTables(
   try {
     ctx.fs.mkdirSync(tempDir, { recursive: true })
     const tempDbPath = ctx.path.join(tempDir, "plugin.db")
-    ctx.fs.writeFileSync(tempDbPath, await dbEntry.async("nodebuffer"))
+    const buffer = await dbEntry.async("nodebuffer")
+    // 0 字节库是「备份时快照没写完」的典型产物（node:sqlite backup 未 await）。
+    // 必须显式失败：SQLite 会把空文件当合法空库打开，否则还原会假成功并丢掉全部表。
+    if (!buffer.length) {
+      report.failed.push({ slotId: "core.pluginDb", error: "backupDbEmpty" })
+      return
+    }
+    ctx.fs.writeFileSync(tempDbPath, buffer)
     // 兼容旧备份（快照失败时可能连 -wal/-shm 一起打包）：一并解出，让 SQLite 自行恢复
     for (const suffix of ["-wal", "-shm"]) {
       const sidecar = zip.file(`plugin.db${suffix}`)
@@ -95,6 +102,14 @@ async function readSqliteTables(
     try {
       // 临时库可写：允许 SQLite 自行恢复旧备份里可能附带的 -wal
       db = new sqlite.DatabaseSync(tempDbPath)
+      const check = db.prepare("PRAGMA quick_check").get() as Record<string, unknown> | undefined
+      const checkValue = check ? Object.values(check)[0] : undefined
+      if (checkValue !== "ok") {
+        report.failed.push({ slotId: "core.pluginDb", error: "backupDbInvalid" })
+        return
+      }
+
+      payload.schemas ??= {}
       for (const slot of SQLITE_SLOTS) {
         if (!isSafeTableName(slot.key)) continue
         const exists = db.prepare(
@@ -102,6 +117,10 @@ async function readSqliteTables(
         ).get(slot.key)
         if (!exists) continue
         payload.tables[slot.key] = db.prepare(`SELECT * FROM "${slot.key}"`).all() as Record<string, unknown>[]
+        const schema = db.prepare(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
+        ).get(slot.key) as { sql?: string } | undefined
+        if (schema?.sql) payload.schemas[slot.key] = schema.sql
       }
     } finally {
       try {
@@ -182,6 +201,7 @@ export async function loadBackupZip(
     owners: [],
     slots: {},
     tables: {},
+    schemas: {},
   }
 
   for (const slot of JSON_SLOTS) {

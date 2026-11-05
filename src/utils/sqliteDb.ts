@@ -37,7 +37,8 @@ export interface SqliteDatabaseSync {
 
 interface SqliteModule {
   DatabaseSync: new (path: string, options?: { readOnly?: boolean }) => SqliteDatabaseSync
-  backup: (sourceDb: SqliteDatabaseSync, destPath: string) => void
+  /** ⚠️ node:sqlite 的在线备份是**异步**的：必须 await，否则读到的是 0 字节文件 */
+  backup: (sourceDb: SqliteDatabaseSync, destPath: string) => Promise<void>
 }
 
 /**
@@ -365,13 +366,14 @@ export class PluginDatabase {
    * 直接复制 `.db` 会得到空库（实测 `no such table`）。本方法在库处于打开状态、
    * 甚至并发写入时也能产出完整可用的单文件快照。
    *
+   * ⚠️ `node:sqlite` 的 `backup()` 返回 Promise：**必须 await 后再 close/读文件**。
+   * 调用后立即读取会拿到 0 字节（实测 Node 24.15），备份 zip 里的库因此为空。
+   *
    * @param destPath 目标文件路径（同目录下的临时名即可，调用方可再改名/打包）
    */
-  snapshotTo(destPath: string): void {
-    // node:sqlite 的 backup() 是同步的：这里不声明 async，
-    // 让失败同步抛出（带 destPath 上下文），而不是变成一个无人 await 的 rejected Promise
+  async snapshotTo(destPath: string): Promise<void> {
     try {
-      this.sqlite.backup(this.db, destPath)
+      await this.sqlite.backup(this.db, destPath)
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error)
       throw new Error(`[sqlite] 生成快照失败 [${destPath}]: ${reason}`)

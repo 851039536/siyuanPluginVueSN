@@ -137,9 +137,20 @@ async function runRestore(file: File): Promise<void> {
     const report = await props.manager.restoreFromZip(file)
     const failed = report.failed[0]
     if (failed) {
-      emit("notify", "error", fill(props.t.transfer?.restoreFailed, errorText(failed.error)))
+      emit("notify", "error", fill(
+        props.t.transfer?.restorePartial,
+        report.applied.length,
+        report.failed.length,
+        report.skipped.length,
+        errorText(failed.error),
+      ))
     } else {
-      let text = fill(props.t.transfer?.restoreDone, report.applied.length, report.failed.length)
+      let text = fill(
+        props.t.transfer?.restoreDone,
+        report.applied.length,
+        report.failed.length,
+        report.skipped.length,
+      )
       if (report.snapshotPath) text += ` · ${fill(props.t.transfer?.snapshotAt, report.snapshotPath)}`
       if (report.requiresReload) text += ` · ${props.t.transfer?.requiresReload}`
       emit("notify", "success", text)

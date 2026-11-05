@@ -20,10 +20,15 @@ export interface DatabaseSnapshotEntry {
 
 /**
  * 为单个库文件生成一致性快照。
+ *
+ * ⚠️ `node:sqlite` 的 `backup()` 返回 Promise，必须 await 后再关闭连接并读文件；
+ * 调用后立即 `statSync` 会得到 0 字节（实测 Node 24.15）。返回 false 时调用方
+ * 应回退到「原库 + -wal/-shm」一起打包。
+ *
  * @param dbPath 源库绝对路径
  * @param destPath 快照目标绝对路径（目录必须已存在）
  */
-export function snapshotDatabaseFile(dbPath: string, destPath: string): boolean {
+export async function snapshotDatabaseFile(dbPath: string, destPath: string): Promise<boolean> {
   const sqlite = getSqlite()
   const node = getNodeFsPathOs()
   if (!sqlite || !node) return false
@@ -31,8 +36,8 @@ export function snapshotDatabaseFile(dbPath: string, destPath: string): boolean 
   let db: SqliteDatabaseSync | null = null
   try {
     db = new sqlite.DatabaseSync(dbPath)
-    sqlite.backup(db, destPath)
-    return true
+    await sqlite.backup(db, destPath)
+    return node.fs.statSync(destPath).size > 0
   } catch (error) {
     console.warn(`[sqliteSnapshot] 生成快照失败 [${dbPath}]:`, error)
     return false
@@ -50,7 +55,7 @@ export function snapshotDatabaseFile(dbPath: string, destPath: string): boolean 
  * @param dirPath 扫描根目录
  * @param tempDir 快照临时目录（必须位于扫描目录之外，否则会被自己打包进去）
  */
-export function snapshotDatabasesInDir(dirPath: string, tempDir: string): DatabaseSnapshotEntry[] {
+export async function snapshotDatabasesInDir(dirPath: string, tempDir: string): Promise<DatabaseSnapshotEntry[]> {
   const node = getNodeFsPathOs()
   if (!node) return []
 
@@ -59,7 +64,7 @@ export function snapshotDatabasesInDir(dirPath: string, tempDir: string): Databa
   let tempReady = false
 
   const entries: DatabaseSnapshotEntry[] = []
-  const walk = (dir: string): void => {
+  const walk = async (dir: string): Promise<void> => {
     let dirEntries: import("node:fs").Dirent[]
     try {
       dirEntries = fs.readdirSync(dir, { withFileTypes: true })
@@ -69,7 +74,7 @@ export function snapshotDatabasesInDir(dirPath: string, tempDir: string): Databa
     for (const entry of dirEntries) {
       const fullPath = path.join(dir, entry.name)
       if (entry.isDirectory()) {
-        walk(fullPath)
+        await walk(fullPath)
         continue
       }
       if (!entry.name.endsWith(".db")) continue
@@ -83,11 +88,11 @@ export function snapshotDatabasesInDir(dirPath: string, tempDir: string): Databa
       const snapshotPath = path.join(tempDir, `${relPath.replace(/\//g, "__")}`)
       entries.push({
         relPath,
-        snapshotPath: snapshotDatabaseFile(fullPath, snapshotPath) ? snapshotPath : null,
+        snapshotPath: await snapshotDatabaseFile(fullPath, snapshotPath) ? snapshotPath : null,
       })
     }
   }
-  walk(dirPath)
+  await walk(dirPath)
   return entries
 }
 

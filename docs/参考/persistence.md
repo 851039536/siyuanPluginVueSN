@@ -28,6 +28,23 @@
 
 存量 key 若不符合命名规范，注册表标 `legacyName: true` 冻结，**不得单独改名**（改名必须与一次性迁移同批）。
 
+### 2.1 与思源同步共存（Windows 强约束）
+
+`plugin.db` 位于同步目录内，思源同步引擎（dejavu）用「同目录临时文件 + `os.Rename`」覆盖目标文件；
+而 Windows 上 SQLite 打开的文件**不带 `FILE_SHARE_DELETE`**，只要连接常驻，rename 就报
+"Access is denied"，整轮同步以「读写文件或访问网络权限不足」失败。
+
+因此 `PluginDatabase`（`src/utils/sqliteDb.ts`）刻意不常驻句柄：
+
+- 空闲 2s 自动 `close()`，下次访问惰性重开（重放 PRAGMA）；
+- `installSqliteSyncGuard(plugin)` 监听思源 `sync-start` 事件，同步开始时立即释放所有句柄
+  （插件 `onload` 挂载、`onunload` 经 `DESTROYABLE_KEYS` 注销）。
+
+关闭最后一个连接会顺带把 WAL 归并并删除 `-wal` / `-shm`；dejavu 的忽略规则（仅点号前缀与 `.tmp`）
+不会跳过这两个附属文件，常驻句柄会让它们被同步到其它设备。
+
+**禁止**把 `PluginDatabase` 改回常驻连接或在外部缓存底层句柄 —— 那会重新锁死 `plugin.db`。
+
 ## 3. 槽位生命周期
 
 1. **声明**：在功能 `types/storage.ts` 建 `TypedStorage`/表常量；同时在 `src/config/storage/` 注册元数据。
@@ -123,3 +140,4 @@ Windows 下无法安全覆盖被连接持有的 `plugin.db`，因此运行中还
 | 两个功能各写同一个 key | 后写覆盖、类型漂移；共享槽用 `owners[]` + 唯一共享工具 |
 | `remove()` 后假设文件消失 | 旧实现只写空串；新实现走 `removeData`，但读取方仍需容忍 `""` |
 | localStorage 存业务数据 | 端口变化导致源变化、冷启动丢失；仅白名单可用 |
+| 常驻持有 `plugin.db` 句柄 | Windows 上思源同步 rename 覆盖该文件失败 → 整轮同步报「读写文件或访问网络权限不足」（见 §2.1） |

@@ -84,6 +84,7 @@ import { setupIconifyOffline } from "@/utils/iconifySetup"
 import { clearRendererCache } from "@/utils/mdRenderer"
 import { isMobileFrontend } from "@/utils/platform"
 import { resolvePluginDataDir, resolvePluginDataDirSync } from "@/utils/pluginDataDir"
+import { installSqliteSyncGuard } from "@/utils/sqliteDb"
 // ========== 全局样式导入 ==========
 // 使用普通 import 而非 @use，确保 CSS 在插件加载时就注入
 // Vite 会将此 CSS 编译到 index.css 并在入口点立即注入
@@ -135,10 +136,15 @@ export default class PluginSample extends Plugin {
     "__statusBar", // 状态栏（Vue app + 状态栏 DOM）
     "__gitPush", // Git 推送（Dock/Tab Vue app + 探测链 + fs.watch + SQLite 句柄）
     "__storageManager", // 数据管理（Dock Vue app + 用量缓存）
+    "__sqliteSyncGuard", // SQLite 同步守卫（sync-start 事件监听）
   ] as const
 
   onload() {
     setupIconifyOffline() // 预加载 mdi + ph 图标数据，确保断网可用
+
+    // 必须在各功能注册前安装：注册阶段就会打开 plugin.db，
+    // 而思源同步用 rename 覆盖该文件，句柄不释放会让整轮同步失败
+    ;(this as any).__sqliteSyncGuard = installSqliteSyncGuard(this)
 
     // 关键：初始化功能开关文件持久化目录（必须在 loadFeatureFlagsSync 之前）
     // 不能用 (this as any).dataDir —— 运行时为 undefined，会导致 flags 文件永不落盘

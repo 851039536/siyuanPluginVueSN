@@ -16,6 +16,19 @@
  * 启用 WAL 后，已提交数据可能仍留在 `-wal` 附属文件中（实测：主库 4KB / wal 48KB），
  * 此时**单独复制 `.db` 会得到空库**。因此提供 `snapshotTo()` —— 内部走 SQLite 官方
  * 在线备份 API 产出单文件一致性快照，备份/导出必须改用它，禁止直接复制 `.db`。
+ *
+ * Windows 同步注意事项（关键，勿删）：
+ * `plugin.db` 位于 `<工作区>/data/storage/petal/<插件>/`，是思源同步目录的一部分。
+ * 思源同步引擎（dejavu）下载文件时先写同目录临时文件、再 `os.Rename` 覆盖目标；
+ * 而 SQLite 在 Windows 上打开库文件时**不带 FILE_SHARE_DELETE**，只要连接保持打开，
+ * rename 就报 "Access is denied"，重试 3 次后整轮同步失败 ——
+ * 即用户看到的「同步失败：读写文件或访问网络权限不足」。
+ * 因此本模块强制两条：
+ * 1) 句柄**空闲即释放**（`IDLE_RELEASE_MS` 后 close，下次访问惰性重开）；
+ * 2) 思源广播 `sync-start` 时立即释放所有句柄（`installSqliteSyncGuard`）。
+ * 副作用正好是需要的：关闭最后一个连接会让 SQLite 归并 WAL 并删除 `-wal`/`-shm`，
+ * 而 dejavu 的忽略规则（仅点号前缀与 `.tmp`）并不会跳过这两个附属文件，
+ * 常驻句柄会让它们被同步到其它设备。
  */
 import type { Plugin } from "siyuan"
 import { getNodeFsPathOs } from "./nodeModules"
@@ -120,6 +133,22 @@ export type OpenResult =
   | { ok: false, reason: OpenFailureReason, error?: unknown }
 
 /**
+ * 空闲多久后释放库文件句柄。
+ * 取值只需覆盖「同一批 UI 操作」：太短会让一次面板刷新反复开关库，太长则把句柄
+ * 留到同步窗口里（见文件头「Windows 同步注意事项」）。
+ */
+const IDLE_RELEASE_MS = 2000
+
+/** 打开连接并应用统一 PRAGMA（首次打开与空闲重开共用，避免两套配置漂移） */
+function createHandle(sqlite: SqliteModule, dbPath: string): SqliteDatabaseSync {
+  const db = new sqlite.DatabaseSync(dbPath)
+  // WAL：读写并发更好，且崩溃不损坏主库。注意其副作用见文件头「WAL 注意事项」
+  db.exec("PRAGMA journal_mode=WAL")
+  db.exec("PRAGMA foreign_keys=ON")
+  return db
+}
+
+/**
  * 打开（必要时创建）插件数据库。
  *
  * **统一单库**：全插件共用一个 `plugin.db`，而不是每个功能一个库文件。
@@ -149,11 +178,7 @@ export async function openPluginDatabase(
   try {
     // 目录可能尚未创建（首次运行且插件从未写过 saveData）
     node.fs.mkdirSync(node.path.dirname(dbPath), { recursive: true })
-    const db = new sqlite.DatabaseSync(dbPath)
-    // WAL：读写并发更好，且崩溃不损坏主库。注意其副作用见文件头「WAL 注意事项」
-    db.exec("PRAGMA journal_mode=WAL")
-    db.exec("PRAGMA foreign_keys=ON")
-    return { ok: true, db: new PluginDatabase(sqlite, db, dbPath) }
+    return { ok: true, db: new PluginDatabase(sqlite, createHandle(sqlite, dbPath), dbPath) }
   } catch (error) {
     console.error(`[sqlite] 打开数据库失败 [${dbPath}]:`, error)
     return { ok: false, reason: "open-failed", error }
@@ -282,19 +307,62 @@ function logOpenFailure(logTag: string, reason: OpenFailureReason, error?: unkno
 }
 
 /**
+ * 存活中的库实例。同步守卫据此统一释放句柄；
+ * 由构造登记、永久 close() 注销（空闲释放只关闭文件，不注销）。
+ */
+const liveDatabases = new Set<PluginDatabase>()
+
+/**
+ * 注册思源同步守卫：同步开始时立即释放所有 `plugin.db` 文件句柄。
+ *
+ * 为什么必须在同步**开始**就放：思源同步引擎用「同目录临时文件 + rename」覆盖目标
+ * 文件，而 Windows 上 SQLite 打开的文件被占用时 rename 会失败（见文件头说明）。
+ * 句柄释放后走空闲重开逻辑，同步结束后的首次访问会自动重连到新文件。
+ *
+ * 由插件 `onload` 调用一次，返回的 `destroy` 供 `onunload` 注销监听。
+ */
+export function installSqliteSyncGuard(plugin: Plugin): { destroy: () => void } {
+  const releaseAll = () => {
+    for (const db of liveDatabases) db.releaseForSync()
+  }
+  // 开始：先放句柄，同步才能 rename 覆盖 plugin.db；
+  // 结束（成功/失败）：若同步期间句柄被重开（用户正好访问了面板），
+  // 此时它指向的可能是已被替换的旧文件，必须释放，下次访问重连到新库，
+  // 顺带把同步期间新产生的 `-wal` / `-shm` 归并清理掉。
+  const events = ["sync-start", "sync-end", "sync-fail"] as const
+  for (const type of events) plugin.eventBus.on(type, releaseAll)
+  return {
+    destroy: () => {
+      for (const type of events) plugin.eventBus.off(type, releaseAll)
+    },
+  }
+}
+
+/**
  * 插件数据库句柄：薄封装 DatabaseSync，附加迁移与快照能力。
  * 所有 SQL 均通过 prepared statement 传参，禁止字符串拼接（防注入）。
+ *
+ * 句柄**不是常驻的**：空闲 `IDLE_RELEASE_MS` 后自动 close，下次访问按库路径重开
+ * （并重放 PRAGMA）。这样插件开着也不会把工作区里的 `plugin.db` 一直锁住，
+ * 思源同步才能正常覆盖它（见文件头「Windows 同步注意事项」）。
  */
 export class PluginDatabase {
   private readonly sqlite: SqliteModule
-  private readonly db: SqliteDatabaseSync
+  /** 当前句柄；空闲释放后为 null，下次访问惰性重开 */
+  private handle: SqliteDatabaseSync | null
   private readonly dbPath: string
+  /** 永久关闭标记（插件卸载），与「空闲释放」区分：后者仍可重开 */
   private closed = false
+  /** >0 表示事务 / 快照进行中，此时禁止空闲释放 */
+  private busy = 0
+  private idleTimer: ReturnType<typeof setTimeout> | null = null
 
   constructor(sqlite: SqliteModule, db: SqliteDatabaseSync, dbPath: string) {
     this.sqlite = sqlite
-    this.db = db
+    this.handle = db
     this.dbPath = dbPath
+    liveDatabases.add(this)
+    this.scheduleIdleRelease()
   }
 
   /** 库文件绝对路径 */
@@ -302,24 +370,75 @@ export class PluginDatabase {
     return this.dbPath
   }
 
+  /**
+   * 取可用句柄（必要时空闲重开）。重开失败会抛出，由调用方按「数据库不可用」兜底。
+   */
+  private acquire(): SqliteDatabaseSync {
+    if (this.closed) throw new Error("[sqlite] 数据库已关闭")
+    if (!this.handle) {
+      // 只可能由空闲释放导致：实例尚未永久关闭，按同一套 PRAGMA 重开
+      this.handle = createHandle(this.sqlite, this.dbPath)
+    }
+    this.scheduleIdleRelease()
+    return this.handle
+  }
+
+  /** 重新安排空闲释放（每次访问都续期；事务 / 快照期间不安排） */
+  private scheduleIdleRelease(): void {
+    if (this.closed || this.busy > 0) return
+    this.cancelIdleRelease()
+    this.idleTimer = setTimeout(() => {
+      this.idleTimer = null
+      this.releaseHandle()
+    }, IDLE_RELEASE_MS)
+  }
+
+  private cancelIdleRelease(): void {
+    if (this.idleTimer === null) return
+    clearTimeout(this.idleTimer)
+    this.idleTimer = null
+  }
+
+  /**
+   * 释放文件句柄但保留实例（可重开）。
+   * 关闭最后一个连接时 SQLite 会把 WAL 归并回主库并删除 `-wal` / `-shm`。
+   */
+  private releaseHandle(): void {
+    this.cancelIdleRelease()
+    const db = this.handle
+    if (!db) return
+    this.handle = null
+    try {
+      db.close()
+    } catch (error) {
+      console.error("[sqlite] 释放数据库句柄失败:", error)
+    }
+  }
+
+  /** 同步开始时立即释放句柄（事务 / 快照进行中则跳过，等空闲释放兜底） */
+  releaseForSync(): void {
+    if (this.closed || this.busy > 0) return
+    this.releaseHandle()
+  }
+
   /** 执行不返回结果的 SQL（建表 / PRAGMA 等） */
   exec(sql: string): void {
-    this.db.exec(sql)
+    this.acquire().exec(sql)
   }
 
   /** 查询多行 */
   all<T = Record<string, unknown>>(sql: string, ...params: unknown[]): T[] {
-    return this.db.prepare(sql).all(...params) as T[]
+    return this.acquire().prepare(sql).all(...params) as T[]
   }
 
   /** 查询单行（无结果返回 undefined） */
   get<T = Record<string, unknown>>(sql: string, ...params: unknown[]): T | undefined {
-    return this.db.prepare(sql).get(...params) as T | undefined
+    return this.acquire().prepare(sql).get(...params) as T | undefined
   }
 
   /** 执行写入，返回受影响行数 */
   run(sql: string, ...params: unknown[]): number {
-    const result = this.db.prepare(sql).run(...params)
+    const result = this.acquire().prepare(sql).run(...params)
     return Number(result.changes)
   }
 
@@ -328,18 +447,25 @@ export class PluginDatabase {
    * SQLite 的事务在单连接上是串行的，回调内不要再嵌套 withTransaction。
    */
   withTransaction<T>(fn: () => T): T {
-    this.db.exec("BEGIN")
+    const db = this.acquire()
+    // 事务期间挂起空闲释放：中途 close 会让后续语句落到已关闭的连接上
+    this.cancelIdleRelease()
+    this.busy++
     try {
+      db.exec("BEGIN")
       const result = fn()
-      this.db.exec("COMMIT")
+      db.exec("COMMIT")
       return result
     } catch (error) {
       try {
-        this.db.exec("ROLLBACK")
+        db.exec("ROLLBACK")
       } catch {
         // 回滚失败不掩盖原始异常
       }
       throw error
+    } finally {
+      this.busy--
+      this.scheduleIdleRelease()
     }
   }
 
@@ -347,7 +473,7 @@ export class PluginDatabase {
    * 读取 user_version（结构版本号，用于迁移判定）
    */
   getUserVersion(): number {
-    const row = this.db.prepare("PRAGMA user_version").get() as { user_version?: number } | undefined
+    const row = this.acquire().prepare("PRAGMA user_version").get() as { user_version?: number } | undefined
     return Number(row?.user_version ?? 0)
   }
 
@@ -356,7 +482,7 @@ export class PluginDatabase {
    */
   setUserVersion(version: number): void {
     // PRAGMA 不支持参数绑定，此处版本号来自代码常量而非外部输入
-    this.db.exec(`PRAGMA user_version=${Math.max(0, Math.floor(version))}`)
+    this.acquire().exec(`PRAGMA user_version=${Math.max(0, Math.floor(version))}`)
   }
 
   /**
@@ -372,11 +498,18 @@ export class PluginDatabase {
    * @param destPath 目标文件路径（同目录下的临时名即可，调用方可再改名/打包）
    */
   async snapshotTo(destPath: string): Promise<void> {
+    const db = this.acquire()
+    // backup 是异步的：期间同样不能空闲释放，否则读的是已关闭的连接
+    this.cancelIdleRelease()
+    this.busy++
     try {
-      await this.sqlite.backup(this.db, destPath)
+      await this.sqlite.backup(db, destPath)
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error)
       throw new Error(`[sqlite] 生成快照失败 [${destPath}]: ${reason}`)
+    } finally {
+      this.busy--
+      this.scheduleIdleRelease()
     }
   }
 
@@ -385,18 +518,15 @@ export class PluginDatabase {
    * 适用于「确实需要直接复制 .db」的场景；一般备份请优先用 snapshotTo()。
    */
   checkpoint(): void {
-    this.db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
+    this.acquire().exec("PRAGMA wal_checkpoint(TRUNCATE)")
   }
 
-  /** 关闭连接（幂等）；关闭后 SQLite 会自动把 WAL 归并回主库 */
+  /** 永久关闭（幂等）：注销实例，之后所有访问抛错；空闲释放不算永久关闭 */
   close(): void {
     if (this.closed) return
     this.closed = true
-    try {
-      this.db.close()
-    } catch (error) {
-      console.error("[sqlite] 关闭数据库失败:", error)
-    }
+    this.releaseHandle()
+    liveDatabases.delete(this)
   }
 }
 

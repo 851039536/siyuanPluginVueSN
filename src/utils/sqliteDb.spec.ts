@@ -4,7 +4,15 @@
 // 此处覆盖可独立推理的纯函数契约，重点是**路径相对性拒绝**（曾把库建到错误目录）
 // 与**工作区解析在无 window 环境下的容错**（不得抛错）。
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { buildDbPath, featureTables, openWithRetry, PLUGIN_DB_NAME, PluginDatabase, resolvePluginDataDir } from "./sqliteDb"
+import {
+  buildDbPath,
+  featureTables,
+  installSqliteSyncGuard,
+  openWithRetry,
+  PLUGIN_DB_NAME,
+  PluginDatabase,
+  resolvePluginDataDir,
+} from "./sqliteDb"
 
 /** 构造一个最小 plugin 桩（本模块只用 name / dataDir） */
 function fakePlugin(dataDir?: unknown): any {
@@ -97,6 +105,122 @@ describe("snapshotTo 语义", () => {
     expect(finished).toBe(false)
     await pending
     expect(finished).toBe(true)
+  })
+})
+
+/** 最小 DatabaseSync 桩：记录是否被关闭，prepare 返回空结果集 */
+class FakeDatabase {
+  closed = false
+  constructor(readonly path: string) {}
+
+  close(): void {
+    this.closed = true
+  }
+
+  exec(): void { /* 记录型桩，无需执行 */ }
+
+  prepare() {
+    return {
+      all: () => [],
+      get: () => undefined,
+      run: () => ({ changes: 0, lastInsertRowid: 0 }),
+    }
+  }
+}
+
+/** 伪造 node:sqlite 模块：DatabaseSync 构造出的实例收集到 opened，便于断言重开 */
+function fakeSqliteModule() {
+  const opened: FakeDatabase[] = []
+  class TrackedDatabase extends FakeDatabase {
+    constructor(path: string) {
+      super(path)
+      opened.push(this)
+    }
+  }
+  return {
+    sqlite: { DatabaseSync: TrackedDatabase, backup: async () => {} },
+    opened,
+  }
+}
+
+describe("空闲释放句柄（思源同步兼容）", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("空闲超时后关闭文件句柄，下次访问自动重开", () => {
+    vi.useFakeTimers()
+    const { sqlite, opened } = fakeSqliteModule()
+    const initial = new FakeDatabase("/tmp/idle.db")
+    const pdb = new PluginDatabase(sqlite as any, initial as any, "/tmp/idle.db")
+
+    pdb.exec("SELECT 1")
+    expect(initial.closed).toBe(false)
+
+    // 超过空闲阈值：句柄必须释放，否则思源同步 rename 覆盖 plugin.db 会失败
+    vi.advanceTimersByTime(2000)
+    expect(initial.closed).toBe(true)
+
+    // 释放不是永久关闭：再次访问应重开（并重放 PRAGMA，此处由 createHandle 承担）
+    pdb.exec("SELECT 1")
+    expect(opened).toHaveLength(1)
+    expect(opened[0].closed).toBe(false)
+
+    pdb.close()
+    expect(opened[0].closed).toBe(true)
+  })
+
+  it("事务进行中不会被空闲释放打断", () => {
+    vi.useFakeTimers()
+    const { sqlite } = fakeSqliteModule()
+    const initial = new FakeDatabase("/tmp/tx.db")
+    const pdb = new PluginDatabase(sqlite as any, initial as any, "/tmp/tx.db")
+
+    let closedDuringTx = true
+    pdb.withTransaction(() => {
+      vi.advanceTimersByTime(5000)
+      closedDuringTx = initial.closed
+    })
+    expect(closedDuringTx).toBe(false)
+
+    // 事务结束后恢复空闲释放
+    vi.advanceTimersByTime(2000)
+    expect(initial.closed).toBe(true)
+    pdb.close()
+  })
+})
+
+describe("思源同步守卫", () => {
+  it("sync-start 时释放所有存活句柄，之后仍可惰性重开", () => {
+    const { sqlite } = fakeSqliteModule()
+    const first = new FakeDatabase("/tmp/sync-a.db")
+    const second = new FakeDatabase("/tmp/sync-b.db")
+    const dbA = new PluginDatabase(sqlite as any, first as any, "/tmp/sync-a.db")
+    const dbB = new PluginDatabase(sqlite as any, second as any, "/tmp/sync-b.db")
+
+    let handler: (() => void) | null = null
+    let offCount = 0
+    const plugin = {
+      eventBus: {
+        on: (_type: string, listener: () => void) => { handler = listener },
+        off: () => { offCount++ },
+      },
+    }
+
+    const guard = installSqliteSyncGuard(plugin as any)
+    expect(handler).not.toBeNull()
+    handler!()
+    expect(first.closed).toBe(true)
+    expect(second.closed).toBe(true)
+
+    // 同步结束后首次访问应自动重连，不抛错
+    expect(() => dbA.exec("SELECT 1")).not.toThrow()
+
+    guard.destroy()
+    // sync-start / sync-end / sync-fail 三个监听都要注销
+    expect(offCount).toBe(3)
+    dbA.close()
+    dbB.close()
   })
 })
 

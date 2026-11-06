@@ -10,7 +10,7 @@ import type {
   CleanHistoryRecord,
   CleanHistoryStats,
 } from "../types"
-import { featureTables, openWithRetry, type PluginDatabase } from "@/utils/sqliteDb"
+import { featureTables, openWithRetry, waitForSyncIdle, type PluginDatabase } from "@/utils/sqliteDb"
 
 /** 日志前缀（与功能模块一致，便于过滤检索） */
 const LOG_TAG = "[everythingSearch]"
@@ -83,6 +83,8 @@ export class CacheCleanHistoryStorage {
   /** 取可用句柄；未就绪或已关闭时抛错（调用方按辅助信息降级处理） */
   private async _require(): Promise<PluginDatabase> {
     if (this.closed) throw new Error(`${LOG_TAG} 历史存储已关闭`)
+    // 同步窗口内不重开 plugin.db；超时后 acquire 抛明确错误，由调用方降级
+    await waitForSyncIdle()
     const db = await this._ready()
     if (!db) throw new Error(`${LOG_TAG} 数据库不可用（node:sqlite 缺失或工作区路径未就绪）`)
     return db

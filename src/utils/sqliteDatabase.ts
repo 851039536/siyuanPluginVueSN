@@ -87,28 +87,123 @@ export function createHandle(sqlite: SqliteModule, dbPath: string): SqliteDataba
  */
 const liveDatabases = new Set<PluginDatabase>()
 
+/** 同步窗口内访问数据库的显式错误（调用方按「数据库暂不可用」兜底） */
+export class SqliteSyncInProgressError extends Error {
+  constructor() {
+    super("[sqlite] 思源正在同步，数据库暂不可用，请稍后重试")
+    this.name = "SqliteSyncInProgressError"
+  }
+}
+
+/** 同步相关的模块级定时器（等待超时 + 同步态兜底解除） */
+const syncTimers = new TimerRegistry()
+
 /**
- * 注册思源同步守卫：同步开始/结束时立即释放所有 `plugin.db` 文件句柄。
+ * 同步进行中标记：同步引擎正在用 rename 覆盖工作区文件，此时**任何重开**都会让整轮同步失败。
+ * 同步窗口内 `acquire()` 直接抛错，异步入口先 `waitForSyncIdle()` 再访问。
+ */
+let syncInProgress = false
+/** 兜底解除同步态（防止结束事件丢失让数据库永久不可用）——只在极长同步时才触发 */
+const SYNC_WATCHDOG_MS = 30 * 60 * 1000
+let syncWatchdog: TimerHandle | null = null
+/** 等待同步结束的异步入口（存储层读取 / 初始化 / 快照） */
+let syncWaiters: Array<() => void> = []
+
+/** 同步窗口内等待数据库恢复可用的默认上限（常见同步在数秒内结束） */
+const SYNC_WAIT_TIMEOUT_MS = 10_000
+
+/** 当前是否处于思源同步窗口（供存储层判断是否需要等待） */
+export function isSyncInProgress(): boolean {
+  return syncInProgress
+}
+
+/**
+ * 等待同步结束（有界）。
  *
- * 为什么必须在同步**开始**就放：思源同步引擎用「同目录临时文件 + rename」覆盖目标
- * 文件，而 Windows 上 SQLite 打开的文件被占用时 rename 会失败（见 sqliteDb.ts 文件头）。
- * 句柄释放后走空闲重开逻辑，同步结束后的首次访问会自动重连到新文件。
+ * @returns true = 已结束（或本来就没在同步）；false = 超时仍在同步
+ *
+ * 只用于**异步入口**（打开库 / 存储层读取 / 快照）；同步 API 无法等待，
+ * 由 `acquire()` 抛 `SqliteSyncInProgressError` 兜底。
+ */
+export function waitForSyncIdle(timeoutMs = SYNC_WAIT_TIMEOUT_MS): Promise<boolean> {
+  if (!syncInProgress) return Promise.resolve(true)
+  return new Promise<boolean>((resolve) => {
+    let settled = false
+    let timeoutHandle: TimerHandle | null = null
+    const finish = (ok: boolean) => {
+      if (settled) return
+      settled = true
+      if (timeoutHandle !== null) syncTimers.clear(timeoutHandle)
+      resolve(ok)
+    }
+    const waiter = () => finish(true)
+    timeoutHandle = syncTimers.setTimeout(() => {
+      const index = syncWaiters.indexOf(waiter)
+      if (index >= 0) syncWaiters.splice(index, 1)
+      finish(false)
+    }, timeoutMs)
+    syncWaiters.push(waiter)
+  })
+}
+
+/**
+ * 进入同步窗口：立即释放所有句柄，并在窗口内拒绝重开。
+ * 幂等：`sync-start` 与 `ws-main` 会重复触发，重复调用只续期兜底定时器。
+ */
+function beginSync(): void {
+  const first = !syncInProgress
+  syncInProgress = true
+  for (const db of liveDatabases) db.releaseForSync()
+  if (syncWatchdog !== null) syncTimers.clear(syncWatchdog)
+  syncWatchdog = syncTimers.setTimeout(() => {
+    syncWatchdog = null
+    endSync()
+  }, SYNC_WATCHDOG_MS)
+  if (first) console.info("[sqlite] 思源同步开始，已释放所有数据库句柄（同步期间暂停数据库访问）")
+}
+
+/** 退出同步窗口：再释放一次兜底（如释放时正被快照占用），唤醒等待中的异步入口 */
+function endSync(): void {
+  if (!syncInProgress) return
+  syncInProgress = false
+  if (syncWatchdog !== null) {
+    syncTimers.clear(syncWatchdog)
+    syncWatchdog = null
+  }
+  for (const db of liveDatabases) db.releaseForSync()
+  const waiters = syncWaiters
+  syncWaiters = []
+  for (const resume of waiters) resume()
+  console.info("[sqlite] 思源同步结束，数据库恢复可用")
+}
+
+/**
+ * 注册思源同步守卫：同步开始即释放所有 `plugin.db` 句柄，同步期间拒绝重开。
+ *
+ * 信号源以 `ws-main` 的 `syncing` 为准（内核广播后**最先**到达插件）：
+ * 思源 3.8.9 的 `sync-start` 是在状态栏同步按钮 `#barSync` 的处理函数里发出的，
+ * 该元素不存在（状态栏隐藏 / 尚未渲染）时会 `return`，插件就永远收不到 ——
+ * 这是「明明做了守卫、同步仍失败」的根因。`sync-start/end/fail` 仅作兜底。
  *
  * 由插件 `onload` 调用一次，返回的 `destroy` 供 `onunload` 注销监听。
  */
 export function installSqliteSyncGuard(plugin: Plugin): { destroy: () => void } {
-  const releaseAll = () => {
-    for (const db of liveDatabases) db.releaseForSync()
+  const onWsMain = (event: CustomEvent) => {
+    const detail = event.detail as { cmd?: string, code?: number } | undefined
+    if (detail?.cmd !== "syncing") return
+    if (detail.code === 0) beginSync()
+    else if (detail.code === 1 || detail.code === 2) endSync()
   }
-  // 开始：先放句柄，同步才能 rename 覆盖 plugin.db；
-  // 结束（成功/失败）：若同步期间句柄被重开（用户正好访问了面板），
-  // 此时它指向的可能是已被替换的旧文件，必须释放，下次访问重连到新库，
-  // 顺带把同步期间新产生的 `-wal` / `-shm` 归并清理掉。
-  const events = ["sync-start", "sync-end", "sync-fail"] as const
-  for (const type of events) plugin.eventBus.on(type, releaseAll)
+  const listeners: Array<[string, (event: CustomEvent) => void]> = [
+    ["ws-main", onWsMain],
+    ["sync-start", () => beginSync()],
+    ["sync-end", () => endSync()],
+    ["sync-fail", () => endSync()],
+  ]
+  for (const [type, listener] of listeners) plugin.eventBus.on(type as any, listener)
   return {
     destroy: () => {
-      for (const type of events) plugin.eventBus.off(type, releaseAll)
+      for (const [type, listener] of listeners) plugin.eventBus.off(type as any, listener)
     },
   }
 }
@@ -121,8 +216,8 @@ export function installSqliteSyncGuard(plugin: Plugin): { destroy: () => void } 
  * （并重放 PRAGMA）。这样插件开着也不会把工作区里的 `plugin.db` 一直锁住，
  * 思源同步才能正常覆盖它（见 sqliteDb.ts 文件头「Windows 同步注意事项」）。
  *
- * 已知限制：同步进行中若用户打开依赖本库的面板，`acquire()` 会重新打开句柄，
- * 该轮同步仍可能失败（下一轮自动恢复）——这是同步 API 无法阻塞等待同步结束的取舍。
+ * 已知限制：同步窗口内所有访问都会被拒绝（异步入口先等待，最多 10s）；
+ * 若同步持续更久，等待超时后仍会尝试打开（功能不可无限期不可用），该轮同步可能失败。
  */
 export class PluginDatabase {
   private readonly sqlite: SqliteModule
@@ -155,6 +250,8 @@ export class PluginDatabase {
    */
   private acquire(): SqliteDatabaseSync {
     if (this.closed) throw new Error("[sqlite] 数据库已关闭")
+    // 同步窗口内绝不重开：dejavu 正在 rename 覆盖 plugin.db，句柄会让整轮同步失败
+    if (syncInProgress) throw new SqliteSyncInProgressError()
     if (!this.handle) {
       // 只可能由空闲释放导致：实例尚未永久关闭，按同一套 PRAGMA 重开
       this.handle = createHandle(this.sqlite, this.dbPath)
@@ -278,6 +375,8 @@ export class PluginDatabase {
    * @param destPath 目标文件路径（同目录下的临时名即可，调用方可再改名/打包）
    */
   async snapshotTo(destPath: string): Promise<void> {
+    // 快照需要读文件：同步窗口内先等结束，避免重新锁住 plugin.db
+    await waitForSyncIdle()
     const db = this.acquire()
     // backup 是异步的：期间同样不能空闲释放，否则读的是已关闭的连接
     this.cancelIdleRelease()

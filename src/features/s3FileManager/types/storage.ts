@@ -147,20 +147,29 @@ class S3FmLogStore {
     }
   }
 
-  /** 加载全部日志（最新在前，按插入序倒序）；库不可用返回空列表 */
+  /** 加载全部日志（最新在前，按插入序倒序）；库不可用或同步窗口内返回空列表 */
   load(): FileOpLog[] {
     const db = this.db
     if (!db) { return [] }
-    const rows = db.all<Parameters<typeof rowToLog>[0]>(
-      `SELECT id, time, type, action, file_name, item_count, file_size, success, message, hostname, detail_json
-       FROM ${TABLE.logs} ORDER BY rowid DESC`,
-    )
-    return rows.map(rowToLog)
+    try {
+      const rows = db.all<Parameters<typeof rowToLog>[0]>(
+        `SELECT id, time, type, action, file_name, item_count, file_size, success, message, hostname, detail_json
+         FROM ${TABLE.logs} ORDER BY rowid DESC`,
+      )
+      return rows.map(rowToLog)
+    } catch (error) {
+      console.warn(`${LOG_TAG} 读取操作日志失败:`, error)
+      return []
+    }
   }
 
-  /** 清空全部日志 */
+  /** 清空全部日志（同步窗口内静默跳过） */
   clear(): void {
-    this.db?.run(`DELETE FROM ${TABLE.logs}`)
+    try {
+      this.db?.run(`DELETE FROM ${TABLE.logs}`)
+    } catch (error) {
+      console.warn(`${LOG_TAG} 清空操作日志失败:`, error)
+    }
   }
 
   /** 关闭句柄（幂等）；关闭后到达的初始化结果也会被立即关闭 */

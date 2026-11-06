@@ -8,7 +8,7 @@
  */
 import type { SqliteDatabaseSync } from "./sqliteDb"
 import { getNodeFsPathOs } from "./nodeModules"
-import { getSqlite } from "./sqliteDb"
+import { getSqlite, waitForSyncIdle } from "./sqliteDb"
 
 /** 单个库文件的一致性快照结果 */
 export interface DatabaseSnapshotEntry {
@@ -32,6 +32,10 @@ export async function snapshotDatabaseFile(dbPath: string, destPath: string): Pr
   const sqlite = getSqlite()
   const node = getNodeFsPathOs()
   if (!sqlite || !node) return false
+
+  // 同步窗口内先等结束：这里的裸连接不在 liveDatabases 里，守卫无法关闭它，
+  // 打开后会重新锁住 plugin.db，让 dejavu 的 rename 失败
+  await waitForSyncIdle()
 
   let db: SqliteDatabaseSync | null = null
   try {

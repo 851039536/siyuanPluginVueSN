@@ -25,20 +25,25 @@
  * 即用户看到的「同步失败：读写文件或访问网络权限不足」。
  * 因此本模块强制两条：
  * 1) 句柄**空闲即释放**（`IDLE_RELEASE_MS` 后 close，下次访问惰性重开）；
- * 2) 思源广播 `sync-start` 时立即释放所有句柄（`installSqliteSyncGuard`）。
+ * 2) 思源广播同步状态时立即释放所有句柄，并在**同步窗口内拒绝重开**
+ *    （`installSqliteSyncGuard` 监听 `ws-main` 的 `syncing`，`sync-start` 仅兜底）。
  * 副作用正好是需要的：关闭最后一个连接会让 SQLite 归并 WAL 并删除 `-wal`/`-shm`，
  * 而 dejavu 的忽略规则（仅点号前缀与 `.tmp`）并不会跳过这两个附属文件，
  * 常驻句柄会让它们被同步到其它设备。
  *
- * 已知限制：同步进行中若用户打开依赖 SQLite 的面板，`acquire()` 会重新打开句柄，
- * 该轮同步仍可能失败（下一轮自动恢复）——这是同步 API 无法阻塞等待同步结束的取舍。
+ * ⚠️ 不能用 `sync-start` 作为唯一信号：思源 3.8.9 的 `syncing` 处理函数在
+ * `#barSync` 元素不存在时会提前 return，`sync-start` 根本不会发到插件事件总线。
+ *
+ * 已知限制：同步窗口内数据库访问会被拒绝（异步入口先等待，最多 10s）；
+ * 若同步持续更久，等待超时后仍会尝试打开（功能不可无限期不可用），
+ * 该轮同步可能失败，下一轮恢复。
  *
  * 职责拆分：会话与句柄生命周期（`PluginDatabase`、空闲释放、同步守卫）在
  * `./sqliteDatabase`，本文件保留路径解析、打开重试与对外汇聚（re-export），
  * 消费方仍统一从 `@/utils/sqliteDb` 导入。
  */
 import type { Plugin } from "siyuan"
-import { createHandle, getSqlite, PluginDatabase } from "./sqliteDatabase"
+import { createHandle, getSqlite, PluginDatabase, waitForSyncIdle } from "./sqliteDatabase"
 import { getNodeFsPathOs } from "./nodeModules"
 import { resolvePluginDataDir } from "./pluginDataDir"
 
@@ -48,6 +53,7 @@ export {
   installSqliteSyncGuard,
   isSqliteAvailable,
   PluginDatabase,
+  waitForSyncIdle,
 } from "./sqliteDatabase"
 export type { SqliteDatabaseSync } from "./sqliteDatabase"
 
@@ -137,6 +143,12 @@ export async function openPluginDatabase(
   if (!dbPath) {
     // 路径无法解析（通常是启动早期内核未就绪）——唯一值得重试的情况
     return { ok: false, reason: "path-unresolved" }
+  }
+
+  // 同步窗口内先等结束：此刻打开文件会让 dejavu 的 rename 失败（见文件头说明）。
+  // 超时仍同步则继续打开（功能不可无限期不可用），但会明确留痕。
+  if (!(await waitForSyncIdle())) {
+    console.warn("[sqlite] 思源同步仍在进行，仍将打开数据库（可能影响本轮同步）")
   }
 
   try {

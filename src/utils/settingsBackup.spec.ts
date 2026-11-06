@@ -37,7 +37,10 @@ vi.mock("@/utils/sqliteDb", async () => {
   } catch {
     sqlite = null
   }
-  return { getSqlite: () => sqlite }
+  return {
+    getSqlite: () => sqlite,
+    waitForSyncIdle: async () => true,
+  }
 })
 
 const temps: string[] = []

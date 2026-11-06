@@ -12,6 +12,7 @@ import {
   PLUGIN_DB_NAME,
   PluginDatabase,
   resolvePluginDataDir,
+  waitForSyncIdle,
 } from "./sqliteDb"
 import { createHandle } from "./sqliteDatabase"
 
@@ -211,42 +212,75 @@ describe("空闲释放句柄（思源同步兼容）", () => {
 })
 
 describe("思源同步守卫", () => {
-  it("sync-start 时释放所有存活句柄，之后仍可惰性重开", () => {
+  /** 收集守卫注册的监听器（同一 type 只保留一个，便于按名触发） */
+  function installInto(
+    handlers: Map<string, (event?: any) => void>,
+    subscribed: string[],
+    onOff: () => void,
+  ): { destroy: () => void } {
+    const plugin = {
+      eventBus: {
+        on: (type: string, listener: (event?: any) => void) => {
+          subscribed.push(type)
+          handlers.set(type, listener)
+        },
+        off: () => onOff(),
+      },
+    }
+    return installSqliteSyncGuard(plugin as any)
+  }
+
+  it("sync-start 释放所有句柄，结束后可惰性重开", async () => {
     const { sqlite } = fakeSqliteModule()
     const first = new FakeDatabase("/tmp/sync-a.db")
     const second = new FakeDatabase("/tmp/sync-b.db")
     const dbA = new PluginDatabase(sqlite as any, first as any, "/tmp/sync-a.db")
     const dbB = new PluginDatabase(sqlite as any, second as any, "/tmp/sync-b.db")
 
-    let handler: (() => void) | null = null
+    const handlers = new Map<string, (event?: any) => void>()
     const subscribed: string[] = []
     let offCount = 0
-    const plugin = {
-      eventBus: {
-        on: (type: string, listener: () => void) => {
-          subscribed.push(type)
-          handler = listener
-        },
-        off: () => { offCount++ },
-      },
-    }
+    const guard = installInto(handlers, subscribed, () => { offCount++ })
 
-    const guard = installSqliteSyncGuard(plugin as any)
-    // 事件名是守卫的触发条件：拼错时订阅数不变、手调 handler 也能过，必须逐字锁定
-    expect(subscribed).toEqual(["sync-start", "sync-end", "sync-fail"])
-    expect(handler).not.toBeNull()
-    handler!()
+    // 事件名是守卫的触发条件：拼错时订阅数不变、手调 handler 也能过，必须逐字锁定。
+    // ws-main 必须在内：sync-start 依赖状态栏 #barSync 存在，不能只订阅它。
+    expect(subscribed).toEqual(["ws-main", "sync-start", "sync-end", "sync-fail"])
+
+    handlers.get("sync-start")!()
     expect(first.closed).toBe(true)
     expect(second.closed).toBe(true)
+
+    const idle = waitForSyncIdle(5000)
+    handlers.get("sync-end")!()
+    await expect(idle).resolves.toBe(true)
 
     // 同步结束后首次访问应自动重连，不抛错
     expect(() => dbA.exec("SELECT 1")).not.toThrow()
 
     guard.destroy()
-    // sync-start / sync-end / sync-fail 三个监听都要注销
-    expect(offCount).toBe(3)
+    expect(offCount).toBe(4)
     dbA.close()
     dbB.close()
+  })
+
+  it("ws-main 的 syncing 广播：开始即释放，窗口内拒绝重开，结束后恢复", () => {
+    const { sqlite } = fakeSqliteModule()
+    const first = new FakeDatabase("/tmp/ws-sync.db")
+    const dbA = new PluginDatabase(sqlite as any, first as any, "/tmp/ws-sync.db")
+
+    const handlers = new Map<string, (event?: any) => void>()
+    const guard = installInto(handlers, [], () => {})
+
+    handlers.get("ws-main")!({ detail: { cmd: "syncing", code: 0 } })
+    expect(first.closed).toBe(true)
+    // 同步窗口内重开会重新锁住 plugin.db：必须显式拒绝
+    expect(() => dbA.exec("SELECT 1")).toThrow(/同步/)
+
+    handlers.get("ws-main")!({ detail: { cmd: "syncing", code: 1 } })
+    expect(() => dbA.exec("SELECT 1")).not.toThrow()
+
+    guard.destroy()
+    dbA.close()
   })
 })
 

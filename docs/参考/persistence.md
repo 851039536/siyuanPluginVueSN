@@ -38,14 +38,19 @@
 对外仍从 `@/utils/sqliteDb` 导入）刻意不常驻句柄：
 
 - 空闲 2s 自动 `close()`，下次访问惰性重开（重放 PRAGMA）；
-- `installSqliteSyncGuard(plugin)` 监听思源 `sync-start` / `sync-end` / `sync-fail` 事件，
-  同步开始与结束时都释放所有句柄（插件 `onload` 挂载、`onunload` 经 `DESTROYABLE_KEYS` 注销）。
+- `installSqliteSyncGuard(plugin)` 监听 `ws-main` 的 `syncing`（code 0 开始 / 1、2 结束），
+  同步开始即释放所有句柄，并在**同步窗口内拒绝重开**；
+  `sync-start` / `sync-end` / `sync-fail` 仅作兜底（插件 `onload` 挂载、`onunload` 经
+  `DESTROYABLE_KEYS` 注销）。
+
+⚠️ 只订阅 `sync-start` 不够：思源 3.8.9 的 `syncing` 处理函数在状态栏 `#barSync` 元素不存在时
+会提前 `return`，`sync-start` 根本不会发到插件事件总线（这是「守卫已实现但同步仍失败」的根因）。
 
 关闭最后一个连接会顺带把 WAL 归并并删除 `-wal` / `-shm`；dejavu 的忽略规则（仅点号前缀与 `.tmp`）
 不会跳过这两个附属文件，常驻句柄会让它们被同步到其它设备。
 
-**已知限制**：同步进行中若用户打开依赖 SQLite 的面板，句柄会被重新打开，该轮同步仍可能失败
-（下一轮自动恢复）。同步 API 无法阻塞等待同步结束，这是有意的取舍。
+**已知限制**：同步窗口内数据库访问会被拒绝（异步入口先等待，最多 10s）；同步持续更久时，
+等待超时后仍会尝试打开（功能不可无限期不可用），该轮同步可能失败，下一轮恢复。
 
 **禁止**把 `PluginDatabase` 改回常驻连接或在外部缓存底层句柄 —— 那会重新锁死 `plugin.db`。
 

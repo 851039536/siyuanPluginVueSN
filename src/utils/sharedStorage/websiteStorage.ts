@@ -8,7 +8,7 @@
  * ⚠️ 本模块**不含**任何旧格式兼容/迁移分支；新增功能请照此模式只加表、不建库。
  */
 import type { Plugin } from "siyuan"
-import { featureTables, openWithRetry, type PluginDatabase } from "@/utils/sqliteDb"
+import { featureTables, openWithRetry, waitForSyncIdle, type PluginDatabase } from "@/utils/sqliteDb"
 
 /** 日志前缀（便于在多功能日志中区分） */
 const LOG_TAG = "[websiteNavigation]"
@@ -284,6 +284,8 @@ export class WebsiteNavigationStorage {
     if (this.closed) {
       throw new Error("[websiteNavigation] 存储已关闭")
     }
+    // 同步窗口内不重开 plugin.db（否则 dejavu 的 rename 会失败）；超时后 acquire 抛明确错误
+    await waitForSyncIdle()
     const db = await this._ready()
     if (!db) {
       throw new Error("[websiteNavigation] 数据库不可用（node:sqlite 缺失或工作区路径未就绪）")

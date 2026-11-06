@@ -1,0 +1,46 @@
+// ========== 设计系统响应式 mixins ==========
+// 被 src/_variables.scss 转发，features 与组件库统一通过 `@use "@/variables.scss" as *` 获得。
+// 规则依据：AGENTS_STYLE.md § 强制规则：移动端密度与触摸目标（2026-11-06）
+@use "./variables.scss" as *;
+
+// 移动端媒体查询：窄视口（桌面窄窗）或粗指针且无 hover（手机/平板触摸）。
+// 只按宽度判断会漏掉手机横屏（视口 ≥ 769px），此时触摸目标会退回桌面尺寸；
+// 加 `hover: none` 是为了不误伤带鼠标的触摸屏笔记本。
+@mixin mobile {
+  @media (max-width: $bp-mobile), (pointer: coarse) and (hover: none) {
+    @content;
+  }
+}
+
+// 命中区扩展：视觉尺寸保持紧凑，触摸范围由透明伪元素撑大，且不参与布局。
+// 对照 Primer：视觉可用 24–32px，触摸目标按 WCAG AAA 取 40px+。
+// 仅用于四周都有余量（工具栏、卡片内）的控件；同一行紧邻的按钮改用 touch-area-y。
+// $positioning：控件本身已定位（如弹窗里的 absolute 关闭按钮）时传原定位值，避免被 relative 覆盖。
+@mixin touch-area($size: 40px, $positioning: relative) {
+  position: $positioning;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: $size;
+    height: $size;
+    transform: translate(-50%, -50%);
+  }
+}
+
+// 仅竖向扩展命中区，横向保持自身宽度，避免与同行相邻控件的命中区重叠
+@mixin touch-area-y($size: 40px) {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: $size;
+    transform: translateY(-50%);
+  }
+}

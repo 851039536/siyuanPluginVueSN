@@ -48,18 +48,36 @@
   }
 }
 
-// 移动端：触摸设备无 hover，操作按钮常驻；导航按钮放大
-@media (max-width: $bp-mobile) {
+// 移动端：触摸设备无 hover，操作按钮常驻；视觉 32px + 40px 伪元素命中区
+@include mobile {
   .single-card-view {
-    .flashcard-item--single .card-actions {
-      opacity: 1;
+    gap: $s-2;
+
+    .flashcard-item--single {
+      .card-actions {
+        gap: $s-2;
+        opacity: 1;
+
+        // Button 根节点会带上本组件的 scope 属性，普通后代选择器即可命中，无需 :deep
+        .si-button.si-button--icon-only {
+          --button-size: 32px;
+          @include touch-area;
+        }
+      }
+
+      // 单卡主操作（播放）保持 36px 高度
+      .card-footer--single .si-button {
+        min-height: 36px;
+      }
     }
 
     .card-navigation {
+      // 与 40px 命中区配合：32px 视觉 + 8px 间距 = 40px 中心距，相邻命中区刚好相接
       gap: $s-2;
 
-      :deep(.si-button) {
-        --button-size: 40px;
+      .si-button.si-button--icon-only {
+        --button-size: 32px;
+        @include touch-area;
       }
     }
   }

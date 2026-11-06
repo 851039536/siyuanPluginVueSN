@@ -333,8 +333,8 @@ $lh-relaxed: 1.75;
 
 ### 参考实现
 
-- `src/features/rssReader/styles/_mixins.scss`（`mobile` / `touch-area` / `touch-area-y`）
-- `src/features/rssReader/styles/index.scss`、`ArticleList.scss`（工具栏、筛选胶囊、卡片标题行内收藏）
+- `src/components/kit/mixins.scss`（`mobile` / `touch-area` / `touch-area-y`，经 `src/_variables.scss` 转发，`@use "@/variables.scss" as *` 即可获得）
+- `src/features/rssReader/`（首个落地功能：工具栏、筛选胶囊、卡片标题行内收藏）
 - `src/index.scss`（`.vp-dock-panel` 底部安全区）
 
 ## 强制规则：背景与过渡对齐 gitPush 范式（2026-09-02）

@@ -29,7 +29,8 @@ export function showFlashcardDialog(plugin?: Plugin, i18n?: any) {
   if (!flashcardModal) {
     flashcardModal = createModalVueApp(FlashcardDialog, {
       maskId: "flashcard-dialog-mask",
-      width: "440px",
+      // 固定 440px 在 360px 手机上会溢出视口，改为随视口收缩
+      width: "min(440px, 92vw)",
       height: "auto",
       getCloseHandler: () => hideFlashcardDialog,
       buildProps: () => ({

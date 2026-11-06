@@ -349,25 +349,103 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
   100% { transform: scale(1); }
 }
 
-// 移动端：两列卡片在窄屏会把标题与操作按钮挤在一起，改为单列；
-// 触摸设备无 hover，卡片操作按钮改为常驻并放大到可点尺寸
+// 移动端（触摸）：控件视觉 32–36px + 40px 伪元素命中区
+// 密度依据见 AGENTS_STYLE.md § 移动端密度与触摸目标
+@include mobile {
+  .flashcard-reading-panel {
+    // 根内边距 16 → 12，把宽度让给卡片内容
+    padding: $s-3;
+
+    // 面板头部图标按钮：视觉 32px、命中 40px
+    .panel-header .si-button.si-button--icon-only {
+      --button-size: 32px;
+      @include touch-area;
+    }
+
+    // CardList 每张卡 6 个操作按钮：触摸设备无 hover，改为常驻。
+    // 选择器必须带上 .card-header：基础样式是 `.card-item .card-header .card-actions`（0,4,0），
+    // 少一层会被基础规则的 opacity: 0 盖掉（上一版即因此从未生效）
+    .flashcard-item .card-header .card-actions {
+      gap: $s-2;
+      opacity: 1;
+
+      .si-button.si-button--icon-only {
+        --button-size: 32px;
+        @include touch-area;
+      }
+    }
+
+    // 筛选区：共享 Select / Input 传的是 xsmall 档（22px），局部抬到 36px
+    .category-filter {
+      gap: $s-1;
+
+      .filter-left label { font-size: $t-xs; }
+
+      // xsmall 档字段是 10px 字号，移动端一并抬到 12px
+      .si-input--xsmall .si-input__field {
+        min-height: 36px;
+        font-size: $t-xs;
+      }
+
+      .si-select--xsmall .si-select__trigger {
+        min-height: 36px;
+        font-size: $t-xs;
+      }
+      .si-select--xsmall .si-select__option {
+        min-height: 36px;
+        padding: 0 $s-4;
+        font-size: $t-xs;
+      }
+    }
+
+    // 底部视图切换：三个等宽 32px 按钮（原为 22px 的 xsmall 文本按钮）
+    .view-mode-toggle {
+      gap: $s-1;
+      padding-top: $s-2;
+      margin-bottom: 0;
+
+      .si-button {
+        flex: 1;
+        min-height: 32px;
+        font-size: $t-xs;
+      }
+    }
+
+    // 卡片导航（单卡视图 / 边学边写共用）：视觉 32px、命中 40px
+    .card-navigation .si-button.si-button--icon-only {
+      --button-size: 32px;
+      @include touch-area;
+    }
+
+    // 分页：Paginator 传的是 xsmall（22px），抬到 32px
+    .pagination {
+      .si-button { min-height: 32px; font-size: $t-xs; }
+      .si-button.si-button--icon-only { --button-size: 32px; }
+      .si-paginator__report { font-size: $t-xs; }
+    }
+
+    // 空态主按钮（"添加卡片"）抬到 36px
+    .empty-state .si-button {
+      min-height: 36px;
+    }
+  }
+}
+
+// 版面类规则只按视口宽度判断：粗指针平板（≥769px）仍有空间放两列与一行操作
 @media (max-width: $bp-mobile) {
   .flashcard-reading-panel {
     .card-list {
       grid-template-columns: 1fr;
     }
 
-    .flashcard-item .card-actions {
-      opacity: 1;
+    // 6 个操作按钮并排会把标题挤到约 60px 宽：独占第二行并右对齐
+    .flashcard-item .card-header {
+      flex-wrap: wrap;
 
-      .si-button {
-        --button-size: 36px;
+      .card-actions {
+        flex: 0 0 100%;
+        justify-content: flex-end;
       }
-    }
-
-    // 面板头部图标按钮（添加/刷新/独立窗口）同样放大到触摸可用尺寸
-    .panel-header .si-button {
-      --button-size: 32px;
     }
   }
 }

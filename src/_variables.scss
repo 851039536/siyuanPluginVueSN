@@ -4,3 +4,5 @@
 // 本文件仅为保持既有引用路径（全项目 336 处 `@use '@/variables.scss'`）兼容而存在，
 // 请勿在此新增 Token —— 新增请到 src/components/kit/variables.scss。
 @forward "./components/kit/variables";
+// 响应式 mixins（mobile / touch-area / touch-area-y）随 Token 一起转发，见 kit/mixins.scss
+@forward "./components/kit/mixins";

@@ -31,3 +31,49 @@ $fc-pad-h: 10px; // 10px 定位偏移（无匹配全局Token）
   min-width: 60px;
   text-align: center;
 }
+
+// 移动端：留白收紧，关闭按钮 32px + 40px 命中区，筛选行改为单行
+@include mobile {
+  .flashcard-dialog {
+    padding: $s-3;
+    gap: $s-3;
+
+    // 基础样式已把它定位为 absolute（top/right 10px），这里保留原定位
+    .close-btn.si-button--icon-only {
+      --button-size: 32px;
+      @include touch-area(40px, absolute);
+    }
+
+    .category-filter {
+      display: flex;
+      align-items: center;
+      gap: $s-2;
+
+      label {
+        font-size: $t-xs;
+        flex-shrink: 0;
+      }
+
+      // 共享 Select 是子组件，需要 :deep 穿透作用域
+      :deep(.si-select) {
+        flex: 1;
+        min-width: 0;
+      }
+      :deep(.si-select__trigger) { min-height: 36px; }
+      :deep(.si-select__option) {
+        min-height: 36px;
+        padding: 0 $s-4;
+      }
+    }
+
+    .card-navigation {
+      // 与 40px 命中区配合：32px 视觉 + 8px 间距 = 40px 中心距
+      gap: $s-2;
+
+      .si-button.si-button--icon-only {
+        --button-size: 32px;
+        @include touch-area;
+      }
+    }
+  }
+}

@@ -17,13 +17,27 @@ export function usePlayWord(
   // 存活标记：组件卸载后 utterance.onend 不再触发写盘（悬空回调防护）
   let alive = true
 
+  /** 语音合成可用性：部分移动端 WebView 未实现 speechSynthesis */
+  const ttsSupported = typeof window !== "undefined"
+    && typeof window.speechSynthesis !== "undefined"
+    && typeof window.SpeechSynthesisUtterance !== "undefined"
+
   onUnmounted(() => {
     alive = false
-    speechSynthesis.cancel()
+    if (!ttsSupported) return
+    try {
+      speechSynthesis.cancel()
+    } catch {
+      // speechSynthesis 不可用时静默忽略
+    }
   })
 
   const playWord = async (card: Flashcard | null) => {
     if (!card) return
+    if (!ttsSupported) {
+      showMessage(t.value.playFailed, 2000, "error")
+      return
+    }
 
     try {
       const utterance = new SpeechSynthesisUtterance(card.title)

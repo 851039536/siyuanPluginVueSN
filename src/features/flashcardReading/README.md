@@ -35,7 +35,7 @@ src/features/flashcardReading/
     ├── CardDialog.scss              # 卡片弹窗样式
     ├── TypingPractice.scss          # 打字练习样式
     ├── StatisticsView.scss          # 统计视图样式
-    ├── SingleCardView.scss          # 单卡视图样式（index.vue 与 FlashcardDialog 共用）
+    ├── SingleCardView.scss          # 单卡视图样式（由 SingleCardView.vue 的 scoped 样式引入）
     └── FlashcardDialog.scss         # 弹窗式快速浏览样式
 ```
 
@@ -91,5 +91,9 @@ src/features/flashcardReading/
 
 ## 平台支持
 
-移动端可用。窄屏适配：卡片列表改单列；卡片操作、单卡操作与导航按钮改为常驻并放大触摸目标。
+移动端可用。窄屏按 GitHub/Primer 密度规则适配（见 `AGENTS_STYLE.md` § 移动端密度与触摸目标）：
+卡片列表改单列，卡片操作按钮移到标题下方独立一行（6 个按钮并排会把标题挤到约 60px 宽）；
+控件视觉保持 32–36px、命中区由伪元素扩到 40px；筛选栏的共享 Select/Input（xsmall 档 22px）、
+分页与底部视图切换抬到 32–36px；边学边写参考区高度 140→96px，小屏改为面板内滚动。
+快速浏览弹窗宽度改为 `min(440px, 92vw)`，避免 360px 手机上溢出视口。
 移动端隐藏「打开存储目录」按钮（依赖 Electron `shell`，移动端不可用），其余读写走插件存储、无 Node 依赖。

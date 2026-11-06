@@ -38,45 +38,8 @@ $rr-transition: all 0.12s;
   }
 }
 
-// 移动端媒体查询：窄视口（桌面窄窗）或粗指针且无 hover（手机/平板触摸）。
-// 只按宽度判断会漏掉手机横屏（视口 ≥ 769px），此时触摸目标会退回桌面尺寸。
-@mixin mobile {
-  @media (max-width: $bp-mobile), (pointer: coarse) and (hover: none) {
-    @content;
-  }
-}
-
-// 命中区扩展：视觉尺寸保持紧凑，触摸范围由透明伪元素撑大，且不参与布局。
-// 对照 Primer：视觉可用 24–32px，触摸目标按 WCAG AAA 取 40px+；用伪元素即可两者兼得。
-// 仅用于四周都有余量（工具栏、卡片内）的控件；同一行紧邻的按钮改用 touch-area-y。
-@mixin touch-area($size: 40px) {
-  position: relative;
-
-  &::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: $size;
-    height: $size;
-    transform: translate(-50%, -50%);
-  }
-}
-
-// 仅竖向扩展命中区，横向保持自身宽度，避免与同行相邻控件的命中区重叠
-@mixin touch-area-y($size: 40px) {
-  position: relative;
-
-  &::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    height: $size;
-    transform: translateY(-50%);
-  }
-}
+// mobile / touch-area / touch-area-y 已提取到 src/components/kit/mixins.scss，
+// 经 @use '@/variables.scss' as * 自动获得（见 AGENTS_STYLE.md § 移动端密度与触摸目标）
 
 // 未读/计数徽章
 @mixin badge($line-h: 16px, $min-w: 16px, $pad-h: 5px) {

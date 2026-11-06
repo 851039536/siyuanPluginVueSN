@@ -331,3 +331,65 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
     }
   }
 }
+
+// 移动端：控件视觉 32px + 40px 命中区；纵向留白收紧，小屏改为面板内滚动
+@include mobile {
+  .flashcard-reading-panel .typing-practice {
+    flex: 1;
+    min-height: 0;
+    gap: $s-3;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    .typing-controls {
+      // 5 个开关 + 会话配置在窄屏必然换行；row-gap 8 让上下两行的 40px 命中区刚好相接
+      flex-wrap: wrap;
+      row-gap: $s-2;
+
+      &__config {
+        margin-left: auto;
+      }
+    }
+
+    .typing-case-toggle {
+      min-height: 32px;
+      padding: 0 $fc-pad-h;
+      @include touch-area-y;
+    }
+
+    // 开关/会话配置的 10px 辅助文字在手机上难读，抬到 12px
+    .typing-case-toggle__text,
+    .typing-session-config__label,
+    .typing-session-config__unit {
+      font-size: $t-xs;
+    }
+
+    .typing-session-config__btn {
+      width: 32px;
+      height: 32px;
+      @include touch-area-y;
+    }
+
+    .typing-area {
+      gap: $s-2;
+    }
+
+    // 参考区固定 140px 在手机上过高，收一档（仍可内部滚动）
+    .typing-reference__content {
+      height: 96px;
+    }
+
+    .typing-reference__footer .si-button.si-button--icon-only {
+      --button-size: 32px;
+      @include touch-area;
+    }
+
+    .typing-input {
+      padding: $s-2 $s-3;
+    }
+
+    .typing-round-summary .si-button {
+      min-height: 32px;
+    }
+  }
+}

@@ -76,3 +76,40 @@ $fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
     .custom-category-input { margin-top: $s-1; }
   }
 }
+
+// 移动端：弹窗控件 36px、关闭按钮 32px + 40px 命中区（见 AGENTS_STYLE.md § 移动端密度）
+@include mobile {
+  .flashcard-reading-panel .dialog {
+    max-height: 92vh;
+
+    .dialog-header {
+      padding: $s-2 $s-3;
+
+      .si-button.si-button--icon-only {
+        --button-size: 32px;
+        @include touch-area;
+      }
+    }
+
+    .dialog-body {
+      padding: $s-3;
+      gap: $s-2;
+
+      .form-group label { font-size: $t-xs; }
+
+      // 共享 Input / Select 传的是 small 档（28px），局部抬到 36px
+      .si-input--small .si-input__field { min-height: 36px; }
+      .si-select--small .si-select__trigger { min-height: 36px; }
+      .si-select--small .si-select__option {
+        min-height: 36px;
+        padding: 0 $s-4;
+      }
+    }
+
+    .dialog-footer {
+      padding: $s-2 $s-3;
+
+      .si-button { min-height: 36px; }
+    }
+  }
+}

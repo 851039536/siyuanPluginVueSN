@@ -13,7 +13,6 @@
 > 功能模块的 `src/features/*/README.md` 同样原地维护，不迁入 docs。
 
 **当前 `docs/` 根下的活跃文档**：
-- [DOC-FIX-PLAN-2026-11-01.md](DOC-FIX-PLAN-2026-11-01.md)（文档缺陷修复计划，含 `AGENTS_STYLE.md` Token 名迁移；状态：待执行）
 - [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
 - [持久化治理与统一数据管理面板.md](持久化治理与统一数据管理面板.md)（本轮实施计划与设计裁决）
 
@@ -30,11 +29,11 @@
 | [codex-ui-reference.html](参考/codex-ui-reference.html) | Codex UI 视觉参考页（静态 HTML，供截图/对照） | — |
 | [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 持久化规范（强制） |
 
-## 二、归档文档（`docs/completed/`，12 份）
+## 二、归档文档（`docs/completed/`，13 份）
 
 前 11 份为 2026-10-28 提交 `caec10a5`「chore(docs): 清理过期审查报告并归档参考文档至参考目录」删除的审查报告，
 2026-11-01 从 git 历史恢复——**原因是代码/README 仍在引用它们**（引用点已改为指向本目录）；
-最后一份是 2026-11-05 执行完成后按规则 2 归档的计划文档。
+后两份是执行完成后按规则 2 归档的计划文档（2026-11-05、2026-11-06）。
 
 | 文件 | 主题 | 引用点 |
 |---|---|---|
@@ -50,6 +49,7 @@
 | [ai-content-generator-skills-merge-review.md](completed/ai-content-generator-skills-merge-review.md) | AI 技能合并专项审查 | `aiContentGenerator/README.md` |
 | [highlight-feature.md](completed/highlight-feature.md) | 双击高亮功能实现（**描述的实现已于 `7ac8100c` 并入 `generalSettings/components/HighlightSettings.vue`**） | — |
 | [mobile-dock-compatibility-plan.md](completed/mobile-dock-compatibility-plan.md) | 侧边栏 Dock 移动端兼容计划与执行记录（P0–P3 已落地，P4 真机回归由用户执行） | 无源码引用；规则落在 `DESKTOP_ONLY_FEATURE_IDS`、`.vp-dock-panel` 与各功能 README「平台支持」 |
+| [DOC-FIX-PLAN-2026-11-01.md](completed/DOC-FIX-PLAN-2026-11-01.md) | 文档缺陷修复（DOC-1 `AGENTS_STYLE.md` Token 短名迁移、DOC-2 注释路径、DOC-4 分片指引；DOC-3 明确不恢复） | `AGENTS.md` § 文档规范「Token 名真源」、[token-shorthand.md](参考/token-shorthand.md) |
 
 **源码注释里的旧路径**：`src/features/gitPush/*.ts|vue`（6 处）、`src/features/superPanel/*.vue`（4 处）等
 仍写着 `docs/xxx-review.md`。这些是纯文本引用（不是可点链接），**本轮未改源码**；
@@ -78,17 +78,17 @@
 `a18c4794`（2026-05-27，`SETTINGS_GUIDE.md`）、`a4786fa0`（2026-05-26，`primevue的组件参考.md`）。
 取回方式同上，把 `caec10a5^` 换成对应提交的父提交（`<sha>^`）。
 
-## 四、已知文档缺陷
+## 四、文档缺陷台账（已清零）
 
-> 修复方案、分批清单、验收脚本全部在 [DOC-FIX-PLAN-2026-11-01.md](DOC-FIX-PLAN-2026-11-01.md)，
-> 本表只记状态。**修完一项就把状态改为「已修（日期）」，不要在这里补方案细节。**
+> 修复过程与验收脚本见 [completed/DOC-FIX-PLAN-2026-11-01.md](completed/DOC-FIX-PLAN-2026-11-01.md)，
+> 本表只记状态。**新增缺陷按同样格式登记，修完把状态改为「已修（日期）」，不要在这里补方案细节。**
 
 | ID | 缺陷（一句话） | 状态 |
 |---|---|---|
-| DOC-1 | `AGENTS_STYLE.md` 设计 Token 名 100% 失效（60 个未定义名：43 个可唯一映射、4 个反例、12 个前缀占位符、1 个示意符） | 仅止血（文件头警告块），**待迁移** |
-| DOC-2 | `variables.scss` 文件头注释的 `docs/token-shorthand.md` 路径失效 | 待修（1 行） |
-| DOC-3 | 10 份被删除的审查报告未归档（本文件第三节台账） | 台账已建，**不计划恢复** |
-| DOC-4 | `AGENTS_BUILD.md` 要求登记审查报告但原无命名/归档约定 | ✅ 已随强制规则落地 |
+| DOC-1 | `AGENTS_STYLE.md` 设计 Token 名 100% 失效（60 个未定义名） | ✅ 已修（2026-11-06，全量迁移短名制，旧名 0 残留） |
+| DOC-2 | `variables.scss` 文件头注释的 `docs/token-shorthand.md` 路径失效 | ✅ 已修（2026-11-06） |
+| DOC-3 | 10 份被删除的审查报告未归档（本文件第三节台账） | 台账已建，**不计划恢复**（明确不做） |
+| DOC-4 | `AGENTS_BUILD.md` 要求登记审查报告但原无命名/归档约定 | ✅ 已修（2026-11-06，补分片指引） |
 
 ## 五、强制规则（2026-11-01 起生效）
 

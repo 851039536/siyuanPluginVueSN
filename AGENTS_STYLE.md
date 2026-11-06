@@ -2,19 +2,8 @@
 
  UI 风格 Codex、设计 Token、字号层级、SCSS 分离与内置字体规范。
 
-> ⚠️ **本文的 Token 名为旧长名，已全部失效（2026-11-01 静态校验）**
->
-> `src/components/kit/variables.scss` 自 2026-09 起改为**短名制**，其文件头明确写着"旧长名已全部移除，
-> 不保留别名"。校验结果：本文出现的 **43 个完整旧变量名在当前真源中一个都不存在**，照本文抄 SCSS 会报
-> `Undefined variable` 编译失败。
->
-> 短名映射见 [`docs/参考/token-shorthand.md`](./docs/参考/token-shorthand.md)：
-> `$spacing-*`→`$s-*`、`$radius-*`→`$r-*`、`$font-size-*`→`$t-*`、`$font-weight-*`→`$fw-*`、
-> `$line-height-*`→`$lh-*`、`$color-*`→`$c-*`、`$vp-mono`→`$ff-mono`、`$vp-radius`→`$r-base`。
->
-> **本文尚未完成迁移**，逐条方案与验收脚本见
-> [`docs/DOC-FIX-PLAN-2026-11-01.md`](./docs/DOC-FIX-PLAN-2026-11-01.md)。
-> 迁移完成前：**以 `variables.scss` 的实际定义为准**，不要照本文的 `$` 名直接抄。
+> Token 名统一为 2026-09 起的短名制，真源是 `src/components/kit/variables.scss`；
+> 旧长名已全部移除，不保留别名。
 
 ## UI 风格：Codex
 
@@ -25,39 +14,41 @@
 所有 feature 的 `styles/*.scss` 文件首先 `@use '@/variables.scss' as *;`，以下 Token 全局可用：
 
 ```scss
-// 颜色（$color-*）— 禁止硬编码色值
+// 颜色（$c-*）— 禁止硬编码色值
 // 语义色作为思源 CSS 变量（--b3-theme-*）的 fallback，运行时思源必提供主题变量，fallback 仅防御性兜底
-$color-fg: hsl(24 10% 5%);            // 深前景/正文文本
-$color-bg: hsl(55 9% 97%);            // 浅背景
-$color-muted: hsl(30 5% 65%);         // 中灰（次要文本）
-$color-surface: hsl(45 5% 96%);       // 浅灰表面（卡片/面板背景）
-$color-border: hsl(30 6% 88%);        // 边框/分割线
-$color-primary: hsl(24 9% 10%);       // 主色（暖黑）
-$color-secondary: hsl(45 5% 96%);     // 次色（暖灰）
-$color-accent: hsl(35 85% 55%);       // 强调（琥珀金）
-$color-danger: hsl(0 72% 51%);        // 危险/错误（红）
-$color-danger-bright: hsl(0 84.2% 60.2%); // 亮红（错误提示文字/高亮背景）
-$color-success: hsl(142 76% 36%);     // 成功（绿）
-$color-warning: hsl(35 90% 50%);      // 警告（琥珀黄）
-$color-info: hsl(217 91% 60%);        // 信息（蓝）
+$c-fg: hsl(24 10% 5%);            // 深前景/正文文本
+$c-bg: hsl(55 9% 97%);            // 浅背景
+$c-muted: hsl(30 5% 65%);         // 中灰（次要文本）
+$c-surface: hsl(45 5% 96%);       // 浅灰表面（卡片/面板背景）
+$c-border: hsl(30 6% 88%);        // 边框/分割线
+$c-primary: hsl(24 9% 10%);       // 主色（暖黑）
+$c-secondary: hsl(45 5% 96%);     // 次色（暖灰）
+$c-accent: hsl(35 85% 55%);       // 强调（琥珀金）
+$c-danger: hsl(0 72% 51%);        // 危险/错误（红）
+$c-danger-bright: hsl(0 84.2% 60.2%); // 亮红（错误提示文字/高亮背景）
+$c-success: hsl(142 76% 36%);     // 成功（绿）
+$c-warning: hsl(35 90% 50%);      // 警告（琥珀黄）
+$c-info: hsl(217 91% 60%);        // 信息（蓝）
 
 // 圆角 — 禁止硬编码 border-radius
-$radius-sm: 0.25rem;    // 4px  标签/徽章
-$radius-base: 0.375rem; // 6px  卡片/控件/字段标准圆角（≈ Codex $vp-radius）
-$radius-md: 0.5rem;     // 8px  section/面板
-$radius-lg: 0.75rem;    // 12px 弹窗/对话框
-$radius-full: 9999px;   // 胶囊/药丸形状
+// 命名规则：px 后缀 = 绝对值；无 px 后缀 = 档位（sm/base/md/lg/xl/2xl/full）
+$r-sm: 0.25rem;    // 4px  标签/徽章
+$r-base: 0.375rem; // 6px  卡片/控件/字段标准圆角（Codex 基准）
+$r-md: 0.5rem;     // 8px  section/面板
+$r-lg: 0.75rem;    // 12px 弹窗/对话框
+$r-full: 9999px;   // 胶囊/药丸形状
 
 // 间距 — 禁止硬编码 padding/gap/margin（注意：使用数字后缀，非 xs/sm/md/lg）
-$spacing-2px: 2px; // 超微间距（极窄分隔线间距、图标紧贴）
-$spacing-px: 3px; // 微间距（密集 grid gap、极窄 tab padding，小于 $spacing-1 时使用）
-$spacing-1: 4px;   // 紧密间距（icon 间距、微型间隙）
-$spacing-2: 8px;   // 元素内间距（按钮 padding、小 gap）
-$spacing-3: 12px;  // 中等间距（卡片 padding、列表 gap）
-$spacing-4: 16px;  // 标准 section 内边距（面板/弹窗 padding）
-$spacing-5: 20px;  // 大间距
-$spacing-6: 24px;  // 特大间距（header 水平 padding 上限）
-// ... $spacing-8 ~ $spacing-16 通常用于布局级间距，UI 组件少用
+// 命名规则：px 后缀 = 绝对值（$s-px10 = 10px）；无 px 后缀 = 4px 进制档位（$s-4 = 1rem = 16px）
+$s-px2: 2px; // 超微间距（极窄分隔线间距、图标紧贴）
+$s-px3: 3px; // 微间距（密集 grid gap、极窄 tab padding，小于 $s-1 时使用）
+$s-1: 4px;   // 紧密间距（icon 间距、微型间隙）
+$s-2: 8px;   // 元素内间距（按钮 padding、小 gap）
+$s-3: 12px;  // 中等间距（卡片 padding、列表 gap）
+$s-4: 16px;  // 标准 section 内边距（面板/弹窗 padding）
+$s-5: 20px;  // 大间距
+$s-6: 24px;  // 特大间距（header 水平 padding 上限）
+// ... $s-8 ~ $s-16 通常用于布局级间距，UI 组件少用
 
 // 外内原则 — 严格区分 padding（内）与 margin/gap（外）
 //   内间距 padding：元素自身内部的留白（按钮内边距、卡片内边距、弹窗 header/body/footer padding）
@@ -65,49 +56,48 @@ $spacing-6: 24px;  // 特大间距（header 水平 padding 上限）
 //   禁止混用：不要在元素之间用 padding 撑开间距，也不要在容器内部用 margin 替代 padding
 
 // 字体 — 禁止硬编码 font-size
-$font-size-2xs: 0.625rem;  // 10px  仅用于大写标签
-$font-size-xs: 0.75rem;   // 12px  小号文字（meta、hint、label）
-$font-size-sm: 0.875rem;  // 14px  次要文字
-$font-size-base: 1rem;    // 16px  正文、标题（标准字号）
-$font-size-lg: 1.125rem;  // 18px  大标题（少用）
+$t-2xs: 0.625rem;  // 10px  仅用于大写标签
+$t-xs: 0.75rem;   // 12px  小号文字（meta、hint、label）
+$t-sm: 0.875rem;  // 14px  次要文字
+$t-base: 1rem;    // 16px  正文、标题（标准字号）
+$t-lg: 1.125rem;  // 18px  大标题（少用）
 
 // 字重 — 禁止硬编码 font-weight
-$font-weight-light: 300;
-$font-weight-normal: 400;
-$font-weight-medium: 500;
-$font-weight-semibold: 600;
-$font-weight-bold: 700;
+$fw-light: 300;
+$fw-normal: 400;
+$fw-medium: 500;
+$fw-semibold: 600;
+$fw-bold: 700;
 
 // 行高 — 禁止硬编码 line-height
-$line-height-tight: 1.25;
-$line-height-normal: 1.5;
-$line-height-relaxed: 1.75;
+$lh-tight: 1.25;
+$lh-normal: 1.5;
+$lh-relaxed: 1.75;
 ```
 
-> **重要**：上述变量名是 `$spacing-1`~`$spacing-4`（数字后缀），**不是** `$spacing-xs`~`$spacing-lg`。`$spacing-xs/sm/md/lg` 是 superPanel 模块的本地别名，**不存在于全局 `_variables.scss` 中**。错误使用会导致 `Undefined variable` 编译错误。
+> **重要**：上述变量名是 `$s-1`~`$s-4`（数字后缀），**不是** `$s-xs`~`$s-lg`。`$s-xs/sm/md/lg` 是 superPanel 模块的本地别名，**不存在于全局 `_variables.scss` 中**。错误使用会导致 `Undefined variable` 编译错误。
 
 ### Codex 增强 Token（真源 `src/components/kit/variables.scss` 已全局定义）
 
-以下 Token 自 2026-06-18 起已收归全局 `_variables.scss`，各模块 **直接可用**，无需本地声明：
+原 `vp` 前缀的 Codex 专用 Token 已并入主清单，各模块 **直接可用**，无需本地声明：
 
-```scss
-$vp-radius: $radius-base; // 6px — Codex 标准圆角
-$vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace; // 等宽字体栈
-```
+- **标准圆角**：即上方圆角清单中的 `$r-base`（0.375rem / 6px）
+- **等宽字体栈**：即真源字体族一节的 `$ff-mono`
 
-> 历史：`$vp-radius`/`$vp-mono` 曾由 `superPanel/styles/variables.scss` 独占，其他模块需本地声明。现已全局化。
+> 历史：这两个 Token 曾以 `vp` 前缀由 `superPanel/styles/variables.scss` 独占，其他模块需本地声明；
+> 短名制推行后已收归全局，旧前缀名不再保留。
 
 ### 核心规范速查表
 
 | 规则 | 模式 | 关键 CSS |
 |------|------|---------|
-| **卡片** | 边框优先，禁用阴影 | `border: 1px solid var(--b3-border-color); border-radius: $vp-radius; background: var(--b3-theme-surface);` |
+| **卡片** | 边框优先，禁用阴影 | `border: 1px solid var(--b3-border-color); border-radius: $r-base; background: var(--b3-theme-surface);` |
 | **卡片 hover** | 边框变色 | `&:hover { border-color: var(--b3-theme-primary); }` |
-| **大写标签** | 元信息 key / form label | `font-size: $font-size-2xs; font-weight: $font-weight-bold; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45;` |
-| **等宽字段** | 路径/版本号/日期/密码 | `font-family: $vp-mono; font-size: $font-size-xs;` |
+| **大写标签** | 元信息 key / form label | `font-size: $t-2xs; font-weight: $fw-bold; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.45;` |
+| **等宽字段** | 路径/版本号/日期/密码 | `font-family: $ff-mono; font-size: $t-xs;` |
 | **focus 发光** | 输入框/控件聚焦 | `box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest);` |
 | **分割线** | section 间 | `border-bottom: 1px solid var(--b3-border-color);` 或 `1px dashed` |
-| **空状态** | 居中斜体灰字 | `text-align: center; padding: 32px $spacing-4; font-style: italic; opacity: 0.35;` |
+| **空状态** | 居中斜体灰字 | `text-align: center; padding: 32px $s-4; font-style: italic; opacity: 0.35;` |
 | **按钮** | 优先用共享 `<Button>` | 颜色轴 `variant`/`severity` × 外观轴 `outlined`/`text`；尺寸 4 档；细节见「强制规则：按钮交互与无障碍」 |
 | **图标按钮（自建 `.icon-btn`）** | 固定尺寸，无 padding | `width: 26px; height: 26px; padding: 0; @include flex-center;` icon: `16px`（关闭按钮等） |
 | **图标按钮（共享 `<Button icon-only>`）** | 尺寸随 `size` 档位 | 22 / 28 / 36 / 44px（与文字按钮 `min-height` 对齐），图标随档位 12/14/16/18 |
@@ -123,13 +113,13 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 // 遮罩
 .xxx-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 99999; }
 // 对话框（边框 + 圆角，禁用 box-shadow）
-.xxx-dialog { width: 700px; max-width: 90vw; max-height: 85vh; background: var(--b3-theme-background); border: 1px solid var(--b3-border-color); border-radius: $radius-lg; display: flex; flex-direction: column; overflow: hidden; }
+.xxx-dialog { width: 700px; max-width: 90vw; max-height: 85vh; background: var(--b3-theme-background); border: 1px solid var(--b3-border-color); border-radius: $r-lg; display: flex; flex-direction: column; overflow: hidden; }
 // 头部（12px/16px padding，标题 ~15px）
-.dialog-header { display: flex; align-items: center; justify-content: space-between; padding: $spacing-3 $spacing-4; border-bottom: 1px solid var(--b3-border-color); background: var(--b3-theme-surface); }
+.dialog-header { display: flex; align-items: center; justify-content: space-between; padding: $s-3 $s-4; border-bottom: 1px solid var(--b3-border-color); background: var(--b3-theme-surface); }
 // 内容
-.dialog-body { flex: 1; overflow-y: auto; padding: $spacing-4; }
+.dialog-body { flex: 1; overflow-y: auto; padding: $s-4; }
 // 底部
-.dialog-footer { padding: $spacing-3 $spacing-4; border-top: 1px solid var(--b3-border-color); background: var(--b3-theme-surface); }
+.dialog-footer { padding: $s-3 $s-4; border-top: 1px solid var(--b3-border-color); background: var(--b3-theme-surface); }
 ```
 
 #### 输入框（`.vp-input`）
@@ -137,12 +127,12 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 ```scss
 .vp-input {
   padding: 7px 10px;
-  border: 1px solid var(--b3-border-color); border-radius: $vp-radius;
+  border: 1px solid var(--b3-border-color); border-radius: $r-base;
   background: var(--b3-theme-background); color: var(--b3-theme-on-background);
   font-size: 13px; outline: none; transition: border-color 0.12s, box-shadow 0.12s;
 
   &:focus { border-color: var(--b3-theme-primary); box-shadow: 0 0 0 2px var(--b3-theme-primary-lightest); }
-  &--mono { font-family: $vp-mono; }
+  &--mono { font-family: $ff-mono; }
 }
 ```
 
@@ -165,20 +155,20 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 ```scss
 .tag {
-  padding: 1px 6px; border-radius: $radius-sm;
+  padding: 1px 6px; border-radius: $r-sm;
   font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
 }
 // 图片计数类 badge（如 "12 张"）用更宽松尺寸：
 .image-count {
-  padding: 2px 8px; border-radius: $radius-lg;
-  font-size: $font-size-xs; font-weight: 500;
+  padding: 2px 8px; border-radius: $r-lg;
+  font-size: $t-xs; font-weight: 500;
 }
 ```
 
 ##### Badge 变体（状态胶囊）
 
 ```scss
-.badge { display: inline-flex; align-items: center; padding: $spacing-1 $spacing-2; border-radius: $radius-full; font-size: $font-size-xs; font-weight: $font-weight-medium; }
+.badge { display: inline-flex; align-items: center; padding: $s-1 $s-2; border-radius: $r-full; font-size: $t-xs; font-weight: $fw-medium; }
 .badge--primary { background: var(--b3-theme-primary); color: var(--b3-theme-on-primary); }
 .badge--secondary { background: var(--b3-theme-surface); color: var(--b3-theme-on-surface); border: 1px solid var(--b3-border-color); }
 .badge--success { background: rgba(22, 163, 74, 0.12); color: var(--b3-theme-success); }
@@ -191,18 +181,18 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 | 禁止 | 必须 |
 |----------|--------|
 | `box-shadow` 作为卡片/弹窗主要样式 | `border: 1px solid var(--b3-border-color)` + hover `border-color` 变色 |
-| `border-radius: 6px` / `12px` 等硬编码 | `$vp-radius` / `$radius-base` / `$radius-lg` 等全局 Token |
-| `padding: 8px` / `16px` 等硬编码 | `$spacing-2` / `$spacing-4` 等全局 Token（数字后缀！） |
-| `font-size: 14px` / `16px` 等硬编码 | `$font-size-sm` / `$font-size-base` 等全局 Token |
-| `font-weight: 500` / `600` / `700` 等硬编码 | `$font-weight-medium` / `$font-weight-semibold` / `$font-weight-bold` |
-| `line-height: 1.25` / `1.5` 等硬编码 | `$line-height-tight` / `$line-height-normal` / `$line-height-relaxed` |
-| `font-family: monospace` / `"Consolas"` | `font-family: $vp-mono`（全局可用） |
-| `$spacing-xs` / `$spacing-sm` / `$spacing-md` / `$spacing-lg` | `$spacing-1` / `$spacing-2` / `$spacing-3` / `$spacing-4`（数字后缀是全局标准） |
+| `border-radius: 6px` / `12px` 等硬编码 | `$r-base` / `$r-lg` 等全局 Token |
+| `padding: 8px` / `16px` 等硬编码 | `$s-2` / `$s-4` 等全局 Token（数字后缀！） |
+| `font-size: 14px` / `16px` 等硬编码 | `$t-sm` / `$t-base` 等全局 Token |
+| `font-weight: 500` / `600` / `700` 等硬编码 | `$fw-medium` / `$fw-semibold` / `$fw-bold` |
+| `line-height: 1.25` / `1.5` 等硬编码 | `$lh-tight` / `$lh-normal` / `$lh-relaxed` |
+| `font-family: monospace` / `"Consolas"` | `font-family: $ff-mono`（全局可用） |
+| `$s-xs` / `$s-sm` / `$s-md` / `$s-lg` | `$s-1` / `$s-2` / `$s-3` / `$s-4`（数字后缀是全局标准） |
 | emoji 表情作为图标 | `<IconWrapper name="iconName">` |
 | 图标按钮用 `padding` 控制尺寸 | 自建 `.icon-btn` 固定 `width/height: 26px; padding: 0;` icon `16px`；共享 `<Button>` 纯图标模式随 `size` 档位 22/28/36/44 |
-| 标题 font-size > 16px | 统一 `$font-size-base`（16px），极少数场景可用 15px（如 superPanel-title） |
-| 各模块重复声明 `$vp-radius` / `$vp-mono` | 直接从 `@/variables.scss` 继承（已全局定义） |
-| 根容器缺基准字号 / JS 硬编码 `font-size: 12px` | 根容器显式声明 `font-size: $font-size-xs`；自建挂载容器补 `vp-dock-root` / `vp-modal-mask` 类 |
+| 标题 font-size > 16px | 统一 `$t-base`（16px），极少数场景可用 15px（如 superPanel-title） |
+| 各模块重复声明 `$r-base` / `$ff-mono` | 直接从 `@/variables.scss` 继承（已全局定义） |
+| 根容器缺基准字号 / JS 硬编码 `font-size: 12px` | 根容器显式声明 `font-size: $t-xs`；自建挂载容器补 `vp-dock-root` / `vp-modal-mask` 类 |
 
 ## 强制规则：字号层级与全局基准字号
 
@@ -212,9 +202,9 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 | 字号 | Token | 用途 |
 |------|-------|------|
-| 10px | `$font-size-2xs` | 辅助文字：标签、提示、描述、状态、命令输出、路径、徽章 |
-| 12px | `$font-size-xs` | 标题与正文内容（面板/弹窗统一基准字号） |
-| 14px+ | `$font-size-sm` 及以上 | 仅限阅读区正文（如 Markdown 预览）与数据突出展示（如统计数值），必须加注释说明用途 |
+| 10px | `$t-2xs` | 辅助文字：标签、提示、描述、状态、命令输出、路径、徽章 |
+| 12px | `$t-xs` | 标题与正文内容（面板/弹窗统一基准字号） |
+| 14px+ | `$t-sm` 及以上 | 仅限阅读区正文（如 Markdown 预览）与数据突出展示（如统计数值），必须加注释说明用途 |
 
 ### 组件 size 档位字号阶梯（两级字号制的唯一例外）
 
@@ -222,10 +212,10 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 | 档位 | Token | 值 |
 |------|-------|-----|
-| `xsmall` | `$font-size-2xs` | 10px |
-| `small` | `$font-size-xs` | 12px |
-| `medium` | `$font-size-sm` | 14px |
-| `large` | `$font-size-base` | 16px |
+| `xsmall` | `$t-2xs` | 10px |
+| `small` | `$t-xs` | 12px |
+| `medium` | `$t-sm` | 14px |
+| `large` | `$t-base` | 16px |
 
 - 这是两级字号制中**唯一**允许 10px 出现在控件正文（按钮/输入框/下拉选项文字）的场景：档位本身表达「更紧凑」的语义，与「辅助文字用 10px」的规则不冲突
 - 例外仅适用于组件库的 `size` 档位变体（`src/components/styles/*.scss` 中的 `&--xsmall` / `&--small` / `&--medium` / `&--large`）；**不得**据此在 feature 业务样式中把正文降到 10px
@@ -235,16 +225,16 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 ### 全局基准字号机制
 
-全局样式入口 `src/index.scss` 已定义（经 `src/index.ts:81` 全局加载）：
+全局样式入口 `src/index.scss` 已定义（经 `src/index.ts:91` 全局加载）：
 
 ```scss
 :root {
-  --vp-font-size-xs: #{$font-size-xs}; // CSS 变量桥接：供 TS 内联样式引用
+  --vp-font-size-xs: #{$t-xs}; // CSS 变量桥接：供 TS 内联样式引用
 }
 
 .vp-dock-root,
 .vp-modal-mask {
-  font-size: $font-size-xs; // 12px 基准
+  font-size: $t-xs; // 12px 基准
 }
 ```
 
@@ -254,9 +244,9 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 ### 审查检查点（新增/修改 SCSS 时逐条核对）
 
-1. **根容器显式声明 `font-size: $font-size-xs`**（gitPush 模式：`.git-push-panel { font-size: $font-size-xs; }`）——即使已挂 `vp-dock-root`，显式声明保证语义清晰、不依赖全局类
-2. **禁止硬编码字号**：`font-size: 13px / 14px / 10px` 等一律替换为 Token（`$font-size-xs` / `$font-size-2xs` / `$font-size-sm`）
-3. **禁止硬编码字重/行高/字体族**：`font-weight: 600` → `$font-weight-semibold`；`line-height: 1.5` → `$line-height-normal`；`font-family: monospace` → `$vp-mono`
+1. **根容器显式声明 `font-size: $t-xs`**（gitPush 模式：`.git-push-panel { font-size: $t-xs; }`）——即使已挂 `vp-dock-root`，显式声明保证语义清晰、不依赖全局类
+2. **禁止硬编码字号**：`font-size: 13px / 14px / 10px` 等一律替换为 Token（`$t-xs` / `$t-2xs` / `$t-sm`）
+3. **禁止硬编码字重/行高/字体族**：`font-weight: 600` → `$fw-semibold`；`line-height: 1.5` → `$lh-normal`；`font-family: monospace` → `$ff-mono`
 4. **自建挂载点必须补类**：任何 `document.createElement("div")` + `createApp().mount()` 的容器，必须加 `vp-dock-root` 类（遮罩加 `vp-modal-mask`），禁止 JS 内联硬编码 `font-size: 12px`
 5. **优先复用挂载工具**：新增弹窗/面板优先使用 `createVueDockApp` / `createModalVueApp`（自动获得全局类），禁止自建容器裸挂
 
@@ -310,7 +300,7 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 3. **过渡统一 0.12s ease**：fade（遮罩/弹窗 opacity）+ 内层 scale 0.98；禁止自定义缓动曲线（ease-out-back/expo）、`translateY` 位移、超时长（0.18s/0.25s 等）
 4. **禁止装饰性排版属性**：`letter-spacing` 负值/自定义字距等非 Token 声明
 5. **z-index 对齐**：全屏遮罩统一 `z-index: 10000`（子级弹窗可叠加，同 gitPush 先例）
-6. **等宽数字场景用 `$vp-mono` + `font-variant-numeric: tabular-nums`**：计数徽章、进度 n/m、文件大小等数值文本（gitPush `.gp-count-badge` 先例）
+6. **等宽数字场景用 `$ff-mono` + `font-variant-numeric: tabular-nums`**：计数徽章、进度 n/m、文件大小等数值文本（gitPush `.gp-count-badge` 先例）
 
 ### 审查检查点（新增/修改弹窗、卡片样式时逐条核对）
 
@@ -332,20 +322,20 @@ $vp-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", monospace;
 
 ### 规则
 
-1. **面板根容器（`overflow-y: auto` 的滚动容器）必须设置 `padding-right`**，至少 `$spacing-2`（8px），为滚动条与侧边栏留出呼吸空间
+1. **面板根容器（`overflow-y: auto` 的滚动容器）必须设置 `padding-right`**，至少 `$s-2`（8px），为滚动条与侧边栏留出呼吸空间
 2. **禁止用 `padding: xxx 0` 省略左右**：左右为 0 时内容会直接贴到侧边栏
-3. **使用间距 Token，禁止硬编码 px**：`$spacing-2`(8px) / `$spacing-3`(12px)，按面板宽度与观感选择
+3. **使用间距 Token，禁止硬编码 px**：`$s-2`(8px) / `$s-3`(12px)，按面板宽度与观感选择
 4. **一处容器覆盖多 Tab 子页面**：若多个 Tab/子页面共用同一根容器（如 `CodeReportPanel` → `.gpr-panel`），在共用容器上统一加右侧间距即可一次覆盖所有页面
 
 ### 审查检查点
 
 1. 新增/修改 Dock 面板、弹窗、报告类滚动容器时，检查根容器是否声明 `padding-right`
-2. `padding` 简写省略右值时（如 `$spacing-1 0` 等价于右 0），视为可疑点，需显式补右值
-3. 滚动条重叠时右侧间距可适当加大（`$spacing-3`），确保内容不被滚动条遮挡
+2. `padding` 简写省略右值时（如 `$s-1 0` 等价于右 0），视为可疑点，需显式补右值
+3. 滚动条重叠时右侧间距可适当加大（`$s-3`），确保内容不被滚动条遮挡
 
 ### 参考实现
 
-- `src/features/gitPush/styles/CodeReportPanel.scss`（`.gpr-panel` 基座：`padding: $spacing-1 $spacing-2 $spacing-1 0`）
+- `src/features/gitPush/styles/CodeReportPanel.scss`（`.gpr-panel` 基座：`padding: $s-1 $s-2 $s-1 0`）
 
 ## 强制规则：SCSS 必须分离到 styles/ 目录
 

@@ -743,7 +743,6 @@ src/
 **审查报告约定**：命名 `<模块>-<类型>.md`（`review` 审查 / `audit` 审计 / `diagnosis` 诊断 / `implementation` 实施记录），
 放 `docs/` 根；问题修完（或明确不修）后按第 1 条归档，并在 `docs/README.md` 归档表登记引用点。
 
-**已知缺陷提醒**：`AGENTS_STYLE.md` 的设计 Token 名 100% 失效（2026-09 已改短名制），
-照它写 SCSS 会编译失败；**写样式时以 `src/components/kit/variables.scss` 实际定义为准**，
-旧名→新名映射见 [`docs/参考/token-shorthand.md`](./docs/参考/token-shorthand.md)。
-迁移工作登记在 `docs/README.md`「已知文档缺陷」DOC-1。
+**Token 名真源**：`AGENTS_STYLE.md` 已在 2026-11-06 完成短名制迁移（旧长名 0 残留），
+写样式时以 `src/components/kit/variables.scss` 的实际定义为准；旧名→新名对照见
+[`docs/参考/token-shorthand.md`](./docs/参考/token-shorthand.md)。

@@ -10,7 +10,7 @@
 // 命名规则（一句话）：
 //   「px」后缀 = 绝对值（$s-px10 = 10px）；无 px 后缀 = 4px 进制档位（$s-4 = 1rem = 16px）
 //
-// 完整映射表见 docs/token-shorthand.md
+// 完整映射表见 docs/参考/token-shorthand.md
 
 // ========== 颜色（$c-*） ==========
 // 用途：作为思源 CSS 变量（--b3-theme-*）的 fallback 值。

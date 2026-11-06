@@ -1,21 +1,26 @@
 # 文档缺陷修复计划（DOC-FIX）
 
+> **归档说明（2026-11-06）**：DOC-1~DOC-4 全部处理完毕（DOC-3 明确不恢复），按 `docs/README.md` 规则归档。
+> DOC-1 已把 `AGENTS_STYLE.md` 全量迁移到短名制（旧名 0 残留，静态校验仅剩 5 个已知例外），
+> 顶部警告块已删除；DOC-2 注释路径、DOC-4 分片指引均已修。文中「待执行」描述属当时的记录，不再更新；
+> 当前状态以 `docs/README.md` §四 为准。
+
 - 文档日期：2026-11-01
 - 代码基线：提交 `eab5085e`（2026-10-31）
 - 对象：`AGENTS_STYLE.md`（26KB）、`src/components/kit/variables.scss`、`docs/` 归档台账、
   `src/features/gitPush/*`、`src/features/superPanel/*`（注释引用）
-- 依据：2026-11-01 的 docs 目录治理与静态校验（见 [README.md](./README.md)「已知文档缺陷」）
+- 依据：2026-11-01 的 docs 目录治理与静态校验（见 [README.md](../README.md)「已知文档缺陷」）
 - 性质：**静态分析，未跑 build / lint**（遵循 `AGENTS.md` 对 AI 的禁令）；本文所有数字均可用文末脚本复算
-- 状态：**待执行**。项目当前无未完成的功能计划，本文件是 `docs/` 根下唯一的活跃计划
+- 状态：**已完成（2026-11-06）并归档**
 
 ## 零、摘要
 
 | ID | 缺陷 | 严重度 | 工作量 | 状态 |
 |---|---|---|---|---|
-| **DOC-1** | `AGENTS_STYLE.md` 的设计 Token 名 **100% 失效**：其中 43 个完整旧变量名在 `variables.scss`（67 个变量、短名制）中全部不存在 | **P0**，照文档写代码必然编译失败 | 1 次脚本替换 + 12 章节复核 + 静态校验 | 仅止血（已加警告块），**未迁移** |
-| DOC-2 | `variables.scss` 文件头注释写 `docs/token-shorthand.md`，实际在 `docs/参考/` | P2，路径点不开 | 1 行 | 待修 |
-| DOC-3 | 10 份审查报告被删除未归档（台账在 README 第三节） | P3，仅影响追溯 | 按需 | 台账已建，**不计划恢复** |
-| DOC-4 | `AGENTS_BUILD.md` 要求"登记到 `docs/` 审查报告"但无命名/归档约定 | P2 | 已随新规则落地 | ✅ 已处理，待用户确认 |
+| **DOC-1** | `AGENTS_STYLE.md` 的设计 Token 名 **100% 失效**：其中 43 个完整旧变量名在 `variables.scss`（67 个变量、短名制）中全部不存在 | **P0**，照文档写代码必然编译失败 | 1 次脚本替换 + 12 章节复核 + 静态校验 | ✅ 已迁移（2026-11-06） |
+| DOC-2 | `variables.scss` 文件头注释写 `docs/token-shorthand.md`，实际在 `docs/参考/` | P2，路径点不开 | 1 行 | ✅ 已修（2026-11-06） |
+| DOC-3 | 10 份审查报告被删除未归档（台账在 README 第三节） | P3，仅影响追溯 | 按需 | 台账已建，**不计划恢复**（明确不做） |
+| DOC-4 | `AGENTS_BUILD.md` 要求"登记到 `docs/` 审查报告"但无命名/归档约定 | P2 | 已随新规则落地 | ✅ 已处理（2026-11-06 补分片指引） |
 
 **DOC-1 规模（口径：`variables.scss` 中找不到定义的 `$名字`，可用文末脚本复算）**
 
@@ -146,7 +151,7 @@ grep -nE '\$(spacing|radius|font-size|font-weight|line-height|color)-|vp-(radius
 
 ## 三、DOC-3：10 份未归档的审查报告
 
-**现状**：`caec10a5` 删除的 20 份中，10 份仍被引用已恢复（见 [README.md](./README.md) §二），
+**现状**：`caec10a5` 删除的 20 份中，10 份仍被引用已恢复（见 [README.md](../README.md) §二），
 另 10 份（`hardcode-audit` 894 行、`shared-component-usage-audit` 666 行等）当前零引用，未恢复。
 
 **决策：不恢复**。理由：它们描述的问题已被后续实现覆盖，恢复只会重新堆积；
@@ -187,11 +192,11 @@ grep -nE '\$(spacing|radius|font-size|font-weight|line-height|color)-|vp-(radius
 
 ## 六、完成定义
 
-- [ ] `AGENTS_STYLE.md` 中每个 `$变量` 都能在 `variables.scss` 找到定义（反例 4 个除外）
-- [ ] 旧长名 0 命中（`$spacing-|$radius-|$font-size-|$font-weight-|$line-height-|$color-|$vp-radius|$vp-mono`）
-- [ ] 12 个章节逐节复核完毕，`.vp-*` 模式库与参考实现的 SCSS 片段语义正确
-- [ ] `AGENTS_STYLE.md` 顶部的警告块删除（迁移完成后不需要了）
-- [ ] `docs/README.md` 的 DOC-1 状态更新，本文档归档
+- [x] `AGENTS_STYLE.md` 中每个 `$变量` 都能在 `variables.scss` 找到定义（反例 4 个除外）
+- [x] 旧长名 0 命中（`$spacing-|$radius-|$font-size-|$font-weight-|$line-height-|$color-|$vp-radius|$vp-mono`）
+- [x] 12 个章节逐节复核完毕，`.vp-*` 模式库与参考实现的 SCSS 片段语义正确
+- [x] `AGENTS_STYLE.md` 顶部的警告块删除（迁移完成后不需要了）
+- [x] `docs/README.md` 的 DOC-1 状态更新，本文档归档
 - [ ] （用户执行）`pnpm build` 通过
 
 ---
@@ -199,7 +204,7 @@ grep -nE '\$(spacing|radius|font-size|font-weight|line-height|color)-|vp-(radius
 ## 附录 A：43 个变量的唯一映射（按长度降序替换）
 
 > 恰好 43 条，与 §零 的口径一致。`variables.scss` 里还有文档未出现的档位（`$r-px1`、`$s-px10/14/18`、
-> `$t-2xl/3xl/4xl`、`$r-0/2xl/xl` 等），完整对照见 [参考/token-shorthand.md](参考/token-shorthand.md)，
+> `$t-2xl/3xl/4xl`、`$r-0/2xl/xl` 等），完整对照见 [参考/token-shorthand.md](../参考/token-shorthand.md)，
 > 将来新增内容时按那张表取，不要在这里临时造名。
 
 | 旧名 | 新名 | 旧名 | 新名 |

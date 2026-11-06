@@ -91,25 +91,37 @@
   }
 }
 
-// 移动端：对话框关闭按钮与底部操作按钮放大，保证触摸可点
-@media (max-width: $bp-mobile) {
+// 移动端：视觉尺寸保持 32–36px（Primer medium 档），关闭按钮命中区扩到 40px
+@include mobile {
   .rss-reader-panel {
     .rss-add-dialog,
     .rss-settings-panel {
       .dialog-header,
       .settings-header {
-        min-height: 44px;
+        min-height: 40px;
+        padding: $s-1 $s-2;
 
         .close-btn {
-          width: 40px;
-          height: 40px;
+          @include touch-area;
+          width: 32px;
+          height: 32px;
+          font-size: $t-base;
         }
       }
 
-      .dialog-footer button {
-        min-height: 40px;
-        padding-left: $s-4;
-        padding-right: $s-4;
+      // 添加订阅源的 URL/分组输入框：按内容撑高仅约 33px，抬到 36px 保证可点
+      .dialog-body input {
+        min-height: 36px;
+      }
+
+      .dialog-footer {
+        padding: $s-1 $s-2;
+
+        button {
+          min-height: 36px;
+          padding-left: $s-4;
+          padding-right: $s-4;
+        }
       }
     }
   }

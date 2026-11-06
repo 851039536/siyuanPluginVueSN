@@ -117,11 +117,24 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    // 阻断滚动链：滚到边界时不再带着宿主/抽屉一起动
+    overscroll-behavior: contain;
     // 右侧留白，避免滚动条/内容紧贴侧边栏
     padding-right: $s-2;
 
     &::-webkit-scrollbar { width: 4px; }
     &::-webkit-scrollbar-thumb { background: var(--b3-theme-surface-lighter); border-radius: $r-px2; }
+  }
+
+  // 文章列表的工具栏在 .rss-content 滚动容器内，吸顶后长列表滚动到底仍可点返回
+  .rss-content .rss-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--b3-theme-background);
+    // 铺满 .rss-content 的右侧留白，避免滚动内容从工具栏右缘露出
+    margin-right: -$s-2;
+    padding-right: $s-3 + $s-2;
   }
 }
 @keyframes spin {
@@ -134,13 +147,20 @@
   animation: spin 1s linear infinite;
 }
 
-// 移动端：顶部图标按钮放大到可稳定点按的尺寸（桌面端 26px 对触摸过小）
-@media (max-width: $bp-mobile) {
+// 移动端：控件视觉尺寸取 32px（Primer medium 按钮），命中区用伪元素扩到 40px，
+// 避免上一版「把边框盒子直接放大到 40px」导致的三条工具带吃掉近 150px 竖向空间。
+@include mobile {
   .rss-reader-panel {
     .rss-toolbar {
+      gap: $s-2;
+      padding: $s-1 $s-2;
+
       .rss-toolbar-btn {
-        width: 40px;
-        height: 40px;
+        @include touch-area;
+        width: 32px;
+        height: 32px;
+        // 图标默认 1em：16px 是 GitHub octicon 的移动端口径
+        font-size: $t-base;
       }
 
       .rss-toolbar-title {
@@ -149,9 +169,35 @@
       }
     }
 
-    .rss-search-bar .rss-search-clear {
-      width: 40px;
-      height: 40px;
+    .rss-search-bar {
+      padding: $s-1 $s-2;
+
+      // 输入框保留 36px（低于 32 聚焦手感明显变差），与 32px 清空按钮共用 44px 行高
+      input {
+        min-height: 36px;
+      }
+
+      .rss-search-clear {
+        @include touch-area-y;
+        width: 32px;
+        height: 32px;
+        font-size: $t-base;
+      }
+    }
+
+    .rss-filter-bar {
+      gap: $s-px6;
+      padding: $s-1 $s-2;
+
+      .filter-tag {
+        // 筛选条是 overflow-x: auto 的滚动容器，命中区高度取条形框高（36px），
+        // 超出会产生纵向可滚动溢出（滚动条/回弹），故不用 40px
+        @include touch-area-y(36px);
+        // 视觉 28px 的胶囊；实测比 40px 高的胶囊省 12px 竖向空间
+        min-height: 28px;
+        padding: 0 $s-px10;
+        font-size: $t-xs;
+      }
     }
   }
 }

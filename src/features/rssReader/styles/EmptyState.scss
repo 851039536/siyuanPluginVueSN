@@ -28,3 +28,15 @@
     }
   }
 }
+
+// 移动端：空态纵向留白收紧，引导按钮 36px
+@include mobile {
+  .rss-reader-panel .rss-empty-state {
+    padding: $s-8 $s-4;
+
+    .empty-action {
+      min-height: 36px;
+      padding: 0 $s-4;
+    }
+  }
+}

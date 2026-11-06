@@ -33,8 +33,9 @@
         </button>
       </div>
       <span class="detail-actions">
-        <!-- 朗读/停止朗读按钮 -->
+        <!-- 朗读/停止朗读按钮（WebView 无 speechSynthesis 时隐藏） -->
         <button
+          v-if="ttsSupported"
           :title="ttsPlaying ? i18n.ttsStop : i18n.ttsStart"
           @click="speakArticle(item)"
         >
@@ -114,7 +115,7 @@ const emit = defineEmits<{
   openInBrowser: []
 }>()
 
-const { ttsPlaying, speakArticle } = useTtsReader()
+const { ttsPlaying, ttsSupported, speakArticle } = useTtsReader()
 
 // ===== 文章详情内容处理 =====
 // RSS 正文是第三方不受信内容，v-html 渲染前必须经 DOMPurify 消毒（项目 v-html 规范）

@@ -72,3 +72,43 @@
     }
   }
 }
+
+// 移动端：设置页表单控件统一到 36px（Primer medium 32px 与输入框可点下限之间），
+// 共享 Select 传的是 xsmall 档（触发器 22px / 选项约 20px），这里局部抬高，不改组件默认档位。
+@include mobile {
+  .rss-reader-panel .rss-settings-panel {
+    .settings-body {
+      padding: $s-2 $s-3;
+
+      .setting-item input {
+        min-height: 36px;
+      }
+
+      .rss-setting-select {
+        .si-select__trigger {
+          min-height: 36px;
+          padding: $s-1 $s-3;
+          font-size: $t-xs;
+        }
+
+        .si-select__option {
+          display: flex;
+          align-items: center;
+          min-height: 36px;
+          padding: 0 $s-4;
+          font-size: $t-xs;
+        }
+      }
+    }
+
+    .opml-btn {
+      min-height: 36px;
+      padding: 0 $s-4;
+    }
+
+    .opml-import-row input[type="file"]::file-selector-button {
+      min-height: 32px;
+      padding: 0 $s-3;
+    }
+  }
+}

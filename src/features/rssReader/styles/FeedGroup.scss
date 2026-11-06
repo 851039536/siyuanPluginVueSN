@@ -203,29 +203,68 @@
   }
 }
 
-// 移动端：FeedGroup 的操作按钮原为 hover 显形（触摸设备无 hover），改为常驻并放大
-@media (max-width: $bp-mobile) {
+// 移动端：hover 显形的操作改常驻；按钮视觉保持 28–32px，命中区用伪元素扩展，
+// 不为放大牺牲标题宽度（3 个订阅源操作原先各占 40px，共吃掉 124px 横向空间）。
+@include mobile {
   .rss-reader-panel .rss-feed-list {
     .feed-group {
       .feed-group-header {
-        min-height: 44px;
+        min-height: 40px;
+        padding: $s-1 $s-3;
+
+        // 分组名/计数按 12px 下限，10px 在手机上难读
+        .group-label,
+        .group-count { font-size: $t-xs; }
+
+        .group-rename-input {
+          min-height: 32px;
+          font-size: $t-xs;
+        }
 
         .group-action-btn {
-          width: 40px;
-          height: 40px;
+          @include touch-area-y;
+          width: 28px;
+          height: 28px;
+          font-size: $t-base;
           opacity: 1;
         }
       }
 
       .feed-item {
-        min-height: 48px;
+        min-height: 44px;
 
         .feed-actions {
+          gap: $s-1;
           opacity: 1;
 
           button {
-            width: 40px;
-            height: 40px;
+            // 无边框图标按钮：视觉 32px、命中 32px（远高于 WCAG AA 的 24px）
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            font-size: $t-base;
+          }
+        }
+
+        .move-group-menu {
+          .move-option {
+            display: flex;
+            align-items: center;
+            min-height: 36px;
+            padding: 0 $s-3;
+            font-size: $t-xs;
+          }
+
+          .new-group-option {
+            // 新建分组行是输入框容器，保持块级：flex + width:100% 会按 input 的 min-content 撑破菜单
+            display: block;
+            padding: $s-1 $s-2;
+
+            input {
+              min-height: 32px;
+              font-size: $t-xs;
+            }
           }
         }
       }

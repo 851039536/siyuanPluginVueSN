@@ -289,6 +289,54 @@ $lh-relaxed: 1.75;
 - `iconPosition` 支持 `left` / `right` / `top` / `bottom`，纵向堆叠时 `&__text` 自动改为 `flex: none`
 - `block` 块级按钮的文案在剩余空间内居中（`.si-button--block .si-button__text { justify-content: center }`），兼容 `iconPosition: right` 时图标贴右
 
+## 强制规则：移动端密度与触摸目标（2026-11-06）
+
+移动端**不靠放大控件解决可点性**：把带边框的盒子整体撑到 40px，会让一屏全是框、内容被挤走。
+统一采用「视觉紧凑 + 命中区扩展」两层：视觉 28–36px，命中区由透明伪元素扩到 40px，不参与布局。
+依据（Primer：AA 最低 24px、移动端建议 44px、medium 按钮 32px；移动端排版阶梯只缩大标题）与落地数据见
+[docs/参考/mobile-ui-density.md](./docs/参考/mobile-ui-density.md)。
+
+### 规则
+
+1. **命中区与视觉分离**：图标按钮视觉 32px、输入/胶囊 28–36px；命中区 ≥40px，用 `::after` 绝对定位扩展，**禁止用 padding/width 撑大布局**
+2. **只在不重叠的方向扩展**：工具栏等独立按钮可四周扩展；同一行紧邻的按钮/胶囊只做竖向扩展（横向保持自身宽度），否则两个 40px 命中区重叠会误触
+3. **相邻命中区之间留 8px**：视觉 32px + gap 8px = 40px 中心距，两个 40px 命中区刚好相接
+4. **字号不随屏幕放大**：正文 14px、元信息 12px（移动端禁用 10px，徽章除外）；只有展示型大标题在移动端降一档
+5. **竖向空间优先压缩**：工具栏 ~40px、筛选胶囊 28px、列表行 44–48px、详情头 40px；**单个次要操作不新开一行**（并入标题行右侧或收进省略菜单）
+6. **横向空间可换竖向**：行内操作在触摸设备常驻（无 hover），但去掉边框/底色、图标统一 16px，避免「一排大盒子」占宽
+7. **列表摘要移动端限 1 行**，完整内容进详情页
+8. **断点必须带粗指针兜底**：`@media (max-width: $bp-mobile), (pointer: coarse) and (hover: none)`；`hover: none` 用于避免误伤触摸屏笔记本，同时覆盖手机横屏（≥769px）
+9. **`<style>` 非 scoped 时禁用 `:deep()`**：会原样进产物导致整条规则失效（rssReader 正文图片限宽曾因此失效），直接写后代选择器
+
+### 参考数值（桌面 → 移动）
+
+| 元素 | 桌面 | 移动端 |
+|------|------|--------|
+| 面板/列表正文 | 14px | 14px |
+| 元信息/次要文字 | 12px（徽章允许 10px） | 12px |
+| 图标按钮视觉 | 22–26px | 32px（图标 16px） |
+| 命中区 | 控件本身 | 40px（伪元素，不占布局） |
+| 工具栏高度 | 36px | 40px |
+| 筛选胶囊 | 20px | 28px（竖向命中 36px，受横向滚动容器高度限制） |
+| 列表行 | 40–48px | 44–48px |
+| 输入 / 下拉 | 22–30px | 36px |
+| 卡片内 gap | 3–8px | 2–6px |
+
+### 审查检查点
+
+1. grep `@media (max-width: $bp-mobile)`：是否已带 `(pointer: coarse) and (hover: none)` 兜底？
+2. 移动端是否还在用 `width/height: 40px` 的带边框盒子撑空间？应改为 32px 视觉 + 伪元素命中区
+3. 同一行相邻按钮是否只做了竖向扩展？中心距是否 ≥40px？
+4. 移动端是否出现 10px 的正文/元信息？
+5. 是否为单个次要操作新开了一整行？
+6. 非 scoped 样式里是否残留 `:deep()`？
+
+### 参考实现
+
+- `src/features/rssReader/styles/_mixins.scss`（`mobile` / `touch-area` / `touch-area-y`）
+- `src/features/rssReader/styles/index.scss`、`ArticleList.scss`（工具栏、筛选胶囊、卡片标题行内收藏）
+- `src/index.scss`（`.vp-dock-panel` 底部安全区）
+
 ## 强制规则：背景与过渡对齐 gitPush 范式（2026-09-02）
 
 **所有功能的背景层级与过渡动效必须对齐 `src/features/gitPush/styles/` 范式**，禁止各功能自创背景方案（如 surface 弹窗内嵌 background 内容的反向层级、backdrop-filter 毛玻璃、回弹缓动等）。

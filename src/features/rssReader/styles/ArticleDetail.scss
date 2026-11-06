@@ -39,6 +39,8 @@
 
     .detail-content {
       flex: 1; overflow-y: auto; padding: $s-3;
+      // 阻断滚动链：正文滚到边界时不再带动宿主/抽屉
+      overscroll-behavior: contain;
 
       .detail-title {
         font-size: $t-base; font-weight: $fw-semibold;
@@ -65,20 +67,35 @@
           margin-right: $s-px2;
         }
       }
+      // 本文件由非 scoped 的 <style> 引入，禁止使用 :deep()（会原样进产物、整条规则失效）；
+      // 直接写后代选择器即可命中 v-html 内容
       .detail-body {
-        font-size: $t-sm; line-height: 1.7;
+        font-size: $t-sm; line-height: 1.6;
         color: var(--b3-theme-on-background);
-        :deep(img) { max-width: 100%; height: auto; border-radius: $r-sm; }
-        :deep(a) { color: $rr-accent; text-decoration: none; &:hover { text-decoration: underline; } }
-        :deep(pre) {
+        // 订阅源正文里的超长 URL/无空格串：允许断行，避免撑破容器后被面板裁掉
+        word-break: break-word;
+        img { max-width: 100%; height: auto; border-radius: $r-sm; }
+        a { color: $rr-accent; text-decoration: none; &:hover { text-decoration: underline; } }
+        pre {
           background: var(--b3-theme-surface-lighter);
           padding: $s-2; border-radius: $r-sm;
           overflow-x: auto; font-size: $t-xs;
         }
-        :deep(blockquote) {
+        blockquote {
           border-left: 3px solid $rr-accent;
           padding-left: $s-2; margin-left: 0;
           color: var(--b3-theme-on-surface-muted);
+        }
+        // 宽表格：面板 overflow: hidden，不给横向滚动会被直接裁掉
+        table {
+          display: block;
+          width: 100%;
+          overflow-x: auto;
+          border-collapse: collapse;
+        }
+        th, td {
+          padding: $s-1 $s-2;
+          border: 1px solid var(--b3-border-color);
         }
       }
     }
@@ -114,25 +131,51 @@
   }
 }
 
-// 移动端：详情页返回/收藏/字号等操作放大到触摸可用尺寸
-@media (max-width: $bp-mobile) {
+// 移动端：详情页操作视觉 32px（Primer medium 档），命中区由伪元素扩到 40px
+@include mobile {
   .rss-reader-panel .rss-item-detail {
     .detail-header {
-      min-height: 44px;
+      min-height: 40px;
+      padding: $s-1 $s-2;
+      // 极窄屏（320px）下操作区放不下时换行，而不是被压缩到不可点
+      flex-wrap: wrap;
 
       .back-btn {
-        width: 40px;
-        height: 40px;
+        @include touch-area;
+        width: 32px;
+        height: 32px;
+        font-size: $t-base;
+      }
+
+      .detail-font-controls {
+        gap: $s-px3;
+
+        .font-btn {
+          @include touch-area-y;
+          width: 32px;
+          height: 32px;
+          font-size: $t-sm;
+        }
+
+        .font-size-label { font-size: $t-xs; }
       }
 
       .detail-actions button {
-        min-height: 40px;
+        @include touch-area-y;
+        min-width: 36px;
+        height: 32px;
+        font-size: $t-base;
+
+        .btn-label { font-size: $t-xs; }
       }
     }
 
-    .detail-font-controls .font-btn {
-      width: 40px;
-      height: 40px;
+    // 窄屏阅读区：横向保留 16px 阅读留白，纵向收紧到 12px
+    .detail-content {
+      padding: $s-3 $s-4;
+
+      // 元信息键（作者/日期标签）按 12px 下限，10px 在手机上难读
+      .detail-meta .meta-key { font-size: $t-xs; }
     }
   }
 }

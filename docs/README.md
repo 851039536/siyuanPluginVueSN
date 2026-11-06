@@ -16,12 +16,13 @@
 - [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
 - [持久化治理与统一数据管理面板.md](持久化治理与统一数据管理面板.md)（本轮实施计划与设计裁决）
 
-## 一、参考文档（`docs/参考/`，8 份）
+## 一、参考文档（`docs/参考/`，9 份）
 
 | 文件 | 主题 | 被谁引用 |
 |---|---|---|
 | [ai-api-usage.md](参考/ai-api-usage.md) | **唯一** AI 调用参考：`aiApi.ts` 入口、标准/流式/思考模式/RAG/多轮、调用方清单 | `AGENTS.md`、`AGENTS_API.md`（共 8 处），强制规则要求新 AI 功能必须遵循 |
 | [token-shorthand.md](参考/token-shorthand.md) | SCSS 设计 Token **短名体系**（`$s-*`/`$r-*`/`$t-*`…）与旧长名完整映射表 | `src/components/kit/variables.scss` 文件头；迁移旧名的唯一依据 |
+| [mobile-ui-density.md](参考/mobile-ui-density.md) | 移动端密度与触摸目标：GitHub/Primer 依据、桌面→移动数值表、伪元素命中区与断点约束 | `AGENTS_STYLE.md` § 移动端密度与触摸目标；`rssReader/README.md` |
 | [思源笔记 API 使用.md](参考/思源笔记%20API%20使用.md) | 思源内核 API（公开/未公开）、请求响应约定、写入文件等用例 | 功能开发查内核接口时 |
 | [floating-toolbar-development.md](参考/floating-toolbar-development.md) | 浮动工具栏模块架构（动态注册、功能项管理、`src/features/floatingToolbar/`） | — |
 | [IconWrapper.README.md](参考/IconWrapper.README.md) | `IconWrapper` 图标组件用法（封装 `@iconify/vue`、样式与错误处理） | — |

@@ -481,6 +481,7 @@ db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
 - **字号层级规范**：两级字号制（`$font-size-xs` 12px / `$font-size-2xs` 10px），根容器显式设置基准字号。详见 [AGENTS_STYLE.md § 强制规则：字号层级与全局基准字号](./AGENTS_STYLE.md#强制规则字号层级与全局基准字号)
 - **背景与过渡 gitPush 范式**：弹窗/面板底色 `background` + 卡片 `surface` 凸出；遮罩 `rgba(0,0,0,0.5)` 禁 `backdrop-filter`；过渡统一 0.12s ease（fade + scale 0.98），禁自定义缓动与装饰性 `letter-spacing`；全屏遮罩 `z-index: 10000`。详见 [AGENTS_STYLE.md § 强制规则：背景与过渡对齐 gitPush 范式](./AGENTS_STYLE.md#强制规则背景与过渡对齐-gitpush-范式2026-09-02)
 - **Dock 面板侧边栏间距**：滚动内容不得紧贴侧边栏，根容器必须 `padding-right` ≥ `$spacing-2`。详见 [AGENTS_STYLE.md § 强制规则：Dock 面板侧边栏间距](./AGENTS_STYLE.md#强制规则dock-面板侧边栏间距)
+- **移动端密度与触摸目标**：视觉 28–36px + 40px 伪元素命中区（禁止把带边框的盒子放大到 40px）；同一行相邻控件只做竖向扩展；断点必须带 `(pointer: coarse) and (hover: none)` 兜底；非 scoped 样式禁用 `:deep()`。详见 [AGENTS_STYLE.md § 强制规则：移动端密度与触摸目标](./AGENTS_STYLE.md#强制规则移动端密度与触摸目标2026-11-06)
 - **AI 调用统一入口**：必须走 `@/utils/aiApi` 的 `callAI` / `callAISmart` / `callAIChat`，禁止直接 `fetch` 或硬编码 Key/端点。详见 [AGENTS_API.md § 强制规则：AI 调用](./AGENTS_API.md#强制规则ai-调用) 与 [docs/参考/ai-api-usage.md](./docs/参考/ai-api-usage.md)
 - **定时任务统一入口**：新增定时任务必须走 `@/utils/timerRegistry` 的 `TimerRegistry`（`setInterval` / `setTimeout` / `clear` / `clearAll`），禁止裸 `setInterval` / `setTimeout`；句柄类型统一为 `TimerHandle`（`ReturnType<typeof setInterval>`），动态启停必须通过 `clear(handle)` / `clearAll()`，生命周期随功能实例 destroy/stop 清理。详见 [AGENTS_API.md § 定时器](./AGENTS_API.md#定时器)
 - **Dock 预加载统一入口**：需要启动预载的 Dock 功能必须通过 `@/utils/dockPreload` 的 `registerDockPreload` 注册（labels 从 `plugin.i18n.<feature>` 提取），启动预载由插件启动链路 `runAllDockPreloads()` 统一执行；手动/定时刷新走 `refreshDockPreload(id)`（带状态栏三态与 loading 防重），面板打开用 `getDockPreloadState(id)` 分流（ready→直接用 / loading→等待 / idle|error→兜底刷新），禁止在 register/init 中自行散落预载逻辑或面板打开时重复全量刷新。详见 [AGENTS_API.md § Dock 预加载](./AGENTS_API.md#dock-预加载)
@@ -709,7 +710,7 @@ src/
 | 分片文件 | 内容 | 使用场景 |
 |------|------|------|
 | [AGENTS_API.md](./AGENTS_API.md) | API 参考（存储/Dock/Modal/事件/状态栏/DOM/Node/加密/AI/开关/设置/快捷键）、路径别名、文件路径、承载模式（Vue 实例常驻/底部面板/独立窗口）、跨功能联动规则与示例、AI 调用规则 | 新功能开发时查询 API 用法、跨功能联动规则与示例 |
-| [AGENTS_STYLE.md](./AGENTS_STYLE.md) | UI 风格 Codex（设计 Token 全表/核心规范/`.vp-*` 组件模式库/禁止事项）、字号层级、Dock 侧边栏间距、SCSS 分离、内置字体 | 编写或审查 SCSS 样式时 |
+| [AGENTS_STYLE.md](./AGENTS_STYLE.md) | UI 风格 Codex（设计 Token 全表/核心规范/`.vp-*` 组件模式库/禁止事项）、字号层级、按钮交互、移动端密度与触摸目标、Dock 侧边栏间距、SCSS 分离、内置字体 | 编写或审查 SCSS 样式时 |
 | [AGENTS_ARCH.md](./AGENTS_ARCH.md) | Composable 提取、文件头注释、单文件行数上限、模块提取判定标准、组件文件夹组织标准 | 代码组织、组件拆分、目录结构规划时 |
 | [AGENTS_I18N.md](./AGENTS_I18N.md) | i18n 不生效问题排查、禁止 i18n 硬编码兜底值 | 处理 i18n 文案或排查翻译不生效时 |
 | [AGENTS_BUILD.md](./AGENTS_BUILD.md) | 构建与验证、单元测试（Vitest）、viteStaticCopy stripBase、依赖清单 | 构建配置、静态资源复制、验证流程、编写/维护单元测试时 |

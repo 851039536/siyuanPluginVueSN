@@ -13,7 +13,7 @@
         <Icon icon="mdi:arrow-left" />
       </button>
       <div class="rss-toolbar-title">
-        {{ filterTitle }}
+        <span class="rss-toolbar-text">{{ filterTitle }}</span>
       </div>
       <!-- 全部标记已读按钮 -->
       <button
@@ -49,16 +49,11 @@
           <span class="item-feed-tag">{{ item.feedTitle }}</span>
           <span class="item-date">{{ formatRelativeDate(item.pubDate, i18n) }}</span>
         </div>
-        <div class="item-title">
-          {{ item.title }}
-        </div>
-        <div
-          v-if="showDescription && item.description"
-          class="item-desc"
-        >
-          {{ item.description }}
-        </div>
-        <div class="item-footer">
+        <!-- 标题行：收藏按钮并入首行右侧，不再为单个操作单开一行底栏 -->
+        <div class="item-title-row">
+          <div class="item-title">
+            {{ item.title }}
+          </div>
           <!-- 收藏切换按钮 -->
           <button
             class="item-star-btn"
@@ -68,6 +63,12 @@
           >
             <Icon :icon="item.starred ? 'mdi:star' : 'mdi:star-outline'" />
           </button>
+        </div>
+        <div
+          v-if="showDescription && item.description"
+          class="item-desc"
+        >
+          {{ item.description }}
         </div>
       </div>
     </div>

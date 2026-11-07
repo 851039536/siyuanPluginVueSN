@@ -196,7 +196,7 @@
       @close="taggingEntry = null"
     />
 
-    <!-- 工作区文件浏览器（顶栏「浏览工作区文件」入口；只读整库文件树 + 类型预览） -->
+    <!-- 工作区文件浏览器（顶栏「浏览工作区文件」入口；只读整库文件树 + 类型预览 + 底部脚本面板） -->
     <WorkspaceExplorerDialog
       v-if="showWorkspaceFiles"
       :project="project"

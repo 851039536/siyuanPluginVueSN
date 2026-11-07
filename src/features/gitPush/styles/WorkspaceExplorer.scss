@@ -88,11 +88,45 @@
   color: var(--b3-theme-error);
 }
 
-// ── 左右分栏 ──
-// 固定视口比例高度：内容区在 90vh 上限内收缩，树与预览各自内部滚动（不撑破弹窗）
-.we-split {
+// ── 主体：文件区 + 底部项目脚本面板 ──
+// 固定高度：内容区在 90vh 上限内收缩，文件树/预览/脚本面板各自内部滚动（不撑破弹窗）
+.we-body {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
   height: min(70vh, 780px);
   min-height: 240px;
+}
+
+// 展开脚本面板：纵向分栏（上文件区 / 下脚本面板，分隔条可拖动）
+.we-body-split {
+  height: 100%;
+}
+
+// 纵向分栏的面板内容交给内层布局：默认 overflow:auto 会在嵌套分栏时多出外层滚动条
+.we-body-split > .si-splitter-panel > .si-splitter-panel__content {
+  overflow: hidden;
+}
+
+// 文件区（状态分流 + 左右分栏都在 WorkspaceExplorerMain 内）
+.we-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+// 脚本面板收起时：文件区占满剩余高度（面板本体只留头部栏）
+.we-body > .we-main {
+  flex: 1;
+  height: auto;
+}
+
+// ── 左右分栏 ──
+.we-split {
+  height: 100%;
+  min-height: 0;
 }
 
 // Splitter 根铺满分栏区；面板宽度由 Splitter 百分比控制（默认 38% / 62%，可拖动/方向键调整）

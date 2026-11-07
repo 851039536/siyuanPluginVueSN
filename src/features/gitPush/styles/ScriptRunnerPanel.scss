@@ -1,0 +1,306 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 项目脚本面板（工作区浏览器底部）：头部栏 + 左脚本列表 / 右运行输出
+// 视觉与 WorkspaceExplorer.scss 同口径（$r-sm 描边容器、surface 头部、两级字号）
+
+.we-scripts {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
+
+  // 收起态：只留头部栏（父层按内容高度排布）
+  &.is-collapsed {
+    height: auto;
+    flex: 0 0 auto;
+  }
+}
+
+// ── 头部栏 ──
+.we-scripts-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px2 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+
+  // 收起时头部即面板本体，不再画底部分隔线
+  .we-scripts.is-collapsed & {
+    border-bottom: none;
+  }
+}
+
+// 折叠切换区（chevron + 标题 + 项目名 + 运行计数）
+.we-scripts-toggle {
+  @include btn-reset;
+
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: $s-px6;
+  text-align: left;
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: 2px;
+  }
+}
+
+.we-scripts-chev {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.we-scripts-icon {
+  flex-shrink: 0;
+  color: var(--b3-theme-primary);
+}
+
+.we-scripts-title {
+  flex-shrink: 0;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-background);
+  white-space: nowrap;
+}
+
+.we-scripts-project {
+  @include text-ellipsis;
+
+  max-width: 200px;
+  font-size: $t-2xs;
+  opacity: 0.6;
+}
+
+.we-scripts-running {
+  flex-shrink: 0;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-primary);
+}
+
+// ── 主体（左列表 / 右输出）──
+.we-scripts-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.we-scripts-split {
+  height: 100%;
+}
+
+// ── 脚本列表 ──
+.we-scripts-list {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: $s-px6;
+  height: 100%;
+  padding: $s-2;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.we-scripts-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+}
+
+// 空态补充说明（支持范围）
+.we-scripts-empty-hint {
+  padding: 0 $s-2;
+  font-size: $t-2xs;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.we-scripts-group {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px3;
+}
+
+.we-scripts-group-head {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px2 0;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.75;
+}
+
+.we-scripts-group-title {
+  flex-shrink: 0;
+  font-weight: $fw-semibold;
+}
+
+.we-scripts-group-source {
+  @include text-ellipsis;
+
+  font-family: $ff-mono;
+  opacity: 0.7;
+}
+
+// 脚本行：紧凑单行（标签 + 命令预览 + 运行/停止）
+.we-scripts-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  min-height: 24px; // 行高下限：容纳 dense 按钮（20px）+ 上下各 2px
+  padding: $s-px1 $s-2;
+  border: 1px solid transparent;
+  border-radius: $r-sm;
+  transition: background 0.12s, border-color 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.is-attachable {
+    cursor: pointer;
+  }
+
+  &.is-running {
+    border-color: var(--b3-theme-primary);
+  }
+
+  // 当前输出区接入的脚本
+  &.is-attached {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.we-scripts-label {
+  @include text-ellipsis;
+
+  flex-shrink: 0;
+  max-width: 140px;
+  font-size: $t-xs;
+  font-weight: $fw-medium;
+  color: var(--b3-theme-on-background);
+}
+
+.we-scripts-preview {
+  @include text-ellipsis;
+
+  flex: 1;
+  min-width: 0;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+// ── 运行输出 ──
+.we-scripts-console {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.we-scripts-console-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px2 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  font-size: $t-2xs;
+}
+
+.we-scripts-console-title {
+  @include text-ellipsis;
+
+  min-width: 0;
+  font-weight: $fw-semibold;
+  opacity: 0.75;
+}
+
+.we-scripts-status {
+  flex-shrink: 0;
+  opacity: 0.7;
+
+  &.is-running {
+    color: var(--b3-theme-primary);
+    opacity: 1;
+  }
+
+  &.is-fail {
+    color: var(--b3-theme-error);
+    opacity: 1;
+  }
+}
+
+.we-scripts-spacer {
+  flex: 1;
+}
+
+// 一次性提示条（并发上限等）
+.we-scripts-notice {
+  flex-shrink: 0;
+  padding: $s-px3 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  font-size: $t-2xs;
+  color: var(--b3-theme-error);
+}
+
+.we-scripts-output {
+  @include output-base;
+
+  flex: 1;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  // 宿主继承链上有 user-select:none，须显式放行才能选中复制
+  user-select: text;
+  -webkit-user-select: text;
+
+  pre {
+    min-height: 100%;
+    color: var(--b3-theme-on-background);
+  }
+}
+
+// 输出中的 http(s) 链接
+.we-scripts-link {
+  color: var(--b3-theme-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+// 无输出时的占位提示
+.we-scripts-output-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 80px;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}

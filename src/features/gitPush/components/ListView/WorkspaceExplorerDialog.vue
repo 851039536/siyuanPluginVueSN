@@ -1,4 +1,4 @@
-<!-- gitPush 工作区文件浏览器（只读 Explorer：整库文件树 + 路径筛选 + 类型预览 + 变更角标） -->
+<!-- gitPush 工作区文件浏览器（只读 Explorer：整库文件树 + 路径筛选 + 类型预览 + 变更角标 + 底部项目脚本面板） -->
 <template>
   <!-- 外壳（遮罩 / 定位 / 层级 / Esc / 焦点归还 / 过渡）由共享 Dialog 承担 -->
   <Dialog
@@ -105,91 +105,85 @@
       {{ `${i18n.workspaceFilesLoadFailed}: ${error}` }}
     </div>
 
-    <!-- 空态："项目路径不可用" -->
-    <EmptyState
-      v-if="!projectPath"
-      icon="mdi:folder-alert-outline"
-      :text="i18n.workspaceFilesNoPath"
-    />
-
-    <!-- 空态："读取文件列表失败"（保留重试入口，按钮文案"刷新文件列表"） -->
-    <EmptyState
-      v-else-if="error && files.length === 0"
-      icon="mdi:alert-outline"
-      :text="`${i18n.workspaceFilesLoadFailed}: ${error}`"
-    >
-      <template #action>
-        <Button
-          variant="ghost"
-          size="xsmall"
-          icon="refresh"
-          @click="refresh"
+    <!-- 主体：上方文件区 + 底部项目脚本面板（展开时纵向分栏可拖高；收起时只留面板头） -->
+    <div class="we-body">
+      <template v-if="scriptsOpen">
+        <Splitter
+          class="we-body-split"
+          layout="vertical"
+          :gutter-size="8"
+          state-key="gitpush-workspace-explorer-vertical"
+          state-storage="session"
         >
-          {{ i18n.workspaceFilesRefresh }}
-        </Button>
-      </template>
-    </EmptyState>
-
-    <!-- 加载态："加载中..." -->
-    <EmptyState
-      v-else-if="loading && files.length === 0"
-      icon="mdi:loading"
-      spin
-      :text="i18n.loading"
-    />
-
-    <!-- 左右分栏：文件树 + 预览（分隔条可拖动调整宽度，方向键亦可微调） -->
-    <div
-      v-else
-      class="we-split"
-    >
-      <Splitter
-        class="we-splitter"
-        layout="horizontal"
-        :gutter-size="8"
-        state-key="gitpush-workspace-explorer-split"
-        state-storage="session"
-      >
-        <SplitterPanel
-          :size="38"
-          :min-size="20"
-          :max-size="70"
-        >
-          <div class="we-tree-pane">
-            <!-- 空态："工作区没有文件" / 筛选无命中："没有匹配的文件" -->
-            <EmptyState
-              v-if="rows.length === 0"
-              icon="mdi:file-find-outline"
-              :text="query.trim() ? i18n.workspaceFilesEmptyFiltered : i18n.workspaceFilesEmpty"
-            />
-            <WorkspaceFileTree
-              v-else
+          <SplitterPanel
+            :size="72"
+            :min-size="35"
+          >
+            <div class="we-main">
+              <WorkspaceExplorerMain
+                :i18n="i18n"
+                :project-path="projectPath"
+                :files="files"
+                :loading="loading"
+                :error="error"
+                :rows="rows"
+                :expanded-dirs="expandedDirs"
+                :selected-path="selectedPath"
+                :query="query"
+                :change-map="changeMap"
+                @select="selectedPath = $event"
+                @toggle-dir="toggleDir"
+                @open-changes="(path) => emit('openChanges', path)"
+                @refresh="refresh"
+              />
+            </div>
+          </SplitterPanel>
+          <SplitterPanel
+            :size="28"
+            :min-size="14"
+          >
+            <ScriptRunnerPanel
+              :project="project"
               :i18n="i18n"
-              :rows="rows"
-              :expanded-dirs="expandedDirs"
-              :selected-path="selectedPath"
-              :query="query"
-              :change-map="changeMap"
-              @select="selectedPath = $event"
-              @toggle-dir="toggleDir"
-              @open-changes="(path) => emit('openChanges', path)"
+              :expanded="true"
+              @toggle="scriptsOpen = false"
             />
-          </div>
-        </SplitterPanel>
-        <SplitterPanel :size="62" :min-size="30">
-          <WorkspaceFilePreview
+          </SplitterPanel>
+        </Splitter>
+      </template>
+      <template v-else>
+        <div class="we-main">
+          <WorkspaceExplorerMain
             :i18n="i18n"
             :project-path="projectPath"
-            :file-path="selectedPath"
+            :files="files"
+            :loading="loading"
+            :error="error"
+            :rows="rows"
+            :expanded-dirs="expandedDirs"
+            :selected-path="selectedPath"
+            :query="query"
+            :change-map="changeMap"
+            @select="selectedPath = $event"
+            @toggle-dir="toggleDir"
+            @open-changes="(path) => emit('openChanges', path)"
+            @refresh="refresh"
           />
-        </SplitterPanel>
-      </Splitter>
+        </div>
+        <ScriptRunnerPanel
+          :project="project"
+          :i18n="i18n"
+          :expanded="false"
+          @toggle="scriptsOpen = true"
+        />
+      </template>
     </div>
   </Dialog>
 </template>
 
 <script setup lang="ts">
-// gitPush 工作区文件浏览器（编排层：数据经 manager 按需拉取，树行由 utils/fileTree 构建，预览/树为纯展示子组件）
+// gitPush 工作区文件浏览器（编排层：数据经 manager 按需拉取，树行由 utils/fileTree 构建，
+// 文件主区 / 树 / 预览 / 底部项目脚本面板均为纯展示子组件）
 import type { FileChange, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, onMounted, ref } from "vue"
@@ -206,9 +200,8 @@ import Dialog from "@/components/Dialog.vue"
 import Input from "@/components/Input.vue"
 import Splitter from "@/components/Splitter.vue"
 import SplitterPanel from "@/components/SplitterPanel.vue"
-import EmptyState from "../common/EmptyState.vue"
-import WorkspaceFilePreview from "./WorkspaceFilePreview.vue"
-import WorkspaceFileTree from "./WorkspaceFileTree.vue"
+import ScriptRunnerPanel from "./ScriptRunnerPanel.vue"
+import WorkspaceExplorerMain from "./WorkspaceExplorerMain.vue"
 
 const props = defineProps<{
   project: GitProject
@@ -243,6 +236,8 @@ const query = ref("")
 const expandedDirs = ref<ReadonlySet<string>>(new Set())
 /** 当前预览文件（相对仓库根；空串 = 未选中） */
 const selectedPath = ref("")
+/** 底部项目脚本面板是否展开（默认展开；用户可在面板头收起为一条栏） */
+const scriptsOpen = ref(true)
 
 /** 截断后的文件集（超出上限只取前 N 条） */
 const shownFiles = computed(() => (

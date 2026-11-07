@@ -18,6 +18,7 @@
 - **路径检查**：添加时检查路径是否为合法 Git 仓库
 - **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改；摘要条「目录树视图」按钮可打开**变更目录树弹窗**（VS Code 源代码管理风格：「已暂存 / 未暂存」两分区各自成树（部分暂存文件两侧分区都出现，勾选后数据驱动自动跨区移动）、变更文件按目录分组折叠、路径关键词筛选、全部展开/收起、行内暂存/丢弃/查看差异与分区级暂存全部/取消暂存全部，目录行显示子树变更计数；操作全部桥接回面板既有链路——暂存/丢弃确认/差异弹窗缓存零复制）
 - **工作区文件浏览器（只读 Explorer）**：卡片顶栏「浏览工作区文件」按钮打开整库文件树（已跟踪 + 未跟踪且未被 `.gitignore` 忽略，`git ls-files -z --cached --others --exclude-standard`），目录折叠、按扩展名图标、路径筛选（命中时自动展开父目录）、变更文件 M/A/D/R/U 角标（点击切回工作区 Tab 并打开该文件差异）、文本/Markdown/图片预览（文本 256 KB、图片 2 MB 上限，二进制只显示元信息）、**行内复制文件名称 / 文件夹名称**、复制相对路径、在文件管理器中显示、用默认程序打开；**左树/右预览分栏可拖动**（共享 Splitter：分隔条拖拽 + 方向键微调，宽度按会话记忆），**弹窗可按住标题栏在窗口内任意移动**（视口 8px 钳制）；文件数上限 2 万条。列表**仅在打开弹窗时拉取一次**，卡片挂载零 git/磁盘开销
+- **项目脚本（集成在工作区浏览器底部）**：工作区浏览器底部「项目脚本」面板（**默认展开**，可在面板头收起为一条栏；不再提供卡片顶栏独立按钮）。自动识别 `package.json` scripts（按锁文件判定 npm/pnpm/yarn）、`.NET` sln/csproj 命令与 `ps1/bat/cmd/sh` 脚本文件，点击运行/停止，左侧列表右侧实时输出（VS Code 底部 PANEL 形态）；**上/下分栏可拖高、左右脚本/输出分栏可拖动**（会话级持久化）；脚本会话由 `ScriptSessionStore` 托管 —— 收起面板或关闭弹窗都**不会中断进程**，重新展开自动接回运行中的输出；输出支持链接点击、复制、清空，并发上限 8 个
 - **差异查看弹窗**：着色 diff + 词级高亮 + 行号双列；新增/未跟踪文件同样展示完整内容（`git diff` 对未跟踪文件恒为空，数据层回退 `git diff --no-index`）；「已暂存且工作区又改动」的文件可切换查看暂存区/工作区两份差异（另一份后台预取）；取差异期间显示加载态（不再与空态混淆）；标题含全路径 tooltip、文件状态与重命名原路径；支持复制差异全文/文件路径；Esc 关闭、←/→ 切换文件
 - **提交功能**：Conventional Commit 快捷类型选择、AI 生成提交信息（基于变更统计摘要，输出单行信息，支持思考模式控制）与 AI 深度生成提交信息（读取暂存区完整 diff 理解实际改动，输出「标题行 + 改动要点列表」的多行信息；与提交历史修正弹窗的两档生成同构）
 - **AI 错误分析**：推送/拉取失败时日志面板提供「AI 分析」按钮，弹窗内流式分析失败日志，输出错误原因、解决方案与预防建议
@@ -65,6 +66,7 @@ src/features/gitPush/
 │   ├── search.ts                    # 搜索高亮片段切分
 │   ├── fileTree.ts                  # 目录树构建（变更文件树 + 整库文件树：目录分组拉平/折叠剪枝/子树计数/路径过滤）
 │   ├── workspaceFile.ts             # 工作区文件浏览：类型分类/扩展名图标/只读预览读取（文本 256 KB、图片 2 MB、二进制嗅探）
+│   ├── scriptScan.ts                # 项目脚本识别：package.json scripts / .NET 命令 / 独立脚本文件扫描与命令构建
 │   ├── runtime.ts                   # 缓存裁剪、连续并发池、并发标志计数
 │   └── errors.ts                    # 抓取失败分类与专用错误类型
 ├── managers/
@@ -83,9 +85,12 @@ src/features/gitPush/
 │   ├── historyRewritePlan.ts        # 历史重写计划类型（RewriteEntry/RewritePlan，HistoryRewriter 与 FastImportRewriter 共享）
 │   ├── BfgOps.ts                    # BFG 运行时层：Java 探测 + bfg.jar 下载缓存 + bfg 进程执行
 │   ├── RepoCleanOps.ts              # 仓库清理编排：体检扫描（纯 git）+ BFG mirror 六步工作流
-│   └── CommitMsgGenerator.ts        # AI 提交信息与 stash 描述生成（含启发式降级）
+│   ├── CommitMsgGenerator.ts        # AI 提交信息与 stash 描述生成（含启发式降级）
+│   ├── ScriptExecutor.ts            # 项目脚本子进程执行器（跨平台解释器 + 进程树停止）
+│   └── ScriptSessionStore.ts        # 脚本会话托管（进程/日志与 UI 解耦，关窗不断；并发上限与日志裁剪）
 ├── types/
 │   ├── index.ts                     # 类型桶（重导出 meta/storage + GitPushManager）
+│   ├── scripts.ts                   # 项目脚本识别结果类型 + dotnet 动词 i18n 映射
 │   ├── meta.ts                      # PLATFORM_META/FILE_STATUS_META 等共享常量（独立模块切断循环引用）
 │   ├── indexCache.ts                # 本地提交索引的记录形状与元数据常量（零依赖，保证引擎可在 Node 单测加载）
 │   ├── queryScheduler.ts            # 查询调度契约（ProjectQueryKind/ProjectQueryScheduler，切断 cardServices ↔ composable 循环）
@@ -106,6 +111,7 @@ src/features/gitPush/
 │   ├── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
 │   ├── useWorkspaceFiles.ts         # 工作区文件列表按需加载（弹窗打开才拉取 + 会话缓存 + 手动刷新）
 │   ├── useWorkspaceExplorer.ts      # 文件浏览器开关 + 角标 → 工作区差异的一次性定位请求（ProjectCard 瘦身）
+│   ├── useScriptSessions.ts         # 脚本会话表 → 响应式信号桥（面板日志镜像 / 行状态 / 运行计数共用）
 │   ├── useDayDragSelect.ts          # 日格拖拽选区状态机（热力图/日历共用：起锚 → 掠过扩展 → mouseup 收尾并抑制补发 click）
 │   └── useReportExport.ts           # 报告导出编排（校验 → 保存对话框 → 渲染 → 写盘 → 提示并打开）
 ├── components/
@@ -143,7 +149,7 @@ src/features/gitPush/
 │   │   ├── TagCommitDialog.vue      # 标签提交弹窗
 │   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/新建日期/最后修改/占比/总行数；clickable 时原生 button 可键盘激活；项目代码行数排行专用）
 │   │   └── LineShareBar.vue         # 行数占比迷你条（轨道 + 填充 + 百分比文本；详情弹窗文件明细占比列用）
-│   ├── ListView/                    # 列表视图专属（21 个）
+│   ├── ListView/                    # 列表视图专属（24 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染；提供手风琴上下文）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏（视图模式/归档/暂停/卡片布局/标签筛选）
 │   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入 + CardTabs 面板切换）
@@ -163,9 +169,11 @@ src/features/gitPush/
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
 │   │   ├── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
 │   │   ├── WorkingTreeTreeDialog.vue# 变更目录树弹窗（VS Code 源代码管理风格：目录分组折叠 + 路径筛选 + 行内暂存/丢弃，操作桥接回 WorkingTreePanel）
-│   │   ├── WorkspaceExplorerDialog.vue # 工作区文件浏览器弹窗（编排层：按需拉取 + 筛选/展开态 + 左右分栏）
+│   │   ├── WorkspaceExplorerDialog.vue # 工作区文件浏览器弹窗（编排层：按需拉取 + 筛选/展开态 + 文件区/脚本面板纵向分栏）
+│   │   ├── WorkspaceExplorerMain.vue # 文件区（路径/加载/失败/空态分流 + 左树右预览分栏，分栏宽度会话级持久化）
 │   │   ├── WorkspaceFileTree.vue    # 文件树（目录折叠/类型图标/变更角标/行内复制名称/本地分页）
-│   │   └── WorkspaceFilePreview.vue # 文件预览（文本/Markdown/图片 + 复制/定位/外部打开）
+│   │   ├── WorkspaceFilePreview.vue # 文件预览（文本/Markdown/图片 + 复制/定位/外部打开）
+│   │   └── ScriptRunnerPanel.vue    # 底部项目脚本面板（脚本识别列表 + 实时输出；收起不断进程，VS Code PANEL 形态）
 │   ├── StatsView/                   # 统计中心 · 项目状态分区（3 层信息架构 + common/ 共享组件）
 │   │   ├── index.vue               # 分区入口容器（空态 + 统一工具条 + 概览/行动/明细三层编排）
 │   │   ├── HealthOverview.vue      # 健康概览（推送状态分布条 + 四态图例 + 精简 KPI 行）
@@ -251,7 +259,8 @@ src/features/gitPush/
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
     ├── WorkingTreeTreeDialog.scss   # 变更目录树弹窗样式（目录行/缩进/工具栏；文件行复用面板 wt-* 类）
-    ├── WorkspaceExplorer.scss       # 工作区文件浏览器样式（左右分栏/树行/变更角标/预览）
+    ├── WorkspaceExplorer.scss       # 工作区文件浏览器样式（文件区/脚本面板纵向分栏、树行、变更角标、预览）
+    ├── ScriptRunnerPanel.scss       # 项目脚本面板样式（头部栏/脚本行/输出控制台，与工作区同口径）
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
     ├── BranchCommitList.scss        # 提交历史列表样式
     ├── variables.scss               # 全局 Token 透传（已废弃：引用方已统一为 @/variables.scss，可删除）

@@ -23,7 +23,7 @@ export function useWorkspaceExplorer(opts: WorkspaceExplorerOptions): {
   const focus = ref<{ file: FileChange, seq: number } | null>(null)
   let seq = 0
 
-  /** 打开文件浏览器（列表在弹窗内按需拉取，卡片挂载时不访问磁盘） */
+  /** 打开文件浏览器（列表在弹窗内按需拉取，卡片挂载时不访问磁盘；底部脚本面板由用户就地展开） */
   function open() {
     visible.value = true
   }

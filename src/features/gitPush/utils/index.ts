@@ -38,6 +38,7 @@ export {
 export {
   fileStatusIcon,
   fileStatusIconKey,
+  fileStatusLetter,
   fileStatusText,
   fileStatusTitle,
   isIconFileStatus,
@@ -148,11 +149,33 @@ export {
 
 export {
   buildFileTreeRows,
+  buildPathTreeRows,
   buildSectionedTreeRows,
+  collectDirectoryPaths,
   filterFilesByQuery,
+  filterPathsByQuery,
   topLevelDirPaths,
 } from "./fileTree"
-export type { FileTreeDirRow, FileTreeFileRow, FileTreeRow, FileTreeSectionId, FileTreeSectionRow } from "./fileTree"
+export type {
+  FileTreeDirRow,
+  FileTreeFileRow,
+  FileTreeRow,
+  FileTreeSectionId,
+  FileTreeSectionRow,
+  PathTreeDirRow,
+  PathTreeFileRow,
+  PathTreeRow,
+} from "./fileTree"
+
+export {
+  classifyWorkspaceFile,
+  IMAGE_PREVIEW_LIMIT,
+  readWorkspaceFilePreview,
+  resolveWorkspacePath,
+  TEXT_PREVIEW_LIMIT,
+  workspaceFileIcon,
+} from "./workspaceFile"
+export type { WorkspaceFileKind, WorkspaceFilePreview } from "./workspaceFile"
 
 export {
   classifyFetchFailure,

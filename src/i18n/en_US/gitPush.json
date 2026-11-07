@@ -1098,6 +1098,30 @@
     "fileTreeSearchPlaceholder": "Filter file paths...",
     "fileTreeExpandAll": "Expand all",
     "fileTreeCollapseAll": "Collapse all",
-    "fileTreeEmptyFiltered": "No matching changed files"
+    "fileTreeEmptyFiltered": "No matching changed files",
+
+    "workspaceFilesButton": "Browse workspace files",
+    "workspaceFilesTitle": "Workspace files",
+    "workspaceFilesSearchPlaceholder": "Filter file paths...",
+    "workspaceFilesRefresh": "Refresh file list",
+    "workspaceFilesCollapseAll": "Collapse all",
+    "workspaceFilesCount": "{0} files",
+    "workspaceFilesCapped": "Too many files; showing the first {0}",
+    "workspaceFilesEmpty": "No files in workspace",
+    "workspaceFilesEmptyFiltered": "No matching files",
+    "workspaceFilesLoadFailed": "Failed to load file list",
+    "workspaceFilesNoPath": "Project path unavailable",
+    "workspaceFilesSelectHint": "Select a file to preview",
+    "workspaceFilesBinary": "Binary file preview is not supported",
+    "workspaceFilesOversized": "File is too large to preview",
+    "workspaceFilesMissing": "File is missing or was deleted",
+    "workspaceFilesReadFailed": "Failed to read preview",
+    "workspaceFilesTruncated": "File too large; showing the first 256 KB",
+    "workspaceFilesOpenDefault": "Open with default app",
+    "workspaceFilesReveal": "Show in file manager",
+    "workspaceFilesCopyPath": "Copy relative path",
+    "workspaceFilesCopied": "Copied",
+    "copyFileName": "Copy file name",
+    "copyFolderName": "Copy folder name"
   }
 }

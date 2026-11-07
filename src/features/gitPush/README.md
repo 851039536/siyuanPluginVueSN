@@ -17,6 +17,7 @@
 - **提交模板**：提交表单可选模板一键套用（支持 `{branch}` / `{files}` 占位符），旁边的齿轮打开管理弹窗增删改；模板持久化并跨卡片共享
 - **路径检查**：添加时检查路径是否为合法 Git 仓库
 - **工作区变更**：查看暂存/未暂存/未跟踪文件，支持暂存、取消暂存、查看着色 diff、丢弃更改；摘要条「目录树视图」按钮可打开**变更目录树弹窗**（VS Code 源代码管理风格：「已暂存 / 未暂存」两分区各自成树（部分暂存文件两侧分区都出现，勾选后数据驱动自动跨区移动）、变更文件按目录分组折叠、路径关键词筛选、全部展开/收起、行内暂存/丢弃/查看差异与分区级暂存全部/取消暂存全部，目录行显示子树变更计数；操作全部桥接回面板既有链路——暂存/丢弃确认/差异弹窗缓存零复制）
+- **工作区文件浏览器（只读 Explorer）**：卡片顶栏「浏览工作区文件」按钮打开整库文件树（已跟踪 + 未跟踪且未被 `.gitignore` 忽略，`git ls-files -z --cached --others --exclude-standard`），目录折叠、按扩展名图标、路径筛选（命中时自动展开父目录）、变更文件 M/A/D/R/U 角标（点击切回工作区 Tab 并打开该文件差异）、文本/Markdown/图片预览（文本 256 KB、图片 2 MB 上限，二进制只显示元信息）、**行内复制文件名称 / 文件夹名称**、复制相对路径、在文件管理器中显示、用默认程序打开；文件数上限 2 万条。列表**仅在打开弹窗时拉取一次**，卡片挂载零 git/磁盘开销
 - **差异查看弹窗**：着色 diff + 词级高亮 + 行号双列；新增/未跟踪文件同样展示完整内容（`git diff` 对未跟踪文件恒为空，数据层回退 `git diff --no-index`）；「已暂存且工作区又改动」的文件可切换查看暂存区/工作区两份差异（另一份后台预取）；取差异期间显示加载态（不再与空态混淆）；标题含全路径 tooltip、文件状态与重命名原路径；支持复制差异全文/文件路径；Esc 关闭、←/→ 切换文件
 - **提交功能**：Conventional Commit 快捷类型选择、AI 生成提交信息（基于变更统计摘要，输出单行信息，支持思考模式控制）与 AI 深度生成提交信息（读取暂存区完整 diff 理解实际改动，输出「标题行 + 改动要点列表」的多行信息；与提交历史修正弹窗的两档生成同构）
 - **AI 错误分析**：推送/拉取失败时日志面板提供「AI 分析」按钮，弹窗内流式分析失败日志，输出错误原因、解决方案与预防建议
@@ -62,7 +63,8 @@ src/features/gitPush/
 │   ├── format.ts                    # 展示格式化：相对与绝对时间、年份选项、分析状态、日志标签
 │   ├── metrics.ts                   # 百分比与条形宽度、净增语义 class、行数排行预计算
 │   ├── search.ts                    # 搜索高亮片段切分
-│   ├── fileTree.ts                  # 变更文件目录树构建（目录分组拉平/折叠剪枝/子树计数/路径过滤，变更目录树弹窗用）
+│   ├── fileTree.ts                  # 目录树构建（变更文件树 + 整库文件树：目录分组拉平/折叠剪枝/子树计数/路径过滤）
+│   ├── workspaceFile.ts             # 工作区文件浏览：类型分类/扩展名图标/只读预览读取（文本 256 KB、图片 2 MB、二进制嗅探）
 │   ├── runtime.ts                   # 缓存裁剪、连续并发池、并发标志计数
 │   └── errors.ts                    # 抓取失败分类与专用错误类型
 ├── managers/
@@ -102,6 +104,8 @@ src/features/gitPush/
 │   ├── useCompareBaseBranch.ts      # Compare / 创建 PR 深链的基线分支读写（持久化）
 │   ├── useProjectQueryScheduler.ts  # 项目查询调度器（单飞去重 + 分支名复用 + 新鲜度节流 + 脏标记，查询调度唯一权威）
 │   ├── useCardData.ts               # 卡片 Tab 数据自包含（log/branches/stash/tags/冲突/diff/md）
+│   ├── useWorkspaceFiles.ts         # 工作区文件列表按需加载（弹窗打开才拉取 + 会话缓存 + 手动刷新）
+│   ├── useWorkspaceExplorer.ts      # 文件浏览器开关 + 角标 → 工作区差异的一次性定位请求（ProjectCard 瘦身）
 │   ├── useDayDragSelect.ts          # 日格拖拽选区状态机（热力图/日历共用：起锚 → 掠过扩展 → mouseup 收尾并抑制补发 click）
 │   └── useReportExport.ts           # 报告导出编排（校验 → 保存对话框 → 渲染 → 写盘 → 提示并打开）
 ├── components/
@@ -139,14 +143,14 @@ src/features/gitPush/
 │   │   ├── TagCommitDialog.vue      # 标签提交弹窗
 │   │   ├── LineRankRow.vue          # 行数排行行（排名/名称/新建日期/最后修改/占比/总行数；clickable 时原生 button 可键盘激活；项目代码行数排行专用）
 │   │   └── LineShareBar.vue         # 行数占比迷你条（轨道 + 填充 + 百分比文本；详情弹窗文件明细占比列用）
-│   ├── ListView/                    # 列表视图专属（18 个）
+│   ├── ListView/                    # 列表视图专属（21 个）
 │   │   ├── index.vue               # 列表视图入口容器（工具栏 + 分组循环卡片，纯渲染；提供手风琴上下文）
 │   │   ├── ListViewToolbar.vue      # 列表工具栏（视图模式/归档/暂停/卡片布局/标签筛选）
 │   │   ├── ProjectCard.vue          # 项目卡片编排层（仅 project prop，数据/操作全注入 + CardTabs 面板切换）
 │   │   ├── CardSummary.vue          # 手风琴收起态摘要行（名称/分支/变更/冲突/同步状态/主推送）
 │   │   ├── CardPushAllButton.vue    # 主推送按钮（推送全部 / 取消；操作栏与摘要行共用）
 │   │   ├── CardHeader.vue           # 卡片顶栏信息区（星标/名称/路径/md 徽章/分支/标签/备注；操作按钮区委托 CardHeaderActions）
-│   │   ├── CardHeaderActions.vue    # 卡片顶栏操作按钮区（分类/平台/IDE/刷新/编辑/Git配置/删除，自包含 services/menu）
+│   │   ├── CardHeaderActions.vue    # 卡片顶栏操作按钮区（分类/平台/IDE/浏览文件/刷新/编辑/Git配置/删除，自包含 services/menu）
 │   │   ├── CardRemotes.vue          # 远程仓库状态 + 冲突警告
 │   │   ├── CardActionBar.vue        # 拉取/推送操作栏（单远程/推送全部/强制推送/Fetch）
 │   │   ├── CardTabs.vue             # 多面板 Tab 切换条（CHANGES/LOG/STASH/TAG + 计数徽标，v-model）
@@ -158,7 +162,10 @@ src/features/gitPush/
 │   │   ├── TagPanel.vue             # 标签面板
 │   │   ├── WorkingTreePanel.vue     # 工作区变更面板
 │   │   ├── WorkingTreeDiffDialog.vue# 工作区文件差异弹窗（加载态/范围切换/复制/键盘导航，diff 文本由父层缓存下发）
-│   │   └── WorkingTreeTreeDialog.vue# 变更目录树弹窗（VS Code 源代码管理风格：目录分组折叠 + 路径筛选 + 行内暂存/丢弃，操作桥接回 WorkingTreePanel）
+│   │   ├── WorkingTreeTreeDialog.vue# 变更目录树弹窗（VS Code 源代码管理风格：目录分组折叠 + 路径筛选 + 行内暂存/丢弃，操作桥接回 WorkingTreePanel）
+│   │   ├── WorkspaceExplorerDialog.vue # 工作区文件浏览器弹窗（编排层：按需拉取 + 筛选/展开态 + 左右分栏）
+│   │   ├── WorkspaceFileTree.vue    # 文件树（目录折叠/类型图标/变更角标/行内复制名称/本地分页）
+│   │   └── WorkspaceFilePreview.vue # 文件预览（文本/Markdown/图片 + 复制/定位/外部打开）
 │   ├── StatsView/                   # 统计中心 · 项目状态分区（3 层信息架构 + common/ 共享组件）
 │   │   ├── index.vue               # 分区入口容器（空态 + 统一工具条 + 概览/行动/明细三层编排）
 │   │   ├── HealthOverview.vue      # 健康概览（推送状态分布条 + 四态图例 + 精简 KPI 行）
@@ -244,6 +251,7 @@ src/features/gitPush/
     ├── WorkingTreePanel.scss        # 工作区面板样式
     ├── WorkingTreeDiffDialog.scss   # 差异弹窗样式
     ├── WorkingTreeTreeDialog.scss   # 变更目录树弹窗样式（目录行/缩进/工具栏；文件行复用面板 wt-* 类）
+    ├── WorkspaceExplorer.scss       # 工作区文件浏览器样式（左右分栏/树行/变更角标/预览）
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
     ├── BranchCommitList.scss        # 提交历史列表样式
     ├── variables.scss               # 全局 Token 透传（已废弃：引用方已统一为 @/variables.scss，可删除）

@@ -1,0 +1,343 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 工作区文件浏览器（Explorer）：左树右预览
+// 外壳（遮罩 / 定位 / z-index / Esc / 焦点归还）由共享 Dialog 承担；
+// 加宽覆盖 large 档（(0,3,0) 压过组件档位类，与变更目录树弹窗同法）
+
+.git-push-panel .si-dialog.we-dialog {
+  --si-dialog-width: min(96vw, 1080px);
+}
+
+// 内容区纵向 flex + 去 Dialog 默认内边距：工具栏固定、左右分栏自行滚动
+.we-dialog .si-dialog__content {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  padding: $s-2;
+  overflow: hidden;
+}
+
+// ── 标题行 ──
+.we-header {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+}
+
+.we-title-row {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  min-width: 0;
+  color: var(--b3-theme-on-surface);
+}
+
+.we-title {
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  white-space: nowrap;
+}
+
+// 项目名（路径 tooltip；弱化展示）
+.we-subtitle {
+  @include text-ellipsis;
+
+  font-size: $t-2xs;
+  opacity: 0.6;
+}
+
+// ── 工具栏 ──
+.we-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  flex-shrink: 0;
+}
+
+.we-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.we-toolbar-count {
+  @include gp-section-count-base;
+
+  flex-shrink: 0;
+}
+
+// 文件数超出上限提示
+.we-notice {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  color: var(--b3-theme-error);
+}
+
+// ── 左右分栏 ──
+// 固定视口比例高度：内容区在 80vh 上限内收缩，树与预览各自内部滚动（不撑破弹窗）
+.we-split {
+  display: flex;
+  gap: $s-2;
+  height: min(61vh, 588px);
+  min-height: 260px;
+}
+
+.we-tree-pane {
+  display: flex;
+  flex: 0 0 38%;
+  flex-direction: column;
+  min-width: 200px;
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+}
+
+// ── 树 ──
+.we-tree {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+// 行基座（目录行是原生 button，需先 btn-reset 再套用本 mixin —— reset 会清零 padding/font，
+// 因此公共几何必须用 mixin 在 reset 之后重新应用，不能只靠 .we-row 类）
+@mixin we-row-base {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  width: 100%;
+  padding-top: $s-px2;
+  padding-bottom: $s-px2;
+  padding-right: $s-px6;
+  // 缩进 = 基准 6px + 层级 × 12px（--we-depth 由模板注入）
+  padding-left: calc(#{$s-px6} + var(--we-depth, 0) * #{$s-px10});
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  text-align: left;
+}
+
+.we-row {
+  @include we-row-base;
+}
+
+// 目录行（原生 button：Enter/Space 折叠 + aria-expanded）
+.we-row--dir {
+  @include btn-reset;
+  @include we-row-base;
+
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+}
+
+// 文件行（div[role=treeitem] + tabindex：整行点击预览，角标内部 stop）
+.we-row--file {
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+
+  &.is-selected {
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+  }
+}
+
+// 展开箭头：展开态旋转 90°（0.12s 契合仓库过渡规范）
+.we-chev {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: transform 0.12s;
+
+  &.is-open {
+    transform: rotate(90deg);
+  }
+}
+
+// 文件行没有箭头，用等宽占位保持图标列对齐
+.we-chev-spacer {
+  flex-shrink: 0;
+  width: 12px;
+}
+
+.we-folder,
+.we-file-icon,
+.we-preview-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.we-name {
+  @include text-ellipsis;
+
+  flex: 1;
+  min-width: 0;
+}
+
+// 目录子树文件计数（弱化等宽小字）
+.we-count {
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  opacity: 0.5;
+}
+
+// 行内复制按钮：默认隐藏避免干扰扫读；悬停或键盘聚焦时显现
+// （opacity 而非 display：始终占位，出现/消失时行宽不跳动）
+.we-copy-btn {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.we-row:hover .we-copy-btn,
+.we-row:focus-within .we-copy-btn,
+.we-copy-btn:focus-visible {
+  opacity: 1;
+}
+
+// 变更角标（M/A/D/R/U）：仅语义色区分，底色统一用中性底，避免多套浅底色失真
+.we-badge {
+  @include btn-reset;
+
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px; // 角标几何：单字母等宽小方块
+  height: 14px;
+  padding: 0 $s-px3;
+  border-radius: $r-sm;
+  background: var(--b3-theme-surface-lighter);
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: 1px;
+  }
+}
+
+// 修改 / 重命名 / 复制
+.we-badge--modified,
+.we-badge--renamed,
+.we-badge--copied {
+  color: var(--b3-theme-primary);
+}
+
+// 新增 / 未跟踪
+.we-badge--added,
+.we-badge--untracked {
+  color: var(--b3-theme-success);
+}
+
+// 删除 / 冲突
+.we-badge--deleted,
+.we-badge--unmerged {
+  color: var(--b3-theme-error);
+}
+
+// ── 预览 ──
+.we-preview {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+}
+
+.we-preview-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px3 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+  font-size: $t-2xs;
+}
+
+.we-preview-path {
+  @include text-ellipsis;
+
+  flex: 1;
+  min-width: 0;
+  font-family: $ff-mono;
+}
+
+.we-preview-size {
+  flex-shrink: 0;
+  font-family: $ff-mono;
+  opacity: 0.5;
+}
+
+.we-preview-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.we-preview-image {
+  display: block;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: $s-2;
+}
+
+// 文本预览：保留原始换行与缩进，长行横向滚动（不对代码做软换行）
+.we-preview-code {
+  margin: 0;
+  padding: $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-background);
+  white-space: pre;
+}
+
+// Markdown 预览：复用 .gp-md-content 排版，仅补内边距
+.we-preview-md {
+  padding: $s-2 $s-3;
+}
+
+.we-preview-foot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px6 $s-2;
+  border-top: 1px solid var(--b3-border-color);
+  font-size: $t-2xs;
+  opacity: 0.7;
+}

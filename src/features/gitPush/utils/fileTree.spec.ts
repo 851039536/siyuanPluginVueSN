@@ -6,8 +6,11 @@ import { describe, expect, it } from "vitest"
 import type { FileChange } from "../types"
 import {
   buildFileTreeRows,
+  buildPathTreeRows,
   buildSectionedTreeRows,
+  collectDirectoryPaths,
   filterFilesByQuery,
+  filterPathsByQuery,
   topLevelDirPaths,
 } from "./fileTree"
 
@@ -165,5 +168,70 @@ describe("buildSectionedTreeRows", () => {
       { section: "staged", name: "已暂存", files: [] },
       { section: "unstaged", name: "未暂存", files: [] },
     ], new Set())).toEqual([])
+  })
+})
+
+describe("collectDirectoryPaths", () => {
+  it("收集各层父目录，不含文件名本身", () => {
+    expect(collectDirectoryPaths(["src/a/b.ts", "src/c.ts", "README.md"]).sort()).toEqual([
+      "src",
+      "src/a",
+    ])
+  })
+
+  it("空输入返回空数组", () => {
+    expect(collectDirectoryPaths([])).toEqual([])
+  })
+})
+
+describe("filterPathsByQuery", () => {
+  it("大小写不敏感的子串匹配；空词返回全部", () => {
+    const paths = ["src/App.vue", "docs/README.md"]
+    expect(filterPathsByQuery(paths, "app")).toEqual(["src/App.vue"])
+    expect(filterPathsByQuery(paths, "  ")).toEqual(paths)
+  })
+})
+
+describe("buildPathTreeRows", () => {
+  it("默认全部收起：只输出根层目录与根级文件", () => {
+    const rows = buildPathTreeRows(["src/a/x.ts", "src/y.ts", "README.md"], new Set())
+    expect(rows.map((r) => `${r.type}:${r.path}@${r.depth}`)).toEqual([
+      "dir:src@0",
+      "file:README.md@0",
+    ])
+  })
+
+  it("展开目录后输出其子目录与直属文件，未展开的子目录仍不输出内容", () => {
+    const rows = buildPathTreeRows(
+      ["src/a/x.ts", "src/y.ts", "README.md"],
+      new Set(["src"]),
+    )
+    expect(rows.map((r) => `${r.type}:${r.path}@${r.depth}`)).toEqual([
+      "dir:src@0",
+      "dir:src/a@1",
+      "file:src/y.ts@1",
+      "file:README.md@0",
+    ])
+  })
+
+  it("目录计数 = 子树内文件总数；输出行不带变更元数据", () => {
+    const rows = buildPathTreeRows(["src/a/x.ts", "src/a/y.ts", "src/z.ts"], new Set(["src"]))
+    const src = rows.find((r) => r.path === "src")
+    const a = rows.find((r) => r.path === "src/a")
+    expect(src?.count).toBe(3)
+    expect(a?.count).toBe(2)
+    expect(rows.every((r) => r.type !== "file" || !("file" in r))).toBe(true)
+  })
+
+  it("depthOffset 整体平移缩进（与变更树同义）", () => {
+    const rows = buildPathTreeRows(["src/a.ts"], new Set(["src"]), 1)
+    expect(rows.map((r) => `${r.type}:${r.path}@${r.depth}`)).toEqual([
+      "dir:src@1",
+      "file:src/a.ts@2",
+    ])
+  })
+
+  it("空输入返回空数组", () => {
+    expect(buildPathTreeRows([], new Set())).toEqual([])
   })
 })

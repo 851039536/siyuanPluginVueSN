@@ -379,6 +379,11 @@ const props = defineProps<{
   refreshingWorkingTree?: boolean
   /** 提交模板（卡内共享数据下发；空数组 = 未配置模板） */
   commitTemplates: CommitTemplate[]
+  /**
+   * 外部定位请求（工作区文件浏览器点击变更角标）：切到本 Tab 后直接打开该文件差异。
+   * seq 每次递增，保证同一文件重复请求也能触发。
+   */
+  focusRequest?: { file: FileChange, seq: number } | null
 }>()
 
 const emit = defineEmits<{
@@ -562,6 +567,12 @@ function openDiffFromTree(file: FileChange) {
 function prefetchOtherScope(file: FileChange) {
   if (file.staged && file.unstaged) emit("loadDiff", file.path, !file.staged, { status: file.status })
 }
+
+// 外部定位：文件浏览器角标点击后，父层切到本 Tab 并下发请求，这里复用「打开差异」链路
+watch(() => props.focusRequest?.seq, () => {
+  const request = props.focusRequest
+  if (request) openDiffFromTree(request.file)
+}, { immediate: true })
 
 /** 弹窗内导航：切换当前差异文件并加载对应 diff（非 force：已看过的文件命中缓存即时渲染） */
 function handleDiffNavigate(file: FileChange) {

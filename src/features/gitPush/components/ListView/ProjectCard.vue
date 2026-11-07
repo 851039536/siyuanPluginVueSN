@@ -20,6 +20,7 @@
       :md-files="mdFiles"
       :reload-log="reloadLog"
       :refresh-tags="refreshTags"
+      :open-workspace-files="openWorkspaceFiles"
       :collapsible="isAccordion"
       @toggle-collapse="toggle"
     />
@@ -56,6 +57,7 @@
           :git-op-loading="gitOpLoading || false"
           :refreshing-working-tree="refreshingWorkingTree || false"
           :commit-templates="commitTemplates"
+          :focus-request="explorerFocus"
           @stage-file="(file: string) => ops.stageItem(project.id, file)"
           @unstage-file="(file: string) => ops.unstageItem(project.id, file)"
           @stage-all="ops.stageAllItems(project.id)"
@@ -193,6 +195,16 @@
       @create="handleTagCreate"
       @close="taggingEntry = null"
     />
+
+    <!-- 工作区文件浏览器（顶栏「浏览工作区文件」入口；只读整库文件树 + 类型预览） -->
+    <WorkspaceExplorerDialog
+      v-if="showWorkspaceFiles"
+      :project="project"
+      :i18n="i18n"
+      :changes="workingTree?.files ?? []"
+      @close="showWorkspaceFiles = false"
+      @open-changes="handleOpenChanges"
+    />
   </div>
 </template>
 
@@ -218,6 +230,7 @@ import { useCardAccordion } from "../../composables/useCardAccordion"
 import { getCardTab, rememberCardTab, useCardData } from "../../composables/useCardData"
 import { provideCardMenu } from "../../composables/useCardMenu"
 import { useCardServices } from "../../composables/useCardServices"
+import { useWorkspaceExplorer } from "../../composables/useWorkspaceExplorer"
 import {
   getProjectRemoteNames,
   platformLabel,
@@ -237,6 +250,7 @@ import OutputPanel from "./OutputPanel.vue"
 import StashSection from "./StashSection.vue"
 import TagPanel from "./TagPanel.vue"
 import WorkingTreePanel from "./WorkingTreePanel.vue"
+import WorkspaceExplorerDialog from "./WorkspaceExplorerDialog.vue"
 
 const props = defineProps<{
   project: GitProject
@@ -469,6 +483,21 @@ function handleCardClick() {
   if (stashTagTab.value === "log") ensureLogStats()
   else if (stashTagTab.value === "tag") ensureRemoteTags()
 }
+
+// ── 工作区文件浏览器（顶栏按钮打开；角标点击回到工作区 Tab 并打开该文件差异）──
+// 弹窗开关与一次性定位请求由 composable 持有（含请求清空时序），本层只负责 Tab 切换副作用
+const {
+  visible: showWorkspaceFiles,
+  focus: explorerFocus,
+  open: openWorkspaceFiles,
+  locate: handleOpenChanges,
+} = useWorkspaceExplorer({
+  changes: () => workingTree.value?.files,
+  openWorktreeTab: () => {
+    stashTagTab.value = "worktree"
+    rememberCardTab(props.project.id, "worktree")
+  },
+})
 </script>
 
 <style lang="scss">

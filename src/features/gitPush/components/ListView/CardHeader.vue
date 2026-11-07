@@ -193,6 +193,7 @@
       :project="project"
       :reload-log="reloadLog"
       :refresh-tags="refreshTags"
+      :open-workspace-files="openWorkspaceFiles"
     />
   </div>
 </template>
@@ -219,6 +220,8 @@ const props = defineProps<{
   reloadLog: (count?: number | "all") => Promise<void>
   /** 刷新菜单"刷新标签"（卡内重载，编排层传入） */
   refreshTags: () => Promise<void>
+  /** 打开工作区文件浏览器（编排层持有弹窗状态） */
+  openWorkspaceFiles: () => void
   /** 手风琴模式下是否显示「收起」按钮（展开态） */
   collapsible?: boolean
 }>()

@@ -1359,6 +1359,11 @@ export class GitPushManager {
     return this.reportOps.getTrackedFiles(projectPath)
   }
 
+  /** 获取工作区可见文件列表（已跟踪 + 未跟踪，排除 .gitignore；文件浏览器用；git 失败抛出错误） */
+  async getWorkspaceFiles(projectPath: string): Promise<string[]> {
+    return this.reportOps.getWorkspaceFiles(projectPath)
+  }
+
   /** 获取文件最近 5 条提交的补丁内容（文件详情弹窗打开时按需懒取；since 限定统计范围；git 失败抛出错误） */
   async getFileHistoryPatch(projectPath: string, file: string, since?: string): Promise<string> {
     return this.reportOps.getFileHistoryPatch(projectPath, file, since)

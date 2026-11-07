@@ -1,5 +1,5 @@
 // gitPush 文件状态标记与文案辅助（字符/图标标记 + i18n 文案，工作区、提交文件列表、差异弹窗共用）
-import type { FileChange } from "../types"
+import type { FileChange, FileChangeStatus } from "../types"
 import { FILE_STATUS_META } from "../types"
 import type { IconKey } from "@/config/icons"
 
@@ -28,4 +28,20 @@ export function fileStatusText(file: FileChange, i18n: Record<string, any>): str
 export function fileStatusTitle(file: FileChange, i18n: Record<string, any>): string {
   const title = fileStatusText(file, i18n)
   return file.oldPath ? `${title}: ${file.oldPath} -> ${file.path}` : title
+}
+
+/** 状态字母（工作区文件浏览器的 M/A/D/R/U 角标；unmerged 用 ! 区分） */
+const FILE_STATUS_LETTER: Record<FileChangeStatus, string> = {
+  modified: "M",
+  added: "A",
+  deleted: "D",
+  renamed: "R",
+  untracked: "U",
+  copied: "C",
+  unmerged: "!",
+}
+
+/** 取文件状态字母（浏览器角标用，不依赖 i18n） */
+export function fileStatusLetter(file: FileChange): string {
+  return FILE_STATUS_LETTER[file.status]
 }

@@ -219,3 +219,78 @@ export function filterFilesByQuery(files: FileChange[], query: string): FileChan
   if (!q) return files
   return files.filter((f) => f.path.toLowerCase().includes(q))
 }
+
+// ── 整库文件树（工作区文件浏览器）：与变更文件共用同一套分组/折叠算法 ──
+
+/** 工作区文件树的目录行（与变更树目录行同形，无变更语义） */
+export interface PathTreeDirRow {
+  type: "dir"
+  key: string
+  name: string
+  path: string
+  depth: number
+  /** 子树内文件总数 */
+  count: number
+}
+
+/** 工作区文件树的文件行 */
+export interface PathTreeFileRow {
+  type: "file"
+  key: string
+  name: string
+  path: string
+  depth: number
+  count: 1
+}
+
+export type PathTreeRow = PathTreeDirRow | PathTreeFileRow
+
+/** 收集路径列表涉及的**全部目录**（含各层父目录），供「未展开目录」补集计算使用 */
+export function collectDirectoryPaths(paths: readonly string[]): string[] {
+  const dirs = new Set<string>()
+  for (const p of paths) {
+    const segs = p.split(SEP)
+    let prefix = ""
+    for (let i = 0; i < segs.length - 1; i++) {
+      prefix = i === 0 ? segs[0] : `${prefix}${SEP}${segs[i]}`
+      dirs.add(prefix)
+    }
+  }
+  return [...dirs]
+}
+
+/** 按关键词过滤路径（大小写不敏感的子串匹配；空词原样返回） */
+export function filterPathsByQuery(paths: readonly string[], query: string): string[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return [...paths]
+  return paths.filter((p) => p.toLowerCase().includes(q))
+}
+
+/**
+ * 工作区可见文件路径 → 拉平目录树行（VS Code Explorer 同构：目录展开才输出子树）。
+ *
+ * 复用变更树的构建算法（`buildFileTreeRows`），差别只在：
+ * - 入参是纯路径（无暂存/变更元数据），输出行不带 `file` 字段；
+ * - 折叠集由「已展开目录集」反推（`全部目录 - expandedDirs`），默认空集 = 全部收起，
+ *   只渲染根层目录与根级文件（`collectDirectoryPaths` 由调用方一次算好传入更省）。
+ * @param paths 可见文件路径（`/` 分隔，相对仓库根）
+ * @param expandedDirs 已展开目录的完整路径集合（空集 = 全部收起）
+ * @param depthOffset 整体缩进偏移（与变更树同义）
+ */
+export function buildPathTreeRows(
+  paths: readonly string[],
+  expandedDirs: ReadonlySet<string>,
+  depthOffset = 0,
+): PathTreeRow[] {
+  const collapsed = collectDirectoryPaths(paths).filter((dir) => !expandedDirs.has(dir))
+  const entries: FileChange[] = paths.map((path) => ({
+    path,
+    status: "modified",
+    staged: false,
+  }))
+  return buildFileTreeRows(entries, new Set(collapsed), depthOffset).map((row) => (
+    row.type === "file"
+      ? { type: "file", key: row.key, name: row.name, path: row.path, depth: row.depth, count: 1 }
+      : { type: "dir", key: row.key, name: row.name, path: row.path, depth: row.depth, count: row.count }
+  ))
+}

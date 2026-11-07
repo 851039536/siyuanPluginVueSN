@@ -214,6 +214,26 @@ export class ReportOps {
   }
 
   /**
+   * 获取工作区可见文件列表（已跟踪 + 未跟踪且未被忽略，相对仓库根的 / 分隔路径）。
+   *
+   * - `--cached --others --exclude-standard`：已跟踪文件（即使后来被 .gitignore 命中仍列出，
+   *   因为它们确实在仓库中）+ 未跟踪但未被忽略的文件；`.gitignore` 因而自动挡掉 node_modules 等。
+   * - **必须 `-z`**：默认换行分隔会对含特殊字符的路径做 C 引号转义，且文件名可合法包含换行；
+   *   `-z` 无引号、无转义、NUL 分隔，路径可原样交给 fs 使用（不 trim，路径可合法以空格结尾）。
+   * - git 失败/路径无效时抛出错误；空仓库返回空数组。
+   *
+   * 与 `getTrackedFiles` 的区别：后者只列 index 内容（行数统计口径），不适用于文件浏览器。
+   */
+  async getWorkspaceFiles(projectPath: string): Promise<string[]> {
+    const raw = await this.executor.execGit(projectPath, [
+      "-c", "core.quotepath=false",
+      "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+    ])
+    if (!raw) return []
+    return raw.split("\0").filter((path) => path.length > 0)
+  }
+
+  /**
    * 获取「自上次索引以来内容有变化的已跟踪文件」路径集合（`git status --porcelain -uno`）。
    *
    * 用途：超大仓库的行数增量扫描。逐文件 `statSync` 的边际成本约 93µs/文件

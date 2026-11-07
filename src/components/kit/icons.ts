@@ -645,6 +645,10 @@ export const COMMON_ICONS = {
   fileTree: {
     icon: "mdi:file-tree",
   },
+  /** 工作区文件浏览器（gitPush 卡片顶栏「浏览工作区文件」入口） */
+  workspaceFiles: {
+    icon: "mdi:file-tree-outline",
+  },
   folderAlert: {
     icon: "mdi:folder-alert",
   },

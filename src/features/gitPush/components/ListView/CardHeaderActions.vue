@@ -210,6 +210,15 @@
         </button>
       </MenuPopover>
     </div>
+    <!-- 悬停提示："浏览工作区文件"（只读文件树弹窗：整库文件 + 类型预览 + 变更角标） -->
+    <Button
+      variant="ghost"
+      size="xsmall"
+      dense
+      icon="workspaceFiles"
+      :title="i18n.workspaceFilesButton"
+      @click="openWorkspaceFiles"
+    />
     <!-- 刷新选项菜单（本地开关，与拉取/推送菜单同模式） -->
     <div class="gp-refresh-wrap gp-menu-wrap">
       <!-- 悬停提示："刷新选项" -->
@@ -348,6 +357,8 @@ const props = defineProps<{
   reloadLog: (count?: number | "all") => Promise<void>
   /** 刷新菜单"刷新标签"（卡内重载，编排层传入） */
   refreshTags: () => Promise<void>
+  /** 打开工作区文件浏览器（编排层持有弹窗状态） */
+  openWorkspaceFiles: () => void
 }>()
 
 const { services, isRefreshing } = useCardServices(() => props.project)

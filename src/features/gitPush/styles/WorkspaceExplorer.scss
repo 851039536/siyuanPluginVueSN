@@ -101,6 +101,8 @@
 // ── 树 ──
 .we-tree {
   flex: 1;
+  // 行已 border-box 收口，正常层级不会横向溢出；显式 hidden 防极深层级出现横向滚动条
+  overflow-x: hidden;
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
@@ -108,6 +110,9 @@
 // 行基座（目录行是原生 button，需先 btn-reset 再套用本 mixin —— reset 会清零 padding/font，
 // 因此公共几何必须用 mixin 在 reset 之后重新应用，不能只靠 .we-row 类）
 @mixin we-row-base {
+  // 必须 border-box：行是 width:100% + 深层缩进 padding-left，
+  // content-box 会把行撑到容器外，行尾的复制按钮/角标被横向滚动区裁掉
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: $s-1;

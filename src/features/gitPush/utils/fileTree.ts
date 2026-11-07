@@ -290,7 +290,9 @@ export function buildPathTreeRows(
   }))
   return buildFileTreeRows(entries, new Set(collapsed), depthOffset).map((row) => (
     row.type === "file"
-      ? { type: "file", key: row.key, name: row.name, path: row.path, depth: row.depth, count: 1 }
+      // 文件键加类型前缀：已跟踪文件被目录替换时（git 仍列旧文件 `foo`，磁盘上 `foo/bar` 是未跟踪），
+      // 目录行与文件行会同时出现在根层且路径同为 `foo`，不加前缀会导致 v-for 重复 key
+      ? { type: "file", key: `f:${row.key}`, name: row.name, path: row.path, depth: row.depth, count: 1 }
       : { type: "dir", key: row.key, name: row.name, path: row.path, depth: row.depth, count: row.count }
   ))
 }

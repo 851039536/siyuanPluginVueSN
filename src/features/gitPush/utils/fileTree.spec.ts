@@ -234,4 +234,12 @@ describe("buildPathTreeRows", () => {
   it("空输入返回空数组", () => {
     expect(buildPathTreeRows([], new Set())).toEqual([])
   })
+
+  it("同名文件与目录共存时行键不冲突（已跟踪文件被目录替换的边界）", () => {
+    // git 仍列已跟踪文件 foo，同时 --others 列出 foo/bar.ts，根层会同时出现目录 foo 与文件 foo
+    const rows = buildPathTreeRows(["foo", "foo/bar.ts"], new Set())
+    expect(rows.map((r) => `${r.type}:${r.path}`)).toEqual(["dir:foo", "file:foo"])
+    const keys = rows.map((r) => r.key)
+    expect(new Set(keys).size).toBe(keys.length)
+  })
 })

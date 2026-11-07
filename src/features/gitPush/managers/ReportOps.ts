@@ -9,6 +9,18 @@ const DIFF_MAX_CHARS = 5000
 /** 增量扫描单次回传提交上限（首次导入超大仓库时防止把 10MB maxBuffer 撑爆） */
 const INCREMENTAL_MAX_COMMITS = 20000
 
+/**
+ * 判断错误是否为「git 输出超过 GitExecutor 缓冲区上限」
+ * （Node `ERR_CHILD_PROCESS_STDIO_MAXBUFFER`）。
+ *
+ * execGit 会把原始错误包装成普通 Error，仅剩拼接后的 message 含 `maxBuffer` 字样，
+ * 故按文本识别；单独导出便于单测，不必真造 10MB 输出。
+ */
+export function isGitOutputOverflow(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return /maxbuffer/i.test(message)
+}
+
 /** 增量扫描结果 */
 export interface IncrementalScan {
   /** 扫描到的提交（按时间升序；knownHashes 非空时仅含未索引的新提交） */
@@ -225,10 +237,20 @@ export class ReportOps {
    * 与 `getTrackedFiles` 的区别：后者只列 index 内容（行数统计口径），不适用于文件浏览器。
    */
   async getWorkspaceFiles(projectPath: string): Promise<string[]> {
-    const raw = await this.executor.execGit(projectPath, [
-      "-c", "core.quotepath=false",
-      "ls-files", "-z", "--cached", "--others", "--exclude-standard",
-    ])
+    let raw: string
+    try {
+      raw = await this.executor.execGit(projectPath, [
+        "-c", "core.quotepath=false",
+        "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+      ])
+    } catch (e) {
+      // 超大仓库/缺失 .gitignore 时 ls-files 输出可能超过 GitExecutor.MAX_BUFFER（10 MB）；
+      // 不兜底的话用户只看到 maxBuffer 原始报错，无法判断该改什么
+      if (isGitOutputOverflow(e)) {
+        throw new Error("仓库文件数过多，文件列表超出单次读取上限（10 MB），无法完整列出。请检查 .gitignore 是否排除了构建产物/依赖目录")
+      }
+      throw e
+    }
     if (!raw) return []
     return raw.split("\0").filter((path) => path.length > 0)
   }

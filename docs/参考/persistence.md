@@ -43,6 +43,19 @@
   `sync-start` / `sync-end` / `sync-fail` 仅作兜底（插件 `onload` 挂载、`onunload` 经
   `DESTROYABLE_KEYS` 注销）。
 
+⚠️ **同步态经 `globalThis` 跨脚本求值共享**（键 `__snPluginSqliteSyncing`）：
+思源每次重载插件都用 `window.eval` 重新求值脚本，模块级变量归零。同步进行中若发生重载
+（改代码热更 / 启用禁用），新模块必须继承「同步中」，否则会立刻重开 `plugin.db` 让 rename 失败。
+守卫挂载时若继承到同步中，会续期兜底定时器等待本次同步的结束事件。
+
+⚠️ **必须覆盖 `Plugin.onDataChanged`**：思源 3.8.9 以
+`plugin.onDataChanged === Plugin.prototype.onDataChanged` 判断插件是否自行处理存储数据变更，
+**未覆盖时每次变更都会整插件重载**（teardown → 重新 eval 脚本 → onload）。同步会连续触发
+多次数据变更，插件因此被反复卸载/重载：旧实例在途的 `loadData` 全部返回 410
+「Plugin lifecycle has ended」，新实例的同步守卫状态也被重置，在同步未结束时重开 `plugin.db`。
+`PluginSample.onDataChanged`（`src/index.ts`）只重读 `plugin-settings` 并应用外观，
+**禁止在其中写入任何存储** —— 写入会再次触发数据变更。
+
 ⚠️ 只订阅 `sync-start` 不够：思源 3.8.9 的 `syncing` 处理函数在状态栏 `#barSync` 元素不存在时
 会提前 `return`，`sync-start` 根本不会发到插件事件总线（这是「守卫已实现但同步仍失败」的根因）。
 

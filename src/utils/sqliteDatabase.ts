@@ -99,10 +99,36 @@ export class SqliteSyncInProgressError extends Error {
 const syncTimers = new TimerRegistry()
 
 /**
+ * 同步态跨模块实例共享。
+ *
+ * 思源每次重载插件都用 `window.eval` 重新求值插件脚本（app/src/plugin/loader.ts），
+ * 模块级变量随之归零。若重载发生在同步进行中（改代码热更 / 启用禁用插件），
+ * 新模块会误判「没在同步」并立刻重开 `plugin.db`，让本轮同步的 rename 失败。
+ * 因此把「是否在同步窗口内」放到 globalThis 上，让重新求值出的模块实例继承。
+ */
+const SYNC_STATE_KEY = "__snPluginSqliteSyncing"
+
+function readSharedSyncState(): boolean {
+  try {
+    return (globalThis as any)[SYNC_STATE_KEY] === true
+  } catch {
+    return false
+  }
+}
+
+function writeSharedSyncState(inProgress: boolean): void {
+  try {
+    (globalThis as any)[SYNC_STATE_KEY] = inProgress
+  } catch {
+    // globalThis 不可写时退化为模块级状态（与未共享时行为一致）
+  }
+}
+
+/**
  * 同步进行中标记：同步引擎正在用 rename 覆盖工作区文件，此时**任何重开**都会让整轮同步失败。
  * 同步窗口内 `acquire()` 直接抛错，异步入口先 `waitForSyncIdle()` 再访问。
  */
-let syncInProgress = false
+let syncInProgress = readSharedSyncState()
 /** 兜底解除同步态（防止结束事件丢失让数据库永久不可用）——只在极长同步时才触发 */
 const SYNC_WATCHDOG_MS = 30 * 60 * 1000
 let syncWatchdog: TimerHandle | null = null
@@ -147,18 +173,27 @@ export function waitForSyncIdle(timeoutMs = SYNC_WAIT_TIMEOUT_MS): Promise<boole
 }
 
 /**
+ * 续期兜底定时器：结束事件丢失时仍能在上限内解除同步态。
+ * 同步开始与「重载后继承同步态」两处共用，避免各写一份。
+ */
+function armSyncWatchdog(): void {
+  if (syncWatchdog !== null) syncTimers.clear(syncWatchdog)
+  syncWatchdog = syncTimers.setTimeout(() => {
+    syncWatchdog = null
+    endSync()
+  }, SYNC_WATCHDOG_MS)
+}
+
+/**
  * 进入同步窗口：立即释放所有句柄，并在窗口内拒绝重开。
  * 幂等：`sync-start` 与 `ws-main` 会重复触发，重复调用只续期兜底定时器。
  */
 function beginSync(): void {
   const first = !syncInProgress
   syncInProgress = true
+  writeSharedSyncState(true)
   for (const db of liveDatabases) db.releaseForSync()
-  if (syncWatchdog !== null) syncTimers.clear(syncWatchdog)
-  syncWatchdog = syncTimers.setTimeout(() => {
-    syncWatchdog = null
-    endSync()
-  }, SYNC_WATCHDOG_MS)
+  armSyncWatchdog()
   if (first) console.info("[sqlite] 思源同步开始，已释放所有数据库句柄（同步期间暂停数据库访问）")
 }
 
@@ -166,6 +201,7 @@ function beginSync(): void {
 function endSync(): void {
   if (!syncInProgress) return
   syncInProgress = false
+  writeSharedSyncState(false)
   if (syncWatchdog !== null) {
     syncTimers.clear(syncWatchdog)
     syncWatchdog = null
@@ -201,6 +237,12 @@ export function installSqliteSyncGuard(plugin: Plugin): { destroy: () => void } 
     ["sync-fail", () => endSync()],
   ]
   for (const [type, listener] of listeners) plugin.eventBus.on(type as any, listener)
+  // 脚本重新求值后继承同步窗口（见 SYNC_STATE_KEY）：旧模块的监听器已随卸载注销，
+  // 这里续期兜底定时器，等待本次同步的结束事件，避免重载即重开 plugin.db
+  if (syncInProgress) {
+    console.info("[sqlite] 插件重载时思源仍在同步，继续暂停数据库访问")
+    armSyncWatchdog()
+  }
   return {
     destroy: () => {
       for (const [type, listener] of listeners) plugin.eventBus.off(type as any, listener)

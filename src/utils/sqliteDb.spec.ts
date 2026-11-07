@@ -282,6 +282,33 @@ describe("思源同步守卫", () => {
     guard.destroy()
     dbA.close()
   })
+
+  it("同步态经 globalThis 跨模块求值继承（插件重载不会误开库）", async () => {
+    // 思源每次重载插件都用 window.eval 重新求值脚本，模块级变量归零；
+    // 同步进行中若发生重载，新模块必须继承同步窗口，否则会重开 plugin.db 让 rename 失败。
+    ;(globalThis as any).__snPluginSqliteSyncing = true
+    vi.resetModules()
+    try {
+      const fresh = await import("./sqliteDatabase")
+      expect(fresh.isSyncInProgress()).toBe(true)
+
+      // 新实例装上守卫后收到同步结束事件，应同步清除共享标记
+      const handlers = new Map<string, (event?: any) => void>()
+      const plugin = {
+        eventBus: {
+          on: (type: string, listener: (event?: any) => void) => handlers.set(type, listener),
+          off: () => {},
+        },
+      }
+      const guard = fresh.installSqliteSyncGuard(plugin as any)
+      handlers.get("sync-end")!()
+      expect(fresh.isSyncInProgress()).toBe(false)
+      expect((globalThis as any).__snPluginSqliteSyncing).toBe(false)
+      guard.destroy()
+    } finally {
+      delete (globalThis as any).__snPluginSqliteSyncing
+    }
+  })
 })
 
 describe("resolvePluginDataDir", () => {

@@ -191,6 +191,24 @@ export default class PluginSample extends Plugin {
     this.rebuildThemeColor()
   }
 
+  /**
+   * 插件存储数据被同步合并（`sync`）或其它前端实例写入（`overwrite`）后由思源调用。
+   *
+   * ⚠️ 必须覆盖：SiYuan 3.8.9 用 `plugin.onDataChanged === Plugin.prototype.onDataChanged`
+   * 判断插件是否自行处理，未覆盖时把每次数据变更**升级为整插件重载**（teardown →
+   * 重新 eval 脚本 → onload）。同步会连续触发多次数据变更，插件于是被反复卸载/重载：
+   * 旧实例在途的 `loadData` 全部返回 410「Plugin lifecycle has ended」；新实例的模块级
+   * 同步守卫状态随脚本重新求值归零，若同步尚未结束就会重开 `plugin.db`，令本轮同步的
+   * rename 失败。这里只做无副作用刷新 —— 写入任何存储都会再次触发数据变更。
+   */
+  public async onDataChanged(reason?: "sync" | "overwrite"): Promise<void> {
+    console.info(`[PluginSample] 插件数据已变更（${reason ?? "unknown"}），重新加载配置`)
+    this.settings = await loadSettings(this)
+    applyCompactMode(this.settings)
+    this.rebuildThemeColor()
+    emitCustomEvent("settingsUpdated")
+  }
+
   /** 重建主题色实例：先销毁旧实例，再按 enableThemeColor 开关决定是否注册 */
   private rebuildThemeColor() {
     this.__themeColor?.destroy()

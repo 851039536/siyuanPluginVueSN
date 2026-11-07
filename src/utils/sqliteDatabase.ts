@@ -138,6 +138,15 @@ let syncWaiters: Array<() => void> = []
 /** 同步窗口内等待数据库恢复可用的默认上限（常见同步在数秒内结束） */
 const SYNC_WAIT_TIMEOUT_MS = 10_000
 
+/**
+ * 继承来的同步态只保留一次「等待同步结束」的时间预算（与 `waitForSyncIdle` 上限一致）。
+ *
+ * 为什么不用 30 分钟兜底：旧模块的结束事件可能已被它自己消费（卸载/重载的间隙），
+ * 新模块继承到的 `true` 可能已经过期。若沿用长兜底，重载后数据库会长时间不可写。
+ * 10s 后仍无法确认就按既有约定「超时后照常打开」（见 sqliteDatabase 文件头）。
+ */
+const INHERITED_SYNC_GRACE_MS = SYNC_WAIT_TIMEOUT_MS
+
 /** 当前是否处于思源同步窗口（供存储层判断是否需要等待） */
 export function isSyncInProgress(): boolean {
   return syncInProgress
@@ -175,13 +184,16 @@ export function waitForSyncIdle(timeoutMs = SYNC_WAIT_TIMEOUT_MS): Promise<boole
 /**
  * 续期兜底定时器：结束事件丢失时仍能在上限内解除同步态。
  * 同步开始与「重载后继承同步态」两处共用，避免各写一份。
+ *
+ * @param delayMs 兜底时长；同步开始用 `SYNC_WATCHDOG_MS`，
+ *   继承同步态用 `INHERITED_SYNC_GRACE_MS`（见其注释）
  */
-function armSyncWatchdog(): void {
+function armSyncWatchdog(delayMs = SYNC_WATCHDOG_MS): void {
   if (syncWatchdog !== null) syncTimers.clear(syncWatchdog)
   syncWatchdog = syncTimers.setTimeout(() => {
     syncWatchdog = null
     endSync()
-  }, SYNC_WATCHDOG_MS)
+  }, delayMs)
 }
 
 /**
@@ -214,6 +226,20 @@ function endSync(): void {
 }
 
 /**
+ * 主动放弃本轮同步窗口（异步入口等待超时后的显式放行）。
+ *
+ * 超时后不能只「打开但不放行」：`acquire()` 仍会抛 `SqliteSyncInProgressError`，
+ * `openWithRetry` 的建表紧随其后就失败，只能返回 null 且不再重试 ——
+ * 该功能整个会话都不可用。放行的代价是本轮同步可能失败（下一轮恢复），
+ * 与「功能不可无限期不可用」的既有约定一致。
+ */
+export function abandonSyncWindow(): void {
+  if (!syncInProgress) return
+  console.warn("[sqlite] 同步等待超时，放弃本轮同步窗口（本轮同步可能失败，下一轮恢复）")
+  endSync()
+}
+
+/**
  * 注册思源同步守卫：同步开始即释放所有 `plugin.db` 句柄，同步期间拒绝重开。
  *
  * 信号源以 `ws-main` 的 `syncing` 为准（内核广播后**最先**到达插件）：
@@ -238,14 +264,20 @@ export function installSqliteSyncGuard(plugin: Plugin): { destroy: () => void } 
   ]
   for (const [type, listener] of listeners) plugin.eventBus.on(type as any, listener)
   // 脚本重新求值后继承同步窗口（见 SYNC_STATE_KEY）：旧模块的监听器已随卸载注销，
-  // 这里续期兜底定时器，等待本次同步的结束事件，避免重载即重开 plugin.db
+  // 这里等待本次同步的结束事件；继承态只给一次等待预算，避免错过结束事件后长期锁库
   if (syncInProgress) {
     console.info("[sqlite] 插件重载时思源仍在同步，继续暂停数据库访问")
-    armSyncWatchdog()
+    armSyncWatchdog(INHERITED_SYNC_GRACE_MS)
   }
   return {
     destroy: () => {
       for (const [type, listener] of listeners) plugin.eventBus.off(type as any, listener)
+      // 本模块卸载后不再负责解除同步态：否则旧看门狗会在 30 分钟后
+      // 把新模块（重新求值出的脚本）正在经历的同步窗口清掉
+      if (syncWatchdog !== null) {
+        syncTimers.clear(syncWatchdog)
+        syncWatchdog = null
+      }
     },
   }
 }
@@ -259,7 +291,7 @@ export function installSqliteSyncGuard(plugin: Plugin): { destroy: () => void } 
  * 思源同步才能正常覆盖它（见 sqliteDb.ts 文件头「Windows 同步注意事项」）。
  *
  * 已知限制：同步窗口内所有访问都会被拒绝（异步入口先等待，最多 10s）；
- * 若同步持续更久，等待超时后仍会尝试打开（功能不可无限期不可用），该轮同步可能失败。
+ * 超时后由 `abandonSyncWindow()` 放弃本轮窗口并放行，代价是该轮同步可能失败、下一轮恢复。
  */
 export class PluginDatabase {
   private readonly sqlite: SqliteModule

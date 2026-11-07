@@ -34,8 +34,13 @@ export async function snapshotDatabaseFile(dbPath: string, destPath: string): Pr
   if (!sqlite || !node) return false
 
   // 同步窗口内先等结束：这里的裸连接不在 liveDatabases 里，守卫无法关闭它，
-  // 打开后会重新锁住 plugin.db，让 dejavu 的 rename 失败
-  await waitForSyncIdle()
+  // 打开后会重新锁住 plugin.db，让 dejavu 的 rename 失败。
+  // 备份不阻塞用户操作，超时就直接跳过（调用方回退为「原库 + sidecar」），
+  // 不像 openPluginDatabase 那样放弃整轮同步窗口。
+  if (!(await waitForSyncIdle())) {
+    console.warn(`[sqliteSnapshot] 思源正在同步，跳过一致性快照 [${dbPath}]`)
+    return false
+  }
 
   let db: SqliteDatabaseSync | null = null
   try {

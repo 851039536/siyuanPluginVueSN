@@ -3,6 +3,9 @@
 // 说明：openWithRetry 依赖思源运行时（plugin 实例 / 内核 API），无法在纯 Node 中完整驱动；
 // 此处覆盖可独立推理的纯函数契约，重点是**路径相对性拒绝**（曾把库建到错误目录）
 // 与**工作区解析在无 window 环境下的容错**（不得抛错）。
+import { mkdtempSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   buildDbPath,
@@ -307,6 +310,70 @@ describe("思源同步守卫", () => {
       guard.destroy()
     } finally {
       delete (globalThis as any).__snPluginSqliteSyncing
+    }
+  })
+
+  it("继承的同步态只保留一次等待预算（避免错过结束事件后长期锁库）", async () => {
+    vi.useFakeTimers()
+    ;(globalThis as any).__snPluginSqliteSyncing = true
+    vi.resetModules()
+    try {
+      const fresh = await import("./sqliteDatabase")
+      const plugin = { eventBus: { on: () => {}, off: () => {} } }
+      const guard = fresh.installSqliteSyncGuard(plugin as any)
+      expect(fresh.isSyncInProgress()).toBe(true)
+
+      // 旧模块的结束事件可能已被消费：继承态必须在等待预算内自行解除，
+      // 不能沿用 30 分钟兜底（否则重载后数据库长时间不可写）
+      vi.advanceTimersByTime(10_000)
+      expect(fresh.isSyncInProgress()).toBe(false)
+      expect((globalThis as any).__snPluginSqliteSyncing).toBe(false)
+      guard.destroy()
+    } finally {
+      delete (globalThis as any).__snPluginSqliteSyncing
+      vi.useRealTimers()
+    }
+  })
+
+  it("同步等待超时后放弃本轮窗口，建表不会被拒绝（功能不会整会话不可用）", async () => {
+    const WS = mkdtempSync(join(tmpdir(), "sn-sqlite-sync-"))
+    vi.useFakeTimers()
+    vi.stubGlobal("window", undefined)
+    vi.stubGlobal("fetch", () => Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ code: 0, data: { conf: { system: { workspaceDir: WS } } } }),
+    }))
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    let guard: { destroy: () => void } | null = null
+    let db: Awaited<ReturnType<typeof openWithRetry>> = null
+    try {
+      const handlers = new Map<string, (event?: any) => void>()
+      guard = installSqliteSyncGuard({
+        eventBus: {
+          on: (type: string, listener: (event?: any) => void) => handlers.set(type, listener),
+          off: () => {},
+        },
+      } as any)
+      handlers.get("sync-start")!()
+
+      const pending = openWithRetry(fakePlugin(undefined), (d) => {
+        d.exec("CREATE TABLE IF NOT EXISTS t (id INTEGER PRIMARY KEY)")
+      }, { logTag: "[spec-sync]", maxAttempts: 1 })
+      // 等待预算耗尽后必须放行：只打开不放行会让建表抛错，openWithRetry 返回 null
+      await vi.advanceTimersByTimeAsync(10_000)
+      db = await pending
+
+      expect(db).not.toBeNull()
+      expect(() => db!.all("SELECT * FROM t")).not.toThrow()
+    } finally {
+      db?.close()
+      guard?.destroy()
+      infoSpy.mockRestore()
+      warnSpy.mockRestore()
+      vi.useRealTimers()
+      vi.unstubAllGlobals()
+      try { rmSync(WS, { recursive: true, force: true }) } catch { /* Windows 上可能仍被占用 */ }
     }
   })
 })

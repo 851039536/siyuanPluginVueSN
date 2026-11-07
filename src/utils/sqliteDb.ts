@@ -35,15 +35,15 @@
  * `#barSync` 元素不存在时会提前 return，`sync-start` 根本不会发到插件事件总线。
  *
  * 已知限制：同步窗口内数据库访问会被拒绝（异步入口先等待，最多 10s）；
- * 若同步持续更久，等待超时后仍会尝试打开（功能不可无限期不可用），
- * 该轮同步可能失败，下一轮恢复。
+ * 超时后**放弃本轮同步窗口**并放行访问 —— 否则该功能会在整个会话内不可用。
+ * 代价是本轮同步可能失败，下一轮恢复。
  *
  * 职责拆分：会话与句柄生命周期（`PluginDatabase`、空闲释放、同步守卫）在
  * `./sqliteDatabase`，本文件保留路径解析、打开重试与对外汇聚（re-export），
  * 消费方仍统一从 `@/utils/sqliteDb` 导入。
  */
 import type { Plugin } from "siyuan"
-import { createHandle, getSqlite, PluginDatabase, waitForSyncIdle } from "./sqliteDatabase"
+import { abandonSyncWindow, createHandle, getSqlite, PluginDatabase, waitForSyncIdle } from "./sqliteDatabase"
 import { getNodeFsPathOs } from "./nodeModules"
 import { resolvePluginDataDir } from "./pluginDataDir"
 
@@ -146,9 +146,10 @@ export async function openPluginDatabase(
   }
 
   // 同步窗口内先等结束：此刻打开文件会让 dejavu 的 rename 失败（见文件头说明）。
-  // 超时仍同步则继续打开（功能不可无限期不可用），但会明确留痕。
+  // 超时则**放弃本轮窗口**：只打开不放行没有意义 —— acquire() 仍会抛错，
+  // 紧随其后的建表会失败，openWithRetry 只能返回 null 且不再重试（功能整会话不可用）。
   if (!(await waitForSyncIdle())) {
-    console.warn("[sqlite] 思源同步仍在进行，仍将打开数据库（可能影响本轮同步）")
+    abandonSyncWindow()
   }
 
   try {

@@ -100,6 +100,8 @@ export default class PluginSample extends Plugin {
   //    保持同一做法——声明了反而触发 `noUnusedLocals`，且易被误认为「registerFeatures 需要接收返回值」。
   /** 主题色实例（rebuildThemeColor 维护，onunload 经 DESTROYABLE_KEYS 销毁） */
   private __themeColor?: { destroy: () => void }
+  /** 卸载标记：onload 发起的异步初始化（设置加载 / 建库重试）在卸载后不得再产生副作用 */
+  private unloaded = false
   // ⚠️ `__globalRelations` / `__statistics` **不在此声明字段**：它们由各自功能模块的 register
   //    经 `(plugin as any).__xxx` 自挂载，本文件只读不写，声明了反而会触发 `noUnusedLocals`
   //    （TS 看不见字符串键的赋值）。二者的实例形状见其在 DESTROYABLE_KEYS 中的注释。
@@ -177,9 +179,13 @@ export default class PluginSample extends Plugin {
    * 异步加载真实配置，覆盖默认值
    */
   private async loadAndApplySettings() {
-    this.settings = await loadSettings(this)
+    const settings = await loadSettings(this)
+    // 等待期间插件可能已被卸载（重载/禁用）：此后的写入与主题监听都会泄漏
+    if (this.unloaded) return
+    this.settings = settings
     // 启动早期内核可能尚未就绪（同步解析为空）：此处补齐目录并落盘一次
     const dataDir = await resolvePluginDataDir(this)
+    if (this.unloaded) return
     if (dataDir) {
       setFeatureFlagsDir(dataDir)
     }
@@ -201,10 +207,22 @@ export default class PluginSample extends Plugin {
    * 同步守卫状态随脚本重新求值归零，若同步尚未结束就会重开 `plugin.db`，令本轮同步的
    * rename 失败。这里只做无副作用刷新 —— 写入任何存储都会再次触发数据变更。
    */
-  public async onDataChanged(reason?: "sync" | "overwrite"): Promise<void> {
+  public onDataChanged(reason?: "sync" | "overwrite"): void {
+    if (this.unloaded) return
     console.info(`[PluginSample] 插件数据已变更（${reason ?? "unknown"}），重新加载配置`)
-    this.settings = await loadSettings(this)
-    applyCompactMode(this.settings)
+    // 不 await：思源会等待本钩子，而 plugin.loadData 在请求回调未触发时可能长期不兑现
+    //（官方 API 文档明示），阻塞会卡住该插件的生命周期队列（重载/禁用）
+    void this.refreshSettingsAfterDataChange().catch((error) => {
+      console.error("[PluginSample] 数据变更后刷新配置失败:", error)
+    })
+  }
+
+  /** 数据变更后的无副作用刷新：重读配置并应用外观（禁止写入存储） */
+  private async refreshSettingsAfterDataChange(): Promise<void> {
+    const settings = await loadSettings(this)
+    if (this.unloaded) return
+    this.settings = settings
+    applyCompactMode(settings)
     this.rebuildThemeColor()
     emitCustomEvent("settingsUpdated")
   }
@@ -218,6 +236,8 @@ export default class PluginSample extends Plugin {
   }
 
   onunload() {
+    // 先置标记：阻断 onload 发起的异步初始化在卸载后继续写入/注册监听
+    this.unloaded = true
     // 清除缓存的加密密钥（内存安全）
     clearCachedKey()
     // 清除 Markdown 渲染器缓存

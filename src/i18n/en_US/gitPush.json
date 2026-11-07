@@ -1102,6 +1102,7 @@
 
     "workspaceFilesButton": "Browse workspace files",
     "workspaceFilesTitle": "Workspace files",
+    "workspaceFilesDragHint": "Hold the header to move this window",
     "workspaceFilesSearchPlaceholder": "Filter file paths...",
     "workspaceFilesRefresh": "Refresh file list",
     "workspaceFilesCollapseAll": "Collapse all",

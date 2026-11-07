@@ -5,6 +5,7 @@
     class="we-dialog"
     :visible="true"
     size="large"
+    :draggable="true"
     :closable="false"
     :aria-label="i18n.workspaceFilesTitle"
     @update:visible="emit('close')"
@@ -13,6 +14,13 @@
     <template #header="{ headerId }">
       <div class="we-header">
         <div class="we-title-row">
+          <!-- 拖拽提示（tooltip："按住标题栏拖动窗口"；标题栏任意空白处均可拖动） -->
+          <Icon
+            icon="mdi:drag-vertical"
+            height="12"
+            class="we-drag-grip"
+            :title="i18n.workspaceFilesDragHint"
+          />
           <Icon
             icon="mdi:file-tree-outline"
             height="12"
@@ -130,36 +138,52 @@
       :text="i18n.loading"
     />
 
-    <!-- 左右分栏：文件树 + 预览 -->
+    <!-- 左右分栏：文件树 + 预览（分隔条可拖动调整宽度，方向键亦可微调） -->
     <div
       v-else
       class="we-split"
     >
-      <div class="we-tree-pane">
-        <!-- 空态："工作区没有文件" / 筛选无命中："没有匹配的文件" -->
-        <EmptyState
-          v-if="rows.length === 0"
-          icon="mdi:file-find-outline"
-          :text="query.trim() ? i18n.workspaceFilesEmptyFiltered : i18n.workspaceFilesEmpty"
-        />
-        <WorkspaceFileTree
-          v-else
-          :i18n="i18n"
-          :rows="rows"
-          :expanded-dirs="expandedDirs"
-          :selected-path="selectedPath"
-          :query="query"
-          :change-map="changeMap"
-          @select="selectedPath = $event"
-          @toggle-dir="toggleDir"
-          @open-changes="(path) => emit('openChanges', path)"
-        />
-      </div>
-      <WorkspaceFilePreview
-        :i18n="i18n"
-        :project-path="projectPath"
-        :file-path="selectedPath"
-      />
+      <Splitter
+        class="we-splitter"
+        layout="horizontal"
+        :gutter-size="8"
+        state-key="gitpush-workspace-explorer-split"
+        state-storage="session"
+      >
+        <SplitterPanel
+          :size="38"
+          :min-size="20"
+          :max-size="70"
+        >
+          <div class="we-tree-pane">
+            <!-- 空态："工作区没有文件" / 筛选无命中："没有匹配的文件" -->
+            <EmptyState
+              v-if="rows.length === 0"
+              icon="mdi:file-find-outline"
+              :text="query.trim() ? i18n.workspaceFilesEmptyFiltered : i18n.workspaceFilesEmpty"
+            />
+            <WorkspaceFileTree
+              v-else
+              :i18n="i18n"
+              :rows="rows"
+              :expanded-dirs="expandedDirs"
+              :selected-path="selectedPath"
+              :query="query"
+              :change-map="changeMap"
+              @select="selectedPath = $event"
+              @toggle-dir="toggleDir"
+              @open-changes="(path) => emit('openChanges', path)"
+            />
+          </div>
+        </SplitterPanel>
+        <SplitterPanel :size="62" :min-size="30">
+          <WorkspaceFilePreview
+            :i18n="i18n"
+            :project-path="projectPath"
+            :file-path="selectedPath"
+          />
+        </SplitterPanel>
+      </Splitter>
     </div>
   </Dialog>
 </template>
@@ -180,6 +204,8 @@ import { useWorkspaceFiles } from "../../composables/useWorkspaceFiles"
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
 import Input from "@/components/Input.vue"
+import Splitter from "@/components/Splitter.vue"
+import SplitterPanel from "@/components/SplitterPanel.vue"
 import EmptyState from "../common/EmptyState.vue"
 import WorkspaceFilePreview from "./WorkspaceFilePreview.vue"
 import WorkspaceFileTree from "./WorkspaceFileTree.vue"

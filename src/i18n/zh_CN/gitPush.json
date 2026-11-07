@@ -1102,6 +1102,7 @@
 
     "workspaceFilesButton": "浏览工作区文件",
     "workspaceFilesTitle": "工作区文件",
+    "workspaceFilesDragHint": "按住标题栏拖动窗口",
     "workspaceFilesSearchPlaceholder": "筛选文件路径...",
     "workspaceFilesRefresh": "刷新文件列表",
     "workspaceFilesCollapseAll": "全部收起",

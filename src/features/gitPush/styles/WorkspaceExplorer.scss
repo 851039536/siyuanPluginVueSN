@@ -6,7 +6,10 @@
 // 加宽覆盖 large 档（(0,3,0) 压过组件档位类，与变更目录树弹窗同法）
 
 .git-push-panel .si-dialog.we-dialog {
-  --si-dialog-width: min(96vw, 1080px);
+  // 桌面端固定宽度上限 + 窄窗口自适应（不再铺满整窗）
+  --si-dialog-width: min(98vw, 1360px);
+  // 覆盖 Dialog 默认 80vh 上限：文件浏览器需要更高的可视区（仍留出遮罩边距）
+  max-height: 90vh;
 }
 
 // 内容区纵向 flex + 去 Dialog 默认内边距：工具栏固定、左右分栏自行滚动
@@ -34,6 +37,12 @@
   gap: $s-px6;
   min-width: 0;
   color: var(--b3-theme-on-surface);
+}
+
+// 拖拽提示图标（颜色弱化，光标随标题栏的可移动光标）
+.we-drag-grip {
+  flex-shrink: 0;
+  opacity: 0.45;
 }
 
 .we-title {
@@ -80,19 +89,24 @@
 }
 
 // ── 左右分栏 ──
-// 固定视口比例高度：内容区在 80vh 上限内收缩，树与预览各自内部滚动（不撑破弹窗）
+// 固定视口比例高度：内容区在 90vh 上限内收缩，树与预览各自内部滚动（不撑破弹窗）
 .we-split {
-  display: flex;
-  gap: $s-2;
-  height: min(61vh, 588px);
-  min-height: 260px;
+  height: min(70vh, 780px);
+  min-height: 240px;
+}
+
+// Splitter 根铺满分栏区；面板宽度由 Splitter 百分比控制（默认 38% / 62%，可拖动/方向键调整）
+.we-split .si-splitter {
+  height: 100%;
 }
 
 .we-tree-pane {
+  // border-box：高度 100% + 1px 边框不会撑出面板内容区（否则出现外层滚动条）
+  box-sizing: border-box;
   display: flex;
-  flex: 0 0 38%;
   flex-direction: column;
-  min-width: 200px;
+  height: 100%;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;
@@ -272,9 +286,10 @@
 
 // ── 预览 ──
 .we-preview {
+  box-sizing: border-box;
   display: flex;
-  flex: 1;
   flex-direction: column;
+  height: 100%;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--b3-border-color);

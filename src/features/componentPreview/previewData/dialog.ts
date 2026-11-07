@@ -192,6 +192,18 @@ export const dialogGroup: PreviewGroup = {
 </Dialog>`,
     },
     {
+      title: "标题栏拖拽移动（draggable）",
+      props: {
+        visible: true,
+        header: "拖动标题栏",
+        draggable: true,
+      },
+      slotText: "开启后按住标题栏可拖动弹窗；位置按视口 8px 边距钳制，关闭重开复位。",
+      code: `<Dialog v-model:visible="visible" header="拖动标题栏" draggable>
+  按住标题栏拖动即可移动弹窗。
+</Dialog>`,
+    },
+    {
       title: "长内容内部滚动",
       props: {
         visible: true,

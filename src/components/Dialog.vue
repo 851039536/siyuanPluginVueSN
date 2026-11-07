@@ -14,15 +14,17 @@
     >
       <div
         ref="containerRef"
+        v-bind="$attrs"
         class="si-dialog"
-        :class="`si-dialog--${size}`"
+        :class="[`si-dialog--${size}`, { 'si-dialog--dragging': dragging }]"
+        :style="dragStyle"
         role="dialog"
         :aria-modal="modal"
         :aria-labelledby="labelledById"
         :aria-label="labelledById ? undefined : ariaLabel"
         tabindex="-1"
       >
-        <!-- 整块结构可替换（官方作用域另有 maximizeCallback / initDragCallback，本项目不做最大化与拖拽） -->
+        <!-- 整块结构可替换（官方作用域另有 maximizeCallback / initDragCallback；本项目不做最大化，拖拽为可选 draggable） -->
         <slot
           name="container"
           v-bind="containerScope"
@@ -30,6 +32,8 @@
           <div
             v-if="showHeader"
             class="si-dialog__header"
+            :class="{ 'si-dialog__header--draggable': draggable }"
+            @pointerdown="handleDragStart"
           >
             <!-- 标题内容可整体替换（作用域给标题类名与标题 id，便于调用方沿用外观与无障碍关联） -->
             <slot
@@ -89,14 +93,21 @@ import {
   ref,
   useId,
   useSlots,
+  watch,
 } from "vue"
 import {
   DEFAULT_CLOSE_LABEL,
   overlayPositionClass,
 } from "./overlay/types"
+import { useDialogDrag } from "./overlay/useDialogDrag"
 import { useOverlay } from "./overlay/useOverlay"
 import Button from "./Button.vue"
 import "./kit/theme"
+
+// 关键：根节点是 <Transition>，默认 attrs 会穿透到遮罩 div 上（class 落在 .si-dialog-mask），
+// 导致调用方 `.si-dialog.my-dialog` 形式的样式覆盖永远不命中。关闭自动继承后把 attrs
+// 显式绑到弹窗面板（class/style 与内部 class/style 由 Vue 自动合并）。
+defineOptions({ inheritAttrs: false })
 
 // 公开类型转出（沿用 ConfirmDialog / Paginator 的别名转出写法：`<script setup>` 不能直接 re-export 导入名）
 export type DialogPosition = OverlayPosition
@@ -126,6 +137,12 @@ interface Props {
   closeOnEscape?: boolean
   /** 是否渲染标题栏（关闭按钮随标题栏一起渲染） */
   showHeader?: boolean
+  /**
+   * 标题栏拖拽移动（可选能力，默认 `false`）。
+   * 仅默认结构生效（`container` 插槽整块替换时没有标题栏、无法拖动）；
+   * 位置按视口 8px 边距钳制，关闭后重开复位。官方默认 `true`，本项目默认关。
+   */
+  draggable?: boolean
   /** 位置九档：`center`（默认）/ 四边 / 四角，模板类驱动、零 JS 定位 */
   position?: DialogPosition
   /** 尺寸档位：驱动弹窗宽度、内边距与基准字号 */
@@ -147,6 +164,7 @@ const props = withDefaults(defineProps<Props>(), {
   position: "center",
   size: "small",
   closeLabel: DEFAULT_CLOSE_LABEL,
+  draggable: false,
 })
 
 const emit = defineEmits<{
@@ -167,6 +185,19 @@ const labelledById = computed(() =>
 )
 
 const containerRef = ref<HTMLElement | null>(null)
+
+// 标题栏拖拽（可选）：位移用独立 translate 属性，与进出场 scale 过渡互不影响
+const {
+  dragging,
+  dragStyle,
+  handleDragStart,
+  resetDrag,
+} = useDialogDrag(containerRef, () => props.draggable)
+
+// 关闭后重开复位：拖拽位置不跨会话保留，避免重开停在旧位置
+watch(() => props.visible, (visible) => {
+  if (visible) resetDrag()
+})
 
 /** 关闭请求：统一收敛为派发 `false`，由调用方决定最终状态（官方单向数据流） */
 function handleClose(): void {

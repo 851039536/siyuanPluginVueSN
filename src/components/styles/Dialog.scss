@@ -79,6 +79,17 @@
     border-bottom: 1px solid var(--b3-border-color, $c-border);
   }
 
+  // 可拖拽标题栏：移动光标提示 + 禁用触摸滚动接管；拖拽期间禁用选中，避免选中标题文字
+  &__header--draggable {
+    cursor: move;
+    user-select: none;
+    touch-action: none;
+  }
+
+  &--dragging {
+    user-select: none;
+  }
+
   // 标题字号与正文同档、仅以字重区分（避免引入第二套字号阶梯，也不越过 16px 标题上限）
   &__title {
     flex: 1;

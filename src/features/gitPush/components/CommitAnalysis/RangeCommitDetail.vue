@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 提交分析区间统计：只做展示——区间与条目由 HeatmapCalendarSection 计算后传入
+// gitPush 提交分析区间统计：只做展示——区间与条目由 HeatmapSection 计算后传入
 import type { CommitAnalysisEntry } from "../../types"
 import type { CommitRangeSummary } from "../../utils"
 import { computed } from "vue"

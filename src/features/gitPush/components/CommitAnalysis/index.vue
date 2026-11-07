@@ -31,30 +31,6 @@
         @run="runCurrentTab"
       >
         <template #controls>
-          <!-- 提交概览视角：视图切换（热力图 / 日历；直接内联，避免每次开设置） -->
-          <div
-            v-if="activeTab === 'overview'"
-            class="gpa-toolbar-seg"
-            role="group"
-            :aria-label="i18n.analysisViewLabel"
-          >
-            <Button
-              class="gpa-toolbar-seg-btn"
-              variant="ghost"
-              size="xsmall"
-              dense
-              :aria-pressed="viewSettings.view === 'heatmap'"
-              @click="emit('updateViewSettings', { view: 'heatmap' })"
-            >{{ i18n.analysisViewHeatmap }}</Button>
-            <Button
-              class="gpa-toolbar-seg-btn"
-              variant="ghost"
-              size="xsmall"
-              dense
-              :aria-pressed="viewSettings.view === 'calendar'"
-              @click="emit('updateViewSettings', { view: 'calendar' })"
-            >{{ i18n.analysisViewCalendar }}</Button>
-          </div>
           <!-- 提交概览视角：显示范围（最近一年 / 全部 / 年份；KPI、排行、趋势与热力图同源） -->
           <Select
             v-if="activeTab === 'overview'"
@@ -104,7 +80,7 @@
             :commit-count="commitCount"
             @update-count="emit('updateCount', $event)"
           />
-          <!-- 提交概览视角：热力图/日历显示设置 -->
+          <!-- 提交概览视角：热力图显示设置 -->
           <CommitAnalysisSettings
             v-if="activeTab === 'overview'"
             :i18n="i18n"
@@ -176,9 +152,9 @@
               @view-project="emit('viewProject', $event)"
             />
 
-            <!-- 提交热力图 / 日历（日粒度提交分布的唯一出口：范围/视图/周起始/颜色/分档可配；点击格子展开当日明细） -->
+            <!-- 提交热力图（日/周/月粒度提交分布的唯一出口：范围/周起始/颜色/分档/密度可配；点击格子展开当日明细） -->
             <div ref="heatmapWrapRef">
-              <HeatmapCalendarSection
+              <HeatmapSection
                 :i18n="i18n"
                 :stats="stats"
                 :view-settings="viewSettings"
@@ -355,7 +331,7 @@ import {
   resolveTrendGranularity,
 } from "../../utils"
 import CommitAnalysisSettings from "./CommitAnalysisSettings.vue"
-import HeatmapCalendarSection from "./HeatmapCalendarSection.vue"
+import HeatmapSection from "./HeatmapSection.vue"
 import ProjectCommitTrend from "./ProjectCommitTrend.vue"
 import ProjectRankingSection from "./ProjectRankingSection.vue"
 import ExtFilterDialog from "../LineStats/ExtFilterDialog.vue"

@@ -1,5 +1,5 @@
-// gitPush 热力图/日历的「拖过一片日格选区间」状态机。
-// 独立成 composable：热力图与日历共用同一套逻辑，避免两处各写一遍「拖拽收尾 click 抑制」这个易错点。
+// gitPush 热力图「拖过一片日格选区间」状态机。
+// 独立成 composable，避免「拖拽收尾 click 抑制」这个易错点散落在组件里。
 // 刻意不用 onMounted/onUnmounted：mouseup 监听在首次按下时挂、收尾时摘，
 // 既没有组件上下文依赖（可在 Node 环境直接单测），也不会因组件卸载残留监听。
 import { readonly, ref } from "vue"

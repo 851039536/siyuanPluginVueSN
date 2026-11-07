@@ -172,7 +172,7 @@ const props = defineProps<{
   weekStart: 0 | 1
   /** 热力主色（#RRGGBB） */
   color: string
-  /** 热力档位阈值（首项 0；自适应或固定由父级决定，与日历视图共用同一份） */
+  /** 热力档位阈值（首项 0；自适应或固定由父级决定） */
   thresholds: readonly number[]
   /** 当前分档方式（图例口径说明） */
   scaleMode: CommitHeatScaleMode

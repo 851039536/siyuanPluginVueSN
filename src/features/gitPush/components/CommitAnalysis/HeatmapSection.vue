@@ -1,10 +1,10 @@
-<!-- gitPush 提交分析热力图/日历区块（按 viewSettings 切换视图；单击看当日、拖拽/Shift+点击框选区间看统计） -->
+<!-- gitPush 提交分析热力图区块（单击看当日、拖拽/Shift+点击框选区间看统计） -->
 <template>
   <div class="gpa-section">
-    <!-- 区块标题："提交热力图"/"提交日历" + 指标切换 + 范围摘要（连续 / 最长连续 / 合计） -->
+    <!-- 区块标题："提交热力图" + 指标切换 + 范围摘要（连续 / 最长连续 / 合计） -->
     <div class="gpa-section-title">
-      {{ viewSettings.view === "heatmap" ? i18n.analysisHeatTitle : i18n.analysisCalendarTitle }}
-      <!-- 热力指标（提交数 / 项目数 / 活跃作者；热力图与日历共用同一口径） -->
+      {{ i18n.analysisHeatTitle }}
+      <!-- 热力指标（提交数 / 项目数 / 活跃作者） -->
       <Select
         class="gpa-heat-metric"
         :model-value="viewSettings.heatMetric"
@@ -21,7 +21,6 @@
       </span>
     </div>
     <CommitHeatmap
-      v-if="viewSettings.view === 'heatmap'"
       :i18n="i18n"
       :bucket-counts="bucketCounts"
       :start="range.start"
@@ -33,22 +32,6 @@
       :scale-mode="viewSettings.heatScale"
       :metric="viewSettings.heatMetric"
       :density="viewSettings.heatDensity"
-      :sel-start="selStart"
-      :sel-end="selEnd"
-      @pick="onPick"
-      @drag-start="onDragStart"
-      @drag-to="onDragTo"
-    />
-    <CommitCalendar
-      v-else
-      :i18n="i18n"
-      :day-counts="dayCounts"
-      :start="range.start"
-      :end="range.end"
-      :week-start="viewSettings.weekStart"
-      :color="viewSettings.color"
-      :thresholds="thresholds"
-      :metric="viewSettings.heatMetric"
       :sel-start="selStart"
       :sel-end="selEnd"
       @pick="onPick"
@@ -81,14 +64,13 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 提交分析热力图/日历区块（viewSettings 控制 heatmap/calendar 切换 + 指标口径 + 自适应/固定分档 + 粒度 + 选中/框选）
-// 选中态、粒度、分档阈值与摘要都放在本层：两个视图共用同一份，切换视图时同一天的着色与选中不跳变。
+// gitPush 提交分析热力图区块（指标口径 + 自适应/固定分档 + 粒度 + 选中/框选）
+// 选中态、粒度、分档阈值与摘要都放在本层，切换范围时着色与选中不跳变。
 import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../types"
 import type { HeatBucketSpan } from "../../utils"
 import { computed, ref, watch } from "vue"
 import Select from "@/components/Select.vue"
 import {
-  buildDayMetricMap,
   buildHeatBuckets,
   buildHeatMetricMap,
   computeHeatThresholds,
@@ -100,7 +82,6 @@ import {
   summarizeHeatStreak,
 } from "../../utils"
 import { COMMIT_HEAT_METRIC_META } from "../../types"
-import CommitCalendar from "./CommitCalendar.vue"
 import CommitHeatmap from "./CommitHeatmap.vue"
 import DayCommitDetail from "./DayCommitDetail.vue"
 import RangeCommitDetail from "./RangeCommitDetail.vue"
@@ -148,11 +129,7 @@ const range = computed(() => {
 /** 格子粒度：由跨度自动决定（≤1 年按日 / ≤2.5 年按周 / 更久按月） */
 const granularity = computed(() => resolveHeatGranularity(range.value.start, range.value.end))
 
-/** 日值映射（日历视图用；指标可为提交数 / 去重项目数 / 去重作者数） */
-const dayCounts = computed(() => buildDayMetricMap(props.stats.entries, props.viewSettings.heatMetric))
-
-/**
- * 桶值映射（热力图用）：按「粒度 + 指标」聚合，**不**把日值相加——
+/** 桶值映射（热力图用）：按「粒度 + 指标」聚合，**不**把日值相加——
  * projects / authors 是去重计数，逐日相加会把连续活跃 10 天的人算成 10 个。
  */
 const bucketCounts = computed(() => buildHeatMetricMap(

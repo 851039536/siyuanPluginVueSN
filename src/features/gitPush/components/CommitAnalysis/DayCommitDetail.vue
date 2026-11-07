@@ -1,4 +1,4 @@
-<!-- gitPush 提交分析当日明细（点击热力图/日历格子后就地展开：当日提交列表 + 计数摘要，行可跳转列表视图） -->
+<!-- gitPush 提交分析当日明细（点击热力图格子后就地展开：当日提交列表 + 计数摘要，行可跳转列表视图） -->
 <template>
   <div class="gpa-day">
     <div class="gpa-day-head">
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-// gitPush 提交分析当日明细：只做「按日过滤结果的展示」——过滤与选中状态由 HeatmapCalendarSection 持有
+// gitPush 提交分析当日明细：只做「按日过滤结果的展示」——过滤与选中状态由 HeatmapSection 持有
 import type { CommitAnalysisEntry } from "../../types"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"

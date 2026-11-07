@@ -8,39 +8,6 @@
 
 // ── 顶部工具条与状态文案：已收敛至 styles/AnalysisToolbar.scss（统一工具条共用）──
 
-// 工具条内联视图切换（热力图 / 日历）：外框同设置表单的分段控件，段内按钮去边框去圆角
-.gpa-toolbar-seg {
-  display: flex;
-  gap: $s-px2;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  padding: $s-px2;
-  flex-shrink: 0;
-}
-
-.gpa-toolbar-seg .gpa-toolbar-seg-btn.si-button {
-  padding: $s-px2 $s-2;
-  border: none;
-  border-radius: $r-sm;
-  background: transparent;
-  color: var(--b3-theme-on-surface-light);
-  font-size: $t-2xs;
-  transition: background 0.12s, color 0.12s;
-}
-
-.gpa-toolbar-seg .gpa-toolbar-seg-btn.si-button:hover {
-  background: var(--b3-list-hover);
-  color: var(--b3-theme-on-surface);
-}
-
-// 选中态排在 hover 之后：同特异性时后者生效，避免悬停已选中项被 hover 底色覆盖
-.gpa-toolbar-seg .gpa-toolbar-seg-btn.si-button[aria-pressed="true"] {
-  background: var(--b3-theme-primary);
-  color: var(--b3-theme-on-primary);
-  font-weight: $fw-semibold;
-}
-
 // 工具条显示范围下拉（与工具条其它 xsmall 控件同高；下拉面板放宽避免「2026 年至今」截断）
 .gpa-toolbar-range.si-select {
   width: 116px;
@@ -113,7 +80,7 @@
 }
 
 // 热力图标题行右侧摘要（连续 / 最长 / 合计）：推到行尾，等宽数字避免刷新时宽度抖动
-// 热力指标下拉（区块标题行内联：与连续/合计摘要同行，热力图与日历共用同一口径）
+// 热力指标下拉（区块标题行内联：与连续/合计摘要同行）
 .gpa-heat-metric.si-select {
   width: 104px;
   flex-shrink: 0;

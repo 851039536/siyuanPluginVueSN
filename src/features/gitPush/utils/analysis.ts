@@ -34,7 +34,7 @@ export function isDayKeyInBucket(dayKey: string, bucketStart: string, spanDays: 
 }
 
 /**
- * 按本地日期（YYYY-MM-DD）聚合提交条目为日计数映射（热力图/日历视图共用，缺天不补 0，无效日期跳过）。
+ * 按本地日期（YYYY-MM-DD）聚合提交条目为日计数映射（热力图日粒度使用，缺天不补 0，无效日期跳过）。
  * 注：reportMetrics.aggregateDailyStats 刻意不复用本函数——其输入 NumstatCommit 需同步
  * 聚合 open/close（首末提交时刻）语义，仅在注释处互指防口径漂移。
  */
@@ -47,18 +47,6 @@ export function buildDayCountMap(entries: CommitAnalysisEntry[]): Map<string, nu
     countByDay.set(key, (countByDay.get(key) || 0) + 1)
   }
   return countByDay
-}
-
-/**
- * 按指标口径聚合日值（热力图指标切换的唯一入口）：
- * - commits：当日提交条数（复用 buildDayCountMap）；
- * - projects / authors：当日**去重**后的项目数 / 作者数（同一天同一个人提交十次仍算 1）。
- * 三者共用同一次 commit log 抓取结果，切换指标不额外跑 git。
- *
- * 日粒度是 buildHeatMetricMap 的一层薄包装：日历视图只按天渲染，读起来比传三个参数轻。
- */
-export function buildDayMetricMap(entries: CommitAnalysisEntry[], metric: CommitHeatMetric): Map<string, number> {
-  return buildHeatMetricMap(entries, "day", metric)
 }
 
 // ── 粒度：一个格子代表多久（日 / 周 / 月）──
@@ -203,7 +191,7 @@ export function buildHeatBuckets(
  *
  * 为什么不能把日值映射按桶相加：projects / authors 是**去重计数**，
  * 「每天的活跃作者数」相加会把连续活跃 10 天的人算成 10 个。
- * 故这里直接按桶收集集合，与 buildDayMetricMap 的口径逐字对齐（day 粒度下结果完全一致）。
+ * 故这里直接按桶收集集合，与日粒度口径逐字对齐（day 粒度下结果完全一致）。
  */
 export function buildHeatMetricMap(
   entries: CommitAnalysisEntry[],
@@ -518,7 +506,7 @@ export function computeHeatThresholds(counts: ReadonlyArray<number>): number[] {
   return thresholds
 }
 
-/** 解析热力图/日历显示范围：最近一年 = 今天−364 天 ~ 今天；年份 N = N-01-01 ~ 今年今天 / N-12-31 */
+/** 解析热力图显示范围：最近一年 = 今天−364 天 ~ 今天；年份 N = N-01-01 ~ 今年今天 / N-12-31 */
 /**
  * 解析显示范围（起止均为本地零点）：
  * - "lastYear"：最近 365 天（含今天）
@@ -562,8 +550,8 @@ export function heatCellColor(level: number, main: string): string {
 }
 
 /**
- * 热力图/日历格子 tooltip："2026-08-01（周六）：3 次提交"。
- * 两个视图共用同一文案口径（i18n 键 analysisHeatTooltip 占位 {0}日期 {1}星期 {2}数值 {3}量词）。
+ * 热力图格子 tooltip："2026-08-01（周六）：3 次提交"。
+ * 文案口径统一（i18n 键 analysisHeatTooltip 占位 {0}日期 {1}星期 {2}数值 {3}量词）。
  * 量词随指标口径变化（次提交 / 个项目 / 位作者），故由调用方传 unitKey。
  */
 export function heatCellTooltip(
@@ -581,52 +569,12 @@ export function heatCellTooltip(
     .replace("{3}", i18n[unitKey] || "")
 }
 
-/** 热力图/日历共用：单个日格的展示数据（样式 + tooltip + 计数） */
-export interface DayCellView {
-  /** YYYY-MM-DD */
-  date: string
-  /** 该日提交数 */
-  count: number
-  /**
-   * 预计算的格子内联样式**对象**。
-   * 存对象而非颜色串：模板绑定同一引用后，Vue 不会把每次重渲染都当成 style 变更去 patch
-   * （一年 53 周 × 7 行 = 371 格 / 12 月 × 31 天 ≈ 372 格，逐格 patch 是明显浪费）。
-   */
-  style: Record<string, string>
-  /** 悬停文案（"2026-08-01（周六）：3 次提交"） */
-  tooltip: string
-}
-
-/** buildDayCell 的可选项（分档阈值与 tooltip 量词都由调用方按当前视图设置决定） */
+/** buildHeatBucketCell 的可选项（分档阈值与 tooltip 量词都由调用方按当前视图设置决定） */
 export interface DayCellOptions {
   /** 分档阈值（首项 0；缺省固定档） */
   thresholds?: readonly number[]
   /** tooltip 量词的 i18n 键（缺省提交数口径 analysisHeatUnitCommits） */
   unitKey?: string
-}
-
-/**
- * 构建单个日格的展示数据（热力图与日历共用，消除两处重复的
- * `heatLevel → heatCellColor` + `heatCellTooltip` 组合）。
- *
- * 两个组件对同一份 dayCounts 渲染出不同形态（周列网格 vs 月卡片），
- * 但「某一天显示什么颜色、什么 tooltip」的口径必须一致，故收敛到此处。
- * 阈值与量词由调用方统一传入（同一份分档喂给两个视图，避免切换视图时同一天换颜色）。
- */
-export function buildDayCell(
-  i18n: Record<string, any>,
-  date: string,
-  count: number,
-  color: string,
-  opts: DayCellOptions = {},
-): DayCellView {
-  const { thresholds = HEAT_LEVEL_THRESHOLDS, unitKey } = opts
-  return {
-    date,
-    count,
-    style: { background: heatCellColor(heatLevel(count, thresholds), color) },
-    tooltip: heatCellTooltip(i18n, date, count, unitKey),
-  }
 }
 
 /** 热力格子（任意粒度）的展示数据：日/周/月共用同一分档口径，只有 tooltip 文案随粒度变 */
@@ -693,7 +641,7 @@ export function rankByCountWithTotal<T>(
   return { rows: sorted.slice(0, limit), totalGroups: sorted.length }
 }
 
-/** 区间统计（热力图/日历框选一段日期后的聚合口径） */
+/** 区间统计（热力图框选一段日期后的聚合口径） */
 export interface CommitRangeSummary {
   /** 区间内提交总数（按条目计，不受热力指标影响） */
   total: number

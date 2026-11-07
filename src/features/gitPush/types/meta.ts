@@ -520,7 +520,7 @@ export type CommitHeatGranularity = "day" | "week" | "month"
 
 /**
  * 趋势图粒度：在热力粒度之上增加「季度 / 年」。
- * 热力图/日历最粗只到月（年 × 12 月矩阵可读），而趋势图在多年跨度下若仍按月
+ * 热力图最粗只到月（年 × 12 月矩阵可读），而趋势图在多年跨度下若仍按月
  * 会出现几十根柱挤成一排，故单独提供更粗的两档（见 utils.resolveTrendGranularity）。
  */
 export type CommitTrendGranularity = CommitHeatGranularity | "quarter" | "year"
@@ -538,10 +538,8 @@ export const HEAT_CELL_SIZES: Record<CommitHeatDensity, number> = {
   normal: 14,
 }
 
-/** 提交分析显示设置（热力图/日历视图配置，持久化到 git-push-analysis-view） */
+/** 提交分析显示设置（热力图视图配置，持久化到 git-push-analysis-view） */
 export interface CommitAnalysisViewSettings {
-  /** 视图：热力图 / 日历 */
-  view: "heatmap" | "calendar"
   /**
    * 显示范围：
    * - "lastYear"：最近一年
@@ -569,7 +567,7 @@ export const HEAT_LEVEL_THRESHOLDS = [0, 1, 3, 6, 12] as const
 
 /**
  * 提交分析星期短名 i18n 键（数组下标 = Date.getDay）。
- * 热力图与日历共用：两者都需按 weekStart 取星期名，各存一份会漂移。
+ * 热力图按 weekStart 排序表头与生成 tooltip 时查表，集中一份避免漂移。
  */
 export const ANALYSIS_WEEKDAY_KEYS = [
   "analysisWdSun", "analysisWdMon", "analysisWdTue", "analysisWdWed",

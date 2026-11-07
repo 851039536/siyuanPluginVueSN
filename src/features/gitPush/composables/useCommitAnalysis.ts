@@ -117,7 +117,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   let pendingReanalyze = false
   /** 运行锁：提交分析与行数统计共用（二者都要跑 git 子进程，并发触发会造成进程风暴），非响应式 */
   let runBusy = false
-  /** 热力图/日历显示设置（视图/范围/每周第一天/格子主色，持久化到 git-push-analysis-view） */
+  /** 热力图显示设置（范围/每周第一天/格子主色/指标/密度/分级方式，持久化到 git-push-analysis-view） */
   const viewSettings = ref<CommitAnalysisViewSettings>({ ...DEFAULT_ANALYSIS_VIEW_SETTINGS })
   /** 项目代码行数排行（按总行数降序，行数统计视图分析后填充） */
   const projectLineRanking = ref<ProjectLineRankItem[]>([])

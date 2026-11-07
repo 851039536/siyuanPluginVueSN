@@ -522,9 +522,8 @@ const DEFAULT_LINE_STATS_CACHE: LineStatsCache = {
   selectedExtensions: [],
 }
 
-/** 提交分析显示设置默认值（热力图 + 最近一年 + 周一起始 + GitHub 绿 + 自适应分级 + 提交数指标 + 紧凑密度） */
+/** 提交分析显示设置默认值（最近一年 + 周一起始 + GitHub 绿 + 自适应分级 + 提交数指标 + 紧凑密度） */
 export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
-  view: "heatmap",
   range: "lastYear",
   weekStart: 1,
   color: "#2ea44f",
@@ -589,7 +588,7 @@ export class GitPushStorage {
   readonly commitAnalysisCache: TypedStorage<CommitAnalysisCache>
   /** 行数统计独立缓存（与提交分析缓存解耦，进入行数统计视图直接复用上次结果） */
   readonly lineStatsCache: TypedStorage<LineStatsCache>
-  /** 提交分析显示设置（热力图/日历视图、显示范围、每周第一天、格子主色） */
+  /** 提交分析显示设置（显示范围、每周第一天、格子主色、指标/密度/分级方式） */
   readonly commitAnalysisView: TypedStorage<CommitAnalysisViewSettings>
   /** 代码统计报告偏好（上次选中项目 + 时间范围，进入视图恢复选择） */
   readonly reportPrefs: TypedStorage<CodeReportPrefs>

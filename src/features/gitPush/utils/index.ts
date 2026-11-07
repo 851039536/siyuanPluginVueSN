@@ -64,12 +64,9 @@ export {
   parseWorktreeStatusV2,
 } from "./gitOutput"
 export type { WorktreeStatusParse, WorktreeStatusV2Parse } from "./gitOutput"
-export type { DayCellView } from "./analysis"
 
 export {
-  buildDayCell,
   buildDayCountMap,
-  buildDayMetricMap,
   buildHeatBucketCell,
   buildHeatBuckets,
   buildHeatMetricMap,

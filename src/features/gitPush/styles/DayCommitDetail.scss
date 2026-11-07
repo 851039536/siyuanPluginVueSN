@@ -2,7 +2,7 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
 
-// 面板容器：与月卡片同款描边 + 表面色，作为热力图/日历下方的「就地展开」层
+// 面板容器：与月卡片同款描边 + 表面色，作为热力图下方的「就地展开」层
 .gpa-day {
   margin-top: $s-2;
   padding: $s-2;

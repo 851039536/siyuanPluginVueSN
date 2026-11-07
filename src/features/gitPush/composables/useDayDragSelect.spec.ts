@@ -1,5 +1,5 @@
 /**
- * useDayDragSelect 单测：热力图/日历共用的「拖过一片日格选区间」状态机。
+ * useDayDragSelect 单测：热力图「拖过一片日格选区间」状态机。
  *
  * 环境是 node（无 DOM），故用一个最小的 window 替身记录 addEventListener/removeEventListener，
  * 手动触发 mouseup 来验证收尾逻辑——被测行为全在事件回调里，不需要真实 DOM。

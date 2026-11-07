@@ -1,34 +1,7 @@
-<!-- gitPush 提交分析显示设置表单（控件走共享库：视图/范围/指标/周起始/密度/分档/颜色；
+<!-- gitPush 提交分析显示设置表单（控件走共享库：范围/周起始/指标/密度/分档/颜色；
      popover 隐藏已上提到工具条与区块标题的常用项，设置汇总弹窗展示完整表单） -->
 <template>
   <div class="gpa-settings-form">
-    <!-- 设置项：视图（热力图 / 日历 两段式切换；已上提到分析工具条，popover 内隐藏） -->
-    <div
-      v-if="!omitPrimary"
-      class="gpa-settings-row"
-    >
-      <!-- 设置项标签："视图" -->
-      <span class="gpa-settings-label">{{ i18n.analysisViewLabel }}</span>
-      <div class="gpa-settings-seg">
-        <Button
-          class="gpa-settings-seg-btn"
-          variant="ghost"
-          size="xsmall"
-          dense
-          :aria-pressed="viewSettings.view === 'heatmap'"
-          @click="update({ view: 'heatmap' })"
-        >{{ i18n.analysisViewHeatmap }}</Button>
-        <Button
-          class="gpa-settings-seg-btn"
-          variant="ghost"
-          size="xsmall"
-          dense
-          :aria-pressed="viewSettings.view === 'calendar'"
-          @click="update({ view: 'calendar' })"
-        >{{ i18n.analysisViewCalendar }}</Button>
-      </div>
-    </div>
-
     <!-- 设置项：显示范围（最近一年 / 全部 / 指定年份；已上提到分析工具条，popover 内隐藏） -->
     <div
       v-if="!omitPrimary"
@@ -81,11 +54,8 @@
       </div>
     </div>
 
-    <!-- 设置项：格子密度（仅热力图有意义；日历是自适应列宽的月度网格） -->
-    <div
-      v-if="viewSettings.view === 'heatmap'"
-      class="gpa-settings-row"
-    >
+    <!-- 设置项：格子密度（紧凑 / 舒适；驱动整张热力网格的格子边长） -->
+    <div class="gpa-settings-row">
       <!-- 设置项标签："密度" -->
       <span class="gpa-settings-label">{{ i18n.analysisHeatDensity }}</span>
       <div class="gpa-settings-seg">
@@ -164,7 +134,7 @@ const props = defineProps<{
   viewSettings: CommitAnalysisViewSettings
   /** 年份选项（数据年份 ∪ 今年 ∪ 已保存年份，降序） */
   years: number[]
-  /** 隐藏已上提到工具条/区块标题的常用项（视图 / 显示范围 / 指标）；设置汇总弹窗保留完整表单 */
+  /** 隐藏已上提到工具条/区块标题的常用项（显示范围 / 指标）；设置汇总弹窗保留完整表单 */
   omitPrimary?: boolean
 }>()
 

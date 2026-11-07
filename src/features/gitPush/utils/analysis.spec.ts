@@ -5,8 +5,6 @@
 // 若该契约破裂，用户会看到排行各行次数之和小于总提交数而被误读为统计错误。
 import { describe, expect, it } from "vitest"
 import {
-  buildDayCell,
-  buildDayMetricMap,
   buildHeatBucketCell,
   buildHeatBuckets,
   buildHeatMetricMap,
@@ -30,69 +28,6 @@ import {
   summarizeHeatRange,
   summarizeHeatStreak,
 } from "./analysis"
-
-describe("buildDayCell（热力图/日历共用的日格口径）", () => {
-  const i18n: Record<string, any> = {
-    analysisHeatTooltip: "{0}（{1}）：{2} {3}",
-    analysisHeatUnitCommits: "次提交",
-    analysisHeatUnitProjects: "个项目",
-    analysisWdMon: "周一",
-    analysisWdTue: "周二",
-    analysisWdWed: "周三",
-    analysisWdThu: "周四",
-    analysisWdFri: "周五",
-    analysisWdSat: "周六",
-    analysisWdSun: "周日",
-  }
-
-  it("返回 date/count/style/tooltip 四项（两个视图据此渲染不同形态）", () => {
-    const cell = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6")
-    expect(cell.date).toBe("2026-08-03")
-    expect(cell.count).toBe(5)
-    expect(typeof cell.style.background).toBe("string")
-    expect(cell.tooltip).toContain("2026-08-03")
-    expect(cell.tooltip).toContain("5")
-  })
-
-  it("style 为对象引用（模板绑定同一引用才不会被逐格 patch）", () => {
-    const a = buildDayCell(i18n, "2026-08-03", 1, "#3b82f6")
-    expect(a.style).toBeTypeOf("object")
-    // 同一输入两次调用产出等价但独立的 style 对象（无共享可变状态）
-    const b = buildDayCell(i18n, "2026-08-03", 1, "#3b82f6")
-    expect(b.style).toEqual(a.style)
-    expect(b.style).not.toBe(a.style)
-  })
-
-  it("0 次用主题表面灰（不走主色透明度分级）", () => {
-    const zero = buildDayCell(i18n, "2026-08-03", 0, "#3b82f6")
-    expect(zero.style.background).toContain("--b3-theme-on-surface-rgb")
-  })
-
-  it("随计数升高，颜色透明度等级递增（同一天同色系只有明暗差异）", () => {
-    const counts = [1, 5, 10, 30]
-    const colors = counts.map((c) => buildDayCell(i18n, "2026-08-03", c, "#3b82f6").style.background)
-    // 各级互不相同，且都以主色为前缀（仅 alpha 后缀变化）
-    expect(new Set(colors).size).toBe(counts.length)
-    for (const c of colors) expect(c.startsWith("#3b82f6")).toBe(true)
-  })
-
-  it("远超阈值（如 1000 次）不越界，仍取最高等级色", () => {
-    const top = buildDayCell(i18n, "2026-08-03", 30, "#3b82f6").style.background
-    expect(buildDayCell(i18n, "2026-08-03", 1000, "#3b82f6").style.background).toBe(top)
-  })
-
-  it("传入自适应阈值时按新档位取色（同一天可因档位不同而降级）", () => {
-    // 固定档下 5 次属 level 2（≥3），自适应档 [0,1,2,3,4] 下升到 level 4
-    const fixed = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6").style.background
-    const auto = buildDayCell(i18n, "2026-08-03", 5, "#3b82f6", { thresholds: [0, 1, 2, 3, 4] }).style.background
-    expect(auto).not.toBe(fixed)
-  })
-
-  it("tooltip 量词随指标口径替换（{3} 由 unitKey 决定）", () => {
-    expect(buildDayCell(i18n, "2026-08-03", 3, "#3b82f6").tooltip).toContain("次提交")
-    expect(buildDayCell(i18n, "2026-08-03", 3, "#3b82f6", { unitKey: "analysisHeatUnitProjects" }).tooltip).toContain("个项目")
-  })
-})
 
 describe("computeHeatThresholds（自适应分档）", () => {
   const FIXED = [0, 1, 3, 6, 12]
@@ -210,50 +145,6 @@ describe("rankByCountWithTotal", () => {
     const { rows, totalGroups } = rankByCountWithTotal(items, (x) => x, 20)
     expect(totalGroups).toBe(3)
     expect(rows.map((r) => r.count)).toEqual([1, 1, 1])
-  })
-})
-
-describe("buildDayMetricMap（热力指标切换的聚合口径）", () => {
-  /** 构造条目（只关心 date / projectId / author 三个字段） */
-  function entry(date: string, projectId: string, author: string) {
-    return {
-      projectId,
-      projectName: projectId,
-      hash: `${projectId}-${date}-${author}`,
-      message: "feat: x",
-      author,
-      date,
-    }
-  }
-
-  const entries = [
-    entry("2026-08-03T09:00:00", "p1", "alice"),
-    entry("2026-08-03T14:00:00", "p1", "alice"),
-    entry("2026-08-03T20:00:00", "p2", "bob"),
-    entry("2026-08-04T10:00:00", "p1", "alice"),
-  ]
-
-  it("commits：按当日提交条数计（同一人同项目两条也算 2）", () => {
-    const map = buildDayMetricMap(entries, "commits")
-    expect(map.get("2026-08-03")).toBe(3)
-    expect(map.get("2026-08-04")).toBe(1)
-  })
-
-  it("projects：按当日去重项目数计", () => {
-    const map = buildDayMetricMap(entries, "projects")
-    expect(map.get("2026-08-03")).toBe(2)
-    expect(map.get("2026-08-04")).toBe(1)
-  })
-
-  it("authors：按当日去重作者数计", () => {
-    const map = buildDayMetricMap(entries, "authors")
-    expect(map.get("2026-08-03")).toBe(2)
-    expect(map.get("2026-08-04")).toBe(1)
-  })
-
-  it("无效日期被跳过，不产生 NaN 键", () => {
-    const map = buildDayMetricMap([entry("not-a-date", "p1", "alice")], "authors")
-    expect(map.size).toBe(0)
   })
 })
 
@@ -598,11 +489,6 @@ describe("buildHeatMetricMap（桶级聚合，去重口径跨天成立）", () =
     const map = buildHeatMetricMap(entries, "week", "commits", 1)
     expect(map.get("2026-08-01")).toBeUndefined()
     expect(map.get("2026-07-27")).toBe(1) // 08-01 归到 07-27 起的周
-  })
-
-  it("日粒度与 buildDayMetricMap 完全一致（包装层不改变口径）", () => {
-    expect(buildHeatMetricMap(entries, "day", "authors")).toEqual(buildDayMetricMap(entries, "authors"))
-    expect(buildHeatMetricMap(entries, "day", "commits")).toEqual(buildDayMetricMap(entries, "commits"))
   })
 
   it("无效日期被跳过（不会产生 NaN 键）", () => {

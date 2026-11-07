@@ -1,6 +1,6 @@
-<!-- gitPush 项目卡片顶栏操作按钮区（平台链接/IDE/刷新/编辑/Git配置/删除，自包含 services/menu；分类调整已合并至编辑项目弹窗） -->
+<!-- gitPush 项目卡片顶栏操作按钮区（平台链接/IDE/浏览文件/编辑/Git配置/删除，自包含 services/menu；分类调整已合并至编辑项目弹窗） -->
 <template>
-  <!-- 操作按钮区：平台链接/IDE/刷新/编辑/Git配置/删除（分类调整已合并至编辑项目弹窗） -->
+  <!-- 操作按钮区：平台链接/IDE/浏览文件/编辑/Git配置/删除（分类调整已合并至编辑项目弹窗） -->
   <div class="gp-card-actions">
     <!-- 平台链接下拉菜单（本地开关，与 IDE/刷新菜单同模式） -->
     <div class="gp-link-wrap gp-menu-wrap">
@@ -219,76 +219,6 @@
       :title="i18n.workspaceFilesButton"
       @click="openWorkspaceFiles"
     />
-    <!-- 刷新选项菜单（本地开关，与拉取/推送菜单同模式） -->
-    <div class="gp-refresh-wrap gp-menu-wrap">
-      <!-- 悬停提示："刷新选项" -->
-      <Button
-        variant="ghost"
-        size="xsmall"
-        dense
-        icon="refresh"
-        :loading="isRefreshing"
-        :title="i18n.refreshOptions"
-        aria-haspopup="menu"
-        :aria-expanded="openMenu === 'refresh'"
-        @click.stop="toggleMenu('refresh')"
-      />
-      <MenuPopover
-        v-if="openMenu === 'refresh'"
-        class="gp-refresh-popover"
-        :aria-label="i18n.refreshOptions"
-      >
-        <!-- 菜单项："刷新工作空间" -->
-        <button
-          class="gp-refresh-item"
-          role="menuitem"
-          @click="ops.handleRefreshWorkingTree(project.id); openMenu = null"
-        >
-          <Icon icon="mdi:file-tree" height="12" />
-          <span>{{ i18n.refreshWorkingTree }}</span>
-        </button>
-        <!-- 菜单项："刷新提交日志"（日志已下沉卡片，直调卡内重载） -->
-        <button
-          class="gp-refresh-item"
-          role="menuitem"
-          @click="reloadLog(); openMenu = null"
-        >
-          <Icon icon="mdi:history" height="12" />
-          <span>{{ i18n.refreshCommitLog }}</span>
-        </button>
-        <!-- 菜单项："刷新标签"（标签已下沉卡片，直调卡内重载） -->
-        <button
-          class="gp-refresh-item"
-          role="menuitem"
-          @click="refreshTags(); openMenu = null"
-        >
-          <Icon icon="mdi:tag-outline" height="12" />
-          <span>{{ i18n.refreshTags }}</span>
-        </button>
-        <!-- 菜单项："刷新远程状态" -->
-        <button
-          class="gp-refresh-item"
-          role="menuitem"
-          @click="ops.handleRefreshRemoteStatus(project.id); openMenu = null"
-        >
-          <Icon icon="mdi:cloud-refresh-outline" height="12" />
-          <span>{{ i18n.refreshRemoteStatus }}</span>
-        </button>
-        <div
-          class="gp-refresh-divider"
-          role="separator"
-        />
-        <!-- 菜单项："全部刷新" -->
-        <button
-          class="gp-refresh-item gp-refresh-item--all"
-          role="menuitem"
-          @click="ops.handleRefresh(project.id); openMenu = null"
-        >
-          <Icon icon="mdi:refresh-circle" height="12" />
-          <span>{{ i18n.refreshAll }}</span>
-        </button>
-      </MenuPopover>
-    </div>
     <!-- 悬停提示："编辑项目（标签/备注）" -->
     <Button
       variant="ghost"
@@ -337,15 +267,11 @@ import MenuPopover from "../common/MenuPopover.vue"
 
 const props = defineProps<{
   project: GitProject
-  /** 刷新菜单"刷新提交日志"（卡内重载，编排层传入） */
-  reloadLog: (count?: number | "all") => Promise<void>
-  /** 刷新菜单"刷新标签"（卡内重载，编排层传入） */
-  refreshTags: () => Promise<void>
   /** 打开工作区文件浏览器（编排层持有弹窗状态） */
   openWorkspaceFiles: () => void
 }>()
 
-const { services, isRefreshing } = useCardServices(() => props.project)
+const { services } = useCardServices(() => props.project)
 const { shared, ops } = services
 const i18n = shared.i18n
 const detectedIdes = shared.detectedIdes

@@ -156,7 +156,7 @@ src/features/gitPush/
 │   │   ├── CardSummary.vue          # 手风琴收起态摘要行（名称/分支/变更/冲突/同步状态/主推送）
 │   │   ├── CardPushAllButton.vue    # 主推送按钮（推送全部 / 取消；操作栏与摘要行共用）
 │   │   ├── CardHeader.vue           # 卡片顶栏信息区（星标/名称/路径/md 徽章/分支/标签/备注；操作按钮区委托 CardHeaderActions）
-│   │   ├── CardHeaderActions.vue    # 卡片顶栏操作按钮区（分类/平台/IDE/浏览文件/刷新/编辑/Git配置/删除，自包含 services/menu）
+│   │   ├── CardHeaderActions.vue    # 卡片顶栏操作按钮区（平台链接/IDE/浏览文件/编辑/Git配置/删除，自包含 services/menu）
 │   │   ├── CardRemotes.vue          # 远程仓库状态 + 冲突警告
 │   │   ├── CardActionBar.vue        # 拉取/推送操作栏（单远程/推送全部/强制推送/Fetch）
 │   │   ├── CardTabs.vue             # 多面板 Tab 切换条（CHANGES/LOG/STASH/TAG + 计数徽标，v-model）

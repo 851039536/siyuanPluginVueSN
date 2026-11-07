@@ -18,8 +18,6 @@
       :project="project"
       :branches="branches"
       :md-files="mdFiles"
-      :reload-log="reloadLog"
-      :refresh-tags="refreshTags"
       :open-workspace-files="openWorkspaceFiles"
       :collapsible="isAccordion"
       @toggle-collapse="toggle"

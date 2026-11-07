@@ -24,34 +24,6 @@
   flex-shrink: 0;
 }
 
-.gp-refresh-wrap {
-  position: relative;
-}
-
-.gp-refresh-popover {
-  @include popover-base;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-top: $s-px6;
-  min-width: 140px;
-}
-
-.gp-refresh-item {
-  @include popover-item;
-
-  &--all {
-    color: var(--b3-theme-primary);
-    &:hover { background: var(--b3-theme-primary-lightest); }
-  }
-}
-
-.gp-refresh-divider {
-  height: 1px;
-  margin: $s-1 $s-px6;
-  background: var(--b3-border-color);
-}
-
 .gp-ide-wrap {
   position: relative;
 }

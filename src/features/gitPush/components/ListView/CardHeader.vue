@@ -188,11 +188,9 @@
         <span>{{ project.note }}</span>
       </div>
     </div>
-    <!-- 操作按钮区（平台链接/IDE/刷新/编辑/Git配置/删除，自包含 services/menu；分类调整在编辑项目弹窗内） -->
+    <!-- 操作按钮区（平台链接/IDE/浏览文件/编辑/Git配置/删除，自包含 services/menu；分类调整在编辑项目弹窗内） -->
     <CardHeaderActions
       :project="project"
-      :reload-log="reloadLog"
-      :refresh-tags="refreshTags"
       :open-workspace-files="openWorkspaceFiles"
     />
   </div>
@@ -216,10 +214,6 @@ const props = defineProps<{
   branches: BranchInfo[]
   /** 卡内自持 Markdown 文件标识（编排层 useCardData 派生传入） */
   mdFiles: MdFileEntry[]
-  /** 刷新菜单"刷新提交日志"（卡内重载，编排层传入） */
-  reloadLog: (count?: number | "all") => Promise<void>
-  /** 刷新菜单"刷新标签"（卡内重载，编排层传入） */
-  refreshTags: () => Promise<void>
   /** 打开工作区文件浏览器（编排层持有弹窗状态） */
   openWorkspaceFiles: () => void
   /** 手风琴模式下是否显示「收起」按钮（展开态） */

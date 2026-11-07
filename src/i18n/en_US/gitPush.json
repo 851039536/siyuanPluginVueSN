@@ -308,7 +308,6 @@
     "deleteCustomIdeMultiConfirm": "Delete all {0} paths?",
     "deleteCustomIde": "Delete this custom IDE",
     "manageIde": "Manage IDE...",
-    "refreshOptions": "Refresh options",
     "yes": "Yes",
     "no": "No",
     "editProjectBtn": "Edit project (tags/notes)",

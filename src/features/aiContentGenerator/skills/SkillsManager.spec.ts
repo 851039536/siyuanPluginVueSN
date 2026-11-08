@@ -69,6 +69,54 @@ describe("skillsManager.parseSkillMd", () => {
     expect(description).toHaveLength(203)
     expect(description).toBe(`${"a".repeat(200)}...`)
   })
+
+  it("优先使用 YAML frontmatter 的 name/description", () => {
+    const {
+      name,
+      description,
+    } = manager.parseSkillMd(
+      "---\nname: pdf-processing\ndescription: 处理 PDF 文档的流程与工具约束\n---\n\n# 另一个标题\n\n正文",
+      "fallback-dir",
+    )
+    expect(name).toBe("pdf-processing")
+    expect(description).toBe("处理 PDF 文档的流程与工具约束")
+  })
+
+  it("支持带引号与块状标量的 frontmatter 字段", () => {
+    const {
+      name,
+      description,
+    } = manager.parseSkillMd(
+      '---\nname: "quoted-skill"\ndescription: >-\n  多行描述\n  折叠为一行\n---\n',
+      "fallback-dir",
+    )
+    expect(name).toBe("quoted-skill")
+    expect(description).toBe("多行描述 折叠为一行")
+  })
+
+  it("frontmatter 缺少字段时回退到标题与正文首行", () => {
+    const {
+      name,
+      description,
+    } = manager.parseSkillMd(
+      "---\nlicense: MIT\n---\n# 技能标题\n\n正文描述",
+      "fallback-dir",
+    )
+    expect(name).toBe("技能标题")
+    expect(description).toBe("正文描述")
+  })
+
+  it("兼容 UTF-8 BOM 与 CRLF 换行", () => {
+    const {
+      name,
+      description,
+    } = manager.parseSkillMd(
+      "\uFEFF---\r\nname: crlf-skill\r\ndescription: 来自 CRLF 文件\r\n---\r\n\r\n# 标题",
+      "fallback-dir",
+    )
+    expect(name).toBe("crlf-skill")
+    expect(description).toBe("来自 CRLF 文件")
+  })
 })
 
 describe("skillsManager 工作区作用域", () => {

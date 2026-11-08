@@ -7,6 +7,7 @@
 import type {
   SkillItem,
 } from "@/types/ai"
+import { readWorkspaceDir } from "@/utils/workspaceDir"
 import { toSkillItem } from "../types"
 import { scanSkills } from "../skills"
 import {
@@ -14,9 +15,7 @@ import {
   ref,
 } from "vue"
 
-export function useSkillsLoader(
-  plugin: any,
-) {
+export function useSkillsLoader() {
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
   const currentSkillIndex = ref(-1)
@@ -64,12 +63,8 @@ export function useSkillsLoader(
   /** 扫描加载 AI 技能 */
   async function loadSkills() {
     try {
-      let projectPath = ""
-      try {
-        if (plugin?.dataPath) {
-          projectPath = plugin.dataPath.replace(/\/data$/, "").replace(/\\data$/, "")
-        }
-      } catch { /* 忽略，只扫全局 */ }
+      // 项目级技能以思源工作区根目录为项目根（plugin 运行时并无 dataPath 字段）
+      const projectPath = await readWorkspaceDir()
 
       const skillInfos = await scanSkills(projectPath || undefined)
       const rawSkills = skillInfos.map(toSkillItem)

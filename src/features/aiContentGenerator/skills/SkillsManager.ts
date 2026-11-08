@@ -8,6 +8,75 @@ import { AI_TOOLS } from "@/config/aiTools"
 import type { AIToolConfig, AIToolType } from "@/config/aiTools"
 import { readWorkspaceDir } from "@/utils/workspaceDir"
 
+/** 技能说明文件名候选：大写优先（Agent Skills 规范），兼容历史小写约定 */
+const SKILL_FILE_NAMES = ["SKILL.md", "skill.md"] as const
+
+/** 去掉 UTF-8 BOM 并统一换行为 LF，避免首行 frontmatter/标题判定受编码影响 */
+function normalizeSkillMdContent(content: string): string {
+  return content.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n")
+}
+
+/**
+ * 拆分文件头部 YAML frontmatter，只提取 name/description
+ * 未闭合（首尾没有成对的 ---）时视为无 frontmatter，由调用方回退旧解析逻辑
+ */
+function splitFrontmatter(content: string): { body: string, fields: Record<string, string> } {
+  const lines = content.split("\n")
+  if (lines[0].trim() !== "---") {
+    return {
+      body: content,
+      fields: {},
+    }
+  }
+
+  const endIndex = lines.findIndex((line, index) => index > 0 && line.trim() === "---")
+  if (endIndex < 0) {
+    return {
+      body: content,
+      fields: {},
+    }
+  }
+
+  return {
+    body: lines.slice(endIndex + 1).join("\n"),
+    fields: parseFrontmatterFields(lines.slice(1, endIndex)),
+  }
+}
+
+/** 解析 frontmatter 内的 name/description，忽略其他字段与注释 */
+function parseFrontmatterFields(lines: string[]): Record<string, string> {
+  const fields: Record<string, string> = {}
+
+  for (let i = 0; i < lines.length; i++) {
+    const keyMatch = lines[i].match(/^([\w-]+)[ \t]*:(.*)$/)
+    if (!keyMatch) continue
+
+    const key = keyMatch[1].toLowerCase()
+    if (key !== "name" && key !== "description") continue
+
+    const rawValue = keyMatch[2].trim()
+    if (/^[|>][+-]?$/.test(rawValue)) {
+      // 块状标量：收集缩进行，| 保留换行，> 折叠为空格
+      const blockLines: string[] = []
+      let j = i + 1
+      while (j < lines.length && (lines[j].trim() === "" || /^\s/.test(lines[j]))) {
+        blockLines.push(lines[j].trim())
+        j++
+      }
+      i = j - 1
+      fields[key] = rawValue.startsWith("|")
+        ? blockLines.join("\n").trim()
+        : blockLines.join(" ").trim()
+      continue
+    }
+
+    // 去掉成对的单/双引号
+    fields[key] = rawValue.replace(/^(["'])(.*)\1$/, "$2").trim()
+  }
+
+  return fields
+}
+
 export interface SkillInfo {
   name: string
   description: string
@@ -138,6 +207,23 @@ export class SkillsManager {
     }
   }
 
+  /** 在技能目录内按候选文件名查找说明文件，返回磁盘上的真实文件名（规避大小写敏感差异） */
+  private async findSkillFile(skillDir: string): Promise<string | null> {
+    let entries: any[]
+    try {
+      entries = await this.fs.promises.readdir(skillDir, { withFileTypes: true })
+    } catch {
+      return null
+    }
+
+    for (const fileName of SKILL_FILE_NAMES) {
+      const entry = entries.find((item: any) => !item.isDirectory() && item.name === fileName)
+      if (entry) return this.path.join(skillDir, entry.name)
+    }
+
+    return null
+  }
+
   private async scanSkillDirectory(
     dirPath: string,
     toolId: AIToolType,
@@ -155,11 +241,13 @@ export class SkillsManager {
         if (!entry.isDirectory()) continue
 
         const skillDir = this.path.join(dirPath, entry.name)
-        const skillMdPath = this.path.join(skillDir, "skill.md")
 
         try {
-          if (await this.fileExists(skillMdPath)) {
-            const content = await this.fs.promises.readFile(skillMdPath, "utf-8")
+          const skillMdPath = await this.findSkillFile(skillDir)
+          if (skillMdPath) {
+            const content = normalizeSkillMdContent(
+              await this.fs.promises.readFile(skillMdPath, "utf-8"),
+            )
             const stat = await this.fs.promises.stat(skillMdPath)
             const {
               name,
@@ -188,14 +276,23 @@ export class SkillsManager {
   public parseSkillMd(
     content: string,
     fallbackName: string,
-  ): { name: string, description: string } {
-    let name = fallbackName
-    let description = ""
+  ): {
+    name: string
+    description: string
+  } {
+    const normalized = normalizeSkillMdContent(content)
+    const {
+      body,
+      fields,
+    } = splitFrontmatter(normalized)
 
-    const lines = content.split("\n")
+    let name = fields.name || fallbackName
+    let description = fields.description || ""
+
+    const lines = body.split("\n")
     for (const line of lines) {
       const trimmed = line.trim()
-      if (name === fallbackName) {
+      if (!fields.name && name === fallbackName) {
         const headingMatch = trimmed.match(/^#+\s+(.+)/)
         if (headingMatch) {
           name = headingMatch[1].trim()

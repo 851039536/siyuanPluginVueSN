@@ -136,7 +136,7 @@ const editCustomInput = ref("")
 
 const {
   skills, currentSkillIndex, currentSkill, loadSkills, restoreSkillById,
-} = useSkillsLoader(props.plugin)
+} = useSkillsLoader()
 
 // ============ 生成管道 ============
 

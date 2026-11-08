@@ -53,6 +53,12 @@
   @include collapsible-status-dot(var(--b3-theme-success));
 }
 
+// 审核失败徽标（解析失败/接口异常）
+.review-error-badge {
+  color: #fff;
+  background: var(--b3-theme-error);
+}
+
 .review-rating-badge {
   font-size: $t-2xs;
   font-weight: $fw-semibold;
@@ -81,6 +87,38 @@
   gap: $s-2;
   padding: $s-2 $s-px10 $s-px10;
   border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+// ============ 审核错误态 ============
+
+.review-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $s-2;
+  padding: $s-2 $s-px10 $s-px10;
+  border-top: 1px solid var(--b3-theme-surface-lighter);
+}
+
+.review-error-icon {
+  color: var(--b3-theme-error);
+}
+
+.review-error-message {
+  margin: 0;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  line-height: $lh-relaxed;
+  word-break: break-word;
+}
+
+// ============ 覆盖范围提示 ============
+
+.review-coverage-notice {
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.65;
+  line-height: $lh-normal;
 }
 
 .review-summary {

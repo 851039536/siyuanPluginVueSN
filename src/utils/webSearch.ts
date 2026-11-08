@@ -7,6 +7,10 @@ import type {
   SearchApiConfig,
   SearchResult,
 } from "@/types/ai"
+import {
+  createTimeoutError,
+  createTimeoutSignal,
+} from "@/utils/abortSignal"
 
 // 重新导出类型
 export type {
@@ -24,6 +28,8 @@ const GOOD_SCORE = 1.5
 
 /** DeepSeek Search API 的 query 上限（官方限制：1~128 个 Unicode 字符，不能全为空白） */
 const MAX_QUERY_LENGTH = 128
+/** 联网搜索超时 */
+const SEARCH_TIMEOUT_MS = 15_000
 
 /**
  * DeepSeek 网页搜索 API 调用
@@ -34,6 +40,7 @@ async function searchDeepSeek(
   query: string,
   apiKey: string,
   maxResults: number = DEFAULT_MAX_RESULTS,
+  signal?: AbortSignal,
 ): Promise<SearchResult[]> {
   // DeepSeek 对 query 有硬性限制：压缩空白（多行提示词会把换行带进来）、
   // 去掉外层引号后再截断到 128 字符，超限会被服务端以 400 拒绝
@@ -46,34 +53,45 @@ async function searchDeepSeek(
     throw new Error("搜索词为空，无法执行联网搜索")
   }
 
-  const response = await fetch(DEEPSEEK_SEARCH_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      query: safeQuery,
-      count: maxResults,
-      need_content: false,
-    }),
-  })
+  const timeout = createTimeoutSignal(signal, SEARCH_TIMEOUT_MS)
+  try {
+    const response = await fetch(DEEPSEEK_SEARCH_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        query: safeQuery,
+        count: maxResults,
+        need_content: false,
+      }),
+      signal: timeout.signal,
+    })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`DeepSeek搜索请求失败: ${response.status} ${errorText}`)
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`DeepSeek搜索请求失败: ${response.status} ${errorText}`)
+    }
+
+    const data = await response.json()
+
+    // DeepSeek 返回格式: { results: [{ rerank_score, title, url, snippet, summary, content, ... }] }
+    const results = data?.results || []
+    return results.map((item: any) => ({
+      title: item.title || "",
+      url: item.url || "",
+      content: item.summary || item.snippet || item.content || "",
+      score: item.rerank_score,
+    })).filter((r: SearchResult) => r.title || r.content)
+  } catch (error) {
+    if (timeout.timedOut()) {
+      throw createTimeoutError("联网搜索超时")
+    }
+    throw error
+  } finally {
+    timeout.cleanup()
   }
-
-  const data = await response.json()
-
-  // DeepSeek 返回格式: { results: [{ rerank_score, title, url, snippet, summary, content, ... }] }
-  const results = data?.results || []
-  return results.map((item: any) => ({
-    title: item.title || "",
-    url: item.url || "",
-    content: item.summary || item.snippet || item.content || "",
-    score: item.rerank_score,
-  })).filter((r: SearchResult) => r.title || r.content)
 }
 
 /**
@@ -83,12 +101,13 @@ async function searchDeepSeek(
 export async function searchWeb(
   query: string,
   config: SearchApiConfig,
+  signal?: AbortSignal,
   maxResults: number = DEFAULT_MAX_RESULTS,
 ): Promise<SearchResult[]> {
   if (!config.deepseekApiKey) {
     throw new Error("DeepSeek 搜索需要配置 API Key，请在超级面板中配置 DeepSeek 供应商的密钥")
   }
-  const results = await searchDeepSeek(query, config.deepseekApiKey, maxResults)
+  const results = await searchDeepSeek(query, config.deepseekApiKey, maxResults, signal)
   // DeepSeek 已按 rerank_score 降序返回；优质结果优先保留，不足时按原始排序补齐
   const good = results.filter((r) => (r.score ?? 0) >= GOOD_SCORE)
   if (good.length >= maxResults) {

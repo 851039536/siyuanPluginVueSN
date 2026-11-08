@@ -19,7 +19,7 @@ export interface AISettings {
   skillId: string
 }
 
-const DEFAULT_AI_SETTINGS: AISettings = {
+export const DEFAULT_AI_SETTINGS: AISettings = {
   model: "",
   customModel: "",
   enableThinking: false,

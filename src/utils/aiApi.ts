@@ -14,6 +14,10 @@ import type {
   SearchApiConfig,
 } from "@/types/ai"
 import {
+  createTimeoutError,
+  createTimeoutSignal,
+} from "@/utils/abortSignal"
+import {
   formatSearchResults,
   searchWeb,
 } from "@/utils/webSearch"
@@ -27,6 +31,11 @@ export type {
 } from "@/types/ai"
 
 // ============ Provider 配置 ============
+
+/** 非流式请求总超时 */
+const AI_REQUEST_TIMEOUT_MS = 60_000
+/** 流式响应空闲超时：连续该时长未收到任何数据即视为超时 */
+const AI_STREAM_IDLE_TIMEOUT_MS = 30_000
 
 interface ProviderConfig {
   url: string
@@ -272,6 +281,7 @@ async function parseSSEStream(
   onChunk: (chunk: string) => void,
   signal?: AbortSignal,
   onReasoningChunk?: (chunk: string) => void,
+  onActivity?: () => void,
 ): Promise<string> {
   const reader = response.body?.getReader()
   if (!reader) throw new Error("无法读取响应流")
@@ -319,6 +329,8 @@ async function parseSSEStream(
         value,
       } = await reader.read()
       if (done) break
+      // 收到任意数据即视为连接仍活跃，重置流式空闲超时
+      onActivity?.()
 
       buffer += decoder.decode(value, { stream: true })
       const lines = buffer.split("\n")
@@ -354,12 +366,13 @@ function parseStreamByProvider(
   onChunk: (chunk: string) => void,
   signal?: AbortSignal,
   onReasoningChunk?: (chunk: string) => void,
+  onActivity?: () => void,
 ): Promise<string> {
   const extract =
     provider === "tongyi"
       ? extractTongyiDelta
       : extractOpenAIDelta
-  return parseSSEStream(response, extract, onChunk, signal, onReasoningChunk)
+  return parseSSEStream(response, extract, onChunk, signal, onReasoningChunk, onActivity)
 }
 
 /**
@@ -482,12 +495,15 @@ async function prepareRequest(
       const searchQuery = rawQuery.length <= 50
         ? `"${rawQuery.replace(/"/g, "")}"`
         : rawQuery
-      const rawResults = await searchWeb(searchQuery, config.searchConfig)
+      // 搜索超时由 searchWeb 内部统一处理（TimeoutError 与主动取消的 AbortError 区分）
+      const rawResults = await searchWeb(searchQuery, config.searchConfig, options?.signal)
       // 通知 UI 原始搜索结果
       options?.onSearchResults?.(rawResults)
       // DeepSeek 搜索结果自带 rerank_score 语义排序，无需额外重排序
       searchContext = formatSearchResults(rawResults)
     } catch (error) {
+      // 用户取消：直接向上抛出，终止整个生成流程
+      if (options?.signal?.aborted) throw error
       const errorMsg = (error as Error).message
       console.warn("联网搜索失败，将不带搜索结果继续生成:", error)
       options?.onSearchError?.(errorMsg)
@@ -570,11 +586,20 @@ export async function callAI(
   )
 
   const headers = buildHeaders(config.apiKey, config.provider)
+  const timeout = createTimeoutSignal(merged?.signal, AI_REQUEST_TIMEOUT_MS)
 
-  const response = await postJson(apiUrl, headers, requestBody, merged?.signal)
-
-  const data = await response.json()
-  return extractResponseText(data)
+  try {
+    const response = await postJson(apiUrl, headers, requestBody, timeout.signal)
+    const data = await response.json()
+    return extractResponseText(data)
+  } catch (error) {
+    if (timeout.timedOut()) {
+      throw createTimeoutError("AI 请求超时，请检查网络或稍后重试")
+    }
+    throw error
+  } finally {
+    timeout.cleanup()
+  }
 }
 
 /**
@@ -607,16 +632,31 @@ export async function callAIStream(
   )
 
   const headers = buildHeaders(config.apiKey, config.provider, true)
+  const timeout = createTimeoutSignal(merged?.signal, AI_STREAM_IDLE_TIMEOUT_MS)
 
-  const response = await postJson(apiUrl, headers, requestBody, merged?.signal)
-
-  return parseStreamByProvider(
-    config.provider,
-    response,
-    onChunk,
-    merged?.signal,
-    merged?.onReasoningChunk,
-  )
+  try {
+    const response = await postJson(apiUrl, headers, requestBody, timeout.signal)
+    const content = await parseStreamByProvider(
+      config.provider,
+      response,
+      onChunk,
+      timeout.signal,
+      merged?.onReasoningChunk,
+      timeout.reset,
+    )
+    // 超时中止时流读取会提前结束并返回残缺内容，此处明确报超时
+    if (timeout.timedOut()) {
+      throw createTimeoutError("AI 流式响应超时，请稍后重试")
+    }
+    return content
+  } catch (error) {
+    if (timeout.timedOut()) {
+      throw createTimeoutError("AI 流式响应超时，请稍后重试")
+    }
+    throw error
+  } finally {
+    timeout.cleanup()
+  }
 }
 
 /**

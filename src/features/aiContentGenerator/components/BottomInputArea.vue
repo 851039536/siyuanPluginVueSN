@@ -212,7 +212,10 @@ import Switch from "@/components/Switch.vue"
 import Tag from "@/components/Tag.vue"
 import SkillSection from "./SkillSection.vue"
 import SkillPreviewModal from "./SkillPreviewModal.vue"
-import { truncateTitle } from "../utils"
+import {
+  canExecuteEdit,
+  truncateTitle,
+} from "../utils"
 import { ACTION_META } from "../types"
 import type { EditActionKey } from "../types"
 
@@ -314,15 +317,10 @@ const onReasoningEffortChange = (value: string | number | boolean | null) => {
 
 // ===== Computed =====
 
-// 与 index.vue handleCustomEdit 校验保持一致：有文档时（技能在 或 输入非空）可执行；无文档时必须有技能且输入非空
-const canExecute = computed(() => {
-  const hasSkill = props.currentSkillIndex >= 0
-  const hasInput = !!props.editCustomInput.trim()
-  if (props.editTargetDoc) {
-    return hasSkill || hasInput
-  }
-  return hasSkill && hasInput
-})
+// 与 index.vue handleCustomEdit 校验共用同一判定，避免按钮态与提交行为漂移
+const canExecute = computed(() =>
+  canExecuteEdit(!!props.editTargetDoc, props.currentSkillIndex >= 0, props.editCustomInput),
+)
 
 const executeButtonTitle = computed(() => {
   if (!props.editTargetDoc && props.currentSkillIndex >= 0) return props.i18n.executeSendQuestion

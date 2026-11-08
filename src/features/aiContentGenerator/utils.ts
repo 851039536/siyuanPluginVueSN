@@ -25,6 +25,38 @@ export function buildSkillSystemPrompt(
 // ============ 文本/UI 工具 ============
 
 /**
+ * i18n 文案取值与占位符替换。
+ * 缺失 key 时回退为 key 本身（不写中文兜底，避免掩盖 i18n 未注册问题）。
+ * 占位符语法与现有模板一致：{name}。
+ */
+export function localize(
+  i18n: Record<string, string>,
+  key: string,
+  params?: Record<string, string | number>,
+): string {
+  let text = i18n[key] ?? key
+  if (params) {
+    for (const [name, value] of Object.entries(params)) {
+      text = text.split(`{${name}}`).join(String(value))
+    }
+  }
+  return text
+}
+
+/**
+ * 自定义编辑/提问的可执行判定（BottomInputArea 按钮态与 index.vue 提交校验共用）：
+ * 有目标文档时（技能或输入任一即可）；无文档时必须同时具备技能与非空输入。
+ */
+export function canExecuteEdit(
+  hasTargetDoc: boolean,
+  hasSkill: boolean,
+  input: string,
+): boolean {
+  const hasInput = !!input.trim()
+  return hasTargetDoc ? (hasSkill || hasInput) : (hasSkill && hasInput)
+}
+
+/**
  * 统一的 Markdown 渲染函数
  *
  * 安全说明：marked 默认透传原始 HTML，而本函数输出会被 v-html 渲染

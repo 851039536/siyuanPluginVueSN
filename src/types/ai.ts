@@ -173,6 +173,20 @@ export interface ReviewResult {
   reviewModel: string
   /** 审核时间 */
   reviewedAt: number
+  /**
+   * 审核错误信息：存在时表示未产出有效审核结果（解析失败/接口异常），
+   * UI 应展示错误态而非评级、评分与问题清单
+   */
+  error?: string
+  /** 审核覆盖范围（生成内容超长时仅抽样首尾片段，UI 据此提示未全量审核） */
+  reviewCoverage?: {
+    /** 实际送入审核的字符数 */
+    reviewedChars: number
+    /** 生成内容总字符数 */
+    totalChars: number
+    /** 截断策略 */
+    strategy: "head-tail"
+  }
   /** 分项评分（可选，由模型返回时填充） */
   detailedScore?: {
     accuracy: number // 内容准确性 1-10

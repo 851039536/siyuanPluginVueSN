@@ -47,6 +47,24 @@
 
 .error-icon { color: var(--b3-theme-error); margin-bottom: $s-4; }
 
+// 错误行内横幅：有内容时与内容并存展示，避免错误被结果区遮挡
+.inline-error {
+  display: flex;
+  align-items: flex-start;
+  gap: $s-2;
+  padding: $s-2 $s-3;
+  border: 1px solid var(--b3-theme-error);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-error);
+  font-size: $t-xs;
+  line-height: $lh-normal;
+}
+
+.inline-error-icon { flex: none; color: var(--b3-theme-error); }
+
+.inline-error-text { flex: 1; word-break: break-word; }
+
 .result-container {
   display: flex;
   flex-direction: column;

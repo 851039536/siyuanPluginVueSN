@@ -36,6 +36,7 @@
         @toggleReasoning="showReasoning = !showReasoning"
         @autoFix="handleAutoFix"
         @reReview="handleReReview"
+        @stopReview="handleStopReview"
         @directReview="handleDirectReview"
         @fixIssue="handleFixIssue"
         @clearConversation="clearConversation"
@@ -90,14 +91,21 @@ import type { EditActionKey } from "./types"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 
 // 模块内部导入
-import { AIGeneratorStorage } from "./types/storage"
+import {
+  AIGeneratorStorage,
+  DEFAULT_AI_SETTINGS,
+} from "./types/storage"
 import { skillsManagerVisible } from "./skills"
 import { useSkillsLoader } from "./composables/useSkillsLoader"
 import { useGeneration } from "./composables/useGeneration"
 import { useReview } from "./composables/useReview"
 import { useEditOperations } from "./composables/useEditOperations"
 import { useDocumentTarget } from "./composables/useDocumentTarget"
-import { buildSkillSystemPrompt, renderMarkdown } from "./utils"
+import {
+  buildSkillSystemPrompt,
+  canExecuteEdit,
+  renderMarkdown,
+} from "./utils"
 import MainContentArea from "./components/MainContentArea.vue"
 import BottomInputArea from "./components/BottomInputArea.vue"
 
@@ -108,7 +116,12 @@ interface Props {
   plugin: Plugin
   onGenerate: (options: GenerateOptions) => Promise<string>
   /** 交叉审核回调（modules 侧 addDock 始终注入） */
-  onReview: (userRequest: string, generatedContent: string, skill?: SkillItem) => Promise<ReviewResult>
+  onReview: (
+    userRequest: string,
+    generatedContent: string,
+    skill?: SkillItem,
+    signal?: AbortSignal,
+  ) => Promise<ReviewResult>
 }
 
 const props = defineProps<Props>()
@@ -145,7 +158,7 @@ let onAfterGenerateCallback: ((reviewUserRequest?: string) => void) | null = nul
 
 const gen = useGeneration({
   enableThinking, reasoningEffort, webSearch, selectedModel, customModel, resolvedModel,
-  currentSkill, editTargetDoc, editCustomInput,
+  i18n: props.i18n,
   plugin: props.plugin,
   onGenerate: props.onGenerate,
   onAfterGenerate: (reviewUserRequest?: string) => onAfterGenerateCallback?.(reviewUserRequest),
@@ -165,6 +178,7 @@ const {
 const editOps = useEditOperations({
   editTargetDoc, originalContent, generatedContent,
   displayedContent, errorMessage, generationElapsed,
+  i18n: props.i18n,
 })
 
 const {
@@ -179,6 +193,7 @@ const {
 const docTarget = useDocumentTarget({
   editTargetDoc, originalContent, generatedContent, displayedContent,
   onClearCustomInput: () => { editCustomInput.value = "" },
+  i18n: props.i18n,
 })
 
 const { selectTargetDocument, selectTargetBlock } = docTarget
@@ -187,9 +202,11 @@ const { selectTargetDocument, selectTargetBlock } = docTarget
 
 const reviewDeps = {
   generatedContent,
+  displayedContent,
   currentSkill,
   editTargetDoc,
   editCustomInput,
+  i18n: props.i18n,
   executeGeneration,
   buildGenerateOptions,
   onReview: props.onReview,
@@ -197,7 +214,7 @@ const reviewDeps = {
 
 const { enableReview, isReviewing, reviewResult, isAutoFixing,
   performReview, handleAutoFix, handleReReview, handleFixIssue,
-  clearReviewState } = useReview(reviewDeps)
+  handleStopReview, clearReviewState } = useReview(reviewDeps)
 
 onAfterGenerateCallback = performReview
 
@@ -257,6 +274,9 @@ const aiEditAction = async (action: EditActionKey) => {
     DEFAULT_SYSTEM_PROMPTS.polish,
   )
 
+  // 新一轮生成会把内容整体替换：旧审核结果与在途审核立即作废
+  clearReviewState()
+
   await executeGeneration(
     props.i18n.taskAiEdit,
     () => buildGenerateOptions(
@@ -270,20 +290,22 @@ const aiEditAction = async (action: EditActionKey) => {
 }
 
 const handleCustomEdit = async () => {
-  if (!editTargetDoc.value && !currentSkill.value) {
-    showMessage(props.i18n.msgSelectDocOrSkill, 2000, "info")
+  // 与 BottomInputArea 按钮态共用同一判定，避免"按钮可点但提交被拦"或反之
+  if (!canExecuteEdit(!!editTargetDoc.value, !!currentSkill.value, editCustomInput.value)) {
+    const hasTargetOrSkill = !!editTargetDoc.value || !!currentSkill.value
+    showMessage(
+      hasTargetOrSkill ? props.i18n.msgInputQuestion : props.i18n.msgSelectDocOrSkill,
+      2000,
+      "info",
+    )
     return
-  }
-
-  if (!editCustomInput.value.trim()) {
-    if (!(editTargetDoc.value && currentSkill.value)) {
-      showMessage(props.i18n.msgInputQuestion, 2000, "info")
-      return
-    }
   }
 
   // 执行前快照输入指令：onSuccess 会清空 editCustomInput，审核阶段需要真实指令
   const reviewRequest = editCustomInput.value.trim()
+
+  // 新一轮生成会把内容整体替换：旧审核结果与在途审核立即作废
+  clearReviewState()
 
   await executeGeneration(props.i18n.taskCustomEdit, () => {
     let finalSystemPrompt: string
@@ -348,24 +370,29 @@ const saveSettings = async () => {
 
 const loadSettings = async () => {
   if (!storage.value) return
-  try {
-    // 启动即以默认值兜底应用（无记录时按 DEFAULT_AI_SETTINGS 生效）；
-    // skillId 需区分"无记录"（保留 loadSkills 首技能默认选中）与 ""（明确无技能），故以 exists() 判定
-    const [hasSaved, settings] = await Promise.all([
-      storage.value.settings.exists(),
-      storage.value.settings.loadOrDefault(),
-    ])
-    selectedModel.value = settings.model || ""
-    customModel.value = settings.customModel || ""
-    enableThinking.value = settings.enableThinking
-    reasoningEffort.value = settings.reasoningEffort
-    webSearch.value = settings.webSearch
-    enableReview.value = settings.enableReview
-    savedSkillId = hasSaved ? settings.skillId : null
-    isSettingsLoaded = true
-  } catch (error) {
-    console.error("从插件存储加载设置失败:", error)
+  // 读取失败 ≠ 键不存在：loadSafe 让两者可区分，避免把一次读失败当成"从未设置"并用默认值覆盖旧配置
+  const result = await storage.value.settings.loadSafe()
+  if (!result.ok) {
+    // 保留当前内存状态且不标记已加载：后续 watcher 触发的保存会被跳过，旧配置不会被默认值覆盖
+    console.error("从插件存储加载设置失败:", result.error)
+    return
   }
+
+  const saved = result.value
+  // 无记录或损坏数据回退默认值（与 loadOrDefault 的容错口径一致）
+  const isObject = saved !== null && typeof saved === "object" && !Array.isArray(saved)
+  const settings = { ...DEFAULT_AI_SETTINGS }
+  if (isObject) Object.assign(settings, saved)
+
+  selectedModel.value = settings.model || ""
+  customModel.value = settings.customModel || ""
+  enableThinking.value = settings.enableThinking
+  reasoningEffort.value = settings.reasoningEffort
+  webSearch.value = settings.webSearch
+  enableReview.value = settings.enableReview
+  // skillId 需区分"无记录"（保留 loadSkills 首技能默认选中）与 ""（明确无技能）
+  savedSkillId = saved === null ? null : settings.skillId
+  isSettingsLoaded = true
 }
 
 /** 防抖调度设置保存（多个 watcher 共用同一定时器） */

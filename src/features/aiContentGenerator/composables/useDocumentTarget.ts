@@ -7,7 +7,10 @@ import { showMessage } from "siyuan"
 import type { TargetDoc } from "@/types/ai"
 import * as api from "@/api"
 import { getCurrentBlockId } from "@/utils/domUtils"
-import { removeFrontmatter } from "../utils"
+import {
+  localize,
+  removeFrontmatter,
+} from "../utils"
 
 export interface UseDocumentTargetDeps {
   editTargetDoc: Ref<TargetDoc | null>
@@ -16,12 +19,14 @@ export interface UseDocumentTargetDeps {
   displayedContent: Ref<string>
   /** 清除自定义输入的回调 */
   onClearCustomInput: () => void
+  /** 运行时文案（toast/默认标题）的国际化数据源 */
+  i18n: Record<string, string>
 }
 
 export function useDocumentTarget(deps: UseDocumentTargetDeps) {
   const {
     editTargetDoc, originalContent, generatedContent,
-    displayedContent, onClearCustomInput,
+    displayedContent, onClearCustomInput, i18n,
   } = deps
 
   /** 加载文档内容 */
@@ -31,21 +36,25 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
     try {
       const docBlock = await api.getBlockByID(docId)
       if (!docBlock) {
-        showMessage("无法获取文档信息", 3000, "error")
+        showMessage(localize(i18n, "docLoadNoInfo"), 3000, "error")
         return null
       }
       const docContent = await api.exportMdContent(docId)
       if (!docContent || !docContent.content) {
-        showMessage("无法获取文档内容", 3000, "error")
+        showMessage(localize(i18n, "docLoadNoContent"), 3000, "error")
         return null
       }
       return {
-        title: docBlock.content || "未命名文档",
+        title: docBlock.content || localize(i18n, "untitledDoc"),
         content: docContent.content,
       }
     } catch (error) {
       console.error("加载文档失败:", error)
-      showMessage("加载文档失败: " + (error as Error).message, 3000, "error")
+      showMessage(
+        localize(i18n, "docLoadFailed", { error: (error as Error).message }),
+        3000,
+        "error",
+      )
       return null
     }
   }
@@ -92,14 +101,18 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
       }
 
       if (!docId) {
-        showMessage("无法获取当前文档，请将光标放在文档中", 2000, "error")
+        showMessage(localize(i18n, "docSelectNoCurrent"), 2000, "error")
         return
       }
 
       await loadTargetDocument(docId)
     } catch (error) {
       console.error("选择文档失败:", error)
-      showMessage("选择文档失败: " + (error as Error).message, 3000, "error")
+      showMessage(
+        localize(i18n, "docSelectFailed", { error: (error as Error).message }),
+        3000,
+        "error",
+      )
     } finally {
       isSelecting = false
     }
@@ -112,25 +125,29 @@ export function useDocumentTarget(deps: UseDocumentTargetDeps) {
     try {
       const blockId = getCurrentBlockId()
       if (!blockId) {
-        showMessage("无法获取当前块，请将光标放在目标块中", 2000, "error")
+        showMessage(localize(i18n, "blockSelectNoCurrent"), 2000, "error")
         return
       }
 
       const blockContent = await api.getBlockMarkdown(blockId)
       if (!blockContent) {
-        showMessage("无法获取块内容", 2000, "error")
+        showMessage(localize(i18n, "blockLoadNoContent"), 2000, "error")
         return
       }
 
       const blockInfo = await api.getBlockByID(blockId)
-      const docTitle = blockInfo?.content || "块内容"
+      const docTitle = blockInfo?.content || localize(i18n, "blockUntitled")
 
       setTargetDocState(
         { id: blockId, title: docTitle, content: blockContent, isBlock: true },
       )
     } catch (error) {
       console.error("选择块失败:", error)
-      showMessage("选择块失败: " + (error as Error).message, 3000, "error")
+      showMessage(
+        localize(i18n, "blockSelectFailed", { error: (error as Error).message }),
+        3000,
+        "error",
+      )
     } finally {
       isSelecting = false
     }

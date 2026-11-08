@@ -4,6 +4,7 @@
  */
 import type {
   GenerateOptions,
+  IssueSeverity,
   ReviewRating,
   ReviewResult,
   SkillItem,
@@ -15,6 +16,7 @@ import {
   Plugin,
   showMessage,
 } from "siyuan"
+import { isAbortError } from "@/utils/abortSignal"
 import {
   callAI,
   callAISmart,
@@ -22,6 +24,7 @@ import {
 } from "@/utils/aiApi"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import AIContentGeneratorPanel from "../index.vue"
+import { localize } from "../utils"
 
 /**
  * 从任意文本中提取 JSON 对象。
@@ -58,11 +61,127 @@ function extractJsonFromText(text: string): string | null {
   return null
 }
 
-function validateRating(rating: unknown): ReviewRating {
+function validateRating(rating: unknown): ReviewRating | undefined {
   if (typeof rating === "string" && (RATING_VALUES as readonly string[]).includes(rating)) {
     return rating as ReviewRating
   }
-  return "良好"
+  return undefined
+}
+
+/** 审核输入正文预算（字符）：超出后按 head+tail 采样，避免长文塞满上下文 */
+const REVIEW_CONTENT_MAX_CHARS = 8_000
+/** head 采样占比：标题/背景/整体结构通常集中在开头 */
+const REVIEW_HEAD_RATIO = 0.7
+/** 审核输出 token 上限：JSON + 多条 issue/suggestion，过低会截断 JSON 导致解析失败 */
+const REVIEW_MAX_TOKENS = 4_000
+
+interface ReviewContentSlice {
+  /** 实际送入审核的正文 */
+  text: string
+  /** 生成内容总字符数 */
+  totalChars: number
+  /** 实际审核的字符数 */
+  reviewedChars: number
+  truncated: boolean
+}
+
+/**
+ * 超长正文按 head+tail 采样：保留开头（背景/结构）与结尾（结论），
+ * 中间以显式标记省略，避免模型误以为内容不完整而凭空补全
+ */
+function sliceContentForReview(content: string): ReviewContentSlice {
+  if (content.length <= REVIEW_CONTENT_MAX_CHARS) {
+    return {
+      text: content,
+      totalChars: content.length,
+      reviewedChars: content.length,
+      truncated: false,
+    }
+  }
+
+  const headChars = Math.floor(REVIEW_CONTENT_MAX_CHARS * REVIEW_HEAD_RATIO)
+  const tailChars = REVIEW_CONTENT_MAX_CHARS - headChars
+  const omittedChars = content.length - REVIEW_CONTENT_MAX_CHARS
+  const text = [
+    content.slice(0, headChars),
+    "",
+    `[……中间省略 ${omittedChars} 字，仅审核首尾内容……]`,
+    "",
+    content.slice(-tailChars),
+  ].join("\n")
+
+  return {
+    text,
+    totalChars: content.length,
+    reviewedChars: REVIEW_CONTENT_MAX_CHARS,
+    truncated: true,
+  }
+}
+
+function validateSeverity(value: unknown): IssueSeverity {
+  if (typeof value === "string" && (SEVERITY_LEVELS as readonly string[]).includes(value)) {
+    return value as IssueSeverity
+  }
+  // 模型漏写/写错严重度时按"中"归类，避免 UI 出现 undefined 分类与空白样式
+  return "中"
+}
+
+function validateIssues(value: unknown): ReviewResult["issues"] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item: any) => item && typeof item === "object")
+    .map((item: any) => ({
+      description: typeof item.description === "string" ? item.description.trim() : "",
+      severity: validateSeverity(item.severity),
+    }))
+    .filter((issue) => issue.description)
+}
+
+function validateSuggestions(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+    .map((item) => item.trim())
+}
+
+/** 单项评分校验：非数字/非有限值视为无效，越界分数收敛到 1-10 */
+function normalizeScore(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined
+  return Math.min(10, Math.max(1, Math.round(value)))
+}
+
+/**
+ * 分项评分校验：五个必填维度任一缺失/非法则整组丢弃（宁可不展示，也不展示半张图），
+ * titleQuality 为可选维度
+ */
+function validateDetailedScore(value: unknown): ReviewResult["detailedScore"] | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const raw = value as Record<string, unknown>
+
+  const accuracy = normalizeScore(raw.accuracy)
+  const structure = normalizeScore(raw.structure)
+  const quality = normalizeScore(raw.quality)
+  const format = normalizeScore(raw.format)
+  const coverage = normalizeScore(raw.coverage)
+  if (
+    accuracy === undefined
+    || structure === undefined
+    || quality === undefined
+    || format === undefined
+    || coverage === undefined
+  ) {
+    return undefined
+  }
+
+  const titleQuality = normalizeScore(raw.titleQuality)
+  return {
+    accuracy,
+    structure,
+    quality,
+    format,
+    coverage,
+    ...(titleQuality !== undefined ? { titleQuality } : {}),
+  }
 }
 
 /** 思考截断重试时的输出预算上限 */
@@ -77,6 +196,15 @@ export class AIContentGenerator {
 
   private getApiConfig(): AiApiConfig {
     return getApiConfigFromPlugin(this.plugin)
+  }
+
+  /** 运行时文案取值（缺失 key 回退为 key 本身，不写中文兜底） */
+  private t(key: string, params?: Record<string, string | number>): string {
+    return localize(
+      (this.plugin.i18n ?? {}) as unknown as Record<string, string>,
+      key,
+      params,
+    )
   }
 
   public init() {
@@ -99,8 +227,9 @@ export class AIContentGenerator {
           userRequest: string,
           generatedContent: string,
           skill?: SkillItem,
+          signal?: AbortSignal,
         ): Promise<ReviewResult> => {
-          return await this.reviewContent(userRequest, generatedContent, skill)
+          return await this.reviewContent(userRequest, generatedContent, skill, signal)
         },
       },
     })
@@ -141,49 +270,42 @@ export class AIContentGenerator {
 
   public async generateContent(options: GenerateOptions): Promise<string> {
     if (!options.userInput) {
-      showMessage("请输入内容", 3000, "error")
+      showMessage(this.t("msgInputContent"), 3000, "error")
       return ""
     }
 
-    try {
-      const fullPrompt = this.buildFullPrompt(options)
-      const apiConfig = this.getApiConfig()
+    const fullPrompt = this.buildFullPrompt(options)
+    const apiConfig = this.getApiConfig()
 
-      if (options.model) {
-        apiConfig.model = options.model
-      }
-
-      const first = await this.runOnce(fullPrompt, apiConfig, options, options.maxTokens)
-      if (first.result) {
-        return first.result
-      }
-
-      // 有思考但无正文：思考耗尽输出预算，自动加倍预算重试一次
-      if (first.hasReasoning) {
-        options.onTruncationRetry?.()
-        showMessage("思考被截断，正在以更大输出预算自动重试...", 3000, "info")
-        // 重试前替换已可能被中止的 signal：复用已 abort 的 signal 会让重试立即失败
-        if (options.signal?.aborted) {
-          options.signal = undefined
-        }
-        const retryTokens = Math.min(options.maxTokens * 2, RETRY_MAX_TOKENS_CAP)
-        const retry = await this.runOnce(fullPrompt, apiConfig, options, retryTokens)
-        if (retry.result) {
-          return retry.result
-        }
-        if (retry.hasReasoning) {
-          showMessage("已扩大输出预算重试但仍被截断，请降低思考强度", 5000, "error")
-          return ""
-        }
-      }
-
-      showMessage("生成失败，请重试", 3000, "error")
-      return ""
-    } catch (error) {
-      const errorMsg = (error as Error).message || "未知错误"
-      showMessage(`生成失败: ${errorMsg}`, 5000, "error")
-      throw error
+    if (options.model) {
+      apiConfig.model = options.model
     }
+
+    const first = await this.runOnce(fullPrompt, apiConfig, options, options.maxTokens)
+    if (first.result) {
+      return first.result
+    }
+
+    // 有思考但无正文：思考耗尽输出预算，自动加倍预算重试一次
+    if (first.hasReasoning) {
+      // 用户已停止：按取消返回，不再发起重试；signal 保持原样，重试仍可被停止
+      if (options.signal?.aborted) return ""
+      options.onTruncationRetry?.()
+      showMessage(this.t("msgTruncationRetry"), 3000, "info")
+      const retryTokens = Math.min(options.maxTokens * 2, RETRY_MAX_TOKENS_CAP)
+      const retry = await this.runOnce(fullPrompt, apiConfig, options, retryTokens)
+      if (retry.result) {
+        return retry.result
+      }
+      if (retry.hasReasoning) {
+        // 抛错交由调用方转为行内错误提示，避免 toast + 行内双通道重复
+        throw new Error(this.t("msgTruncationRetryFailed"))
+      }
+    }
+
+    // 用户已停止：安静返回，交由调用方按取消处理，不产出"生成失败"错误
+    if (options.signal?.aborted) return ""
+    throw new Error(this.t("msgGenerationFailedRetry"))
   }
 
   private buildFullPrompt(options: GenerateOptions): string {
@@ -198,8 +320,19 @@ ${options.userInput}`
     return options.userInput
   }
 
-  public async reviewContent(userRequest: string, generatedContent: string, skill?: SkillItem): Promise<ReviewResult> {
+  public async reviewContent(
+    userRequest: string,
+    generatedContent: string,
+    skill?: SkillItem,
+    signal?: AbortSignal,
+  ): Promise<ReviewResult> {
     const skillRubric = skill ? this.buildSkillRubric(skill) : ""
+    const contentSlice = sliceContentForReview(generatedContent)
+    const reviewCoverage: NonNullable<ReviewResult["reviewCoverage"]> = {
+      reviewedChars: contentSlice.reviewedChars,
+      totalChars: contentSlice.totalChars,
+      strategy: "head-tail",
+    }
 
     const reviewPrompt = [
       "你是专业的代码/文档审核专家，请以 GitHub PR Review 的严谨风格审核以下AI生成的Markdown文档，并以JSON格式输出。",
@@ -218,7 +351,10 @@ ${options.userInput}`
       userRequest.slice(0, 500),
 
       "## 生成内容",
-      generatedContent.slice(0, 3000),
+      contentSlice.text,
+      ...(contentSlice.truncated
+        ? [`（注：原文共 ${contentSlice.totalChars} 字，以上为开头与结尾节选，请仅基于节选内容审核）`]
+        : []),
 
       ...(skillRubric ? [skillRubric] : []),
 
@@ -259,42 +395,92 @@ ${options.userInput}`
       const result = await callAI(reviewPrompt, apiConfig, {
         systemPrompt: "你只输出JSON，禁止任何解释或前缀文字。",
         temperature: 0.1,
-        maxTokens: 2500,
+        maxTokens: REVIEW_MAX_TOKENS,
         responseFormat: { type: "json_object" },
+        signal,
       })
 
       const json = extractJsonFromText(result)
-      if (json) {
-        const parsed = JSON.parse(json) as Partial<ReviewResult>
-        return {
-          rating: validateRating(parsed.rating),
-          summary: parsed.summary || "审核完成",
-          issues: Array.isArray(parsed.issues) ? parsed.issues.filter((i: any) => i?.description) : [],
-          suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.filter((s: any) => typeof s === "string") : [],
-          reviewModel: apiConfig.model,
-          reviewedAt: Date.now(),
-          detailedScore: parsed.detailedScore,
-        }
+      if (!json) {
+        return this.buildReviewError(
+          this.t("reviewErrorNoJson"),
+          apiConfig,
+          reviewCoverage,
+        )
       }
 
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(json)
+      } catch {
+        return this.buildReviewError(
+          this.t("reviewErrorInvalidJson"),
+          apiConfig,
+          reviewCoverage,
+        )
+      }
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return this.buildReviewError(
+          this.t("reviewErrorNotObject"),
+          apiConfig,
+          reviewCoverage,
+        )
+      }
+
+      const record = parsed as Partial<ReviewResult>
+      const rating = validateRating(record.rating)
+      if (!rating) {
+        return this.buildReviewError(
+          this.t("reviewErrorNoRating"),
+          apiConfig,
+          reviewCoverage,
+        )
+      }
+
+      const detailedScore = validateDetailedScore(record.detailedScore)
       return {
-        rating: "良好",
-        summary: result.trim().slice(0, 300),
-        issues: [],
-        suggestions: [],
+        rating,
+        summary: typeof record.summary === "string" && record.summary.trim()
+          ? record.summary.trim()
+          : this.t("reviewSummaryCompleted"),
+        issues: validateIssues(record.issues),
+        suggestions: validateSuggestions(record.suggestions),
         reviewModel: apiConfig.model,
         reviewedAt: Date.now(),
+        reviewCoverage,
+        ...(detailedScore ? { detailedScore } : {}),
       }
     } catch (error) {
+      // 用户取消审核：向上抛出，交由审核侧按取消处理，不产出"审核异常"结果
+      if (isAbortError(error)) throw error
       console.error("审核失败:", error)
-      return {
-        rating: RATING_NEEDS_FIX,
-        summary: `审核异常: ${(error as Error).message}`,
-        issues: [],
-        suggestions: [],
-        reviewModel: apiConfig.model || DEEPSEEK_V4_PRO,
-        reviewedAt: Date.now(),
-      }
+      return this.buildReviewError(
+        this.t("reviewErrorException", { error: (error as Error).message }),
+        apiConfig,
+        reviewCoverage,
+      )
+    }
+  }
+
+  /**
+   * 构造审核错误态结果：error 存在时 UI 不展示评级/评分/问题清单，
+   * 仅展示错误信息与重试入口
+   */
+  private buildReviewError(
+    message: string,
+    apiConfig: AiApiConfig,
+    reviewCoverage: NonNullable<ReviewResult["reviewCoverage"]>,
+  ): ReviewResult {
+    return {
+      rating: RATING_NEEDS_FIX,
+      summary: "",
+      issues: [],
+      suggestions: [],
+      reviewModel: apiConfig.model || DEEPSEEK_V4_PRO,
+      reviewedAt: Date.now(),
+      error: message,
+      reviewCoverage,
     }
   }
 

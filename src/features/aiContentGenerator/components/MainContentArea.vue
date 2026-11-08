@@ -3,30 +3,30 @@
   <div class="main-content-area">
     <!-- 加载状态（仅在没有内容时显示，思考过程中不遮挡） -->
     <div
-      v-if="isGenerating && !displayedContent && !generatedContent && !reasoningContent"
+      v-if="isGenerating && !hasContent"
       class="loading-wrapper"
     >
       <Loader />
     </div>
 
-    <!-- 错误提示 -->
-    <div
-      v-else-if="errorMessage && !displayedContent && !generatedContent"
-      class="error-state"
-    >
-      <IconWrapper
-        name="cancel"
-        :size="48"
-        class="error-icon"
-      />
-      <p>{{ errorMessage }}</p>
-    </div>
-
     <!-- 生成结果（流式输出时也显示；思考过程到达时也渲染以展示推理内容） -->
     <div
-      v-else-if="displayedContent || generatedContent || reasoningContent"
+      v-else-if="hasContent"
       class="result-container"
     >
+      <!-- 错误提示与内容并存展示：生成中途失败时保留已有内容，错误不再被内容遮挡 -->
+      <div
+        v-if="errorMessage"
+        class="inline-error"
+      >
+        <IconWrapper
+          name="cancel"
+          :size="14"
+          class="inline-error-icon"
+        />
+        <span class="inline-error-text">{{ errorMessage }}</span>
+      </div>
+
       <div class="result-header">
         <span class="result-title">
           <span
@@ -157,6 +157,7 @@
             :is-auto-fixing="isAutoFixing"
             @reReview="$emit('reReview')"
             @autoFix="$emit('autoFix')"
+            @stopReview="$emit('stopReview')"
             @fixIssue="$emit('fixIssue', $event)"
           />
           <!-- 审查 Tab 空态：尚无审核结果时的提示 -->
@@ -173,6 +174,19 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- 无内容时的错误空态 -->
+    <div
+      v-else-if="errorMessage"
+      class="error-state"
+    >
+      <IconWrapper
+        name="cancel"
+        :size="48"
+        class="error-icon"
+      />
+      <p>{{ errorMessage }}</p>
     </div>
 
     <!-- 空状态 -->
@@ -265,12 +279,18 @@ defineEmits<{
   (e: "toggleReasoning"): void
   (e: "autoFix"): void
   (e: "reReview"): void
+  (e: "stopReview"): void
   (e: "directReview"): void
   (e: "fixIssue", issueIndex: number): void
   (e: "clearConversation"): void
 }>()
 
 const viewMode = ref<"preview" | "diff" | "review">("preview")
+
+// 是否存在可展示内容（正文或思考过程）：有内容时错误提示改为行内横幅，与内容并存
+const hasContent = computed(() =>
+  !!props.displayedContent || !!props.generatedContent || !!props.reasoningContent,
+)
 
 // 是否存在差异（有原文且有生成内容且不同）
 const hasDiff = computed(() => {

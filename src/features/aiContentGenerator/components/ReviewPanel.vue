@@ -12,27 +12,76 @@
         <!-- 头栏标题："交叉审核" -->
         <span class="review-header-title">{{ i18n.reviewCrossReview }}</span>
       </div>
-      <!-- 右侧：加载状态点 / 评级徽标 -->
+      <!-- 右侧：加载状态点 / 停止审核 / 评级徽标 -->
       <div class="review-header-right">
+        <template v-if="isReviewing">
+          <span class="review-loading-dot"></span>
+          <!-- 按钮："停止审核" -->
+          <Button
+            variant="danger"
+            size="xsmall"
+            icon="close"
+            :title="i18n.reviewStop"
+            @click="$emit('stopReview')"
+          >
+            {{ i18n.reviewStop }}
+          </Button>
+        </template>
         <span
-          v-if="isReviewing"
-          class="review-loading-dot"
-        ></span>
+          v-else-if="reviewResult && reviewResult.error"
+          class="review-rating-badge review-error-badge"
+        >
+          {{ i18n.reviewErrorTitle }}
+        </span>
         <span
           v-else-if="reviewResult"
           class="review-rating-badge"
           :class="ratingClass"
         >
-          {{ reviewResult.rating }}
+          {{ ratingLabel }}
         </span>
       </div>
     </div>
 
+    <!-- 审核错误态（解析失败/接口异常）：不展示评级、评分与问题清单 -->
+    <div
+      v-if="reviewResult && reviewResult.error"
+      class="review-error-state"
+    >
+      <IconWrapper
+        name="cancel"
+        :size="20"
+        class="review-error-icon"
+      />
+      <p class="review-error-message">
+        {{ reviewResult.error }}
+      </p>
+      <!-- 按钮："重新审核" -->
+      <Button
+        v-if="!isReviewing"
+        variant="primary"
+        size="xsmall"
+        icon="refresh"
+        :title="i18n.reviewReReview"
+        @click="$emit('reReview')"
+      >
+        {{ i18n.reviewReReview }}
+      </Button>
+    </div>
+
     <!-- 审核详情 -->
     <div
-      v-if="reviewResult"
+      v-else-if="reviewResult"
       class="review-body"
     >
+      <!-- 覆盖范围提示：内容超长时仅审核首尾片段 -->
+      <div
+        v-if="coverageNotice"
+        class="review-coverage-notice"
+      >
+        {{ coverageNotice }}
+      </div>
+
       <!-- 总体评价 -->
       <div class="review-summary">
         <IconWrapper
@@ -111,7 +160,7 @@
             <span
               class="issue-severity"
               :class="`severity-${entry.issue.severity}`"
-            >{{ entry.issue.severity }}</span>
+            >{{ severityLabel(entry.issue.severity) }}</span>
             <span class="issue-text">{{ entry.issue.description }}</span>
           </div>
           <div
@@ -176,9 +225,9 @@
             <span class="dot-flashing"></span>
             {{ i18n.reviewFixing }}
           </span>
-          <!-- 按钮："自动修复"（title："自动修复所有问题"） -->
+          <!-- 按钮："自动修复"（title："自动修复所有问题"）；无问题时隐藏，避免空转修复请求 -->
           <Button
-            v-else
+            v-else-if="hasIssues"
             variant="warning"
             size="xsmall"
             icon="refresh"
@@ -217,6 +266,7 @@ const props = defineProps<Props>()
 defineEmits<{
   (e: "reReview"): void
   (e: "autoFix"): void
+  (e: "stopReview"): void
   (e: "fixIssue", issueIndex: number): void
 }>()
 
@@ -251,6 +301,29 @@ const ratingClass = computed(() =>
   props.reviewResult ? RATING_CLASS_MAP[props.reviewResult.rating] : "",
 )
 
+/** 评级→i18n 键映射：业务枚举保持中文契约，仅展示层本地化 */
+const RATING_I18N_KEYS: Record<ReviewRating, string> = {
+  优秀: "reviewRatingExcellent",
+  良好: "reviewRatingGood",
+  需改进: "reviewRatingNeedsFix",
+}
+
+const ratingLabel = computed(() =>
+  props.reviewResult ? props.i18n[RATING_I18N_KEYS[props.reviewResult.rating]] : "",
+)
+
+/** 是否存在待修复问题（无问题时隐藏自动修复，避免空转请求） */
+const hasIssues = computed(() => (props.reviewResult?.issues.length ?? 0) > 0)
+
+/** 内容超长导致仅审核首尾片段时的提示文案（未截断时为空） */
+const coverageNotice = computed(() => {
+  const coverage = props.reviewResult?.reviewCoverage
+  if (!coverage || coverage.reviewedChars >= coverage.totalChars) return ""
+  return props.i18n.reviewCoverageNotice
+    .replace("{reviewed}", String(coverage.reviewedChars))
+    .replace("{total}", String(coverage.totalChars))
+})
+
 /** 评级为"需改进"且有具体问题时才展示单条 issue 的定向修复按钮 */
 const needsFix = computed(() => {
   const result = props.reviewResult
@@ -280,6 +353,9 @@ const sevKeyMap: Record<IssueSeverity, string> = {
   中: "reviewSeverityMid",
   低: "reviewSeverityLow",
 }
+
+/** 问题条目的严重度展示文案（业务枚举 → 本地化文案） */
+const severityLabel = (severity: IssueSeverity): string => props.i18n[sevKeyMap[severity]]
 
 // 过滤按钮："全部"与"高/中/低"文案均取自 i18n
 const filterOptions = computed<{ key: SeverityFilterKey; label: string }[]>(() => [

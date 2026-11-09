@@ -158,17 +158,6 @@
       />
     </Transition>
     <Transition name="gp-dialog-fade">
-      <CategoryDialog
-        v-if="showCatDialog"
-        :i18n="i18n"
-        :categories="categories"
-        @close="showCatDialog = false"
-        @add-category="handleAddCategory"
-        @update-category="handleUpdateCategory"
-        @delete-category="handleDeleteCategory"
-      />
-    </Transition>
-    <Transition name="gp-dialog-fade">
       <SettingsDialog
         v-if="showSettings"
         :i18n="i18n"
@@ -183,6 +172,7 @@
         :year-options="settingsYearOptions"
         :probe-config="probeConfig"
         :probe-watched-count="probeWatchedCount"
+        :categories="categories"
         @close="showSettings = false"
         @save="setGitConcurrency"
         @save-network-timeout="setNetworkTimeout"
@@ -193,7 +183,9 @@
         @update-view-settings="updateViewSettings"
         @save-probe-config="saveProbeConfig"
         @probe-now="handleProbeNow"
-        @open-category="openCategoryFromSettings"
+        @add-category="handleAddCategory"
+        @update-category="handleUpdateCategory"
+        @delete-category="handleDeleteCategory"
       />
     </Transition>
     <!-- 通用确认弹窗（删除/丢弃/恢复/分类/拉取等需二次确认的操作） -->
@@ -304,7 +296,6 @@ import { buildYearOptions, findProject } from "./utils"
 import { fmtTemplate } from "./utils/i18nFormat"
 import type { SectionTabItem } from "./components/common/sectionTabs"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
-import CategoryDialog from "./components/common/CategoryDialog.vue"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import ConsistencyAuditDialog from "./components/common/ConsistencyAuditDialog.vue"
 import EditProjectDialog from "./components/common/EditProjectDialog.vue"
@@ -475,7 +466,6 @@ async function recordCommitActivity(id: string, isoTime: string) {
 }
 
 const showAddDialog = ref(false)
-const showCatDialog = ref(false)
 const showSettings = ref(false)
 
 /** 打开设置汇总弹窗：先预载显示设置，防止未进分析视图时以默认值覆盖已保存设置 */
@@ -484,12 +474,6 @@ function openSettings() {
   void loadViewSettings()
   // 同步监听状态：该值仅用于弹窗内解释「文件监听是否真的生效」，按需刷新即可
   probeWatchedCount.value = gitProbe.getWatchedCount()
-}
-
-/** 设置弹窗内「管理分类」入口：关闭设置并打开分类弹窗（避免弹窗叠放） */
-function openCategoryFromSettings() {
-  showSettings.value = false
-  showCatDialog.value = true
 }
 
 /** 远程与本地一致性分析弹窗 */

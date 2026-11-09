@@ -39,21 +39,8 @@
               :icon="sec.icon"
               height="14"
             />
-            <!-- 导航项文案："常规" / "显示" / "推送账号" / "Git 配置" -->
+            <!-- 导航项文案："常规" / "分类" / "显示" / "推送账号" / "Git 配置" -->
             <span>{{ i18n[sec.labelKey] }}</span>
-          </button>
-          <!-- 底部固定操作（tooltip："管理分类"）：点击后关闭设置并打开分类弹窗 -->
-          <button
-            class="gp-settings-nav-btn gp-settings-nav-manage"
-            :title="i18n.manageCategories"
-            @click="$emit('openCategory')"
-          >
-            <Icon
-              icon="mdi:tag-outline"
-              height="14"
-            />
-            <!-- 操作文案："管理分类" -->
-            <span>{{ i18n.manageCategories }}</span>
           </button>
         </nav>
 
@@ -99,6 +86,16 @@
             />
           </template>
 
+          <!-- ── 分类分区：项目分类增删改（内联，不再单独开窗） ── -->
+          <CategorySettingsSection
+            v-else-if="activeSection === 'categories'"
+            :i18n="i18n"
+            :categories="categories"
+            @add-category="onAddCategory"
+            @update-category="onUpdateCategory"
+            @delete-category="onDeleteCategory"
+          />
+
           <!-- ── 显示分区：提交分析显示设置 ── -->
           <template v-else-if="activeSection === 'display'">
             <!-- 提示文案："改动即时保存并生效" -->
@@ -140,6 +137,7 @@ import type {
   CommitRuleConfig,
   GitPushManager,
   ProbeConfig,
+  ProjectCategory,
 } from "../../types"
 import { Icon } from "@iconify/vue"
 import { ref } from "vue"
@@ -148,13 +146,14 @@ import { useDialogKeyboard } from "../../composables/useDialogKeyboard"
 import AnalysisSettingsForm from "../CommitAnalysis/AnalysisSettingsForm.vue"
 import GitConfigSection from "./GitConfigSection.vue"
 import PushProfilesSection from "./PushProfilesSection.vue"
+import CategorySettingsSection from "./settings/CategorySettingsSection.vue"
 import IndexSettingsSection from "./settings/IndexSettingsSection.vue"
 import PerformanceSettingsSection from "./settings/PerformanceSettingsSection.vue"
 import ProbeSettingsSection from "./settings/ProbeSettingsSection.vue"
 import PushLinkSettingsSection from "./settings/PushLinkSettingsSection.vue"
 import RuleCheckSettingsSection from "./settings/RuleCheckSettingsSection.vue"
 
-type SettingsSection = "general" | "display" | "accounts" | "gitconfig"
+type SettingsSection = "general" | "categories" | "display" | "accounts" | "gitconfig"
 
 defineProps<{
   i18n: Record<string, any>
@@ -177,9 +176,11 @@ defineProps<{
   probeConfig: ProbeConfig
   /** 已建立 .git 文件监听的项目数（0 = 环境不支持或监听关闭，已降级到轮询层） */
   probeWatchedCount: number
+  /** 项目分类列表（「分类」分区内联增删改） */
+  categories: ProjectCategory[]
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   close: []
   save: [value: number]
   saveNetworkTimeout: [value: number]
@@ -194,9 +195,24 @@ defineEmits<{
   saveProbeConfig: [config: ProbeConfig]
   /** 立即探测一次（清空预筛基准强制真查） */
   probeNow: []
-  /** 底部「管理分类」操作：由父级关闭设置弹窗并打开分类弹窗 */
-  openCategory: []
+  /** 分类增删改（由父级持久化并刷新列表） */
+  addCategory: [name: string, color: string]
+  updateCategory: [id: string, name: string, color: string]
+  deleteCategory: [id: string]
 }>()
+
+/** 分类事件转发（多参数，故用脚本函数承接） */
+function onAddCategory(name: string, color: string) {
+  emit("addCategory", name, color)
+}
+
+function onUpdateCategory(id: string, name: string, color: string) {
+  emit("updateCategory", id, name, color)
+}
+
+function onDeleteCategory(id: string) {
+  emit("deleteCategory", id)
+}
 
 /** 分区导航元数据（图标均为本地 MDI 集已注册图标） */
 const sections: { id: SettingsSection, icon: string, labelKey: string }[] = [
@@ -204,6 +220,11 @@ const sections: { id: SettingsSection, icon: string, labelKey: string }[] = [
     id: "general",
     icon: "mdi:tune",
     labelKey: "settingsSectionGeneral",
+  },
+  {
+    id: "categories",
+    icon: "mdi:tag-outline",
+    labelKey: "settingsSectionCategories",
   },
   {
     id: "display",

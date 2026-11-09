@@ -321,13 +321,12 @@ const changesCount = computed(() => {
 })
 
 /**
- * 手风琴展开：先刷新一次工作区（缓存可能是外部编辑器改动前的旧快照，
- * 原地停留不会自动重查），刷新后确有变更时自动落到「变更」页签。
+ * 卡片进入「可见详情」时刷新一次工作区，并在确有变更时落到「变更」页签。
+ * 触发点：手风琴展开、详细模式挂载（卡片重挂载常带 LRU 旧快照，原地停留不会自动重查）。
  * 刷新期间用户已手动切页签则不抢；刷新失败保持原页签。
- * 已展开卡片重挂载不触发，保留页签记忆。
  */
-watch(isExpanded, (expanded) => {
-  if (!expanded || !isAccordion.value) return
+function syncWorkingTreeOnEnter() {
+  if (!isExpanded.value) return
   const tabBeforeRefresh = stashTagTab.value
   void ops.refreshProjectStatus(props.project.id)
     .then(() => {
@@ -335,7 +334,14 @@ watch(isExpanded, (expanded) => {
       if (changesCount.value > 0) stashTagTab.value = "worktree"
     })
     .catch(() => {})
+}
+
+watch(isExpanded, (expanded) => {
+  if (expanded) syncWorkingTreeOnEnter()
 })
+
+// 详细模式恒为展开态，watch 不会触发；挂载时补一次（手风琴下仅已展开的那张卡会走到这里）
+onMounted(syncWorkingTreeOnEnter)
 
 /** 项目已配置的远程名列表（Tag 推送远程选择用） */
 const remoteNames = computed(() => getProjectRemoteNames(props.project).map((r) => r.name))

@@ -994,6 +994,9 @@ export const COMMON_ICONS = {
   fileDocumentCheckOutline: {
     icon: "mdi:file-document-check-outline",
   },
+  fileDocumentMultipleOutline: {
+    icon: "mdi:file-document-multiple-outline",
+  },
   clipboardCheckOutline: {
     icon: "mdi:clipboard-check-outline",
   },

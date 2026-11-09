@@ -24,6 +24,8 @@ export interface CardSharedData {
   customIdes: Ref<CustomIde[]>
   detectedTerminals: Ref<TerminalEntry[]>
   commitTemplates: Ref<CommitTemplate[]>
+  /** 提交信息草稿（按项目 id；仅会话内存 —— 手风琴折叠/切分类卸载面板时不丢失） */
+  commitDrafts: Ref<Record<string, string>>
   searchQuery: Ref<string>
   /** Compare / 创建 PR 深链基线分支（默认 main，设置弹窗可改） */
   compareBaseBranch: Ref<string>

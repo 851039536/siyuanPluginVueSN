@@ -56,7 +56,7 @@
         size="xsmall"
         dense
         on-icon="viewAccordion"
-        off-icon="viewAccordion"
+        off-icon="layoutGrid"
         :aria-label="i18n.cardLayoutAccordion"
         :title="accordionMode ? i18n.cardLayoutAccordion : i18n.cardLayoutDetailed"
       />

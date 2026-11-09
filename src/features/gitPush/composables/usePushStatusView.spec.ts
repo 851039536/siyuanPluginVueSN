@@ -38,7 +38,7 @@ describe("usePushStatusView —— 状态分类与判定", () => {
       gitee: { ahead: 0, behind: 0, noUpstream: true },
     })
 
-    expect(view.remoteView("p1", "github")).toEqual({ kind: "ahead", label: "+4" })
+    expect(view.remoteView("p1", "github")).toEqual({ kind: "ahead", label: "↑4" })
     // 空仓库：没有可推送的提交，不进入 ahead 分类、不显示 +0 徽章
     expect(view.remoteView("p1", "gitee")).toEqual({ kind: "synced", label: "" })
     // 但单平台仍放行尝试（远程分支尚未建立）

@@ -106,6 +106,13 @@
   }
 }
 
+// 手风琴模式：收起摘要按 GitHub 行式列表整行铺满；详细模式保持双列
+// （解除 390px 保底宽度：窄 Dock 下摘要行应随容器收缩，而不是整块横向滚动）
+.gp-list--accordion .gp-card {
+  flex: 1 1 100% !important;
+  min-width: 0 !important;
+}
+
 // 顶栏/操作区/菜单样式 → CardHeader.scss（IDE 管理弹窗与通用弹窗样式保留在 index.scss 与 Dialog.scss）
 
 // IDE 管理弹窗

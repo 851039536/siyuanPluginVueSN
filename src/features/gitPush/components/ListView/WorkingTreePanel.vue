@@ -417,7 +417,8 @@ const TYPE_PREFIX_RE = /^([A-Z]+)((?:\([^)]*\))?!?):\s*/i
 const INCOMPLETE_COMMIT_RE = /^(?:[A-Z]+(?:\([^)]*\))?!?:\s*)?$/i
 
 const commitType = ref("chore")
-const commitMessage = ref("")
+/** 提交信息（v-model:draft）：草稿由父层按项目持有，卡片折叠 / 切分类卸载面板时不丢 */
+const commitMessage = defineModel<string>("draft", { default: "" })
 /** 提交模板选择（空串 = 未选择；选中后立即套用并复位） */
 const templatePick = ref<string | number>("")
 /** 模板管理弹窗开关 */

@@ -19,6 +19,8 @@ export function useCardServices(project: () => GitProject): {
   services: CardServices
   pushStatus: ComputedRef<PushStatusInfo | undefined>
   workingTree: ComputedRef<WorkingTreeInfo | undefined>
+  /** 待提交变更数（暂存 + 未暂存 + 未跟踪；摘要行 / Tab 徽标 / 展开落点共用） */
+  changesCount: ComputedRef<number>
   committing: ComputedRef<boolean>
   stashLoading: ComputedRef<boolean>
   pullOutputs: ComputedRef<PushOutputEntry[]>
@@ -45,6 +47,10 @@ export function useCardServices(project: () => GitProject): {
 
   const pushStatus = computed(() => byId(records.pushStatuses.value))
   const workingTree = computed(() => byId(records.workingTrees.value))
+  const changesCount = computed(() => {
+    const wt = workingTree.value
+    return (wt?.stagedCount || 0) + (wt?.unstagedCount || 0) + (wt?.untrackedCount || 0)
+  })
   const committing = computed(() => byId(records.committing.value) ?? false)
   // 引用计数型标志：>0 视为 loading
   const stashLoading = computed(() => (byId(records.stashLoading.value) ?? 0) > 0)
@@ -65,6 +71,7 @@ export function useCardServices(project: () => GitProject): {
     services,
     pushStatus,
     workingTree,
+    changesCount,
     committing,
     stashLoading,
     pullOutputs,

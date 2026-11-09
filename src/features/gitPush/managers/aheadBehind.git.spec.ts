@@ -192,7 +192,7 @@ describe("远程 ahead/behind 批量读取（for-each-ref）", () => {
   it("整体失败：for-each-ref 报错时必须与「ref 不存在」区分，不可回落为空映射", () => {
     // 回归目标：`readRemoteAheadBehind` 曾用 `catch { return new Map() }`，
     // 使「命令整体失败」与「该远程无上游」产生同一结果 —— 下游会把真实故障
-    // 呈现为 noUpstream（platform.ts 视为待推送、UI 显示「+N 个提交」）。
+    // 呈现为 noUpstream（platform.ts 视为待推送、UI 显示「↑N 个提交」）。
     //
     // 构造真实失败：传入不存在的 --format 占位符以外的非法参数（git 会以非 0 退出）。
     let failed = false

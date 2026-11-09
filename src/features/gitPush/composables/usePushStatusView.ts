@@ -20,9 +20,9 @@ export function usePushStatusView(pushStatuses: Ref<Record<string, PushStatusInf
 
     let label: string
     if (rs.noUpstream) {
-      // 远程分支尚未建立且有本地提交：用 +N 表示「首次推送将建立的提交数」；
+      // 远程分支尚未建立且有本地提交：用 ↑N 表示「首次推送将建立的提交数」（与 ahead 同一符号口径）；
       // 空仓库（ahead=0）没有可推送内容，不显示徽章
-      label = rs.ahead > 0 ? `+${rs.ahead}` : ""
+      label = rs.ahead > 0 ? `↑${rs.ahead}` : ""
     } else {
       // 分叉（既领先又落后）时同时展示上传与下拉数量
       const parts: string[] = []

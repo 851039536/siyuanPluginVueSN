@@ -14,6 +14,7 @@
 
 **当前 `docs/` 根下的活跃文档**：
 - [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
+- [gitPush-accordion-review.md](gitPush-accordion-review.md)（手风琴模式审查：批次 1–2 已落地；剩余可选扩展 E1–E6 / B6–B7 待定）
 
 ## 一、参考文档（`docs/参考/`，9 份）
 

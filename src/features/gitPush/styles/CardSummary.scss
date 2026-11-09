@@ -15,50 +15,89 @@
   gap: $s-1;
   min-width: 0;
   width: 100%;
+  cursor: pointer;
 }
 
-// 展开按钮：几何由共享 Button 承担，这里只做弱化
-.git-push-panel .gp-summary .gp-summary-expand.si-button {
-  flex-shrink: 0;
-  opacity: 0.4;
-  transition: opacity 0.12s;
-
-  &:hover { opacity: 0.9; }
-}
-
-// 项目名：唯一可压缩项（其余元素 flex-shrink:0，避免被挤爆）
-.gp-summary-name {
+// 摘要主按钮：承载箭头 + 项目名与键盘焦点；去掉 Button 默认描边/底色/居中，宽度上限交给行布局
+.gp-card.gp-card--collapsed .gp-summary .gp-summary-main.si-button {
   flex: 0 1 auto;
   min-width: 0;
   max-width: 42%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  justify-content: flex-start;
+  text-align: left;
+  color: inherit;
+  border-radius: $r-sm;
+}
+
+// 内容层单行排布（名称/分支自行截断，其余元素不压缩）
+.gp-card.gp-card--collapsed .gp-summary .gp-summary-main.si-button .si-button__text {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  width: 100%;
+  min-width: 0;
+  line-height: $lh-normal;
+}
+
+// 悬停反馈（整行高亮；有变更的项目仍靠变更徽章区分，不改变底色语义）
+.gp-card.gp-card--collapsed .gp-summary .gp-summary-main.si-button:hover {
+  background: var(--b3-list-hover);
+}
+
+// 展开指示箭头（常态弱化，悬停/聚焦时提亮）
+.gp-summary-chevron {
+  flex-shrink: 0;
+  opacity: 0.45;
+  transition: opacity 0.12s;
+}
+
+.gp-summary-main:hover .gp-summary-chevron,
+.gp-summary-main:focus-visible .gp-summary-chevron {
+  opacity: 0.9;
+}
+
+// 项目名：按钮内唯一可压缩项（省略号由行宽上限 42% 驱动）
+.gp-summary-name {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: $t-xs;
   font-weight: $fw-semibold;
   @include text-ellipsis;
 }
 
-// 当前分支（等宽字体，弱化展示）
+// 搜索关键词高亮（与展开态 .gp-card-name .gp-hl 同款，两处消费保持视觉一致）
+.gp-summary-name .gp-hl {
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  border-radius: $r-sm;
+}
+
+// 当前分支（等宽字体，弱化展示；宽度上限交给文本层做省略号）
 .gp-summary-branch {
   display: inline-flex;
   align-items: center;
   gap: $s-px3;
   flex-shrink: 0;
-  max-width: 26%;
-  overflow: hidden;
+  max-width: 22%;
+  min-width: 0;
   font-family: $ff-mono;
   font-size: $t-2xs;
-  white-space: nowrap;
   opacity: 0.55;
 }
 
-// 待提交变更数
-.gp-summary-metric {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px2;
+.gp-summary-branch-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// 待提交变更数（语义色 Tag；内容与三类拆分 tooltip 由共享 Tag 承担）
+.gp-summary-changes.si-tag {
   flex-shrink: 0;
-  font-size: $t-2xs;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.6;
 }
 
 // 单个远程的同步徽章（平台图标 + ↑N/↓N 标签）

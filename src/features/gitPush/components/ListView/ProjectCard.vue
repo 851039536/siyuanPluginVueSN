@@ -1,6 +1,7 @@
 <!-- gitPush 项目卡片编排层（仅 project prop，数据与操作全部经 useCardServices/useCardData 注入） -->
 <template>
   <div
+    ref="rootEl"
     class="gp-card"
     :class="{ 'gp-card--collapsed': collapsed }"
     @click.capture="handleCardClick"
@@ -43,6 +44,7 @@
       <!-- 工作区变更 -->
       <template #worktree>
         <WorkingTreePanel
+          v-model:draft="commitDraft"
           :i18n="i18n"
           :tree="workingTree"
           :committing="committing || false"
@@ -217,6 +219,7 @@ import type {
 import type { CardTabId } from "../../types/cardTab"
 import {
   computed,
+  nextTick,
   onMounted,
   ref,
   watch,
@@ -258,6 +261,7 @@ const props = defineProps<{
 const {
   services,
   workingTree,
+  changesCount,
   committing,
   stashLoading,
   commitOutput,
@@ -314,10 +318,12 @@ const {
 /** Stash / Tag 面板 Tab 切换（恢复该项目上次激活的 Tab，切分类 / 切视图后不丢） */
 const stashTagTab = ref<CardTabId>(getCardTab(props.project.id))
 
-/** 待提交变更数（暂存 + 未暂存 + 未跟踪；Tab 徽标与展开后的页签落点共用） */
-const changesCount = computed(() => {
-  const wt = workingTree.value
-  return (wt?.stagedCount || 0) + (wt?.unstagedCount || 0) + (wt?.untrackedCount || 0)
+/** 提交信息草稿（shared 会话态；面板卸载 / 手风琴折叠不丢，提交成功后由面板清空） */
+const commitDraft = computed({
+  get: () => shared.commitDrafts.value[props.project.id] ?? "",
+  set: (v: string) => {
+    shared.commitDrafts.value[props.project.id] = v
+  },
 })
 
 /**
@@ -336,8 +342,24 @@ function syncWorkingTreeOnEnter() {
     .catch(() => {})
 }
 
+/** 卡片根节点（展开后把焦点交给「收起」按钮，避免键盘用户丢失焦点位置） */
+const rootEl = ref<HTMLElement | null>(null)
+
 watch(isExpanded, (expanded) => {
   if (expanded) syncWorkingTreeOnEnter()
+})
+
+/**
+ * 键盘展开后的焦点接力：摘要按钮会随收起态一起卸载，
+ * 若不转移焦点，键盘用户会直接掉回页面顶部。
+ */
+watch(isExpanded, (expanded) => {
+  if (!expanded) return
+  const active = document.activeElement
+  if (!(active instanceof HTMLElement) || !active.classList.contains("gp-summary-main")) return
+  void nextTick(() => {
+    rootEl.value?.querySelector<HTMLElement>(".gp-collapse-btn")?.focus()
+  })
 })
 
 // 详细模式恒为展开态，watch 不会触发；挂载时补一次（手风琴下仅已展开的那张卡会走到这里）

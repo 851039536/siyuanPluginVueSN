@@ -1734,6 +1734,9 @@ const settingsYearOptions = computed(() =>
 // 推送状态派生视图（远程同步视图/推送判定，供 ProjectCard 函数 props）
 const { remoteView, needsPushFor } = usePushStatusView(pushStatuses)
 
+/** 提交信息草稿（按项目 id；仅会话内存，卡片折叠 / 切分类卸载面板时不丢） */
+const commitDrafts = ref<Record<string, string>>({})
+
 // ── 卡片服务注入（五分组契约，消除中间人 props/emits：共享数据 / 响应式 Record / 派生函数 / 操作集群）──
 provide(CARD_SERVICES_KEY, {
   manager: props.manager,
@@ -1748,6 +1751,7 @@ provide(CARD_SERVICES_KEY, {
     customIdes,
     detectedTerminals,
     commitTemplates,
+    commitDrafts,
     // 卡片高亮与列表过滤共用防抖后的生效词，避免「高亮已变、列表未变」两套时间基准
     searchQuery: activeQuery,
     compareBaseBranch,

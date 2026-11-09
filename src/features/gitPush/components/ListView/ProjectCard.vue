@@ -35,7 +35,7 @@
       v-if="!collapsed"
       v-model="stashTagTab"
       :i18n="i18n"
-      :changes-count="(workingTree?.stagedCount || 0) + (workingTree?.unstagedCount || 0) + (workingTree?.untrackedCount || 0)"
+      :changes-count="changesCount"
       :log-count="logEntries.length"
       :stash-count="stashList.length"
       :tag-count="tags.length"
@@ -313,6 +313,29 @@ const {
 
 /** Stash / Tag 面板 Tab 切换（恢复该项目上次激活的 Tab，切分类 / 切视图后不丢） */
 const stashTagTab = ref<CardTabId>(getCardTab(props.project.id))
+
+/** 待提交变更数（暂存 + 未暂存 + 未跟踪；Tab 徽标与展开后的页签落点共用） */
+const changesCount = computed(() => {
+  const wt = workingTree.value
+  return (wt?.stagedCount || 0) + (wt?.unstagedCount || 0) + (wt?.untrackedCount || 0)
+})
+
+/**
+ * 手风琴展开：先刷新一次工作区（缓存可能是外部编辑器改动前的旧快照，
+ * 原地停留不会自动重查），刷新后确有变更时自动落到「变更」页签。
+ * 刷新期间用户已手动切页签则不抢；刷新失败保持原页签。
+ * 已展开卡片重挂载不触发，保留页签记忆。
+ */
+watch(isExpanded, (expanded) => {
+  if (!expanded || !isAccordion.value) return
+  const tabBeforeRefresh = stashTagTab.value
+  void ops.refreshProjectStatus(props.project.id)
+    .then(() => {
+      if (stashTagTab.value !== tabBeforeRefresh) return
+      if (changesCount.value > 0) stashTagTab.value = "worktree"
+    })
+    .catch(() => {})
+})
 
 /** 项目已配置的远程名列表（Tag 推送远程选择用） */
 const remoteNames = computed(() => getProjectRemoteNames(props.project).map((r) => r.name))

@@ -25,7 +25,7 @@ export const PLATFORM_META = [
     label: "Gitea",
     remoteProp: "giteaRemote" as const,
     urlProp: "giteaUrl" as const,
-    webUrl: "https://about.gitea.com",
+    webUrl: "http://kaigitea.s.3q.hair/",
   },
   {
     key: "cnb" as const,

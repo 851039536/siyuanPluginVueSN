@@ -141,7 +141,8 @@
   font-size: $t-2xs;
   font-family: $ff-mono;
   opacity: 0.5;
-  max-width: 280px;
+  // 卡片宽度已由列表约束，这里不再叠加固定上限（旧 280px 会让宽卡里的路径过早省略）
+  max-width: 100%;
 
   .gp-path-icon {
     flex-shrink: 0;
@@ -181,6 +182,25 @@
     color: var(--b3-theme-primary);
     background: var(--b3-theme-primary-lightest);
   }
+}
+
+// 分支列表未就绪时的当前分支占位：与 .gp-branch-tag.current 同观感，但只读
+.gp-branch-current {
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  padding: $s-px1 $s-1;
+  border: 1px solid var(--b3-theme-primary);
+  border-radius: $r-sm;
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+}
+
+// 分支折叠按钮（"+N" / "−"）：几何由共享 Button 承担，此处只做弱化
+.gp-branch-row .gp-branch-more.si-button {
+  opacity: 0.6;
+
+  &:hover { opacity: 1; }
 }
 
 // ========== 卡片增强（顶栏信息区专属） ==========

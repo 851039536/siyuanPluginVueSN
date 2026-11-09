@@ -203,6 +203,8 @@
     "previewFileTitle": "Preview {0}",
     "mdFilesExpand": "Show all {0} Markdown files",
     "mdFilesCollapse": "Collapse Markdown files",
+    "branchesExpand": "Show remaining {0} branches",
+    "branchesCollapse": "Collapse branches",
     "noMarkdownFiles": "No Markdown files found",
     "fileTooLarge": "Large file",
     "errReadFile": "Failed to read file",

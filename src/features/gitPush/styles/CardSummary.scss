@@ -19,10 +19,11 @@
 }
 
 // 摘要主按钮：承载箭头 + 项目名与键盘焦点；去掉 Button 默认描边/底色/居中，宽度上限交给行布局
+// 提交消息移出摘要后，名称上限从 42% 提到 50%（长项目名不再被时间/消息挤占）
 .gp-card.gp-card--collapsed .gp-summary .gp-summary-main.si-button {
   flex: 0 1 auto;
   min-width: 0;
-  max-width: 42%;
+  max-width: 50%;
   padding: 0;
   border: none;
   background: transparent;
@@ -95,29 +96,19 @@
   text-overflow: ellipsis;
 }
 
-// 最近提交：时间恒显，消息单行省略（仅在日志已缓存时出现）
+// 最近提交：只保留相对时间（提交消息会挤占项目名，已移出摘要）
 .gp-summary-commit {
   display: inline-flex;
   align-items: center;
   gap: $s-px3;
-  flex: 0 1 auto;
-  min-width: 0;
-  max-width: 32%;
+  flex: 0 0 auto;
   font-family: $ff-mono;
   font-size: $t-2xs;
   opacity: 0.5;
 }
 
 .gp-summary-commit-age {
-  flex-shrink: 0;
   white-space: nowrap;
-}
-
-.gp-summary-commit-msg {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 // 待提交变更数（语义色 Tag；内容与三类拆分 tooltip 由共享 Tag 承担）

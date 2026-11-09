@@ -121,8 +121,11 @@ export interface CardOps {
    * @param fastWhenClean 兼容保留（当前 no-op；原干净工作区快速路径因净亏已移除）
    */
   ensureProjectStatus: (id: string, fastWhenClean?: boolean) => Promise<void>
-  /** Tab 切回工作区时的显式刷新（refresh 语义 + 最小间隔节流） */
-  refreshProjectStatus: (id: string) => Promise<void>
+  /**
+   * 项目状态显式刷新（refresh 语义 + 最小间隔节流）。
+   * `minIntervalMs` 缺省 2s；卡片「进入可见详情」用更大的间隔，避免详细模式下整批卡片同时重查。
+   */
+  refreshProjectStatus: (id: string, opts?: { minIntervalMs?: number }) => Promise<void>
   openRepoWebUrl: (url: string) => void
   openLocalPath: (path: string) => void
 }

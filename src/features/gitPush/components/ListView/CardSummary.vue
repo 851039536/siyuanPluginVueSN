@@ -59,7 +59,7 @@
       />
       <span class="gp-summary-branch-text">{{ branchLabel }}</span>
     </span>
-    <!-- 最近提交（时间恒显；消息仅在日志已缓存时展示，避免为摘要额外跑 git） -->
+    <!-- 最近提交时间（只展示相对时间；提交消息会挤占项目名，完整时间见 tooltip） -->
     <span
       v-if="commitAge"
       class="gp-summary-commit"
@@ -70,10 +70,6 @@
         height="11"
       />
       <span class="gp-summary-commit-age">{{ commitAge }}</span>
-      <span
-        v-if="latestCommitMessage"
-        class="gp-summary-commit-msg"
-      >{{ latestCommitMessage }}</span>
     </span>
     <!-- 待提交变更数（tooltip 拆分「已暂存 / 未暂存 / 未跟踪」） -->
     <Tag
@@ -140,8 +136,8 @@ import CardPushAllButton from "./CardPushAllButton.vue"
 
 const props = defineProps<{
   project: GitProject
-  /** 最近提交（仅日志已缓存时传入；缺失则退回项目最后活动时间） */
-  latestCommit?: { message: string, date: string } | null
+  /** 最近提交时间（ISO；仅日志已缓存时传入，缺失则退回项目最后活动时间） */
+  latestCommitDate?: string | null
   /** 已缓存的 Stash 数（>0 时展示） */
   stashCount?: number
 }>()
@@ -158,14 +154,9 @@ const nameSegments = computed(() => highlightSegments(props.project.name, shared
 const branchLabel = computed(() => pushStatus.value?.branch || "")
 
 /** 最近提交/活动时间（优先真实提交时间；都没有则不占版面） */
-const commitIso = computed(() => props.latestCommit?.date || props.project.lastActivity || "")
+const commitIso = computed(() => props.latestCommitDate || props.project.lastActivity || "")
 const commitAge = computed(() => (commitIso.value ? relativeTime(commitIso.value, i18n) : ""))
-const latestCommitMessage = computed(() => props.latestCommit?.message.split("\n")[0] ?? "")
-const commitTitle = computed(() => {
-  if (!commitIso.value) return ""
-  const when = new Date(commitIso.value).toLocaleString()
-  return latestCommitMessage.value ? `${when} · ${latestCommitMessage.value}` : when
-})
+const commitTitle = computed(() => (commitIso.value ? new Date(commitIso.value).toLocaleString() : ""))
 
 /** 变更数 tooltip：按三类拆分（为 0 的类别不列；缓存缺失时退回通用文案） */
 const changesTitle = computed(() => {

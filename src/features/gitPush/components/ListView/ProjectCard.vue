@@ -10,7 +10,7 @@
     <CardSummary
       v-if="collapsed"
       :project="project"
-      :latest-commit="latestCommit"
+      :latest-commit-date="latestCommitDate"
       :stash-count="stashList.length"
       @expand="expand"
     />
@@ -20,17 +20,52 @@
       v-if="!collapsed"
       :project="project"
       :branches="branches"
+      :current-branch="pushStatus?.branch || ''"
       :md-files="mdFiles"
       :open-workspace-files="openWorkspaceFiles"
       :collapsible="isAccordion"
       @toggle-collapse="toggle"
     />
 
-    <!-- 远程仓库状态 + 冲突警告（branchRowVisible：顶栏分支行就绪后远程区不再重复展示当前分支名） -->
+    <!-- 远程仓库状态（当前分支名统一由顶栏分支行展示，此处不再重复） -->
     <CardRemotes
       v-if="!collapsed"
       :project="project"
-      :branch-row-visible="branches.length > 0"
+    />
+
+    <!-- 冲突区（合并冲突的列表 + 解决操作）：阻断性信息，放在页签之前 -->
+    <ConflictSection
+      v-if="!collapsed"
+      :conflicts="conflicts"
+      :i18n="i18n"
+      @resolve-conflict="(file: string, strategy: 'theirs' | 'ours') => ops.handleResolveConflict(project.id, file, strategy)"
+      @abort-merge="ops.handleAbortMerge(project.id)"
+    />
+
+    <!-- 操作栏：拉取 / 推送（主操作上移到页签之前，避免长页签内容把它推到首屏之外） -->
+    <CardActionBar
+      v-if="!collapsed"
+      :project="project"
+    />
+
+    <!-- 拉取/推送输出（运行中显示逐平台过程行；失败时内置 AI 分析入口；右上角可关闭结果） -->
+    <OutputPanel
+      v-if="!collapsed"
+      :entries="pullOutputs"
+      :running-states="pullRunningStates"
+      :i18n="i18n"
+      :project-name="project.name"
+      action="pull"
+      @clear="ops.clearRemoteOutput(project.id, 'pull')"
+    />
+    <OutputPanel
+      v-if="!collapsed"
+      :entries="pushOutputs"
+      :running-states="pushRunningStates"
+      :i18n="i18n"
+      :project-name="project.name"
+      action="push"
+      @clear="ops.clearRemoteOutput(project.id, 'push')"
     />
 
     <!-- 多面板 Tab 切换（工作区 / 提交日志 / Stash / Tag）；面板经具名插槽下发，未激活面板不挂载 -->
@@ -127,41 +162,6 @@
         />
       </template>
     </CardTabs>
-
-    <!-- 冲突区（合并冲突的列表 + 解决操作） -->
-    <ConflictSection
-      v-if="!collapsed"
-      :conflicts="conflicts"
-      :i18n="i18n"
-      @resolve-conflict="(file: string, strategy: 'theirs' | 'ours') => ops.handleResolveConflict(project.id, file, strategy)"
-      @abort-merge="ops.handleAbortMerge(project.id)"
-    />
-
-    <!-- 操作栏：拉取 / 推送 -->
-    <CardActionBar
-      v-if="!collapsed"
-      :project="project"
-    />
-
-    <!-- 拉取/推送输出（运行中显示逐平台过程行；失败时内置 AI 分析入口；右上角可关闭结果） -->
-    <OutputPanel
-      v-if="!collapsed"
-      :entries="pullOutputs"
-      :running-states="pullRunningStates"
-      :i18n="i18n"
-      :project-name="project.name"
-      action="pull"
-      @clear="ops.clearRemoteOutput(project.id, 'pull')"
-    />
-    <OutputPanel
-      v-if="!collapsed"
-      :entries="pushOutputs"
-      :running-states="pushRunningStates"
-      :i18n="i18n"
-      :project-name="project.name"
-      action="push"
-      @clear="ops.clearRemoteOutput(project.id, 'push')"
-    />
 
     <!-- 提交信息修正弹窗（LOG Tab 与规则检查共用） -->
     <CommitFixDialog
@@ -262,6 +262,7 @@ const props = defineProps<{
 // 卡片服务（共享数据 / 响应式 Record 派生 / 派生函数 / 操作集群）
 const {
   services,
+  pushStatus,
   workingTree,
   changesCount,
   committing,
@@ -328,23 +329,23 @@ const commitDraft = computed({
   },
 })
 
-/** 最近一条提交（仅日志已缓存时可用；摘要行据此展示时间与消息，不额外起 git） */
-const latestCommit = computed(() => {
-  const entry = logEntries.value[0]
-  return entry ? { message: entry.message, date: entry.date } : null
-})
+/** 最近一条提交时间（仅日志已缓存时可用；摘要只展示相对时间，不展示消息，不额外起 git） */
+const latestCommitDate = computed(() => logEntries.value[0]?.date ?? "")
 
 /**
  * 卡片进入「可见详情」时刷新一次工作区，并在确有变更时落到「变更」页签。
  * 触发点：手风琴展开、详细模式挂载（卡片重挂载常带 LRU 旧快照，原地停留不会自动重查）。
  * 刷新期间用户已手动切页签则不抢；刷新失败保持原页签。
+ * 两个边界：
+ *   · 进入刷新用 10s 最小间隔——详细模式下所有卡片都会挂载，避免切分类时 N 个项目各查一轮；
+ *   · 自动跳页签只在手风琴展开时做——详细模式卡片常开，跳页签会覆盖用户记住的 LOG / TAG 选择。
  */
 function syncWorkingTreeOnEnter() {
   if (!isExpanded.value) return
   const tabBeforeRefresh = stashTagTab.value
-  void ops.refreshProjectStatus(props.project.id)
+  void ops.refreshProjectStatus(props.project.id, { minIntervalMs: 10_000 })
     .then(() => {
-      if (stashTagTab.value !== tabBeforeRefresh) return
+      if (!isAccordion.value || stashTagTab.value !== tabBeforeRefresh) return
       if (changesCount.value > 0) stashTagTab.value = "worktree"
     })
     .catch(() => {})

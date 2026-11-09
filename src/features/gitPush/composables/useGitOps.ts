@@ -44,9 +44,12 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     return scheduler.loadStatus(id, { mode: "ensure", fastWhenClean })
   }
 
-  /** 项目状态显式刷新（refresh 语义 + 2s 最小间隔，合并面板内操作与自动刷新的重复触发） */
-  function refreshProjectStatus(id: string) {
-    return scheduler.loadStatus(id, { mode: "refresh", minIntervalMs: 2000 })
+  /**
+   * 项目状态显式刷新（refresh 语义 + 最小间隔节流，合并面板内操作与自动刷新的重复触发）。
+   * `minIntervalMs` 缺省 2s；卡片挂载时的「进入刷新」传更大值（详细模式下所有卡片都会挂载）。
+   */
+  function refreshProjectStatus(id: string, opts?: { minIntervalMs?: number }) {
+    return scheduler.loadStatus(id, { mode: "refresh", minIntervalMs: opts?.minIntervalMs ?? 2000 })
   }
 
   /** 待清理的 setTimeout ID */

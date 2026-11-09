@@ -72,7 +72,10 @@
   <div
     v-else
     class="gp-list"
-    :class="{ 'gp-list--accordion': cardLayout === 'accordion' }"
+    :class="{
+      'gp-list--accordion': cardLayout === 'accordion',
+      'gp-list--detailed': cardLayout === 'detailed',
+    }"
   >
     <template
       v-for="group in filteredGroups"

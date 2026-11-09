@@ -116,18 +116,24 @@
           {{ mdExpanded ? "−" : `+${hiddenMdCount}` }}
         </Button>
       </div>
-      <!-- 分支标签（悬停："当前分支"/"切换到 {0}"；懒加载就绪后当前分支名的展示由本行统一承担，
-           远程区同名分支名随之隐藏，避免两处并列） -->
+      <!-- 分支行（悬停："当前分支"/"切换到 {0}"）：当前分支先由 pushStatus 渲染，
+           分支列表懒加载就绪后再补上可切换项，避免点击卡片后分支名从远程区"跳"到这里 -->
       <div
-        v-if="branches?.length"
+        v-if="branchRowVisible"
         class="gp-branch-row"
       >
         <Icon
           icon="mdi:source-branch"
           height="12"
         />
+        <!-- 分支列表尚未加载：当前分支只读占位（与选中态同观感，但不可点击） -->
+        <span
+          v-if="!branches.length"
+          class="gp-branch-current"
+          :title="i18n.currentBranch"
+        >{{ currentBranch }}</span>
         <Button
-          v-for="b in branches"
+          v-for="b in visibleBranches"
           :key="b.name"
           class="gp-branch-tag"
           :class="{ current: b.current }"
@@ -143,6 +149,21 @@
           @click="handleSwitchBranch(b)"
         >
           {{ b.name }}
+        </Button>
+        <!-- 折叠按钮（tooltip："展开其余 N 个分支" / "收起分支列表"） -->
+        <Button
+          v-if="hiddenBranchCount > 0"
+          class="gp-branch-more"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
+          :title="branchesExpanded
+            ? i18n.branchesCollapse
+            : i18n.branchesExpand.replace('{0}', String(hiddenBranchCount))"
+          @click.stop="branchesExpanded = !branchesExpanded"
+        >
+          {{ branchesExpanded ? "−" : `+${hiddenBranchCount}` }}
         </Button>
       </div>
       <!-- 项目标签（前 3 个直接展示，其余折叠为 "+N"；筛选入口在列表工具栏） -->
@@ -212,6 +233,8 @@ const props = defineProps<{
   project: GitProject
   /** 卡内自持分支列表（编排层 useCardData 派生传入） */
   branches: BranchInfo[]
+  /** 当前分支名（pushStatus 派生；分支列表懒加载就绪前用于占位展示） */
+  currentBranch?: string
   /** 卡内自持 Markdown 文件标识（编排层 useCardData 派生传入） */
   mdFiles: MdFileEntry[]
   /** 打开工作区文件浏览器（编排层持有弹窗状态） */
@@ -256,6 +279,27 @@ const visibleTags = computed(() => {
 })
 /** 被折叠的标签数量（<=0 时不显示折叠按钮） */
 const hiddenTagCount = computed(() => (props.project.tags?.length ?? 0) - TAG_VISIBLE_LIMIT)
+
+// ── 分支列表折叠（与 MD 徽章 / 标签同规则：默认只展示前 N 个）──
+/** 默认直接展示的分支数量上限 */
+const BRANCH_VISIBLE_LIMIT = 4
+/** 是否已展开全部分支 */
+const branchesExpanded = ref(false)
+/** 当前分支置顶后的顺序：折叠时不能把当前分支藏进「+N」里 */
+const orderedBranches = computed(() => {
+  const current = props.branches.find((b) => b.current)
+  return current ? [current, ...props.branches.filter((b) => b !== current)] : props.branches
+})
+/** 实际展示的分支列表（折叠时仅前 N 个） */
+const visibleBranches = computed(() =>
+  branchesExpanded.value
+    ? orderedBranches.value
+    : orderedBranches.value.slice(0, BRANCH_VISIBLE_LIMIT),
+)
+/** 被折叠的分支数量（<=0 时不显示折叠按钮） */
+const hiddenBranchCount = computed(() => Math.max(0, props.branches.length - BRANCH_VISIBLE_LIMIT))
+/** 分支行是否展示：分支列表就绪，或已有当前分支可先占位（不再等点击卡片才出现） */
+const branchRowVisible = computed(() => props.branches.length > 0 || !!props.currentBranch)
 
 // ── 分支切换（切分支含 checkout + 两次状态重载，耗时可达数秒）──
 /** 正在切换的目标分支名（空串 = 空闲）；用于按钮转圈与防重复提交 */

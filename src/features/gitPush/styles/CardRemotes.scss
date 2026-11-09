@@ -25,17 +25,6 @@
   }
 }
 
-// 当前分支名徽章（mono 小字，弱化展示）
-.gp-remote-branch {
-  display: inline-flex;
-  align-items: center;
-  gap: $s-px3;
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  color: var(--b3-theme-on-surface-light);
-  white-space: nowrap;
-}
-
 .gp-remote-item {
   display: flex;
   align-items: center;

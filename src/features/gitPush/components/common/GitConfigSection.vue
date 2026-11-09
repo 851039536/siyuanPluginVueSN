@@ -13,17 +13,16 @@
         class="gp-cfg-count"
       >{{ i18n.gitConfigCount.replace("{0}", String(entries.length)) }}</span>
       <div class="gp-grow" />
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <!-- 按钮文案："新增配置项"，展开态变为"取消" -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        :icon="showAdd ? 'close' : 'plus'"
         @click="toggleAdd"
       >
-        <Icon
-          :icon="showAdd ? 'mdi:close' : 'mdi:plus'"
-          height="12"
-        />
-        <!-- 按钮文案："新增配置项"，展开态变为"取消" -->
-        <span>{{ showAdd ? i18n.cancel : i18n.gitConfigAddEntry }}</span>
-      </button>
+        {{ showAdd ? i18n.cancel : i18n.gitConfigAddEntry }}
+      </Button>
     </div>
 
     <!-- 加载态 -->
@@ -50,17 +49,16 @@
         height="14"
       />
       <span>{{ error }}</span>
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <!-- 按钮文案："重试" -->
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="refresh"
         @click="load"
       >
-        <Icon
-          icon="mdi:refresh"
-          height="12"
-        />
-        <!-- 按钮文案："重试" -->
-        <span>{{ i18n.gitConfigRetry }}</span>
-      </button>
+        {{ i18n.gitConfigRetry }}
+      </Button>
     </div>
 
     <!-- 空态 -->
@@ -118,9 +116,11 @@
         <!-- 编辑态：key 只读 + value 输入 + 保存/取消 -->
         <template v-else>
           <span class="gp-cfg-key gp-cfg-key--edit">{{ entry.key }}</span>
-          <input
+          <!-- 编辑值输入（共享 Input，失焦后由保存按钮写入） -->
+          <Input
             v-model="editValue"
-            class="gp-cfg-input"
+            size="xsmall"
+            class="gp-cfg-input-field"
             :placeholder="i18n.gitConfigValuePlaceholder"
           />
           <!-- 保存按钮（tooltip："保存"） -->
@@ -165,28 +165,29 @@
         :aria-label="i18n.gitConfigPresetPlaceholder"
         @update:model-value="onPresetChange"
       />
-      <input
+      <Input
         v-model="newKey"
-        class="gp-cfg-input gp-cfg-input--key"
+        size="xsmall"
+        class="gp-cfg-input-field gp-cfg-input-field--key"
         :placeholder="i18n.gitConfigKeyPlaceholder"
       />
-      <input
+      <Input
         v-model="newValue"
-        class="gp-cfg-input"
+        size="xsmall"
+        class="gp-cfg-input-field"
         :placeholder="i18n.gitConfigValuePlaceholder"
       />
       <!-- 添加按钮文案："添加" -->
-      <button
-        class="vp-btn vp-btn--primary vp-btn--sm"
+      <Button
+        variant="primary"
+        size="xsmall"
+        dense
+        icon="plus"
         :disabled="busy"
         @click="addEntry"
       >
-        <Icon
-          icon="mdi:plus"
-          height="12"
-        />
-        <span>{{ i18n.gitConfigAdd }}</span>
-      </button>
+        {{ i18n.gitConfigAdd }}
+      </Button>
     </div>
 
     <!-- 底部操作栏：复制全部 + 打开配置文件 -->
@@ -196,27 +197,25 @@
     >
       <div class="gp-grow" />
       <!-- 复制全部按钮，点击后短暂变为"已复制" -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        :icon="copied ? 'check' : 'contentCopy'"
         @click="handleCopy"
       >
-        <Icon
-          :icon="copied ? 'mdi:check' : 'mdi:content-copy'"
-          height="12"
-        />
-        <span>{{ copied ? i18n.copied : i18n.gitConfigCopyAll }}</span>
-      </button>
+        {{ copied ? i18n.copied : i18n.gitConfigCopyAll }}
+      </Button>
       <!-- 打开配置文件按钮（用系统编辑器打开 .gitconfig） -->
-      <button
-        class="vp-btn vp-btn--ghost vp-btn--sm"
+      <Button
+        variant="ghost"
+        size="xsmall"
+        dense
+        icon="pencilOutline"
         @click="handleOpenFile"
       >
-        <Icon
-          icon="mdi:file-document-edit-outline"
-          height="12"
-        />
-        <span>{{ i18n.gitConfigOpenFile }}</span>
-      </button>
+        {{ i18n.gitConfigOpenFile }}
+      </Button>
     </div>
 
     <!-- 操作反馈消息 -->
@@ -245,6 +244,8 @@ import {
   onMounted,
   ref,
 } from "vue"
+import Button from "@/components/Button.vue"
+import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { getErrorMessage } from "@/utils/stringUtils"

@@ -29,11 +29,11 @@
 | [codex-ui-reference.html](参考/codex-ui-reference.html) | Codex UI 视觉参考页（静态 HTML，供截图/对照） | — |
 | [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 持久化规范（强制） |
 
-## 二、归档文档（`docs/completed/`，16 份）
+## 二、归档文档（`docs/completed/`，17 份）
 
 前 11 份为 2026-10-28 提交 `caec10a5`「chore(docs): 清理过期审查报告并归档参考文档至参考目录」删除的审查报告，
 2026-11-01 从 git 历史恢复——**原因是代码/README 仍在引用它们**（引用点已改为指向本目录）；
-后 5 份是执行完成后按规则 2 归档的审查/计划文档（2026-11-05 至 2026-11-09）。
+后 6 份是执行完成后按规则 2 归档的审查/计划文档（2026-11-05 至 2026-11-09）。
 
 | 文件 | 主题 | 引用点 |
 |---|---|---|
@@ -53,6 +53,7 @@
 | [持久化治理与统一数据管理面板.md](completed/持久化治理与统一数据管理面板.md) | 持久化治理实施记录（Phase 0–4 落地：规则文档、注册表与审计、基础设施修复、`storageManager` 面板；Phase 5 SQLite 迁移按约定未执行） | [plugin-persistence-audit.md](plugin-persistence-audit.md) §4、`AGENTS.md` § 持久化规范、[persistence.md](参考/persistence.md) |
 | [gitPush-accordion-review.md](completed/gitPush-accordion-review.md) | gitPush 手风琴模式审查与实施记录（整行列表/键盘可达/变更徽章/草稿保留 + E1/E3/E4/E5/B6/B7） | 无源码引用；行为约定落在 `src/features/gitPush/README.md` 卡片布局条目 |
 | [gitPush-detailed-mode-review.md](completed/gitPush-detailed-mode-review.md) | gitPush 详细模式审查与实施记录（网格几何/操作栏位置/分支折叠/刷新节流/页签高度/紧凑密度；E2/E3 等未做） | 无源码引用；行为约定落在 `src/features/gitPush/README.md` 卡片布局条目 |
+| [gitPush-settings-ui-review.md](completed/gitPush-settings-ui-review.md) | gitPush 设置弹窗 UI 审查与实施记录（数字输入钳位缺陷、保存模型统一、常规五分区分组、控件与密度统一、888→231 行拆分） | 无源码引用；结构约定落在 `src/features/gitPush/README.md` 组件树 |
 
 **源码注释里的旧路径**：`src/features/gitPush/*.ts|vue`（6 处）、`src/features/superPanel/*.vue`（4 处）等
 仍写着 `docs/xxx-review.md`。这些是纯文本引用（不是可点链接），**本轮未改源码**；

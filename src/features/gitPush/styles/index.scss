@@ -410,12 +410,13 @@
   }
 }
 
-// ── 设置弹窗：分支模式 radio（外观由共享 RadioButton 承担） ──
+// ── 设置弹窗：分支模式 radio（外观由共享 RadioButton 承担；同排内联以省纵向空间） ──
 .gp-set-radio-group {
   display: flex;
-  flex-direction: column;
-  gap: $s-1;
-  align-items: flex-start;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $s-2;
+  align-items: center;
 }
 
 // dialog/form styles → Dialog.scss / Form.scss
@@ -428,18 +429,13 @@
   gap: $s-2;
 }
 
-// 设置弹窗内相邻设置组之间的垂直间距
-.gp-set-row--spaced {
-  margin-top: $s-3;
-}
-
 // 设置弹窗分组小标题（如「实时探测」）：与上方设置项拉开距离并加分隔线，
 // 使同一分区内的多组设置仍有视觉层次。
 // ⚠️ 不用 opacity 做弱化——opacity 会连 border-top 一起变淡，使该分隔线比其他分隔线更浅。
 // 改为显式降低文字色，分隔线保持与其他分隔线一致
 .gp-set-section-title {
-  margin-top: $s-4;
-  padding-top: $s-3;
+  margin-top: $s-3;
+  padding-top: $s-2;
   border-top: 1px solid var(--b3-border-color);
   color: var(--b3-theme-on-surface);
   font-size: $t-xs;
@@ -457,9 +453,21 @@
   gap: $s-1;
 }
 
-// 并发数数字输入框：固定窄宽度（仅需容纳 1~2 位数字）
-.gp-set-concurrency-input {
-  width: 70px;
+// 数字输入框：固定窄宽度（容纳范围上限的位数即可）
+.gp-set-number-input {
+  width: 78px;
+}
+
+// 文本输入框（PR 基线分支等）
+.gp-set-text-input {
+  width: 160px;
+}
+
+// 探测已监听项目数（跟随开关的旁注，不另占一行）
+.gp-set-watched {
+  font-size: $t-2xs;
+  opacity: 0.5;
+  white-space: nowrap;
 }
 
 // 设置弹窗：可选规则开关 checkbox（与 radio 同主题色）

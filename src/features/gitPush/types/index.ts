@@ -35,6 +35,8 @@ export type {
   WorkingTreeInfo,
 } from "./storage"
 export {
+  BODY_LINE_LENGTH_MAX,
+  BODY_LINE_LENGTH_MIN,
   clampDiffContextBudget,
   clampGitConcurrency,
   clampLocalTimeout,

@@ -146,25 +146,17 @@
   min-width: 0;
 }
 
-.gp-cfg-input {
+// 共享 Input 的布局挂钩（外观与焦点环交还组件），键名仍用等宽字体
+.gp-cfg-input-field {
   flex: 1 1 120px;
   min-width: 0;
-  padding: $s-1 $s-2;
-  font-size: $t-xs;
-  font-family: $ff-mono;
-  color: var(--b3-theme-on-surface);
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  outline: none;
-  transition: border-color 0.12s;
 
-  &:focus {
-    @include focus-ring;
+  :deep(.si-input__field) {
+    font-family: $ff-mono;
   }
 }
 
-.gp-cfg-input--key {
+.gp-cfg-input-field--key {
   flex: 1 1 160px;
 }
 

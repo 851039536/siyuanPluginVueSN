@@ -75,3 +75,17 @@
   flex-direction: column;
   gap: $s-2;
 }
+
+// 常规分区内的功能分组（推送与链接 / 性能与超时 / 本地索引 / 实时探测 / 提交规则）
+.gp-set-section {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+}
+
+// 首组不再画顶部分隔线（与内容区上内边距重复；分组前可能有提示行，故按 section 类型取首个）
+.gp-set-section:first-of-type .gp-set-section-title {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}

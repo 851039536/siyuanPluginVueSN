@@ -8,7 +8,7 @@
       <Button
         v-if="!form"
         variant="ghost"
-        size="small"
+        size="xsmall"
         icon="plus"
         @click="startCreate"
       >
@@ -33,25 +33,25 @@
         v-model="form.label"
         :label="i18n.pushProfileLabel"
         :placeholder="i18n.pushProfileLabelPlaceholder"
-        size="small"
+        size="xsmall"
       />
       <div class="gp-pp-grid">
         <Input
           v-model="form.gitName"
           :label="i18n.pushProfileGitName"
-          size="small"
+          size="xsmall"
         />
         <Input
           v-model="form.gitEmail"
           :label="i18n.pushProfileGitEmail"
-          size="small"
+          size="xsmall"
         />
       </div>
       <Input
         v-model="form.sshKeyPath"
         :label="i18n.pushProfileSshKey"
         :placeholder="i18n.pushProfileSshKeyPlaceholder"
-        size="small"
+        size="xsmall"
       />
       <div class="gp-pp-hint">
         {{ i18n.pushProfileSshHint }}
@@ -114,14 +114,14 @@
       <div class="gp-pp-actions">
         <Button
           variant="ghost"
-          size="small"
+          size="xsmall"
           @click="cancelEdit"
         >
           {{ i18n.cancel }}
         </Button>
         <Button
           variant="primary"
-          size="small"
+          size="xsmall"
           :loading="saving"
           @click="save"
         >

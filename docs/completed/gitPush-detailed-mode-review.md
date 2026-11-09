@@ -1,5 +1,9 @@
 # gitPush 详细模式审查（2026-11-09）
 
+> **归档说明（2026-11-09）**：审查项批次 1–3 已全部落地（见 §八）；E2 单卡折叠与 E4 排序按约定未做，
+> E3 因卡内就地 `position: fixed` 弹窗的 containment 风险不采用，S8 的「顶栏按钮收进 …」未做。
+> 行为约定落在 `src/features/gitPush/README.md` 的「卡片布局」条目；本文保留为交互决策依据，不再更新。
+
 > 审查对象：`src/features/gitPush/` 列表视图的**详细模式**（`cardLayout = "detailed"`，默认布局），
 > 重点为 `components/ListView/ProjectCard.vue`、`CardHeader.vue`、`CardHeaderActions.vue`、
 > `CardRemotes.vue`、`CardTabs.vue`、`CardActionBar.vue` 与相关 SCSS。

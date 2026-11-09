@@ -68,3 +68,13 @@
   color: var(--b3-theme-on-surface-light);
   opacity: 0.5;
 }
+
+// ── 紧凑密度：隐藏卡片次要信息行（保留名称 / 路径 / 分支 / 页签与操作区）──
+.gp-list--compact .gp-card {
+  .gp-md-files,
+  .gp-card-tags,
+  .gp-card-note,
+  .gp-activity {
+    display: none;
+  }
+}

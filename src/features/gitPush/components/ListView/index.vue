@@ -7,6 +7,7 @@
     v-model:show-archived="showArchived"
     v-model:git-ops-paused="gitOpsPaused"
     v-model:card-layout="cardLayout"
+    v-model:card-compact="cardCompact"
     :i18n="i18n"
     :grouped-projects="groupedProjects"
     :all-tags="allTags"
@@ -75,6 +76,7 @@
     :class="{
       'gp-list--accordion': cardLayout === 'accordion',
       'gp-list--detailed': cardLayout === 'detailed',
+      'gp-list--compact': cardCompact,
     }"
   >
     <template
@@ -139,6 +141,7 @@ const activeCategory = defineModel<string>("activeCategory", { required: true })
 const showArchived = defineModel<boolean>("showArchived", { required: true })
 const gitOpsPaused = defineModel<boolean>("gitOpsPaused", { required: true })
 const cardLayout = defineModel<CardLayout>("cardLayout", { required: true })
+const cardCompact = defineModel<boolean>("cardCompact", { required: true })
 
 /** 手风琴上下文：一次只展开一张卡片（会话内恢复上次展开项） */
 const accordion = provideCardAccordion(() => cardLayout.value)

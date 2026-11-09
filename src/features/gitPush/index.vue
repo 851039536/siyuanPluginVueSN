@@ -133,6 +133,7 @@
       v-model:show-archived="showArchived"
       v-model:git-ops-paused="gitOpsPaused"
       v-model:card-layout="cardLayout"
+      v-model:card-compact="cardCompact"
       :i18n="i18n"
       :grouped-projects="groupedProjects"
       :filtered-groups="filteredGroups"
@@ -328,6 +329,7 @@ import { useIdeManagement } from "./composables/useIdeManagement"
 import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
+import { useCardCompact } from "./composables/useCardCompact"
 import { useCardLayout } from "./composables/useCardLayout"
 import { useCompareBaseBranch } from "./composables/useCompareBaseBranch"
 import { useScanImport } from "./composables/useScanImport"
@@ -647,6 +649,9 @@ const selectedTagList = computed(() => [...selectedTags.value])
 
 /** 卡片布局偏好（详细 / 手风琴，持久化；工具栏切换即保存） */
 const { cardLayout, loadCardLayout } = useCardLayout(props.manager.storage.cardLayout)
+
+/** 卡片紧凑密度（隐藏次要信息行，持久化；工具栏切换即保存） */
+const { cardCompact, loadCardCompact } = useCardCompact(props.manager.storage.cardCompact)
 
 /** Compare / 创建 PR 深链的基线分支（设置弹窗内显式保存） */
 const { compareBaseBranch, loadCompareBaseBranch, setCompareBaseBranch } = useCompareBaseBranch(
@@ -1242,6 +1247,7 @@ onMounted(async () => {
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
   await loadCardLayout() // 从持久化存储恢复卡片布局（详细 / 手风琴）
+  await loadCardCompact() // 恢复紧凑密度（隐藏卡片次要信息行）
   await loadCompareBaseBranch() // 恢复 Compare 深链基线分支（默认 main）
   loadGitConcurrency()
   loadNetworkTimeout()

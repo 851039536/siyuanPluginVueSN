@@ -52,6 +52,7 @@ export const JSON_SLOTS = [
   jsonSlot("gitPush.showArchived", ["gitPush"], "git-push-show-archived", "显示归档项目"),
   jsonSlot("gitPush.branchMode", ["gitPush"], "git-push-branch-mode", "推送分支模式"),
   jsonSlot("gitPush.cardLayout", ["gitPush"], "git-push-card-layout", "项目卡片布局"),
+  jsonSlot("gitPush.cardCompact", ["gitPush"], "git-push-card-compact", "项目卡片紧凑密度"),
   jsonSlot("gitPush.compareBase", ["gitPush"], "git-push-compare-base", "对比基准分支"),
   jsonSlot("gitPush.opLogs", ["gitPush"], "git-push-op-logs", "Git 操作日志", {
     growth: true,

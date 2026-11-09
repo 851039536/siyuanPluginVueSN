@@ -63,7 +63,8 @@
   display: flex;
   flex-direction: column;
   gap: $s-px2;
-  max-height: 160px;
+  // 300px：与工作区（420px）/ Stash（220px）同一量级，切页签时卡片高度不再突变
+  max-height: 300px;
   overflow-y: auto;
   // 滚动条槽位常驻：换条数/刷新日志导致行数变化时不再引起卡片宽度抖动
   scrollbar-gutter: stable;

@@ -212,7 +212,8 @@
 
 .gp-stash-list {
   margin-top: $s-1;
-  max-height: 120px;
+  // 220px：与工作区（420px）/ 提交日志（300px）同一量级，减少切页签时的高度突变
+  max-height: 220px;
   overflow-y: auto;
   scrollbar-gutter: stable; // 滚动条槽位常驻，避免条目增减时卡片宽度抖动
 }

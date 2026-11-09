@@ -1072,6 +1072,8 @@
     "cardCollapse": "收起详情",
     "cardLayoutAccordion": "手风琴模式（一次只展开一张卡片）",
     "cardLayoutDetailed": "详细模式（所有卡片展开）",
+    "cardCompact": "紧凑密度",
+    "cardCompactTip": "隐藏 Markdown / 标签 / 备注与活动时间等次要信息",
     "pushAllNoPending": "没有待推送的提交",
     "compareCreatePr": "创建 PR / Compare",
     "compareHint": "在浏览器打开 Compare 页面（可创建 PR）",

@@ -938,6 +938,10 @@ export const COMMON_ICONS = {
   viewAccordion: {
     icon: "mdi:view-agenda-outline",
   },
+  /** 详细模式紧凑密度（隐藏 Markdown / 标签 / 备注等次要信息行） */
+  viewCompact: {
+    icon: "mdi:view-compact-outline",
+  },
 
   // 通用动作补充：列表 / 编辑 / 状态 / 归档场景（供共享 Button 的 icon prop 使用）
   unfoldMoreHorizontal: {

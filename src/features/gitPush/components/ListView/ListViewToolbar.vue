@@ -60,6 +60,17 @@
         :aria-label="i18n.cardLayoutAccordion"
         :title="accordionMode ? i18n.cardLayoutAccordion : i18n.cardLayoutDetailed"
       />
+      <!-- 紧凑密度（开启后隐藏 Markdown / 标签 / 备注与活动时间等次要信息行） -->
+      <ToggleButton
+        v-model="cardCompact"
+        class="gp-ft-btn"
+        size="xsmall"
+        dense
+        on-icon="viewCompact"
+        off-icon="viewCompact"
+        :aria-label="i18n.cardCompact"
+        :title="i18n.cardCompactTip"
+      />
     </div>
   </div>
 
@@ -175,6 +186,7 @@ const activeCategory = defineModel<string>("activeCategory", { required: true })
 const showArchived = defineModel<boolean>("showArchived", { required: true })
 const gitOpsPaused = defineModel<boolean>("gitOpsPaused", { required: true })
 const cardLayout = defineModel<CardLayout>("cardLayout", { required: true })
+const cardCompact = defineModel<boolean>("cardCompact", { required: true })
 
 /** 卡片布局是否手风琴（ToggleButton 是布尔开关，字符串模型在此折叠） */
 const accordionMode = computed({

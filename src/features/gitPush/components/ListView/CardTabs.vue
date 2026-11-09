@@ -17,11 +17,11 @@
         :value="tab.id"
       >
         {{ i18n[tab.labelKey] }}
-        <!-- 计数徽标（数量为 0 时不显示） -->
+        <!-- 计数徽标（数量为 0 时不显示；LOG 达到抓取上限时带 "+"） -->
         <span
           v-if="counts[tab.countKey] > 0"
           class="gp-stash-tag-tab-count"
-        >{{ counts[tab.countKey] }}</span>
+        >{{ countText(tab) }}</span>
       </Tab>
     </TabList>
     <TabPanels>
@@ -68,6 +68,8 @@ const props = defineProps<{
   modelValue: CardTabId
   /** 面板文案（与卡片其他区块同源传入） */
   i18n: Record<string, any>
+  /** LOG 已加载条数是否达到抓取上限（是则徽标显示 "N+"，避免把已加载数误当总数） */
+  logCountMore?: boolean
 } & CardCounts>()
 
 const emit = defineEmits<{
@@ -81,6 +83,12 @@ const counts = computed<CardCounts>(() => ({
   stashCount: props.stashCount,
   tagCount: props.tagCount,
 }))
+
+/** 单个 Tab 的徽标文案（仅 LOG 在达到抓取上限时追加 "+"） */
+function countText(tab: { countKey: keyof CardCounts }): string {
+  const count = counts.value[tab.countKey]
+  return tab.countKey === "logCount" && props.logCountMore ? `${count}+` : String(count)
+}
 
 /** Tab 切换：Tabs 只对外派发 string | number（TabsValue 类型在组件私有目录内，不跨层引用） */
 function handleChange(value: string | number) {

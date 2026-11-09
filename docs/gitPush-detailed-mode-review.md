@@ -121,10 +121,14 @@
   - 在 LOG 页签停留 → 切分类 → 回来：仍停在 LOG（批次 2 后），工作区内容仍是最新。
   - 切分类时观察 git 进程数：只在数据过期时刷新（批次 2 后）。
   - 点「编辑」按钮：不再伴随 4 条 git 查询（批次 3 后）。
+  - 卡片内切换四个页签：卡片高度变化明显收敛（日志 300 / Stash 220 / 工作区 420）。
+  - 顶栏 LOG 徽标在默认 200 条上限下显示 `200+`，切到「全部」后显示真实条数。
+  - 长项目名在双列窄卡里单行省略，悬停 tooltip 给完整名称。
+  - 工具栏「紧凑密度」开启后：Markdown / 标签 / 备注 / 活动时间行消失，关闭后恢复；重载插件后开关状态保持。
 
 ## 八、实施记录（2026-11-09）
 
-批次 1、批次 2 已落地；批次 3 待确认。
+批次 1、2、3 已落地；`E2 单卡折叠` 未做（会改变「详细模式 = 全部展开」的既有语义，留待单独确认）。
 
 | ID | 状态 | 落地内容 | 主要文件 |
 |---|---|---|---|
@@ -136,12 +140,16 @@
 | S4 | ✅ | 进入刷新支持 `minIntervalMs`：卡片挂载传 10s，手动刷新与切回页签仍为 2s | `ProjectCard.vue`、`composables/useGitOps.ts`、`types/cardServices.ts` |
 | S5 | ✅ | 分支行常驻：当前分支先用 `pushStatus.branch` 渲染，分支列表就绪后补上可切换项；远程区删除重复分支名与 `branchRowVisible` | `CardHeader.vue`、`CardRemotes.vue`、`ProjectCard.vue` |
 | S6 | ✅ | 自动跳「变更」页签只在手风琴展开时执行；详细模式保留会话级页签记忆 | `ProjectCard.vue` |
-| S7 | — | 页签内容区统一高度：待批次 3 目测后决定 | — |
-| S8 | — | 长名称省略 / 顶栏按钮收进「…」：待批次 3 | — |
-| S9 | — | LOG 徽标 `200+`：待批次 3 | — |
-| S10 | — | 点击捕获触发详情加载收敛：待批次 3 | — |
-| R3 / R4 | — | 维持不改：详情加载多点触发属既有懒加载设计；刷新双触发由调度器单飞 + 节流收口 | — |
-| E1～E4 | — | 扩展项（紧凑密度 / 单卡折叠 / `content-visibility` / 排序）未开始 | — |
+| S7 | ✅ | 页签列表高度收敛到同一量级：提交日志 160→300px、Stash 120→220px（工作区仍 420px），切页签时卡片高度不再突变 | `styles/BranchCommitList.scss`、`styles/index.scss` |
+| S8 | ◐ | 长项目名单行省略 + tooltip（`flex: 1 1 auto` + ellipsis）；顶栏按钮收进「…」未做（保持常驻可见，避免隐藏高频操作） | `CardHeader.vue`、`styles/CardHeader.scss` |
+| S9 | ✅ | LOG 徽标达到抓取上限（未选「全部」）时显示 `N+`，不再把已加载数误当总数 | `CardTabs.vue`、`ProjectCard.vue` |
+| S10 | ✅ | 点击交互控件（按钮 / 输入框 / 菜单项 / 页签 / role=button）只补项目状态，不再顺带触发 4 条 git 的详情加载；空白处点击仍按需加载 | `ProjectCard.vue` |
+| E1 | ✅ | 工具栏「紧凑密度」开关：隐藏 Markdown / 标签 / 备注 / 活动时间；新增持久化槽 `git-push-card-compact` 与存储注册表条目 | `useCardCompact.ts`、`ListViewToolbar.vue`、`types/storage.ts`、`config/storage/jsonSlots.ts`、`styles/ListView.scss` |
+| E3 | — | **不做**：卡内弹窗（`Dialog` 系）为就地 `position: fixed`，`content-visibility` 跳过时的 `contain: layout` 会成为 fixed 后代的包含块，卡片滚出视口后弹窗会被裁切/错位 | — |
+| E2 | — | 单卡折叠未做：需要把「详细模式恒展开」改为可收起集合，属语义变更，留待确认 | — |
+| E4 | — | 列表排序未做 | — |
+| R3 / R4 | — | 维持不改：详情加载的页签触发属既有懒加载设计；刷新双触发由调度器单飞 + 节流收口 | — |
 
-验证：`pnpm typecheck`、`pnpm test`（71 文件 / 1128 项）、`pnpm i18n:verify`、`pnpm i18n:merge` 均通过。
+验证：`pnpm typecheck`、`pnpm test`（71 文件 / 1128 项）、`pnpm i18n:verify`、`pnpm i18n:merge`、
+`pnpm validate:icons`（新增 `viewCompact`）、`pnpm audit:storage`（新增 `gitPush.cardCompact`）均通过。
 **未做浏览器/真机手测**（按协作约定由用户执行 §七 清单）。

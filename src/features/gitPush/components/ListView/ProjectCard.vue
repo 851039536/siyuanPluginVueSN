@@ -75,6 +75,7 @@
       :i18n="i18n"
       :changes-count="changesCount"
       :log-count="logEntries.length"
+      :log-count-more="logCountMore"
       :stash-count="stashList.length"
       :tag-count="tags.length"
     >
@@ -332,6 +333,12 @@ const commitDraft = computed({
 /** 最近一条提交时间（仅日志已缓存时可用；摘要只展示相对时间，不展示消息，不额外起 git） */
 const latestCommitDate = computed(() => logEntries.value[0]?.date ?? "")
 
+/** LOG 徽标是否可能还有更多：已加载条数达到抓取上限（选「全部」时不再追加 "+"） */
+const logCountMore = computed(() => {
+  const limit = logLimit.value
+  return limit !== "all" && logEntries.value.length > 0 && logEntries.value.length >= limit
+})
+
 /**
  * 卡片进入「可见详情」时刷新一次工作区，并在确有变更时落到「变更」页签。
  * 触发点：手风琴展开、详细模式挂载（卡片重挂载常带 LRU 旧快照，原地停留不会自动重查）。
@@ -535,11 +542,19 @@ onMounted(() => {
   else if (stashTagTab.value === "tag") ensureRemoteTags()
 })
 
-/** 点击卡片任意位置时补齐当前项目数据（幂等：状态按 ensure + 详情在途共享，重复点击不产生额外查询） */
-function handleCardClick() {
+/** 交互控件判定：点这些元素只补项目状态，不触发详情懒加载（避免点「编辑 / 删除」也跑 4 条 git） */
+const INTERACTIVE_CLICK_SELECTOR = "button, a, input, textarea, select, [role='button'], [role='menuitem'], [role='tab'], [contenteditable='true']"
+
+/**
+ * 点击卡片空白处时补齐当前项目数据（幂等：状态按 ensure + 详情在途共享，重复点击不产生额外查询）。
+ * 交互控件自身的点击不算「进入卡片」——详情由页签切换 / 展开时按需加载。
+ */
+function handleCardClick(e: MouseEvent) {
   void ops.ensureProjectStatus(props.project.id)
+  const target = e.target as HTMLElement | null
+  if (target?.closest(INTERACTIVE_CLICK_SELECTOR)) return
   void ensureDetailsLoaded()
-  // 当前激活面板若是 LOG/TAG，点卡片也应补齐其懒加载域
+  // 当前激活面板若是 LOG/TAG，点空白处也补齐其懒加载域
   if (stashTagTab.value === "log") ensureLogStats()
   else if (stashTagTab.value === "tag") ensureRemoteTags()
 }

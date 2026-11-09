@@ -14,7 +14,7 @@
 
 **当前 `docs/` 根下的活跃文档**：
 - [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
-- [gitPush-detailed-mode-review.md](gitPush-detailed-mode-review.md)（gitPush 详细模式审查：双列网格几何、操作栏位置、分支折叠、挂载刷新节流等；状态：待确认实施批次）
+- [gitPush-detailed-mode-review.md](gitPush-detailed-mode-review.md)（gitPush 详细模式审查：双列网格几何、操作栏位置、分支折叠、挂载刷新节流、紧凑密度等；状态：批次 1–3 已落地，单卡折叠/排序待确认）
 
 ## 一、参考文档（`docs/参考/`，9 份）
 

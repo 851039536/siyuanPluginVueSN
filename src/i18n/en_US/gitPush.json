@@ -1072,6 +1072,8 @@
     "cardCollapse": "Collapse details",
     "cardLayoutAccordion": "Accordion mode (one card expanded at a time)",
     "cardLayoutDetailed": "Detailed mode (all cards expanded)",
+    "cardCompact": "Compact density",
+    "cardCompactTip": "Hide secondary info such as Markdown / tags / note / activity time",
     "pushAllNoPending": "No commits to push",
     "compareCreatePr": "Create PR / Compare",
     "compareHint": "Open the compare page in your browser to create a PR",

@@ -28,8 +28,11 @@
           :title="project.starred ? i18n.unstar : i18n.starPin"
           @click.stop="ops.toggleStar(project.id)"
         />
-        <!-- 项目名（含搜索命中高亮分段） -->
-        <span class="gp-card-name"><template
+        <!-- 项目名（含搜索命中高亮分段；长名单行省略，完整名称见 tooltip） -->
+        <span
+          class="gp-card-name"
+          :title="project.name"
+        ><template
           v-for="(seg, i) in nameSegments"
           :key="i"
         ><span

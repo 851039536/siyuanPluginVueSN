@@ -59,6 +59,22 @@
       />
       <span class="gp-summary-branch-text">{{ branchLabel }}</span>
     </span>
+    <!-- 最近提交（时间恒显；消息仅在日志已缓存时展示，避免为摘要额外跑 git） -->
+    <span
+      v-if="commitAge"
+      class="gp-summary-commit"
+      :title="commitTitle"
+    >
+      <Icon
+        icon="mdi:clock-outline"
+        height="11"
+      />
+      <span class="gp-summary-commit-age">{{ commitAge }}</span>
+      <span
+        v-if="latestCommitMessage"
+        class="gp-summary-commit-msg"
+      >{{ latestCommitMessage }}</span>
+    </span>
     <!-- 待提交变更数（tooltip 拆分「已暂存 / 未暂存 / 未跟踪」） -->
     <Tag
       v-if="changesCount > 0"
@@ -68,6 +84,15 @@
       icon="fileDocumentMultipleOutline"
       :content="String(changesCount)"
       :title="changesTitle"
+    />
+    <!-- Stash 数（仅已缓存的卡片有值；>0 时提示） -->
+    <Tag
+      v-if="stashCount"
+      size="xsmall"
+      variant="info"
+      icon="archiveOutline"
+      :content="String(stashCount)"
+      :title="i18n.cardTabStash"
     />
     <!-- 合并冲突提示（文案："检测到合并冲突"） -->
     <Tag
@@ -106,7 +131,7 @@ import type { GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import { REMOTES, REMOTE_SYNC_VARIANT } from "../../types"
-import { highlightSegments, platformLabel } from "../../utils"
+import { highlightSegments, platformLabel, relativeTime } from "../../utils"
 import { useCardAccordion } from "../../composables/useCardAccordion"
 import { useCardServices } from "../../composables/useCardServices"
 import Button from "@/components/Button.vue"
@@ -115,6 +140,10 @@ import CardPushAllButton from "./CardPushAllButton.vue"
 
 const props = defineProps<{
   project: GitProject
+  /** 最近提交（仅日志已缓存时传入；缺失则退回项目最后活动时间） */
+  latestCommit?: { message: string, date: string } | null
+  /** 已缓存的 Stash 数（>0 时展示） */
+  stashCount?: number
 }>()
 
 const { services, pushStatus, workingTree, changesCount } = useCardServices(() => props.project)
@@ -127,6 +156,16 @@ const nameSegments = computed(() => highlightSegments(props.project.name, shared
 
 /** 当前分支名（分支行未加载时 pushStatus.branch 仍可用） */
 const branchLabel = computed(() => pushStatus.value?.branch || "")
+
+/** 最近提交/活动时间（优先真实提交时间；都没有则不占版面） */
+const commitIso = computed(() => props.latestCommit?.date || props.project.lastActivity || "")
+const commitAge = computed(() => (commitIso.value ? relativeTime(commitIso.value, i18n) : ""))
+const latestCommitMessage = computed(() => props.latestCommit?.message.split("\n")[0] ?? "")
+const commitTitle = computed(() => {
+  if (!commitIso.value) return ""
+  const when = new Date(commitIso.value).toLocaleString()
+  return latestCommitMessage.value ? `${when} · ${latestCommitMessage.value}` : when
+})
 
 /** 变更数 tooltip：按三类拆分（为 0 的类别不列；缓存缺失时退回通用文案） */
 const changesTitle = computed(() => {

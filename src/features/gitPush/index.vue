@@ -339,6 +339,7 @@ import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { useCodeReport } from "./composables/useCodeReport"
 import { useReportExport } from "./composables/useReportExport"
 import { CARD_SERVICES_KEY, PLATFORM_META } from "./types"
+import type { ViewMode } from "./types"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import { clampProbeConfig, DEFAULT_PROBE_CONFIG } from "./types/probeConfig"
 import {
@@ -1532,7 +1533,12 @@ async function refreshStatsData() {
 
 /** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→不自动加载（由用户点击）；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
 watch(currentView, async (view) => {
-  if (view === "list") await loadCurrentCategoryList()
+  if (view === "list") {
+    // 收藏 / 归档视图按项目属性取状态；其余视图仍走「当前分类最小集」
+    const list = viewModeStatusProjects(viewMode.value)
+    if (list) await ensureStatusFor(list)
+    else await loadCurrentCategoryList()
+  }
   // 项目状态采用手动加载模式：进入只展示会话内已有数据或未加载空态，
   // 不发起任何 git（含链接审计）；由用户点击「加载项目状态」触发。
   if (view === "log") {
@@ -1551,7 +1557,20 @@ watch(currentView, async (view) => {
 })
 
 /**
- * 切换到智能视图（需推送 / 需拉取 / 有变更）时，补齐命中判定所需的全量状态数据。
+ * 智能视图额外需要状态数据的项目集。
+ *
+ * 收藏 / 归档视图不依赖分类过滤，历史上漏在 viewMode 补载清单之外：
+ * 既没有发起状态查询，也没有把这些项目标记为「已展示」，
+ * 于是后台探测（isProjectDisplayed 门控）不会轮询它们 —— 表现为「收藏页状态不自动刷新」。
+ */
+function viewModeStatusProjects(mode: ViewMode): GitProject[] | null {
+  if (mode === "starred") return starredProjects.value
+  if (mode === "archived") return projects.value.filter((p) => p.archived)
+  return null
+}
+
+/**
+ * 切换到智能视图（需推送 / 需拉取 / 有变更 / 收藏 / 归档）时，补齐命中判定所需的全量状态数据。
  *
  * ⚠️ `needsPull` 必须在此列：它的命中判据是 `pushStatuses[id].remotes[*].behind > 0`，
  * 而 behind 只有跑过 loadStatus/checkPushStatus 才有值。历史实现漏了 needsPull，
@@ -1565,8 +1584,12 @@ watch(viewMode, async (mode) => {
     await ensureNeedsPullData()
     return
   }
-  if (mode !== "needsPush" && mode !== "uncommitted") return
-  await ensureStatsDataLoaded()
+  if (mode === "needsPush" || mode === "uncommitted") {
+    await ensureStatsDataLoaded()
+    return
+  }
+  const list = viewModeStatusProjects(mode)
+  if (list) await ensureStatusFor(list)
 })
 
 /** 解除暂停时按当前上下文补载数据（暂停期间跳过的加载在恢复后立即补齐） */
@@ -1595,6 +1618,12 @@ watch(gitOpsPaused, async (paused) => {
   // 其他智能视图需要全量状态数据
   if (viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
     await ensureStatsDataLoaded()
+    return
+  }
+  // 收藏 / 归档视图按其项目集补状态
+  const smartList = viewModeStatusProjects(viewMode.value)
+  if (smartList) {
+    await ensureStatusFor(smartList)
     return
   }
   // 列表视图只补当前分类下未缓存的项目（与首屏最小集一致）

@@ -101,6 +101,7 @@
 <script setup lang="ts">
 // 列表视图容器（纯渲染，卡片数据与操作全部经 useCardServices 注入，无领域状态）
 import type { CardLayout, GroupedProject, ViewMode } from "../../types"
+import { watch } from "vue"
 import { Icon } from "@iconify/vue"
 import Button from "@/components/Button.vue"
 import EmptyState from "../common/EmptyState.vue"
@@ -108,7 +109,7 @@ import ListViewToolbar from "./ListViewToolbar.vue"
 import ProjectCard from "./ProjectCard.vue"
 import { provideCardAccordion } from "../../composables/useCardAccordion"
 
-defineProps<{
+const props = defineProps<{
   i18n: Record<string, any>
   groupedProjects: GroupedProject[]
   filteredGroups: GroupedProject[]
@@ -136,8 +137,36 @@ const showArchived = defineModel<boolean>("showArchived", { required: true })
 const gitOpsPaused = defineModel<boolean>("gitOpsPaused", { required: true })
 const cardLayout = defineModel<CardLayout>("cardLayout", { required: true })
 
-/** 手风琴上下文：一次只展开一张卡片（状态随列表视图实例存活） */
-provideCardAccordion(() => cardLayout.value)
+/** 手风琴上下文：一次只展开一张卡片（会话内恢复上次展开项） */
+const accordion = provideCardAccordion(() => cardLayout.value)
+
+/** 「有变更」视图本轮是否已自动展开过（避免数据刷新反复重置用户的选择） */
+let autoExpandedUncommitted = false
+
+/**
+ * 切到「有变更」视图（或该视图数据就绪）时展开第一个命中项目：
+ * 用户进入该视图的目的就是看变更，直接把他带到内容，省一次点击。
+ */
+function expandFirstUncommitted() {
+  if (autoExpandedUncommitted || viewMode.value !== "uncommitted" || cardLayout.value !== "accordion") return
+  const first = props.filteredGroups[0]?.projects[0]
+  if (!first) return
+  autoExpandedUncommitted = true
+  accordion.expand(first.id)
+}
+
+watch(viewMode, (mode) => {
+  autoExpandedUncommitted = false
+  if (mode === "uncommitted") expandFirstUncommitted()
+})
+
+// 数据晚于视图切换就绪（首次加载 / 暂停恢复）时补一次
+watch(() => props.filteredGroups, expandFirstUncommitted)
+
+// 切到手风琴时，若已在「有变更」视图也直接展开首项
+watch(cardLayout, (layout) => {
+  if (layout === "accordion") expandFirstUncommitted()
+})
 </script>
 
 <style lang="scss">

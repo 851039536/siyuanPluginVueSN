@@ -6,10 +6,12 @@
     :class="{ 'gp-card--collapsed': collapsed }"
     @click.capture="handleCardClick"
   >
-    <!-- 手风琴收起态：单行摘要（名称/分支/变更/同步状态/主推送），点击展开详情 -->
+    <!-- 手风琴收起态：单行摘要（名称/分支/最近提交/变更/同步状态/主推送），点击展开详情 -->
     <CardSummary
       v-if="collapsed"
       :project="project"
+      :latest-commit="latestCommit"
+      :stash-count="stashList.length"
       @expand="expand"
     />
 
@@ -326,6 +328,12 @@ const commitDraft = computed({
   },
 })
 
+/** 最近一条提交（仅日志已缓存时可用；摘要行据此展示时间与消息，不额外起 git） */
+const latestCommit = computed(() => {
+  const entry = logEntries.value[0]
+  return entry ? { message: entry.message, date: entry.date } : null
+})
+
 /**
  * 卡片进入「可见详情」时刷新一次工作区，并在确有变更时落到「变更」页签。
  * 触发点：手风琴展开、详细模式挂载（卡片重挂载常带 LRU 旧快照，原地停留不会自动重查）。
@@ -350,15 +358,17 @@ watch(isExpanded, (expanded) => {
 })
 
 /**
- * 键盘展开后的焦点接力：摘要按钮会随收起态一起卸载，
- * 若不转移焦点，键盘用户会直接掉回页面顶部。
+ * 键盘展开后的焦点接力 + 滚动定位：
+ * 摘要按钮会随收起态一起卸载，若不转移焦点，键盘用户会直接掉回页面顶部；
+ * 同时把卡片滚入视口，避免展开后的详情落在可视区外。
  */
 watch(isExpanded, (expanded) => {
   if (!expanded) return
   const active = document.activeElement
-  if (!(active instanceof HTMLElement) || !active.classList.contains("gp-summary-main")) return
+  const fromSummary = active instanceof HTMLElement && active.classList.contains("gp-summary-main")
   void nextTick(() => {
-    rootEl.value?.querySelector<HTMLElement>(".gp-collapse-btn")?.focus()
+    rootEl.value?.scrollIntoView({ block: "nearest" })
+    if (fromSummary) rootEl.value?.querySelector<HTMLElement>(".gp-collapse-btn")?.focus()
   })
 })
 

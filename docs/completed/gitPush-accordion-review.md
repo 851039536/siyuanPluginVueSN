@@ -1,12 +1,16 @@
 # gitPush 手风琴模式审查（2026-11-09）
 
+> **归档说明（2026-11-09）**：审查项批次 1–2 与扩展 E1 / E3 / E4 / E5 / B6 / B7 已全部落地
+> （见 §八实施记录）；E6 折叠动画与 Esc 收起明确不做。本文保留为交互决策依据，不再更新。
+
 > 审查对象：`src/features/gitPush/` 列表视图的卡片布局（详细 / 手风琴），重点为
 > `components/ListView/CardSummary.vue`、`ProjectCard.vue`、`composables/useCardAccordion.ts`、
 > `ListViewToolbar.vue` 与相关 SCSS。
 > 基线：`32afd68e`（工作区另含 2026-11-09 的「展开刷新 + 自动切回变更页签」改动）。
 > 方式：静态走查 + 对照 GitHub 仓库列表 / GitHub Desktop 的行式交互；**未做真机手测**（交互类结论需用户回归）。
 > 依据：`AGENTS_STYLE.md`（Codex / 移动端密度）、`.qoder` 协作记忆「移除/审查先出文档」。
-> **实施状态（2026-11-09）**：批次 1、2 已落地，明细见 §八；B6 / B7 / E1–E6 未做，保留为待办。
+> **实施状态（2026-11-09）**：批次 1、2 与扩展 E1 / E3 / E4 / E5 / B6 / B7 已落地（明细见 §八）；
+> E6（折叠动画）与 Esc 收起明确不做。
 
 ## 一、现状（与审查结论相关的最小事实）
 
@@ -122,8 +126,16 @@
 | R2 | ✅ | `remoteRows` 改 `flatMap`，删除不可达 `variant` 兜底 | `CardSummary.vue` |
 | R5 | ◐ | **未采用 `aria-controls`**：详情区由多个兄弟节点组成，需重构根结构才有一个容器；改为「展开后焦点交给收起按钮」达成同等键盘连续性 | `ProjectCard.vue` |
 | R4 | — | 维持不改：三层状态触发由调度器单飞 + 2s 节流收口（见 §四） | — |
+| E1 | ✅ | 摘要补「最近提交相对时间」（`lastActivity`，零额外 git）；消息仅在日志已缓存时展示首行并截断，tooltip 给完整时间 + 消息 | `ProjectCard.vue`、`CardSummary.vue`、`CardSummary.scss` |
+| E3 | ✅ | 切到「有变更」视图（或数据就绪 / 切入手风琴）自动展开首个命中项目；每轮只展开一次，不覆盖用户后续选择 | `components/ListView/index.vue` |
+| E4 | ✅ | 摘要展示已缓存的 Stash 数（>0 时才出现，不额外起 git） | `ProjectCard.vue`、`CardSummary.vue` |
+| E5 | ✅ | 展开后 `scrollIntoView({ block: "nearest" })`，详情不再落在视口外 | `ProjectCard.vue` |
+| B6 | ✅ | 展开项改为会话级记忆（`sessionExpandedId`），切统计/日志/分析再回列表时恢复；不落盘 | `useCardAccordion.ts` |
+| B7 | ✅ | `(pointer: coarse) and (hover: none)` 下用伪元素把摘要命中区补到约 40px，视觉高度不变 | `CardSummary.scss` |
+| E2 | ◐ | 键盘导航已做（Enter/Space、↑↓、展开后焦点接力）；按用户要求**不做 Esc 收起** | `CardSummary.vue`、`ProjectCard.vue` |
+| E6 | — | 明确不做：折叠高度动画与滚动位置相互干扰，Codex 允许瞬时切换 | — |
 
 验证：`pnpm typecheck`、`pnpm test`（1128 项）、`pnpm i18n:verify`、`pnpm validate:icons` 均通过。
 **未做浏览器/真机手测**（按协作约定由用户执行 §七 清单）。
 
-剩余待办：B6（展开项持久化）、B7（触屏命中区）、E1（最近提交时间/消息）、E2 的 Esc 收起、E3–E6。
+剩余待办：无（E6 与 Esc 收起按约定不做）。

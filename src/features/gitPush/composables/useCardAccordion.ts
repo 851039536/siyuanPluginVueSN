@@ -1,6 +1,6 @@
 // gitPush 卡片布局上下文（Provide/Inject：手风琴模式下「一次只展开一张」的共享状态）
 import type { ComputedRef, InjectionKey, Ref } from "vue"
-import { computed, inject, provide, ref } from "vue"
+import { computed, inject, provide, ref, watch } from "vue"
 import type { CardLayout } from "../types/meta"
 
 /** 卡片布局上下文（ListView 提供，ProjectCard/CardSummary 消费） */
@@ -17,9 +17,15 @@ export interface CardAccordionContext {
 
 const CARD_ACCORDION_KEY: InjectionKey<CardAccordionContext> = Symbol("gitPushCardAccordion")
 
-/** 列表容器提供手风琴上下文（每个列表视图实例各自一份，不跨窗口共享） */
+/** 会话级展开项：ListView 卸载（切统计 / 日志 / 分析）后重挂载时恢复；仅内存，不落盘 */
+let sessionExpandedId = ""
+
+/** 列表容器提供手风琴上下文（每个列表视图实例各自一份；初始值沿用本次会话最后一次展开项） */
 export function provideCardAccordion(layout: () => CardLayout): CardAccordionContext {
-  const expandedId = ref("")
+  const expandedId = ref(sessionExpandedId)
+  watch(expandedId, (v) => {
+    sessionExpandedId = v
+  })
 
   function expand(projectId: string) {
     expandedId.value = projectId

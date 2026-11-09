@@ -75,12 +75,12 @@
   border-radius: $r-sm;
 }
 
-// 当前分支（等宽字体，弱化展示；宽度上限交给文本层做省略号）
+// 当前分支（等宽字体，弱化展示；宽度上限交给文本层做省略号，可随窄宽收缩）
 .gp-summary-branch {
   display: inline-flex;
   align-items: center;
   gap: $s-px3;
-  flex-shrink: 0;
+  flex: 0 1 auto;
   max-width: 22%;
   min-width: 0;
   font-family: $ff-mono;
@@ -89,6 +89,31 @@
 }
 
 .gp-summary-branch-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+// 最近提交：时间恒显，消息单行省略（仅在日志已缓存时出现）
+.gp-summary-commit {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px3;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 32%;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  opacity: 0.5;
+}
+
+.gp-summary-commit-age {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.gp-summary-commit-msg {
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -116,4 +141,17 @@
 // 主推送按钮不参与压缩
 .gp-summary .gp-action-btn.si-button {
   flex-shrink: 0;
+}
+
+// 触屏 / 手写笔：摘要行视觉高度不变，用伪元素把命中区补到约 40px（AGENTS_STYLE 移动端密度规则）
+@media (pointer: coarse) and (hover: none) {
+  .gp-card.gp-card--collapsed .gp-summary .gp-summary-main.si-button {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -$s-px10 0;
+    }
+  }
 }

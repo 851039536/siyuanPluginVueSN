@@ -1,6 +1,6 @@
 @use "@/variables.scss" as *;
 @use "./mixins" as *;
-@use "./WorkingTreeDiffDialog.scss";
+@use "./DiffView.scss";
 
 // 提交内文件差异弹窗遮罩：gp-mask 基座 + 更高层级 + 重新注入 diff 着色变量
 .gp-mask.cdf-overlay {

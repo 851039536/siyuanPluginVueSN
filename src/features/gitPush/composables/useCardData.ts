@@ -410,8 +410,41 @@ export function useCardData(project: () => GitProject) {
     return exec
   }
 
-  // ── 父层脏标记响应（提交/stash/tag/冲突/批量刷新完成后按域重载）──
+  // ── 变更集补丁缓存（审阅流首屏：一次 git diff 覆盖全部 tracked 文件）──
+  /** 按范围缓存 `{ at: 取数时的树版本, diffs }`；树刷新后版本不符即失效 */
+  const changesetCache: Record<"s" | "u", { at: number, diffs: Record<string, string> } | null> = {
+    s: null,
+    u: null,
+  }
+  /** 同范围在途请求（打开弹窗时连点两次不重复 spawn） */
+  const changesetInflight = new Map<"s" | "u", Promise<Record<string, string>>>()
 
+  /**
+   * 取整个变更集的补丁并按文件切分（审阅流用）。
+   * 结果单独缓存，不写入单文件 `fileDiffs`：后者有 30 条上限的裁剪，
+   * 把上百个文件的补丁灌进去只会互相挤出，反而让未跟踪文件的缓存反复失效。
+   * 未跟踪文件不在 `git diff` 输出中（结果里没有该路径），由视图层回退 loadDiff 逐个取。
+   */
+  async function loadChangeset(staged: boolean, opts?: { force?: boolean }): Promise<Record<string, string>> {
+    const scope = staged ? "s" : "u"
+    const cached = changesetCache[scope]
+    if (!opts?.force && cached && cached.at === state.diffTreeVersion) return cached.diffs
+    const inflight = changesetInflight.get(scope)
+    if (inflight) return inflight
+    const fetchedAtVersion = state.diffTreeVersion
+    const exec = (async () => {
+      const diffs = await manager.getChangesetDiff(path(), staged)
+      changesetCache[scope] = {
+        at: fetchedAtVersion,
+        diffs,
+      }
+      return diffs
+    })().finally(() => { changesetInflight.delete(scope) })
+    changesetInflight.set(scope, exec)
+    return exec
+  }
+
+  // ── 父层脏标记响应（提交/stash/tag/冲突/批量刷新完成后按域重载）──
   /**
    * 消费本项目脏域并重载对应数据（幂等：无脏域则无操作）。
    *  一律 force：脏标记语义是「数据已变，必须重取」，复用在飞旧查询会把变更前的数据写回（脏标记失效）
@@ -477,6 +510,7 @@ export function useCardData(project: () => GitProject) {
     reloadLog,
     refreshTags,
     loadDiff,
+    loadChangeset,
     logLimit: state.logLimit,
     setLogLimit,
   }

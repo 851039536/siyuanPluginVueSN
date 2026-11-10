@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import {
   parseAheadBehind,
   parseBranches,
+  parseChangesetDiff,
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,
@@ -561,3 +562,91 @@ describe("parseWorktreeStatusV2", () => {
   })
 })
 
+describe("parseChangesetDiff", () => {
+  const chunk = (path: string, body = "@@ -1 +1 @@\n-a\n+b") =>
+    [`diff --git a/${path} b/${path}`, "index 111..222 100644", `--- a/${path}`, `+++ b/${path}`, body].join("\n")
+
+  it("空输入返回空 Map", () => {
+    expect(parseChangesetDiff("").size).toBe(0)
+  })
+
+  it("多文件按 diff --git 切块，键为新文件路径", () => {
+    const raw = [chunk("a.ts"), chunk("src/b.ts")].join("\n")
+    const map = parseChangesetDiff(raw)
+    expect([...map.keys()]).toEqual(["a.ts", "src/b.ts"])
+    expect(map.get("src/b.ts")).toContain("@@ -1 +1 @@")
+  })
+
+  it("重命名取目标路径", () => {
+    const raw = [
+      "diff --git a/old.ts b/new.ts",
+      "similarity index 90%",
+      "rename from old.ts",
+      "rename to new.ts",
+      "--- a/old.ts",
+      "+++ b/new.ts",
+      "@@ -1 +1 @@",
+      "-a",
+      "+b",
+    ].join("\n")
+    expect([...parseChangesetDiff(raw).keys()]).toEqual(["new.ts"])
+  })
+
+  it("100% 重命名（无 ---/+++ 行）回退 rename to", () => {
+    const raw = [
+      "diff --git a/old.ts b/new.ts",
+      "similarity index 100%",
+      "rename from old.ts",
+      "rename to new.ts",
+    ].join("\n")
+    expect([...parseChangesetDiff(raw).keys()]).toEqual(["new.ts"])
+  })
+
+  it("删除文件取 --- 侧的旧路径", () => {
+    const raw = [
+      "diff --git a/gone.ts b/gone.ts",
+      "deleted file mode 100644",
+      "--- a/gone.ts",
+      "+++ /dev/null",
+      "@@ -1 +0,0 @@",
+      "-a",
+    ].join("\n")
+    expect([...parseChangesetDiff(raw).keys()]).toEqual(["gone.ts"])
+  })
+
+  it("二进制文件（只有 diff --git 行）也能取到路径", () => {
+    const raw = [
+      "diff --git a/logo.png b/logo.png",
+      "index 111..222 100644",
+      "Binary files a/logo.png and b/logo.png differ",
+    ].join("\n")
+    expect([...parseChangesetDiff(raw).keys()]).toEqual(["logo.png"])
+  })
+
+  it("含空格的路径剥掉 git 追加的行尾制表符", () => {
+    const raw = [
+      "diff --git a/my file.ts b/my file.ts",
+      "index 111..222 100644",
+      "--- a/my file.ts\t",
+      "+++ b/my file.ts\t",
+      "@@ -1 +1 @@",
+      "-a",
+      "+b",
+    ].join("\n")
+    expect([...parseChangesetDiff(raw).keys()]).toEqual(["my file.ts"])
+  })
+
+  it("正文里恰好形如 +++ b/x 的行不参与路径判定", () => {
+    const raw = [
+      "diff --git a/a.ts b/a.ts",
+      "index 111..222 100644",
+      "--- a/a.ts",
+      "+++ b/a.ts",
+      "@@ -1,2 +1,2 @@",
+      "-x",
+      "+++ b/fake.ts",
+      " y",
+    ].join("\n")
+    expect([...parseChangesetDiff(raw).keys()]).toEqual(["a.ts"])
+  })
+})

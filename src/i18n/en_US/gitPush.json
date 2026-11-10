@@ -1103,8 +1103,9 @@
     "saveTemplatesFailed": "Failed to save commit templates",
     "commitLogCountLabel": "Rows",
 
-    "fileTreeOpenButton": "Tree view",
-    "fileTreeTitle": "Changes Tree",
+    "diffStreamTitle": "Review changes",
+    "diffFileCollapse": "Collapse file",
+    "diffFileExpand": "Expand file",
     "fileTreeSearchPlaceholder": "Filter file paths...",
     "fileTreeExpandAll": "Expand all",
     "fileTreeCollapseAll": "Collapse all",

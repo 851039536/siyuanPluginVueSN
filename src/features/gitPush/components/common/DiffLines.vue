@@ -3,55 +3,14 @@
   供工作区差异弹窗与提交内差异弹窗复用；宿主只负责弹窗外壳与数据下发，不关心行怎么摆。
 -->
 <template>
-  <!-- 视图栏：左侧图例，右侧布局与显示开关（把原先只占高度的图例行变成工具条） -->
-  <div class="wt-diff-bar">
-    <div class="wt-diff-legend">
-      <span class="wt-legend-add">+ {{ i18n.legendAdd }}</span>
-      <span class="wt-legend-del">− {{ i18n.legendDel }}</span>
-      <span class="wt-legend-ctx">⋯ {{ i18n.legendCtx }}</span>
-    </div>
-    <div class="wt-diff-views">
-      <!-- 布局三态：自适应按可用宽度在统一/并排之间切换 -->
-      <Button
-        v-for="opt in LAYOUT_OPTIONS"
-        :key="opt.value"
-        :variant="layout === opt.value ? 'primary' : 'ghost'"
-        text
-        size="xsmall"
-        :aria-pressed="layout === opt.value"
-        :title="i18n.diffLayoutTip"
-        @click="setLayout(opt.value)"
-      >
-        {{ i18n[opt.labelKey] }}
-      </Button>
-      <Divider
-        class="wt-diff-bar-sep"
-        layout="vertical"
-      />
-      <!-- 行号显隐（并排视图下每列只保留本侧行号） -->
-      <Button
-        variant="ghost"
-        text
-        size="xsmall"
-        :aria-pressed="showLineNumbers"
-        :title="i18n.diffLineNumbers"
-        @click="toggleLineNumbers"
-      >
-        {{ i18n.diffLineNumbers }}
-      </Button>
-      <!-- 仅改动：隐去未变行与折叠条，只看增删 -->
-      <Button
-        variant="ghost"
-        text
-        size="xsmall"
-        :aria-pressed="onlyChanges"
-        :title="i18n.diffOnlyChanges"
-        @click="toggleOnlyChanges"
-      >
-        {{ i18n.diffOnlyChanges }}
-      </Button>
-    </div>
-  </div>
+  <!-- 视图栏（审阅流把这条提到弹窗顶部全局共用，由 showBar=false 关闭单个文件上的重复条） -->
+  <DiffViewBar
+    v-if="showBar"
+    v-model:layout="layout"
+    v-model:show-line-numbers="showLineNumbers"
+    v-model:only-changes="onlyChanges"
+    :i18n="i18n"
+  />
 
   <!-- diff 内容区（空态 / 着色行） -->
   <div
@@ -166,16 +125,17 @@ import {
   ref,
   watch,
 } from "vue"
-import Button from "@/components/Button.vue"
-import Divider from "@/components/Divider.vue"
 import { DIFF_SIGN, filterOnlyChanges, isChangeLine, toSplitRows } from "../../utils"
 import DiffLineText from "./DiffLineText.vue"
+import DiffViewBar from "./DiffViewBar.vue"
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   i18n: Record<string, any>
   /** 已解析的 diff 行数组（由宿主经 parseDiffLines 产出） */
   lines: DiffLine[]
-}>()
+  /** 是否渲染顶部的图例 + 视图开关（审阅流多处并排时由宿主在弹窗顶部统一提供） */
+  showBar?: boolean
+}>(), { showBar: true })
 
 /** 视图布局（自适应 = 按可用宽度在统一 / 并排之间切换） */
 const layout = defineModel<DiffLayout>("layout", { default: "auto" })
@@ -195,22 +155,6 @@ const SPLIT_MIN_WIDTH = 880
  * 单一阈值会让布局在边界上反复翻转，故进入与退出的门槛错开。
  */
 const SPLIT_HYSTERESIS = 48
-
-/** 布局三态选项（labelKey 指向 i18n） */
-const LAYOUT_OPTIONS: { value: DiffLayout, labelKey: string }[] = [
-  {
-    value: "unified",
-    labelKey: "diffLayoutUnified",
-  },
-  {
-    value: "split",
-    labelKey: "diffLayoutSplit",
-  },
-  {
-    value: "auto",
-    labelKey: "diffLayoutAuto",
-  },
-]
 
 /** diff 内容区根节点（尺寸探测用） */
 const contentEl = ref<HTMLElement | null>(null)
@@ -265,21 +209,6 @@ const renderedLines = computed(() => {
 /** 并排行序列（统一行按 del/add 块配对重排） */
 const splitRows = computed<DiffSplitRow[]>(() => toSplitRows(renderedLines.value))
 
-/** 切换布局（模板里避免直接给 defineModel 的 ref 赋值，语义更明确） */
-function setLayout(next: DiffLayout) {
-  layout.value = next
-}
-
-/** 行号显隐 */
-function toggleLineNumbers() {
-  showLineNumbers.value = !showLineNumbers.value
-}
-
-/** 仅改动开关 */
-function toggleOnlyChanges() {
-  onlyChanges.value = !onlyChanges.value
-}
-
 /** 并排单元格的着色类（空位走 wt-ds-empty 的占位底色；hunk/meta/gap 永远跨整行，不进单元格） */
 function cellClasses(line: DiffLine | undefined): Record<string, boolean> {
   return {
@@ -302,5 +231,5 @@ function gapLabel(line: DiffLine): string {
 </script>
 
 <style lang="scss">
-@use "../../styles/WorkingTreeDiffDialog.scss";
+@use "../../styles/DiffView.scss";
 </style>

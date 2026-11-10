@@ -1025,6 +1025,14 @@ export class GitPushManager {
     return this.worktreeOps.getFileDiff(projectPath, file, staged, status)
   }
 
+  /**
+   * 一次取回整个变更集的补丁并按文件切分（审阅流用；单进程覆盖全部 tracked 变更）。
+   * 未跟踪文件不在结果中，调用方对缺失路径回退 getFileDiff。
+   */
+  async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string>> {
+    return this.worktreeOps.getChangesetDiff(projectPath, staged)
+  }
+
   async stageFile(projectPath: string, file: string): Promise<void> {
     return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stageFile(projectPath, file))
   }

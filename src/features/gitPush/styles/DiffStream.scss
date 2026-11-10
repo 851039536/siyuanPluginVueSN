@@ -1,0 +1,292 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 改动审阅流弹窗（多文件连续浏览）：左侧目录树索引 + 右侧连续 diff。
+// 外壳（遮罩 / 定位 / 层级 / Esc / 焦点归还 / 过渡）由共享 Dialog 承担；
+// 文件行复用 WorkingTreePanel.scss 的全局 .wt-* 类（状态色 / 勾选框 / 部分暂存标记）。
+
+// 宽屏优先：并排视图需要两列各自可读（扣除 250px 侧栏后仍有 ~900px 可用）
+.git-push-panel .si-dialog.wt-stream-dialog {
+  --si-dialog-width: min(96vw, 1180px);
+}
+
+// 内容区改为横向 flex 并去掉内边距：侧栏固定宽，右侧流自行滚动
+.git-push-panel .wt-stream-dialog .si-dialog__content {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+
+// ── 标题行 ──
+.wt-stream-header {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $s-2;
+}
+
+// 变更文件总数徽章（与目录树弹窗同款计数外观）
+.wt-stream-total {
+  @include gp-section-count-base;
+}
+
+// 暂存 / 未暂存分布点（文案走 tooltip，标题行只留色点 + 数字）
+.wt-stream-count {
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  opacity: 0.75;
+
+  &--staged { color: var(--gp-diff-add-color); }
+  &--unstaged { color: var(--gp-diff-hunk-color); }
+}
+
+// ── 左侧目录树索引 ──
+.wt-sb {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 250px;
+  min-height: 0;
+  border-right: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+.wt-sb-toolbar {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  padding: $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.wt-sb-search {
+  flex: 1;
+  min-width: 0;
+}
+
+.wt-sb-empty {
+  padding: $s-5 $s-3;
+  text-align: center;
+  font-size: $t-2xs;
+  opacity: 0.5;
+}
+
+.wt-sb-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-bottom: $s-2;
+}
+
+// 分区行（已暂存 / 未暂存）：不缩进，底部描边分隔两区
+.wt-sb-section {
+  @include btn-reset;
+
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  width: 100%;
+  padding: $s-px3 $s-px6;
+  border-bottom: 1px solid var(--b3-border-color);
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  text-align: left;
+  user-select: none;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+
+    .wt-sb-section-btn { opacity: 0.8; }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+}
+
+// 分区级批量操作：hover 前隐藏，避免占位干扰标题
+.wt-sb-section-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+// 目录行 / 文件行基座：缩进 = 基准 6px + 层级 × 10px（--wt-sb-depth 由模板注入）
+.wt-sb-row {
+  --wt-sb-indent-base: #{$s-px6};
+  --wt-sb-indent-step: #{$s-px10};
+
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  width: 100%;
+  padding-top: $s-px2;
+  padding-bottom: $s-px2;
+  padding-right: $s-px6;
+  padding-left: calc(var(--wt-sb-indent-base) + var(--wt-sb-depth, 0) * var(--wt-sb-indent-step));
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+}
+
+// 目录行是原生 button（Enter/Space 折叠 + aria-expanded）
+.wt-sb-dir {
+  @include btn-reset;
+}
+
+// 文件行：右侧连续流当前所在的文件高亮
+.wt-sb-file.is-active {
+  background: var(--b3-list-hover);
+  box-shadow: inset 2px 0 0 var(--b3-theme-primary);
+}
+
+.wt-sb-chev {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: transform 0.12s;
+
+  &.is-open { transform: rotate(90deg); }
+}
+
+.wt-sb-folder {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.wt-sb-name {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+.wt-sb-file-name {
+  font-family: $ff-mono;
+}
+
+.wt-sb-count {
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  opacity: 0.5;
+}
+
+// ── 右侧连续流 ──
+.wt-stream-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.wt-stream-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  // 滚动容器需要成为 sticky 文件头的包含块
+  position: relative;
+}
+
+// 单个文件段
+.wt-stream-file {
+  border-bottom: 1px solid var(--b3-border-color);
+
+  &:last-child { border-bottom: none; }
+}
+
+// sticky 文件头：滚动到任何位置都能看到"当前在看哪个文件"
+.wt-stream-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  padding: $s-px3 $s-2 $s-px3 $s-px6;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    background: var(--b3-list-hover);
+
+    .wt-stream-head-actions { opacity: 1; }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -2px;
+  }
+}
+
+.wt-stream-chev {
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: transform 0.12s;
+
+  &.is-open { transform: rotate(90deg); }
+}
+
+.wt-stream-path {
+  font-size: $t-xs;
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+// 行内操作区：hover 前半透明，避免多个文件头堆满按钮
+.wt-stream-head-actions {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.35;
+  transition: opacity 0.12s;
+}
+
+// 范围切换与本组按钮之间的竖直分隔线（弹窗头部的同款规则作用不到这两处，这里自持几何）
+.wt-stream-header .wt-diff-header-sep.si-divider,
+.wt-stream-head .wt-diff-header-sep.si-divider {
+  height: 12px;
+  min-height: 0;
+  margin: 0 $s-1;
+}
+
+.wt-stream-body {
+  // diff 正文自身的上下留白由 .wt-diff-content 承担
+  min-height: 0;
+}
+
+// 单文件行数上限的「展开更多」条
+.wt-stream-more {
+  display: flex;
+  justify-content: center;
+  padding: $s-2 0;
+  border-top: 1px dashed var(--b3-border-color);
+}

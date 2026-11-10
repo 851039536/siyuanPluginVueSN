@@ -394,3 +394,45 @@ export function parseBranches(raw: string): BranchInfo[] {
     }
   })
 }
+
+/**
+ * 解析整份 `git diff` 输出，按文件路径切成「路径 → 该文件补丁」。
+ *
+ * 路径只取文件头区域（首个 hunk 之前），避免正文里恰好渲染成 `+++ b/x` 的行被误判为文件头；
+ * 取值为新文件路径（重命名/复制取目标路径），删除文件没有 `+++` 时回退 `---`。
+ * 路径含空格时 git 会在 `---`/`+++` 行尾补一个制表符，需剥掉。
+ * 二进制文件与「100% 重命名」没有 `---`/`+++` 行，分别回退 `rename to` / `diff --git` 行。
+ */
+export function parseChangesetDiff(raw: string): Map<string, string> {
+  const result = new Map<string, string>()
+  if (!raw) return result
+  for (const chunk of raw.split(/\n(?=diff --git )/)) {
+    if (!chunk.startsWith("diff --git ")) continue
+    const path = changesetChunkPath(chunk)
+    // 同一路径出现多次（如合并补丁）只保留首段，与单文件 diff 的展示口径一致
+    if (path && !result.has(path)) result.set(path, chunk)
+  }
+  return result
+}
+
+/** 从单个文件补丁块中解析新文件路径（按可靠性依次尝试四种文件头写法） */
+function changesetChunkPath(chunk: string): string | null {
+  // 正文行可能恰好渲染成 `+++ b/xxx`，故只看首个 hunk 之前的头部区域
+  const hunkStart = chunk.indexOf("\n@@ ")
+  const header = hunkStart < 0 ? chunk : chunk.slice(0, hunkStart)
+  const plus = /^\+\+\+ b\/(.+?)\t?$/m.exec(header)
+  if (plus) return plus[1]
+  const renamed = /^(?:rename|copy) to (.+)$/m.exec(header)
+  if (renamed) return renamed[1]
+  const minus = /^--- a\/(.+?)\t?$/m.exec(header)
+  if (minus) return minus[1]
+  // 最后兜底：`diff --git a/x b/x`（两侧同路径时长度关系确定，可正中间切开）
+  const gitLine = /^diff --git (.+)$/m.exec(header)
+  if (!gitLine) return null
+  const rest = gitLine[1]
+  const pathLen = (rest.length - 5) / 2
+  if (!Number.isInteger(pathLen) || pathLen <= 0) return null
+  const left = rest.slice(2, 2 + pathLen)
+  const right = rest.slice(2 + pathLen + 3)
+  return left === right ? right : null
+}

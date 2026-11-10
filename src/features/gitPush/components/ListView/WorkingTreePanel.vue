@@ -50,15 +50,7 @@
           >
             {{ i18n.unstageAll }}
           </Button>
-          <!-- 目录树视图（tooltip："目录树视图"；打开 VS Code 源代码管理风格的变更目录树弹窗） -->
-          <Button
-            variant="ghost"
-            size="xsmall"
-            dense
-            icon="fileTree"
-            :title="i18n.fileTreeOpenButton"
-            @click.stop="showTreeDialog = true"
-          />
+          <!-- 目录树视图已并入审阅流侧栏，此处不再单独提供入口 -->
           <!-- 单独刷新工作区 -->
           <Button
             variant="ghost"
@@ -162,37 +154,24 @@
         />
       </div>
 
-      <!-- 变更目录树弹窗（VS Code 源代码管理风格：目录分组折叠 + 筛选 + 行内操作；
-           刻意放在差异弹窗之前 —— 同 z-index 下 DOM 靠后的差异弹窗叠于树弹窗之上） -->
-      <WorkingTreeTreeDialog
-        v-if="showTreeDialog"
-        :i18n="i18n"
-        :files="sortedFiles"
-        :active-file="activeDiffFile"
-        :git-op-loading="gitOpLoading"
-        @close="showTreeDialog = false"
-        @view-diff="openDiffFromTree"
-        @stage-file="(file: string) => emit('stageFile', file)"
-        @unstage-file="(file: string) => emit('unstageFile', file)"
-        @stage-all="emit('stageAll')"
-        @unstage-all="emit('unstageAll')"
-        @discard-file="(file: string, staged: boolean, status: string) => emit('discardFile', file, staged, status)"
-      />
-
-      <!-- 差异查看弹窗（子组件自含渲染与键盘导航，父只管开关与数据下发） -->
-      <WorkingTreeDiffDialog
+      <!-- 审阅流弹窗（多文件连续浏览 + 目录树索引；子组件自含 changeset 取数与键盘导航） -->
+      <DiffStreamDialog
         v-if="activeDiffFile"
         :i18n="i18n"
-        :file="activeDiffFile"
         :files="sortedFiles"
         :file-diffs="fileDiffs"
         :diff-loading="diffLoading"
         :git-op-loading="gitOpLoading"
+        :focus-file="activeDiffFile"
+        :get-changeset="getChangeset"
         @close="activeDiffFile = null"
-        @navigate="handleDiffNavigate"
-        @stage-toggle="handleDiffStageToggle"
-        @discard="handleDiffDiscard"
-        @request-diff="handleDiffRequest"
+        @stage-file="(file: string) => emit('stageFile', file)"
+        @unstage-file="(file: string) => emit('unstageFile', file)"
+        @stage-all="emit('stageAll')"
+        @unstage-all="emit('unstageAll')"
+        @stage-toggle="handleStreamStageToggle"
+        @discard="handleStreamDiscard"
+        @load-diff="(file: string, staged: boolean, opts?: { force?: boolean, status?: string }) => emit('loadDiff', file, staged, opts)"
       />
 
       <!-- 提交表单 -->
@@ -359,8 +338,7 @@ import {
   ruleReasonText,
 } from "../../utils"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
-import WorkingTreeDiffDialog from "./WorkingTreeDiffDialog.vue"
-import WorkingTreeTreeDialog from "./WorkingTreeTreeDialog.vue"
+import DiffStreamDialog from "./DiffStreamDialog.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -384,6 +362,11 @@ const props = defineProps<{
    * seq 每次递增，保证同一文件重复请求也能触发。
    */
   focusRequest?: { file: FileChange, seq: number } | null
+  /**
+   * 取整个变更集的补丁（审阅流首屏：一次 git diff 覆盖全部 tracked 文件）。
+   * 未跟踪文件不在结果中，由审阅流对缺失路径回退 loadDiff。
+   */
+  getChangeset: (staged: boolean, opts?: { force?: boolean }) => Promise<Record<string, string>>
 }>()
 
 const emit = defineEmits<{
@@ -427,9 +410,8 @@ const showTemplatesDialog = ref(false)
 const templateOptions = computed<SelectOption[]>(() =>
   props.commitTemplates.map((t) => ({ value: t.id, label: t.name })),
 )
+/** 审阅流弹窗锚点：null = 未打开；非 null = 打开并在流中定位到该文件 */
 const activeDiffFile = ref<FileChange | null>(null)
-/** 变更目录树弹窗开关（VS Code 源代码管理风格浏览面；打开期间暂停 pointerdown 自动刷新） */
-const showTreeDialog = ref(false)
 /** 提交信息输入框（类型按钮赋值后把焦点交回此处） */
 const textareaEl = ref<InstanceType<typeof Textarea>>()
 
@@ -484,14 +466,14 @@ watch(() => props.refreshingWorkingTree, (refreshing) => {
  * 曾经这里每张卡片各挂一个 window focus 监听，N 张卡获焦即并 N 路 force 查询，
  * 与探测层全量轮询叠加成 2N 量级 git 进程风暴（见 docs/gitPush-memory-cpu-review.md §P0-1）。
  *
- * ⚠️ 差异弹窗 / 目录树弹窗打开期间跳过：弹窗未 Teleport、渲染在本面板内，弹窗内的每次点击
- * （导航/复制/关闭）都会冒泡到此处，触发无意义的后台 git status —— 用户此时在「看」diff/树，
+ * ⚠️ 审阅流弹窗打开期间跳过：弹窗未 Teleport、渲染在本面板内，弹窗内的每次点击
+ * （导航/复制/关闭）都会冒泡到此处，触发无意义的后台 git status —— 用户此时在「看」diff，
  * 不是在改文件；关闭弹窗后的下一次 pointerdown 自然恢复刷新。
  *
  * 已有待发定时器时不再重置：用户连续点击（每次 pointerdown 都会触发）会让刷新被无限推迟。
  */
 function handleAutoRefreshTrigger() {
-  if (activeDiffFile.value || showTreeDialog.value) return
+  if (activeDiffFile.value) return
   if (autoRefreshTimer !== null) return
   if (props.gitOpLoading || props.refreshingWorkingTree) return
   if (Date.now() - lastRefreshStartedAt < AUTO_REFRESH_MIN_INTERVAL_MS) return
@@ -542,67 +524,29 @@ function toggleStage(file: FileChange) {
   }
 }
 
-/** 打开差异弹窗：纯查看语义（非 force）。缓存命中时数据层直接返回（0 git 进程、无加载闪烁） */
-function toggleDiff(file: FileChange) {
-  if (activeDiffFile.value?.path === file.path && activeDiffFile.value?.staged === file.staged) {
-    activeDiffFile.value = null
-  } else {
-    activeDiffFile.value = file
-    emit("loadDiff", file.path, file.staged, { status: file.status })
-    prefetchOtherScope(file)
-  }
-}
-
-/** 目录树弹窗内点击文件：始终「打开」（无切换关闭语义），其余与 toggleDiff 打开分支一致 */
-function openDiffFromTree(file: FileChange) {
-  activeDiffFile.value = file
-  emit("loadDiff", file.path, file.staged, { status: file.status })
-  prefetchOtherScope(file)
-}
-
 /**
- * 预取另一份差异：仅「已暂存 + 工作区又改动」的文件有两份差异，
- * 提前拉取后弹窗内切范围命中缓存即刻渲染（不做则首次切换要等一次 git 子进程）。
- * 缓存命中时数据层直接返回，重复打开不再重复付进程。
+ * 打开审阅流并定位到该文件。
+ * 与旧的单文件弹窗不同，这里不再「点同一文件 = 关闭」——审阅流一次承载全部变更，
+ * 重复点击只重新定位（要关闭走 X / Esc / 遮罩）。
+ * diff 由弹窗自己一次取回（含未跟踪文件的回退），这里不再逐文件请求。
  */
-function prefetchOtherScope(file: FileChange) {
-  if (file.staged && file.unstaged) emit("loadDiff", file.path, !file.staged, { status: file.status })
+function toggleDiff(file: FileChange) {
+  activeDiffFile.value = file
 }
-
-// 外部定位：文件浏览器角标点击后，父层切到本 Tab 并下发请求，这里复用「打开差异」链路
+// 外部定位：文件浏览器角标点击后，父层切到本 Tab 并下发请求，这里复用「打开审阅流」链路
 watch(() => props.focusRequest?.seq, () => {
   const request = props.focusRequest
-  if (request) openDiffFromTree(request.file)
+  if (request) toggleDiff(request.file)
 }, { immediate: true })
 
-/** 弹窗内导航：切换当前差异文件并加载对应 diff（非 force：已看过的文件命中缓存即时渲染） */
-function handleDiffNavigate(file: FileChange) {
-  activeDiffFile.value = file
-  emit("loadDiff", file.path, file.staged, { status: file.status })
-}
-
-/** 弹窗内切换差异范围：仅切换查看对象，不改变文件的暂存状态（非 force，预取缓存可命中） */
-function handleDiffRequest(staged: boolean) {
-  const file = activeDiffFile.value
-  if (!file) return
-  emit("loadDiff", file.path, staged)
-}
-
 /**
- * 弹窗内暂存切换：翻转 staged 后重新加载 diff（缓存键含 staged 前缀）。
+ * 流内暂存切换：翻转该文件暂存态并重取 diff（缓存键含 staged 前缀）。
  *
- * 部分暂存文件（porcelain MM/AM：staged && unstaged）在「暂存」后，
- * 工作区那份改动已被并入暂存区 —— 若只翻转 staged 而保留 unstaged，
- * 弹窗会继续提供切到「已暂存」范围，而那份 diff 此时已为空。
- * 故暂存时同时清掉 unstaged，让 canSwitchScope 与实际状态一致；
- * 反向（取消暂存）则把内容交回工作区。
- * 真实状态仍以后续 tree 刷新为准（失败回滚由下方 watch 自愈）。
- *
- * ⚠️ force：暂存操作必然改变目标范围的 diff 内容，打开时预取的缓存已过期，必须重取。
+ * 部分暂存文件（porcelain MM/AM：staged && unstaged）在「暂存」后，工作区那份改动已被并入暂存区——
+ * 若只翻转 staged 而保留 unstaged，文件段会继续提供切到「已暂存」的按钮，而那份 diff 此时已为空。
+ * 故暂存时同时清掉 unstaged；反向（取消暂存）则把内容交回工作区。真实状态仍以后续 tree 刷新为准。
  */
-function handleDiffStageToggle() {
-  const file = activeDiffFile.value
-  if (!file) return
+function handleStreamStageToggle(file: FileChange) {
   const nextStaged = !file.staged
   toggleStage(file)
   activeDiffFile.value = {
@@ -616,53 +560,23 @@ function handleDiffStageToggle() {
   })
 }
 
-/** 弹窗内丢弃：透传给父级确认流程，文件从树中消失后由下方 watch 关闭弹窗 */
-function handleDiffDiscard() {
-  const file = activeDiffFile.value
-  if (!file) return
+/** 流内丢弃：透传给父级确认流程，文件从树中消失后由下方 watch 关闭弹窗 */
+function handleStreamDiscard(file: FileChange) {
   emit("discardFile", file.path, file.staged, file.status)
 }
 
 /**
- * 树刷新后同步当前差异文件：两级匹配自愈——
- * - 精确匹配（path + staged 均未变）：跟随新对象；仅当暂存/未暂存计数相对**上一棵树**有变化
- *   （说明有文件内容被外部改动，可能就是当前文件）时 force 重取一次；计数均未变则 diff 必然未变，
- *   不重取（避免自动刷新风暴期反复 spawn git diff）；
- * - 仅同路径（staged 翻转，暂存/取消暂存操作后）：scope 已变，force 重取目标范围；
- * - 都不存在（丢弃/提交完成）则关闭弹窗。
+ * 树刷新后同步锚点文件：文件仍在则跟随新对象（暂存态可能已翻转），
+ * 已被提交 / 丢弃则关闭审阅流。diff 内容由弹窗按工作区版本自行重取，这里不再逐文件 force。
  */
-function syncActiveDiffOnTree(tree: WorkingTreeInfo, prev: WorkingTreeInfo | undefined) {
+function syncStreamAnchor(tree: WorkingTreeInfo) {
   const file = activeDiffFile.value
   if (!file) return
-  const exact = tree.files.find((f) => f.path === file.path && f.staged === file.staged)
-  if (exact) {
-    activeDiffFile.value = exact
-    const countsChanged = !prev
-      || tree.stagedCount !== prev.stagedCount
-      || tree.unstagedCount !== prev.unstagedCount
-      || tree.untrackedCount !== prev.untrackedCount
-    if (countsChanged) { emit("loadDiff", file.path, file.staged, {
-      force: true,
-      status: file.status,
-    })
-    }
-    return
-  }
-  const samePath = tree.files.find((f) => f.path === file.path)
-  if (samePath) {
-    activeDiffFile.value = samePath
-    // staged 翻转 ⇒ 目标范围的 diff 内容必然已变（暂存把工作区改动并入暂存区），必须 force
-    emit("loadDiff", samePath.path, samePath.staged, {
-      force: true,
-      status: samePath.status,
-    })
-  } else {
-    activeDiffFile.value = null
-  }
+  const same = tree.files.find((f) => f.path === file.path)
+  activeDiffFile.value = same ?? null
 }
-watch(() => props.tree, (tree, prevTree) => {
-  if (!tree) return
-  syncActiveDiffOnTree(tree, prevTree)
+watch(() => props.tree, (tree) => {
+  if (tree) syncStreamAnchor(tree)
 })
 
 /**

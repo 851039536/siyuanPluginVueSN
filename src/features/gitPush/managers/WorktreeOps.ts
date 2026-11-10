@@ -13,6 +13,7 @@ import {
   buildDiffContext,
   DEFAULT_LOG_LIMIT,
   parseBranches,
+  parseChangesetDiff,
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,
@@ -189,6 +190,26 @@ export class WorktreeOps {
       return await this.execNoIndexDiff(projectPath, file)
     } catch {
       return ""
+    }
+  }
+
+  /**
+   * 一次性取回整个变更集的补丁，按文件路径切分为「路径 → 补丁」。
+   *
+   * 审阅流（多文件连续浏览）用它替代 N 次单文件 `git diff`：一次进程覆盖所有 tracked 变更，
+   * 代价从「每个文件 ~0.3s 进程启动」降到一次。失败 / 超 maxBuffer 时返回空对象，
+   * 调用方对缺失路径回退 getFileDiff —— 视图层永远能拿到内容，只是退化为逐个取。
+   *
+   * ⚠️ 未跟踪文件不在 `git diff` 输出中（既不在 index 也不在 HEAD），必须由调用方按需回退。
+   */
+  async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string>> {
+    try {
+      const args = ["-c", "core.quotepath=false", "diff", "--text"]
+      if (staged) args.push("--cached")
+      const raw = await this.executor.execGit(projectPath, args)
+      return Object.fromEntries(parseChangesetDiff(raw))
+    } catch {
+      return {}
     }
   }
 

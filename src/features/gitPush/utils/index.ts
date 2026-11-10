@@ -59,6 +59,7 @@ export type { DiffLayout, DiffSplitRow } from "./diffLayout"
 export {
   parseAheadBehind,
   parseBranches,
+  parseChangesetDiff,
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,

@@ -96,6 +96,7 @@
           :refreshing-working-tree="refreshingWorkingTree || false"
           :commit-templates="commitTemplates"
           :focus-request="explorerFocus"
+          :get-changeset="loadChangeset"
           @stage-file="(file: string) => ops.stageItem(project.id, file)"
           @unstage-file="(file: string) => ops.unstageItem(project.id, file)"
           @stage-all="ops.stageAllItems(project.id)"
@@ -315,6 +316,7 @@ const {
   reloadLog,
   refreshTags,
   loadDiff,
+  loadChangeset,
   logLimit,
   setLogLimit,
 } = useCardData(() => props.project)

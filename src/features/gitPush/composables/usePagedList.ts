@@ -1,4 +1,4 @@
-// gitPush 本地分页 composable（消除 CommitAnalysisPanel / LogPanel 两处分页重复）
+// gitPush 本地分页 composable（提交分析等分页列表共用）
 import type { Ref } from "vue"
 import { computed, ref } from "vue"
 

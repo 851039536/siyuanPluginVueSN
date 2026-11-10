@@ -26,7 +26,7 @@
     </div>
 
     <div class="gp-header-btns">
-      <!-- 视图切换（四个入口由 VIEW_GROUPS 配置驱动；统计组内含项目状态/提交分析/代码报告三视图） -->
+      <!-- 视图切换（三个入口由 VIEW_GROUPS 配置驱动；统计组内含项目状态/提交分析/代码报告三视图） -->
       <div class="gp-view-toggle">
         <button
           v-for="group in VIEW_GROUPS"
@@ -223,7 +223,6 @@ const VIEW_GROUPS: ViewGroup[] = [
   { key: "list", icon: "mdi:view-list", labelKey: "listView", views: ["list"] },
   // 规则检查与行数排行为「提交分析」的内部 Tab，不再各占一个入口
   { key: "stats", icon: "mdi:chart-bar", labelKey: "statsGroup", views: ["stats", "analysis", "report"] },
-  { key: "log", icon: "mdi:history", labelKey: "logView", views: ["log"] },
   { key: "repoclean", icon: "mdi:broom", labelKey: "repoCleanView", views: ["repoclean"] },
 ]
 

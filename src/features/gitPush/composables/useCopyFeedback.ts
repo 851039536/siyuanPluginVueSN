@@ -3,10 +3,7 @@ import { onUnmounted, ref } from "vue"
 import { TimerRegistry } from "@/utils/timerRegistry"
 
 /**
- * 复制反馈状态机（操作日志的表格行与详情弹窗共用）。
- *
- * 原先两处各自维护 `copied` ref + `setTimeout` 句柄 + `onUnmounted` 清理，
- * 属同一模式的复制粘贴 —— 也正是这类重复让「复制文本」在两处产生了不同格式（见 formatLogEntryText）。
+ * 复制反馈状态机（各弹窗与列表行的复制按钮共用，避免各自维护 copied + setTimeout + 卸载清理）。
  *
  * 定时器统一走 TimerRegistry（项目规范：计时器句柄集中托管，禁裸 setTimeout）。
  *

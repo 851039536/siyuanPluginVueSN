@@ -49,16 +49,6 @@
       @open-consistency="showConsistencyDialog = true"
     />
 
-    <!-- ========== 操作日志视图 ========== -->
-    <LogPanel
-      v-if="currentView === 'log'"
-      :i18n="i18n"
-      :logs="opLogs"
-      :loading="opLogsLoading"
-      @clear="confirmClearOpLogs"
-      @view-project="onViewProject"
-    />
-
     <!-- ========== 统计中心 · 提交分析（三视角 Tab：提交概览 / 规则检查 / 行数排行） ========== -->
     <CommitAnalysisPanel
       v-if="currentView === 'analysis'"
@@ -307,7 +297,6 @@ import ScanImportDialog from "./components/common/ScanImportDialog.vue"
 import SectionTabs from "./components/common/SectionTabs.vue"
 import SettingsDialog from "./components/common/SettingsDialog.vue"
 import StatsPanel from "./components/StatsView/index.vue"
-import LogPanel from "./components/LogPanel/index.vue"
 import CommitAnalysisPanel from "./components/CommitAnalysis/index.vue"
 import CodeReportPanel from "./components/CodeReport/index.vue"
 import RepoCleanPanel from "./components/RepoCleanPanel/index.vue"
@@ -444,10 +433,6 @@ const {
   needsPullProjects,
   uncommittedProjects,
   statsView,
-  // 操作日志
-  opLogs,
-  ensureOpLogsLoaded,
-  clearOpLogs,
   // 项目聚合管理
   starredProjects,
   allTags,
@@ -527,16 +512,6 @@ function cancelGenericConfirm() {
   genericConfirm.value.visible = false
 }
 
-/** 清空操作日志二次确认 */
-function confirmClearOpLogs() {
-  showConfirm(
-    props.i18n.clearLogsConfirm,
-    props.i18n.clearLogsConfirmBody,
-    () => { clearOpLogs() },
-    props.i18n.clearLogs,
-  )
-}
-
 // ── 批量加载旋转进度指示器（数据经 PanelHeader 头部最右侧展示；runBatch 编排已下沉 useBatchProgress，批内并发跟随 git 并发设置）──
 const { state: progressState, runBatch: runBatchWithProgress } = useBatchProgress({
   getBatchSize: () => props.manager.getGitConcurrency(),
@@ -560,7 +535,7 @@ async function runProjectLoadBatch(
   })
 }
 
-/** 当前视图（顶层入口：列表 / 统计 / 日志 / 清理；统计中心内含 stats / analysis / report 三分区） */
+/** 当前视图（顶层入口：列表 / 统计 / 清理；统计中心内含 stats / analysis / report 三分区） */
 const currentView = ref<PanelView>("list")
 
 /** 统计中心覆盖的三个分区视图 */
@@ -587,8 +562,6 @@ const statisticsTab = computed<StatisticsTabId>({
 
 /** 项目状态是否已由用户手动加载（进入页面不自动加载；同一面板会话内保持） */
 const statsLoaded = ref(false)
-/** 日志视图首次读盘加载态（供 LogPanel 展示加载中占位，避免闪现空态） */
-const opLogsLoading = ref(false)
 /** 当前选中的分类 ID（空串 = 用户尚未选择，此时不加载任何项目；每次打开面板均从空串开始） */
 const activeCategory = ref<string>("")
 
@@ -1521,7 +1494,7 @@ async function refreshStatsData() {
   }
 }
 
-/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→不自动加载（由用户点击）；日志→同步置 loading（pre-flush，避免 LogPanel 首渲闪空态）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
+/** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→不自动加载（由用户点击）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
 watch(currentView, async (view) => {
   if (view === "list") {
     // 收藏 / 归档视图按项目属性取状态；其余视图仍走「当前分类最小集」
@@ -1531,14 +1504,6 @@ watch(currentView, async (view) => {
   }
   // 项目状态采用手动加载模式：进入只展示会话内已有数据或未加载空态，
   // 不发起任何 git（含链接审计）；由用户点击「加载项目状态」触发。
-  if (view === "log") {
-    opLogsLoading.value = true
-    try {
-      await ensureOpLogsLoaded()
-    } finally {
-      opLogsLoading.value = false
-    }
-  }
   if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
   // 行数排行是「提交分析」视图的内部 Tab，其缓存加载是纯本地存储读取、不触发 git，
   // 故与 ensureAnalysis 一并无条件执行（暂停 git 操作时仍须恢复过滤选择与上次行数数据，否则重启后勾选丢失）

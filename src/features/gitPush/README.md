@@ -47,7 +47,7 @@
 ```
 src/features/gitPush/
 ├── index.ts                         # registerGitPush() 入口
-├── index.vue                        # 主面板（Dock / 独立窗口 tab 双形态；列表 + 统计中心 + 日志 + 清理四入口）
+├── index.vue                        # 主面板（Dock / 独立窗口 tab 双形态；列表 + 统计中心 + 清理三入口）
 ├── GitPushManager.ts                # 门面：组合 managers/ 协作者 + addTab/openWindow 独立窗口承载
 ├── reportMetrics.ts                 # 代码统计报告纯函数层：numstat 解析 + 作者/文件聚合 + 债务/热点评分 + K 线分桶压缩
 ├── reportChart.ts                   # 提交 K 线图绘制配置：chart.js 数据集/坐标轴/影线插件（自 CandlestickSection 迁出）
@@ -138,7 +138,7 @@ src/features/gitPush/
 │   │   ├── MenuPopover.vue          # 统一内联菜单容器（role=menu、↑↓/Home/End、打开聚焦首项、Esc 上报）
 │   │   ├── DropCommitDialog.vue     # 删除历史提交弹窗（四项前置校验 + bundle 备份 + fast-import 历史重建删除，LOG Tab 与规则检查共用）
 │   │   ├── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
-│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 四入口视图切换 + 批量旋转进度指示器）
+│   │   ├── PanelHeader.vue          # 面板头部（搜索 + 三入口视图切换 + 批量旋转进度指示器）
 │   │   ├── SectionTabs.vue          # 视图内分区切换条（提交分析 / 代码报告 / 统计中心共用）
 │   │   ├── CommitCountSelect.vue    # 分析条数选择下拉（共享 Select xsmall 档，提交分析与规则检查工具条共用）
 │   │   ├── AnalysisToolbar.vue      # 分析/统计类视图统一工具条（状态文案 + 控件插槽 + 可选运行按钮）
@@ -185,13 +185,6 @@ src/features/gitPush/
 │   │   ├── PendingProjectsSection.vue # 待处理项目区块（全站唯一一份待处理清单表格）
 │   │   ├── PlatformSection.vue     # 平台区块（覆盖率行内汇总 + 链接校验问题 + 每项目平台配置/一致性矩阵 + 分支一致性入口）
 │   │   └── common/                 # 统计区块共享组件（StatsSection 区块包裹器 / PlatformTable 平台矩阵表格 / AllClear 全部正常空态）
-│   ├── LogPanel/                    # 操作日志视图专属（6 个）
-│   │   ├── index.vue                # 操作日志视图入口容器（筛选/分页/日期分组编排 + 区块组合）
-│   │   ├── LogStatsBar.vue          # 状态统计条（按操作类型聚合成功/失败）
-│   │   ├── LogToolbar.vue           # 顶部工具条（搜索 + 类型筛选 + 仅失败 + 清空）
-│   │   ├── LogTable.vue             # 日志表格（表头 + 日期分组循环）
-│   │   ├── LogTableRow.vue          # 日志表格行（数据行 + 平台/commit 子行，展开/复制状态自持）
-│   │   └── LogDetailDialog.vue      # 日志条目详情弹窗
 │   ├── CommitAnalysis/              # 统计中心 · 提交分析分区（三视角 Tab：提交概览 / 规则检查 / 行数排行；9 个）
 │   │   ├── index.vue                # 视图入口容器（三 Tab 编排 + 共用工具条/四态门；范围内 KPI/趋势/排行/热力图在此组合）
 │   │   ├── ProjectCommitTrend.vue   # 每日项目提交趋势（chart.js 堆叠柱：与热力图同粒度，Top 8 + 其他，最新日期在最左，点击柱子联动明细）

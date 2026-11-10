@@ -87,12 +87,6 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     doStashDrop: gitOps.doStashDrop,
     generateStashDesc: gitOps.generateStashDesc,
 
-    // ── 操作日志 ──
-    opLogs: gitOps.opLogs,
-    ensureOpLogsLoaded: gitOps.ensureOpLogsLoaded,
-    clearOpLogs: gitOps.clearOpLogs,
-    flushOpLogs: gitOps.flushOpLogs,
-
     // ── Tag + 冲突 + 模板 + 扫描 ──
     createTagOp: tagsConflicts.createTagOp,
     deleteTagOp: tagsConflicts.deleteTagOp,

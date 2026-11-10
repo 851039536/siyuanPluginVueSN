@@ -410,7 +410,7 @@ export interface ConflictFile {
   status: "both-modified" | "added-by-us" | "added-by-them" | "deleted-by-us" | "deleted-by-them"
 }
 
-// ── Git 操作日志（持久化追查推送/拉取/提交历史）──
+// ── Git 操作类型与远程输出 ──
 
 /** 操作类型 */
 export type GitOpAction = "push" | "pull" | "commit"
@@ -426,39 +426,6 @@ export interface PushOutputEntry {
   fullStdout: string
   fullStderr: string
 }
-
-/** 操作日志单平台结果（PushOutputEntry 的精简投影，不存 fullStdout/fullStderr 防撑爆存储） */
-export interface GitOpLogPlatform {
-  key: string
-  label: string
-  ok: boolean
-  skipped: boolean
-  summary: string
-}
-
-/** 操作日志条目 */
-export interface GitOpLogEntry {
-  id: string
-  /** ISO 时间戳 */
-  time: string
-  /** 项目 ID */
-  projectId: string
-  /** 项目名称（存储时不实时反查，打点方传入快照） */
-  projectName: string
-  /** 操作类型 */
-  action: GitOpAction
-  /** 整体成功/失败 */
-  ok: boolean
-  /** 摘要（第一行输出或错误消息） */
-  summary: string
-  /** commit 信息（仅 action=commit 时有值） */
-  message?: string
-  /** 逐平台结果（仅 push/pull 时有值） */
-  platforms?: GitOpLogPlatform[]
-}
-
-/** 操作日志环形上限 */
-export const MAX_OP_LOG_COUNT = 300
 
 // ── 提交信息模板 ──
 
@@ -584,8 +551,6 @@ export class GitPushStorage {
   readonly cardCompact: TypedStorage<boolean>
   /** Compare / 创建 PR 深链的基线分支（默认 main；仓库默认分支为 master 时可改） */
   readonly compareBaseBranch: TypedStorage<string>
-  /** 操作日志（环形上限 300 条，防抖落盘） */
-  readonly opLogs: TypedStorage<GitOpLogEntry[]>
   /** 提交分析结果缓存（跨会话复用，进入分析视图直接展示上次结果，手动重新分析后更新） */
   readonly commitAnalysisCache: TypedStorage<CommitAnalysisCache>
   /** 行数统计独立缓存（与提交分析缓存解耦，进入行数统计视图直接复用上次结果） */
@@ -645,7 +610,6 @@ export class GitPushStorage {
     this.cardLayout = new TypedStorage<CardLayout>(storage, "git-push-card-layout", "detailed")
     this.cardCompact = new TypedStorage<boolean>(storage, "git-push-card-compact", false)
     this.compareBaseBranch = new TypedStorage(storage, "git-push-compare-base", "main")
-    this.opLogs = new TypedStorage(storage, "git-push-op-logs", [])
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
     this.lineStatsCache = new TypedStorage(storage, "git-push-line-stats-cache", DEFAULT_LINE_STATS_CACHE)
     this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)

@@ -8,16 +8,13 @@ import type {
 } from "../types"
 import { onUnmounted, ref } from "vue"
 import {
-  deriveOpOk,
   findProject,
-  opLogSummary,
   requireProject,
   resolveValidPath,
   acquireFlag,
   releaseFlag,
 } from "../utils"
 import { useRemoteProgress } from "./useRemoteProgress"
-import { useOpLog } from "./useOpLog"
 import { useProjectQueryScheduler } from "./useProjectQueryScheduler"
 export type { PushOutputEntry, ProgressStatus } from "./useRemoteProgress"
 
@@ -148,26 +145,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
         reloadWorkingTreeAfterWrite(id),
         loadPushStatus(id, branch ? { branch, force: true } : { force: true }),
       ])
-      // 操作日志埋点（摘要经 opLogSummary 单一真源生成，与 push/pull 口径一致）
-      void appendOpLog({
-        projectId: id,
-        projectName: project.name,
-        action: "commit",
-        ok: deriveOpOk(undefined, true),
-        summary: opLogSummary({ action: "commit", ok: true, i18n, raw: result }),
-        message,
-      })
       return result
     } catch (e: any) {
-      // 操作日志埋点：提交失败（ok 由「抛错即失败」的契约决定，与成功分支成对）
-      void appendOpLog({
-        projectId: id,
-        projectName: project.name,
-        action: "commit",
-        ok: deriveOpOk(undefined, false),
-        summary: opLogSummary({ action: "commit", ok: false, i18n, raw: String(e?.message || e) }),
-        message,
-      })
       throw e // 原样 rethrow，保持 handleCommit 的现有错误处理不变
     } finally {
       delete committing.value[id]
@@ -235,15 +214,11 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     remote.clearProject(id)
   }
 
-  // ── 操作日志（实例化后在漏斗处埋点）──
-  const { opLogs, ensureOpLogsLoaded, appendOpLog, clearOpLogs, flush: flushOpLogs } = useOpLog(manager)
-
   // ── 远程推送/拉取（委托 useRemoteProgress）──
   const remote = useRemoteProgress(manager, projects, {
     // 推送/拉取改变了 ahead/behind：强制重查，避免复用在飞旧查询
     loadPushStatus: (id: string) => loadPushStatus(id, { force: true }),
     safeTimeout,
-    appendOpLog,
     i18n,
   })
 
@@ -302,11 +277,6 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     generateStashDesc,
     // 清理
     clearProjectCache,
-    // 操作日志
-    opLogs,
-    ensureOpLogsLoaded,
-    clearOpLogs,
-    flushOpLogs,
   }
 }
 

@@ -1,4 +1,4 @@
-<!-- gitPush 通用「加载更多」按钮（消除 CommitAnalysisPanel / LogPanel 两处重复） -->
+<!-- gitPush 通用「加载更多」按钮（提交分析等分页列表共用） -->
 <template>
   <div class="gp-load-more">
     <!-- 按钮文案："加载更多 (可见/总数)"；共享 Button（ghost + xsmall + dense，视觉以文字为主） -->

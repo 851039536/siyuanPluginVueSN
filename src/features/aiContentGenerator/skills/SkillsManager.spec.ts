@@ -145,6 +145,7 @@ describe("toSkillItem", () => {
       content: "# 技能名",
       filePath: "/home/u/.claude/skills/x/skill.md",
       tool: "claude",
+      scope: "global",
       fileSize: 42,
     })
     expect(item.id).toBe("/home/u/.claude/skills/x/skill.md")

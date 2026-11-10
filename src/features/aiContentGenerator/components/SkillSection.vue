@@ -16,9 +16,12 @@
       :empty-text="i18n.skillNoMatch"
       @update:model-value="onSelect"
     >
-      <!-- 已选项富内容：技能名 + 来源工具色点 -->
+      <!-- 已选项富内容：技能名 + 来源工具色点（title 补全被省略号截断的长名称） -->
       <template #selected="{ option }">
-        <span class="skill-item-main">
+        <span
+          class="skill-item-main"
+          :title="option?.label"
+        >
           <span class="skill-item-name">{{ option?.label }}</span>
           <span
             v-if="option?.skill"

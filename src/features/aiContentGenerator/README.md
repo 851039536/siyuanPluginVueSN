@@ -64,8 +64,14 @@ aiContentGenerator/
     与项目路径输入无关、始终扫描；工作区根经 `@/utils/workspaceDir` 的 `readWorkspaceDir()` 解析
     （`window.siyuan.config.system.workspaceDir`，getConf 回退）。
   - 复制 Skill 的目标作用域沿用「来源作用域优先、无登记路径顺延」，工作区技能视为 global 桶。
+- **加载来源开关**：「管理技能」弹窗内「加载来源」按 `tool + scope + 相对路径` 维度勾选，
+  未勾选的路径在**扫描阶段直接跳过（不读盘）**，工具卡片计数也按启用路径统计。
+  - 状态源为 `skills/sourcePrefs.ts` 的模块级单例（面板与弹窗共享，无需跨组件传参）；
+  - 存的是**禁用列表**（`ai-content-generator-skill-sources`，已登记 `src/config/storage/jsonSlots.ts`），
+    默认空数组 = 全部启用，新增工具/路径无需迁移旧配置；已下线路径的残留记录在加载时被过滤；
+  - 弹窗切换开关后静默重扫（不弹「扫描完成」），面板在弹窗关闭时自动重载列表。
 - **扫描**：`skills/index.ts` 的 `scanSkills()` 为模块内 API（`useSkillsLoader` 直连），
-  不再走跨 Feature 依赖注入；`SkillInfo` 是扫描原始结构，`SkillItem`（`@/types/ai`）
+  统一注入 `isSkillPathEnabled` 过滤器；`SkillInfo` 是扫描原始结构（含 `scope`），`SkillItem`（`@/types/ai`）
   是展示/去重结构，经 `types/index.ts` 的 `toSkillItem` 转换。
 - **稳定标识**：列表 key 与编辑/删除/复制目标均使用 `skill.filePath`，禁止回退到数组索引。
 - **Markdown 渲染**：SkillCard 展开内容与 SkillPreviewModal 同用 `utils.ts` 的

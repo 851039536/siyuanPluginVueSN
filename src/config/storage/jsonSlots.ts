@@ -240,6 +240,7 @@ export const JSON_SLOTS = [
   jsonSlot("textDiff.settings", ["textDiff"], "textdiff-settings", "文本对比设置", { legacyName: true }),
   jsonSlot("formatAssistant.settings", ["formatAssistant"], "format-assistant-settings", "排版助手设置"),
   jsonSlot("aiContentGenerator.settings", ["aiContentGenerator"], "ai-content-generator-settings", "AI 信息生成设置"),
+  jsonSlot("aiContentGenerator.skillSources", ["aiContentGenerator"], "ai-content-generator-skill-sources", "AI 技能加载来源"),
   jsonSlot("componentPreview.size", ["componentPreview"], "component-preview-size", "组件预览尺寸"),
 
   // ==================== toolCollection ====================

@@ -5,7 +5,7 @@
  */
 
 import { AI_TOOLS } from "@/config/aiTools"
-import type { AIToolConfig, AIToolType } from "@/config/aiTools"
+import type { AISkillScope, AIToolConfig, AIToolType } from "@/config/aiTools"
 import { readWorkspaceDir } from "@/utils/workspaceDir"
 
 /** 技能说明文件名候选：大写优先（Agent Skills 规范），兼容历史小写约定 */
@@ -83,8 +83,20 @@ export interface SkillInfo {
   content: string
   filePath: string
   tool: AIToolType
+  /** 来源作用域（技能开关按 tool + scope + 相对路径维度配置） */
+  scope: AISkillScope
   fileSize: number
 }
+
+/**
+ * 单条来源路径的启用判定（返回 false 时整条路径跳过，不读盘）
+ * 由 sourcePrefs 提供实现，SkillsManager 只负责调用，保持与偏好存储解耦。
+ */
+export type SkillPathFilter = (
+  toolId: AIToolType,
+  scope: AISkillScope,
+  relPath: string,
+) => boolean
 
 export class SkillsManager {
   private fs: any = null
@@ -157,43 +169,52 @@ export class SkillsManager {
     return this.path.join(basePath, relPath)
   }
 
-  async scanToolSkills(tool: AIToolConfig, projectPath?: string): Promise<SkillInfo[]> {
-    if (!this.available) return []
-
+  /** 扫描一组来源路径（filter 返回 false 的路径整体跳过，不读盘） */
+  private async scanPathGroup(
+    basePath: string,
+    relPaths: readonly string[],
+    toolId: AIToolType,
+    scope: AISkillScope,
+    filter?: SkillPathFilter,
+  ): Promise<SkillInfo[]> {
     const skills: SkillInfo[] = []
 
-    for (const relPath of tool.skillPaths) {
-      const fullPath = this.path.join(this.homeDir, relPath)
-      const found = await this.scanSkillDirectory(fullPath, tool.id)
-      skills.push(...found)
+    for (const relPath of relPaths) {
+      if (filter && !filter(toolId, scope, relPath)) continue
+      const fullPath = this.path.join(basePath, relPath)
+      skills.push(...(await this.scanSkillDirectory(fullPath, toolId, scope)))
     }
 
+    return skills
+  }
+
+  async scanToolSkills(
+    tool: AIToolConfig,
+    projectPath?: string,
+    filter?: SkillPathFilter,
+  ): Promise<SkillInfo[]> {
+    if (!this.available) return []
+
+    const skills = await this.scanPathGroup(this.homeDir, tool.skillPaths, tool.id, "global", filter)
+
     if (projectPath) {
-      for (const relPath of tool.projectPaths) {
-        const fullPath = this.path.join(projectPath, relPath)
-        const found = await this.scanSkillDirectory(fullPath, tool.id)
-        skills.push(...found)
-      }
+      skills.push(...await this.scanPathGroup(projectPath, tool.projectPaths, tool.id, "project", filter))
     }
 
     // 思源工作区作用域（如 data/storage/ai/agent/skills）：与项目路径输入无关，始终扫描
     if (tool.workspacePaths && tool.workspacePaths.length > 0) {
       const ws = await this.getWorkspaceDir()
       if (ws) {
-        for (const relPath of tool.workspacePaths) {
-          const fullPath = this.path.join(ws, relPath)
-          const found = await this.scanSkillDirectory(fullPath, tool.id)
-          skills.push(...found)
-        }
+        skills.push(...await this.scanPathGroup(ws, tool.workspacePaths, tool.id, "workspace", filter))
       }
     }
 
     return skills
   }
 
-  async scanAllSkills(projectPath?: string): Promise<SkillInfo[]> {
+  async scanAllSkills(projectPath?: string, filter?: SkillPathFilter): Promise<SkillInfo[]> {
     const results = await Promise.all(
-      AI_TOOLS.map((tool) => this.scanToolSkills(tool, projectPath)),
+      AI_TOOLS.map((tool) => this.scanToolSkills(tool, projectPath, filter)),
     )
     return results.flat()
   }
@@ -227,6 +248,7 @@ export class SkillsManager {
   private async scanSkillDirectory(
     dirPath: string,
     toolId: AIToolType,
+    scope: AISkillScope,
   ): Promise<SkillInfo[]> {
     const skills: SkillInfo[] = []
 
@@ -259,6 +281,7 @@ export class SkillsManager {
               content,
               filePath: skillMdPath,
               tool: toolId,
+              scope,
               fileSize: stat.size,
             })
           }
@@ -341,7 +364,7 @@ export class SkillsManager {
     }
   }
 
-  async checkToolExists(tool: AIToolConfig, projectPath?: string): Promise<{
+  async checkToolExists(tool: AIToolConfig, projectPath?: string, filter?: SkillPathFilter): Promise<{
     global: boolean
     project: boolean
     globalCount: number
@@ -356,14 +379,20 @@ export class SkillsManager {
       }
     }
 
+    /** 只统计启用中的路径，与 scanSkillDirectory 的扫描口径保持一致 */
+    const enabledPaths = (scope: AISkillScope, relPaths: string[]) =>
+      filter ? relPaths.filter((relPath) => filter(tool.id, scope, relPath)) : relPaths
+
     // 计数口径：global 桶 = 全局（用户目录）+ 思源工作区作用域（UI 卡片按合计展示）
-    const globalResult = await this.checkPathGroup(this.homeDir, tool.skillPaths)
+    const globalResult = await this.checkPathGroup(this.homeDir, enabledPaths("global", tool.skillPaths))
     const wsDir = await this.getWorkspaceDir()
-    const workspaceResult = (wsDir && tool.workspacePaths && tool.workspacePaths.length > 0)
-      ? await this.checkPathGroup(wsDir, tool.workspacePaths)
+    const workspacePaths = enabledPaths("workspace", tool.workspacePaths ?? [])
+    const workspaceResult = (wsDir && workspacePaths.length > 0)
+      ? await this.checkPathGroup(wsDir, workspacePaths)
       : { exists: false, count: 0 }
-    const projectResult = projectPath
-      ? await this.checkPathGroup(projectPath, tool.projectPaths)
+    const projectPaths = enabledPaths("project", tool.projectPaths)
+    const projectResult = (projectPath && projectPaths.length > 0)
+      ? await this.checkPathGroup(projectPath, projectPaths)
       : {
           exists: false,
           count: 0,

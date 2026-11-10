@@ -94,6 +94,63 @@
               </div>
             </div>
           </div>
+          <!-- 加载来源：只有勾选的路径参与扫描（偏好持久化，AI 面板技能列表同步生效） -->
+          <CollapsibleSection
+            class="sv-sources"
+            :title="i18n.loadSources"
+            icon="folder"
+            :open="sourcesOpen"
+            @update:open="sourcesOpen = $event"
+          >
+            <template #headerRight>
+              <span class="sv-sources-count">{{ enabledSkillSourceCount }}/{{ skillSources.length }}</span>
+            </template>
+            <div class="sv-sources-toolbar">
+              <!-- 来源说明 -->
+              <span class="sv-sources-hint">{{ i18n.loadSourcesHint }}</span>
+              <!-- 按钮：全部启用 -->
+              <Button
+                variant="ghost"
+                size="xsmall"
+                @click="toggleAllSkillSources(true)"
+              >
+                {{ i18n.selectAll }}
+              </Button>
+              <!-- 按钮：全部禁用 -->
+              <Button
+                variant="ghost"
+                size="xsmall"
+                @click="toggleAllSkillSources(false)"
+              >
+                {{ i18n.clearAll }}
+              </Button>
+            </div>
+            <ul class="sv-source-list">
+              <li
+                v-for="source in skillSources"
+                :key="source.id"
+                class="sv-source-item"
+                :class="{ 'sv-source-item--off': !isSkillSourceEnabled(source.id) }"
+              >
+                <Checkbox
+                  size="xsmall"
+                  :model-value="isSkillSourceEnabled(source.id)"
+                  :aria-label="`${source.toolName} ${getScopeLabel(source.scope)}`"
+                  @update:model-value="(v) => toggleSkillSource(source.id, !!v)"
+                />
+                <span
+                  class="sv-source-dot"
+                  :style="{ background: source.color }"
+                ></span>
+                <span class="sv-source-tool">{{ source.toolName }}</span>
+                <span class="sv-source-scope">{{ getScopeLabel(source.scope) }}</span>
+                <span
+                  class="sv-source-path"
+                  :title="getSourcePathLabel(source)"
+                >{{ getSourcePathLabel(source) }}</span>
+              </li>
+            </ul>
+          </CollapsibleSection>
           <div class="sv-project-path">
             <!-- 项目路径标签 -->
             <div class="sv-path-label">
@@ -118,7 +175,7 @@
               variant="primary"
               size="xsmall"
               :loading="loading"
-              @click="refreshSkills"
+              @click="refreshSkills()"
             >
               {{ i18n.refresh }}
             </Button>
@@ -173,9 +230,11 @@
                 :size="40"
               />
             </div>
-            <!-- 空状态文案（区分全局/单工具） -->
+            <!-- 空状态文案（区分「未启用来源」/全局/单工具） -->
             <div class="sv-empty-text">
-              {{ selectedTool === 'all' ? i18n.noSkillsAllTools : i18n.noSkillsForTool }}
+              {{ enabledSkillSourceCount === 0
+                ? i18n.noSourcesEnabled
+                : (selectedTool === 'all' ? i18n.noSkillsAllTools : i18n.noSkillsForTool) }}
             </div>
             <!-- 空状态路径提示 -->
             <div class="sv-empty-hint">
@@ -209,10 +268,12 @@
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
 import Button from "@/components/Button.vue"
+import Checkbox from "@/components/Checkbox.vue"
 import Dialog from "@/components/Dialog.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import Loader from "@/components/Loader.vue"
+import CollapsibleSection from "../../components/CollapsibleSection.vue"
 import { useSkillsManager } from "../composables/useSkillsManager"
 import CopySkillModal from "./CopySkillModal.vue"
 import DeleteConfirmModal from "./DeleteConfirmModal.vue"
@@ -243,6 +304,14 @@ const {
   projectPath,
   skills,
   loading,
+  sourcesOpen,
+  skillSources,
+  enabledSkillSourceCount,
+  isSkillSourceEnabled,
+  getScopeLabel,
+  getSourcePathLabel,
+  toggleSkillSource,
+  toggleAllSkillSources,
   expandedSkills,
   editingSkill,
   editContent,

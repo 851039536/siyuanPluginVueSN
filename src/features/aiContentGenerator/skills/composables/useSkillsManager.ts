@@ -2,10 +2,18 @@
  * Skills 管理 — 状态与 CRUD 逻辑（以 filePath 为稳定标识，含定时器清理）
  */
 import type { Plugin } from "siyuan"
-import type { AIToolType } from "@/config/aiTools"
+import type { AISkillScope, AISkillSource, AIToolType } from "@/config/aiTools"
 import type { SkillInfo } from "../SkillsManager"
 import { showMessage } from "siyuan"
-import { AI_TOOLS, getAITool } from "@/config/aiTools"
+import { AI_TOOLS, getAITool, SKILL_SOURCES } from "@/config/aiTools"
+import {
+  enabledSkillSourceCount,
+  initSkillSourcePrefs,
+  isSkillPathEnabled,
+  isSkillSourceEnabled,
+  setAllSkillSourcesEnabled,
+  setSkillSourceEnabled,
+} from "../sourcePrefs"
 import { SkillsManager } from "../SkillsManager"
 import {
   computed,
@@ -14,6 +22,13 @@ import {
   ref,
   watch,
 } from "vue"
+
+/** 作用域 → i18n 键（来源列表文案） */
+const SCOPE_LABEL_KEYS: Record<AISkillScope, string> = {
+  global: "scopeGlobal",
+  project: "scopeProject",
+  workspace: "scopeWorkspace",
+}
 
 interface UseSkillsManagerProps {
   visible: boolean
@@ -34,6 +49,18 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
   const skills = ref<SkillInfo[]>([])
   const loading = ref(false)
   const expandedSkills = reactive(new Set<string>())
+
+  /** 「加载来源」区块展开态（默认收起：仅在需要缩小扫描范围时调整） */
+  const sourcesOpen = ref(false)
+
+  /** 来源行数据：配置投影 + 工具展示名/色（名称与颜色统一取自 getAITool） */
+  const skillSources = computed<Array<AISkillSource & { toolName: string, color: string }>>(() =>
+    SKILL_SOURCES.map((source) => ({
+      ...source,
+      toolName: getAITool(source.toolId)?.name ?? source.toolId,
+      color: getAITool(source.toolId)?.color ?? "#999",
+    })),
+  )
 
   const editingSkill = ref<string | null>(null)
   const editContent = ref("")
@@ -77,6 +104,16 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
 
   function getToolName(toolId: AIToolType): string {
     return getAITool(toolId)?.name || toolId
+  }
+
+  /** 作用域展示名（全局 / 项目级 / 工作区） */
+  function getScopeLabel(scope: AISkillScope): string {
+    return i18n.value[SCOPE_LABEL_KEYS[scope]] ?? scope
+  }
+
+  /** 来源路径展示：全局用 ~ 前缀，项目级/工作区保留相对路径（基准目录由作用域标签说明） */
+  function getSourcePathLabel(source: AISkillSource): string {
+    return source.scope === "global" ? `~/${source.relPath}` : source.relPath
   }
 
   function toggleExpand(filePath: string) {
@@ -247,7 +284,7 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
   async function checkAllToolStatuses() {
     const results = await Promise.all(
       AI_TOOLS.map(async (tool) => {
-        const status = await manager.checkToolExists(tool, projectPath.value || undefined)
+        const status = await manager.checkToolExists(tool, projectPath.value || undefined, isSkillPathEnabled)
         return { id: tool.id, status }
       }),
     )
@@ -256,28 +293,47 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     }
   }
 
-  async function refreshSkills() {
+  /**
+   * 重新扫描。
+   * silent 用于来源开关等高频操作：只刷新列表，不弹「扫描完成」提示。
+   */
+  async function refreshSkills(options: { silent?: boolean } = {}) {
     if (!managerAvailable) return
-    loading.value = true
+    // 静默重扫（来源开关）不切加载态：避免每次勾选都闪一次骨架
+    if (!options.silent) loading.value = true
     expandedSkills.clear()
     editingSkill.value = null
 
     try {
-      skills.value = await manager.scanAllSkills(projectPath.value || undefined)
+      skills.value = await manager.scanAllSkills(projectPath.value || undefined, isSkillPathEnabled)
       await checkAllToolStatuses()
-      showMessage(
-        skills.value.length > 0
-          ? `${i18n.value.scanComplete ?? ""}：${skills.value.length} ${i18n.value.unit ?? ""}`
-          : (i18n.value.noSkillsFound ?? ""),
-        2000,
-        "info",
-      )
+      if (!options.silent) {
+        showMessage(
+          skills.value.length > 0
+            ? `${i18n.value.scanComplete ?? ""}：${skills.value.length} ${i18n.value.unit ?? ""}`
+            : (i18n.value.noSkillsFound ?? ""),
+          2000,
+          "info",
+        )
+      }
     } catch (e) {
       console.error("扫描 Skills 失败:", e)
       showMessage(i18n.value.scanFailed ?? "", 2000, "error")
     } finally {
       loading.value = false
     }
+  }
+
+  /** 单个来源开关：落盘后静默重扫（禁用的路径不再读盘） */
+  async function toggleSkillSource(id: string, enabled: boolean) {
+    await setSkillSourceEnabled(id, enabled)
+    await refreshSkills({ silent: true })
+  }
+
+  /** 全选 / 全不选（一次落盘，随后静默重扫一次） */
+  async function toggleAllSkillSources(enabled: boolean) {
+    await setAllSkillSourcesEnabled(skillSources.value.map((source) => source.id), enabled)
+    await refreshSkills({ silent: true })
   }
 
   async function openCurrentToolDir() {
@@ -318,6 +374,8 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
   watch(() => props.visible, async (v) => {
     if (v && !hasInitialized && managerAvailable) {
       hasInitialized = true
+      // 先恢复来源偏好再扫描：否则首帧会按「全部启用」多读一批已禁用的目录
+      await initSkillSourcePrefs(props.plugin)
       await checkAllToolStatuses()
       await refreshSkills()
     }
@@ -336,6 +394,14 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     projectPath,
     skills,
     loading,
+    sourcesOpen,
+    skillSources,
+    enabledSkillSourceCount,
+    isSkillSourceEnabled,
+    getScopeLabel,
+    getSourcePathLabel,
+    toggleSkillSource,
+    toggleAllSkillSources,
     expandedSkills,
     editingSkill,
     editContent,

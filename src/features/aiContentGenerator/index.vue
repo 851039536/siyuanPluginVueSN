@@ -95,7 +95,7 @@ import {
   AIGeneratorStorage,
   DEFAULT_AI_SETTINGS,
 } from "./types/storage"
-import { skillsManagerVisible } from "./skills"
+import { initSkillSourcePrefs, skillsManagerVisible } from "./skills"
 import { useSkillsLoader } from "./composables/useSkillsLoader"
 import { useGeneration } from "./composables/useGeneration"
 import { useReview } from "./composables/useReview"
@@ -409,11 +409,16 @@ watch(
 // 技能选择变更持久化（按 id 保存，索引不稳定）
 watch(currentSkillIndex, scheduleSaveSettings)
 
-// Skills 管理弹窗关闭后刷新技能列表（弹窗内可能编辑/删除/复制了技能文件），并尽量保持原选择
+// Skills 管理弹窗关闭后刷新技能列表（弹窗内可能编辑/删除/复制了技能文件，或改了加载来源），并尽量保持原选择
 watch(skillsManagerVisible, async (visible) => {
   if (visible) return
   const prevId = currentSkill.value?.id ?? ""
   await loadSkills()
+  // 原选中技能已随「来源禁用 / 技能删除」消失时清空选择，避免静默落到别的技能上
+  if (prevId && !skills.value.some((skill) => skill.id === prevId)) {
+    currentSkillIndex.value = -1
+    return
+  }
   restoreSkillById(prevId)
 })
 
@@ -432,6 +437,8 @@ onMounted(async () => {
   if (props.plugin) {
     storage.value = new AIGeneratorStorage(props.plugin)
     await loadSettings()
+    // 来源偏好须先于首次扫描就绪：否则会把已禁用的路径一并扫进列表
+    await initSkillSourcePrefs(props.plugin)
   }
   await loadSkills()
   // 技能加载完成后恢复持久化的选择（须在 skills 就绪后执行）

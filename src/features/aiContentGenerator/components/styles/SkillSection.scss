@@ -7,9 +7,19 @@
   gap: $s-1;
 }
 
-// 约束宽度，避免长技能名撑破顶栏
+// 固定宽度：技能名长短变化时触发器不再左右抖动，也避免长名撑破顶栏
 .skill-select {
-  max-width: 180px;
+  flex: 0 0 auto;
+  width: 180px;
+
+  // 下拉面板单独放宽：短名与触发器同宽，长名按内容伸展到 280px 上限（超出省略、title 兜底）。
+  // 左对齐向右扩展——顶栏左侧文档选择器为 flex:1 可压缩，向右有足够空间；
+  // 右对齐会越过面板左边界，被 .ai-content-panel 的 overflow: hidden 裁掉
+  :deep(.si-select__dropdown) {
+    width: max-content;
+    min-width: 100%;
+    max-width: 280px;
+  }
 }
 
 // 选中项与下拉选项共用的"名称 + 来源色点"行

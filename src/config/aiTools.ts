@@ -21,6 +21,24 @@ export interface AIToolConfig {
   workspacePaths?: string[]
 }
 
+/** 技能来源作用域：global = 用户目录，project = 项目根，workspace = 思源工作区 */
+export type AISkillScope = "global" | "project" | "workspace"
+
+/** 单个可开关的技能来源路径（由 AI_TOOLS 派生，id 为持久化标识，勿手工拼接） */
+export interface AISkillSource {
+  /** 稳定 id：`<toolId>:<scope>:<相对路径>` */
+  id: string
+  toolId: AIToolType
+  scope: AISkillScope
+  /** 相对基准目录的路径（global → 用户目录 / project → 项目根 / workspace → 思源工作区） */
+  relPath: string
+}
+
+/** 拼接技能来源稳定 id（tool/scope/相对路径任一变化即视为新来源，旧持久化记录自动失效） */
+export function skillSourceId(toolId: AIToolType, scope: AISkillScope, relPath: string): string {
+  return `${toolId}:${scope}:${relPath}`
+}
+
 /** 全部 AI 编程工具配置（新增工具时在此处登记） */
 export const AI_TOOLS: AIToolConfig[] = [
   {
@@ -73,6 +91,31 @@ export const AI_TOOLS: AIToolConfig[] = [
     workspacePaths: ["data/storage/ai/agent/skills"],
   },
 ]
+
+/** 全部技能来源路径（按 AI_TOOLS 顺序展开；新增工具或路径自动纳入，无需另处登记） */
+export const SKILL_SOURCES: readonly AISkillSource[] = AI_TOOLS.flatMap((tool) => {
+  const groups: ReadonlyArray<readonly [AISkillScope, readonly string[]]> = [
+    ["global", tool.skillPaths],
+    ["project", tool.projectPaths],
+    ["workspace", tool.workspacePaths ?? []],
+  ]
+  return groups.flatMap(([scope, paths]) =>
+    paths.map((relPath) => ({
+      id: skillSourceId(tool.id, scope, relPath),
+      toolId: tool.id,
+      scope,
+      relPath,
+    })),
+  )
+})
+
+/** 技能来源 id 集合（用于校验持久化数据里已下线/改名的路径） */
+const SKILL_SOURCE_ID_SET: ReadonlySet<string> = new Set(SKILL_SOURCES.map((s) => s.id))
+
+/** 是否为当前版本仍存在的技能来源 id */
+export function isKnownSkillSourceId(id: string): boolean {
+  return SKILL_SOURCE_ID_SET.has(id)
+}
 
 /** AI 工具最小展示元信息（仅 id/name/color，供展示类消费方使用） */
 export interface AIToolMeta {

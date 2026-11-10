@@ -132,6 +132,97 @@
     }
   }
 
+  /* ── 加载来源（路径开关） ─────────────────────── */
+
+  .sv-sources {
+    margin-bottom: $s-4;
+
+    .sv-sources-count {
+      font-size: $t-2xs;
+      font-family: $ff-mono;
+      font-variant-numeric: tabular-nums;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
+    }
+
+    .sv-sources-toolbar {
+      display: flex;
+      align-items: center;
+      gap: $s-1;
+      margin-bottom: $s-2;
+    }
+
+    .sv-sources-hint {
+      flex: 1;
+      min-width: 0;
+      font-size: $t-2xs;
+      line-height: $lh-tight;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
+      opacity: 0.75;
+    }
+
+    .sv-source-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      // 12 条来源全展开时约 168px，超出滚动，避免把技能列表挤到看不见
+      max-height: 168px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: $s-px2;
+      @include sv-custom-scrollbar;
+    }
+
+    .sv-source-item {
+      display: flex;
+      align-items: center;
+      gap: $s-1;
+      min-width: 0;
+      font-size: $t-2xs;
+
+      // 未勾选：整行弱化，与「不参与扫描」的状态对应
+      &--off {
+        opacity: 0.45;
+
+        .sv-source-path {
+          text-decoration: line-through;
+        }
+      }
+    }
+
+    .sv-source-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sv-source-tool {
+      flex-shrink: 0;
+      font-weight: $fw-medium;
+      color: var(--b3-theme-on-surface, $c-fg);
+    }
+
+    .sv-source-scope {
+      flex-shrink: 0;
+      padding: 0 $s-px3;
+      border-radius: $r-sm;
+      background: var(--b3-theme-surface-lighter, $c-secondary);
+      color: var(--b3-theme-on-surface-variant, $c-muted);
+    }
+
+    .sv-source-path {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: $ff-mono;
+      color: var(--b3-theme-on-surface-variant, $c-muted);
+      opacity: 0.7;
+    }
+  }
+
   /* ── project path ───────────────────────────── */
 
   .sv-project-path {

@@ -4,6 +4,7 @@
 import type { Plugin } from "siyuan"
 import type { SkillInfo } from "./SkillsManager"
 import { SkillsManager } from "./SkillsManager"
+import { isSkillPathEnabled } from "./sourcePrefs"
 import { showSkillsManager } from "./state"
 
 /** 注册「Skills 查看器」命令（功能并入 aiContentGenerator 后由其统一注册） */
@@ -31,8 +32,12 @@ export {
 export async function scanSkills(projectPath?: string): Promise<SkillInfo[]> {
   const manager = new SkillsManager()
   try {
-    return await manager.scanAllSkills(projectPath)
+    // 只扫描启用中的来源路径（偏好由 Skills 管理弹窗的「加载来源」维护）
+    return await manager.scanAllSkills(projectPath, isSkillPathEnabled)
   } finally {
     manager.destroy()
   }
 }
+
+/** 初始化技能来源偏好（面板在首次扫描前调用；弹窗内部自行初始化，幂等） */
+export { initSkillSourcePrefs } from "./sourcePrefs"

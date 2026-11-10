@@ -72,9 +72,14 @@ export function useSkillsLoader() {
       // 去重
       skills.value = deduplicateSkills(rawSkills)
 
-      // 首次加载时自动选中第一个技能
-      if (skills.value.length > 0 && currentSkillIndex.value < 0) {
+      // 列表长度变化（来源开关 / 技能被删除）后索引需收敛，否则会停留在越界位置导致"看似选中实则为空"
+      if (skills.value.length === 0) {
+        currentSkillIndex.value = -1
+      } else if (currentSkillIndex.value < 0) {
+        // 首次加载或此前明确选过"无技能"：仅首次自动选中第一项（restoreSkillById 会随后覆盖）
         currentSkillIndex.value = 0
+      } else if (currentSkillIndex.value >= skills.value.length) {
+        currentSkillIndex.value = skills.value.length - 1
       }
     } catch (err) {
       console.error("扫描技能失败:", err)

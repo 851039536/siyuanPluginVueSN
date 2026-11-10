@@ -1031,8 +1031,9 @@ export class GitPushManager {
   /**
    * 一次取回整个变更集的补丁并按文件切分（审阅流用；单进程覆盖全部 tracked 变更）。
    * 未跟踪文件不在结果中，调用方对缺失路径回退 getFileDiff。
+   * 取数失败（git 报错 / 超 maxBuffer）返回 `null`，与「变更集为空」区分。
    */
-  async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string>> {
+  async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string> | null> {
     return this.worktreeOps.getChangesetDiff(projectPath, staged)
   }
 

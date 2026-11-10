@@ -201,19 +201,23 @@ export class WorktreeOps {
    * 一次性取回整个变更集的补丁，按文件路径切分为「路径 → 补丁」。
    *
    * 审阅流（多文件连续浏览）用它替代 N 次单文件 `git diff`：一次进程覆盖所有 tracked 变更，
-   * 代价从「每个文件 ~0.3s 进程启动」降到一次。失败 / 超 maxBuffer 时返回空对象，
-   * 调用方对缺失路径回退 getFileDiff —— 视图层永远能拿到内容，只是退化为逐个取。
+   * 代价从「每个文件 ~0.3s 进程启动」降到一次。
+   *
+   * 失败（git 报错 / 输出超 maxBuffer）返回 `null` 而不是空对象：调用方必须能区分
+   * 「变更集为空（确实没有改动）」与「取数失败」。前者按缺失路径回退是正常路径，
+   * 后者若也静默成空对象，视图层会以为每个文件都不在变更集里，于是为每个可见文件各 spawn
+   * 一个 `git diff` —— 本该 2 个进程的场景退化成 20+ 个，且界面上看不出原因。
    *
    * ⚠️ 未跟踪文件不在 `git diff` 输出中（既不在 index 也不在 HEAD），必须由调用方按需回退。
    */
-  async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string>> {
+  async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string> | null> {
     try {
       const args = ["-c", "core.quotepath=false", "diff", "--text"]
       if (staged) args.push("--cached")
       const raw = await this.executor.execGit(projectPath, args)
       return Object.fromEntries(parseChangesetDiff(raw))
     } catch {
-      return {}
+      return null
     }
   }
 

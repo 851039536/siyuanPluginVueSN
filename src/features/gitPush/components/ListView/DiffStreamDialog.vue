@@ -102,6 +102,19 @@
         :i18n="i18n"
       />
 
+      <!-- 变更集不可用：已退化为逐文件取数，给出可见原因（否则只是"变慢"且无从解释） -->
+      <div
+        v-if="changesetFailed"
+        class="wt-stream-notice"
+        role="status"
+      >
+        <Icon
+          icon="mdi:alert-circle-outline"
+          height="12"
+        />
+        <span>{{ i18n.diffChangesetUnavailable }}</span>
+      </div>
+
       <div
         ref="scrollEl"
         class="wt-stream-scroll"
@@ -172,6 +185,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  shallowRef,
   watch,
 } from "vue"
 import Button from "@/components/Button.vue"
@@ -197,8 +211,9 @@ const props = defineProps<{
   /**
    * 取整个变更集的补丁（一次 git diff 覆盖全部 tracked 文件）。
    * 未跟踪文件不在结果中，由本组件对缺失路径回退 loadDiff。
+   * 返回 `null` 表示取数失败（超 maxBuffer / git 报错），用于区分「空变更集」。
    */
-  getChangeset: (staged: boolean, opts?: { force?: boolean }) => Promise<Record<string, string>>
+  getChangeset: (staged: boolean, opts?: { force?: boolean }) => Promise<Record<string, string> | null>
 }>()
 
 const emit = defineEmits<{
@@ -222,17 +237,31 @@ const layout = defineModel<DiffLayout>("layout", { default: "auto" })
 const showLineNumbers = defineModel<boolean>("showLineNumbers", { default: true })
 const onlyChanges = defineModel<boolean>("onlyChanges", { default: false })
 
+/**
+ * 变更集不可用时的占位空映射。
+ * 模块级常量（引用稳定）：refreshChangesets 靠引用相等判断「内容没变」，
+ * 每次新建 `{}` 会让短路失效，退化成每轮刷新都全量重算统计、全部文件段重渲染。
+ */
+const EMPTY_CHANGESET: Record<string, string> = {}
+
 /** 当前所在文件（滚动联动侧栏高亮，也是 ←/→ 的基准） */
 const activePath = ref("")
 /** 已挂载的文件段数量（分页） */
 const streamLimit = ref(STREAM_FILE_INITIAL)
-/** 变更集补丁：两个范围各取一份，范围切换与首屏渲染都命中内存 */
-const changesets = ref<{ staged: Record<string, string> | null, unstaged: Record<string, string> | null }>({
-  staged: null,
-  unstaged: null,
+/**
+ * 变更集补丁：两个范围各取一份，范围切换与首屏渲染都命中内存。
+ *
+ * 用 `shallowRef`：条目只整体替换、从不原地修改，深响应式会为上百个路径键各建一个 dep，
+ * 而 `diffOf` / `loadingOf` 每帧都要按路径读一次 —— 这些读追踪全是白付的开销。
+ */
+const changesets = shallowRef<{ staged: Record<string, string>, unstaged: Record<string, string> }>({
+  staged: EMPTY_CHANGESET,
+  unstaged: EMPTY_CHANGESET,
 })
 /** 变更集取数中（仅首屏用于占位，后续刷新不闪白） */
 const changesetLoading = ref(true)
+/** 变更集是否取数失败（超 maxBuffer / git 报错）：已降级为逐文件加载，需要给用户一个可见原因 */
+const changesetFailed = ref(false)
 /** 用户手动切过范围的文件（path → 是否暂存区），未记录时按文件自身暂存态决定 */
 const scopeOverride = ref<Record<string, boolean>>({})
 /** 已展开上下文的文件（path → 上下文行数），缺省 = git 默认 3 行 */
@@ -279,7 +308,6 @@ const changesetStats = computed<Record<string, { add: number, del: number }>>(()
   const out: Record<string, { add: number, del: number }> = {}
   for (const scope of ["staged", "unstaged"] as const) {
     const map = changesets.value[scope]
-    if (!map) continue
     for (const [path, raw] of Object.entries(map)) {
       out[diffCacheKey(path, scope === "staged")] = countRawDiffLines(raw)
     }
@@ -288,8 +316,8 @@ const changesetStats = computed<Record<string, { add: number, del: number }>>(()
 })
 
 /** 是否已有任何可渲染内容（决定首屏是否显示整页加载态） */
-const hasAnyContent = computed(() => Object.keys(changesets.value.staged ?? {}).length > 0
-  || Object.keys(changesets.value.unstaged ?? {}).length > 0
+const hasAnyContent = computed(() => Object.keys(changesets.value.staged).length > 0
+  || Object.keys(changesets.value.unstaged).length > 0
   || Object.keys(props.fileDiffs).length > 0)
 
 /** 当前文件在流中的下标（用于标题栏位置指示与 ←/→ 边界） */
@@ -322,10 +350,10 @@ function diffOf(file: FileChange): string {
     // 展开档还没回来 / 取数失败：先退回变更集里的默认档内容，不要整段空白
     // （loadingOf 对同一场景返回 false，才不会把这份兜底内容挡住）
     const map = changesets.value[scope]
-    return (map && file.path in map) ? map[file.path] : ""
+    return (file.path in map) ? map[file.path] : ""
   }
   const map = changesets.value[scope]
-  if (map && file.path in map) return map[file.path]
+  if (file.path in map) return map[file.path]
   return props.fileDiffs[diffCacheKey(file.path, staged)] ?? ""
 }
 
@@ -343,10 +371,10 @@ function loadingOf(file: FileChange): boolean {
     if (key in props.fileDiffs) return !!props.diffLoading[key]
     // 展开档未到但变更集里有默认档内容：不切骨架，先展示默认档（与 diffOf 的兜底同口径）
     const map = changesets.value[scope]
-    return !(map && file.path in map)
+    return !(file.path in map)
   }
   const map = changesets.value[scope]
-  if (map && file.path in map) return false
+  if (file.path in map) return false
   const key = diffCacheKey(file.path, staged)
   if (!(key in props.fileDiffs)) return true
   return !!props.diffLoading[key]
@@ -356,24 +384,35 @@ function loadingOf(file: FileChange): boolean {
  * 变更集取数：两个范围并行取（4 个 git 进程 → 2 个），
  * 范围切换 / 首屏 / 单文件打开全部命中内存，不再逐文件 spawn。
  * force=false 时由数据层按工作区版本判断是否真的需要重取。
+ *
+ * ⚠️ 引用相等短路：树刷新（自动刷新 / 暂存 / 提交后）会再次调用本函数，但数据层按树版本
+ * 命中同一份记录。原样再赋值一次会让 `changesetStats` 全量重算（两个范围每个文件 split 一遍）、
+ * 全部文件段重渲染 —— 内容没变时这全是白付的开销。
  */
 async function refreshChangesets(force = false) {
   try {
-    const [unstaged, staged] = await Promise.all([
+    const [unstagedRaw, stagedRaw] = await Promise.all([
       props.getChangeset(false, { force }),
       props.getChangeset(true, { force }),
     ])
-    changesets.value = {
-      staged,
-      unstaged,
+    // null = 该范围取数失败（超 maxBuffer / git 报错），与「空变更集」区分
+    changesetFailed.value = unstagedRaw === null || stagedRaw === null
+    const next = {
+      staged: stagedRaw ?? EMPTY_CHANGESET,
+      unstaged: unstagedRaw ?? EMPTY_CHANGESET,
     }
+    if (changesets.value.staged === next.staged && changesets.value.unstaged === next.unstaged) return
+    changesets.value = next
   } catch {
-    // 取数失败：置为空映射而不是保留 null —— null 会让 ensureMissingDiffs 整批跳过、
-    // 每个文件段永久停在 loading 且没有重试入口；空映射则让它按「变更集里没有该路径」
+    // 意外拒绝（数据层已把 git 失败包成 null，这里兜的是更上游的编程错误）：
+    // 置为空映射而不是保留 null —— 空映射让 ensureMissingDiffs 按「变更集里没有该路径」
     // 逐文件回退 loadDiff，退化为逐个取但始终能看到内容。
-    changesets.value = {
-      staged: {},
-      unstaged: {},
+    changesetFailed.value = true
+    if (changesets.value.staged !== EMPTY_CHANGESET || changesets.value.unstaged !== EMPTY_CHANGESET) {
+      changesets.value = {
+        staged: EMPTY_CHANGESET,
+        unstaged: EMPTY_CHANGESET,
+      }
     }
   } finally {
     changesetLoading.value = false
@@ -447,7 +486,7 @@ function handleScopeChange(file: FileChange, staged: boolean) {
   }
   // 该范围若不在变更集内（未跟踪等），回退单文件取数
   const map = changesets.value[staged ? "staged" : "unstaged"]
-  if (!map || !(file.path in map)) {
+  if (!(file.path in map)) {
     emit("loadDiff", file.path, staged, { status: file.status })
   }
 }
@@ -473,7 +512,7 @@ function expandContext(file: FileChange) {
 
 /**
  * 未跟踪 / 变更集缺失的文件：挂载即回退单文件取数。
- * ① 该范围的变更集尚未到达（null）时整批跳过 —— 否则首屏会对每个文件各 spawn 一个 git 进程，
+ * ① 变更集尚未到达（首屏还在取）时整批跳过 —— 否则首屏会对每个文件各 spawn 一个 git 进程，
  *    正好抵消「一次取全量」的收益；
  * ② 缓存里已有（含「空串 = 取数失败」的占位）就不再请求，避免渲染期反复 emit。
  */
@@ -485,19 +524,25 @@ function ensureMissingDiffs() {
     if (context > 0) {
       const key = diffCacheKey(file.path, staged, context)
       if (key in props.fileDiffs) continue
+      if (props.diffLoading[key]) continue
       emit("loadDiff", file.path, staged, { status: file.status, context })
       continue
     }
+    // 变更集未到：此时「不在 map 里」不代表缺失，跳过，等取数完成后这里会再被触发一次
+    if (changesetLoading.value) continue
     const map = changesets.value[scopeOf(file)]
-    if (!map) continue
     if (file.path in map) continue
     const key = diffCacheKey(file.path, staged)
     if (key in props.fileDiffs) continue
+    // 已在途：同一轮 flush 里被重复触及时不再 emit 一次（否则同一个文件 spawn 两个 git 进程）
+    if (props.diffLoading[key]) continue
     emit("loadDiff", file.path, staged, { status: file.status })
   }
 }
 
-watch([visibleStreamFiles, changesets, contextByPath], ensureMissingDiffs)
+// changesetLoading 也要监听：变更集为空/失败时 changesets 可能不发生引用变化，
+// 只靠它无法触发第二轮；「取数结束」这个信号才是让逐文件回退真正启动的那个。
+watch([visibleStreamFiles, changesets, contextByPath, changesetLoading], ensureMissingDiffs)
 
 // 文件集合变化（暂存 / 丢弃 / 提交 / 外部改动刷新）→ 重取变更集（数据层按版本决定是否真的重跑）；
 // 同时收起已展开的上下文：展开档位的内容是按旧版本取的，回到默认档才能跟着变更集一起刷新

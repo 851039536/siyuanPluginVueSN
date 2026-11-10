@@ -365,8 +365,9 @@ const props = defineProps<{
   /**
    * 取整个变更集的补丁（审阅流首屏：一次 git diff 覆盖全部 tracked 文件）。
    * 未跟踪文件不在结果中，由审阅流对缺失路径回退 loadDiff。
+   * 返回 `null` 表示取数失败（超 maxBuffer / git 报错），审阅流据此显示降级提示。
    */
-  getChangeset: (staged: boolean, opts?: { force?: boolean }) => Promise<Record<string, string>>
+  getChangeset: (staged: boolean, opts?: { force?: boolean }) => Promise<Record<string, string> | null>
 }>()
 
 const emit = defineEmits<{

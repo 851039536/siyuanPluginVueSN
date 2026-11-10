@@ -1107,6 +1107,7 @@
     "diffStreamTitle": "Review changes",
     "diffFileCollapse": "Collapse file",
     "diffFileExpand": "Expand file",
+    "diffChangesetUnavailable": "Changeset too large or unreadable; loading file by file instead (slower)",
     "fileTreeSearchPlaceholder": "Filter file paths...",
     "fileTreeExpandAll": "Expand all",
     "fileTreeCollapseAll": "Collapse all",

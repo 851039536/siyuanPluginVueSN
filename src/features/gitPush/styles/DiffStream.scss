@@ -176,6 +176,20 @@
   min-height: 0;
 }
 
+// 变更集不可用的降级提示：贴在视图栏下方，不与 diff 正文抢视觉重量
+.wt-stream-notice {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: $s-1;
+  padding: $s-1 $s-2 $s-1 $s-px10;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-warning-lightest, rgba(240, 173, 78, 0.08));
+  color: var(--b3-theme-warning);
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+}
+
 .wt-stream-scroll {
   flex: 1;
   min-height: 0;

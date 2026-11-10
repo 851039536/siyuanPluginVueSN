@@ -412,21 +412,27 @@ export function useCardData(project: () => GitProject) {
   }
 
   // ── 变更集补丁缓存（审阅流首屏：一次 git diff 覆盖全部 tracked 文件）──
-  /** 按范围缓存 `{ at: 取数时的树版本, diffs }`；树刷新后版本不符即失效 */
-  const changesetCache: Record<"s" | "u", { at: number, diffs: Record<string, string> } | null> = {
+  /**
+   * 按范围缓存 `{ at: 取数时的树版本, diffs }`；树刷新后版本不符即失效。
+   * `diffs` 为 `null` 表示上次取数失败（超 maxBuffer / git 报错），与「空变更集」区分，
+   * 视图层据此给出「已改为逐个加载」的提示。
+   */
+  const changesetCache: Record<"s" | "u", { at: number, diffs: Record<string, string> | null } | null> = {
     s: null,
     u: null,
   }
   /** 同范围在途请求（打开弹窗时连点两次不重复 spawn） */
-  const changesetInflight = new Map<"s" | "u", Promise<Record<string, string>>>()
+  const changesetInflight = new Map<"s" | "u", Promise<Record<string, string> | null>>()
 
   /**
    * 取整个变更集的补丁并按文件切分（审阅流用）。
    * 结果单独缓存，不写入单文件 `fileDiffs`：后者有 30 条上限的裁剪，
    * 把上百个文件的补丁灌进去只会互相挤出，反而让未跟踪文件的缓存反复失效。
    * 未跟踪文件不在 `git diff` 输出中（结果里没有该路径），由视图层回退 loadDiff 逐个取。
+   *
+   * 返回 `null` = 取数失败（已缓存，同一树版本内不重试）；返回空对象 = 确实没有改动。
    */
-  async function loadChangeset(staged: boolean, opts?: { force?: boolean }): Promise<Record<string, string>> {
+  async function loadChangeset(staged: boolean, opts?: { force?: boolean }): Promise<Record<string, string> | null> {
     const scope = staged ? "s" : "u"
     const cached = changesetCache[scope]
     if (!opts?.force && cached && cached.at === state.diffTreeVersion) return cached.diffs

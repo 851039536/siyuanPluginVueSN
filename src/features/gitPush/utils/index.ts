@@ -53,6 +53,9 @@ export {
 } from "./diffText"
 export type { DiffLine, DiffLineType, DiffSegment } from "./diffText"
 
+export { filterOnlyChanges, isChangeLine, toSplitRows } from "./diffLayout"
+export type { DiffLayout, DiffSplitRow } from "./diffLayout"
+
 export {
   parseAheadBehind,
   parseBranches,

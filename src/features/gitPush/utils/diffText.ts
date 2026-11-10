@@ -5,8 +5,14 @@ export function diffCacheKey(filePath: string, staged: boolean): string {
   return `${staged ? "s" : "u"}::${filePath}`
 }
 
-/** diff 文本行类型（meta = diff --git / index / --- / +++ 等文件头行） */
-export type DiffLineType = "add" | "del" | "hunk" | "ctx" | "meta"
+/**
+ * diff 文本行类型：
+ * - add/del/ctx：着色正文行
+ * - hunk：`@@ -a,b +c,d @@` 分段头
+ * - meta：diff --git / index / --- / +++ 等文件头行
+ * - gap：两个 hunk 之间被 git 省略的未变行折叠条（不渲染内容，只提示相隔行数）
+ */
+export type DiffLineType = "add" | "del" | "hunk" | "ctx" | "meta" | "gap"
 
 /** 词级差异分段（changed=true 为行内真正变化的片段） */
 export interface DiffSegment { text: string, changed: boolean }
@@ -19,6 +25,13 @@ export interface DiffLine {
   newNo?: number
   /** 词级差异分段（仅 add/del 行与对侧行配对成功时存在） */
   segments?: DiffSegment[]
+  /**
+   * hunk 头尾部的所属作用域（git 从 `@@ -a,b +c,d @@` 之后带出的函数 / 类名，
+   * 取决于仓库的 diff 驱动配置）；仅 hunk 行有值，hunk 行的 text 已剥离该部分
+   */
+  scope?: string
+  /** 折叠条覆盖的未变行数；仅 gap 行有值 */
+  gapCount?: number
 }
 
 /**
@@ -27,25 +40,58 @@ export interface DiffLine {
  */
 const DIFF_META_RE = /^(?:diff --git|index |--- |\+\+\+ |new file|deleted file|old mode|new mode|rename |copy |similarity |dissimilarity |Binary files|\\ No newline)/
 
-/** 将 diff 文本解析为带类型与行号的行数组（剥离行首 +/-/空格标记，标记改由渲染层的符号列展示） */
+/**
+ * hunk 头：`@@ -旧起始,旧行数 +新起始,新行数 @@ 所属作用域`。
+ * 行数省略时按 1 计（`@@ -5 +7 @@`）；作用域由 git 按语言规则带出（可能为空）。
+ */
+const HUNK_RE = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$/
+
+/**
+ * 将 diff 文本解析为带类型与行号的行数组（剥离行首 +/-/空格标记，标记改由渲染层的符号列展示）。
+ *
+ * 相邻 hunk 之间会插入 `gap` 行（未变行折叠条）：git 默认只带 3 行上下文，
+ * 两处改动相距较远时中间的行完全不出现在 diff 里，折叠条让「相隔多远」可见。
+ */
 export function parseDiffLines(diffText: string): DiffLine[] {
   if (!diffText) return []
   let oldNo = 0
   let newNo = 0
+  /** 上一个 hunk 覆盖到的旧文件行号（null = 当前文件还没有出现 hunk） */
+  let prevOldEnd: number | null = null
   const result: DiffLine[] = []
   for (const line of diffText.split("\n")) {
     // 首字符分流：hunk 正则只在 '@' 开头时执行（万行级 diff 绝大多数行免付正则开销）
     const head = line.charCodeAt(0)
-    const hunk = head === 64 /* '@' */ ? /^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/.exec(line) : null
+    const hunk = head === 64 /* '@' */ ? HUNK_RE.exec(line) : null
     if (hunk) {
-      oldNo = Number(hunk[1])
-      newNo = Number(hunk[2])
+      const oldStart = Number(hunk[1])
+      const oldCount = hunk[2] === undefined ? 1 : Number(hunk[2])
+      const newStart = Number(hunk[3])
+      // 未变行数：首个 hunk 取 oldStart - 1（纯新增文件 oldStart=0 时自然为 0），
+      // 其后取与上一 hunk 末行之间的间隔
+      const unseen = prevOldEnd === null ? oldStart - 1 : oldStart - prevOldEnd - 1
+      if (unseen > 0) {
+        result.push({
+          text: "",
+          type: "gap",
+          gapCount: unseen,
+        })
+      }
+      oldNo = oldStart
+      newNo = newStart
+      // hunk 行的 text 剥掉尾部作用域（由渲染层弱化展示），便于样式与复制分离
+      const scope = hunk[5]?.trim() ?? ""
       result.push({
-        text: line,
+        text: line.slice(0, line.length - (hunk[5]?.length ?? 0)).trimEnd(),
         type: "hunk",
+        scope: scope || undefined,
       })
+      // 纯删除（oldCount=0）时该 hunk 不覆盖任何旧行，末行即起始行本身
+      prevOldEnd = oldCount === 0 ? oldStart : oldStart + oldCount - 1
     } else if ((oldNo === 0 && newNo === 0) || DIFF_META_RE.test(line)) {
       // 首个 hunk 之前的所有行、以及多文件 diff 中间的文件头行均为 meta
+      // 新文件头重置折叠基准，避免把上一个文件的末行算进本文件的首个 hunk
+      if (head === 100 /* 'd' */ && line.startsWith("diff --git ")) prevOldEnd = null
       result.push({
         text: line,
         type: "meta",
@@ -85,6 +131,7 @@ export const DIFF_SIGN: Record<DiffLineType, string> = {
   hunk: "@",
   ctx: " ",
   meta: " ",
+  gap: "⋯",
 }
 
 /** 统计 diff 增/删行数（标题行 +N / −N 展示） */
@@ -188,43 +235,169 @@ function sampleIndices(n: number, k: number): number[] {
   return idxs
 }
 
-// 行内变化占比阈值：中间变化片段超过此比例视为整行重写，不做词级高亮（高亮反而添噪）
-const INLINE_DIFF_MAX_CHANGED_RATIO = 0.6
+// ── 词级高亮：token 级 LCS 对齐 + 变化块首尾字符裁剪 ──
 
-/** 对配对的 del/add 行做公共前缀/后缀裁剪，生成词级差异分段；变化过大或完全相同时返回 null */
-function diffSegments(del: string, add: string): { del: DiffSegment[], add: DiffSegment[] } | null {
-  const minLen = Math.min(del.length, add.length)
-  let prefix = 0
-  while (prefix < minLen && del[prefix] === add[prefix]) prefix++
-  let suffix = 0
-  while (suffix < minLen - prefix && del[del.length - 1 - suffix] === add[add.length - 1 - suffix]) suffix++
+/** 行内变化占比阈值：变化总量超过此比例视为整行重写，不做词级高亮（高亮反而添噪） */
+const INLINE_DIFF_MAX_CHANGED_RATIO = 0.6
+/** 参与 LCS 的最大 token 数：超长单行退化为「整行一个变化块」处理，避免 O(n²) DP 拖慢解析 */
+const MAX_INLINE_TOKENS = 240
+/** token 切分：标识符 / 空白段 / 单个符号（CJK 与标点逐字切分，天然按字级对齐） */
+const TOKEN_RE = /[\w$]+|\s+|[^\w\s$]/g
+
+/** 对齐后的块：eq 为两侧共有片段，chg 为两侧各自的改动片段（某侧可能为空串） */
+type InlineBlock = { kind: "eq", text: string } | { kind: "chg", del: string, add: string }
+
+function tokenize(text: string): string[] {
+  return text.match(TOKEN_RE) ?? []
+}
+
+/**
+ * 最长公共子序列对齐：产出 eq / chg 交替的块序列。
+ * 比逐字符 diff 稳（不会把 `|| strict` 的零散字母错配到别处），相邻的删/插合并为同一个 chg 块。
+ */
+function alignBlocks(a: string[], b: string[]): InlineBlock[] {
+  const n = a.length
+  const m = b.length
+  const width = m + 1
+  // dp[i * width + j] = a[i..] 与 b[j..] 的 LCS 长度；token 数受 MAX_INLINE_TOKENS 约束，Uint16 足够
+  const dp = new Uint16Array((n + 1) * width)
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i * width + j] = a[i] === b[j]
+        ? dp[(i + 1) * width + j + 1] + 1
+        : Math.max(dp[(i + 1) * width + j], dp[i * width + j + 1])
+    }
+  }
+  const blocks: InlineBlock[] = []
+  let delRun = ""
+  let addRun = ""
+  const flush = () => {
+    if (!delRun && !addRun) return
+    blocks.push({
+      kind: "chg",
+      del: delRun,
+      add: addRun,
+    })
+    delRun = ""
+    addRun = ""
+  }
+  let i = 0
+  let j = 0
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      flush()
+      blocks.push({
+        kind: "eq",
+        text: a[i],
+      })
+      i++
+      j++
+      continue
+    }
+    // 相等时偏向「删除」：让两侧片段顺序稳定，避免同一输入产出不同分段
+    if (dp[(i + 1) * width + j] >= dp[i * width + j + 1]) {
+      delRun += a[i++]
+    } else {
+      addRun += b[j++]
+    }
+  }
+  while (i < n) delRun += a[i++]
+  while (j < m) addRun += b[j++]
+  flush()
+  return blocks
+}
+
+/** 公共前缀长度 */
+function commonPrefixLen(a: string, b: string): number {
+  const max = Math.min(a.length, b.length)
+  let i = 0
+  while (i < max && a[i] === b[i]) i++
+  return i
+}
+
+/** 公共后缀长度（不与已裁掉的前缀重叠） */
+function commonSuffixLen(a: string, b: string, prefix: number): number {
+  const max = Math.min(a.length, b.length) - prefix
+  let i = 0
+  while (i < max && a[a.length - 1 - i] === b[b.length - 1 - i]) i++
+  return i
+}
+
+/**
+ * 把变化块按公共前后缀再拆细：`line1` / `lineX` → eq"line" + chg"1"/"X"。
+ * token 相同但拼写相近的标识符（改后缀、改数字）靠这一步拿到精确的字符级差异。
+ */
+function refineBlock(del: string, add: string): InlineBlock[] {
+  const prefix = commonPrefixLen(del, add)
+  const suffix = commonSuffixLen(del, add, prefix)
+  const out: InlineBlock[] = []
+  if (prefix) {
+    out.push({
+      kind: "eq",
+      text: del.slice(0, prefix),
+    })
+  }
   const delMid = del.slice(prefix, del.length - suffix)
   const addMid = add.slice(prefix, add.length - suffix)
-  if (!delMid && !addMid) return null
-  const maxLen = Math.max(del.length, add.length)
-  if (Math.max(delMid.length, addMid.length) / maxLen > INLINE_DIFF_MAX_CHANGED_RATIO) return null
-  const build = (text: string, mid: string): DiffSegment[] => {
-    const segs: DiffSegment[] = []
-    if (prefix) { segs.push({
-      text: text.slice(0, prefix),
-      changed: false,
+  if (delMid || addMid) {
+    out.push({
+      kind: "chg",
+      del: delMid,
+      add: addMid,
     })
-    }
-    if (mid) { segs.push({
-      text: mid,
-      changed: true,
-    })
-    }
-    if (suffix) { segs.push({
-      text: text.slice(text.length - suffix),
-      changed: false,
-    })
-    }
-    return segs
   }
+  if (suffix) {
+    out.push({
+      kind: "eq",
+      text: del.slice(del.length - suffix),
+    })
+  }
+  return out
+}
+
+/** 把块序列投影到某一侧的差异分段（相邻同类分段合并） */
+function blocksToSegments(blocks: InlineBlock[], side: "del" | "add"): DiffSegment[] {
+  const segs: DiffSegment[] = []
+  for (const b of blocks) {
+    const text = b.kind === "eq" ? b.text : b[side]
+    if (!text) continue
+    const changed = b.kind === "chg"
+    const prev = segs[segs.length - 1]
+    if (prev && prev.changed === changed) prev.text += text
+    else segs.push({
+      text,
+      changed,
+    })
+  }
+  return segs
+}
+
+/** 对配对的 del/add 行生成词级差异分段；完全相同时返回 null，变化过大时也返回 null（整行重写不做词级高亮） */
+function diffSegments(del: string, add: string): { del: DiffSegment[], add: DiffSegment[] } | null {
+  const delTokens = tokenize(del)
+  const addTokens = tokenize(add)
+  // 超长单行跳过 DP：整行当作一个变化块，只做首尾裁剪（O(n)）
+  const raw: InlineBlock[] = delTokens.length > MAX_INLINE_TOKENS || addTokens.length > MAX_INLINE_TOKENS
+    ? refineBlock(del, add)
+    : alignBlocks(delTokens, addTokens).flatMap((b) => (b.kind === "chg" ? refineBlock(b.del, b.add) : [b]))
+
+  let changedDel = 0
+  let changedAdd = 0
+  for (const b of raw) {
+    if (b.kind !== "chg") continue
+    changedDel += b.del.length
+    changedAdd += b.add.length
+  }
+  if (!changedDel && !changedAdd) return null
+  const maxLineLen = Math.max(del.length, add.length)
+  if (Math.max(changedDel, changedAdd) / maxLineLen > INLINE_DIFF_MAX_CHANGED_RATIO) return null
+
+  const delSegs = blocksToSegments(raw, "del")
+  const addSegs = blocksToSegments(raw, "add")
+  // 纯插入/纯删除：无变化的那一侧不拆段（整行同色才是最准确的表达）
   return {
-    del: build(del, delMid),
-    add: build(add, addMid),
+    del: delSegs.some((s) => s.changed) ? delSegs : [],
+    add: addSegs.some((s) => s.changed) ? addSegs : [],
   }
 }
 
@@ -242,10 +415,10 @@ function markInlineDiff(lines: DiffLine[]): void {
       const delLine = lines[delStart + k]
       const addLine = lines[addStart + k]
       const segs = diffSegments(delLine.text, addLine.text)
-      if (segs) {
-        delLine.segments = segs.del
-        addLine.segments = segs.add
-      }
+      if (!segs) continue
+      // 单侧无变化时保持 segments 缺省，渲染层直接输出整行文本
+      if (segs.del.length) delLine.segments = segs.del
+      if (segs.add.length) addLine.segments = segs.add
     }
   }
 }

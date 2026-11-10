@@ -65,10 +65,12 @@ describe("parseDiffLines", () => {
 
   it("hunk 行号驱动 add/del/ctx 的行号自增", () => {
     const diff = ["@@ -10,2 +20,2 @@", "-old", "+new", " ctx"].join("\n")
-    const [, del, add, ctx] = parseDiffLines(diff)
-    expect(del).toMatchObject({ type: "del", oldNo: 10, text: "old" })
-    expect(add).toMatchObject({ type: "add", newNo: 20, text: "new" })
-    expect(ctx).toMatchObject({ type: "ctx", oldNo: 11, newNo: 21, text: "ctx" })
+    const lines = parseDiffLines(diff)
+    // 首个 hunk 的起始行号 > 1 时先插一条头部折叠条（前 9 行未出现在 diff 中）
+    expect(lines[0]).toMatchObject({ type: "gap", gapCount: 9 })
+    expect(lines[2]).toMatchObject({ type: "del", oldNo: 10, text: "old" })
+    expect(lines[3]).toMatchObject({ type: "add", newNo: 20, text: "new" })
+    expect(lines[4]).toMatchObject({ type: "ctx", oldNo: 11, newNo: 21, text: "ctx" })
   })
 
   it("剥离行首 +/-/空格标记（标记改由渲染层符号列展示）", () => {
@@ -80,17 +82,17 @@ describe("parseDiffLines", () => {
 
   it("hunk 头省略计数形式（@@ -1 +1 @@）也能解析出行号", () => {
     const lines = parseDiffLines("@@ -5 +7 @@\n-a\n+b")
-    expect(lines[1].oldNo).toBe(5)
-    expect(lines[2].newNo).toBe(7)
+    expect(lines.find((l) => l.type === "del")?.oldNo).toBe(5)
+    expect(lines.find((l) => l.type === "add")?.newNo).toBe(7)
   })
 
   it("第二个 hunk 重置行号基准", () => {
     const diff = ["@@ -1,1 +1,1 @@", "-a", "+b", "@@ -50,1 +60,1 @@", "-c", "+d"].join("\n")
     const lines = parseDiffLines(diff)
-    const secondDel = lines[4]
-    const secondAdd = lines[5]
-    expect(secondDel).toMatchObject({ oldNo: 50 })
-    expect(secondAdd).toMatchObject({ newNo: 60 })
+    const dels = lines.filter((l) => l.type === "del")
+    const adds = lines.filter((l) => l.type === "add")
+    expect(dels[1]).toMatchObject({ oldNo: 50 })
+    expect(adds[1]).toMatchObject({ newNo: 60 })
   })
 
   it("新增文件：new file mode 归为 meta", () => {
@@ -151,6 +153,63 @@ describe("parseDiffLines", () => {
     const lines = parseDiffLines("@@ -1 +1 @@\n-- a\n++ b")
     expect(lines[1]).toMatchObject({ type: "del", text: "- a" })
     expect(lines[2]).toMatchObject({ type: "add", text: "+ b" })
+  })
+})
+
+describe("parseDiffLines 未变行折叠条（gap）", () => {
+  it("相邻 hunk 之间插入省略行数", () => {
+    const diff = ["@@ -1,2 +1,2 @@", " a", "-b", "+c", "@@ -10,2 +10,2 @@", " d", "-e", "+f"].join("\n")
+    const lines = parseDiffLines(diff)
+    // 第一段覆盖旧文件 1~2 行，第二段从第 10 行开始 → 中间省略 7 行
+    expect(lines.find((l) => l.type === "gap")?.gapCount).toBe(7)
+  })
+
+  it("折叠条紧邻后一个 hunk（位置不漂移）", () => {
+    const diff = ["@@ -1,1 +1,1 @@", "-a", "+b", "@@ -20,1 +20,1 @@", "-c", "+d"].join("\n")
+    const lines = parseDiffLines(diff)
+    const gapIndex = lines.findIndex((l) => l.type === "gap")
+    expect(lines[gapIndex + 1].type).toBe("hunk")
+    expect(lines[gapIndex + 1].text).toContain("-20,1")
+  })
+
+  it("首个 hunk 从文件中间开始时也有头部折叠条", () => {
+    const lines = parseDiffLines("@@ -5,3 +5,3 @@\n a\n-b\n+c")
+    expect(lines[0]).toMatchObject({ type: "gap", gapCount: 4 })
+  })
+
+  it("首个 hunk 从第 1 行开始时 / 纯新增文件均不插折叠条", () => {
+    expect(parseDiffLines("@@ -1,3 +1,3 @@\n a\n-b\n+c").some((l) => l.type === "gap")).toBe(false)
+    expect(parseDiffLines("@@ -0,0 +1,2 @@\n+a\n+b").some((l) => l.type === "gap")).toBe(false)
+  })
+
+  it("多文件 diff 的第二个文件不继承上一个文件的末行", () => {
+    const diff = [
+      "diff --git a/a.ts b/a.ts",
+      "@@ -1,2 +1,2 @@",
+      " a",
+      "-b",
+      "+c",
+      "diff --git a/b.ts b/b.ts",
+      "@@ -1,2 +1,2 @@",
+      " x",
+      "-y",
+      "+z",
+    ].join("\n")
+    expect(parseDiffLines(diff).some((l) => l.type === "gap")).toBe(false)
+  })
+})
+
+describe("parseDiffLines hunk 作用域", () => {
+  it("提取 @@ ... @@ 尾部作用域，并从 hunk 文本中剥离", () => {
+    const hunk = parseDiffLines("@@ -12,7 +12,9 @@ export function foo() {\n-a\n+b").find((l) => l.type === "hunk")
+    expect(hunk?.scope).toBe("export function foo() {")
+    expect(hunk?.text).toBe("@@ -12,7 +12,9 @@")
+  })
+
+  it("无作用域时 scope 为 undefined，且文本原样保留行区间", () => {
+    const hunk = parseDiffLines("@@ -1 +1 @@\n-a\n+b").find((l) => l.type === "hunk")
+    expect(hunk?.scope).toBeUndefined()
+    expect(hunk?.text).toBe("@@ -1 +1 @@")
   })
 })
 
@@ -244,6 +303,22 @@ describe("parseDiffLines 词级高亮（markInlineDiff）", () => {
     const lines = parseDiffLines("@@ -1 +1 @@\n-a\n+b")
     expect(lines[1].segments).toBeUndefined()
     expect(lines[2].segments).toBeUndefined()
+  })
+
+  it("行内多处改动各自独立高亮（token 级对齐，不做整段染色）", () => {
+    const diff = ["@@ -1 +1 @@", "-const a = foo(1) + bar(2)", "+const a = foo(9) + bar(8)"].join("\n")
+    const [, del] = parseDiffLines(diff)
+    expect(del.segments?.filter((s) => s.changed).map((s) => s.text)).toEqual(["1", "2"])
+    // 中间未变的文本应保持连续，而不是被两次改动切成碎片
+    expect(del.segments?.filter((s) => !s.changed).map((s) => s.text).join("")).toBe("const a = foo() + bar()")
+  })
+
+  it("纯插入行：无变化的一侧不拆段", () => {
+    const lines = parseDiffLines("@@ -1 +1 @@\n-if (a) return\n+if (a && b) return")
+    const del = lines.find((l) => l.type === "del")
+    const add = lines.find((l) => l.type === "add")
+    expect(del?.segments).toBeUndefined()
+    expect(add?.segments?.find((s) => s.changed)?.text).toBe(" && b")
   })
 })
 

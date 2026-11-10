@@ -118,7 +118,7 @@
 import { Icon } from "@iconify/vue"
 import { computed, ref, watch } from "vue"
 import type { FileStatRow } from "../../types"
-import { formatIsoDate, parseDiffLines, type DiffLineType } from "../../utils"
+import { DIFF_SIGN, formatIsoDate, parseDiffLines } from "../../utils"
 import { fmtTemplate } from "../../utils/i18nFormat"
 import { formatSignedNet } from "../../utils/reportFormat"
 import { useDialogClose } from "../../composables/useDialogClose"
@@ -163,15 +163,6 @@ const netLines = computed(() => {
   if (!props.fileStat) return "—"
   return formatSignedNet(props.fileStat.added - props.fileStat.deleted)
 })
-
-/** diff 行类型 → 行首符号（与 WorkingTreeDiffDialog 展示一致） */
-const DIFF_SIGN: Record<DiffLineType, string> = {
-  add: "+",
-  del: "−",
-  hunk: "@",
-  ctx: " ",
-  meta: " ",
-}
 
 /**
  * diff 渲染行数上限。

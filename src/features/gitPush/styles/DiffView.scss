@@ -5,9 +5,10 @@
 // 外壳（遮罩 / 定位 / z-index / 过渡 / Esc / 焦点归还）由共享 Dialog 承担；
 // 弹窗不再 Teleport，位于 .git-push-panel 内，diff 着色变量直接继承面板定义，无需再注入
 
-// 宽屏优先：覆盖 Dialog large 档的固定宽度（(0,3,0) 稳定压过组件 scoped 的 --si-dialog-width）
+// 宽屏优先：覆盖 Dialog large 档的固定宽度。
+// 并排视图需要两列各自可读，1040px 下每列约 500px；窄窗口由自适应布局回退为统一视图
 .git-push-panel .si-dialog.wt-diff-dialog {
-  --si-dialog-width: min(90vw, 800px);
+  --si-dialog-width: min(94vw, 1040px);
 }
 
 // 内容区改为纵向 flex 并去掉 Dialog 内边距：图例固定、diff 行自行滚动
@@ -110,19 +111,47 @@
 
 // 丢弃按钮：危险色由共享 Button 的 severity=danger 承担，无需额外样式
 
+// 视图栏：左侧图例 + 右侧视图开关（原图例行升级为工具条，不额外占用纵向空间）
+.wt-diff-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+  padding: 2px $s-2 2px $s-px10;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
 .wt-diff-legend {
   display: flex;
   gap: $s-3;
-  padding: $s-1 $s-px10;
   font-size: $t-2xs;
   font-family: $ff-mono;
-  border-bottom: 1px solid var(--b3-border-color);
-  flex-shrink: 0;
 }
 
 .wt-legend-add { color: var(--gp-diff-add-color); }
 .wt-legend-del { color: var(--gp-diff-del-color); }
 .wt-legend-ctx { opacity: 0.35; }
+
+// 视图开关组（布局三态 / 行号 / 仅改动）
+.wt-diff-views {
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  margin-left: auto;
+}
+
+.wt-diff-bar .wt-diff-bar-sep.si-divider {
+  height: 12px;
+  min-height: 0;
+  margin: 0 $s-1;
+}
+
+// 开关打开态：只借 primary 的颜色，保留 ghost 的轻量外观（不用整块主色底）
+.wt-diff-views .si-button[aria-pressed="true"] {
+  color: var(--b3-theme-primary);
+}
 
 .wt-diff-content {
   margin: 0;
@@ -154,44 +183,80 @@
   opacity: 0.5;
 }
 
+// ── 着色行：统一视图的整行与并排视图的单元格共用同一套类型类 ──
 .wt-diff-line {
   display: flex;
   padding: 0 $s-2 0 0;
   line-height: $lh-normal;
+}
 
-  &.wt-dl-add {
-    background: var(--gp-diff-add-bg);
+.wt-dl-add {
+  background: var(--gp-diff-add-bg);
 
-    .wt-dl-sign { color: var(--gp-diff-add-color); opacity: 1; }
-    .wt-dl-seg-changed { background: var(--gp-diff-add-emph-bg); }
-  }
+  .wt-dl-sign { color: var(--gp-diff-add-color); opacity: 1; }
+  .wt-dl-seg-changed { background: var(--gp-diff-add-emph-bg); }
+}
 
-  &.wt-dl-del {
-    background: var(--gp-diff-del-bg);
+.wt-dl-del {
+  background: var(--gp-diff-del-bg);
 
-    .wt-dl-sign { color: var(--gp-diff-del-color); opacity: 1; }
-    .wt-dl-seg-changed { background: var(--gp-diff-del-emph-bg); }
-  }
+  .wt-dl-sign { color: var(--gp-diff-del-color); opacity: 1; }
+  .wt-dl-seg-changed { background: var(--gp-diff-del-emph-bg); }
+}
 
-  // hunk 行强化为分隔条，分段一目了然
-  &.wt-dl-hunk {
-    margin-top: $s-1;
-    padding-top: $s-px2;
-    padding-bottom: $s-px2;
-    background: var(--b3-theme-surface);
-    color: var(--gp-diff-hunk-color);
+// hunk 行强化为分隔条，分段一目了然
+.wt-dl-hunk {
+  margin-top: $s-1;
+  padding-top: $s-px2;
+  padding-bottom: $s-px2;
+  background: var(--b3-theme-surface);
+  color: var(--gp-diff-hunk-color);
 
-    .wt-dl-sign { color: var(--gp-diff-hunk-color); }
-  }
+  .wt-dl-sign { color: var(--gp-diff-hunk-color); }
+}
 
-  &.wt-dl-ctx {
-    opacity: 0.6;
-  }
+.wt-dl-ctx { opacity: 0.6; }
 
-  // 文件头行（diff --git / index / --- / +++）：弱化为背景信息
-  &.wt-dl-meta {
-    opacity: 0.35;
-  }
+// 文件头行（diff --git / index / --- / +++）：弱化为背景信息
+.wt-dl-meta { opacity: 0.35; }
+
+// 折叠条：两个 hunk 之间被 git 省略的未变行（虚线夹起，提示"这里跳过了 N 行"）
+.wt-diff-line.wt-dl-gap {
+  align-items: center;
+  margin: $s-1 0;
+  padding: 1px 0 1px $s-px10;
+  border-top: 1px dashed var(--b3-border-color);
+  border-bottom: 1px dashed var(--b3-border-color);
+  color: var(--gp-diff-hunk-color);
+  font-size: $t-2xs;
+  opacity: 0.75;
+}
+
+.wt-dl-gap-text { white-space: nowrap; }
+
+// ── 并排视图：左右单元格 ──
+.wt-dr-split {
+  display: flex;
+  line-height: $lh-normal;
+}
+
+.wt-ds-cell {
+  display: flex;
+  flex: 1 1 50%;
+  min-width: 0;
+  padding-right: $s-2;
+}
+
+// 中缝分隔线
+.wt-ds-cell + .wt-ds-cell {
+  border-left: 1px solid var(--b3-border-color);
+  padding-left: $s-2;
+}
+
+// 该侧此行无内容（对侧行数更多）：留白占位，保证两侧行对齐
+.wt-ds-cell.wt-ds-empty {
+  background: var(--b3-theme-surface);
+  opacity: 0.4;
 }
 
 // 旧/新文件行号双列（右对齐，不参与文本选中复制）
@@ -220,7 +285,19 @@
   min-width: 0;
 }
 
+// hunk 头尾部的所属作用域（函数 / 类名）：与行区间拉开距离并弱化
+.wt-dl-scope {
+  margin-left: $s-3;
+  opacity: 0.7;
+}
+
 // 词级差异变化片段：加深底色 + 轻微圆角
 .wt-dl-seg-changed {
   border-radius: $r-sm;
+}
+
+// 改动跳转定位（] / [ 键盘导航）：只描边不改底色，不干扰原有的增删配色
+.wt-diff-content [data-chg].wt-dl-cursor {
+  outline: 1px solid var(--gp-diff-hunk-color);
+  outline-offset: -1px;
 }

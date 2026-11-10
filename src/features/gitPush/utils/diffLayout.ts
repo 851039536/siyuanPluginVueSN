@@ -2,6 +2,7 @@
 // 与 diffText 的分工：那边负责「一行是什么」，这边负责「行怎么摆」。
 
 import type { DiffLine } from "./diffText"
+import { pairChangeBlock } from "./diffText"
 
 /** diff 布局：unified 统一 / split 并排 / auto 按可用宽度自适应 */
 export type DiffLayout = "unified" | "split" | "auto"
@@ -33,13 +34,22 @@ export function toSplitRows(lines: DiffLine[]): DiffSplitRow[] {
       while (i < lines.length && lines[i].type === "del") i++
       const addStart = i
       while (i < lines.length && lines[i].type === "add") i++
-      const delCount = addStart - delStart
-      const addCount = i - addStart
-      const rowCount = Math.max(delCount, addCount)
-      for (let k = 0; k < rowCount; k++) {
+      const dels = lines.slice(delStart, addStart)
+      const adds = lines.slice(addStart, i)
+      if (!dels.length) {
+        for (const add of adds) rows.push({ right: add })
+        continue
+      }
+      if (!adds.length) {
+        for (const del of dels) rows.push({ left: del })
+        continue
+      }
+      // 与词级高亮共用同一套配对（文本锚点 + 位置补足），左右看到的对即是染色的对
+      const pairs = pairChangeBlock(dels.map((d) => d.text), adds.map((a) => a.text))
+      for (const pair of pairs) {
         rows.push({
-          left: k < delCount ? lines[delStart + k] : undefined,
-          right: k < addCount ? lines[addStart + k] : undefined,
+          left: pair.del >= 0 ? dels[pair.del] : undefined,
+          right: pair.add >= 0 ? adds[pair.add] : undefined,
         })
       }
       continue

@@ -74,6 +74,24 @@ describe("toSplitRows", () => {
     expect(rows[1].left?.type).toBe("ctx")
   })
 
+  it("块内文本相同的行按锚点对齐，不按位置硬凑", () => {
+    const rows = toSplitRows([
+      line("del", "a"),
+      line("del", "b"),
+      line("del", "c"),
+      line("add", "x"),
+      line("add", "c"),
+    ])
+    expect(rows).toHaveLength(3)
+    expect(rows[0].left?.text).toBe("a")
+    expect(rows[0].right?.text).toBe("x")
+    // b 没有对应行 → 只在左列；c 与 c 锚定到同一行
+    expect(rows[1].left?.text).toBe("b")
+    expect(rows[1].right).toBeUndefined()
+    expect(rows[2].left?.text).toBe("c")
+    expect(rows[2].right?.text).toBe("c")
+  })
+
   it("配对不跨越 ctx 行（两个独立改动块各自配对）", () => {
     const rows = toSplitRows([
       line("del", "a1"),

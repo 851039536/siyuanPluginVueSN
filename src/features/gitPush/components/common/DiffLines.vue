@@ -34,10 +34,13 @@
         :data-chg="isChangeRow(row) ? '1' : undefined"
       >
         <template v-if="row.full">
-          <span
+          <DiffGapRow
             v-if="row.full.type === 'gap'"
-            class="wt-dl-gap-text"
-          >{{ gapLabel(row.full) }}</span>
+            :i18n="i18n"
+            :count="row.full.gapCount ?? 0"
+            :expandable="gapsExpandable"
+            @expand="emit('expand')"
+          />
           <template v-else>
             <!-- 跨整行的 hunk/meta：只留一列行号占位，符号列才能与左侧单元格对齐 -->
             <span
@@ -93,10 +96,13 @@
         :data-chg="line.type === 'add' || line.type === 'del' ? '1' : undefined"
       >
         <!-- 折叠条：两个 hunk 之间被 git 省略的未变行数 -->
-        <span
+        <DiffGapRow
           v-if="line.type === 'gap'"
-          class="wt-dl-gap-text"
-        >{{ gapLabel(line) }}</span>
+          :i18n="i18n"
+          :count="line.gapCount ?? 0"
+          :expandable="gapsExpandable"
+          @expand="emit('expand')"
+        />
         <template v-else>
           <!-- 旧/新文件行号双列（hunk/meta 行无行号，留空保持对齐） -->
           <span
@@ -126,6 +132,7 @@ import {
   watch,
 } from "vue"
 import { DIFF_SIGN, filterOnlyChanges, isChangeLine, toSplitRows } from "../../utils"
+import DiffGapRow from "./DiffGapRow.vue"
 import DiffLineText from "./DiffLineText.vue"
 import DiffViewBar from "./DiffViewBar.vue"
 
@@ -135,7 +142,17 @@ const props = withDefaults(defineProps<{
   lines: DiffLine[]
   /** 是否渲染顶部的图例 + 视图开关（审阅流多处并排时由宿主在弹窗顶部统一提供） */
   showBar?: boolean
-}>(), { showBar: true })
+  /** 折叠条是否可点击展开（宿主支持按更大上下文重取时开启） */
+  gapsExpandable?: boolean
+}>(), {
+  showBar: true,
+  gapsExpandable: false,
+})
+
+const emit = defineEmits<{
+  /** 点击折叠条：请求更大上下文的 diff（具体档位由宿主决定） */
+  expand: []
+}>()
 
 /** 视图布局（自适应 = 按可用宽度在统一 / 并排之间切换） */
 const layout = defineModel<DiffLayout>("layout", { default: "auto" })
@@ -222,11 +239,6 @@ function cellClasses(line: DiffLine | undefined): Record<string, boolean> {
 /** 该行是否构成一次改动（改动跳转定位用，与统一视图的 data-chg 同口径） */
 function isChangeRow(row: DiffSplitRow): boolean {
   return isChangeLine(row.left) || isChangeLine(row.right)
-}
-
-/** 折叠条文案（"⋯ N 行未变"） */
-function gapLabel(line: DiffLine): string {
-  return String(props.i18n.diffGapLines ?? "{0}").replace("{0}", String(line.gapCount ?? 0))
 }
 </script>
 

@@ -377,9 +377,10 @@ export function useCardData(project: () => GitProject) {
    * - force=true 绕过前两者（语义对齐 scheduler.run 的 force）：用于「内容必然已变」的写后路径
    *   （弹窗内暂存切换、暂存状态翻转后的重载）。
    * ⚠️ status 为可选提示（FileChange.status 透传）：untracked 命中 manager 层单进程快速路径（3 → 1）。
+   * ⚠️ context 为展开折叠条时的上下文行数（0 = git 默认 3 行）；不同档位走不同缓存键，互不覆盖。
    */
-  async function loadDiff(file: string, staged: boolean, opts?: { force?: boolean, status?: string }) {
-    const key = diffCacheKey(file, staged)
+  async function loadDiff(file: string, staged: boolean, opts?: { force?: boolean, status?: string, context?: number }) {
+    const key = diffCacheKey(file, staged, opts?.context ?? 0)
     if (!opts?.force && key in state.fileDiffs.value && state.diffMeta[key] === state.diffTreeVersion) return
     const inflight = state.diffInflight.get(key)
     if (inflight) return inflight
@@ -387,7 +388,7 @@ export function useCardData(project: () => GitProject) {
     const fetchedAtVersion = state.diffTreeVersion
     const exec = (async () => {
       try {
-        const text = await manager.getFileDiff(path(), file, staged, opts?.status)
+        const text = await manager.getFileDiff(path(), file, staged, opts?.status, opts?.context ?? 0)
         state.fileDiffs.value[key] = text
         state.diffMeta[key] = fetchedAtVersion
         pruneRecordCache(state.fileDiffs.value, 30)

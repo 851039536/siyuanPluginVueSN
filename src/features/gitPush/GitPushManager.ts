@@ -1020,9 +1020,12 @@ export class GitPushManager {
     return this.worktreeOps.getWorkingTreeStatus(projectPath, opts)
   }
 
-  /** 获取文件差异。`status` 为可选提示（如 "untracked"），命中时走单进程快速路径；缺省行为不变 */
-  async getFileDiff(projectPath: string, file: string, staged = false, status?: string): Promise<string> {
-    return this.worktreeOps.getFileDiff(projectPath, file, staged, status)
+  /**
+   * 获取文件差异。`status` 为可选提示（如 "untracked"），命中时走单进程快速路径；
+   * `context` 为展开折叠条时的上下文行数（`-U<n>`，缺省 3 行）。
+   */
+  async getFileDiff(projectPath: string, file: string, staged = false, status?: string, context = 0): Promise<string> {
+    return this.worktreeOps.getFileDiff(projectPath, file, staged, status, context)
   }
 
   /**

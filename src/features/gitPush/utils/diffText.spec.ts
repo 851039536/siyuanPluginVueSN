@@ -8,6 +8,8 @@ import {
   countDiffStats,
   countRawDiffLines,
   diffCacheKey,
+  nextDiffContext,
+  pairChangeBlock,
   DIFF_SIGN,
   parseDiffLines,
 } from "./diffText"
@@ -426,5 +428,68 @@ describe("countRawDiffLines", () => {
   it("无 hunk（二进制 / 仅改权限）返回 0/0", () => {
     expect(countRawDiffLines("diff --git a/x.png b/x.png\nBinary files differ")).toEqual({ add: 0, del: 0 })
     expect(countRawDiffLines("")).toEqual({ add: 0, del: 0 })
+  })
+})
+
+describe("diffCacheKey 上下文档位", () => {
+  it("缺省（0 行上下文）保持旧键，既有缓存与预取不受影响", () => {
+    expect(diffCacheKey("a.ts", true)).toBe("s::a.ts")
+    expect(diffCacheKey("a.ts", false, 0)).toBe("u::a.ts")
+  })
+
+  it("展开档位另起键，与默认档互不覆盖", () => {
+    expect(diffCacheKey("a.ts", false, 20)).toBe("u::a.ts@20")
+    expect(diffCacheKey("a.ts", false, 80)).not.toBe(diffCacheKey("a.ts", false, 20))
+    expect(diffCacheKey("a.ts", false, 20)).not.toBe(diffCacheKey("a.ts", false))
+  })
+})
+
+describe("nextDiffContext 档位阶梯", () => {
+  it("从默认档逐级升到 20 / 80 / 320", () => {
+    expect(nextDiffContext(0)).toBe(20)
+    expect(nextDiffContext(20)).toBe(80)
+    expect(nextDiffContext(80)).toBe(320)
+  })
+
+  it("到顶后返回 null（不再显示展开入口）", () => {
+    expect(nextDiffContext(320)).toBeNull()
+    expect(nextDiffContext(999)).toBeNull()
+  })
+
+  it("越档请求（缓存里存着中间值时）跳到下一个更大档位，不回头", () => {
+    expect(nextDiffContext(30)).toBe(80)
+    expect(nextDiffContext(100)).toBe(320)
+  })
+})
+
+describe("pairChangeBlock 块内行配对", () => {
+  it("无相同行时按位置配对", () => {
+    expect(pairChangeBlock(["a", "b"], ["x", "y"])).toEqual([
+      { del: 0, add: 0 },
+      { del: 1, add: 1 },
+    ])
+  })
+
+  it("数量不等时多余的一侧记为 -1", () => {
+    expect(pairChangeBlock(["a", "b", "c"], ["x"])).toEqual([
+      { del: 0, add: 0 },
+      { del: 1, add: -1 },
+      { del: 2, add: -1 },
+    ])
+  })
+
+  it("文本相同的行先锚定（移动过的行也能对上）", () => {
+    // del a,b,c / add x,c → c 与 c 锚定，a,b 与 x 之间按位置补
+    expect(pairChangeBlock(["a", "b", "c"], ["x", "c"])).toEqual([
+      { del: 0, add: 0 },
+      { del: 1, add: -1 },
+      { del: 2, add: 1 },
+    ])
+  })
+
+  it("空块与单侧空块", () => {
+    expect(pairChangeBlock([], [])).toEqual([])
+    expect(pairChangeBlock(["a"], [])).toEqual([{ del: 0, add: -1 }])
+    expect(pairChangeBlock([], ["a"])).toEqual([{ del: -1, add: 0 }])
   })
 })

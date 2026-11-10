@@ -137,12 +137,14 @@
             :i18n="i18n"
             :file="file"
             :scope="scopeOf(file)"
+            :context="contextOf(file)"
             :diff-text="diffOf(file)"
             :loading="loadingOf(file)"
             :git-op-loading="gitOpLoading"
             @stage-toggle="handleSectionStageToggle"
             @discard="handleSectionDiscard"
             @scope-change="handleScopeChange"
+            @expand-context="expandContext(file)"
           />
           <!-- 文件数分页：一次只挂前 N 个文件段，避免上百个文件同时建 DOM -->
           <LoadMoreButton
@@ -175,7 +177,7 @@ import {
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
 import Divider from "@/components/Divider.vue"
-import { buildSectionedTreeRows, countRawDiffLines, diffCacheKey } from "../../utils"
+import { buildSectionedTreeRows, countRawDiffLines, diffCacheKey, nextDiffContext } from "../../utils"
 import DiffViewBar from "../common/DiffViewBar.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 import DiffFileSection from "./DiffFileSection.vue"
@@ -208,7 +210,7 @@ const emit = defineEmits<{
   stageToggle: [file: FileChange]
   discard: [file: FileChange]
   /** 单文件差异取数（未跟踪 / 变更集缺失时的回退） */
-  loadDiff: [file: string, staged: boolean, opts?: { force?: boolean, status?: string }]
+  loadDiff: [file: string, staged: boolean, opts?: { force?: boolean, status?: string, context?: number }]
 }>()
 
 /** 一次挂载的文件段数量 / 每次「加载更多」的步长 */
@@ -233,6 +235,8 @@ const changesets = ref<{ staged: Record<string, string> | null, unstaged: Record
 const changesetLoading = ref(true)
 /** 用户手动切过范围的文件（path → 是否暂存区），未记录时按文件自身暂存态决定 */
 const scopeOverride = ref<Record<string, boolean>>({})
+/** 已展开上下文的文件（path → 上下文行数），缺省 = git 默认 3 行 */
+const contextByPath = ref<Record<string, number>>({})
 
 const rootEl = ref<HTMLElement | null>(null)
 const scrollEl = ref<HTMLElement | null>(null)
@@ -298,12 +302,30 @@ function scopeOf(file: FileChange): "staged" | "unstaged" {
   return file.staged ? "staged" : "unstaged"
 }
 
-/** 该文件在当前范围下的 diff 文本：优先变更集，缺失时回退单文件缓存 */
+/** 该文件已展开的上下文档位（0 = git 默认 3 行） */
+function contextOf(file: FileChange): number {
+  return contextByPath.value[file.path] ?? 0
+}
+
+/**
+ * 该文件在当前范围下的 diff 文本。
+ * 展开过上下文的文件走「按档位单文件取数」的缓存键：变更集永远是默认上下文，
+ * 两套内容分开存放，收起前后互不覆盖。
+ */
 function diffOf(file: FileChange): string {
   const scope = scopeOf(file)
+  const staged = scope === "staged"
+  const context = contextOf(file)
+  if (context > 0) {
+    const expanded = props.fileDiffs[diffCacheKey(file.path, staged, context)]
+    if (expanded) return expanded
+    // 展开档还没回来 / 取数失败：先退回默认档内容，不要整段空白
+    const map = changesets.value[scope]
+    return (map && file.path in map) ? map[file.path] : (expanded ?? "")
+  }
   const map = changesets.value[scope]
   if (map && file.path in map) return map[file.path]
-  return props.fileDiffs[diffCacheKey(file.path, scope === "staged")] ?? ""
+  return props.fileDiffs[diffCacheKey(file.path, staged)] ?? ""
 }
 
 /**
@@ -313,9 +335,16 @@ function diffOf(file: FileChange): string {
  */
 function loadingOf(file: FileChange): boolean {
   const scope = scopeOf(file)
+  const staged = scope === "staged"
+  const context = contextOf(file)
+  if (context > 0) {
+    const key = diffCacheKey(file.path, staged, context)
+    if (!(key in props.fileDiffs)) return true
+    return !!props.diffLoading[key]
+  }
   const map = changesets.value[scope]
   if (map && file.path in map) return false
-  const key = diffCacheKey(file.path, scope === "staged")
+  const key = diffCacheKey(file.path, staged)
   if (!(key in props.fileDiffs)) return true
   return !!props.diffLoading[key]
 }
@@ -399,11 +428,36 @@ function handleScopeChange(file: FileChange, staged: boolean) {
     ...scopeOverride.value,
     [file.path]: staged,
   }
+  // 展开过上下文的文件：范围变了就按新范围重取同一档位
+  const context = contextOf(file)
+  if (context > 0) {
+    emit("loadDiff", file.path, staged, { status: file.status, context })
+    return
+  }
   // 该范围若不在变更集内（未跟踪等），回退单文件取数
   const map = changesets.value[staged ? "staged" : "unstaged"]
   if (!map || !(file.path in map)) {
     emit("loadDiff", file.path, staged, { status: file.status })
   }
+}
+
+/**
+ * 展开折叠条：把该文件的上下文按阶梯提高一档并重取。
+ *
+ * 只能整文件重取（`git diff -U<n>` 的粒度就是文件），所以点任意一处折叠条，
+ * 同文件内的其他折叠条也会一起变短——这一点在按钮文案里明确成「展开更多上下文」而非「展开这 N 行」。
+ */
+function expandContext(file: FileChange) {
+  const next = nextDiffContext(contextOf(file))
+  if (next === null) return
+  contextByPath.value = {
+    ...contextByPath.value,
+    [file.path]: next,
+  }
+  emit("loadDiff", file.path, scopeOf(file) === "staged", {
+    status: file.status,
+    context: next,
+  })
 }
 
 /**
@@ -414,20 +468,32 @@ function handleScopeChange(file: FileChange, staged: boolean) {
  */
 function ensureMissingDiffs() {
   for (const file of visibleStreamFiles.value) {
-    const scope = scopeOf(file)
-    const map = changesets.value[scope]
+    const staged = scopeOf(file) === "staged"
+    const context = contextOf(file)
+    // 展开过上下文的文件：内容只可能来自按档位的单文件取数
+    if (context > 0) {
+      const key = diffCacheKey(file.path, staged, context)
+      if (key in props.fileDiffs) continue
+      emit("loadDiff", file.path, staged, { status: file.status, context })
+      continue
+    }
+    const map = changesets.value[scopeOf(file)]
     if (!map) continue
     if (file.path in map) continue
-    const key = diffCacheKey(file.path, scope === "staged")
+    const key = diffCacheKey(file.path, staged)
     if (key in props.fileDiffs) continue
-    emit("loadDiff", file.path, scope === "staged", { status: file.status })
+    emit("loadDiff", file.path, staged, { status: file.status })
   }
 }
 
-watch([visibleStreamFiles, changesets], ensureMissingDiffs)
+watch([visibleStreamFiles, changesets, contextByPath], ensureMissingDiffs)
 
-// 文件集合变化（暂存 / 丢弃 / 提交 / 外部改动刷新）→ 重取变更集（数据层按版本决定是否真的重跑）
-watch(() => props.files, () => { void refreshChangesets() })
+// 文件集合变化（暂存 / 丢弃 / 提交 / 外部改动刷新）→ 重取变更集（数据层按版本决定是否真的重跑）；
+// 同时收起已展开的上下文：展开档位的内容是按旧版本取的，回到默认档才能跟着变更集一起刷新
+watch(() => props.files, () => {
+  if (Object.keys(contextByPath.value).length) contextByPath.value = {}
+  void refreshChangesets()
+})
 
 /**
  * 打开时的定位请求。

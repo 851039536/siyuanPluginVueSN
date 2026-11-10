@@ -146,6 +146,8 @@
           :i18n="i18n"
           :lines="visibleLines"
           :show-bar="false"
+          :gaps-expandable="canExpandGap"
+          @expand="emit('expandContext')"
         />
         <!-- 单文件行数上限：超长 diff 先渲染前 N 行，其余按需增量展开（避免一屏几千行卡住滚动） -->
         <div
@@ -186,6 +188,7 @@ import {
   fileStatusTitle,
   filterOnlyChanges,
   isIconFileStatus,
+  nextDiffContext,
   parseDiffLines,
 } from "../../utils"
 import DiffLines from "../common/DiffLines.vue"
@@ -196,6 +199,8 @@ const props = defineProps<{
   file: FileChange
   /** 当前查看的差异范围（暂存区 / 工作区，由弹窗统一持有） */
   scope: "staged" | "unstaged"
+  /** 本段已展开的上下文档位（0 = git 默认 3 行；>0 表示按该行数重取过） */
+  context: number
   /** 该文件在当前范围下的 diff 文本（缺失且未加载时为空串） */
   diffText: string
   /** 单文件取数在途标记（未跟踪文件回退路径） */
@@ -209,6 +214,8 @@ const emit = defineEmits<{
   discard: [file: FileChange]
   /** 切换差异范围（暂存区 / 工作区） */
   scopeChange: [file: FileChange, staged: boolean]
+  /** 点击折叠条：请求该文件下一档上下文的 diff */
+  expandContext: []
 }>()
 
 /** 视图偏好由弹窗统一持有，逐段透传（一条工具条控制所有文件段） */
@@ -221,6 +228,9 @@ const collapsed = ref(false)
 
 /** 仅「已暂存 + 工作区又改动」的文件有两份差异可切 */
 const canSwitchScope = computed(() => !!(props.file.staged && props.file.unstaged))
+
+/** 还有更大的上下文档位可请求时，折叠条才显示展开入口 */
+const canExpandGap = computed(() => nextDiffContext(props.context) !== null)
 
 const SCOPE_OPTIONS: { value: "staged" | "unstaged", labelKey: string }[] = [
   {

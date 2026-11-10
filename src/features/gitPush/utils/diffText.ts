@@ -1,8 +1,15 @@
 // gitPush 差异文本处理（纯函数）：缓存键、着色行解析、词级高亮、AI 上下文预算采样
 
-/** 差异缓存键（fileDiffs 缓存 / diffLoading 标记 / 面板预取共用同一键空间） */
-export function diffCacheKey(filePath: string, staged: boolean): string {
-  return `${staged ? "s" : "u"}::${filePath}`
+/**
+ * 差异缓存键（fileDiffs 缓存 / diffLoading 标记 / 面板预取共用同一键空间）。
+ *
+ * `context` 为 0 时保持旧键（`s::path` / `u::path`），既有调用方零改动；
+ * 展开折叠条时按上下文档位另起一键（`u::path@20`），
+ * 让「3 行上下文的概览」与「展开后的长上下文」各自缓存、互不覆盖。
+ */
+export function diffCacheKey(filePath: string, staged: boolean, context = 0): string {
+  const base = `${staged ? "s" : "u"}::${filePath}`
+  return context > 0 ? `${base}@${context}` : base
 }
 
 /**
@@ -146,6 +153,20 @@ export function countDiffStats(lines: DiffLine[]): { add: number, del: number } 
     add,
     del,
   }
+}
+
+/**
+ * 折叠条展开的上下文档位阶梯（行数）。逐级放大：每次点击请求下一档，
+ * 到顶后不再显示展开入口（再往上没有信息增量，只是把整个文件搬一遍）。
+ */
+export const DIFF_CONTEXT_LEVELS = [20, 80, 320] as const
+
+/** 下一档上下文行数（已到顶返回 null） */
+export function nextDiffContext(current: number): number | null {
+  for (const level of DIFF_CONTEXT_LEVELS) {
+    if (level > current) return level
+  }
+  return null
 }
 
 /**
@@ -427,7 +448,80 @@ function diffSegments(del: string, add: string): { del: DiffSegment[], add: Diff
   }
 }
 
-/** 后处理：将连续 del 块与紧随的 add 块按下标配对，为每对行生成词级差异分段 */
+/**
+ * 块内「行文本完全相同」的 LCS 锚点。
+ * 块过大时直接返回空（退化为按位置配对）——DP 是 O(n×m)，几十行的块足够，
+ * 上百行的整段重写本来也没有可靠的行对应关系。
+ */
+function lineAnchors(a: string[], b: string[]): [number, number][] {
+  const n = a.length
+  const m = b.length
+  if (!n || !m || n * m > 40000) return []
+  const width = m + 1
+  const dp = new Uint16Array((n + 1) * width)
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i * width + j] = a[i] === b[j]
+        ? dp[(i + 1) * width + j + 1] + 1
+        : Math.max(dp[(i + 1) * width + j], dp[i * width + j + 1])
+    }
+  }
+  const anchors: [number, number][] = []
+  let i = 0
+  let j = 0
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      anchors.push([i, j])
+      i++
+      j++
+    } else if (dp[(i + 1) * width + j] >= dp[i * width + j + 1]) {
+      i++
+    } else {
+      j++
+    }
+  }
+  return anchors
+}
+
+/**
+ * 一个改动块（连续 del + 紧随的连续 add）的行配对表。
+ *
+ * 先用「文本完全相同」的行做锚点（移动过位置的行也能对上），锚点之间的剩余段按位置配对；
+ * 未配上的一侧记为 -1。返回值按行序排列，供词级高亮与并排视图共用——
+ * 两侧必须用同一套配对，否则「并排看到的对」与「词级染色的对」会不是同一对。
+ */
+export function pairChangeBlock(delTexts: string[], addTexts: string[]): { del: number, add: number }[] {
+  const pairs: { del: number, add: number }[] = []
+  let di = 0
+  let ai = 0
+  const flushTo = (toDel: number, toAdd: number) => {
+    while (di < toDel && ai < toAdd) pairs.push({
+      del: di++,
+      add: ai++,
+    })
+    while (di < toDel) pairs.push({
+      del: di++,
+      add: -1,
+    })
+    while (ai < toAdd) pairs.push({
+      del: -1,
+      add: ai++,
+    })
+  }
+  for (const [d, a] of lineAnchors(delTexts, addTexts)) {
+    flushTo(d, a)
+    pairs.push({
+      del: d,
+      add: a,
+    })
+    di = d + 1
+    ai = a + 1
+  }
+  flushTo(delTexts.length, addTexts.length)
+  return pairs
+}
+
+/** 后处理：将连续 del 块与紧随的 add 块按「文本锚点 + 位置补足」配对，为每对行生成词级差异分段 */
 function markInlineDiff(lines: DiffLine[]): void {
   let i = 0
   while (i < lines.length) {
@@ -436,10 +530,14 @@ function markInlineDiff(lines: DiffLine[]): void {
     while (i < lines.length && lines[i].type === "del") i++
     const addStart = i
     while (i < lines.length && lines[i].type === "add") i++
-    const pairCount = Math.min(addStart - delStart, i - addStart)
-    for (let k = 0; k < pairCount; k++) {
-      const delLine = lines[delStart + k]
-      const addLine = lines[addStart + k]
+    const dels = lines.slice(delStart, addStart)
+    const adds = lines.slice(addStart, i)
+    if (!dels.length || !adds.length) continue
+    const pairs = pairChangeBlock(dels.map((l) => l.text), adds.map((l) => l.text))
+    for (const pair of pairs) {
+      if (pair.del < 0 || pair.add < 0) continue
+      const delLine = dels[pair.del]
+      const addLine = adds[pair.add]
       const segs = diffSegments(delLine.text, addLine.text)
       if (!segs) continue
       // 单侧无变化时保持 segments 缺省，渲染层直接输出整行文本

@@ -169,14 +169,18 @@ export class WorktreeOps {
    * `untracked` 且未暂存的文件**必然**不在 index 中（git diff 恒空、ls-files 必然 miss），
    * 直接走 `--no-index`，省掉前两次注定空手的 git 进程（每次进程启动费 ~0.3s，3 → 1）。
    * status 缺省时行为与旧签名完全一致（向后兼容）。
+   *
+   * ⚠️ `context` 为展开折叠条时请求的上下文行数（`-U<n>`）；0/缺省按 git 默认 3 行，
+   * 与既有调用完全一致。未跟踪文件走 `--no-index` 展示全文，上下文对其无意义。
    */
-  async getFileDiff(projectPath: string, file: string, staged = false, status?: string): Promise<string> {
+  async getFileDiff(projectPath: string, file: string, staged = false, status?: string, context = 0): Promise<string> {
     try {
       // 快速路径：未跟踪文件的常规 diff 与基线检查都是注定空手的进程，直接展示完整新增内容
       if (!staged && status === "untracked") {
         return await this.execNoIndexDiff(projectPath, file)
       }
       const args = ["-c", "core.quotepath=false", "diff", "--text"]
+      if (context > 0) args.push(`-U${context}`)
       if (staged) args.push("--cached")
       args.push("--", file)
       const text = await this.executor.execGit(projectPath, args)

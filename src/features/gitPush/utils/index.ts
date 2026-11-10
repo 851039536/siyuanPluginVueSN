@@ -49,7 +49,10 @@ export {
   countDiffStats,
   countRawDiffLines,
   diffCacheKey,
+  DIFF_CONTEXT_LEVELS,
   DIFF_SIGN,
+  nextDiffContext,
+  pairChangeBlock,
   parseDiffLines,
 } from "./diffText"
 export type { DiffLine, DiffLineType, DiffSegment } from "./diffText"

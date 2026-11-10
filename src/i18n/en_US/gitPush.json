@@ -357,6 +357,7 @@
     "diffLayoutTip": "Switch diff layout (unified / split / auto; auto falls back on narrow windows)",
     "diffLineNumbers": "Line numbers",
     "diffOnlyChanges": "Changes only",
+    "diffGapExpand": "Show more context",
     "diffGapLines": "⋯ {0} unchanged lines",
     "prevFile": "Previous file",
     "nextFile": "Next file",

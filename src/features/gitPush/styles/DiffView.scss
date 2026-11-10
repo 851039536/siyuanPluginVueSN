@@ -234,6 +234,42 @@
 
 .wt-dl-gap-text { white-space: nowrap; }
 
+// 折叠条按钮：可展开时整条可点，不可展开时退化成纯文本行（同一套排版，避免两种长相）
+.wt-dl-gap-btn {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: default;
+
+  &.is-expandable {
+    cursor: pointer;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--b3-theme-primary);
+    outline-offset: -1px;
+  }
+}
+
+// 「展开」提示：悬停才显现，避免每条折叠都挂一句说明
+.wt-dl-gap-cta {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.wt-dl-gap-btn.is-expandable:hover .wt-dl-gap-cta,
+.wt-dl-gap-btn.is-expandable:focus-visible .wt-dl-gap-cta {
+  opacity: 0.9;
+}
+
 // ── 并排视图：左右单元格 ──
 .wt-dr-split {
   display: flex;

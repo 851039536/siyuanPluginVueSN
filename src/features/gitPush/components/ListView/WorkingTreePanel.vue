@@ -380,9 +380,10 @@ const emit = defineEmits<{
   deepGenerateMsg: []
   /**
    * 查看文件差异。opts.status 透传 FileChange.status（untracked 命中数据层单进程快速路径）；
-   *  opts.force=true 表示「内容必然已变」（写后重载），绕过数据层缓存命中
+   *  opts.force=true 表示「内容必然已变」（写后重载），绕过数据层缓存命中；
+   *  opts.context 为展开折叠条时请求的上下文行数（缺省 3 行）
    */
-  loadDiff: [file: string, staged: boolean, opts?: { force?: boolean, status?: string }]
+  loadDiff: [file: string, staged: boolean, opts?: { force?: boolean, status?: string, context?: number }]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]
   /** 手动刷新工作区（顶部刷新按钮，force 语义：必须重查，不复用在飞结果） */

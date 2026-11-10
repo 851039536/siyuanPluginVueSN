@@ -357,6 +357,7 @@
     "diffLayoutTip": "切换 diff 布局（统一 / 并排 / 自适应；自适应在窗口过窄时回退为统一）",
     "diffLineNumbers": "行号",
     "diffOnlyChanges": "仅改动",
+    "diffGapExpand": "展开更多上下文",
     "diffGapLines": "⋯ {0} 行未变",
     "prevFile": "上一个文件",
     "nextFile": "下一个文件",

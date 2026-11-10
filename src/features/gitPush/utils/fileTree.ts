@@ -226,17 +226,6 @@ export function buildSectionedTreeRows(
   return rows
 }
 
-/** 收集顶层目录路径集合（「全部收起」用：收起顶层目录即可折叠整棵树） */
-export function topLevelDirPaths(files: FileChange[]): string[] {
-  const top = new Set<string>()
-  for (const f of files) {
-    const idx = f.path.indexOf(SEP)
-    // idx > 0：排除 ".gitignore" 这类首字符为点的根级文件（indexOf 返回 -1）
-    if (idx > 0) top.add(f.path.slice(0, idx))
-  }
-  return [...top]
-}
-
 /** 按关键词过滤变更文件（大小写不敏感的路径子串匹配；空词原样返回） */
 export function filterFilesByQuery(files: FileChange[], query: string): FileChange[] {
   const q = query.trim().toLowerCase()

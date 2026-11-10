@@ -11,7 +11,6 @@ import {
   collectDirectoryPaths,
   filterFilesByQuery,
   filterPathsByQuery,
-  topLevelDirPaths,
 } from "./fileTree"
 
 /** 快捷构造变更条目（path 必填，其余默认未暂存修改） */
@@ -93,17 +92,6 @@ describe("buildFileTreeRows", () => {
     const fileRow = rows.find((r) => r.type === "file")!
     expect(fileRow.path).toBe("new/dir/f.ts")
     expect(fileRow.file).toBe(renamed)
-  })
-})
-
-describe("topLevelDirPaths", () => {
-  it("收集顶层目录，根级文件不产生目录", () => {
-    const top = topLevelDirPaths([fc("src/a/x.ts"), fc("src/b.ts"), fc("docs/d.md"), fc(".gitignore")])
-    expect(top.sort()).toEqual(["docs", "src"])
-  })
-
-  it("空输入返回空数组", () => {
-    expect(topLevelDirPaths([])).toEqual([])
   })
 })
 

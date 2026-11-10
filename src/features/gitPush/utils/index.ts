@@ -156,7 +156,6 @@ export {
   collectDirectoryPaths,
   filterFilesByQuery,
   filterPathsByQuery,
-  topLevelDirPaths,
 } from "./fileTree"
 export type {
   FileTreeDirRow,

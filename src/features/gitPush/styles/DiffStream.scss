@@ -46,14 +46,19 @@
 }
 
 // ── 左侧目录树索引 ──
+// 行本体（缩进 / 箭头 / 文件夹图标 / 文件类型图标 / 名字 / 变更角标）全部复用
+// WorkspaceExplorer.scss 的 .we-row 系列 —— 同一插件里文件树只保留一种长相。
+// 本文件只补三样东西：侧栏容器、分区标题行、「增删统计 ⇄ 暂存开关」的右侧槽位。
 .wt-sb {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  width: 250px;
+  width: 272px;
   min-height: 0;
   border-right: 1px solid var(--b3-border-color);
   background: var(--b3-theme-surface);
+  // 显式钉住界面字体：树里有等宽元素（计数 / 角标），避免祖先串味
+  font-family: $ff-zh;
 }
 
 .wt-sb-toolbar {
@@ -77,15 +82,7 @@
   opacity: 0.5;
 }
 
-.wt-sb-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  padding-bottom: $s-2;
-}
-
-// 分区行（已暂存 / 未暂存）：不缩进，底部描边分隔两区
+// 分区标题行（工作区树没有对应物）：与树行同节奏的细标签，不平分视觉重量
 .wt-sb-section {
   @include btn-reset;
 
@@ -93,20 +90,20 @@
   align-items: center;
   gap: $s-1;
   width: 100%;
-  padding: $s-px3 $s-px6;
-  border-bottom: 1px solid var(--b3-border-color);
+  padding: $s-2 $s-px6 $s-px2;
   font-size: $t-2xs;
-  font-weight: $fw-semibold;
+  font-weight: $fw-medium;
   color: var(--b3-theme-on-surface);
+  opacity: 0.6;
   cursor: pointer;
   text-align: left;
   user-select: none;
-  transition: background 0.12s;
+  transition: opacity 0.12s;
 
   &:hover {
-    background: var(--b3-list-hover);
+    opacity: 0.9;
 
-    .wt-sb-section-btn { opacity: 0.8; }
+    .we-copy-btn { opacity: 1; }
   }
 
   &:focus-visible {
@@ -115,82 +112,59 @@
   }
 }
 
-// 分区级批量操作：hover 前隐藏，避免占位干扰标题
+.wt-sb-section-name {
+  flex-shrink: 0;
+}
+
+// 分区级批量操作排到行尾
 .wt-sb-section-btn {
   margin-left: auto;
   flex-shrink: 0;
-  opacity: 0;
+}
+
+// 右侧槽位：增删统计与暂存开关叠在同一格互换（行宽恒定，hover 不抖动）
+.wt-sb-slot {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 16px;
+}
+
+.wt-sb-stats,
+.wt-sb-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $s-1;
   transition: opacity 0.12s;
 }
 
-// 目录行 / 文件行基座：缩进 = 基准 6px + 层级 × 10px（--wt-sb-depth 由模板注入）
-.wt-sb-row {
-  --wt-sb-indent-base: #{$s-px6};
-  --wt-sb-indent-step: #{$s-px10};
-
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-  width: 100%;
-  padding-top: $s-px2;
-  padding-bottom: $s-px2;
-  padding-right: $s-px6;
-  padding-left: calc(var(--wt-sb-indent-base) + var(--wt-sb-depth, 0) * var(--wt-sb-indent-step));
+.wt-sb-stats {
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
+  font-family: $ff-mono;
+}
 
-  &:hover {
-    background: var(--b3-list-hover);
-  }
+.wt-sb-stage {
+  opacity: 0;
+  pointer-events: none;
+}
 
-  &:focus-visible {
-    outline: 2px solid var(--b3-theme-primary);
-    outline-offset: -2px;
+.we-row--file:hover {
+  .wt-sb-stats { opacity: 0; }
+
+  .wt-sb-stage {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
-// 目录行是原生 button（Enter/Space 折叠 + aria-expanded）
-.wt-sb-dir {
-  @include btn-reset;
-}
+// 侧栏里的变更角标只是状态标记（工作区树里它是「跳到改动」的可点按钮）
+.wt-sb .we-badge {
+  cursor: default;
 
-// 文件行：右侧连续流当前所在的文件高亮
-.wt-sb-file.is-active {
-  background: var(--b3-list-hover);
-  box-shadow: inset 2px 0 0 var(--b3-theme-primary);
-}
-
-.wt-sb-chev {
-  flex-shrink: 0;
-  opacity: 0.6;
-  transition: transform 0.12s;
-
-  &.is-open { transform: rotate(90deg); }
-}
-
-.wt-sb-folder {
-  flex-shrink: 0;
-  opacity: 0.7;
-}
-
-.wt-sb-name {
-  flex: 1;
-  min-width: 0;
-  @include text-ellipsis;
-}
-
-.wt-sb-file-name {
-  font-family: $ff-mono;
-}
-
-.wt-sb-count {
-  flex-shrink: 0;
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  opacity: 0.5;
+  &:hover { opacity: 1; }
 }
 
 // ── 右侧连续流 ──
@@ -233,8 +207,6 @@
 
   &:hover {
     background: var(--b3-list-hover);
-
-    .wt-stream-head-actions { opacity: 1; }
   }
 
   &:focus-visible {
@@ -254,20 +226,29 @@
 .wt-stream-path {
   font-size: $t-xs;
   font-family: $ff-mono;
-  font-weight: $fw-semibold;
+  // 500 而不是 600：等宽字体加粗到 600 在 12px 下会糊成一团（与浏览器树路径同处理）
+  font-weight: $fw-medium;
   min-width: 0;
   @include text-ellipsis;
 }
 
-// 行内操作区：hover 前半透明，避免多个文件头堆满按钮
+// 行内操作区：默认隐藏、悬停或键盘聚焦时显现（与工作区浏览器的行内按钮同法）。
+// 文件头因此只剩「箭头 + 状态 + 路径 + 统计」，连续滚动时不会再被一排按钮打断节奏。
 .wt-stream-head-actions {
   display: flex;
   align-items: center;
   gap: $s-px2;
   margin-left: auto;
   flex-shrink: 0;
-  opacity: 0.35;
+  opacity: 0;
+  pointer-events: none;
   transition: opacity 0.12s;
+}
+
+.wt-stream-head:hover .wt-stream-head-actions,
+.wt-stream-head:focus-within .wt-stream-head-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 // 范围切换与本组按钮之间的竖直分隔线（弹窗头部的同款规则作用不到这两处，这里自持几何）

@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import {
   buildDiffContext,
   countDiffStats,
+  countRawDiffLines,
   diffCacheKey,
   DIFF_SIGN,
   parseDiffLines,
@@ -394,5 +395,36 @@ describe("buildDiffContext", () => {
   it("空块（仅空白）不计入文件数", () => {
     const diff = `${makeFileDiff("a.ts", 5)}\n   \n`
     expect(buildDiffContext(diff, 10000)).not.toContain("省略")
+  })
+})
+
+describe("countRawDiffLines", () => {
+  it("只统计 hunk 之后的增删行，跳过文件头", () => {
+    const raw = [
+      "diff --git a/a.ts b/a.ts",
+      "--- a/a.ts",
+      "+++ b/a.ts",
+      "@@ -1,2 +1,3 @@",
+      "-old",
+      " keep",
+      "+new",
+      "+extra",
+    ].join("\n")
+    expect(countRawDiffLines(raw)).toEqual({ add: 2, del: 1 })
+  })
+
+  it("多 hunk 累计，hunk 头自身不计入", () => {
+    const raw = ["@@ -1 +1 @@", "-a", "+b", "@@ -9 +9 @@", "-c", "+d", "+e"].join("\n")
+    expect(countRawDiffLines(raw)).toEqual({ add: 3, del: 2 })
+  })
+
+  it("内容行以 +++ / --- 开头时按增删计入（不是文件头）", () => {
+    const raw = ["@@ -1 +1 @@", "-+++ x", "+--- y"].join("\n")
+    expect(countRawDiffLines(raw)).toEqual({ add: 1, del: 1 })
+  })
+
+  it("无 hunk（二进制 / 仅改权限）返回 0/0", () => {
+    expect(countRawDiffLines("diff --git a/x.png b/x.png\nBinary files differ")).toEqual({ add: 0, del: 0 })
+    expect(countRawDiffLines("")).toEqual({ add: 0, del: 0 })
   })
 })

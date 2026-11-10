@@ -243,3 +243,35 @@ describe("buildPathTreeRows", () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
 })
+
+describe("buildFileTreeRows compact（单子目录链压缩）", () => {
+  it("只有单个子目录且自身无文件的链条合并成一行", () => {
+    const rows = buildFileTreeRows([fc("src/features/gitPush/utils/x.ts")], new Set(), 0, "", true)
+    const dirs = rows.filter((r) => r.type === "dir")
+    expect(dirs).toHaveLength(1)
+    expect(dirs[0]).toMatchObject({ name: "src/features/gitPush/utils", depth: 0, key: "src/features/gitPush/utils" })
+    // 文件挂在合并后的那一行下面，只深一层
+    expect(rows.find((r) => r.type === "file")).toMatchObject({ name: "x.ts", depth: 1 })
+  })
+
+  it("分支处停止合并（多个子目录不合并）", () => {
+    const rows = buildFileTreeRows([fc("src/a/x.ts"), fc("src/b/z.ts")], new Set(), 0, "", true)
+    expect(rows.filter((r) => r.type === "dir").map((r) => r.name)).toEqual(["src", "a", "b"])
+  })
+
+  it("目录自身有文件时停止合并", () => {
+    const rows = buildFileTreeRows([fc("src/a/x.ts"), fc("src/a/y.ts")], new Set(), 0, "", true)
+    expect(rows.filter((r) => r.type === "dir").map((r) => r.name)).toEqual(["src/a"])
+  })
+
+  it("折叠合并行时整条链一起收起（键为最深路径）", () => {
+    const rows = buildFileTreeRows([fc("src/features/x.ts")], new Set(["src/features"]), 0, "", true)
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ type: "dir", name: "src/features" })
+  })
+
+  it("compact 关闭时保持逐层输出（既有调用方行为不变）", () => {
+    const rows = buildFileTreeRows([fc("src/features/x.ts")])
+    expect(rows.filter((r) => r.type === "dir").map((r) => r.name)).toEqual(["src", "features"])
+  })
+})

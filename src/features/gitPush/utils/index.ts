@@ -47,6 +47,7 @@ export {
 export {
   buildDiffContext,
   countDiffStats,
+  countRawDiffLines,
   diffCacheKey,
   DIFF_SIGN,
   parseDiffLines,

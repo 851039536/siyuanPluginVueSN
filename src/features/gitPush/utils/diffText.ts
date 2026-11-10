@@ -148,6 +148,32 @@ export function countDiffStats(lines: DiffLine[]): { add: number, del: number } 
   }
 }
 
+/**
+ * 从**原始 diff 文本**快速统计增删行数（不做行解析、不做词级对齐）。
+ *
+ * 用于「大量文件、只要一个数字」的场景（如审阅流侧栏每个文件的 +N −N）：
+ * 跳过首个 hunk 之前的文件头，之后只按行首字符计数。
+ * 比 parseDiffLines 快一个数量级——那条路径会建行对象、跑 LCS，给上百个文件算数字不值当。
+ */
+export function countRawDiffLines(raw: string): { add: number, del: number } {
+  let add = 0
+  let del = 0
+  let inBody = false
+  for (const line of raw.split("\n")) {
+    if (!inBody) {
+      if (line.startsWith("@@")) inBody = true
+      continue
+    }
+    const head = line.charCodeAt(0)
+    if (head === 43 /* '+' */) add++
+    else if (head === 45 /* - */) del++
+  }
+  return {
+    add,
+    del,
+  }
+}
+
 /** 单文件 diff 的最小分析配额（变更文件数超过预算容量时，仅完整覆盖前 capacity 个文件，其余由变更文件清单兜底） */
 const MIN_PER_FILE_DIFF_BUDGET = 500
 /** 单个 hunk 的最小保留字符数（大文件 diff 按此配额均匀采样 hunk） */

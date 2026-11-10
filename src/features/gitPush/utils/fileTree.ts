@@ -119,22 +119,42 @@ function basename(path: string): string {
  * - 深度语义：文件行比其父目录行深一层（文件挂在目录内容下），
  *   dir.depthOffset = 目录自身缩进，file.depth = 父目录深度 + 1；
  * - depthOffset：分区结构下整体缩进偏移（分区行 depth 0，其下目录从 1 起）。
+ *
+ * @param contentDepth 本目录直属文件所在深度（= 目录深度 + 1；链式压缩后取最外层目录的深度 + 1）
+ * @param compact 是否把「只有单个子目录且自身无文件」的链条合并成一行（`src/features/gitPush`）
  */
-function emitRows(dir: DirNode, collapsed: ReadonlySet<string>, depthOffset: number, fileKeyPrefix: string, out: FileTreeRow[]): void {
+function emitRows(
+  dir: DirNode,
+  collapsed: ReadonlySet<string>,
+  depthOffset: number,
+  fileKeyPrefix: string,
+  out: FileTreeRow[],
+  contentDepth: number,
+  compact: boolean,
+): void {
   const children = [...dir.dirs.values()].sort((a, b) => a.name.localeCompare(b.name))
   for (const child of children) {
+    // 链式压缩：沿唯一子目录一路下探，把中间层折叠进一行（VS Code 资源管理器同款行为）。
+    // 深度取最外层目录的层级，键取最深路径（折叠这一行即折叠整条链）。
+    let name = child.name
+    let node = child
+    if (compact) {
+      while (node.files.length === 0 && node.dirs.size === 1) {
+        const only = [...node.dirs.values()][0]
+        name = `${name}/${only.name}`
+        node = only
+      }
+    }
     out.push({
       type: "dir",
-      key: child.path,
-      name: child.name,
-      path: child.path,
-      depth: child.depth + depthOffset,
-      count: child.count,
+      key: node.path,
+      name,
+      path: node.path,
+      depth: contentDepth + depthOffset,
+      count: node.count,
     })
-    if (!collapsed.has(child.path)) emitRows(child, collapsed, depthOffset, fileKeyPrefix, out)
+    if (!collapsed.has(node.path)) emitRows(node, collapsed, depthOffset, fileKeyPrefix, out, contentDepth + 1, compact)
   }
-  // 文件比目录行深一层：根目录的直属文件在无分区时 depth = 0，有分区时 = 1
-  const fileDepth = dir.depth + depthOffset + 1
   for (const file of dir.files) {
     out.push({
       type: "file",
@@ -142,7 +162,7 @@ function emitRows(dir: DirNode, collapsed: ReadonlySet<string>, depthOffset: num
       key: `${fileKeyPrefix}${file.path}`,
       name: basename(file.path),
       path: file.path,
-      depth: fileDepth,
+      depth: contentDepth + depthOffset,
       count: 1,
       file,
     } satisfies FileTreeFileRow)
@@ -155,19 +175,21 @@ function emitRows(dir: DirNode, collapsed: ReadonlySet<string>, depthOffset: num
  * @param collapsedDirs 已折叠目录的完整路径集合（命中即整棵子树不输出；目录行自身仍输出）
  * @param depthOffset 整体缩进偏移（分区结构下传 1：分区行占 depth 0）
  * @param fileKeyPrefix 文件行键前缀（分区结构下传分区标识，保证跨分区键唯一；目录键不加前缀以共享折叠记忆）
+ * @param compact 是否压缩单子目录链（窄侧栏里省下大量缩进；默认关闭以保持既有调用方行为）
  */
 export function buildFileTreeRows(
   files: FileChange[],
   collapsedDirs: ReadonlySet<string> = new Set(),
   depthOffset = 0,
   fileKeyPrefix = "",
+  compact = false,
 ): FileTreeRow[] {
   // 根为虚拟层（depth -1）：顶层目录 = 0、根级直属文件 = 0，文件恒比父目录深一层
   const root = makeDir("", "", -1)
   for (const f of files) insertFile(root, f)
   computeCounts(root)
   const rows: FileTreeRow[] = []
-  emitRows(root, collapsedDirs, depthOffset, fileKeyPrefix, rows)
+  emitRows(root, collapsedDirs, depthOffset, fileKeyPrefix, rows, 0, compact)
   return rows
 }
 
@@ -178,10 +200,12 @@ export function buildFileTreeRows(
  * - 空分区整段省略（无已暂存文件时不渲染该分区标题）；
  * - 目录折叠键跨分区共享（同一路径在两区中折叠状态一致，记忆不翻倍）。
  * @param sections 分区标识与文件列表的配对（name 由视图层 i18n 填充，模块层零文案）
+ * @param compact 是否压缩单子目录链（窄侧栏场景传 true）
  */
 export function buildSectionedTreeRows(
   sections: { section: FileTreeSectionId, name: string, files: FileChange[] }[],
   collapsedDirs: ReadonlySet<string> = new Set(),
+  compact = false,
 ): FileTreeRow[] {
   const rows: FileTreeRow[] = []
   for (const { section, name, files } of sections) {
@@ -197,7 +221,7 @@ export function buildSectionedTreeRows(
     })
     // 分区折叠时其下整棵树省略（分区行自身保留，折叠语义与目录行一致）
     if (collapsedDirs.has(`section:${section}`)) continue
-    rows.push(...buildFileTreeRows(files, collapsedDirs, 1, `${section}:`))
+    rows.push(...buildFileTreeRows(files, collapsedDirs, 1, `${section}:`, compact))
   }
   return rows
 }

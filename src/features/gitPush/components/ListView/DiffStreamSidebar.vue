@@ -1,11 +1,13 @@
 <!--
   gitPush 审阅流侧栏：变更文件的目录树索引（已暂存 / 未暂存两个分区各自成树）。
   侧栏只负责「定位与暂存」，diff 本体在右侧连续流里；点击文件滚动到对应段。
-  原独立的「变更目录树」弹窗在本组件上线后并入审阅流，不再单独存在。
+
+  视觉/结构直接复用「工作区文件浏览器」的树（.we-row / .we-chev / .we-folder /
+  .we-file-icon / .we-name / .we-badge），同一个插件里文件树只有一种长相。
 -->
 <template>
   <aside class="wt-sb">
-    <!-- 筛选 + 展开/收起 + 计数 -->
+    <!-- 筛选 + 展开/收起 -->
     <div class="wt-sb-toolbar">
       <Input
         v-model="query"
@@ -42,22 +44,23 @@
       {{ i18n.fileTreeEmptyFiltered }}
     </div>
 
+    <!-- 树主体：复用工作区树的滚动容器类（overflow / scrollbar-gutter 与之一致） -->
     <div
       v-else
-      class="wt-sb-body"
+      class="we-tree"
       role="tree"
     >
       <template
         v-for="row in pagedRows"
         :key="row.key"
       >
-        <!-- 分区行：已暂存 / 未暂存（整行比一个空分区更省地方，空分区不渲染） -->
+        <!-- 分区行：已暂存 / 未暂存 -->
         <div
           v-if="row.type === 'section'"
           class="wt-sb-section"
-          role="button"
+          role="treeitem"
           tabindex="0"
-          :aria-expanded="!isCollapsed(row.key)"
+          :aria-expanded="isExpanded(row.key)"
           @click="toggleDir(row.key)"
           @keydown.enter.prevent="toggleDir(row.key)"
           @keydown.space.prevent="toggleDir(row.key)"
@@ -65,14 +68,14 @@
           <Icon
             icon="mdi:chevron-right"
             height="12"
-            class="wt-sb-chev"
-            :class="{ 'is-open': !isCollapsed(row.key) }"
+            class="we-chev"
+            :class="{ 'is-open': isExpanded(row.key) }"
           />
-          <span class="wt-sb-name">{{ row.name }}</span>
-          <span class="wt-sb-count">{{ row.count }}</span>
-          <!-- 分区级批量操作（复用面板既有链路与确认语义） -->
+          <span class="wt-sb-section-name">{{ row.name }}</span>
+          <span class="we-count">{{ row.count }}</span>
+          <!-- 分区级批量操作（hover 显现，复用工作区树的悬停按钮显隐规则） -->
           <Button
-            class="wt-sb-section-btn"
+            class="we-copy-btn wt-sb-section-btn"
             variant="ghost"
             size="xsmall"
             dense
@@ -84,84 +87,87 @@
           </Button>
         </div>
 
-        <!-- 目录行 -->
-        <button
+        <!-- 目录行：箭头 + 文件夹图标 + 名字 + 子树计数 -->
+        <div
           v-else-if="row.type === 'dir'"
-          class="wt-sb-row wt-sb-dir"
+          class="we-row we-row--dir"
           :style="indentStyle(row.depth)"
-          :aria-expanded="!isCollapsed(row.path)"
+          role="treeitem"
+          :aria-expanded="isExpanded(row.path)"
+          tabindex="0"
           :title="row.path"
           @click="toggleDir(row.path)"
+          @keydown.enter.prevent="toggleDir(row.path)"
+          @keydown.space.prevent="toggleDir(row.path)"
         >
           <Icon
             icon="mdi:chevron-right"
             height="12"
-            class="wt-sb-chev"
-            :class="{ 'is-open': !isCollapsed(row.path) }"
+            class="we-chev"
+            :class="{ 'is-open': isExpanded(row.path) }"
           />
           <Icon
-            icon="mdi:folder-outline"
+            :icon="isExpanded(row.path) ? 'mdi:folder-open-outline' : 'mdi:folder-outline'"
             height="12"
-            class="wt-sb-folder"
+            class="we-folder"
           />
-          <span class="wt-sb-name">{{ row.name }}</span>
-          <span class="wt-sb-count">{{ row.count }}</span>
-        </button>
+          <span class="we-name">{{ row.name }}</span>
+          <span class="we-count">{{ row.count }}</span>
+        </div>
 
-        <!-- 文件行：点击滚动到右侧对应文件段；勾选框翻转暂存态 -->
+        <!-- 文件行：文件类型图标 + 名字 + 增删统计 + 变更角标（悬停时统计让位给暂存开关） -->
         <div
           v-else
-          class="wt-sb-row wt-sb-file"
+          class="we-row we-row--file"
+          :class="{ 'is-selected': activePath === row.file.path }"
           :style="indentStyle(row.depth)"
-          :class="{ 'is-active': activePath === row.file.path }"
-          role="button"
+          role="treeitem"
+          :aria-selected="activePath === row.file.path"
           tabindex="0"
-          :aria-current="activePath === row.file.path ? 'true' : undefined"
-          :title="`${i18n.clickViewDiff} — ${row.file.path}`"
+          :title="row.file.path"
           @click="emit('focus', row.file)"
           @keydown.enter.prevent="emit('focus', row.file)"
           @keydown.space.prevent="emit('focus', row.file)"
         >
-          <span
-            class="wt-checkbox"
-            @click.stop
-          >
-            <Checkbox
-              :model-value="row.file.staged"
-              size="xsmall"
-              :disabled="gitOpLoading"
-              :aria-label="row.file.staged ? i18n.unstageFile : i18n.stageFile"
-              :title="row.file.staged ? i18n.unstageFile : i18n.stageFile"
-              @update:model-value="toggleStage(row.file)"
-            />
-          </span>
-          <span
-            class="wt-file-status"
-            :class="`wt-s-${row.file.status}`"
-            :title="fileStatusTitle(row.file, i18n)"
-          >
-            <IconWrapper
-              v-if="isIconFileStatus(row.file)"
-              :name="fileStatusIconKey(row.file)"
-              :size="12"
-            />
-            <template v-else>
-              {{ fileStatusIcon(row.file) }}
-            </template>
-          </span>
-          <span class="wt-sb-name wt-sb-file-name"><template
+          <span class="we-chev-spacer" />
+          <Icon
+            :icon="workspaceFileIcon(row.file.path)"
+            height="12"
+            class="we-file-icon"
+          />
+          <span class="we-name"><template
             v-for="(seg, i) in nameSegments(row.name)"
             :key="i"
           ><span
             v-if="seg.hit"
             class="gp-hl"
           >{{ seg.text }}</span><template v-else>{{ seg.text }}</template></template></span>
-          <!-- 已暂存后又改动（porcelain MM/AM） -->
+
+          <!-- 增删统计 / 暂存开关：同一格互换，行宽恒定 -->
+          <span class="wt-sb-slot">
+            <span
+              v-if="hasStats(row.file)"
+              class="wt-sb-stats"
+            ><span class="wt-stat-add">+{{ statsOf(row.file)?.add }}</span><span class="wt-stat-del">−{{ statsOf(row.file)?.del }}</span></span>
+            <Button
+              class="we-copy-btn wt-sb-stage"
+              variant="ghost"
+              size="xsmall"
+              dense
+              :icon="row.file.staged ? 'minusBoxOutline' : 'plusBoxOutline'"
+              :disabled="gitOpLoading"
+              :aria-label="row.file.staged ? i18n.unstageFile : i18n.stageFile"
+              :title="row.file.staged ? i18n.unstageFile : i18n.stageFile"
+              @click.stop="toggleStage(row.file)"
+            />
+          </span>
+
+          <!-- 变更角标（M / A / D / R / U；与工作区树同款） -->
           <span
-            v-if="row.file.staged && row.file.unstaged"
-            class="wt-partial-mark"
-            :title="i18n.stagedAndUnstagedTip"
-          ></span>
+            class="we-badge"
+            :class="`we-badge--${row.file.status}`"
+            :title="fileStatusTitle(row.file, i18n)"
+          >{{ fileStatusLetter(row.file) }}</span>
         </div>
       </template>
 
@@ -186,19 +192,16 @@ import {
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
-import Checkbox from "@/components/Checkbox.vue"
-import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { usePagedList } from "../../composables/usePagedList"
 import {
   buildSectionedTreeRows,
-  fileStatusIcon,
-  fileStatusIconKey,
+  diffCacheKey,
+  fileStatusLetter,
   fileStatusTitle,
   filterFilesByQuery,
   highlightSegments,
-  isIconFileStatus,
-  topLevelDirPaths,
+  workspaceFileIcon,
 } from "../../utils"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 
@@ -208,6 +211,8 @@ const props = defineProps<{
   files: FileChange[]
   /** 右侧当前所在的文件路径（滚动联动高亮） */
   activePath: string
+  /** 每个文件的增删行数（键 = diffCacheKey(path, staged)，由弹窗按变更集预先算好） */
+  stats: Record<string, { add: number, del: number }>
   gitOpLoading: boolean
 }>()
 
@@ -223,7 +228,7 @@ const emit = defineEmits<{
 /** 路径筛选词（大小写不敏感子串；筛选时忽略折叠全展开，与 VS Code 同语义） */
 const query = ref("")
 
-/** 已折叠节点的键集合（键空间：目录完整路径 / "section:staged" / "section:unstaged"） */
+/** 已折叠节点的键集合（键空间：目录最深路径 / "section:staged" / "section:unstaged"） */
 const collapsedDirs = ref<ReadonlySet<string>>(new Set())
 
 /** 按暂存状态拆分两分区（部分暂存文件归入已暂存区） */
@@ -243,12 +248,20 @@ const sectionedFiles = computed(() => {
   ]
 })
 
-/** 拉平树行（两分区各自成树，空分区整段省略；筛选时传空折叠集 = 全展开） */
+/**
+ * 拉平树行（两分区各自成树，空分区整段省略；筛选时传空折叠集 = 全展开）。
+ * compact = true：把「只有单个子目录」的链条压成一行（src/features/gitPush），
+ * 272px 宽的侧栏里能省下 3~4 层缩进，文件名才放得下。
+ */
 const rows = computed(() =>
-  buildSectionedTreeRows(sectionedFiles.value, query.value.trim() ? new Set() : collapsedDirs.value),
+  buildSectionedTreeRows(
+    sectionedFiles.value,
+    query.value.trim() ? new Set() : collapsedDirs.value,
+    true,
+  ),
 )
 
-// 侧栏本地分页：200 行（与面板内列表同款保护）
+// 侧栏本地分页：200 行（与工作区树同款保护）
 const SIDEBAR_PAGE_SIZE = 200
 const {
   paged: pagedRows,
@@ -256,8 +269,9 @@ const {
   loadMore,
 } = usePagedList(rows, SIDEBAR_PAGE_SIZE)
 
-function isCollapsed(key: string): boolean {
-  return collapsedDirs.value.has(key)
+/** 是否展开（树行用展开语义表达，内部仍按折叠集合存储） */
+function isExpanded(key: string): boolean {
+  return !collapsedDirs.value.has(key)
 }
 
 function toggleDir(key: string) {
@@ -272,19 +286,34 @@ function expandAll() {
   collapsedDirs.value = new Set()
 }
 
-/** 全部收起：收起两分区（分区折叠即整棵树收起） */
+/**
+ * 全部收起：只收起两个分区 —— 分区折叠即整棵树收起。
+ * 不逐个收起目录：链式压缩后目录行的键是最深路径，按顶层目录名收集会对不上。
+ */
 function collapseAll() {
-  collapsedDirs.value = new Set(["section:staged", "section:unstaged", ...topLevelDirPaths(props.files)])
+  collapsedDirs.value = new Set(["section:staged", "section:unstaged"])
 }
 
-/** 文件名筛选命中片段高亮（与卡片名称搜索同款渲染） */
+/** 文件名筛选命中片段高亮（与工作区树同款渲染） */
 function nameSegments(name: string): HighlightSegment[] {
   return highlightSegments(name, query.value)
 }
 
-/** 缩进层级注入 CSS 变量（缩进量在 SCSS 中以 Token 计算） */
+/** 缩进层级注入 CSS 变量（复用工作区树的 --we-depth，缩进量在 SCSS 中以 Token 计算） */
 function indentStyle(depth: number): Record<string, string> {
-  return { "--wt-sb-depth": String(depth) }
+  return { "--we-depth": String(depth) }
+}
+
+/** 该文件在当前暂存态下的增删统计（该侧没有时回退到另一侧的数字） */
+function statsOf(file: FileChange): { add: number, del: number } | undefined {
+  return props.stats[diffCacheKey(file.path, file.staged)]
+    ?? props.stats[diffCacheKey(file.path, !file.staged)]
+}
+
+/** 有实际增删才显示统计（二进制 / 仅改权限的文件会是 0 0，显示出来只是噪音） */
+function hasStats(file: FileChange): boolean {
+  const s = statsOf(file)
+  return !!s && (s.add > 0 || s.del > 0)
 }
 
 /** 暂存勾选翻转（与面板列表行同语义） */
@@ -293,3 +322,9 @@ function toggleStage(file: FileChange) {
   else emit("stageFile", file.path)
 }
 </script>
+
+<style lang="scss">
+@use "@/index.scss" as *;
+@use "../../styles/WorkspaceExplorer.scss";
+@use "../../styles/DiffStream.scss";
+</style>

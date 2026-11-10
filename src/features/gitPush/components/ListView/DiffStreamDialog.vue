@@ -83,6 +83,7 @@
       :i18n="i18n"
       :files="files"
       :active-path="activePath"
+      :stats="changesetStats"
       :git-op-loading="gitOpLoading"
       @focus="gotoFile"
       @stage-file="(path: string) => $emit('stageFile', path)"
@@ -174,7 +175,7 @@ import {
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
 import Divider from "@/components/Divider.vue"
-import { buildSectionedTreeRows, diffCacheKey } from "../../utils"
+import { buildSectionedTreeRows, countRawDiffLines, diffCacheKey } from "../../utils"
 import DiffViewBar from "../common/DiffViewBar.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 import DiffFileSection from "./DiffFileSection.vue"
@@ -264,6 +265,23 @@ const streamFiles = computed<FileChange[]>(() => {
 
 const visibleStreamFiles = computed(() => streamFiles.value.slice(0, streamLimit.value))
 const streamHasMore = computed(() => streamLimit.value < streamFiles.value.length)
+
+/**
+ * 每个文件的增删行数（侧栏右侧那列 +N −N）。
+ * 直接扫原始补丁的行首字符，不走 parseDiffLines —— 上百个文件只为拿一个数字，
+ * 没必要建行对象、跑词级对齐。变更集变化时重算一次。
+ */
+const changesetStats = computed<Record<string, { add: number, del: number }>>(() => {
+  const out: Record<string, { add: number, del: number }> = {}
+  for (const scope of ["staged", "unstaged"] as const) {
+    const map = changesets.value[scope]
+    if (!map) continue
+    for (const [path, raw] of Object.entries(map)) {
+      out[diffCacheKey(path, scope === "staged")] = countRawDiffLines(raw)
+    }
+  }
+  return out
+})
 
 /** 是否已有任何可渲染内容（决定首屏是否显示整页加载态） */
 const hasAnyContent = computed(() => Object.keys(changesets.value.staged ?? {}).length > 0

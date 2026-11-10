@@ -64,6 +64,16 @@
       :aria-label="i18n.skillPreviewTitle"
       @click="$emit('showPreview')"
     />
+    <!-- 纯图标按钮：重新扫描技能列表（ariaLabel："重新扫描技能"） -->
+    <Button
+      variant="ghost"
+      text
+      size="xsmall"
+      icon="refresh"
+      :aria-label="i18n.skillRefreshTitle"
+      :title="i18n.skillRefreshTitle"
+      @click="$emit('reloadSkills')"
+    />
     <!-- 纯图标按钮：打开 Skills 管理弹窗（ariaLabel："管理技能"） -->
     <Button
       variant="ghost"
@@ -96,6 +106,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'selectSkill': [index: number]
   'showPreview': []
+  'reloadSkills': []
 }>()
 
 /** "无技能"选项值（与 currentSkill 为空时的选中值一致） */

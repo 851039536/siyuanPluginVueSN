@@ -4,7 +4,7 @@
  * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode，以及思源内置 Agent 技能目录（工作区作用域）
  */
 
-import { AI_TOOLS } from "@/config/aiTools"
+import { AI_TOOLS, SKILL_SOURCES } from "@/config/aiTools"
 import type { AISkillScope, AIToolConfig, AIToolType } from "@/config/aiTools"
 import { readWorkspaceDir } from "@/utils/workspaceDir"
 
@@ -245,6 +245,25 @@ export class SkillsManager {
     return null
   }
 
+  /**
+   * 判断目录条目是否为可扫描目录（跟随符号链接）。
+   *
+   * 为什么必须跟随：`npx skills add` 等生态工具默认以 **symlink** 安装技能
+   * （链接指向 canonical 副本），此时 `Dirent.isDirectory()` 为 false，
+   * 直接跳过会让用户「装了却看不到」。junction 在 Windows 上同样报 symbolic link。
+   */
+  private async isDirectoryEntry(parentDir: string, entry: any): Promise<boolean> {
+    if (entry.isDirectory()) return true
+    if (!entry.isSymbolicLink()) return false
+    try {
+      const stat = await this.fs.promises.stat(this.path.join(parentDir, entry.name))
+      return stat.isDirectory()
+    } catch {
+      // 悬空链接（目标已删除）视为无效条目
+      return false
+    }
+  }
+
   private async scanSkillDirectory(
     dirPath: string,
     toolId: AIToolType,
@@ -260,7 +279,7 @@ export class SkillsManager {
       })
 
       for (const entry of entries) {
-        if (!entry.isDirectory()) continue
+        if (!(await this.isDirectoryEntry(dirPath, entry))) continue
 
         const skillDir = this.path.join(dirPath, entry.name)
 
@@ -338,80 +357,50 @@ export class SkillsManager {
     }
   }
 
-  private async checkPathGroup(
-    basePath: string,
-    relPaths: string[],
-  ): Promise<{ exists: boolean, count: number }> {
-    let exists = false
-    let count = 0
-    for (const relPath of relPaths) {
-      const fullPath = this.path.join(basePath, relPath)
-      try {
-        if (await this.fileExists(fullPath)) {
-          exists = true
-          const entries = await this.fs.promises.readdir(fullPath, {
-            withFileTypes: true,
-          })
-          count += entries.filter((e: any) => e.isDirectory()).length
-        }
-      } catch {
-        // 忽略
+  /** 全部已登记来源根目录（全局 + 工作区 + 项目；目录是否存在不影响判定，仅做路径比较） */
+  private async resolveSkillRoots(projectPath?: string): Promise<string[]> {
+    const roots: string[] = []
+    const wsDir = await this.getWorkspaceDir()
+
+    for (const source of SKILL_SOURCES) {
+      if (source.scope === "global") {
+        roots.push(this.path.join(this.homeDir, source.relPath))
+      } else if (source.scope === "workspace") {
+        if (wsDir) roots.push(this.path.join(wsDir, source.relPath))
+      } else if (projectPath) {
+        roots.push(this.path.join(projectPath, source.relPath))
       }
     }
-    return {
-      exists,
-      count,
-    }
+
+    return roots
   }
 
-  async checkToolExists(tool: AIToolConfig, projectPath?: string, filter?: SkillPathFilter): Promise<{
-    global: boolean
-    project: boolean
-    globalCount: number
-    projectCount: number
-  }> {
-    if (!this.available) {
-      return {
-        global: false,
-        project: false,
-        globalCount: 0,
-        projectCount: 0,
-      }
-    }
+  /**
+   * 技能目录是否位于某个已登记来源根之下（且为直接子目录）。
+   *
+   * 这是删除前的安全闸：技能目录来自扫描结果，但路径一旦被篡改/退化成根目录，
+   * `rm -rf` 会清空整个 skills 目录。用词法 resolve 而非 realpath —— symlink 安装的
+   * 技能必须按「链接所在的根」判定，解析到真实路径会落到根之外并被误判为不安全。
+   */
+  async isSkillDirUnderRoots(skillDirPath: string, projectPath?: string): Promise<boolean> {
+    if (!this.available || !skillDirPath) return false
 
-    /** 只统计启用中的路径，与 scanSkillDirectory 的扫描口径保持一致 */
-    const enabledPaths = (scope: AISkillScope, relPaths: string[]) =>
-      filter ? relPaths.filter((relPath) => filter(tool.id, scope, relPath)) : relPaths
+    const target = this.path.resolve(skillDirPath)
+    const roots = await this.resolveSkillRoots(projectPath)
 
-    // 计数口径：global 桶 = 全局（用户目录）+ 思源工作区作用域（UI 卡片按合计展示）
-    const globalResult = await this.checkPathGroup(this.homeDir, enabledPaths("global", tool.skillPaths))
-    const wsDir = await this.getWorkspaceDir()
-    const workspacePaths = enabledPaths("workspace", tool.workspacePaths ?? [])
-    const workspaceResult = (wsDir && workspacePaths.length > 0)
-      ? await this.checkPathGroup(wsDir, workspacePaths)
-      : { exists: false, count: 0 }
-    const projectPaths = enabledPaths("project", tool.projectPaths)
-    const projectResult = (projectPath && projectPaths.length > 0)
-      ? await this.checkPathGroup(projectPath, projectPaths)
-      : {
-          exists: false,
-          count: 0,
-        }
-
-    return {
-      global: globalResult.exists || workspaceResult.exists,
-      project: projectResult.exists,
-      globalCount: globalResult.count + workspaceResult.count,
-      projectCount: projectResult.count,
-    }
+    return roots.some((root) => {
+      const resolvedRoot = this.path.resolve(root)
+      return target !== resolvedRoot && this.path.dirname(target) === resolvedRoot
+    })
   }
 
   async openInFileManager(dirPath: string): Promise<boolean> {
     if (!this.available) return false
     try {
       const { shell } = window.require("electron")
-      await shell.openPath(dirPath)
-      return true
+      // shell.openPath 失败时返回错误字符串而非抛错（成功返回空串），必须判返回值
+      const error = await shell.openPath(dirPath)
+      return !error
     } catch {
       return false
     }
@@ -427,10 +416,20 @@ export class SkillsManager {
     }
   }
 
-  async deleteSkill(skillDirPath: string): Promise<boolean> {
-    if (!this.available) return false
+  /** 删除到系统回收站；无 electron / 回收站不可用时回退为直接删除 */
+  private async removeSkillDir(dirPath: string): Promise<boolean> {
     try {
-      await this.fs.promises.rm(skillDirPath, {
+      const { shell } = window.require("electron")
+      if (shell?.trashItem) {
+        await shell.trashItem(dirPath)
+        return true
+      }
+    } catch {
+      // 继续走 fs 回退
+    }
+
+    try {
+      await this.fs.promises.rm(dirPath, {
         recursive: true,
         force: true,
       })
@@ -438,6 +437,17 @@ export class SkillsManager {
     } catch {
       return false
     }
+  }
+
+  /**
+   * 删除技能目录。
+   * 必须先通过 `isSkillDirUnderRoots` 校验：只允许删除已登记来源根下的直接子目录，
+   * 杜绝路径异常时把整个 skills 根目录删掉。
+   */
+  async deleteSkill(skillDirPath: string, projectPath?: string): Promise<boolean> {
+    if (!this.available) return false
+    if (!(await this.isSkillDirUnderRoots(skillDirPath, projectPath))) return false
+    return this.removeSkillDir(skillDirPath)
   }
 
   async copySkill(sourceSkillDir: string, targetDir: string): Promise<boolean> {

@@ -136,10 +136,19 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     editContent.value = ""
   }
 
+  /** 是否含 YAML frontmatter（去掉 BOM 后首行必须是 ---） */
+  const hasFrontmatter = (content: string) => /^---\r?\n/.test(content.replace(/^\uFEFF/, ""))
+
   async function saveEdit(filePath: string) {
     if (!filePath || savingSkill.value) return
     const skill = skills.value.find((s) => s.filePath === filePath)
     if (!skill) return
+
+    // 原文件有 frontmatter 而新内容删掉了它：保存后技能名/描述会退化为目录名，等于"写坏"技能
+    if (hasFrontmatter(skill.content) && !hasFrontmatter(editContent.value)) {
+      showMessage(i18n.value.saveSkillFrontmatterRequired ?? "", 3000, "error")
+      return
+    }
 
     savingSkill.value = true
     try {
@@ -236,7 +245,8 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
       if (copied) {
         copyConfirmVisible.value = false
         copySourcePath.value = null
-        await checkAllToolStatuses()
+        // 目标工具下多了一份技能：静默重扫，让列表与卡片计数同步出现
+        await refreshSkills({ silent: true })
         showMessage(
           `${i18n.value.copySkillSuccess ?? ""} ${targetTool.name}`,
           2000,
@@ -261,11 +271,13 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     deletingSkill.value = true
     try {
       const skillDir = manager.resolveSkillDir(skill.filePath)
-      const success = await manager.deleteSkill(skillDir)
+      const success = await manager.deleteSkill(skillDir, projectPath.value || undefined)
       if (success) {
         const originalIndex = skills.value.findIndex((s) => s.filePath === skill.filePath)
         if (originalIndex !== -1) {
           skills.value.splice(originalIndex, 1)
+          // 计数由列表派生：删完立即同步，避免卡片数字比列表多 1
+          syncToolStatuses()
         }
         deleteConfirmVisible.value = false
         deleteTargetPath.value = null
@@ -281,17 +293,41 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     }
   }
 
-  async function checkAllToolStatuses() {
-    const results = await Promise.all(
-      AI_TOOLS.map(async (tool) => {
-        const status = await manager.checkToolExists(tool, projectPath.value || undefined, isSkillPathEnabled)
-        return { id: tool.id, status }
-      }),
-    )
-    for (const { id, status } of results) {
-      toolStatuses[id] = status
+  /**
+   * 工具卡片计数：直接由扫描结果派生。
+   * 口径与列表完全一致——目录存在但没有 SKILL.md、或路径被禁用，都不再计入。
+   */
+  function syncToolStatuses() {
+    const next: typeof toolStatuses = {}
+    for (const tool of AI_TOOLS) {
+      next[tool.id] = {
+        global: false,
+        project: false,
+        globalCount: 0,
+        projectCount: 0,
+      }
+    }
+
+    for (const skill of skills.value) {
+      const bucket = next[skill.tool]
+      if (!bucket) continue
+      // workspace 与 global 同属"全局桶"（UI 卡片按合计展示）
+      if (skill.scope === "project") {
+        bucket.project = true
+        bucket.projectCount += 1
+      } else {
+        bucket.global = true
+        bucket.globalCount += 1
+      }
+    }
+
+    for (const id of Object.keys(next)) {
+      toolStatuses[id] = next[id]
     }
   }
+
+  /** 扫描序号：连点来源开关时只接受最后一次扫描结果，避免旧结果覆盖新结果 */
+  let scanToken = 0
 
   /**
    * 重新扫描。
@@ -299,14 +335,17 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
    */
   async function refreshSkills(options: { silent?: boolean } = {}) {
     if (!managerAvailable) return
+    const token = ++scanToken
     // 静默重扫（来源开关）不切加载态：避免每次勾选都闪一次骨架
     if (!options.silent) loading.value = true
     expandedSkills.clear()
     editingSkill.value = null
 
     try {
-      skills.value = await manager.scanAllSkills(projectPath.value || undefined, isSkillPathEnabled)
-      await checkAllToolStatuses()
+      const result = await manager.scanAllSkills(projectPath.value || undefined, isSkillPathEnabled)
+      if (token !== scanToken) return // 已有更新的扫描在跑，丢弃本次结果
+      skills.value = result
+      syncToolStatuses()
       if (!options.silent) {
         showMessage(
           skills.value.length > 0
@@ -317,10 +356,12 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
         )
       }
     } catch (e) {
+      if (token !== scanToken) return
       console.error("扫描 Skills 失败:", e)
       showMessage(i18n.value.scanFailed ?? "", 2000, "error")
     } finally {
-      loading.value = false
+      // 仅最新一次扫描负责收尾，避免旧扫描提前关掉新扫描的加载态
+      if (token === scanToken) loading.value = false
     }
   }
 
@@ -359,26 +400,29 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
 
   let pathChangeTimer: ReturnType<typeof setTimeout> | null = null
 
-  /** 路径输入 500ms 防抖后自动重扫（@input 实时触发） */
+  /** 路径输入 500ms 防抖后自动重扫（静默：输入过程中不逐次弹「扫描完成」） */
   function handlePathChange() {
     if (!managerAvailable) return
     if (pathChangeTimer) clearTimeout(pathChangeTimer)
     pathChangeTimer = setTimeout(() => {
       pathChangeTimer = null
-      refreshSkills()
+      refreshSkills({ silent: true })
     }, 500)
   }
 
   let hasInitialized = false
 
+  // 每次打开都重扫：外部可能刚用 npx skills / git clone 装删过技能，只用首开快照会一直看到旧列表
   watch(() => props.visible, async (v) => {
-    if (v && !hasInitialized && managerAvailable) {
+    if (!v || !managerAvailable) return
+
+    const firstOpen = !hasInitialized
+    if (firstOpen) {
       hasInitialized = true
       // 先恢复来源偏好再扫描：否则首帧会按「全部启用」多读一批已禁用的目录
       await initSkillSourcePrefs(props.plugin)
-      await checkAllToolStatuses()
-      await refreshSkills()
     }
+    await refreshSkills({ silent: !firstOpen })
   })
 
   onBeforeUnmount(() => {

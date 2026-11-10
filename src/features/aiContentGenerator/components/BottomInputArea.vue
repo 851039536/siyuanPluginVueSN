@@ -56,6 +56,7 @@
           :skills="skills"
           @selectSkill="onSkillSelect"
           @showPreview="showSkillPreview = true"
+          @reloadSkills="$emit('reloadSkills')"
         />
       </div>
 
@@ -247,6 +248,7 @@ const emit = defineEmits<{
   'selectTargetDoc': []
   'selectTargetBlock': []
   'clearTargetDoc': []
+  'reloadSkills': []
   'customEdit': []
   'update:editCustomInput': [value: string]
   'update:currentSkillIndex': [value: number]

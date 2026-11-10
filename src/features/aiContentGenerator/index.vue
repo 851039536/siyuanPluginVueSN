@@ -65,6 +65,7 @@
       @selectTargetDoc="selectTargetDocument"
       @selectTargetBlock="selectTargetBlock"
       @clearTargetDoc="clearTargetDocument"
+      @reloadSkills="handleReloadSkills"
       @customEdit="handleCustomEdit"
       @update:editCustomInput="editCustomInput = $event"
       @update:currentSkillIndex="currentSkillIndex = $event"
@@ -148,7 +149,7 @@ const editCustomInput = ref("")
 // ============ 技能加载 ============
 
 const {
-  skills, currentSkillIndex, currentSkill, loadSkills, restoreSkillById,
+  skills, currentSkillIndex, currentSkill, loadSkills, reloadSkills, restoreSkillById,
 } = useSkillsLoader()
 
 // ============ 生成管道 ============
@@ -412,15 +413,13 @@ watch(currentSkillIndex, scheduleSaveSettings)
 // Skills 管理弹窗关闭后刷新技能列表（弹窗内可能编辑/删除/复制了技能文件，或改了加载来源），并尽量保持原选择
 watch(skillsManagerVisible, async (visible) => {
   if (visible) return
-  const prevId = currentSkill.value?.id ?? ""
-  await loadSkills()
-  // 原选中技能已随「来源禁用 / 技能删除」消失时清空选择，避免静默落到别的技能上
-  if (prevId && !skills.value.some((skill) => skill.id === prevId)) {
-    currentSkillIndex.value = -1
-    return
-  }
-  restoreSkillById(prevId)
+  await reloadSkills()
 })
+
+/** 面板技能区的刷新按钮：外部装/删技能后可即时同步，无需重开 Dock */
+const handleReloadSkills = () => {
+  void reloadSkills()
+}
 
 // ============ 清除所有展示态 ============
 

@@ -32,6 +32,7 @@
     "editSkillHint": "修改完成后点击保存按钮写入文件",
     "saveSkillSuccess": "Skill 保存成功",
     "saveSkillFailed": "Skill 保存失败",
+    "saveSkillFrontmatterRequired": "保存已阻止：YAML frontmatter（name/description）被删除，技能将无法被识别",
     "deleteSkill": "删除",
     "copySkill": "复制到其他工具",
     "expand": "展开",

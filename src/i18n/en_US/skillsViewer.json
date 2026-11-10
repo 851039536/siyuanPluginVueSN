@@ -32,6 +32,7 @@
     "editSkillHint": "Click save button after editing to write to file",
     "saveSkillSuccess": "Skill saved successfully",
     "saveSkillFailed": "Failed to save Skill",
+    "saveSkillFrontmatterRequired": "Save blocked: YAML frontmatter (name/description) was removed, the skill would not be recognized",
     "deleteSkill": "Delete",
     "copySkill": "Copy to Other Tool",
     "expand": "Expand",

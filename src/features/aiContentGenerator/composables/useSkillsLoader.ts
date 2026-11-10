@@ -103,11 +103,26 @@ export function useSkillsLoader() {
     currentSkillIndex.value = index
   }
 
+  /**
+   * 重扫并尽量保持当前选择（面板手动刷新 / 管理弹窗关闭后调用）。
+   * 原选中技能已不存在（被删除或来源被禁用）时清空选择，避免静默落到别的技能上。
+   */
+  async function reloadSkills(): Promise<void> {
+    const prevId = currentSkill.value?.id ?? ""
+    await loadSkills()
+    if (prevId && !skills.value.some((skill) => skill.id === prevId)) {
+      currentSkillIndex.value = -1
+      return
+    }
+    restoreSkillById(prevId)
+  }
+
   return {
     skills,
     currentSkillIndex,
     currentSkill,
     loadSkills,
+    reloadSkills,
     restoreSkillById,
   }
 }

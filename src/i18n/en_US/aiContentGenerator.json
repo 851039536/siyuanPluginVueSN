@@ -79,6 +79,7 @@
   "skillPreviewTitle": "Preview skill details",
   "skillSearchPlaceholder": "Search skills...",
   "skillNoMatch": "No matching skill",
+  "skillRefreshTitle": "Rescan skills",
   "skillPreviewClose": "Close",
   "skillSourceLabel": "Source:",
   "manageSkills": "Manage skills",

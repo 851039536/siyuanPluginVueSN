@@ -55,8 +55,10 @@ aiContentGenerator/
 `docs/completed/ai-content-generator-skills-merge-review.md`）：
 
 - **入口**：斜杠命令「Skills 查看器」由 `registerAIContentGenerator` 一并注册；
-  面板技能选择区的「管理技能」按钮（`SkillSection.vue`）也可打开管理弹窗。
-  弹窗关闭后 `index.vue` 自动刷新技能列表并尽量保持原选择。
+  面板技能选择区的「管理技能」按钮（`SkillSection.vue`）也可打开管理弹窗；
+  旁边的「重新扫描」按钮（`refresh` 图标）用于外部装/删技能后即时同步。
+  - 弹窗关闭后 `index.vue` 调用 `useSkillsLoader.reloadSkills()` 刷新列表并尽量保持原选择；
+  - 弹窗**每次打开都会静默重扫**（仅首次弹「扫描完成」），避免外部 `npx skills add` 后看到旧列表。
 - **路径作用域**（单一数据源 `@/config/aiTools`，按 `AIToolConfig` 三类相对路径派生）：
   - `skillPaths`：全局，基于用户主目录；
   - `projectPaths`：项目级，基于弹窗内「项目路径」输入；
@@ -69,10 +71,21 @@ aiContentGenerator/
   - 状态源为 `skills/sourcePrefs.ts` 的模块级单例（面板与弹窗共享，无需跨组件传参）；
   - 存的是**禁用列表**（`ai-content-generator-skill-sources`，已登记 `src/config/storage/jsonSlots.ts`），
     默认空数组 = 全部启用，新增工具/路径无需迁移旧配置；已下线路径的残留记录在加载时被过滤；
-  - 弹窗切换开关后静默重扫（不弹「扫描完成」），面板在弹窗关闭时自动重载列表。
+  - 弹窗切换开关后静默重扫（不弹「扫描完成」），面板在弹窗关闭时自动重载列表；
+  - 连续切换用扫描序号（`scanToken`）只接受最后一次结果，旧扫描不覆盖新结果、也不提前关加载态。
+- **计数口径**：工具卡片数量**直接由扫描结果派生**（`syncToolStatuses`），不再单独读目录统计。
+  目录存在但没有 `SKILL.md`、或路径被禁用，都不计入 —— 卡片数字与下方列表恒等。
 - **扫描**：`skills/index.ts` 的 `scanSkills()` 为模块内 API（`useSkillsLoader` 直连），
   统一注入 `isSkillPathEnabled` 过滤器；`SkillInfo` 是扫描原始结构（含 `scope`），`SkillItem`（`@/types/ai`）
   是展示/去重结构，经 `types/index.ts` 的 `toSkillItem` 转换。
+- **symlink 安装兼容**：`SkillsManager.isDirectoryEntry()` 对符号链接（含 Windows junction）
+  `stat` 跟随后再判目录。`npx skills add` 等生态工具默认以链接安装技能，若只认 `Dirent.isDirectory()`
+  会导致「装了却看不到」；悬空链接按无效条目跳过。
+- **删除安全**：`deleteSkill()` 先经 `isSkillDirUnderRoots()` 校验目标必须是**已登记来源根的直接子目录**
+  （用词法 `path.resolve` 而非 `realpath`，否则 symlink 技能会被判成根外路径），根目录本身一律拒绝；
+  删除优先走 `shell.trashItem`（系统回收站），electron 不可用时才回退 `fs.rm`。
+- **保存守卫**：原文件有 YAML frontmatter 而编辑后删除时拒绝保存（`saveSkillFrontmatterRequired`），
+  否则技能名/描述会退化为目录名、重载后"看起来坏了"。
 - **稳定标识**：列表 key 与编辑/删除/复制目标均使用 `skill.filePath`，禁止回退到数组索引。
 - **Markdown 渲染**：SkillCard 展开内容与 SkillPreviewModal 同用 `utils.ts` 的
   `renderMarkdown`（XSS 安全版，转义 skill.md 中的原始 HTML），禁止再引裸 `parseMarkdown`；

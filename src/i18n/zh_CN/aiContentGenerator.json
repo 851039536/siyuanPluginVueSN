@@ -79,6 +79,7 @@
   "skillPreviewTitle": "预览技能细则",
   "skillSearchPlaceholder": "搜索技能...",
   "skillNoMatch": "无匹配技能",
+  "skillRefreshTitle": "重新扫描技能",
   "skillPreviewClose": "关闭",
   "skillSourceLabel": "来源:",
   "manageSkills": "管理技能",

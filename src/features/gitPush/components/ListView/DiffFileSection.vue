@@ -118,6 +118,16 @@
           :title="copiedWhat === 'path' ? i18n.copied : i18n.copyPath"
           @click.stop="handleCopyPath"
         />
+        <!-- 打开所在文件夹（目录语义：审阅完直接跳到编辑器 / 文件管理器） -->
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="folderOpen"
+          :disabled="!projectPath"
+          :title="i18n.diffOpenFolder"
+          @click.stop="handleOpenFolder"
+        />
       </span>
     </header>
 
@@ -173,6 +183,7 @@
 import type { FileChange } from "../../types"
 import type { DiffLayout } from "../../utils"
 import { Icon } from "@iconify/vue"
+import { showMessage } from "siyuan"
 import {
   computed,
   onUnmounted,
@@ -182,6 +193,7 @@ import Button from "@/components/Button.vue"
 import Divider from "@/components/Divider.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import { openFolderInExplorer } from "@/utils/electronDialog"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import {
   countDiffStats,
@@ -208,6 +220,8 @@ const props = defineProps<{
   /** 单文件取数在途标记（未跟踪文件回退路径） */
   loading: boolean
   gitOpLoading: boolean
+  /** 项目绝对路径（与 file.path 拼出该文件所在目录） */
+  projectPath: string
 }>()
 
 const emit = defineEmits<{
@@ -330,6 +344,29 @@ function handleCopyDiff() {
 
 function handleCopyPath() {
   void copyText(props.file.path, "path")
+}
+
+/**
+ * 该文件所在目录的绝对路径（根级文件回退到项目根）。
+ * 目录不存在时不给按钮兜底：`openFolderInExplorer` 自带存在性检查，失败由下方提示承接。
+ */
+function containingDir(): string {
+  if (!props.projectPath) return ""
+  const slash = props.file.path.lastIndexOf("/")
+  return slash > 0 ? `${props.projectPath}/${props.file.path.slice(0, slash)}` : props.projectPath
+}
+
+/**
+ * 打开所在文件夹（目录语义，不是用默认程序打开文件本身）。
+ * 审阅完 diff 多半要跳去编辑器 / 文件管理器，按目录打开由系统统一承接；
+ * 整目录被删（文件随之消失）时打开会失败，给一次性提示而不是静默无反应。
+ */
+function handleOpenFolder() {
+  const dir = containingDir()
+  if (!dir) return
+  void openFolderInExplorer(dir).then((ok) => {
+    if (!ok) showMessage(props.i18n.diffOpenFolderFailed, 3000, "error")
+  })
 }
 
 /** 切换范围：只改变本段查看对象，不改文件暂存状态（父层更新范围映射后本段内容随之下发） */

@@ -154,6 +154,7 @@
             :diff-text="diffOf(file)"
             :loading="loadingOf(file)"
             :git-op-loading="gitOpLoading"
+            :project-path="projectPath"
             @stage-toggle="handleSectionStageToggle"
             @discard="handleSectionDiscard"
             @scope-change="handleScopeChange"
@@ -214,6 +215,8 @@ const props = defineProps<{
    * 返回 `null` 表示取数失败（超 maxBuffer / git 报错），用于区分「空变更集」。
    */
   getChangeset: (staged: boolean, opts?: { force?: boolean }) => Promise<Record<string, string> | null>
+  /** 项目绝对路径（各文件段据此拼出所在目录，供「打开所在文件夹」用） */
+  projectPath: string
 }>()
 
 const emit = defineEmits<{

@@ -66,19 +66,29 @@
 }
 
 // ============ Markdown 预览（MainContentArea 与 SkillPreviewModal 共用） ============
-@mixin markdown-preview {
-  padding: $s-2 $s-px10;
-  background: var(--b3-theme-surface);
-  border-radius: $r-sm;
-  border: 1px solid var(--b3-theme-surface-lighter);
+/**
+ * Markdown 排版骨架（跨组件共用）
+ *
+ * $frame：是否带"卡片外壳"（内边距 + 表面色 + 描边 + 内滚）。
+ * - true（默认）：独立承载内容的场景（主内容区、技能卡展开体）需要自成一格的视觉边界；
+ * - false：已经嵌在容器里（如 Dialog 内容区已有内边距），再加一层会出现"框中框 + 双重内边距"。
+ */
+@mixin markdown-preview($frame: true) {
   line-height: $lh-normal;
   overflow-wrap: break-word;
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0;
   user-select: text;
   cursor: text;
   font-size: $t-xs;
+
+  @if $frame {
+    padding: $s-2 $s-px10;
+    background: var(--b3-theme-surface);
+    border-radius: $r-sm;
+    border: 1px solid var(--b3-theme-surface-lighter);
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
 
   :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
     margin-top: 0.6em;

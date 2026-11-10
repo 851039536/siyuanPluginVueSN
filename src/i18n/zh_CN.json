@@ -2419,6 +2419,8 @@
     "diffFileCollapse": "折叠此文件",
     "diffFileExpand": "展开此文件",
     "diffChangesetUnavailable": "变更集过大或读取失败，已改为按文件逐个加载（会慢一些）",
+    "diffOpenFolder": "打开所在文件夹",
+    "diffOpenFolderFailed": "打开文件夹失败（目录可能已不存在）",
     "fileTreeSearchPlaceholder": "筛选文件路径...",
     "fileTreeExpandAll": "全部展开",
     "fileTreeCollapseAll": "全部收起",

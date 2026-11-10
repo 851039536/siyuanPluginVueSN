@@ -1108,6 +1108,8 @@
     "diffFileCollapse": "Collapse file",
     "diffFileExpand": "Expand file",
     "diffChangesetUnavailable": "Changeset too large or unreadable; loading file by file instead (slower)",
+    "diffOpenFolder": "Open containing folder",
+    "diffOpenFolderFailed": "Failed to open the folder (it may no longer exist)",
     "fileTreeSearchPlaceholder": "Filter file paths...",
     "fileTreeExpandAll": "Expand all",
     "fileTreeCollapseAll": "Collapse all",

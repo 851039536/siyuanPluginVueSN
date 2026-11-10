@@ -164,6 +164,7 @@
         :git-op-loading="gitOpLoading"
         :focus-file="activeDiffFile"
         :get-changeset="getChangeset"
+        :project-path="projectPath"
         @close="activeDiffFile = null"
         @stage-file="(file: string) => emit('stageFile', file)"
         @unstage-file="(file: string) => emit('unstageFile', file)"
@@ -368,6 +369,8 @@ const props = defineProps<{
    * 返回 `null` 表示取数失败（超 maxBuffer / git 报错），审阅流据此显示降级提示。
    */
   getChangeset: (staged: boolean, opts?: { force?: boolean }) => Promise<Record<string, string> | null>
+  /** 项目绝对路径（审阅流按文件拼出所在目录，供「打开所在文件夹」用） */
+  projectPath: string
 }>()
 
 const emit = defineEmits<{

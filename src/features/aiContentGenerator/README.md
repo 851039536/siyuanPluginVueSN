@@ -120,6 +120,9 @@ aiContentGenerator/
 - 跨组件共用的组件形态（`.markdown-preview` / `.dot-flashing` / 空态·错误态骨架）
   以 mixin 暴露（`markdown-preview` / `dot-flashing` / `state-skeleton`），
   由消费组件在自己的 `<style scoped>` 中 `@include`，只发射自己那一份。
+  - `markdown-preview($frame)` 的 `$frame` 默认 `true`（自带内边距/表面色/描边/内滚，
+    用于主内容区与技能卡展开体）；Dialog 内容区这类**已有内边距的容器**必须传 `false`，
+    否则会出现「框中框 + 双重内边距」。
 - SCSS 变量统一用别名形式 `@use "@/variables.scss" as *;`（勿用相对路径 `../../../variables`）。
 
 ## UI 层约定

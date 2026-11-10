@@ -97,6 +97,7 @@
           :commit-templates="commitTemplates"
           :focus-request="explorerFocus"
           :get-changeset="loadChangeset"
+          :project-path="project.path"
           @stage-file="(file: string) => ops.stageItem(project.id, file)"
           @unstage-file="(file: string) => ops.unstageItem(project.id, file)"
           @stage-all="ops.stageAllItems(project.id)"

@@ -9,17 +9,19 @@
       dismissable-mask
       @update:visible="$emit('close')"
     >
-      <!-- 标题栏：技能名 + 描述两行（沿用 Dialog 的标题类名与 id 保持无障碍关联） -->
+      <!-- 标题栏：技能名 + 描述两行（标题类名挂在外层，撑满标题栏让关闭按钮靠右） -->
       <template
         #header="{
           class: titleClass, headerId,
         }"
       >
-        <div class="skill-preview-heading">
+        <div
+          class="skill-preview-heading"
+          :class="titleClass"
+        >
           <span
             :id="headerId"
             class="skill-preview-title"
-            :class="titleClass"
           >{{ currentSkill?.name }}</span>
           <span
             v-if="currentSkill?.description"
@@ -29,14 +31,17 @@
       </template>
 
       <div
-        class="skill-preview-content markdown-preview"
+        class="skill-preview-content"
         v-html="renderedContent"
       ></div>
 
       <template #footer>
         <div class="skill-preview-footer">
-          <!-- 元信息："来源: " + 工具名 · 作用域 -->
-          <span class="skill-preview-tool">{{ i18n.skillSourceLabel }} {{ sourceText }}</span>
+          <!-- 元信息："来源: " + 工具名 · 作用域（过长省略，title 补全；文件路径见 title 第二行） -->
+          <span
+            class="skill-preview-tool"
+            :title="`${sourceText}\n${currentSkill?.id ?? ''}`"
+          >{{ i18n.skillSourceLabel }} {{ sourceText }}</span>
           <!-- 按钮："关闭" -->
           <Button
             variant="ghost"
@@ -89,11 +94,7 @@ const sourceText = computed(() => {
 </script>
 
 <style scoped lang="scss">
+// 样式全部落在模块文件里（项目约定：.vue 不内联规则）。
+// 注意：@use 进来的模块不会把 SCSS 变量转出，SFC 块内直接用变量会报 Undefined variable。
 @use "./styles/SkillPreviewModal.scss" as *;
-@use "../styles/index.scss" as *;
-
-// 共享 Markdown 预览骨架按需 @include
-.markdown-preview {
-  @include markdown-preview;
-}
 </style>

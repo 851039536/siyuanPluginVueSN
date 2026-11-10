@@ -175,12 +175,14 @@ import type { DiffLayout } from "../../utils"
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  onUnmounted,
   ref,
 } from "vue"
 import Button from "@/components/Button.vue"
 import Divider from "@/components/Divider.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import { TimerRegistry } from "@/utils/timerRegistry"
 import {
   countDiffStats,
   fileStatusIcon,
@@ -248,8 +250,29 @@ const STREAM_LINE_INITIAL = 200
 const STREAM_LINE_STEP = 500
 const lineCap = ref(STREAM_LINE_INITIAL)
 
+/**
+ * 词级高亮的启用阈值（原始 diff 行数）。
+ * token 级 LCS 是逐行配对的最坏 O(MAX_INLINE_TOKENS²)，而审阅流一次会挂起多个文件段；
+ * 超大补丁保留结构与增删配色、放弃行内染色，避免打开弹窗那一帧被行内对齐占满。
+ */
+const INLINE_DIFF_MAX_LINES = 3000
+
+/**
+ * 原始行数是否超过阈值。
+ * 数到阈值即返回（不数完全文、不建行数组）：只需要一个布尔判断，没必要为它 split 一遍。
+ */
+const isHugeDiff = computed(() => {
+  const text = props.diffText
+  if (!text) return false
+  let count = 1
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) === 10 /* '\n' */ && ++count > INLINE_DIFF_MAX_LINES) return true
+  }
+  return false
+})
+
 /** 解析后的全量行（供统计与截断计数） */
-const allLines = computed(() => parseDiffLines(props.diffText))
+const allLines = computed(() => parseDiffLines(props.diffText, { inlineDiff: !isHugeDiff.value }))
 /**
  * 「仅改动」必须在截断之前过滤：否则只显示「前 200 行里的改动」，
  * 而文件后半段的增删要一直点「展开更多」才会露出来。空结果回退全量（纯元数据变更不算无差异）。
@@ -273,20 +296,32 @@ const discardTitle = computed(() =>
     : props.file.status === "untracked" ? props.i18n.discardUntracked : props.i18n.discardChanges,
 )
 
-/** 复制反馈（2 秒后自动复位） */
+/** 复制反馈保持时长 */
+const COPY_FEEDBACK_MS = 2000
+
+/**
+ * 复制反馈（2 秒后自动复位）。
+ * 定时器走 TimerRegistry（项目规范：计时器句柄集中托管，禁裸 setTimeout），
+ * 卸载时统一清理 —— 否则 2 秒内被折叠/关闭会留下一个写向已卸载组件的回调。
+ */
 const copiedWhat = ref<"diff" | "path" | null>(null)
-let copyTimer: ReturnType<typeof setTimeout> | null = null
+const copyTimers = new TimerRegistry()
+let copyTimer: number | null = null
 
 async function copyText(text: string, what: "diff" | "path") {
   const ok = await copyToClipboard(text)
   if (!ok) return
-  if (copyTimer) clearTimeout(copyTimer)
+  copyTimers.clear(copyTimer)
   copiedWhat.value = what
-  copyTimer = setTimeout(() => {
+  copyTimer = copyTimers.setTimeout(() => {
     copiedWhat.value = null
     copyTimer = null
-  }, 2000)
+  }, COPY_FEEDBACK_MS)
 }
+
+onUnmounted(() => {
+  copyTimers.clearAll()
+})
 
 function handleCopyDiff() {
   if (!props.diffText) return

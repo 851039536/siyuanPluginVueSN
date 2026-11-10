@@ -171,7 +171,7 @@
         @unstage-all="emit('unstageAll')"
         @stage-toggle="handleStreamStageToggle"
         @discard="handleStreamDiscard"
-        @load-diff="(file: string, staged: boolean, opts?: { force?: boolean, status?: string }) => emit('loadDiff', file, staged, opts)"
+        @load-diff="(file: string, staged: boolean, opts?: { force?: boolean, status?: string, context?: number }) => emit('loadDiff', file, staged, opts)"
       />
 
       <!-- 提交表单 -->

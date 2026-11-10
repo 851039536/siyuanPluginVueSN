@@ -36,10 +36,7 @@ export function toSplitRows(lines: DiffLine[]): DiffSplitRow[] {
       while (i < lines.length && lines[i].type === "add") i++
       const dels = lines.slice(delStart, addStart)
       const adds = lines.slice(addStart, i)
-      if (!dels.length) {
-        for (const add of adds) rows.push({ right: add })
-        continue
-      }
+      // dels 必然非空（本分支只在 line.type === "del" 时进入）；adds 可为空（纯删除块）
       if (!adds.length) {
         for (const del of dels) rows.push({ left: del })
         continue

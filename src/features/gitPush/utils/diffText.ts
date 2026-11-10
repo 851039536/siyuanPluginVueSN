@@ -53,13 +53,24 @@ const DIFF_META_RE = /^(?:diff --git|index |--- |\+\+\+ |new file|deleted file|o
  */
 const HUNK_RE = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$/
 
+/** `parseDiffLines` 的可选项 */
+export interface ParseDiffOptions {
+  /**
+   * 是否做词级高亮（token 级 LCS）。
+   *
+   * 默认开启。逐行配对的最坏成本是 O(MAX_INLINE_TOKENS²)，万行级补丁上这笔开销
+   * 全压在打开弹窗的那一帧；超大 diff 可传 false，牺牲行内染色换取首屏不卡。
+   */
+  inlineDiff?: boolean
+}
+
 /**
  * 将 diff 文本解析为带类型与行号的行数组（剥离行首 +/-/空格标记，标记改由渲染层的符号列展示）。
  *
  * 相邻 hunk 之间会插入 `gap` 行（未变行折叠条）：git 默认只带 3 行上下文，
  * 两处改动相距较远时中间的行完全不出现在 diff 里，折叠条让「相隔多远」可见。
  */
-export function parseDiffLines(diffText: string): DiffLine[] {
+export function parseDiffLines(diffText: string, opts?: ParseDiffOptions): DiffLine[] {
   if (!diffText) return []
   let oldNo = 0
   let newNo = 0
@@ -93,7 +104,7 @@ export function parseDiffLines(diffText: string): DiffLine[] {
         type: "hunk",
         scope: scope || undefined,
       })
-      // 纯删除（oldCount=0）时该 hunk 不覆盖任何旧行，末行即起始行本身
+      // 旧行数为 0（`-a,0`，纯插入）时该 hunk 不覆盖任何旧行，末行即插入点 a 本身
       prevOldEnd = oldCount === 0 ? oldStart : oldStart + oldCount - 1
     } else if ((oldNo === 0 && newNo === 0) || DIFF_META_RE.test(line)) {
       // 首个 hunk 之前的所有行、以及多文件 diff 中间的文件头行均为 meta
@@ -127,7 +138,7 @@ export function parseDiffLines(diffText: string): DiffLine[] {
   // 去掉文本末尾换行符经 split 产生的空行
   const last = result[result.length - 1]
   if (last && (last.type === "ctx" || last.type === "meta") && last.text === "") result.pop()
-  markInlineDiff(result)
+  if (opts?.inlineDiff !== false) markInlineDiff(result)
   return result
 }
 

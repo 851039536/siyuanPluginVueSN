@@ -171,8 +171,17 @@ const netLines = computed(() => {
  */
 const MAX_DIFF_LINES = 1500
 
-/** 全量解析结果（供截断计数；diff 文本为空时为空数组） */
-const parsedDiffLines = computed(() => (patchContent.value ? parseDiffLines(patchContent.value) : []))
+/**
+ * 全量解析结果（供截断计数；diff 文本为空时为空数组）。
+ *
+ * 折叠条（`gap`：两个 hunk 之间被 git 省略的未变行）在这里剔除：
+ * 本弹窗没有「展开更多上下文」的入口，行数存在 `gapCount` 而模板只输出 `line.text`，
+ * 渲染出来会是一行只有 `⋯` 符号、既无内容也无行数提示的空白行。
+ * 折叠条的可视化由共享 `DiffLines` 里的 `DiffGapRow` 承担，此弹窗不参与。
+ */
+const parsedDiffLines = computed(() => (patchContent.value
+  ? parseDiffLines(patchContent.value).filter((line) => line.type !== "gap")
+  : []))
 
 /** 实际渲染的 diff 行（超过上限时只取前 MAX_DIFF_LINES 行） */
 const diffLines = computed(() => parsedDiffLines.value.slice(0, MAX_DIFF_LINES))

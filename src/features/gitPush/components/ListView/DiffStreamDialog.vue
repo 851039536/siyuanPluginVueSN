@@ -319,9 +319,10 @@ function diffOf(file: FileChange): string {
   if (context > 0) {
     const expanded = props.fileDiffs[diffCacheKey(file.path, staged, context)]
     if (expanded) return expanded
-    // 展开档还没回来 / 取数失败：先退回默认档内容，不要整段空白
+    // 展开档还没回来 / 取数失败：先退回变更集里的默认档内容，不要整段空白
+    // （loadingOf 对同一场景返回 false，才不会把这份兜底内容挡住）
     const map = changesets.value[scope]
-    return (map && file.path in map) ? map[file.path] : (expanded ?? "")
+    return (map && file.path in map) ? map[file.path] : ""
   }
   const map = changesets.value[scope]
   if (map && file.path in map) return map[file.path]
@@ -339,8 +340,10 @@ function loadingOf(file: FileChange): boolean {
   const context = contextOf(file)
   if (context > 0) {
     const key = diffCacheKey(file.path, staged, context)
-    if (!(key in props.fileDiffs)) return true
-    return !!props.diffLoading[key]
+    if (key in props.fileDiffs) return !!props.diffLoading[key]
+    // 展开档未到但变更集里有默认档内容：不切骨架，先展示默认档（与 diffOf 的兜底同口径）
+    const map = changesets.value[scope]
+    return !(map && file.path in map)
   }
   const map = changesets.value[scope]
   if (map && file.path in map) return false
@@ -363,6 +366,14 @@ async function refreshChangesets(force = false) {
     changesets.value = {
       staged,
       unstaged,
+    }
+  } catch {
+    // 取数失败：置为空映射而不是保留 null —— null 会让 ensureMissingDiffs 整批跳过、
+    // 每个文件段永久停在 loading 且没有重试入口；空映射则让它按「变更集里没有该路径」
+    // 逐文件回退 loadDiff，退化为逐个取但始终能看到内容。
+    changesets.value = {
+      staged: {},
+      unstaged: {},
     }
   } finally {
     changesetLoading.value = false
@@ -575,8 +586,22 @@ function isTopmostDialog(): boolean {
   return !mine || masks[masks.length - 1] === mine
 }
 
+/**
+ * 事件目标是否为可编辑控件（输入框 / 多行文本 / contenteditable）。
+ * 这类元素里的按键归它们自己：本弹窗的侧栏筛选框就在同一遮罩内，
+ * 若在此处吞掉，输入 `1`/`2`/`0` 会顺手切布局、`←`/`→` 会顺手翻文件。
+ */
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  if (!el?.tagName) return false
+  if (el.isContentEditable) return true
+  const tag = el.tagName
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+}
+
 function handleKeydown(e: KeyboardEvent) {
   if (e.ctrlKey || e.metaKey || e.altKey) return
+  if (isEditableTarget(e.target)) return
   if (!isTopmostDialog()) return
   if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
     e.stopImmediatePropagation()

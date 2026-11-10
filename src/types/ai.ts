@@ -85,6 +85,9 @@ export interface TargetDoc {
 
 // ============ 技能相关类型 ============
 
+/** 技能来源作用域：global = 用户目录，project = 项目根，workspace = 思源工作区 */
+export type SkillScope = "global" | "project" | "workspace"
+
 /** AI 技能来源信息 */
 export interface SkillSource {
   id: string // 该来源的唯一ID（filePath）
@@ -99,6 +102,10 @@ export interface SkillItem {
   description: string
   content: string
   tool: string
+  /** 来源作用域（扫描结果携带；非扫描来源可能缺省） */
+  scope?: SkillScope
+  /** 同名技能存在内容不同的多个版本（去重时已取最长的一份，仅提示用） */
+  hasConflict?: boolean
   /** 去重后的来源列表（同名技能来自多个工具时） */
   sources: SkillSource[]
 }

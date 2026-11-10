@@ -65,6 +65,9 @@ aiContentGenerator/
   - `workspacePaths`：**思源工作区**（`workspaceDir` 下），含 `data/storage/ai/agent/skills`，
     与项目路径输入无关、始终扫描；工作区根经 `@/utils/workspaceDir` 的 `readWorkspaceDir()` 解析
     （`window.siyuan.config.system.workspaceDir`，getConf 回退）。
+  - 已登记工具：Claude / CodeBuddy / Qoder / Trae / Opencode / **Codex / Cursor / Gemini CLI / GitHub Copilot** / 思源。
+    路径口径对齐 GitHub 上 [`npx skills` 的 agent 表](https://github.com/vercel-labs/skills)，
+    新增工具只需在 `AI_TOOLS` 加一条（图标同步登记 `kit/icons.ts`），来源开关与扫描自动覆盖。
   - 复制 Skill 的目标作用域沿用「来源作用域优先、无登记路径顺延」，工作区技能视为 global 桶。
 - **加载来源开关**：「管理技能」弹窗内「加载来源」按 `tool + scope + 相对路径` 维度勾选，
   未勾选的路径在**扫描阶段直接跳过（不读盘）**，工具卡片计数也按启用路径统计。
@@ -86,6 +89,15 @@ aiContentGenerator/
   删除优先走 `shell.trashItem`（系统回收站），electron 不可用时才回退 `fs.rm`。
 - **保存守卫**：原文件有 YAML frontmatter 而编辑后删除时拒绝保存（`saveSkillFrontmatterRequired`），
   否则技能名/描述会退化为目录名、重载后"看起来坏了"。
+- **规范校验**：扫描时对 **frontmatter 显式 name** 做 Agent Skills 规范检查（小写 kebab-case、≤64、
+  必须与目录同名，`SkillsManager.validateSkillName`），不合规在卡片下方以警示色提示；
+  无显式 name（回退标题/目录名）不校验，避免存量中文技能名被误标。
+- **搜索**：弹窗内搜索框按「名称 / 描述 / 文件路径 / 工具名」前端过滤已加载列表，
+  空态文案按「未启用来源 → 搜索无结果 → 全局/单工具无技能」优先级切换。
+- **同名多版本**：`deduplicateSkills` 合并同名技能时，内容不同则标记 `hasConflict`，
+  面板下拉与选中项显示警示图标（内容相同 = symlink/copy 重复安装，不提示）。
+- **预览来源**：`SkillPreviewModal` 展示「工具名 · 作用域」（作用域键 `SKILL_SCOPE_LABEL_KEYS`
+  在 `types/index.ts` 统一维护，面板与弹窗两个 i18n 分片使用同名键）。
 - **稳定标识**：列表 key 与编辑/删除/复制目标均使用 `skill.filePath`，禁止回退到数组索引。
 - **Markdown 渲染**：SkillCard 展开内容与 SkillPreviewModal 同用 `utils.ts` 的
   `renderMarkdown`（XSS 安全版，转义 skill.md 中的原始 HTML），禁止再引裸 `parseMarkdown`；

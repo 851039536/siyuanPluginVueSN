@@ -3,9 +3,20 @@
  * skills 扫描/复制路径（aiContentGenerator/skills 子模块）与技能来源展示颜色均从此处派生。
  */
 import type { IconKey } from "@/config/icons"
+import type { SkillScope } from "@/types/ai"
 
 /** AI 编程工具类型标识（与各工具 skills 目录约定一一对应；siyuan 为思源内置 Agent 技能目录） */
-export type AIToolType = "claude" | "codebuddy" | "qoder" | "trae" | "opencode" | "siyuan"
+export type AIToolType
+  = | "claude"
+    | "codebuddy"
+    | "qoder"
+    | "trae"
+    | "opencode"
+    | "codex"
+    | "cursor"
+    | "gemini"
+    | "copilot"
+    | "siyuan"
 
 /** AI 编程工具完整配置：展示元信息 + 全局/项目级/思源工作区 skills 路径 */
 export interface AIToolConfig {
@@ -21,8 +32,8 @@ export interface AIToolConfig {
   workspacePaths?: string[]
 }
 
-/** 技能来源作用域：global = 用户目录，project = 项目根，workspace = 思源工作区 */
-export type AISkillScope = "global" | "project" | "workspace"
+/** 技能来源作用域（类型真源在 @/types/ai，此处别名供配置层使用） */
+export type AISkillScope = SkillScope
 
 /** 单个可开关的技能来源路径（由 AI_TOOLS 派生，id 为持久化标识，勿手工拼接） */
 export interface AISkillSource {
@@ -80,6 +91,38 @@ export const AI_TOOLS: AIToolConfig[] = [
     color: "#00ACC1",
     skillPaths: [".config/opencode/skills", ".agents/skills"],
     projectPaths: [".opencode/skills"],
+  },
+  {
+    id: "codex",
+    name: "Codex",
+    icon: "codexTool",
+    color: "#10A37F",
+    skillPaths: [".codex/skills"],
+    projectPaths: [".codex/skills"],
+  },
+  {
+    id: "cursor",
+    name: "Cursor",
+    icon: "cursorTool",
+    color: "#E8A33D",
+    skillPaths: [".cursor/skills"],
+    projectPaths: [".cursor/skills"],
+  },
+  {
+    id: "gemini",
+    name: "Gemini CLI",
+    icon: "geminiTool",
+    color: "#7B61FF",
+    skillPaths: [".gemini/skills"],
+    projectPaths: [".gemini/skills"],
+  },
+  {
+    id: "copilot",
+    name: "GitHub Copilot",
+    icon: "copilotTool",
+    color: "#9CA3AF",
+    skillPaths: [".copilot/skills"],
+    projectPaths: [".github/skills"],
   },
   {
     id: "siyuan",

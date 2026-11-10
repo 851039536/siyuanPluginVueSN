@@ -35,8 +35,8 @@
 
       <template #footer>
         <div class="skill-preview-footer">
-          <!-- 元信息："来源: " + 工具名 -->
-          <span class="skill-preview-tool">{{ i18n.skillSourceLabel }} {{ currentSkill?.tool }}</span>
+          <!-- 元信息："来源: " + 工具名 · 作用域 -->
+          <span class="skill-preview-tool">{{ i18n.skillSourceLabel }} {{ sourceText }}</span>
           <!-- 按钮："关闭" -->
           <Button
             variant="ghost"
@@ -56,6 +56,8 @@ import type { SkillItem } from "@/types/ai"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
+import { getAITool } from "@/config/aiTools"
+import { SKILL_SCOPE_LABEL_KEYS } from "../types"
 import { renderMarkdown } from "../utils"
 
 const props = defineProps<{
@@ -71,6 +73,18 @@ defineEmits<{
 const renderedContent = computed(() => {
   if (!props.currentSkill) return ""
   return renderMarkdown(props.currentSkill.content, false)
+})
+
+/** 来源展示："工具名 · 作用域"（工具名本地化，作用域缺失时只显示工具名） */
+const sourceText = computed(() => {
+  const skill = props.currentSkill
+  if (!skill) return ""
+
+  const toolName = getAITool(skill.tool)?.name ?? skill.tool
+  const scopeKey = skill.scope ? SKILL_SCOPE_LABEL_KEYS[skill.scope] : ""
+  const scopeLabel = scopeKey ? (props.i18n[scopeKey] ?? "") : ""
+
+  return [toolName, scopeLabel].filter(Boolean).join(" · ")
 })
 </script>
 

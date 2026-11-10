@@ -34,6 +34,18 @@
               :style="{ background: color }"
             ></span>
           </span>
+          <!-- 同名多版本提示：去重时已取内容最长的一份 -->
+          <span
+            v-if="option?.skill?.hasConflict"
+            class="skill-conflict"
+            :title="i18n.skillConflictTitle"
+          >
+            <IconWrapper
+              name="warning"
+              :size="10"
+              aria-hidden="true"
+            />
+          </span>
         </span>
       </template>
       <!-- 下拉选项富内容：技能名 + 来源工具色点 -->
@@ -50,6 +62,18 @@
               class="source-dot"
               :style="{ background: color }"
             ></span>
+          </span>
+          <!-- 同名多版本提示：去重时已取内容最长的一份 -->
+          <span
+            v-if="option.skill?.hasConflict"
+            class="skill-conflict"
+            :title="i18n.skillConflictTitle"
+          >
+            <IconWrapper
+              name="warning"
+              :size="10"
+              aria-hidden="true"
+            />
           </span>
         </span>
       </template>
@@ -91,6 +115,7 @@ import type { SelectOption } from "@/components/Select.vue"
 import type { SkillItem } from "@/types/ai"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import Select from "@/components/Select.vue"
 import { showSkillsManager } from "../skills"
 import { getSourceDotColors } from "../utils"

@@ -104,6 +104,21 @@
     opacity: 0.8;
   }
 
+  // 规范校验提示（frontmatter.name 不合规 / 与目录名不一致）
+  .sv-skill-warning {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+    margin-bottom: $s-1;
+    font-size: $t-2xs;
+    line-height: $lh-tight;
+    color: var(--b3-theme-warning, $c-warning);
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
   .sv-skill-path {
     font-size: $t-2xs;
     color: var(--b3-theme-on-surface-variant, $c-muted);

@@ -926,6 +926,18 @@ export const COMMON_ICONS = {
   opencodeTool: {
     icon: "mdi:cube-outline",
   },
+  codexTool: {
+    icon: "mdi:robot-outline",
+  },
+  cursorTool: {
+    icon: "mdi:cursor-default-click-outline",
+  },
+  geminiTool: {
+    icon: "mdi:star-four-points-outline",
+  },
+  copilotTool: {
+    icon: "mdi:github",
+  },
 
   // 通用动作 / 视图切换
   minus: {

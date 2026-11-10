@@ -80,6 +80,17 @@
     >
       {{ skill.description }}
     </div>
+    <!-- 规范校验提示：frontmatter.name 不合规或与目录名不一致 -->
+    <div
+      v-if="issueText"
+      class="sv-skill-warning"
+    >
+      <IconWrapper
+        name="warning"
+        :size="12"
+      />
+      <span>{{ issueText }}</span>
+    </div>
     <div
       class="sv-skill-path"
       :title="skill.filePath"
@@ -132,6 +143,7 @@
 import type { SkillInfo } from "../SkillsManager"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
+import IconWrapper from "@/components/IconWrapper.vue"
 import Input from "@/components/Input.vue"
 import { formatFileSize } from "@/utils/format"
 import { renderMarkdown } from "../../utils"
@@ -161,6 +173,14 @@ defineEmits<{
 
 // 统一走模块的 XSS 安全渲染（转义 skill.md 中的原始 HTML），与 SkillPreviewModal 同源
 const renderedContent = computed(() => renderMarkdown(props.skill.content, false))
+
+/** 校验提示文案（多条以「；」连接；空串表示无问题） */
+const issueText = computed(() =>
+  props.skill.issues
+    .map((issue) => props.i18n[issue === "nameInvalid" ? "skillNameInvalid" : "skillNameMismatch"] ?? "")
+    .filter(Boolean)
+    .join("；"),
+)
 </script>
 
 <style scoped lang="scss">

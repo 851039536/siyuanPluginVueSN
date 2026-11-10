@@ -44,6 +44,14 @@
   flex-shrink: 0;
 }
 
+// 同名多版本提示图标
+.skill-conflict {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--b3-theme-warning, $c-warning);
+}
+
 .source-dot {
   display: inline-block;
   width: 6px;

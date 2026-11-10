@@ -1,7 +1,8 @@
 /**
  * Skills 管理器（原 skillsViewer/SkillsViewerManager，随功能并入 aiContentGenerator）
  * 扫描并读取 AI 编程工具的 Skills 配置文件
- * 兼容 Claude, CodeBuddy, Qoder, Trae, Opencode，以及思源内置 Agent 技能目录（工作区作用域）
+ * 兼容 Claude / CodeBuddy / Qoder / Trae / Opencode / Codex / Cursor / Gemini CLI / GitHub Copilot，
+ * 以及思源内置 Agent 技能目录（工作区作用域）
  */
 
 import { AI_TOOLS, SKILL_SOURCES } from "@/config/aiTools"
@@ -77,6 +78,26 @@ function parseFrontmatterFields(lines: string[]): Record<string, string> {
   return fields
 }
 
+/** Agent Skills 规范校验问题（只针对 frontmatter 显式 name，避免中文技能名误报） */
+export type SkillValidationIssue = "nameInvalid" | "nameMismatch"
+
+/**
+ * 校验 frontmatter 中的 name 是否符合 Agent Skills 规范：
+ * 小写 kebab-case、≤64 字符，且必须与技能目录同名（参考 anthropics/skills spec）。
+ * 无显式 name（回退到标题/目录名）不校验——存量中文技能名不应被标黄。
+ */
+export function validateSkillName(
+  frontmatterName: string | null,
+  dirName: string,
+): SkillValidationIssue[] {
+  if (!frontmatterName) return []
+
+  if (frontmatterName.length > 64 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(frontmatterName)) {
+    return ["nameInvalid"]
+  }
+  return frontmatterName === dirName ? [] : ["nameMismatch"]
+}
+
 export interface SkillInfo {
   name: string
   description: string
@@ -85,6 +106,8 @@ export interface SkillInfo {
   tool: AIToolType
   /** 来源作用域（技能开关按 tool + scope + 相对路径维度配置） */
   scope: AISkillScope
+  /** 规范校验问题（空数组 = 合规或未声明 frontmatter name） */
+  issues: SkillValidationIssue[]
   fileSize: number
 }
 
@@ -293,6 +316,7 @@ export class SkillsManager {
             const {
               name,
               description,
+              frontmatterName,
             } = this.parseSkillMd(content, entry.name)
             skills.push({
               name,
@@ -301,6 +325,7 @@ export class SkillsManager {
               filePath: skillMdPath,
               tool: toolId,
               scope,
+              issues: validateSkillName(frontmatterName, entry.name),
               fileSize: stat.size,
             })
           }
@@ -321,6 +346,8 @@ export class SkillsManager {
   ): {
     name: string
     description: string
+    /** frontmatter 中显式声明的 name（无则 null，用于规范校验/回退判定） */
+    frontmatterName: string | null
   } {
     const normalized = normalizeSkillMdContent(content)
     const {
@@ -354,6 +381,7 @@ export class SkillsManager {
     return {
       name,
       description,
+      frontmatterName: fields.name || null,
     }
   }
 

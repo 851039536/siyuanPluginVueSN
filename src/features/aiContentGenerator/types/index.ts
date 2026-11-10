@@ -3,7 +3,7 @@
  */
 import type { IconKey } from "@/config/icons"
 import type { SkillInfo } from "../skills/SkillsManager"
-import type { IssueSeverity, ReviewRating, SkillItem } from "@/types/ai"
+import type { IssueSeverity, ReviewRating, SkillItem, SkillScope } from "@/types/ai"
 
 /** AI 快捷编辑动作类型（BottomInputArea 快捷操作键 / index.vue aiEditAction 共用） */
 export type EditActionKey = "polish" | "expand" | "condense" | "fix" | "rewrite" | "summary"
@@ -94,6 +94,13 @@ export const DEFAULT_SYSTEM_PROMPTS = {
   fixIssue: "你是一个专业的文档编辑助手。请根据描述的问题定向修改，仅修正相关问题部分，保持其他内容不变。直接输出修改后的完整文档。",
 } as const
 
+/** 作用域 → i18n 键（skillsViewer 与 aiContentGenerator 两个分片使用同名键） */
+export const SKILL_SCOPE_LABEL_KEYS: Record<SkillScope, string> = {
+  global: "scopeGlobal",
+  project: "scopeProject",
+  workspace: "scopeWorkspace",
+}
+
 /** SkillInfo（skills/ 扫描原始条目，含 fileSize）→ SkillItem（展示/去重模型）转换 */
 export function toSkillItem(entry: SkillInfo): SkillItem {
   return {
@@ -102,6 +109,7 @@ export function toSkillItem(entry: SkillInfo): SkillItem {
     description: entry.description,
     content: entry.content,
     tool: entry.tool,
+    scope: entry.scope,
     sources: [{
       id: entry.filePath,
       tool: entry.tool,

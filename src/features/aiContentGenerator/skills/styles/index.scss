@@ -263,6 +263,12 @@
     border-bottom: 1px dashed var(--b3-border-color, $c-border);
   }
 
+  /* ── skills search ──────────────────────────── */
+
+  .sv-search {
+    margin-bottom: $s-3;
+  }
+
   /* ── skills list ────────────────────────────── */
 
   .sv-skills-list {

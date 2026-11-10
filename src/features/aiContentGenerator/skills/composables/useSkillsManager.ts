@@ -15,6 +15,7 @@ import {
   setSkillSourceEnabled,
 } from "../sourcePrefs"
 import { SkillsManager } from "../SkillsManager"
+import { SKILL_SCOPE_LABEL_KEYS } from "../../types"
 import {
   computed,
   onBeforeUnmount,
@@ -22,13 +23,6 @@ import {
   ref,
   watch,
 } from "vue"
-
-/** 作用域 → i18n 键（来源列表文案） */
-const SCOPE_LABEL_KEYS: Record<AISkillScope, string> = {
-  global: "scopeGlobal",
-  project: "scopeProject",
-  workspace: "scopeWorkspace",
-}
 
 interface UseSkillsManagerProps {
   visible: boolean
@@ -49,6 +43,9 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
   const skills = ref<SkillInfo[]>([])
   const loading = ref(false)
   const expandedSkills = reactive(new Set<string>())
+
+  /** 技能搜索词（名称 / 描述 / 路径 / 工具名，前端过滤已加载列表） */
+  const searchQuery = ref("")
 
   /** 「加载来源」区块展开态（默认收起：仅在需要缩小扫描范围时调整） */
   const sourcesOpen = ref(false)
@@ -89,8 +86,28 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
   }>>({})
 
   const filteredSkills = computed(() => {
-    if (selectedTool.value === "all") return skills.value
-    return skills.value.filter((s) => s.tool === selectedTool.value)
+    const byTool = selectedTool.value === "all"
+      ? skills.value
+      : skills.value.filter((s) => s.tool === selectedTool.value)
+
+    const query = searchQuery.value.trim().toLowerCase()
+    if (!query) return byTool
+
+    return byTool.filter((skill) =>
+      skill.name.toLowerCase().includes(query)
+      || skill.description.toLowerCase().includes(query)
+      || skill.filePath.toLowerCase().includes(query)
+      || getToolName(skill.tool).toLowerCase().includes(query),
+    )
+  })
+
+  /** 列表空态文案（未启用来源 / 搜索无结果 / 全局无技能 / 单工具无技能） */
+  const emptyStateText = computed(() => {
+    if (enabledSkillSourceCount.value === 0) return i18n.value.noSourcesEnabled ?? ""
+    if (searchQuery.value.trim()) return i18n.value.searchNoMatch ?? ""
+    return selectedTool.value === "all"
+      ? (i18n.value.noSkillsAllTools ?? "")
+      : (i18n.value.noSkillsForTool ?? "")
   })
 
   function selectTool(toolId: string) {
@@ -108,7 +125,7 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
 
   /** 作用域展示名（全局 / 项目级 / 工作区） */
   function getScopeLabel(scope: AISkillScope): string {
-    return i18n.value[SCOPE_LABEL_KEYS[scope]] ?? scope
+    return i18n.value[SKILL_SCOPE_LABEL_KEYS[scope]] ?? scope
   }
 
   /** 来源路径展示：全局用 ~ 前缀，项目级/工作区保留相对路径（基准目录由作用域标签说明） */
@@ -438,6 +455,8 @@ export function useSkillsManager(props: UseSkillsManagerProps) {
     projectPath,
     skills,
     loading,
+    searchQuery,
+    emptyStateText,
     sourcesOpen,
     skillSources,
     enabledSkillSourceCount,

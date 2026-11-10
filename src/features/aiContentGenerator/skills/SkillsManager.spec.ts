@@ -6,7 +6,7 @@ import {
 } from "vitest"
 import { readWorkspaceDir } from "@/utils/workspaceDir"
 import { toSkillItem } from "../types"
-import { SkillsManager } from "./SkillsManager"
+import { SkillsManager, validateSkillName } from "./SkillsManager"
 
 vi.mock("@/utils/workspaceDir", () => ({
   readWorkspaceDir: vi.fn(() => Promise.resolve("C:\\siyuan-workspace")),
@@ -137,6 +137,27 @@ describe("skillsManager 工作区作用域", () => {
   })
 })
 
+describe("validateSkillName", () => {
+  it("合法且与目录同名 → 无问题", () => {
+    expect(validateSkillName("my-skill-2", "my-skill-2")).toEqual([])
+  })
+
+  it("与目录名不一致 → nameMismatch", () => {
+    expect(validateSkillName("my-skill", "other-dir")).toEqual(["nameMismatch"])
+  })
+
+  it("含大写/下划线/空格或超过 64 字符 → nameInvalid", () => {
+    expect(validateSkillName("My-Skill", "My-Skill")).toEqual(["nameInvalid"])
+    expect(validateSkillName("my_skill", "my_skill")).toEqual(["nameInvalid"])
+    expect(validateSkillName("my skill", "my skill")).toEqual(["nameInvalid"])
+    expect(validateSkillName("a".repeat(65), "a".repeat(65))).toEqual(["nameInvalid"])
+  })
+
+  it("无显式 frontmatter name → 不校验（兼容中文技能名）", () => {
+    expect(validateSkillName(null, "中文技能目录")).toEqual([])
+  })
+})
+
 describe("toSkillItem", () => {
   it("skillInfo → SkillItem：id 取 filePath，sources 单元素", () => {
     const item = toSkillItem({
@@ -146,11 +167,13 @@ describe("toSkillItem", () => {
       filePath: "/home/u/.claude/skills/x/skill.md",
       tool: "claude",
       scope: "global",
+      issues: [],
       fileSize: 42,
     })
     expect(item.id).toBe("/home/u/.claude/skills/x/skill.md")
     expect(item.name).toBe("技能名")
     expect(item.tool).toBe("claude")
+    expect(item.scope).toBe("global")
     expect(item.sources).toHaveLength(1)
     expect(item.sources[0]).toEqual({
       id: "/home/u/.claude/skills/x/skill.md",

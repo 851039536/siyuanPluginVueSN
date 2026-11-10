@@ -15,6 +15,44 @@ import {
   ref,
 } from "vue"
 
+/**
+ * 对同名技能去重，合并来源信息（导出以便单测；逻辑与视图状态无关）
+ * 去重规则：name 相同的技能只保留一个，sources 记录所有来源
+ * 优先保留内容最长的版本，并在 description 中提示来源
+ * 内容不一致时标记 hasConflict（UI 提示"同名多版本"），内容相同（symlink/copy 重复安装）不提示
+ */
+export function deduplicateSkills(items: SkillItem[]): SkillItem[] {
+  const nameMap = new Map<string, SkillItem>()
+
+  for (const item of items) {
+    const key = item.name.toLowerCase().trim()
+    const existing = nameMap.get(key)
+
+    if (!existing) {
+      nameMap.set(key, { ...item })
+    } else {
+      // 合并 sources
+      const mergedSources = [...existing.sources, ...item.sources]
+      const hasConflict = existing.hasConflict
+        || existing.content !== item.content
+
+      // 保留内容最长的版本
+      if (item.content.length > existing.content.length) {
+        nameMap.set(key, {
+          ...item,
+          sources: mergedSources,
+          hasConflict,
+        })
+      } else {
+        existing.sources = mergedSources
+        existing.hasConflict = hasConflict
+      }
+    }
+  }
+
+  return Array.from(nameMap.values())
+}
+
 export function useSkillsLoader() {
   /** 去重后的技能列表 */
   const skills = ref<SkillItem[]>([])
@@ -26,39 +64,6 @@ export function useSkillsLoader() {
     }
     return skills.value[currentSkillIndex.value]
   })
-
-  /**
-   * 对同名技能去重，合并来源信息
-   * 去重规则：name 相同的技能只保留一个，sources 记录所有来源
-   * 优先保留内容最长的版本，并在 description 中提示来源
-   */
-  function deduplicateSkills(items: SkillItem[]): SkillItem[] {
-    const nameMap = new Map<string, SkillItem>()
-
-    for (const item of items) {
-      const key = item.name.toLowerCase().trim()
-      const existing = nameMap.get(key)
-
-      if (!existing) {
-        nameMap.set(key, { ...item })
-      } else {
-        // 合并 sources
-        const mergedSources = [...existing.sources, ...item.sources]
-
-        // 保留内容最长的版本
-        if (item.content.length > existing.content.length) {
-          nameMap.set(key, {
-            ...item,
-            sources: mergedSources,
-          })
-        } else {
-          existing.sources = mergedSources
-        }
-      }
-    }
-
-    return Array.from(nameMap.values())
-  }
 
   /** 扫描加载 AI 技能 */
   async function loadSkills() {

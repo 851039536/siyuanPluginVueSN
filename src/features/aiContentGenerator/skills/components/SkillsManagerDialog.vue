@@ -188,6 +188,16 @@
               {{ i18n.openDir }}
             </Button>
           </div>
+          <!-- 技能搜索：按名称 / 描述 / 路径 / 工具名过滤已加载列表 -->
+          <div class="sv-search">
+            <Input
+              v-model="searchQuery"
+              size="xsmall"
+              prefix-icon="search"
+              clearable
+              :placeholder="i18n.searchPlaceholder"
+            />
+          </div>
           <div
             v-if="loading"
             class="sv-loading"
@@ -230,11 +240,9 @@
                 :size="40"
               />
             </div>
-            <!-- 空状态文案（区分「未启用来源」/全局/单工具） -->
+            <!-- 空状态文案（未启用来源 / 搜索无结果 / 全局 / 单工具） -->
             <div class="sv-empty-text">
-              {{ enabledSkillSourceCount === 0
-                ? i18n.noSourcesEnabled
-                : (selectedTool === 'all' ? i18n.noSkillsAllTools : i18n.noSkillsForTool) }}
+              {{ emptyStateText }}
             </div>
             <!-- 空状态路径提示 -->
             <div class="sv-empty-hint">
@@ -304,6 +312,8 @@ const {
   projectPath,
   skills,
   loading,
+  searchQuery,
+  emptyStateText,
   sourcesOpen,
   skillSources,
   enabledSkillSourceCount,

@@ -87,12 +87,14 @@ import {
 import { clampProbeConfig } from "./types/probeConfig"
 import { GitPushStorage } from "./types/storage"
 import {
+  buildDesktopTransferPayload,
   buildPushProfileEnv,
   DEFAULT_LOG_LIMIT,
   getCurrentDeviceName,
   poolProcess,
   resolveValidPath,
 } from "./utils"
+import type { ProjectTransferPayload } from "./utils/projectTransferExport"
 
 /** 索引状态查询的加载并发上限（每项目 2 次 NDJSON 读盘 + 解析；限流压住设置面板打开时的 IO 峰值） */
 const INDEX_STATUS_LOAD_CONCURRENCY = 4
@@ -1352,6 +1354,28 @@ export class GitPushManager {
 
   async saveCommitTemplates(templates: CommitTemplate[]): Promise<void> {
     return this.commitMsgGen.saveCommitTemplates(templates)
+  }
+
+  /**
+   * 构造「给 GitDesk 桌面端」的项目配置载荷。
+   *
+   * 与「数据管理 → 按模块导出」的 `ModuleExportPayload` v1 同形，但**只带 4 个项目槽位**：
+   * 缓存槽（提交分析 / 行数 / 一致性 / 报告）桌面端不消费，带上会让文件从几十 KB 涨到 MB 级。
+   * `pushProfileId` 在纯函数里剔除（账号令牌属敏感槽位，不跨仓传递）。
+   */
+  async buildProjectTransferPayload(): Promise<ProjectTransferPayload> {
+    const [projects, categories, tags, templates] = await Promise.all([
+      this.store.getProjects(),
+      this.store.getCategories(),
+      this.store.getAllTags(),
+      this.commitMsgGen.getCommitTemplates(),
+    ])
+    return buildDesktopTransferPayload({
+      projects,
+      categories,
+      tags,
+      templates,
+    })
   }
 
   // ── 代码统计报告（ReportOps：numstat 提交日志 + 首提交日期）──

@@ -492,3 +492,34 @@ src/features/myFeature/
    需按本侧实际宽度单独定值。
 5. **跨仓库改动一律先问后做**，逐次确认，不视为一次性授权；未经确认不得改动另一侧任何文件（含文档）。
 6. 桌面端有 `smoke:app` / `gate:it` 可自验；本插件按 AGENTS_BUILD.md 由人工构建验证。
+
+### 项目配置导入/导出：跨仓数据契约（强制，2026-11-11 起）
+
+`gitPush` 的项目配置导出文件是**两个仓库之间的数据接口**，不是本插件内部格式：
+本插件「`+` → 导出项目配置（给桌面端）」/「数据管理 → 按模块导出」产出的 JSON
+要能被 GitDesk 直接导入；GitDesk 导出的 JSON 要能被本插件「数据管理 → 导入 JSON」整份接受。
+单方面改契约会让对方**静默读错或整份拒收**。
+
+契约本体：
+
+| 项 | 约定 |
+| --- | --- |
+| 外壳 | `ModuleExportPayload` v1：`{version:1, exportedAt, owners:["gitPush"], slots, tables, schemas}` |
+| 槽位键（只认这 4 个） | `git-push-projects` / `git-push-categories` / `git-push-tags` / `git-push-commit-templates` |
+| 本侧产出 | `utils/projectTransferExport.ts` 的 `buildDesktopTransferPayload`（白名单重建、只带 4 槽、不带 `pushProfileId`） |
+| 本侧消费 | 数据管理 →「导入 JSON」（`storageManager` 的 `parseModulePayload` + 整槽覆盖） |
+| 桌面端消费 | 宽容解析 slots / `{projects}` / 裸数组，预览后按「路径优先于 id」合并 |
+
+强制规则：
+
+1. **契约改动必须提前通知桌面端**：改槽位键名或增删键、改字段含义、改 `version`、改合并判定、
+   改导出文件名/范围，都要先说明「改什么、桌面端会怎样」，得到确认后再动；「只加一个字段」不豁免。
+2. **只做向后兼容演进**：新增字段必须可选且默认值等于旧行为；破坏性变更必须升 `version` 并两侧同时改。
+3. **导出永远白名单重建**：本侧 `parseModulePayload` 遇到未注册 slot key 会整份拒绝，
+   所以导出对象必须按白名单构造，禁止回吐原始 payload。
+4. **敏感数据不跨仓**：`git-push-profiles`（令牌密文）与项目上的 `pushProfileId` 不导出。
+5. **改完验证**：本侧跑 `pnpm typecheck` + `pnpm test`（含 `utils/projectTransferExport.spec.ts`
+   的「槽位键已在 JSON_SLOTS 注册」断言）；`pnpm build` / `pnpm lint` 按 AGENTS_BUILD.md 交人工。
+6. **契约真源**：本侧 `utils/projectTransferExport.ts` 的 `PROJECT_TRANSFER_SLOT_KEYS`；
+   桌面端 `features/gitPush/types/projectTransfer.ts` 的 `PROJECT_SLOT_KEYS` / `PROJECT_CONFIG_VERSION`。
+   两组常量必须逐字一致。

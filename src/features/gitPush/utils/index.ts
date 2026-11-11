@@ -203,3 +203,14 @@ export {
   normalizePushHost,
 } from "./pushProfile"
 export type { PushEnvBuildOptions, PushEnvBuildResult } from "./pushProfile"
+
+export {
+  buildDesktopTransferPayload,
+  desktopTransferFileName,
+  PROJECT_TRANSFER_SLOT_KEYS,
+} from "./projectTransferExport"
+export type {
+  ProjectTransferPayload,
+  ProjectTransferSlotKey,
+  ProjectTransferSlots,
+} from "./projectTransferExport"

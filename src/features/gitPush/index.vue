@@ -18,6 +18,7 @@
       @open-settings="openSettings"
       @open-add-project="showAddDialog = true"
       @open-scan="handleOpenScan"
+      @export-for-desktop="exportForDesktop"
       @open-web="openRepoWebUrl"
       @open-floating="openFloatingWindow"
     />
@@ -313,6 +314,7 @@ import { useCardCompact } from "./composables/useCardCompact"
 import { useCardLayout } from "./composables/useCardLayout"
 import { useCompareBaseBranch } from "./composables/useCompareBaseBranch"
 import { useScanImport } from "./composables/useScanImport"
+import { useProjectTransferExport } from "./composables/useProjectTransferExport"
 import { useGitConfigDialog } from "./composables/useGitConfigDialog"
 import { useGitHandlers } from "./composables/useGitHandlers"
 import { useRefreshOps } from "./composables/useRefreshOps"
@@ -957,6 +959,12 @@ const {
   getScanDir: () => props.manager.getScanDir(),
   setScanDir: (dir: string) => props.manager.setScanDir(dir),
   tf,
+})
+
+// ── 项目配置导出（给 GitDesk 桌面端）──
+const { exportForDesktop } = useProjectTransferExport({
+  manager: props.manager,
+  i18n: props.i18n,
 })
 
 // ── Git 配置弹窗（项目级入口；全局配置走设置弹窗 GitConfigSection 分区）──

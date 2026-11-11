@@ -194,3 +194,11 @@
 .gp-add-item {
   @include popover-item;
 }
+
+// 菜单内分隔线：把「单个项目的新增/扫描导入」与「整份配置导出给桌面端」视觉上分开
+.gp-add-sep {
+  display: block;
+  height: 1px;
+  margin: $s-1 $s-px2;
+  background: var(--b3-border-color);
+}

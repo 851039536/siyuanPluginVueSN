@@ -1109,6 +1109,11 @@
     "workspaceFilesCopyPath": "Copy relative path",
     "workspaceFilesCopied": "Copied",
     "copyFileName": "Copy file name",
-    "copyFolderName": "Copy folder name"
+    "copyFolderName": "Copy folder name",
+    "exportForDesktop": "Export project config (for desktop)",
+    "exportForDesktopEmpty": "No projects to export",
+    "exportForDesktopDone": "Exported {0} projects to {1}",
+    "exportForDesktopFailed": "Export failed: {0}",
+    "exportForDesktopNoNode": "File access is unavailable in this environment"
   }
 }

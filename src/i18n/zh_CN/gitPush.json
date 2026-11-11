@@ -1109,6 +1109,11 @@
     "workspaceFilesCopyPath": "复制相对路径",
     "workspaceFilesCopied": "已复制",
     "copyFileName": "复制文件名称",
-    "copyFolderName": "复制文件夹名称"
+    "copyFolderName": "复制文件夹名称",
+    "exportForDesktop": "导出项目配置（给桌面端）",
+    "exportForDesktopEmpty": "还没有项目可导出",
+    "exportForDesktopDone": "已导出 {0} 个项目到 {1}",
+    "exportForDesktopFailed": "导出失败：{0}",
+    "exportForDesktopNoNode": "当前环境不支持文件读写"
   }
 }

@@ -2419,7 +2419,12 @@
     "workspaceFilesCopyPath": "Copy relative path",
     "workspaceFilesCopied": "Copied",
     "copyFileName": "Copy file name",
-    "copyFolderName": "Copy folder name"
+    "copyFolderName": "Copy folder name",
+    "exportForDesktop": "Export project config (for desktop)",
+    "exportForDesktopEmpty": "No projects to export",
+    "exportForDesktopDone": "Exported {0} projects to {1}",
+    "exportForDesktopFailed": "Export failed: {0}",
+    "exportForDesktopNoNode": "File access is unavailable in this environment"
   },
   "enableGlobalRelations": "Enable Global Relations",
   "enableGlobalRelationsDesc": "Query bidirectional link relations across the whole library via refs table and getBacklink2 API",

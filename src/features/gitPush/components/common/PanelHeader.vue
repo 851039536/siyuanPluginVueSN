@@ -153,6 +153,20 @@
             />
             <span>{{ i18n.importProject }}</span>
           </button>
+          <!-- 分隔线：整份项目配置的导出与「单个项目的新增/扫描导入」不是同一类操作 -->
+          <span class="gp-add-sep" />
+          <!-- 菜单项："导出项目配置（给桌面端）" -->
+          <button
+            class="gp-add-item"
+            role="menuitem"
+            @click="showAddMenu = false; emit('exportForDesktop')"
+          >
+            <Icon
+              icon="mdi:download-outline"
+              height="12"
+            />
+            <span>{{ i18n.exportForDesktop }}</span>
+          </button>
         </MenuPopover>
       </div>
 
@@ -202,6 +216,7 @@ const emit = defineEmits<{
   openSettings: []
   openAddProject: []
   openScan: []
+  exportForDesktop: []
   openWeb: [url: string]
   openFloating: []
 }>()

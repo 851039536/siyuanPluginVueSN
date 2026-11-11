@@ -4,6 +4,15 @@
 @use "./Shared";
 @use "./Dialog";
 @use "./Form";
+// 面板级共享样式：过去由各面板内的多个组件各自 @use，同样的规则被重复展开 2~8 次。
+// 它们本就是跨组件共享的全局规则（没有 scoped 隔离），跟上面四个基座同性质，一并收口到这里。
+// 注意：本文件只负责引入，规则内容（含字号）一字未改。
+@use "./StatsPanel";
+@use "./WorkspaceExplorer";
+@use "./RepoCleanPanel";
+@use "./CommitRuleCheckPanel";
+@use "./CommitAnalysisPanel";
+@use "./LineStatsPanel";
 
 .git-push-panel {
   // ── 本地 CSS 颜色变量（diff / 文件状态 / accent）──

@@ -194,5 +194,4 @@ const summaryText = computed(() => {
 
 <style lang="scss">
 @use "../../styles/DayCommitDetail.scss";
-@use "../../styles/index.scss";
 </style>

@@ -120,8 +120,3 @@ const kpis = computed(() => [
   },
 ])
 </script>
-
-<style lang="scss">
-@use "../../styles/StatsPanel.scss";
-@use "../../styles/index.scss";
-</style>

@@ -97,6 +97,5 @@ function handleChange(value: string | number) {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/CardTabs.scss";
 </style>

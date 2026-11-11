@@ -58,5 +58,4 @@ withDefaults(defineProps<{
 
 <style lang="scss">
 @use "../../styles/AnalysisGate.scss";
-@use "../../styles/index.scss";
 </style>

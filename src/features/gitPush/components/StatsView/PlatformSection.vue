@@ -203,8 +203,3 @@ const issueChips = computed(() =>
 /** 平台状态行视图模型：单元格图标与 tooltip 已预计算，模板只做渲染 */
 const platformRows = computed<PlatformTableRowView[]>(() => auditAggregate.value.rows)
 </script>
-
-<style lang="scss">
-@use "../../styles/StatsPanel.scss";
-@use "../../styles/index.scss";
-</style>

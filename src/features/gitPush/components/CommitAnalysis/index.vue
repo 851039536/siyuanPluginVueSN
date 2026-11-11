@@ -634,10 +634,3 @@ function handleBatchSaved(projectIds: string[]) {
   emit("runAnalysis", projectIds)
 }
 </script>
-
-<style lang="scss">
-@use "../../styles/CommitAnalysisPanel.scss";
-@use "../../styles/CommitRuleCheckPanel.scss";
-@use "../../styles/LineStatsPanel.scss";
-@use "../../styles/index.scss";
-</style>

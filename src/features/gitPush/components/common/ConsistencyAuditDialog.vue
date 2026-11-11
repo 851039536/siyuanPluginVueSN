@@ -366,5 +366,4 @@ void rootRef
 
 <style lang="scss">
 @use "../../styles/ConsistencyAuditDialog.scss";
-@use "../../styles/index.scss";
 </style>

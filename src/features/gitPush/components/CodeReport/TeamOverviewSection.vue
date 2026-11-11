@@ -43,5 +43,4 @@ const overviewCards = computed<StatCardItem[]>(() => [
 
 <style lang="scss">
 @use "../../styles/CodeReportPanel.scss";
-@use "../../styles/index.scss";
 </style>

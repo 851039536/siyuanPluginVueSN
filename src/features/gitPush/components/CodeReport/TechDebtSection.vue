@@ -263,5 +263,4 @@ function toggleExpand(path: string) {
 
 <style lang="scss">
 @use "../../styles/TechDebtSection.scss";
-@use "../../styles/index.scss";
 </style>

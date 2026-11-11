@@ -149,5 +149,4 @@ const authorRows = computed(() =>
 
 <style lang="scss">
 @use "../../styles/RangeCommitDetail.scss";
-@use "../../styles/index.scss";
 </style>

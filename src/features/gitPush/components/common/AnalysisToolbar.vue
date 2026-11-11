@@ -96,5 +96,4 @@ const resolvedStatusText = computed(() => {
 
 <style lang="scss">
 @use "../../styles/AnalysisToolbar.scss";
-@use "../../styles/index.scss";
 </style>

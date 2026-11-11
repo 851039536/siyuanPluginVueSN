@@ -205,6 +205,5 @@ function openCompare(url: string) {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/CardActionBar.scss";
 </style>

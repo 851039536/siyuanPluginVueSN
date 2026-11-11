@@ -202,7 +202,3 @@ function confirm() {
 // 当父组件通过 genStashDesc 生成描述后，自动填入输入框
 useGeneratedMsgSync(toRef(props, "generatedMsg"), localMsg)
 </script>
-
-<style lang="scss">
-@use "../../styles/index.scss";
-</style>

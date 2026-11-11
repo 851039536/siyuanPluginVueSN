@@ -461,3 +461,19 @@ src/features/myFeature/
 5. **i18n**：提示"已随插件内置"文案走 i18n
 
 参考实现：`src/features/generalSettings/`（`utils/styles.ts` 的 `BUILTIN_FONT` + `injectBuiltinFont()`，`GeneralSettings.ts` 的 `injectBuiltinFonts()`）。
+
+## 与桌面端 GitDesk 的对账（同源代码）
+
+`src/features/gitPush/` 有一份独立化复刻：**Windows 桌面客户端 GitDesk**，
+路径 `E:/programDevelopment/desktop/GitDesk/src/renderer/src/features/gitPush`。
+`styles/*.scss` 两边逐文件字节一致（对方仅 `styles/index.scss` 多几行 `@use`，用于把共享基座收口到全局入口）。
+
+对账规则：
+
+1. 改 gitPush 样式前先 `diff -rq` 两边 `styles/` 目录，判断是「上游还没有」还是「改漏了」。
+2. **字号不得随桌面端反向改动**：桌面端的 `.app-shell` 基准字号、整页缩放（`webPreferences.zoomFactor`）
+   都是脱离思源宿主后的适配手段，本插件依赖两级字号制 + `src/index.scss` 的全局基准字号兜底，
+   两边字号基线不同步是**设计如此**，不是遗漏。
+3. 做样式去重（例如把每个组件 `@use` 的共享 partial 收口到面板根 `index.vue`）时，
+   只允许删除 `@use` 行，不得触碰任何声明——尤其 `font-size`。
+4. 桌面端有 `smoke:app` / `gate:it` 可自验；本插件按 AGENTS_BUILD.md 由人工构建验证。

@@ -80,6 +80,5 @@ const remoteRows = computed(() =>
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/CardRemotes.scss";
 </style>

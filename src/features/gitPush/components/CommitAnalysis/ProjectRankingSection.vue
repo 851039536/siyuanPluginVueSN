@@ -118,8 +118,3 @@ const truncatedHint = computed(() => {
     .replace("{1}", String(total))
 })
 </script>
-
-<style lang="scss">
-@use "../../styles/CommitAnalysisPanel.scss";
-@use "../../styles/index.scss";
-</style>

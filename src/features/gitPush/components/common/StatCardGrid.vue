@@ -63,5 +63,4 @@ withDefaults(defineProps<{
 
 <style lang="scss">
 @use "../../styles/StatCardGrid.scss";
-@use "../../styles/index.scss";
 </style>

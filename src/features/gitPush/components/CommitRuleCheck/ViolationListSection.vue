@@ -220,8 +220,3 @@ watch(pagedSource, () => {
   selectedKeys.value = new Set()
 })
 </script>
-
-<style lang="scss">
-@use "../../styles/CommitRuleCheckPanel.scss";
-@use "../../styles/index.scss";
-</style>

@@ -204,8 +204,3 @@ function indentStyle(depth: number): Record<string, string> {
   return { "--we-depth": String(depth) }
 }
 </script>
-
-<style lang="scss">
-@use "@/index.scss" as *;
-@use "../../styles/WorkspaceExplorer.scss";
-</style>

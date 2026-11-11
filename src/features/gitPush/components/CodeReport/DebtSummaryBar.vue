@@ -86,5 +86,4 @@ const top = computed(() => buildTopDebts(props.files))
 
 <style lang="scss">
 @use "../../styles/DebtSummaryBar.scss";
-@use "../../styles/index.scss";
 </style>

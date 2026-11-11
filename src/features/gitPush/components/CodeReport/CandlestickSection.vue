@@ -258,5 +258,4 @@ const rhythmCards = computed(() => {
 
 <style lang="scss">
 @use "../../styles/CandlestickSection.scss";
-@use "../../styles/index.scss";
 </style>

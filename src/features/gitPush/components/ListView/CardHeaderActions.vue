@@ -322,6 +322,5 @@ function deleteConfirmText(pathCount: number): string {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/CardHeaderActions.scss";
 </style>

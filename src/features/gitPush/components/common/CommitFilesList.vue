@@ -172,5 +172,4 @@ onMounted(() => {
 
 <style lang="scss">
 @use "../../styles/CommitFilesList.scss";
-@use "../../styles/index.scss";
 </style>

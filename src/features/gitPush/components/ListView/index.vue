@@ -176,6 +176,5 @@ watch(cardLayout, (layout) => {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/ListView.scss";
 </style>

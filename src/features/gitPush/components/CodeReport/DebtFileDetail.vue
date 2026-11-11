@@ -107,5 +107,4 @@ const locText = computed(() => (loc.value === null ? "-" : String(loc.value)))
 
 <style lang="scss">
 @use "../../styles/DebtFileDetail.scss";
-@use "../../styles/index.scss";
 </style>

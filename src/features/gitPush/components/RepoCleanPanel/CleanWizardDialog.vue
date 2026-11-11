@@ -526,8 +526,3 @@ function finishWizard() {
   emit("close")
 }
 </script>
-
-<style lang="scss">
-@use "../../styles/RepoCleanPanel.scss";
-@use "../../styles/index.scss";
-</style>

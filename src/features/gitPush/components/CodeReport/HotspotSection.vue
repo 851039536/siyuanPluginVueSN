@@ -283,5 +283,4 @@ async function openFile(path: string) {
 
 <style lang="scss">
 @use "../../styles/HotspotSection.scss";
-@use "../../styles/index.scss";
 </style>

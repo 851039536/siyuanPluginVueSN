@@ -329,6 +329,5 @@ async function handleSwitchBranch(branch: BranchInfo) {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/CardHeader.scss";
 </style>

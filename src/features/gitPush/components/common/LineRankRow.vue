@@ -76,5 +76,4 @@ function onClick() {
 
 <style lang="scss">
 @use "../../styles/LineRankRow.scss";
-@use "../../styles/index.scss";
 </style>

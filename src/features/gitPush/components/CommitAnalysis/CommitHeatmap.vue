@@ -543,5 +543,4 @@ function onGridKeydown(e: KeyboardEvent) {
 
 <style lang="scss">
 @use "../../styles/CommitHeatmap.scss";
-@use "../../styles/index.scss";
 </style>

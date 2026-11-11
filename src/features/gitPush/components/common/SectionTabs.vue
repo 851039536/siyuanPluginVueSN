@@ -41,5 +41,4 @@ const modelValue = defineModel<T>({ required: true })
 
 <style lang="scss">
 @use "../../styles/SectionTabs.scss";
-@use "../../styles/index.scss";
 </style>

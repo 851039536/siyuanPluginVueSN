@@ -263,5 +263,4 @@ function onRangeChange(v: string | number | boolean | null) {
 
 <style lang="scss">
 @use "../../styles/CodeReportPanel.scss";
-@use "../../styles/index.scss";
 </style>

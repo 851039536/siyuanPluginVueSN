@@ -252,5 +252,4 @@ function toggleExpand(author: string) {
 
 <style lang="scss">
 @use "../../styles/AuthorContributionSection.scss";
-@use "../../styles/index.scss";
 </style>

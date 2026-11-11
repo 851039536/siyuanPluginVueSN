@@ -211,6 +211,5 @@ function onKeydown(e: KeyboardEvent) {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/CardSummary.scss";
 </style>

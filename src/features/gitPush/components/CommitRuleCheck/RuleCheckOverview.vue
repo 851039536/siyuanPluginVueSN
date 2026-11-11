@@ -63,8 +63,3 @@ const hintText = computed(() => {
   return `${base}${String(props.i18n.ruleCheckHintOptional || "").replace("{0}", enabled.join(separator))}`
 })
 </script>
-
-<style lang="scss">
-@use "../../styles/CommitRuleCheckPanel.scss";
-@use "../../styles/index.scss";
-</style>

@@ -127,5 +127,4 @@ const peakHoursText = computed(() => {
 
 <style lang="scss">
 @use "../../styles/RhythmSection.scss";
-@use "../../styles/index.scss";
 </style>

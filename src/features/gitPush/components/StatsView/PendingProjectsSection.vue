@@ -129,8 +129,3 @@ function remoteTitle(byRemote: { key: string, ahead?: number, behind?: number }[
     .join(" · ")
 }
 </script>
-
-<style lang="scss">
-@use "../../styles/StatsPanel.scss";
-@use "../../styles/index.scss";
-</style>

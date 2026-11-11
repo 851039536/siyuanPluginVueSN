@@ -116,5 +116,4 @@ void rootRef
 
 <style lang="scss">
 @use "../../styles/ExtFilterDialog.scss";
-@use "../../styles/index.scss";
 </style>

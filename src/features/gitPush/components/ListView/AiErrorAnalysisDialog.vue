@@ -296,7 +296,6 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "@/variables.scss" as *;
 @use "../../styles/mixins" as *;
 @use "../../styles/AiErrorAnalysisDialog.scss";

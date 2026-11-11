@@ -1816,6 +1816,5 @@ provide(CARD_SERVICES_KEY, {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "./styles/index.scss";
 </style>

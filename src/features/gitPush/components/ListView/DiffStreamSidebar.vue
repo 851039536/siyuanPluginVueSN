@@ -324,7 +324,5 @@ function toggleStage(file: FileChange) {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
-@use "../../styles/WorkspaceExplorer.scss";
 @use "../../styles/DiffStream.scss";
 </style>

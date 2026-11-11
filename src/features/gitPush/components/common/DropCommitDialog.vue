@@ -505,5 +505,4 @@ async function openBackupFolder() {
 
 <style lang="scss">
 @use "../../styles/DropCommitDialog.scss";
-@use "../../styles/index.scss";
 </style>

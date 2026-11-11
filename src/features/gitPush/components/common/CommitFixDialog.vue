@@ -441,5 +441,4 @@ async function performSave(preserve: boolean) {
 
 <style lang="scss">
 @use "../../styles/CommitFixDialog.scss";
-@use "../../styles/index.scss";
 </style>

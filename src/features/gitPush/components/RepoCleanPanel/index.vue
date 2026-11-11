@@ -233,8 +233,3 @@ async function runScan() {
   }
 }
 </script>
-
-<style lang="scss">
-@use "../../styles/RepoCleanPanel.scss";
-@use "../../styles/index.scss";
-</style>

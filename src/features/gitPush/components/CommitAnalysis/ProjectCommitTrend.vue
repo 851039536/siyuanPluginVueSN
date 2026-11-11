@@ -344,5 +344,4 @@ const {
 
 <style lang="scss">
 @use "../../styles/ProjectCommitTrend.scss";
-@use "../../styles/index.scss";
 </style>

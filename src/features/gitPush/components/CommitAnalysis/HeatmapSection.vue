@@ -289,8 +289,3 @@ const rangeSummary = computed(() =>
     : { total: 0, activeDays: 0, daySpan: 0, projectCount: 0, authorCount: 0, busiest: null, topProjects: [], topAuthors: [] },
 )
 </script>
-
-<style lang="scss">
-@use "../../styles/CommitAnalysisPanel.scss";
-@use "../../styles/index.scss";
-</style>

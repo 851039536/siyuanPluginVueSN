@@ -293,8 +293,3 @@ onMounted(() => {
   void refresh()
 })
 </script>
-
-<style lang="scss">
-@use "@/index.scss" as *;
-@use "../../styles/WorkspaceExplorer.scss";
-</style>

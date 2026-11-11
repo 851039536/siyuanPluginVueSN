@@ -27,5 +27,4 @@ void props
 
 <style lang="scss">
 @use "../../styles/LineShareBar.scss";
-@use "../../styles/index.scss";
 </style>

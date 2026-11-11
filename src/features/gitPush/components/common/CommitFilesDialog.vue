@@ -150,5 +150,4 @@ async function init() {
 
 <style lang="scss">
 @use "../../styles/CommitFilesDialog.scss";
-@use "../../styles/index.scss";
 </style>

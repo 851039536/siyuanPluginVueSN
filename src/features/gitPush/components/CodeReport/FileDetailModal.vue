@@ -200,5 +200,4 @@ useDialogClose({
 
 <style lang="scss">
 @use "../../styles/FileDetailModal.scss";
-@use "../../styles/index.scss";
 </style>

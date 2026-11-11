@@ -87,7 +87,5 @@ const rows = computed(() =>
 </script>
 
 <style lang="scss">
-@use "../../styles/LineStatsPanel.scss";
 @use "../../styles/LineRankRow.scss";
-@use "../../styles/index.scss";
 </style>

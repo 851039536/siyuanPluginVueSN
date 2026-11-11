@@ -251,5 +251,4 @@ onUnmounted(() => {
 
 <style lang="scss">
 @use "../../styles/CommitFileDiffDialog.scss";
-@use "../../styles/index.scss";
 </style>

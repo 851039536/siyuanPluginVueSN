@@ -99,8 +99,3 @@ function onThresholdChange(v: string | number | boolean | null) {
   if (Number.isFinite(n) && n > 0) emit("updateThreshold", n)
 }
 </script>
-
-<style lang="scss">
-@use "../../styles/RepoCleanPanel.scss";
-@use "../../styles/index.scss";
-</style>

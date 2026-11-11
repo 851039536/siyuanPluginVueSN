@@ -548,5 +548,4 @@ function finalize() {
 
 <style lang="scss">
 @use "../../styles/BatchFixDialog.scss";
-@use "../../styles/index.scss";
 </style>

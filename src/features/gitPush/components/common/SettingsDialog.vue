@@ -252,5 +252,4 @@ void rootRef
 
 <style lang="scss">
 @use "../../styles/SettingsDialog.scss";
-@use "../../styles/index.scss";
 </style>

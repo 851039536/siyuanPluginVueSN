@@ -362,6 +362,5 @@ async function copyHash(hash: string) {
 </script>
 
 <style lang="scss">
-@use "@/index.scss" as *;
 @use "../../styles/BranchCommitList.scss";
 </style>

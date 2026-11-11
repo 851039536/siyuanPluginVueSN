@@ -174,5 +174,4 @@ void rootRef
 <style lang="scss">
 @use "../../styles/ProjectLineDetail.scss";
 @use "../../styles/LineShareBar.scss";
-@use "../../styles/index.scss";
 </style>

@@ -203,5 +203,4 @@ function commitColor() {
 
 <style lang="scss">
 @use "../../styles/CommitAnalysisSettings.scss";
-@use "../../styles/index.scss";
 </style>

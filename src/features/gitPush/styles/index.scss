@@ -6,7 +6,6 @@
 @use "./Form";
 // 面板级共享样式：过去由各面板内的多个组件各自 @use，同样的规则被重复展开 2~8 次。
 // 它们本就是跨组件共享的全局规则（没有 scoped 隔离），跟上面四个基座同性质，一并收口到这里。
-// 注意：本文件只负责引入，规则内容（含字号）一字未改。
 @use "./StatsPanel";
 @use "./WorkspaceExplorer";
 @use "./RepoCleanPanel";
@@ -90,7 +89,11 @@
   // overflow-x 兜底：卡片有 390px 保底宽度（min-width），窄 Dock 下横向滚动仅限于本列表区，
   // 不牵连整个面板；缺此声明时卡片会溢出并被静默裁掉右侧内容（参考 HotspotSection 先例）
   overflow-x: auto;
-  padding: $s-1 $s-1 $s-1 0 !important;
+  // 左右留白必须对称：面板自带 3px 内边距，这里左右各再留 4px。
+  // 右侧不再写 padding —— 垂直滚动条的常驻槽位（scrollbar-gutter: stable）正好补上这 4px。
+  // 旧写法 padding-right: 4 会与滚动条叠加，变成「左 3px / 右 11px」的右宽左窄。
+  padding: $s-1 0 $s-1 $s-1 !important;
+  scrollbar-gutter: stable;
   width: 100% !important;
 
   // 细滚动条：内容增减导致滚动条出现/消失时，宽度占用仅 4px，
@@ -122,20 +125,58 @@
   min-width: 0 !important;
 }
 
-// 详细模式：网格布局
+// 详细模式：行内等高卡片网格
 //   ① 等宽列：旧 flex-grow 会把奇数个项目的最后一张卡拉满整行；
-//   ② 自然高度：旧默认 stretch 会把同行短卡拉到最高卡等高，空白留在卡片边框内；
-//   ③ 列宽下限 390px：< 784px 时单列铺满，≥ 784px 双列，容器更宽时按 390px 下限自动增列。
+//   ② 行内等高：align-items 由 start 改 stretch，同行卡片拉到本行最高那张的高度，
+//      消除「矮卡旁边空一块」的参差；但高度仍由内容决定，不设统一高度 ——
+//      强行统一（min-height 或 grid-auto-rows）会让无变更的卡底部空出四成，得不偿失；
+//   ③ 唯一可伸缩的是 Tab 内容区，超出部分在面板内滚动，卡片本身不再被内容顶穿；
+//   ④ 列宽下限 390px：< 784px 时单列铺满，≥ 784px 双列，容器更宽时按 390px 下限自动增列。
 .gp-list--detailed {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
   align-content: start;
-  align-items: start;
+  align-items: stretch;
 
   .gp-card {
     // 列宽已由网格轨道约束；flex 声明在 grid 容器内失效，显式复位避免误读
     flex: initial !important;
     min-width: 0 !important;
+    // 卡片自身纵向排布：除 Tab 内容区外都按内容占位，富余高度交给面板内部滚动
+    display: flex;
+    flex-direction: column;
+  }
+
+  // 顶栏 / 远程状态 / 操作栏 / 输出面板：按内容占位，不参与伸缩
+  // 注：卡片内弹窗都走 Teleport 或 overlay 定位，不会被这条规则影响
+  .gp-card > * {
+    flex: 0 0 auto;
+  }
+
+  .gp-card > .gp-stash-tag-tabs {
+    flex: 1 1 auto;
+    // flex 子项默认 min-height:auto 会顶住内容高度，下面三层链缺一层都收不紧
+    min-height: 0;
+  }
+
+  // Tabs 内部打通到面板：.si-tabs → .si-tabpanels → .si-tabpanel
+  .gp-card .si-tabs {
+    min-height: 0;
+  }
+
+  .gp-card .si-tabpanels {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  // 面板内保留原有的二级滚动上限（.wt-files / .wt-body）：
+  // 卡片高度既然由内容决定，就不能再让文件数无限拉长卡片，否则同一行会把邻居一起拽高
+  .gp-card .si-tabpanel {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
   }
 
   // 搜索态的分类分组头需要整行占位（grid 下 flex-basis 不再生效）

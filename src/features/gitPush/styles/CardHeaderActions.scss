@@ -15,6 +15,15 @@
   }
 }
 
+// 顶栏图标按钮（ghost + xsmall + dense）实测 20×20，低于 24px 的最小点击热区，
+// 一行最多并排 6 个时容易点错。只抬高盒子的最小尺寸，图标仍是 12px，视觉重量不变。
+// 必须带 .git-push-panel 前缀：共享 Button 带一条 min-height: 0 的 scoped 规则，
+// 用 `.gp-card-actions .si-button` 时宽度能生效、高度会被压回 0（已实测）。
+.git-push-panel .gp-card-actions .si-button {
+  min-width: 24px;
+  min-height: 24px;
+}
+
 // 危险操作分隔线：常规操作与删除之间的视觉分组
 .gp-actions-divider {
   width: 1px;

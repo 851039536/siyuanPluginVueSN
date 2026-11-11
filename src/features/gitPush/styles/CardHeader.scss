@@ -57,7 +57,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: $s-px3;
-  margin-top: $s-px3;
+  // 与路径行/分支行统一 6px 行间距（原 3px 让三行元信息挤成一团）
+  margin-top: $s-px6;
 }
 
 // Markdown 文件徽章（按文件类型着色，readme/agents/claude/codebuddy/other 五档）
@@ -142,6 +143,10 @@
   display: flex;
   align-items: center;
   gap: $s-px3;
+  // 名称行与路径行原本只隔 name-row 的 2px，两行大字与小字贴在一起；
+  // 补到 6px 让顶栏形成稳定行间距（与下方 md 行、分支行同一节奏）。
+  // 注意：与 .gp-card-name-row 的 margin-bottom 相邻，外边距会合并，写 6px 实得 6px。
+  margin-top: $s-px6;
   font-size: $t-2xs;
   font-family: $ff-mono;
   opacity: 0.5;
@@ -163,7 +168,7 @@
   display: flex;
   align-items: center;
   gap: $s-1;
-  margin-top: $s-px3;
+  margin-top: $s-px6;
   flex-wrap: wrap;
 }
 
@@ -238,9 +243,12 @@
 }
 
 // 收起按钮（手风琴展开态）：与星标同档弱化
+// 几何：xsmall + dense 实测 20×20，低于 24px 最小热区；只放大盒子，星标/箭头图标尺寸不动。
 .git-push-panel .gp-card-name-row .gp-collapse-btn.si-button {
   opacity: 0.35;
   transition: opacity 0.12s;
+  min-width: 24px;
+  min-height: 24px;
 
   &:hover { opacity: 0.85; }
 }
@@ -249,6 +257,8 @@
 .git-push-panel .gp-card-name-row .gp-star-btn.si-button {
   opacity: 0.3;
   transition: opacity 0.12s, transform 0.12s;
+  min-width: 24px;
+  min-height: 24px;
 
   &:hover { opacity: 0.7; }
   &:active { transform: scale(0.9); }

@@ -67,8 +67,10 @@
   flex-shrink: 0;
 }
 
+// 搜索框限宽：不限宽时 flex:1 会把输入框拉到上千 px（整行留白又难看），
+// 计数紧跟搜索框（.we-toolbar-count 的 auto 外边距把刷新/收起顶到最右）
 .we-search {
-  flex: 1;
+  flex: 0 1 360px;
   min-width: 0;
 }
 
@@ -76,6 +78,7 @@
   @include gp-section-count-base;
 
   flex-shrink: 0;
+  margin-right: auto;
 }
 
 // 文件数超出上限提示
@@ -383,6 +386,17 @@
 // Markdown 预览：复用 .gp-md-content 排版，仅补内边距
 .we-preview-md {
   padding: $s-2 $s-3;
+}
+
+// Markdown 内联图片读不到时的占位（避免浏览器破图图标；文本为原始引用路径）
+.we-md-asset-missing {
+  display: inline-block;
+  padding: 0 $s-px6;
+  border: 1px dashed var(--b3-border-color);
+  border-radius: $r-sm;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  opacity: 0.65;
 }
 
 .we-preview-foot {

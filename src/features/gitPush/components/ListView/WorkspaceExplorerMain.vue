@@ -76,6 +76,8 @@
           :i18n="i18n"
           :project-path="projectPath"
           :file-path="selectedPath"
+          :reload-key="reloadKey"
+          @navigate="emit('navigate', $event)"
         />
       </SplitterPanel>
     </Splitter>
@@ -108,6 +110,8 @@ defineProps<{
   expandedDirs: ReadonlySet<string>
   /** 当前预览的文件相对路径 */
   selectedPath: string
+  /** 外部刷新序号（工具栏「刷新文件列表」后递增，触发预览重读磁盘） */
+  reloadKey: number
   /** 当前筛选词（仅用于文件名高亮） */
   query: string
   /** 变更文件映射（用于树行角标） */
@@ -118,6 +122,8 @@ const emit = defineEmits<{
   select: [path: string]
   toggleDir: [path: string]
   openChanges: [path: string]
+  /** Markdown 内点站内相对链接：切到该文件预览（由上层改 selectedPath） */
+  navigate: [path: string]
   refresh: []
 }>()
 </script>

@@ -178,6 +178,71 @@ export function resolveWorkspacePath(projectRoot: string, relPath: string): stri
 }
 
 /**
+ * 把 Markdown 里的**站内相对引用**解析为仓库相对路径（`/` 分隔）。
+ *
+ * 典型输入：`./assets/a.png`、`../docs/b.png`、`images/c.png?raw=1`、`d%20e.png`（URL 编码）。
+ * 绝对 URL / 协议相对 `//host/x` / `data:` / `#anchor` 一律返回 null（不属站内文件）。
+ *
+ * @param projectRoot 项目根绝对路径
+ * @param fromRelFile 引用所在的 Markdown 文件（相对仓库根）
+ * @returns 仓库相对路径；越界（解析后落在项目根外）或 Node 不可用时返回 null
+ */
+export function resolveWorkspaceRelative(
+  projectRoot: string,
+  fromRelFile: string,
+  ref: string,
+): string | null {
+  if (!ref || ref.startsWith("#") || ref.startsWith("//") || /^[a-z][a-z0-9+.-]*:/i.test(ref)) return null
+  const node = getNodeFsPathOs()
+  if (!node) return null
+  const { path } = node
+
+  // 去掉 query/hash 后解码（Markdown 里空格常写成 %20）
+  const raw = ref.split("#")[0].split("?")[0]
+  let decoded = raw
+  try {
+    decoded = decodeURIComponent(raw)
+  } catch {
+    // 非法转义序列：按原样处理
+  }
+  if (!decoded) return null
+
+  // 相对路径基准 = 该 Markdown 文件所在目录（根级文件基准为仓库根）
+  const dirPrefix = fromRelFile.includes("/") ? fromRelFile.slice(0, fromRelFile.lastIndexOf("/") + 1) : ""
+  const rootAbs = path.resolve(projectRoot)
+  const absPath = path.resolve(rootAbs, `${dirPrefix}${decoded}`.split("/").join(path.sep))
+  if (absPath !== rootAbs && !absPath.startsWith(rootAbs + path.sep)) return null
+  return path.relative(rootAbs, absPath).split(path.sep).join("/")
+}
+
+/**
+ * 读取工作区图片为 data URL（Markdown 内联图片用）。
+ *
+ * 必须走 data URL：打包后 CSP 是 `img-src 'self' data: blob:`，`file://` 会被拦；
+ * 而 `sanitizeHtml` 会剥掉 HTML 字符串里的 `data:` src，所以只能在渲染后从 DOM 侧注入。
+ *
+ * @returns data URL；非图片扩展名 / 超过上限 / 读失败返回 null
+ */
+export function readWorkspaceImageDataUrl(
+  projectRoot: string,
+  relPath: string,
+  limit = IMAGE_PREVIEW_LIMIT,
+): string | null {
+  const node = getNodeFsPathOs()
+  const absPath = resolveWorkspacePath(projectRoot, relPath)
+  if (!node || !absPath) return null
+  const mime = IMAGE_MIME[extname(relPath)]
+  if (!mime) return null
+  try {
+    if (node.fs.statSync(absPath).size > limit) return null
+    const buf = node.fs.readFileSync(absPath)
+    return `data:${mime};base64,${Buffer.from(buf).toString("base64")}`
+  } catch {
+    return null
+  }
+}
+
+/**
  * 只读预览工作区文件。
  * @param projectRoot 项目根绝对路径
  * @param relPath 相对仓库根的文件路径（/ 分隔，来自 git 输出）

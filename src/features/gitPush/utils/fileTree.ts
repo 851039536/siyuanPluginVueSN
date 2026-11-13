@@ -60,29 +60,32 @@ export interface FileTreeSectionRow {
 /** 拉平后的树行（分区行/目录行/文件行的判别联合） */
 export type FileTreeRow = FileTreeSectionRow | FileTreeDirRow | FileTreeFileRow
 
-/** 目录中间节点（构建期内部形状，不对外导出） */
-interface DirNode {
+/**
+ * 目录中间节点（构建期内部形状，不对外导出）。
+ * 文件项类型由调用方决定：变更树是 `FileChange`，工作区树是纯路径串 `string`。
+ */
+interface DirNode<T> {
   path: string
   name: string
   depth: number
   /** 子目录（key = 目录段名，同层唯一） */
-  dirs: Map<string, DirNode>
-  /** 直接挂在目录下的文件（保持插入顺序） */
-  files: FileChange[]
-  /** 子树内变更文件总数（构建后填充） */
+  dirs: Map<string, DirNode<T>>
+  /** 直接挂在目录下的文件项（保持插入顺序） */
+  files: T[]
+  /** 子树内文件总数（构建后填充） */
   count: number
 }
 
 /** 路径分隔符（git 输出统一为 /，含 Windows） */
 const SEP = "/"
 
-function makeDir(path: string, name: string, depth: number): DirNode {
+function makeDir<T>(path: string, name: string, depth: number): DirNode<T> {
   return { path, name, depth, dirs: new Map(), files: [], count: 0 }
 }
 
-/** 把单个变更文件按目录前缀插入目录树（顶层目录 depth = 0，逐层 +1） */
-function insertFile(root: DirNode, file: FileChange): void {
-  const segs = file.path.split(SEP)
+/** 把单个文件项按目录前缀插入目录树（顶层目录 depth = 0，逐层 +1） */
+function insertFile<T>(root: DirNode<T>, entry: T, pathOf: (entry: T) => string): void {
+  const segs = pathOf(entry).split(SEP)
   let dir = root
   for (let i = 0; i < segs.length - 1; i++) {
     const seg = segs[i]
@@ -94,11 +97,11 @@ function insertFile(root: DirNode, file: FileChange): void {
     }
     dir = next
   }
-  dir.files.push(file)
+  dir.files.push(entry)
 }
 
 /** 后序遍历填充各目录的子树文件总数 */
-function computeCounts(dir: DirNode): number {
+function computeCounts<T>(dir: DirNode<T>): number {
   let n = dir.files.length
   for (const child of dir.dirs.values()) n += computeCounts(child)
   dir.count = n
@@ -122,15 +125,18 @@ function basename(path: string): string {
  *
  * @param contentDepth 本目录直属文件所在深度（= 目录深度 + 1；链式压缩后取最外层目录的深度 + 1）
  * @param compact 是否把「只有单个子目录且自身无文件」的链条合并成一行（`src/features/gitPush`）
+ * @param toFileRow 文件项 → 文件行（变更树带 file 字段，工作区树不带，其余字段同形）
  */
-function emitRows(
-  dir: DirNode,
+function emitRows<T, F extends PathTreeFileRow>(
+  dir: DirNode<T>,
   collapsed: ReadonlySet<string>,
   depthOffset: number,
   fileKeyPrefix: string,
-  out: FileTreeRow[],
+  out: (FileTreeDirRow | F)[],
   contentDepth: number,
   compact: boolean,
+  pathOf: (entry: T) => string,
+  toFileRow: (entry: T, depth: number, key: string, path: string) => F,
 ): void {
   const children = [...dir.dirs.values()].sort((a, b) => a.name.localeCompare(b.name))
   for (const child of children) {
@@ -153,20 +159,34 @@ function emitRows(
       depth: contentDepth + depthOffset,
       count: node.count,
     })
-    if (!collapsed.has(node.path)) emitRows(node, collapsed, depthOffset, fileKeyPrefix, out, contentDepth + 1, compact)
+    if (!collapsed.has(node.path)) {
+      emitRows(node, collapsed, depthOffset, fileKeyPrefix, out, contentDepth + 1, compact, pathOf, toFileRow)
+    }
   }
-  for (const file of dir.files) {
-    out.push({
-      type: "file",
-      // 键带分区前缀：部分暂存文件同路径在两个分区各出现一次，v-for 键必须唯一
-      key: `${fileKeyPrefix}${file.path}`,
-      name: basename(file.path),
-      path: file.path,
-      depth: contentDepth + depthOffset,
-      count: 1,
-      file,
-    } satisfies FileTreeFileRow)
+  for (const entry of dir.files) {
+    const path = pathOf(entry)
+    // 键带分区前缀：部分暂存文件同路径在两个分区各出现一次，v-for 键必须唯一
+    out.push(toFileRow(entry, contentDepth + depthOffset, `${fileKeyPrefix}${path}`, path))
   }
+}
+
+/** 通用树构建：任意「带路径的文件项」→ 拉平行列表（变更树 / 工作区树共用） */
+function buildRows<T, F extends PathTreeFileRow>(
+  entries: readonly T[],
+  pathOf: (entry: T) => string,
+  collapsedDirs: ReadonlySet<string>,
+  depthOffset: number,
+  fileKeyPrefix: string,
+  compact: boolean,
+  toFileRow: (entry: T, depth: number, key: string, path: string) => F,
+): (FileTreeDirRow | F)[] {
+  // 根为虚拟层（depth -1）：顶层目录 = 0、根级直属文件 = 0，文件恒比父目录深一层
+  const root = makeDir<T>("", "", -1)
+  for (const entry of entries) insertFile(root, entry, pathOf)
+  computeCounts(root)
+  const rows: (FileTreeDirRow | F)[] = []
+  emitRows(root, collapsedDirs, depthOffset, fileKeyPrefix, rows, 0, compact, pathOf, toFileRow)
+  return rows
 }
 
 /**
@@ -184,13 +204,23 @@ export function buildFileTreeRows(
   fileKeyPrefix = "",
   compact = false,
 ): FileTreeRow[] {
-  // 根为虚拟层（depth -1）：顶层目录 = 0、根级直属文件 = 0，文件恒比父目录深一层
-  const root = makeDir("", "", -1)
-  for (const f of files) insertFile(root, f)
-  computeCounts(root)
-  const rows: FileTreeRow[] = []
-  emitRows(root, collapsedDirs, depthOffset, fileKeyPrefix, rows, 0, compact)
-  return rows
+  return buildRows<FileChange, FileTreeFileRow>(
+    files,
+    (file) => file.path,
+    collapsedDirs,
+    depthOffset,
+    fileKeyPrefix,
+    compact,
+    (file, depth, key, path) => ({
+      type: "file",
+      key,
+      name: basename(path),
+      path,
+      depth,
+      count: 1,
+      file,
+    }),
+  )
 }
 
 /**
@@ -272,10 +302,10 @@ export function collectDirectoryPaths(paths: readonly string[]): string[] {
   return [...dirs]
 }
 
-/** 按关键词过滤路径（大小写不敏感的子串匹配；空词原样返回） */
-export function filterPathsByQuery(paths: readonly string[], query: string): string[] {
+/** 按关键词过滤路径（大小写不敏感的子串匹配；空词原样返回同一引用，避免大仓库无谓复制） */
+export function filterPathsByQuery(paths: readonly string[], query: string): readonly string[] {
   const q = query.trim().toLowerCase()
-  if (!q) return [...paths]
+  if (!q) return paths
   return paths.filter((p) => p.toLowerCase().includes(q))
 }
 
@@ -296,16 +326,23 @@ export function buildPathTreeRows(
   depthOffset = 0,
 ): PathTreeRow[] {
   const collapsed = collectDirectoryPaths(paths).filter((dir) => !expandedDirs.has(dir))
-  const entries: FileChange[] = paths.map((path) => ({
-    path,
-    status: "modified",
-    staged: false,
-  }))
-  return buildFileTreeRows(entries, new Set(collapsed), depthOffset).map((row) => (
-    row.type === "file"
+  // 直接以路径串为树项（不再为每条路径造一个一次性 FileChange：2 万文件会白扔 2 万个对象）
+  return buildRows<string, PathTreeFileRow>(
+    paths,
+    (path) => path,
+    new Set(collapsed),
+    depthOffset,
+    "",
+    false,
+    (_path, depth, key, path) => ({
+      type: "file",
       // 文件键加类型前缀：已跟踪文件被目录替换时（git 仍列旧文件 `foo`，磁盘上 `foo/bar` 是未跟踪），
       // 目录行与文件行会同时出现在根层且路径同为 `foo`，不加前缀会导致 v-for 重复 key
-      ? { type: "file", key: `f:${row.key}`, name: row.name, path: row.path, depth: row.depth, count: 1 }
-      : { type: "dir", key: row.key, name: row.name, path: row.path, depth: row.depth, count: row.count }
-  ))
+      key: `f:${key}`,
+      name: basename(path),
+      path,
+      depth,
+      count: 1,
+    }),
+  )
 }

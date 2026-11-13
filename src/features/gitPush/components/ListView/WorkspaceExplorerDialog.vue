@@ -121,17 +121,9 @@
           >
             <div class="we-main">
               <WorkspaceExplorerMain
-                :i18n="i18n"
-                :project-path="projectPath"
-                :files="files"
-                :loading="loading"
-                :error="error"
-                :rows="rows"
-                :expanded-dirs="expandedDirs"
-                :selected-path="selectedPath"
-                :query="query"
-                :change-map="changeMap"
+                v-bind="mainProps"
                 @select="selectedPath = $event"
+                @navigate="selectedPath = $event"
                 @toggle-dir="toggleDir"
                 @open-changes="(path) => emit('openChanges', path)"
                 @refresh="refresh"
@@ -154,17 +146,9 @@
       <template v-else>
         <div class="we-main">
           <WorkspaceExplorerMain
-            :i18n="i18n"
-            :project-path="projectPath"
-            :files="files"
-            :loading="loading"
-            :error="error"
-            :rows="rows"
-            :expanded-dirs="expandedDirs"
-            :selected-path="selectedPath"
-            :query="query"
-            :change-map="changeMap"
+            v-bind="mainProps"
             @select="selectedPath = $event"
+            @navigate="selectedPath = $event"
             @toggle-dir="toggleDir"
             @open-changes="(path) => emit('openChanges', path)"
             @refresh="refresh"
@@ -186,7 +170,7 @@
 // 文件主区 / 树 / 预览 / 底部项目脚本面板均为纯展示子组件）
 import type { FileChange, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import {
   buildPathTreeRows,
   collectDirectoryPaths,
@@ -225,7 +209,7 @@ const i18n = props.i18n
 /** 当前设备有效路径（多设备适配；空串 = 本项目在本机不可用） */
 const projectPath = computed(() => resolveValidPath(props.project))
 
-const { files, loading, error, refresh } = useWorkspaceFiles(
+const { files, loading, error, refresh: refreshFiles } = useWorkspaceFiles(
   () => projectPath.value,
   (dir) => services.manager.getWorkspaceFiles(dir),
 )
@@ -236,28 +220,52 @@ const query = ref("")
 const expandedDirs = ref<ReadonlySet<string>>(new Set())
 /** 当前预览文件（相对仓库根；空串 = 未选中） */
 const selectedPath = ref("")
-/** 底部项目脚本面板是否展开（默认展开；用户可在面板头收起为一条栏） */
-const scriptsOpen = ref(true)
+/** 预览重读序号（刷新列表后递增：选中路径没变，磁盘内容也可能已变） */
+const reloadKey = ref(0)
 
-/** 截断后的文件集（超出上限只取前 N 条） */
+// ── 底部项目脚本面板展开态（默认收起：打开本弹窗的主意图是看文件；展开后本次会话记住）──
+const SCRIPTS_OPEN_KEY = "gitpush-workspace-explorer-scripts-open"
+function readScriptsOpen(): boolean {
+  try {
+    return sessionStorage.getItem(SCRIPTS_OPEN_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+const scriptsOpen = ref(readScriptsOpen())
+watch(scriptsOpen, (open) => {
+  try {
+    sessionStorage.setItem(SCRIPTS_OPEN_KEY, open ? "1" : "0")
+  } catch {
+    // 无存储能力（隐私模式）：仅本次打开生效，不影响功能
+  }
+})
+
+/** 刷新文件列表 + 让预览重读磁盘（用户点「刷新」时两者的语义应当一致） */
+async function refresh() {
+  await refreshFiles()
+  reloadKey.value++
+}
+
+/** 过滤后的全量路径（先过滤后截断：超出上限时筛选仍覆盖全库，而不是只搜前 N 个） */
+const filteredFiles = computed(() => filterPathsByQuery(files.value, query.value))
+
+/** 截断后的渲染集（超出上限只取前 N 条） */
 const shownFiles = computed(() => (
-  files.value.length > MAX_FILES ? files.value.slice(0, MAX_FILES) : files.value
+  filteredFiles.value.length > MAX_FILES ? filteredFiles.value.slice(0, MAX_FILES) : filteredFiles.value
 ))
 
 /** 超出上限提示（不超限时为 null） */
 const truncatedNotice = computed(() => (
-  files.value.length > MAX_FILES
+  filteredFiles.value.length > MAX_FILES
     ? i18n.workspaceFilesCapped.replace("{0}", String(MAX_FILES))
     : ""
 ))
 
-/** 计数文案：有筛选词时显示命中数，否则显示总数 */
-const countText = computed(() => {
-  const shown = query.value.trim()
-    ? filterPathsByQuery(shownFiles.value, query.value).length
-    : shownFiles.value.length
-  return i18n.workspaceFilesCount.replace("{0}", String(shown))
-})
+/** 计数文案：有筛选词时为命中数，否则为总数 */
+const countText = computed(() => (
+  i18n.workspaceFilesCount.replace("{0}", String(filteredFiles.value.length))
+))
 
 /** 变更映射（相对路径 → 变更条目；角标数据源） */
 const changeMap = computed(() => new Map(props.changes.map((f) => [f.path, f])))
@@ -268,12 +276,29 @@ const changeMap = computed(() => new Map(props.changes.map((f) => [f.path, f])))
  * - 无筛选词 → 按用户展开集，默认全部收起只渲染根层。
  */
 const rows = computed(() => {
-  const filtered = filterPathsByQuery(shownFiles.value, query.value)
   const expanded = query.value.trim()
-    ? new Set(collectDirectoryPaths(filtered))
+    ? new Set(collectDirectoryPaths(shownFiles.value))
     : expandedDirs.value
-  return buildPathTreeRows(filtered, expanded)
+  return buildPathTreeRows(shownFiles.value, expanded)
 })
+
+/**
+ * 主区 props：模板里两处渲染 `<WorkspaceExplorerMain>`（脚本面板展开 / 收起两条分支），
+ * 用同一份对象传入，避免 12 个属性重复两遍（改一个忘另一个）。
+ */
+const mainProps = computed(() => ({
+  i18n,
+  projectPath: projectPath.value,
+  files: files.value,
+  loading: loading.value,
+  error: error.value,
+  rows: rows.value,
+  expandedDirs: expandedDirs.value,
+  selectedPath: selectedPath.value,
+  reloadKey: reloadKey.value,
+  query: query.value,
+  changeMap: changeMap.value,
+}))
 
 /** 展开/收起目录（替换式更新保证 Set 变更可被响应式追踪） */
 function toggleDir(path: string) {

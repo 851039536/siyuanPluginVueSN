@@ -141,6 +141,20 @@ export async function openLocalPath(path: string): Promise<void> {
   await getElectronModules()?.shell?.openPath(path)
 }
 
+/**
+ * 在文件管理器中**定位并选中**该文件（资源管理器 / Finder 会高亮条目）。
+ *
+ * 与 `openLocalPath(所在目录)` 的区别是「打开目录」vs「选中文件」——
+ * 后者是用户点「在文件管理器中显示」时的预期语义。
+ * @returns 是否已接管；无 Electron shell 能力时返回 false，调用方应降级为打开所在目录
+ */
+export function revealLocalPath(path: string): boolean {
+  const shell = getElectronModules()?.shell
+  if (!shell || typeof shell.showItemInFolder !== "function") return false
+  shell.showItemInFolder(path)
+  return true
+}
+
 /** 在浏览器中打开远程仓库网页（Electron 用系统浏览器，降级 window.open） */
 export async function openRepoWebUrl(url: string): Promise<void> {
   await openExternalUrl(gitUrlToWebUrl(url))

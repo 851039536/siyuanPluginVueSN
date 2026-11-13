@@ -16,6 +16,7 @@ export {
   resolveValidPath,
   resolveValidPathFromPaths,
   resolveValidPathWithSource,
+  revealLocalPath,
   sortProjects,
 } from "./project"
 
@@ -172,7 +173,9 @@ export {
   classifyWorkspaceFile,
   IMAGE_PREVIEW_LIMIT,
   readWorkspaceFilePreview,
+  readWorkspaceImageDataUrl,
   resolveWorkspacePath,
+  resolveWorkspaceRelative,
   TEXT_PREVIEW_LIMIT,
   workspaceFileIcon,
 } from "./workspaceFile"

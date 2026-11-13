@@ -18,7 +18,9 @@ import {
   classifyWorkspaceFile,
   IMAGE_PREVIEW_LIMIT,
   readWorkspaceFilePreview,
+  readWorkspaceImageDataUrl,
   resolveWorkspacePath,
+  resolveWorkspaceRelative,
   TEXT_PREVIEW_LIMIT,
   workspaceFileIcon,
 } from "./workspaceFile"
@@ -139,5 +141,57 @@ describe("readWorkspaceFilePreview（真实临时目录）", () => {
   it("绝对路径被拒绝（不得用仓库外路径预览）", () => {
     expect(resolveWorkspacePath(root, "/etc/passwd")).toBeNull()
     expect(readWorkspaceFilePreview(root, "/etc/passwd").kind).toBe("error")
+  })
+})
+
+describe("resolveWorkspaceRelative（Markdown 站内相对引用）", () => {
+  const root = join(tmpdir(), "gp-root")
+
+  it("相对路径以该 Markdown 所在目录为基准", () => {
+    expect(resolveWorkspaceRelative(root, "docs/README.md", "./assets/a.png")).toBe("docs/assets/a.png")
+    expect(resolveWorkspaceRelative(root, "docs/README.md", "a.png")).toBe("docs/a.png")
+    expect(resolveWorkspaceRelative(root, "docs/README.md", "../logo.png")).toBe("logo.png")
+    // 根级 Markdown 的基准是仓库根
+    expect(resolveWorkspaceRelative(root, "README.md", "./a.png")).toBe("a.png")
+  })
+
+  it("URL 编码与 query/hash 会被剥离", () => {
+    expect(resolveWorkspaceRelative(root, "docs/README.md", "images/b%20c.png")).toBe("docs/images/b c.png")
+    expect(resolveWorkspaceRelative(root, "docs/README.md", "a.png?raw=1#frag")).toBe("docs/a.png")
+  })
+
+  it("站外引用（绝对 URL / 协议相对 / data: / 锚点）一律不当作站内文件", () => {
+    for (const ref of ["https://x.com/a.png", "//cdn/a.png", "data:image/png;base64,AA", "#h2", "mailto:a@b.c"]) {
+      expect(resolveWorkspaceRelative(root, "docs/README.md", ref)).toBeNull()
+    }
+  })
+
+  it("越界引用被拒绝", () => {
+    expect(resolveWorkspaceRelative(root, "docs/README.md", "../../../etc/passwd")).toBeNull()
+  })
+})
+
+describe("readWorkspaceImageDataUrl（Markdown 内联图片）", () => {
+  let root = ""
+
+  beforeAll(() => {
+    root = mkdtempSync(join(tmpdir(), "gp-md-asset-"))
+    writeFileSync(join(root, "image.png"), Buffer.from([0x89, 0x50, 0x4e, 0x47]))
+    writeFileSync(join(root, "note.md"), "# hi")
+    writeFileSync(join(root, "big.png"), Buffer.alloc(IMAGE_PREVIEW_LIMIT + 1))
+  })
+
+  afterAll(() => {
+    if (root) rmSync(root, { recursive: true, force: true })
+  })
+
+  it("图片读成 data URL", () => {
+    expect(readWorkspaceImageDataUrl(root, "image.png")?.startsWith("data:image/png;base64,")).toBe(true)
+  })
+
+  it("非图片 / 不存在 / 超限一律返回 null（调用方降级为占位）", () => {
+    expect(readWorkspaceImageDataUrl(root, "note.md")).toBeNull()
+    expect(readWorkspaceImageDataUrl(root, "missing.png")).toBeNull()
+    expect(readWorkspaceImageDataUrl(root, "big.png")).toBeNull()
   })
 })

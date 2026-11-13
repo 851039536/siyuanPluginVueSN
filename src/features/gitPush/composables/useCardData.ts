@@ -35,8 +35,15 @@ import { scanMarkdownFiles } from "./useMarkdownFiles"
 /** Tag→commit 映射拉取上限（防异常大仓库失控） */
 const TAG_COMMIT_MAP_LIMIT = 500
 
-/** 卡片态缓存上限（按项目数计；超出后淘汰最久未访问的条目） */
-const CARD_STATE_LIMIT = 32
+/**
+ * 卡片态缓存上限（按项目数计；超出后淘汰最久未访问的条目）。
+ *
+ * ⚠️ 这个上限必须大于「一屏挂载的卡片数」：详细模式下**每张卡挂载都会建一条 state**
+ * （哪怕用户从没点开过），旧值 32 在 60+ 个项目的列表里，第 33 张卡挂载时就把前 32 张
+ * 真正加载过详情（log/branches/stash/tags）的条目全淘汰了 —— 表现为「切回收藏，
+ * 每张卡又把 git 内容拉了一遍」。淘汰策略见 acquireState：空壳优先出局。
+ */
+const CARD_STATE_LIMIT = 64
 
 /** 卡片自持数据 + 一次性查询标志（单个项目的全部可变状态） */
 interface CardDataState {
@@ -138,12 +145,39 @@ function acquireState(project: () => GitProject): CardDataState {
   }
   const state = createState(project)
   cardStates.set(key, state)
-  while (cardStates.size > CARD_STATE_LIMIT) {
-    const oldest = cardStates.keys().next().value
-    if (oldest === undefined) break
-    cardStates.delete(oldest)
-  }
+  pruneStates(key)
   return state
+}
+
+/**
+ * 按上限淘汰，**空壳优先**。
+ *
+ * 详细模式下每张卡挂载即建一条 state，所以「插入序淘汰」会先把真正加载过详情的老条目挤掉，
+ * 缓存命中率反而更低（切一次视图，原来的 log/branches/stash/tags 全部作废）。
+ * 这里先清 `detailsLoaded === false` 的空壳，只有在全部条目都加载过详情时才按插入序淘汰。
+ *
+ * @param keepKey 本次正在使用的条目，永不淘汰（否则刚建就被删，且后续写入全部丢失）
+ */
+function pruneStates(keepKey: string): void {
+  while (cardStates.size > CARD_STATE_LIMIT) {
+    let victim: string | undefined
+    for (const [k, v] of cardStates) {
+      if (k !== keepKey && !v.detailsLoaded) {
+        victim = k
+        break
+      }
+    }
+    if (victim === undefined) {
+      for (const k of cardStates.keys()) {
+        if (k !== keepKey) {
+          victim = k
+          break
+        }
+      }
+    }
+    if (victim === undefined) break
+    cardStates.delete(victim)
+  }
 }
 
 export function useCardData(project: () => GitProject) {

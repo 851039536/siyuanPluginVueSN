@@ -343,17 +343,25 @@ const logCountMore = computed(() => {
 })
 
 /**
- * 卡片进入「可见详情」时刷新一次工作区，并在确有变更时落到「变更」页签。
- * 触发点：手风琴展开、详细模式挂载（卡片重挂载常带 LRU 旧快照，原地停留不会自动重查）。
- * 刷新期间用户已手动切页签则不抢；刷新失败保持原页签。
- * 两个边界：
- *   · 进入刷新用 10s 最小间隔——详细模式下所有卡片都会挂载，避免切分类时 N 个项目各查一轮；
- *   · 自动跳页签只在手风琴展开时做——详细模式卡片常开，跳页签会覆盖用户记住的 LOG / TAG 选择。
+ * 卡片「用户主动展开」时的刷新节流（ms）。
+ *
+ * 挂载**不再**刷新：详细模式下所有卡片都会挂载，切一次视图 = N 张卡各跑 2~3 个 git 进程
+ * （v2 status + pushStatus），60 个项目≈150+ 进程，正是「切回收藏 / 有变更还在加载全部仓库」的主因。
+ * 新鲜度由探测层兜底（GitDirWatcher 监听 .git + 2s 预筛轮询），卡片重挂载不该承担「重查仓库」的职责；
+ * 用户真的进入某张卡（展开 / 点卡片 / 切回工作区 Tab）时仍会刷新，只是把最小间隔从 10s 提到 30s。
  */
-function syncWorkingTreeOnEnter() {
+const CARD_ENTER_REFRESH_MIN_INTERVAL_MS = 30_000
+
+/**
+ * 卡片进入「可见详情」时刷新一次工作区，并在确有变更时落到「变更」页签。
+ * 触发点：手风琴**展开**（用户主动进入），不再包含挂载。
+ * 刷新期间用户已手动切页签则不抢；刷新失败保持原页签。
+ * 自动跳页签只在手风琴展开时做——详细模式卡片常开，跳页签会覆盖用户记住的 LOG / TAG 选择。
+ */
+function refreshWorkingTreeOnEnter() {
   if (!isExpanded.value) return
   const tabBeforeRefresh = stashTagTab.value
-  void ops.refreshProjectStatus(props.project.id, { minIntervalMs: 10_000 })
+  void ops.refreshProjectStatus(props.project.id, { minIntervalMs: CARD_ENTER_REFRESH_MIN_INTERVAL_MS })
     .then(() => {
       if (!isAccordion.value || stashTagTab.value !== tabBeforeRefresh) return
       if (changesCount.value > 0) stashTagTab.value = "worktree"
@@ -365,7 +373,7 @@ function syncWorkingTreeOnEnter() {
 const rootEl = ref<HTMLElement | null>(null)
 
 watch(isExpanded, (expanded) => {
-  if (expanded) syncWorkingTreeOnEnter()
+  if (expanded) refreshWorkingTreeOnEnter()
 })
 
 /**
@@ -383,8 +391,13 @@ watch(isExpanded, (expanded) => {
   })
 })
 
-// 详细模式恒为展开态，watch 不会触发；挂载时补一次（手风琴下仅已展开的那张卡会走到这里）
-onMounted(syncWorkingTreeOnEnter)
+/**
+ * 挂载只做「有数据可渲染」：命中调度器缓存时 0 个 git 进程，缺数据才查一次（ensure 语义）。
+ * 详细模式恒为展开态，watch 不会触发，故这里补一次 ensure —— 但**绝不**升级为 refresh。
+ */
+onMounted(() => {
+  if (isExpanded.value) void ops.ensureProjectStatus(props.project.id)
+})
 
 /** 项目已配置的远程名列表（Tag 推送远程选择用） */
 const remoteNames = computed(() => getProjectRemoteNames(props.project).map((r) => r.name))

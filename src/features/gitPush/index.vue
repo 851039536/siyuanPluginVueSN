@@ -620,7 +620,7 @@ const { compareBaseBranch, loadCompareBaseBranch, setCompareBaseBranch } = useCo
 /**
  * 「需拉取」视图的专用补载。
  *
- * 与 ensureStatsDataLoaded 的差异：behind 的比较基准是 `refs/remotes/*`，
+ * 与 ensureSmartViewData 的差异：behind 的比较基准是 `refs/remotes/*`，
  * **只有 fetch 才会更新**（checkPushStatus 是纯本地比对，见 RemoteOps 注释）。
  * 因此仅加载本地状态不够：远程有新提交但本地从未 fetch 时，behind 恒为 0，视图会永远空。
  *
@@ -679,8 +679,24 @@ const NEEDS_PULL_FETCH_TIMEOUT_MS = 20000
  */
 const NEEDS_PULL_RENDER_BUDGET_MS = 800
 
-/** 预算定时器（统一走 TimerRegistry，随组件卸载清理；不占用 useBatchProgress 的全局批次锁） */
-const needsPullTimers = new TimerRegistry()
+/**
+ * 智能视图补载的令牌与卸载标记。
+ *
+ * `smartViewLoadToken`：每进入一次视图（或暂停恢复补载）递增。池内每个项目发起前比对令牌，
+ * 代数不符即跳过剩余项目 —— 用户切走视图后不再继续 spawn git，也不必给每个调用方传取消函数。
+ * `smartViewAborted`：面板卸载后彻底停手（在飞的几条自然结束，结果仍然有效）。
+ */
+let smartViewLoadToken = 0
+let smartViewAborted = false
+
+/**
+ * 智能视图首屏渲染预算（ms）。
+ *
+ * 与「需拉取」同一个取舍：命中判定需要全量状态，但全量在无缓存时是 N×2 个 git 进程，
+ * 等完成才渲染会让切视图像卡死；完全不等又会「先空态、后突然冒卡片」。
+ * 预算内完成的先渲染，其余在后台增量补（Vue 自然增量渲染）。
+ */
+const SMART_VIEW_RENDER_BUDGET_MS = 800
 
 /**
  * 进入「需拉取」视图：先按本地缓存渲染，再**后台**发起一轮远程检查。
@@ -696,59 +712,77 @@ const needsPullTimers = new TimerRegistry()
  */
 async function ensureNeedsPullData(): Promise<void> {
   if (gitOpsPaused.value) return
-  await ensureStatsDataLoadedWithinBudget(NEEDS_PULL_RENDER_BUDGET_MS)
+  // 只补 pushStatus 一个域：本视图判据只看 ahead/behind，workingTree 与它无关
+  //（`checkPushStatus` 是纯本地比对 refs/remotes，不联网，用户之前 fetch 过就立刻有值）。
+  await ensureSmartViewData(projects.value, {
+    budgetMs: NEEDS_PULL_RENDER_BUDGET_MS,
+    statusOnly: true,
+  })
   // 后台补一轮远程检查：不进 await 链，失败不影响渲染
   if (!needsPullCheckedThisSession) void startNeedsPullRemoteCheck()
 }
 
 /**
- * 带渲染预算的 ensureStatsDataLoaded：最多等 `budgetMs`，超时后剩余项目转后台。
+ * 智能视图补载池（需推送 / 需拉取 / 有变更 / 收藏 / 归档共用）。
  *
- * 存在理由：智能视图的命中判定需要全量状态，但「全量」在无缓存时是 N×2 个 git 进程
- * （Windows/EDR 下单进程 0.25~1s）。等完成才渲染会让切视图像卡死；
- * 不等又会出现「先空态后突然冒出卡片」的闪烁。折中是给一个短预算：
- * 预算内完成的先渲染，其余后台补齐（完成后 Vue 自然增量渲染）。
+ * 目标：切视图只做「一次、非阻塞、可中断」的补齐，**绝不重复扫全量**。
  *
- * ⚠️ 刻意**不用** runProjectLoadBatch：它经 useBatchProgress 的 runChain 串行，
- * 超时后这批仍占着全局锁，会把后续「切分类 / 首屏加载」的批次一起堵死
- * （曾导致切到「需拉取」面板卡死）。这里用独立并发池，与批次编排互不影响。
+ * 三条硬约束（都来自事故，勿回退）：
+ *   1. **不进 `useBatchProgress.runBatch`**。它的 `runChain` 是跨批次全局串行锁：
+ *      一批 N 个项目的加载没跑完，随后「切视图 / 切分类 / 首屏」的批次全部排在它后面，
+ *      表现就是「从『有变更』切回『收藏』，还在转圈加载所有仓库」——本函数存在的首要原因。
+ *   2. **缓存优先**。缺哪个域才补哪个（`scheduler.has`）；两域齐备的项目一个进程都不发，
+ *      全缓存命中时整趟 0 个 git 进程。
+ *   3. **可中断**。进入即递增 `smartViewLoadToken`，切走（或暂停 / 卸载）后剩余项目不再发起。
  *
- * ⚠️ 只查 `pushStatus` 一个域：视图判据只需要 ahead/behind，**不需要** workingTree。
- * `loadPushStatus` → `checkPushStatus` 是**纯本地**比对 refs/remotes（不联网），
- * 所以这一步在用户之前 fetch 过的仓库上能立刻给出 behind。
+ * 等待策略：只 await 一个渲染预算（默认 800ms），超时即返回，其余在后台继续，
+ * 完成后由 Vue 增量渲染。既不「等全量才渲染」，也不「完全不等」。
+ *
+ * @param opts.statusOnly 只补 pushStatus（需推送 / 需拉取的判据只需 ahead/behind）
  */
-async function ensureStatsDataLoadedWithinBudget(budgetMs: number): Promise<void> {
-  const list = projects.value
+async function ensureSmartViewData(
+  list: GitProject[],
+  opts?: { budgetMs?: number, statusOnly?: boolean },
+): Promise<void> {
+  if (gitOpsPaused.value || smartViewAborted) return
   if (list.length === 0) return
+
+  const budgetMs = opts?.budgetMs ?? SMART_VIEW_RENDER_BUDGET_MS
+  // 先取令牌：本次进入即刻作废上一轮（切走前的视图）的剩余项目
+  const token = ++smartViewLoadToken
+  /** 本轮是否已失效（被更新的视图切换 / 暂停 / 卸载取代） */
+  const isStale = (): boolean => token !== smartViewLoadToken || gitOpsPaused.value || smartViewAborted
+
+  // 进入加载即视为「已展示」：探测层随后按增量判定，不再做无谓的全量首查
   markProjectsDisplayed(list.map((p) => p.id))
-  // 已缓存 pushStatus 的项目无需等待（已有值即可参与过滤）；workingTree 与本视图无关。
-  // 注：`has()` 只表示「曾成功加载过」。项目路径/远程被编辑时，`handleEditSaved` 会调
-  // `scheduler.clearProject(id)` 清掉该条记录，故陈旧缓存不会卡住这里；
-  // 即便偶有陈旧，后台 fetch 也会在数秒内覆盖为最新值。
-  const pending = list.filter((p) => !scheduler.has(p.id, "pushStatus"))
+
+  // 统计页正在后台全量加载：最多等一个预算窗口（它的结果会直接进缓存），
+  // 剩下的交给调度器单飞 —— 同 (项目, 域) 在飞时这里不会重复起 git 进程。
+  // 绝不整段 await：那会把切换视图变成分钟级等待。
+  if (statsLoadFull) {
+    await raceWithBudget(statsLoadFull, budgetMs)
+    if (isStale()) return
+  }
+
+  // 缓存优先：`has()` 只表示「曾成功加载过」。项目路径 / 远程被编辑时
+  // `handleEditSaved` 会调 `scheduler.clearProject(id)` 清记录，故陈旧缓存不会卡住这里。
+  const pending = list.filter((p) => opts?.statusOnly
+    ? !scheduler.has(p.id, "pushStatus")
+    : !(scheduler.has(p.id, "pushStatus") && scheduler.has(p.id, "workingTree")))
   if (pending.length === 0) return
+
   const concurrency = Math.max(1, props.manager.getGitConcurrency())
   const work = poolProcess(pending, concurrency, async (p) => {
-    // 预算到期后这批仍在后台跑：暂停/卸载时必须停手，避免继续 spawn 本地 git
-    if (gitOpsPaused.value || needsPullAborted) return
+    // 预算到期后这批仍在后台跑：切视图 / 暂停 / 卸载时立即停手
+    if (isStale()) return
     try {
-      await scheduler.loadPushStatus(p.id)
+      if (opts?.statusOnly) await scheduler.loadPushStatus(p.id)
+      else await ensureProjectStatus(p.id, true)
     } catch {
-      // 单项目失败静默：不阻断其余项目，也不影响渲染
+      // 单项目失败静默：不阻断其余项目，也不影响渲染（失败详情由卡片 / 统计入口呈现）
     }
   })
-  let budgetTimer: TimerHandle | null = null
-  try {
-    await Promise.race([
-      work,
-      new Promise<void>((resolve) => {
-        budgetTimer = needsPullTimers.setTimeout(resolve, budgetMs)
-      }),
-    ])
-  } finally {
-    // work 先完成时必须清掉预算定时器，否则每次进入都会留下一个未触发的句柄
-    if (budgetTimer !== null) needsPullTimers.clear(budgetTimer)
-  }
+  await raceWithBudget(work, budgetMs)
 }
 
 /**
@@ -1236,11 +1270,13 @@ onUnmounted(() => {
   panelVisibilityObserver = null
   // 后台远程检查：置中断标记，剩余项目不再发网络请求
   needsPullAborted = true
-  // 预算定时器随卸载清理（避免卸载后回调仍触发）
-  needsPullTimers.clearAll()
-  // 统计页后台状态加载：置中断标记并清理预算定时器（在飞 git 调用自然结束，剩余不再发起）
-  statsLoadAborted = true
+  // 智能视图补载：置中断标记，池内剩余项目不再 spawn 本地 git（在飞的几条自然结束）
+  smartViewAborted = true
+  smartViewLoadToken++
+  // 渲染预算定时器随卸载清理（避免卸载后回调仍触发；统计页与智能视图共用）
   statsLoadTimers.clearAll()
+  // 统计页后台状态加载：置中断标记（在飞 git 调用自然结束，剩余不再发起）
+  statsLoadAborted = true
   // 探测持有 fs.watch 句柄与定时器，必须随组件卸载释放（否则多窗口/反复开关面板会累积泄漏）
   gitProbe.destroy()
 })
@@ -1281,9 +1317,14 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
 }
 
 /**
- * 补齐给定项目集的状态最小数据集（pushStatus + workingTree），列表视图与统计/智能视图共用。
- * commitLog/branches/stash 不在这两类视图中展示，无需加载。
+ * 补齐给定项目集的状态最小数据集（pushStatus + workingTree），用于**用户主动选择分类**的路径。
+ * commitLog/branches/stash 不在列表视图中展示，无需加载。
  * 分支名由调度器解析一次并缓存分发给两个查询；在途与已加载均由调度器去重。
+ *
+ * ⚠️ 只给「点分类 TAB」这类**显式、一次性、用户盯着进度**的场景用。
+ * 智能视图（收藏 / 归档 / 需推送 / 有变更 / 需拉取）一律走 `ensureSmartViewData`：
+ * 本函数经 `runProjectLoadBatch` → `useBatchProgress.runChain` 全局串行，
+ * 一批长任务会把后续视图切换的补载堵在队列里，且切走不会停手。
  *
  * @param fastWhenClean 兼容保留（当前 no-op）。原「干净工作区快速路径」已移除：
  *   实测探测 + 全量 ≈ 2× 单次全量（瓶颈是每次 git 调用的进程启动费 ~310ms，而非文件扫描量），
@@ -1303,6 +1344,8 @@ async function ensureStatusFor(list: GitProject[], fastWhenClean = false) {
 async function loadCurrentCategoryList() {
   const catId = activeCategory.value
   if (!catId) return
+  // 分类切换是显式动作：先作废智能视图补载池的剩余项目，避免两套全量池并行扫同一批仓库
+  smartViewLoadToken++
   const list = projects.value.filter((p) => p.categoryId === catId)
   await ensureStatusFor(list)
 }
@@ -1313,13 +1356,6 @@ watch(activeCategory, async (catId) => {
   if (currentView.value !== "list") return
   await loadCurrentCategoryList()
 })
-
-/** 补齐所有项目的统计最小数据集（智能视图共用；统计页走 ensureStatsDataLoadedBudgeted）。
- * 若统计页已在后台加载，先复用同一轮，避免两套批次重复遍历。 */
-async function ensureStatsDataLoaded() {
-  if (statsLoadFull) await statsLoadFull
-  await ensureStatusFor(projects.value, true)
-}
 
 /**
  * 统计页首屏渲染预算（ms）。
@@ -1336,7 +1372,7 @@ const statsLoadProgress = ref({ done: 0, total: 0 })
 let statsLoadFull: Promise<void> | null = null
 /** 卸载标记：卸载后剩余项目不再发起 git 查询（已完成结果仍有效） */
 let statsLoadAborted = false
-/** 统计页预算定时器（与「需拉取」预算独立；随组件卸载清理） */
+/** 渲染预算定时器（统计页全量加载与智能视图补载共用；随组件卸载统一清理） */
 const statsLoadTimers = new TimerRegistry()
 
 /** 统计视图全量刷新中（工具条刷新按钮转圈禁用） */
@@ -1358,6 +1394,22 @@ function createBudgetWaiter(ms: number): { promise: Promise<void>, cancel: () =>
         handle = null
       }
     },
+  }
+}
+
+/**
+ * 预算竞速：最多等 `ms`，超时即返回；被等的任务**继续在后台跑**（不取消）。
+ *
+ * 统计页与智能视图补载共用：两者都是「预算内先渲染、其余后台增量补」，
+ * 差别只在超时后调用的后续动作，不需要两套等待实现。
+ */
+async function raceWithBudget(task: Promise<unknown>, ms: number): Promise<void> {
+  const waiter = createBudgetWaiter(ms)
+  try {
+    await Promise.race([task, waiter.promise])
+  } finally {
+    // task 先完成时必须清掉预算定时器，否则每次进入都会留下一个未触发的句柄
+    waiter.cancel()
   }
 }
 
@@ -1505,9 +1557,9 @@ async function refreshStatsData() {
 /** 切换视图时按目标视图补齐数据：列表→当前分类状态；统计→不自动加载（由用户点击）；分析→复用缓存或首次自动分析；行数统计→复用缓存（无缓存需手动分析）；报告→自动生成一次 */
 watch(currentView, async (view) => {
   if (view === "list") {
-    // 收藏 / 归档视图按项目属性取状态；其余视图仍走「当前分类最小集」
+    // 收藏 / 归档视图按项目属性取状态（与智能视图同一条补载路径：预算 + 可中断，不占全局批次锁）
     const list = viewModeStatusProjects(viewMode.value)
-    if (list) await ensureStatusFor(list)
+    if (list) await ensureSmartViewData(list)
     else await loadCurrentCategoryList()
   }
   // 项目状态采用手动加载模式：进入只展示会话内已有数据或未加载空态，
@@ -1533,26 +1585,36 @@ function viewModeStatusProjects(mode: ViewMode): GitProject[] | null {
 }
 
 /**
- * 切换到智能视图（需推送 / 需拉取 / 有变更 / 收藏 / 归档）时，补齐命中判定所需的全量状态数据。
+ * 切换到智能视图（需推送 / 需拉取 / 有变更 / 收藏 / 归档）时，补齐命中判定所需的状态数据。
  *
  * ⚠️ `needsPull` 必须在此列：它的命中判据是 `pushStatuses[id].remotes[*].behind > 0`，
  * 而 behind 只有跑过 loadStatus/checkPushStatus 才有值。历史实现漏了 needsPull，
  * 导致「刚进面板就直接点需拉取」时 pushStatuses 为空 → 列表空白。
  *
- * ⚠️ 性能：`ensureNeedsPullData` 只 await「本地状态已就绪」；远程检查在后台进行，
- * 不阻塞视图切换（早期版本在 await 链里跑全量 fetch，直接卡死面板）。
+ * ⚠️ 性能（本轮修复的核心）：一律走 `ensureSmartViewData`，**不再用 `ensureStatusFor`**。
+ * 后者经 `useBatchProgress.runChain` 全局串行，一批跑满 N 个项目期间，
+ * 切到任何其他视图的补载都会排在它后面，表现为「切回收藏又在加载全部仓库」；
+ * 而且它不感知切走，用户离开后仍会把整批跑完。现在：缓存优先（全命中 0 进程）、
+ * 预算内先渲染、进入即令上一轮停手、远程检查照旧在后台。
  */
 watch(viewMode, async (mode) => {
+  // 「全部」视图不需要补载（分类由 activeCategory 单独驱动），但要先作废上一轮补载池的剩余项目：
+  // 切走即停手，不能让「有变更」那一批在用户已经离开后继续扫全量。
+  if (mode === "all") {
+    smartViewLoadToken++
+    return
+  }
   if (mode === "needsPull") {
     await ensureNeedsPullData()
     return
   }
+  // 需推送 / 有变更 的命中判据依赖全量状态，但已有缓存的项目不会重跑（见 ensureSmartViewData）
   if (mode === "needsPush" || mode === "uncommitted") {
-    await ensureStatsDataLoaded()
+    await ensureSmartViewData(projects.value)
     return
   }
   const list = viewModeStatusProjects(mode)
-  if (list) await ensureStatusFor(list)
+  if (list) await ensureSmartViewData(list)
 })
 
 /** 解除暂停时按当前上下文补载数据（暂停期间跳过的加载在恢复后立即补齐） */
@@ -1578,15 +1640,15 @@ watch(gitOpsPaused, async (paused) => {
     await ensureNeedsPullData()
     return
   }
-  // 其他智能视图需要全量状态数据
+  // 其他智能视图需要全量状态数据（缓存优先，已在缓存里的项目不会重跑）
   if (viewMode.value === "needsPush" || viewMode.value === "uncommitted") {
-    await ensureStatsDataLoaded()
+    await ensureSmartViewData(projects.value)
     return
   }
   // 收藏 / 归档视图按其项目集补状态
   const smartList = viewModeStatusProjects(viewMode.value)
   if (smartList) {
-    await ensureStatusFor(smartList)
+    await ensureSmartViewData(smartList)
     return
   }
   // 列表视图只补当前分类下未缓存的项目（与首屏最小集一致）

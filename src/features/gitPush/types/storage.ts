@@ -322,6 +322,14 @@ export interface FileChange {
   unstaged?: boolean
 }
 
+/**
+ * 批量丢弃目标：只携带丢弃判定所需的三要素。
+ *
+ * 刻意不直接复用 `FileChange`：丢弃逻辑不关心 oldPath / unstaged 等展示字段，
+ * 收窄入参能防止上层把「UI 展示用的推断值」当成 git 的真实状态传下来。
+ */
+export type DiscardTarget = Pick<FileChange, "path" | "status" | "staged">
+
 /** 工作区状态汇总 */
 export interface WorkingTreeInfo {
   /** 当前分支 */

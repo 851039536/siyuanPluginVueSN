@@ -166,6 +166,24 @@
   }
 }
 
+// 选择模式的已选计数（占据原「暂存全部 / 取消暂存全部」的位置）
+.wt-selection-count {
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  color: var(--b3-theme-primary);
+  white-space: nowrap;
+}
+
+// 选择模式：整行点击 = 切换勾选（不打开审阅流），故不再有「点任意处看差异」的悬停暗示
+.wt-file-row.selection-mode {
+  // 已选行：主色淡底 + 左边条，与 diff-active 同构；选择模式下不渲染 diff-active，不会互相顶掉
+  &.selected {
+    background: var(--b3-theme-primary-lightest);
+    border-left: 2px solid var(--b3-theme-primary);
+    padding-left: $s-1;
+  }
+}
+
 // Diff 弹窗样式已随组件拆分迁至 WorkingTreeDiffDialog.scss
 
 .wt-commit-form {

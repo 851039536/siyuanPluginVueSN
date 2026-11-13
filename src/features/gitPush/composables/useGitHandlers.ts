@@ -3,6 +3,7 @@ import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { GitProject, ProjectQueryKind } from "../types"
+import type { DiscardTarget } from "../types/storage"
 import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
 
@@ -16,6 +17,8 @@ export function useGitHandlers(deps: {
   tf: (key: string, ...args: (string | number)[]) => string
   // ── useGitPush 领域操作 ──
   discardFile: (id: string, file: string, staged: boolean, status: string) => Promise<void>
+  /** 批量丢弃（全部 / 选中）：一次写锁 + 分组命令 */
+  discardFiles: (id: string, files: DiscardTarget[]) => Promise<void>
   doCommit: (id: string, message: string) => Promise<string>
   generateCommitMsg: (id: string) => Promise<{ message: string, source: string }>
   /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
@@ -37,7 +40,7 @@ export function useGitHandlers(deps: {
 }) {
   const {
     projects, showConfirm, safeGitOp, tf,
-    discardFile, doCommit, generateCommitMsg, deepGenerateCommitMsg,
+    discardFile, discardFiles, doCommit, generateCommitMsg, deepGenerateCommitMsg,
     doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
     createTagOp, deleteTagOp, pushTagOp,
     abortMergeOp, resolveConflictOp,
@@ -102,6 +105,51 @@ export function useGitHandlers(deps: {
       await loadWorkingTree(id)
     } catch (e: unknown) {
       reportFailure(id, tf("discardOpFailed", label, getErrorMessage(e)))
+    } finally {
+      releaseFlag(gitOpLoading.value, id)
+    }
+  }
+
+  /**
+   * 批量丢弃入口（「全部丢弃」与「丢弃所选」共用）。
+   *
+   * 三件事必须做对，否则一次误操作就是不可逆事故：
+   *   1. **冲突文件先剔除**：`git checkout` 对 unmerged 路径直接报错，会让整组失败；
+   *      剔除同时写进确认文案，避免用户以为它们也被丢了。
+   *   2. **未跟踪 / 新增文件单独点明**：这类文件是**从磁盘删除**，没有 git 历史可恢复，
+   *      必须比「还原改动」更醒目（文案里给数量）。
+   *   3. **确认按钮文案用「丢弃更改」**：默认「确定」对破坏性操作太轻。
+   */
+  function handleDiscardMany(id: string, files: DiscardTarget[]) {
+    if (files.length === 0) return
+    const targets = files.filter((f) => f.status !== "unmerged")
+    const skipped = files.length - targets.length
+    if (targets.length === 0) {
+      showMessage(tf("discardAllConflictOnly"), 4000, "error")
+      return
+    }
+    // 与 WorktreeOps.discardFiles 的 clean 分组保持一致：这些路径会被 clean -f 从磁盘删除
+    // ⚠️ 状态是 FileChangeStatus 枚举值（"added"），不是 porcelain 的 'A' 字母
+    const removable = targets.filter((f) =>
+      f.status === "untracked" || f.status === "renamed" || (f.staged && f.status === "added"),
+    ).length
+    const body = removable > 0
+      ? tf("discardManyConfirmUntracked", targets.length, removable)
+      : tf("discardManyConfirmBody", targets.length)
+    const message = skipped > 0 ? `${body} ${tf("discardConflictSkipped", skipped)}` : body
+    showConfirm(tf("confirmActionTitle"), message, () => {
+      void doDiscardMany(id, targets)
+    }, tf("discardChanges"))
+  }
+
+  async function doDiscardMany(id: string, files: DiscardTarget[]) {
+    commitOutputs.value[id] = ""
+    acquireFlag(gitOpLoading.value, id)
+    try {
+      await discardFiles(id, files)
+      await loadWorkingTree(id)
+    } catch (e: unknown) {
+      reportFailure(id, tf("discardManyOpFailed", files.length, getErrorMessage(e)))
     } finally {
       releaseFlag(gitOpLoading.value, id)
     }
@@ -262,6 +310,7 @@ export function useGitHandlers(deps: {
     tagPushLoading,
     handleGitOp,
     handleDiscard,
+    handleDiscardMany,
     handleGenStashDesc,
     handleStashConfirmMsg,
     handleStashPop,

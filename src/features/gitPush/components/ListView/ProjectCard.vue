@@ -108,6 +108,7 @@
           @load-diff="loadDiff"
           @clear-output="ops.clearOutput(project.id)"
           @discard-file="(file: string, staged: boolean, status: string) => ops.handleDiscard(project.id, file, staged, status)"
+          @discard-many="(files: DiscardTarget[]) => ops.handleDiscardMany(project.id, files)"
           @refresh-working-tree="ops.handleRefreshWorkingTree(project.id)"
           @auto-refresh-working-tree="ops.handleRefreshWorkingTree(project.id, { force: false })"
           @save-commit-templates="handleSaveCommitTemplates"
@@ -219,6 +220,7 @@ import type {
   CommitFixTarget,
   CommitLogEntry,
   CommitTemplate,
+  DiscardTarget,
   GitProject,
 } from "../../types"
 import type { CardTabId } from "../../types/cardTab"

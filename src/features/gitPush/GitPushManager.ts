@@ -24,6 +24,7 @@ import type {
   CommitStat,
   CommitTemplate,
   ConflictFile,
+  DiscardTarget,
   GitProject,
   GitRemoteInfo,
   ProjectCategory,
@@ -1057,6 +1058,14 @@ export class GitPushManager {
 
   async discardFile(projectPath: string, file: string, staged: boolean, status: string): Promise<void> {
     return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.discardFile(projectPath, file, staged, status))
+  }
+
+  /**
+   * 批量丢弃（全部 / 选中）：整批共用一次写锁，内部按操作分组成最多三条 git 命令。
+   * 与 `discardFile` 同语义，只是把「每文件 1~2 个进程」摊平成「整批 3 个进程」。
+   */
+  async discardFiles(projectPath: string, files: DiscardTarget[]): Promise<void> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.discardFiles(projectPath, files))
   }
 
   async commit(projectPath: string, message: string): Promise<string> {

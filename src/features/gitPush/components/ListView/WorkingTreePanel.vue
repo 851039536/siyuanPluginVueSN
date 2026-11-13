@@ -28,39 +28,95 @@
           {{ i18n.pendingChanges }}
         </span>
         <span class="wt-summary-actions">
-          <!-- 无可暂存内容时隐藏按钮，避免 disabled 常驻占位 -->
-          <Button
-            v-if="hasUnstaged"
-            variant="ghost"
-            size="xsmall"
-            dense
-            :disabled="gitOpLoading"
-            @click.stop="$emit('stageAll')"
-          >
-            {{ i18n.stageAll }}
-          </Button>
-          <Button
-            v-if="hasStaged"
-            variant="ghost"
-            text
-            size="xsmall"
-            dense
-            :disabled="gitOpLoading"
-            @click.stop="$emit('unstageAll')"
-          >
-            {{ i18n.unstageAll }}
-          </Button>
-          <!-- 目录树视图已并入审阅流侧栏，此处不再单独提供入口 -->
-          <!-- 单独刷新工作区 -->
-          <Button
-            variant="ghost"
-            size="xsmall"
-            dense
-            icon="refresh"
-            :loading="refreshingWorkingTree"
-            :title="i18n.refreshWorkingTree"
-            @click.stop="$emit('refreshWorkingTree')"
-          />
+          <!-- 选择模式：摘要条只保留批量动作，避免与单项暂存/丢弃混排造成误点 -->
+          <template v-if="selectionMode">
+            <span class="wt-selection-count">{{ i18n.discardSelectedCount.replace("{0}", String(selectedCount)) }}</span>
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
+              icon="checkboxMultipleOutline"
+              :title="allFilesSelected ? i18n.discardClearSelection : i18n.selectAll"
+              :aria-label="allFilesSelected ? i18n.discardClearSelection : i18n.selectAll"
+              @click.stop="toggleSelectAll"
+            />
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
+              severity="danger"
+              :disabled="selectedCount === 0 || gitOpLoading"
+              @click.stop="discardSelected"
+            >
+              {{ i18n.discardSelected }}
+            </Button>
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
+              icon="close"
+              :title="i18n.cancel"
+              :aria-label="i18n.cancel"
+              @click.stop="exitSelection"
+            />
+          </template>
+          <template v-else>
+            <!-- 无可暂存内容时隐藏按钮，避免 disabled 常驻占位 -->
+            <Button
+              v-if="hasUnstaged"
+              variant="ghost"
+              size="xsmall"
+              dense
+              :disabled="gitOpLoading"
+              @click.stop="$emit('stageAll')"
+            >
+              {{ i18n.stageAll }}
+            </Button>
+            <Button
+              v-if="hasStaged"
+              variant="ghost"
+              text
+              size="xsmall"
+              dense
+              :disabled="gitOpLoading"
+              @click.stop="$emit('unstageAll')"
+            >
+              {{ i18n.unstageAll }}
+            </Button>
+            <!-- 选择性丢弃：进入多选模式后按勾选批量丢弃 -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
+              icon="checkboxMultipleOutline"
+              :title="i18n.discardSelectMode"
+              :aria-label="i18n.discardSelectMode"
+              :disabled="gitOpLoading"
+              @click.stop="enterSelection"
+            />
+            <!-- 全部丢弃：图标与行内丢弃一致（危险色），未跟踪/新增文件会被从磁盘删除，确认弹窗会点明数量 -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
+              severity="danger"
+              icon="undoVariant"
+              :title="i18n.discardAll"
+              :aria-label="i18n.discardAll"
+              :disabled="gitOpLoading"
+              @click.stop="discardAll"
+            />
+            <!-- 单独刷新工作区 -->
+            <Button
+              variant="ghost"
+              size="xsmall"
+              dense
+              icon="refresh"
+              :loading="refreshingWorkingTree"
+              :title="i18n.refreshWorkingTree"
+              @click.stop="$emit('refreshWorkingTree')"
+            />
+          </template>
         </span>
       </template>
     </div>
@@ -80,22 +136,34 @@
           :class="{
             'staged': file.staged,
             'partially-staged': file.staged && file.unstaged,
-            'diff-active': activeDiffFile?.path === file.path,
+            'diff-active': !selectionMode && activeDiffFile?.path === file.path,
+            'selection-mode': selectionMode,
+            'selected': selectionMode && selectedPaths.has(file.path),
           }"
           role="button"
           tabindex="0"
-          :aria-pressed="activeDiffFile?.path === file.path"
-          :title="`${i18n.clickViewDiff} — ${file.path}`"
-          @click="toggleDiff(file)"
-          @keydown.enter.prevent="toggleDiff(file)"
-          @keydown.space.prevent="toggleDiff(file)"
+          :aria-pressed="selectionMode ? selectedPaths.has(file.path) : activeDiffFile?.path === file.path"
+          :title="selectionMode ? i18n.selectFile : `${i18n.clickViewDiff} — ${file.path}`"
+          @click="selectionMode ? toggleSelect(file) : toggleDiff(file)"
+          @keydown.enter.prevent="selectionMode ? toggleSelect(file) : toggleDiff(file)"
+          @keydown.space.prevent="selectionMode ? toggleSelect(file) : toggleDiff(file)"
         >
           <!-- 勾选框（共享 Checkbox 提供原生复选语义与 aria-checked；外层包一层拦截冒泡，避免触发整行查看差异） -->
           <span
             class="wt-checkbox"
             @click.stop
           >
+            <!-- 选择模式下同一位置换成「批量丢弃选择框」，不并存两套勾选框（避免误把暂存当选择） -->
             <Checkbox
+              v-if="selectionMode"
+              :model-value="selectedPaths.has(file.path)"
+              size="xsmall"
+              :aria-label="i18n.selectFile"
+              :title="i18n.selectFile"
+              @update:model-value="(value: boolean | any[]) => setSelected(file.path, value === true)"
+            />
+            <Checkbox
+              v-else
               :model-value="file.staged"
               size="xsmall"
               :disabled="gitOpLoading"
@@ -132,8 +200,9 @@
             :title="i18n.stagedAndUnstagedTip"
           ></span>
 
-          <!-- 丢弃更改（危险语义 ⇒ severity=danger 的红色文字） -->
+          <!-- 丢弃更改（危险语义 ⇒ severity=danger 的红色文字）；选择模式下由摘要条的「丢弃所选」统一处理 -->
           <Button
+            v-if="!selectionMode"
             class="wt-discard-btn"
             variant="ghost"
             size="xsmall"
@@ -299,6 +368,7 @@
 <script setup lang="ts">
 import type {
   CommitType,
+  DiscardTarget,
   FileChange,
   WorkingTreeInfo,
 } from "../../types"
@@ -390,6 +460,8 @@ const emit = defineEmits<{
   loadDiff: [file: string, staged: boolean, opts?: { force?: boolean, status?: string, context?: number }]
   clearOutput: []
   discardFile: [file: string, staged: boolean, status: string]
+  /** 批量丢弃（摘要条的「全部丢弃」/「丢弃所选」）：确认与冲突过滤由父层 handler 完成 */
+  discardMany: [files: DiscardTarget[]]
   /** 手动刷新工作区（顶部刷新按钮，force 语义：必须重查，不复用在飞结果） */
   refreshWorkingTree: []
   /** 自动刷新工作区（pointerdown 触发，可复用调度器在飞单飞结果） */
@@ -528,6 +600,92 @@ function toggleStage(file: FileChange) {
     emit("stageFile", file.path)
   }
 }
+
+// ── 选择性丢弃（多选模式）──
+//
+// 为什么用「模式」而不是常驻复选框：行内勾选框已经被「暂存/取消暂存」占用，
+// 再并一个勾选框会让用户分不清哪颗是暂存、哪颗是选择（一次误点就是不可逆的丢弃）。
+// 模式内勾选框**替换**暂存勾选框，语义唯一。
+/** 是否处于多选丢弃模式 */
+const selectionMode = ref(false)
+/** 已选路径（只在选择模式下生效；浏览态一律忽略，避免残留选择影响下次进入） */
+const selectedPaths = ref<Set<string>>(new Set())
+
+/** 选中项 → 丢弃目标（沿用 sortedFiles 顺序，与确认文案里的数量口径一致） */
+const selectedDiscardTargets = computed<DiscardTarget[]>(() =>
+  sortedFiles.value
+    .filter((file) => selectedPaths.value.has(file.path))
+    .map((file) => ({ path: file.path, status: file.status, staged: file.staged })),
+)
+const selectedCount = computed(() => selectedDiscardTargets.value.length)
+const allFilesSelected = computed(() =>
+  sortedFiles.value.length > 0 && selectedCount.value === sortedFiles.value.length,
+)
+
+/** 进入选择模式：清空上轮残留，避免「上次选过」变成一次意外的批量丢弃 */
+function enterSelection() {
+  // 审阅流弹窗盖在列表上，且选择模式下行点击不再打开差异 —— 先关掉，避免两套交互叠在一起
+  activeDiffFile.value = null
+  selectionMode.value = true
+  selectedPaths.value = new Set()
+}
+
+/** 退出选择模式（丢弃完成或用户取消） */
+function exitSelection() {
+  selectionMode.value = false
+  selectedPaths.value = new Set()
+}
+
+/** 设置单个文件的选择态（由 Checkbox 的 update 事件驱动，避免取反式切换出现双翻转） */
+function setSelected(path: string, selected: boolean) {
+  const next = new Set(selectedPaths.value)
+  if (selected) next.add(path)
+  else next.delete(path)
+  selectedPaths.value = next
+}
+
+/** 整行点击 = 切换选择（选择模式下不再打开审阅流） */
+function toggleSelect(file: FileChange) {
+  setSelected(file.path, !selectedPaths.value.has(file.path))
+}
+
+/** 全选 / 清空（按已选数量判断，语义随按钮标题切换） */
+function toggleSelectAll() {
+  selectedPaths.value = allFilesSelected.value
+    ? new Set()
+    : new Set(sortedFiles.value.map((file) => file.path))
+}
+
+/** 丢弃所选：确认与冲突过滤在父层 handler 完成；成功后由 tree 刷新裁剪选择集 */
+function discardSelected() {
+  const files = selectedDiscardTargets.value
+  if (files.length === 0) return
+  emit("discardMany", files)
+}
+
+/** 全部丢弃：目标取**完整** sortedFiles（不是分页后的 pagedFiles，否则只丢前 200 个） */
+function discardAll() {
+  const files = sortedFiles.value.map((file) => ({
+    path: file.path,
+    status: file.status,
+    staged: file.staged,
+  }))
+  if (files.length === 0) return
+  emit("discardMany", files)
+}
+
+/**
+ * 工作区刷新后裁剪选择集：
+ *   · 已消失的路径（丢弃成功 / 被提交）从选择里去掉；
+ *   · 列表清空则自动退出选择模式，避免停在一个没有任何目标的空模式里。
+ */
+watch(sortedFiles, (files) => {
+  if (!selectionMode.value) return
+  const alive = new Set(files.map((file) => file.path))
+  const next = new Set([...selectedPaths.value].filter((path) => alive.has(path)))
+  if (next.size !== selectedPaths.value.size) selectedPaths.value = next
+  if (files.length === 0) exitSelection()
+})
 
 /**
  * 打开审阅流并定位到该文件。

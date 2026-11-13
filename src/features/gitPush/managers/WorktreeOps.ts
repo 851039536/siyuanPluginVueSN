@@ -3,6 +3,7 @@ import type {
   BranchInfo,
   CommitLogEntry,
   CommitStat,
+  DiscardTarget,
   FileChange,
   StashEntry,
   WorkingTreeInfo,
@@ -285,6 +286,67 @@ export class WorktreeOps {
       await this.executor.execGit(projectPath, ["clean", "-f", "--", file])
     } else {
       await this.executor.execGit(projectPath, ["checkout", "--", file])
+    }
+  }
+
+  /**
+   * 批量丢弃（一次写锁、最多三条 git 命令，与文件数无关）。
+   *
+   * 单个 `discardFile` 每个文件要 1~2 个进程（还需 `ls-tree` 判 HEAD），
+   * 一次丢弃几十上百个文件就是几十秒的进程创建 —— 批量必须按操作分组，一次覆盖全部路径。
+   *
+   * 分组判据直接取 `FileChangeStatus`（**不是** porcelain 的 A/M/D 字母），**不再逐文件 `ls-tree`**：
+   *   · `staged`                    ⇒ 先 `reset HEAD --`（一次覆盖）
+   *   · `added`（已暂存的新增）      ⇒ reset 后成未跟踪 ⇒ 只能 `clean -f` 删文件
+   *   · `untracked`                 ⇒ 直接 `clean -f`
+   *   · `renamed`                   ⇒ 同新增处理（reset 后新路径成未跟踪；旧路径的删除由后续丢弃/还原收尾，
+   *                                    与单文件实现的 `isFileInHead=false → clean` 行为一致）
+   *   · 其余                        ⇒ `checkout --` 从 HEAD 还原工作区
+   *
+   * ⚠️ 顺序不能换：`checkout --` 从 **index** 取内容还原工作区，必须先 reset 再 checkout，
+   *    否则「已暂存的改动」会被原样写回工作区，看起来像没丢成功。
+   * ⚠️ `checkout --` 只要有一条路径不在 HEAD 就整条失败，这就是必须按状态拆成三组的原因。
+   *
+   * 失败语义：分组命令任一失败即向上抛（由调用方提示）。此处刻意不做「逐文件容错重试」——
+   * 那会把一次批量退化成 N 次进程，与批量丢弃的初衷相悖。
+   */
+  async discardFiles(projectPath: string, files: DiscardTarget[]): Promise<void> {
+    if (files.length === 0) return
+    // 冲突文件（unmerged）任何一条 checkout 都会整组失败（git: "path is unmerged"），
+    // 且「丢弃」对冲突没有正确语义（应走解决冲突流程）⇒ 一键前置于任何写操作，绝不半途而废。
+    const unmerged = files.filter((f) => f.status === "unmerged")
+    if (unmerged.length > 0) {
+      throw new Error(`存在 ${unmerged.length} 个未解决的冲突文件，请先解决冲突后再丢弃`)
+    }
+    // ⚠️ 判据是 `FileChangeStatus` 的枚举值（"added"），不是 porcelain 的 'A' 字母。
+    //    写成 startsWith("A") 会把新增文件误分到 checkout 组，整批以
+    //    `pathspec ... did not match any file(s)` 失败（本模块有真实仓库用例守着）。
+    const isAdded = (status: string): boolean => status === "added"
+    /** 需要 reset 的（全部已暂存路径） */
+    const resetPaths: string[] = []
+    /** reset 后需要从工作区删除的（新增 / 重命名 / 未跟踪） */
+    const cleanPaths: string[] = []
+    /** 需要从 HEAD 还原到工作区的 */
+    const checkoutPaths: string[] = []
+
+    for (const file of files) {
+      if (file.staged) resetPaths.push(file.path)
+      if (file.status === "untracked" || file.status === "renamed" || (file.staged && isAdded(file.status))) {
+        cleanPaths.push(file.path)
+      } else {
+        checkoutPaths.push(file.path)
+      }
+    }
+
+    if (resetPaths.length > 0) {
+      await this.executor.execGit(projectPath, ["reset", "HEAD", "--", ...resetPaths])
+    }
+    if (checkoutPaths.length > 0) {
+      await this.executor.execGit(projectPath, ["checkout", "--", ...checkoutPaths])
+    }
+    if (cleanPaths.length > 0) {
+      // -d：目录型新增（整目录未跟踪）也能一并清掉；不带它时 git 会跳过这些路径而不报错
+      await this.executor.execGit(projectPath, ["clean", "-f", "-d", "--", ...cleanPaths])
     }
   }
 

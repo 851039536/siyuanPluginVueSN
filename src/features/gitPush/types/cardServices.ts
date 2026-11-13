@@ -6,6 +6,7 @@ import type { ProjectQueryScheduler } from "./queryScheduler"
 import type {
   CommitTemplate,
   CustomIde,
+  DiscardTarget,
   GitProject,
   IdeEntry,
   ProjectCategory,
@@ -100,6 +101,8 @@ export interface CardOps {
   /** 关闭推送/拉取结果面板（清除该操作的输出记录；运行中不生效） */
   clearRemoteOutput: (id: string, action: "push" | "pull") => void
   handleDiscard: (id: string, file: string, staged: boolean, status: string) => void
+  /** 批量丢弃（全部 / 选中）：一次写锁 + 分组命令，确认与冲突过滤在 handler 内完成 */
+  handleDiscardMany: (id: string, files: DiscardTarget[]) => void
   handleStashConfirmMsg: (id: string, msg: string) => void
   handleGenStashDesc: (id: string) => void
   handleStashPop: (id: string, index: number) => void

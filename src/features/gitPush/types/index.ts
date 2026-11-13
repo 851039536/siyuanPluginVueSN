@@ -13,6 +13,7 @@ export type {
   CommitType,
   ConflictFile,
   CustomIde,
+  DiscardTarget,
   FileChange,
   FileChangeStatus,
   GitOpAction,

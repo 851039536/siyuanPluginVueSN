@@ -1,6 +1,7 @@
 // Git 底层操作封装（加载/提交/暂存/分支切换；远程推送/拉取已提取到 useRemoteProgress，查询调度已下沉 useProjectQueryScheduler）
 import type { Ref } from "vue"
 import type {
+  DiscardTarget,
   GitProject,
   GitPushManager,
   LoadStatusOptions,
@@ -129,6 +130,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
   async function discardFile(id: string, file: string, staged: boolean, status: string) {
     const project = requireProject(projects, id)
     await manager.discardFile(resolveValidPath(project), file, staged, status)
+  }
+
+  /** 批量丢弃（全部 / 选中）：一次写锁 + 分组命令，与文件数无关 */
+  async function discardFiles(id: string, files: DiscardTarget[]) {
+    if (files.length === 0) return
+    const project = requireProject(projects, id)
+    await manager.discardFiles(resolveValidPath(project), files)
   }
 
   async function doCommit(id: string, message: string): Promise<string> {
@@ -266,6 +274,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     unstageItem,
     unstageAllItems,
     discardFile,
+    discardFiles,
     doCommit,
     generateCommitMsg,
     deepGenerateCommitMsg,

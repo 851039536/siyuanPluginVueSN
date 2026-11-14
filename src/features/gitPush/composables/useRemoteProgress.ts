@@ -306,6 +306,11 @@ export function useRemoteProgress(
     return remoteOpAll("push", pushProgress, pushOutputs, manager.pushToAll.bind(manager), id, pullProgress)
   }
 
+  /** 推送前预检（只读网络探测，不写进度、不占写锁；调用方据结果决定是否先拉取） */
+  function preflightPush(id: string, opts?: { timeoutMs?: number }) {
+    return manager.preflightPush(id, opts)
+  }
+
   function forcePushToAll(id: string) {
     return remoteOpAll("push", pushProgress, pushOutputs, manager.forcePushToAll.bind(manager), id, pullProgress)
   }
@@ -362,6 +367,7 @@ export function useRemoteProgress(
     isPulling,
     pullOutputs,
     pushToAll,
+    preflightPush,
     forcePushToAll,
     pushSingle,
     pullSingle,

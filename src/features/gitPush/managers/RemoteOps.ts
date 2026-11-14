@@ -37,6 +37,31 @@ export type AllPlatformResult = {
   allSkipped: boolean
 } & Record<PlatformKey, RemoteOpResult>
 
+/** 单个远程的推送前预检结论 */
+export interface PushPreflightRemote {
+  key: PlatformKey
+  remoteName: string
+  /** 远程 head 与本地跟踪引用不一致：其他客户端可能已推过新提交 */
+  moved: boolean
+  /** 无法判定（网络失败 / 本地无跟踪引用），调用方应降级直推而非阻塞 */
+  unknown: boolean
+  message?: string
+}
+
+/** 推送前预检结果 */
+export interface PushPreflightResult {
+  /** 至少一个远程有更新，需要用户先决策；false 时调用方可直接推送 */
+  needsDecision: boolean
+  remotes: PushPreflightRemote[]
+}
+
+/** ls-remote 单行输出（`<sha>\t<ref>`）→ sha；空输出表示远程没有该分支 */
+function parseLsRemoteSha(raw: string): string {
+  const line = raw.split("\n").map((l) => l.trim()).find(Boolean)
+  if (!line) return ""
+  return line.split(/\s+/)[0] || ""
+}
+
 export class RemoteOps {
   private executor: GitExecutor
   private store: ProjectStore
@@ -552,6 +577,85 @@ export class RemoteOps {
 
     if (pathWarning && errors.length > 0) { errors.unshift(pathWarning) }
     return { fetched, errors }
+  }
+
+  /**
+   * 推送前预检：只读探测每个已配置远程的 head，判断是否已被其他客户端推过。
+   *
+   * 为什么需要：`checkPushStatus` 只比对**本地**跟踪 ref（`for-each-ref refs/remotes`），
+   * 它反映的是上次 fetch 时的快照。远程在此期间被推进时本地无从得知，直接推送只能
+   * 吃 non-fast-forward 报错。这里用一次 `ls-remote`（不写 refs、不拉对象）把窗口补上。
+   *
+   * 判定口径：
+   * - 远程无该分支（首次推送）→ moved=false，不存在被拒风险；
+   * - 本地无跟踪引用（从未 fetch）→ unknown=true，交给 git 自行裁决，不阻塞；
+   * - 两侧 sha 不同 → moved=true（可能只是落后，也可能被 force-push 改写），需用户决策；
+   * - 命令失败/超时 → unknown=true，同样不阻塞（预检不能变成「网络差就推不出去」）。
+   */
+  async preflightPush(id: string, opts?: { timeoutMs?: number }): Promise<PushPreflightResult> {
+    const project = await this.store.getProjectById(id)
+    if (!project) return { needsDecision: false, remotes: [] }
+
+    const cwd = resolveValidPathWithSource(project).path
+    const branch = await this.executor.getCurrentBranch(cwd).catch(() => "")
+    // detached HEAD / 空仓库：没有可比对的分支，交给推送本身报错
+    if (!branch) return { needsDecision: false, remotes: [] }
+
+    // 5s：正常网络一次 ls-remote 约 0.3~1s；超过这个窗口视为无法判定并降级直推，
+    // 不能让预检把「网络慢」变成「推不出去」
+    const timeoutMs = opts?.timeoutMs ?? 5000
+    const remotes = getProjectRemoteNames(project)
+    const results = await Promise.all(
+      remotes.map(async ({ key, name }): Promise<PushPreflightRemote> => {
+        try {
+          const raw = await this.executor.execGit(
+            cwd,
+            ["ls-remote", "--heads", name, `refs/heads/${branch}`],
+            undefined,
+            timeoutMs,
+          )
+          const remoteSha = parseLsRemoteSha(raw)
+          if (!remoteSha) return { key, remoteName: name, moved: false, unknown: false }
+
+          const localSha = await this.readRemoteTrackingSha(cwd, name, branch)
+          if (!localSha) {
+            return {
+              key,
+              remoteName: name,
+              moved: false,
+              unknown: true,
+              message: "本地无该分支的远程跟踪引用",
+            }
+          }
+          return { key, remoteName: name, moved: localSha !== remoteSha, unknown: false }
+        } catch (e: unknown) {
+          return {
+            key,
+            remoteName: name,
+            moved: false,
+            unknown: true,
+            message: getErrorMessage(e) || String(e),
+          }
+        }
+      }),
+    )
+
+    return { needsDecision: results.some((r) => r.moved), remotes: results }
+  }
+
+  /** 读取本地远程跟踪引用的 sha（不存在时返回空串，供预检判定「无法比较」） */
+  private async readRemoteTrackingSha(cwd: string, remoteName: string, branch: string): Promise<string> {
+    try {
+      const sha = await this.executor.execGit(cwd, [
+        "rev-parse",
+        "--verify",
+        "--quiet",
+        `refs/remotes/${remoteName}/${branch}`,
+      ])
+      return sha.trim()
+    } catch {
+      return ""
+    }
   }
 
   /**

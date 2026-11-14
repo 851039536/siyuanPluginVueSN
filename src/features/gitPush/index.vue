@@ -386,6 +386,7 @@ const {
   addProject,
   removeProject,
   pushToAll,
+  preflightPush,
   forcePushToAll,
   pushSingle,
   pullSingle,
@@ -1683,6 +1684,47 @@ function onViewProject(projectId: string) {
   searchQuery.value = project.name
 }
 
+/** 预检去重：连点「推送全部」不叠加多次 ls-remote（预检只读，但没必要重复发网络请求） */
+const preflightInFlight = new Set<string>()
+
+/**
+ * 推送全部（带预检）：先只读探测远程 head，发现远程已被其他客户端推过时改为「先拉取再推送」，
+ * 避免直接推送吃 non-fast-forward。预检自身失败（网络/超时）不阻塞，按原路径直接推送。
+ */
+async function handlePushToAll(id: string): Promise<Record<string, any>> {
+  if (!findProject(projects, id)) return {}
+  if (preflightInFlight.has(id)) return {}
+  preflightInFlight.add(id)
+  try {
+    const pre = await preflightPush(id)
+    if (pre.needsDecision) {
+      const moved = pre.remotes.filter((r) => r.moved)
+      showConfirm(
+        tf("preflightTitle"),
+        tf("preflightBody", moved.map((r) => r.remoteName).join(" / ")),
+        () => { void pullThenPush(id, moved) },
+        tf("preflightPullFirst"),
+      )
+      // 等待用户决策，本次不推送
+      return {}
+    }
+  } catch {
+    // 预检异常一律降级：探测失败不能变成「推不出去」
+  } finally {
+    preflightInFlight.delete(id)
+  }
+  return pushToAll(id)
+}
+
+/** 预检命中后的收尾：逐个拉取仍有更新的远程，全部成功后再推送（失败即停，详情在拉取输出面板） */
+async function pullThenPush(id: string, targets: { key: PlatformKey, remoteName: string }[]) {
+  for (const t of targets) {
+    const result = await pullSingle(id, t.key)
+    if (!result.ok) return
+  }
+  await pushToAll(id)
+}
+
 /** 强制推送二次确认：--force-with-lease 覆盖远程历史，需明确同意 */
 function handleForcePushToAll(id: string) {
   showConfirm(
@@ -1877,7 +1919,7 @@ provide(CARD_SERVICES_KEY, {
     handleAbortMerge,
     confirmPullSingle,
     pushSingle,
-    pushToAll,
+    pushToAll: handlePushToAll,
     handleForcePushToAll,
     cancelPush,
     clearRemoteOutput,

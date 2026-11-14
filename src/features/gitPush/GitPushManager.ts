@@ -5,7 +5,7 @@ import type {
   LineStatsStore,
   ProjectStatsRecord,
 } from "./managers/LineStatsStore"
-import type { AllPlatformResult, RemoteOpResult } from "./managers/RemoteOps"
+import type { AllPlatformResult, PushPreflightResult, RemoteOpResult } from "./managers/RemoteOps"
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
 import type { NumstatCommit } from "./reportMetrics"
 import type {
@@ -963,6 +963,11 @@ export class GitPushManager {
   async setPushBranchMode(mode: "all" | "head"): Promise<void> { return this.remoteOps.setPushBranchMode(mode) }
 
   async pushToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.pushToAll(id) }
+
+  /** 推送前预检（只读 ls-remote，不占写锁；失败/超时由调用方降级直推） */
+  async preflightPush(id: string, opts?: { timeoutMs?: number }): Promise<PushPreflightResult> {
+    return this.remoteOps.preflightPush(id, opts)
+  }
 
   async forcePushToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.forcePushToAll(id) }
 

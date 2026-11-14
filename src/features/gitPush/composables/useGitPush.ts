@@ -76,6 +76,7 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     generateCommitMsg: gitOps.generateCommitMsg,
     deepGenerateCommitMsg: gitOps.deepGenerateCommitMsg,
     pushToAll: gitOps.pushToAll,
+    preflightPush: gitOps.preflightPush,
     forcePushToAll: gitOps.forcePushToAll,
     pushSingle: gitOps.pushSingle,
     pullSingle: gitOps.pullSingle,

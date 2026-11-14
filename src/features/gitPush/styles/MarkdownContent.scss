@@ -1,0 +1,198 @@
+@use "@/variables.scss" as *;
+
+// 由 styles/index.scss 统一 @use：Markdown 预览弹窗与工作区文件浏览器共用同一套排版。
+// （各组件各自 @use 会被重复展开，见 index.scss 顶部的重复打包说明。）
+
+// ── 渲染的 Markdown 内容（GitHub 风格排版 — 经过多年优化的可读性设计） ──
+// 样式全局生效（无 scoped），普通后代选择器直接匹配 v-html 注入的子元素
+// 注意：非 scoped 样式禁用 :deep()——它不会被 Vue 编译器转换，产出的选择器浏览器无法识别
+// 排版内部间距采用 em 相对单位（随阅读字号缩放），不适用 px 间距 Token
+// 参考：GitHub Markdown CSS — 文字密度、留白、对比度、节奏感
+.gp-md-content {
+  max-width: 720px; // 阅读行宽上限（约 80 字符），超宽降低可读性
+  margin: 0 auto;
+  // 与思源侧栏 420px 宽度协调的阅读字号（阅读区正文，允许 sm）
+  font-size: $t-sm;
+  line-height: $lh-relaxed; // 阅读区正文行高
+  color: var(--b3-theme-on-background);
+  word-wrap: break-word;
+  // 确保文本可选（覆盖继承自 button 的 user-select:none）
+  user-select: text;
+  -webkit-user-select: text;
+
+  // ── 渲染失败提示 ──
+  .gp-md-render-error {
+    color: var(--b3-theme-error);
+  }
+
+  // ── 标题（层级分明，不过度放大） ──
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 1.4em;
+    margin-bottom: 0.7em;
+    font-weight: $fw-bold;
+    line-height: $lh-tight; // 标题行高收紧
+    color: var(--b3-theme-on-background);
+  }
+  h1 {
+    font-size: 1.7em;
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid var(--b3-border-color);
+  }
+  h2 {
+    font-size: 1.4em;
+    padding-bottom: 0.2em;
+    border-bottom: 1px solid var(--b3-border-color);
+  }
+  h3 { font-size: 1.18em; }
+  h4 { font-size: 1em; }
+  h5 { font-size: 0.9em; }
+  h6 { font-size: 0.85em; color: var(--b3-theme-on-surface); }
+
+  // ── 段落 + 文字强调（GitHub: margin-top 1em, 不设置 margin-bottom，由下个元素 margin-top 决定间距） ──
+  p {
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+  strong { font-weight: $fw-bold; color: var(--b3-theme-on-background); }
+  em { font-style: italic; }
+  del { text-decoration: line-through; }
+
+  // ── 链接（GitHub: #0969da 蓝色 + hover underline） ──
+  a {
+    color: var(--b3-theme-primary);
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+
+  // ── 列表（GitHub: padding-left 2em, 紧凑列表 margin 0, 嵌套列表 margin-top 4px） ──
+  ul, ol {
+    padding-left: 2em;
+    margin-top: 0;
+    margin-bottom: 1em;
+  }
+  ul { list-style-type: disc; }
+  ol { list-style-type: decimal; }
+  li {
+    margin-top: 0.25em;
+    padding-left: 0;
+  }
+  // 嵌套列表紧凑化
+  li > ul, li > ol {
+    margin-top: 0.25em;
+    margin-bottom: 0;
+  }
+  // 列表内段落消除间距
+  li > p { margin-top: 1em; }
+
+  // ── 行内代码 ──
+  :not(pre) > code {
+    font-family: $ff-mono;
+    font-size: 0.88em;
+    background: color-mix(in srgb, var(--b3-theme-on-surface) 8%, transparent);
+    border-radius: $r-sm;
+    padding: 0.12em 0.35em;
+    margin: 0;
+    word-wrap: break-word;
+    color: var(--b3-theme-on-background);
+  }
+
+  // ── 代码块 ──
+  pre {
+    font-family: $ff-mono;
+    font-size: 0.85em;
+    line-height: $lh-normal;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-md;
+    padding: 0.85em 1em;
+    overflow: auto;
+    margin-top: 0;
+    margin-bottom: 1em;
+    word-wrap: normal;
+    -webkit-overflow-scrolling: touch;
+
+    // 代码块内的 code 元素清除行内样式
+    code {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-size: 100%;
+      white-space: pre;
+      word-break: normal;
+    }
+  }
+
+  // ── 引用块（GitHub: 左侧 4px 竖线 + 灰色背景 + padding-left） ──
+  blockquote {
+    padding: 0 1em;
+    border-left: 0.25em solid var(--b3-border-color);
+    color: var(--b3-theme-on-surface);
+    margin: 0 0 1em;
+    background: none;
+    font-size: 1em;
+
+    // 引用内首段/末段消除额外间距
+    > :first-child { margin-top: 0; }
+    > :last-child { margin-bottom: 0; }
+  }
+
+  // ── 表格 ──
+  table {
+    border-spacing: 0;
+    border-collapse: collapse;
+    margin-top: 0;
+    margin-bottom: 1em;
+    width: 100%;
+    overflow: auto;
+    display: block;
+  }
+  th {
+    padding: 0.45em 0.9em;
+    text-align: left;
+    font-weight: $fw-semibold;
+    background: var(--b3-theme-surface);
+    border: 1px solid var(--b3-border-color);
+    border-bottom-width: 2px;
+  }
+  td {
+    padding: 0.45em 0.9em;
+    border: 1px solid var(--b3-border-color);
+    vertical-align: top;
+  }
+  // 表格斑马纹
+  tbody tr:nth-child(2n) {
+    background: color-mix(in srgb, var(--b3-theme-surface) 50%, transparent);
+  }
+
+  // ── 分割线 ──
+  hr {
+    height: 1px;
+    padding: 0;
+    margin: 1.5em 0;
+    background-color: var(--b3-border-color);
+    border: 0;
+  }
+
+  // ── 图片（GitHub: max-width 100%, background-color white for transparent PNGs） ──
+  img {
+    max-width: 100%;
+    box-sizing: content-box;
+    border-radius: $r-sm;
+    border: 1px solid var(--b3-border-color);
+  }
+
+  // ── 脚注（GFM） ──
+  .footnotes {
+    font-size: 0.85em;
+    color: var(--b3-theme-on-surface);
+    border-top: 1px solid var(--b3-border-color);
+    padding-top: $s-3;
+  }
+
+  // ── 清除第一个子元素顶间距（避免内容紧贴容器顶部） ──
+  > :first-child { margin-top: 0 !important; }
+  // ── 清除最后一个子元素底间距 ──
+  > :last-child { margin-bottom: 0 !important; }
+}
+

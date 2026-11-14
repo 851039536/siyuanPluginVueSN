@@ -74,6 +74,7 @@
         <pre
           v-else-if="preview && preview.kind === 'text'"
           class="we-preview-code"
+          :class="{ 'is-wrapped': softWrap }"
         >{{ preview.content }}</pre>
         <!-- 不可预览原因："二进制文件不支持预览" / "文件过大，不预览内容" / "文件不存在或已被删除" / "预览读取失败" -->
         <EmptyState
@@ -161,6 +162,30 @@ function loadPreview() {
 
 // reloadKey：树刷新后磁盘内容可能已变（编辑器保存、分支切换），选中路径不变也要重读
 watch(() => [props.projectPath, props.filePath, props.reloadKey ?? 0], loadPreview, { immediate: true })
+
+/**
+ * 文本预览是否软换行：仅在「存在超长行」时开启。
+ * minified 文件（一整行几万字符）不换行就是一条几千 px 宽的横向滚动，
+ * 屏幕上什么都看不到 —— 这种文件自动换行，正常代码仍保持不换行（对齐不乱）。
+ */
+const softWrap = computed(() => {
+  const content = preview.value?.kind === "text" ? preview.value.content : undefined
+  if (!content) return false
+  return hasVeryLongLine(content)
+})
+
+/** 是否存在超过 limit 字符的行（单次扫描，命中即返回） */
+function hasVeryLongLine(text: string, limit = 240): boolean {
+  let lineLength = 0
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) === 10) {
+      lineLength = 0
+      continue
+    }
+    if (++lineLength > limit) return true
+  }
+  return false
+}
 
 /** Markdown 渲染（仅在选中 .md 时执行） */
 const markdownHtml = computed(() => {
@@ -281,7 +306,3 @@ function revealInFolder() {
   if (absDir) openLocalPath(absDir)
 }
 </script>
-
-<style lang="scss">
-@use "../../styles/MarkdownPreviewDialog.scss";
-</style>

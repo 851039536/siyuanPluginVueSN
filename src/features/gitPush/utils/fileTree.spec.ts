@@ -219,6 +219,15 @@ describe("buildPathTreeRows", () => {
     ])
   })
 
+  it("传入预计算目录集合（allDirs）时结果与内部计算一致", () => {
+    const paths = ["src/a/x.ts", "src/y.ts", "README.md"]
+    const allDirs = collectDirectoryPaths(paths)
+    const sets = [new Set<string>(), new Set(["src"]), new Set(allDirs)]
+    for (const expanded of sets) {
+      expect(buildPathTreeRows(paths, expanded, 0, allDirs)).toEqual(buildPathTreeRows(paths, expanded))
+    }
+  })
+
   it("空输入返回空数组", () => {
     expect(buildPathTreeRows([], new Set())).toEqual([])
   })

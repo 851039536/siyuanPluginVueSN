@@ -104,7 +104,7 @@
           class="we-badge"
           :class="`we-badge--${changeOf(row.path)!.status}`"
           :title="fileStatusTitle(changeOf(row.path)!, i18n)"
-          :aria-label="changeTitle(changeOf(row.path)!)"
+          :aria-label="fileStatusTitle(changeOf(row.path)!, i18n)"
           @click.stop="emit('openChanges', row.path)"
         >
           {{ fileStatusLetter(changeOf(row.path)!) }}
@@ -304,11 +304,6 @@ function isExpanded(path: string): boolean {
 /** 取文件的变更条目（模板中多处使用，避免重复写 Map 访问） */
 function changeOf(path: string): FileChange | undefined {
   return props.changeMap.get(path)
-}
-
-/** 角标可访问名称（图标文字对读屏无意义，用完整状态文案） */
-function changeTitle(file: FileChange): string {
-  return fileStatusTitle(file, props.i18n)
 }
 
 /** 缩进 = 基准 6px + 层级 × 12px（由 SCSS 读取自定义属性计算） */

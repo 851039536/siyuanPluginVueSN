@@ -319,13 +319,16 @@ export function filterPathsByQuery(paths: readonly string[], query: string): rea
  * @param paths 可见文件路径（`/` 分隔，相对仓库根）
  * @param expandedDirs 已展开目录的完整路径集合（空集 = 全部收起）
  * @param depthOffset 整体缩进偏移（与变更树同义）
+ * @param allDirs 预计算的「全部目录」集合：展开/收起目录时行集合会重算，而目录集合只随文件列表变化。
+ *   调用方传缓存值可省掉每次点击的全量重算（2 万文件下约 14ms）；不传则内部计算。
  */
 export function buildPathTreeRows(
   paths: readonly string[],
   expandedDirs: ReadonlySet<string>,
   depthOffset = 0,
+  allDirs?: readonly string[],
 ): PathTreeRow[] {
-  const collapsed = collectDirectoryPaths(paths).filter((dir) => !expandedDirs.has(dir))
+  const collapsed = (allDirs ?? collectDirectoryPaths(paths)).filter((dir) => !expandedDirs.has(dir))
   // 直接以路径串为树项（不再为每条路径造一个一次性 FileChange：2 万文件会白扔 2 万个对象）
   return buildRows<string, PathTreeFileRow>(
     paths,

@@ -43,7 +43,7 @@
       layout="horizontal"
       :gutter-size="8"
       state-key="gitpush-workspace-explorer-split"
-      state-storage="session"
+      state-storage="local"
     >
       <SplitterPanel
         :size="38"

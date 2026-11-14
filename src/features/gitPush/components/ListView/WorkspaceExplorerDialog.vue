@@ -113,7 +113,7 @@
           layout="vertical"
           :gutter-size="8"
           state-key="gitpush-workspace-explorer-vertical"
-          state-storage="session"
+          state-storage="local"
         >
           <SplitterPanel
             :size="72"
@@ -275,15 +275,19 @@ const countText = computed(() => {
 const changeMap = computed(() => new Map(props.changes.map((f) => [f.path, f])))
 
 /**
+ * 可见文件的全部目录集合：只随文件列表 / 筛选词变化（展开、收起目录不会变）。
+ * 传给 buildPathTreeRows 复用，避免每次展开/收起都重扫全部路径（2 万文件约 14ms）。
+ */
+const allDirs = computed(() => collectDirectoryPaths(shownFiles.value))
+
+/**
  * 拉平树行：
  * - 有筛选词 → 自动展开命中路径的全部父目录（否则命中深层文件仍不可见）；
  * - 无筛选词 → 按用户展开集，默认全部收起只渲染根层。
  */
 const rows = computed(() => {
-  const expanded = query.value.trim()
-    ? new Set(collectDirectoryPaths(shownFiles.value))
-    : expandedDirs.value
-  return buildPathTreeRows(shownFiles.value, expanded)
+  const expanded = query.value.trim() ? new Set(allDirs.value) : expandedDirs.value
+  return buildPathTreeRows(shownFiles.value, expanded, 0, allDirs.value)
 })
 
 /**

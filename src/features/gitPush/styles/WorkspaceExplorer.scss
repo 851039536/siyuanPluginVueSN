@@ -6,9 +6,11 @@
 // 加宽覆盖 large 档（(0,3,0) 压过组件档位类，与变更目录树弹窗同法）
 
 .git-push-panel .si-dialog.we-dialog {
-  // 桌面端固定宽度上限 + 窄窗口自适应（不再铺满整窗）
-  --si-dialog-width: min(98vw, 1360px);
-  // 覆盖 Dialog 默认 80vh 上限：文件浏览器需要更高的可视区（仍留出遮罩边距）
+  // 桌面端固定宽度上限 + 窄窗口自适应（94vw 留出可感知的遮罩边距，98vw 几乎贴边）
+  --si-dialog-width: min(94vw, 1360px);
+  // 固定高度：内容区是 flex:1，文件区拿满剩余高度。
+  // 不再用「内容撑高 + max-height:90vh」——那样上限永远触发不到，大屏白白少一截。
+  height: min(90vh, 900px);
   max-height: 90vh;
 }
 
@@ -99,13 +101,12 @@
 }
 
 // ── 主体：文件区 + 底部项目脚本面板 ──
-// 固定高度：内容区在 90vh 上限内收缩，文件树/预览/脚本面板各自内部滚动（不撑破弹窗）
+// 高度由弹窗固定高度分配（flex:1）；文件树/预览/脚本面板各自内部滚动，不撑破弹窗
 .we-body {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  height: min(70vh, 780px);
-  min-height: 240px;
+  flex: 1;
+  min-height: 0;
 }
 
 // 展开脚本面板：纵向分栏（上文件区 / 下脚本面板，分隔条可拖动）
@@ -388,6 +389,12 @@
   line-height: $lh-normal;
   color: var(--b3-theme-on-background);
   white-space: pre;
+}
+
+// 超长行文件（minified / 单行 JSON）：软换行，避免 5000px 宽的横向滚动条
+.we-preview-code.is-wrapped {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 // Markdown 预览：复用 .gp-md-content 排版，仅补内边距

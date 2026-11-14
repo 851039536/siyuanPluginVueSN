@@ -8,6 +8,8 @@
 // 它们本就是跨组件共享的全局规则（没有 scoped 隔离），跟上面四个基座同性质，一并收口到这里。
 @use "./StatsPanel";
 @use "./WorkspaceExplorer";
+// Markdown 渲染排版（.gp-md-content）：Markdown 预览弹窗 / 工作区文件浏览器 / AI 分析弹窗共用
+@use "./MarkdownContent";
 @use "./RepoCleanPanel";
 @use "./CommitRuleCheckPanel";
 @use "./CommitAnalysisPanel";

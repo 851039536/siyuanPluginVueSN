@@ -227,5 +227,5 @@ function resetToDefault() {
 </script>
 
 <style lang="scss" scoped>
-@use "../../styles/SettingsPanel.scss";
+@use "../../styles/PlatformSection.scss";
 </style>

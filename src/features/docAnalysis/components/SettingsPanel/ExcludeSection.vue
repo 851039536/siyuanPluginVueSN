@@ -40,5 +40,5 @@ function handleInput(e: Event) {
 </script>
 
 <style lang="scss" scoped>
-@use "../../styles/SettingsPanel.scss";
+@use "../../styles/ExcludeSection.scss";
 </style>

@@ -1,0 +1,32 @@
+// 查询默认分区（仅 QuerySection.vue 引用）
+@use "@/variables.scss" as *;
+
+.settings-section {
+  padding: $s-3 $s-4;
+}
+
+// ============ 查询默认行 ============
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-px2 0;
+
+  .settings-row-label {
+    width: 96px;
+    flex-shrink: 0;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-on-surface-variant);
+  }
+}
+
+// 共享 Select（外观由组件自身承担，此处仅限宽以贴合原行内布局）
+.settings-select-field {
+  min-width: 120px;
+
+  &--small {
+    width: 96px;
+    min-width: 0;
+  }
+}

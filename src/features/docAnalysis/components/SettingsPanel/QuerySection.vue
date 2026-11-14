@@ -106,5 +106,5 @@ function onSortOrder(value: string | number | boolean | null) {
 </script>
 
 <style lang="scss" scoped>
-@use "../../styles/SettingsPanel.scss";
+@use "../../styles/QuerySection.scss";
 </style>

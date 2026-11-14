@@ -1,0 +1,32 @@
+// 名称排除分区（仅 ExcludeSection.vue 引用）
+@use "@/variables.scss" as *;
+
+.settings-section {
+  padding: $s-3 $s-4;
+}
+
+.settings-hint {
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-variant);
+  margin: 0 0 $s-1;
+  opacity: 0.7;
+}
+
+// ============ 名称排除文本域 ============
+.settings-textarea {
+  width: 100%;
+  padding: $s-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-background);
+  font-size: $t-xs;
+  font-family: $ff-mono;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: var(--b3-theme-primary);
+  }
+}

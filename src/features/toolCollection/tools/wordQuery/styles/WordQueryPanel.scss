@@ -1,5 +1,5 @@
 @use '@/variables.scss' as *;
-@use 'codeUtils.scss' as cutils;
+@use 'code-mixins.scss' as cutils;
 @use 'common.scss' as c;
 
 // 单词查询面板样式

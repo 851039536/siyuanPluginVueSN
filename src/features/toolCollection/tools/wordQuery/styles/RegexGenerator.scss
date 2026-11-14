@@ -1,0 +1,140 @@
+// 正则生成器专属样式（examples / regex 展示 / 测试区域）
+// 通用面板布局仍在 codeUtils.scss。
+@use '@/variables.scss' as *;
+@use './code-mixins' as *;
+
+// ========== 正则生成器特殊样式 ==========
+.examples-section {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+
+  .examples-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .examples-label {
+      @include label-row;
+    }
+  }
+
+  .examples-list {
+    display: flex;
+    flex-direction: column;
+    gap: $s-2;
+  }
+
+  .example-item {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+
+    .example-inputs {
+      display: flex;
+      flex: 1;
+      gap: $s-2;
+
+      .match-input,
+      .not-match-input {
+        flex: 1;
+      }
+    }
+  }
+}
+
+.regex-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+  padding: $s-3;
+  background: var(--b3-theme-background);
+  border-radius: $r-base;
+
+  .regex-pattern {
+    flex: 1;
+    font-family: $ff-mono;
+    font-size: $t-base;
+    font-weight: $fw-semibold;
+    color: var(--b3-theme-primary);
+    overflow-wrap: break-word;
+  }
+}
+
+.examples-result-section {
+  border-top: 1px solid var(--b3-border-color);
+  padding-top: $s-3;
+
+  .examples-result-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $s-2;
+  }
+
+  .example-result-item {
+    padding: $s-1 $s-2;
+    background: var(--b3-theme-surface-light);
+    border-radius: $r-sm;
+    font-family: $ff-mono;
+    font-size: $t-xs;
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+// ========== 测试区域 ==========
+.test-section {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  border-top: 1px solid var(--b3-border-color);
+  padding-top: $s-3;
+
+  .test-input-area {
+    display: flex;
+    gap: $s-2;
+  }
+
+  .test-result {
+    padding: $s-2 $s-3;
+    background: var(--b3-theme-background);
+    border-radius: $r-base;
+
+    .matches-info {
+      .match-count {
+        font-size: $codeblock-font-size;
+        font-weight: $fw-medium;
+        color: var(--b3-theme-success, #22c55e);
+      }
+
+      .matches-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $compact-gap;
+        margin-top: $s-2;
+      }
+
+      .match-item {
+        padding: $s-px2 $s-2;
+        background: var(--b3-theme-success-light, #dcfce7);
+        border-radius: $r-sm;
+        font-family: $ff-mono;
+        font-size: $t-xs;
+        color: var(--b3-theme-success, #16a34a);
+      }
+    }
+
+    .no-match {
+      font-size: $codeblock-font-size;
+      color: var(--b3-theme-on-surface-light);
+    }
+
+    .error-info {
+      display: flex;
+      align-items: center;
+      gap: $compact-gap;
+      font-size: $codeblock-font-size;
+      color: var(--b3-theme-error);
+    }
+  }
+}

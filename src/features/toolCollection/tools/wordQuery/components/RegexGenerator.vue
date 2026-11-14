@@ -323,4 +323,5 @@ function copyRegex() {
 
 <style scoped lang="scss">
 @use "../styles/codeUtils.scss";
+@use "../styles/RegexGenerator.scss";
 </style>

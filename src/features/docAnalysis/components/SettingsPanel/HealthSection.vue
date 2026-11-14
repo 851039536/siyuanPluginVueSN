@@ -91,5 +91,5 @@ function toggleBookmark(bookmark: string, checked: boolean) {
 </script>
 
 <style lang="scss" scoped>
-@use "../../styles/SettingsPanel.scss";
+@use "../../styles/HealthSection.scss";
 </style>

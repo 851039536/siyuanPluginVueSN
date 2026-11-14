@@ -1,0 +1,108 @@
+// MilestoneCategoryList 分类里程碑样式（仅 MilestoneCategoryList.vue 引用）
+@use "@/variables.scss" as *;
+@use "../styles/index.scss" as stats;
+
+.categories-section {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+}
+
+.section-label {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  padding-bottom: $s-1;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.category-card {
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  overflow: hidden;
+  background: var(--b3-theme-surface);
+
+  &:hover {
+    border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
+  }
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  width: 100%;
+  padding: $s-px10 $s-3;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  font-size: $t-xs;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
+  }
+}
+
+.category-icon {
+  font-size: $t-xs;
+  flex-shrink: 0;
+}
+
+.category-name {
+  font-weight: $fw-semibold;
+  flex: 1;
+  text-align: left;
+}
+
+.category-count {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-primary);
+  opacity: 0.6;
+}
+
+.category-toggle {
+  display: flex;
+  align-items: center;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  transition: transform 0.2s;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.category-body,
+.category-preview {
+  padding: $s-2 $s-3 $s-px10;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+// ===== Milestone chips grid =====
+.milestone-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-px6;
+}
+
+.category-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $s-px6;
+}
+
+.more-hint {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  padding: $s-1 $s-2;
+}

@@ -154,6 +154,6 @@ function onSaveLevelConfig() {
 </script>
 
 <style scoped lang="scss">
-@use "../../styles/MilestoneRuleEditor.scss";
+@use "../../styles/LevelConfigTab.scss";
 @use '../../styles/index.scss' as stats;
 </style>

@@ -1,0 +1,97 @@
+// AchievementCard 成就卡片样式（仅 AchievementCard.vue 引用）
+@use "@/variables.scss" as *;
+@use "../styles/index.scss" as stats;
+
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $s-px10 $s-2;
+  border-radius: stats.$r-sm;
+  text-align: center;
+  position: relative;
+  transition: transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &.tier-common {
+    background: rgba(stats.$c-success, 0.06);
+    border: 1px solid rgba(stats.$c-success, 0.15);
+  }
+
+  &.tier-rare {
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.15);
+  }
+
+  &.tier-epic {
+    background: linear-gradient(135deg, rgba(stats.$color-tier-epic, 0.08), rgba(var(--b3-theme-primary-rgb), 0.04));
+    border: 1px solid rgba(stats.$color-tier-epic, 0.2);
+  }
+
+  &.tier-legendary {
+    background: linear-gradient(135deg, rgba(stats.$color-tier-legendary, 0.1), rgba(234, 88, 12, 0.04));
+    border: 1px solid rgba(stats.$color-tier-legendary, 0.3);
+  }
+
+  .ach-icon {
+    font-size: 22px; // 无精确 Token（成就大图标字形）
+    margin-bottom: $s-1;
+  }
+
+  .ach-title {
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
+    color: var(--b3-theme-on-surface);
+    line-height: $lh-tight;
+  }
+
+  .ach-desc {
+    font-size: $t-2xs;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.4;
+    line-height: $lh-tight;
+    margin-top: $s-px2;
+  }
+
+  &.locked-card {
+    opacity: 0.35;
+    filter: grayscale(0.5);
+
+    .ach-icon { font-size: $t-lg; } // 图标字形尺寸（非正文文字）
+  }
+}
+
+// ===== Custom achievement card =====
+.achievement-card.custom-ach {
+  position: relative;
+  padding-top: $s-px14;
+}
+
+.btn-del-ach {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.25;
+  font-size: $t-xs;
+  line-height: $lh-tight;
+  cursor: pointer;
+  border-radius: $r-px2;
+  padding: 0;
+
+  &:hover {
+    opacity: 1;
+    color: stats.$c-danger;
+    background: rgba(stats.$c-danger, 0.08);
+  }
+}

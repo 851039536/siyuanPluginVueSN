@@ -303,6 +303,6 @@ async function onDeleteAchievement(id: string) {
 </script>
 
 <style scoped lang="scss">
-@use "../../styles/MilestoneRuleEditor.scss";
+@use "../../styles/AchievementsTab.scss";
 @use '../../styles/index.scss' as stats;
 </style>

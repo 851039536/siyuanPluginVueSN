@@ -1,0 +1,222 @@
+// LevelConfigTab 等级配置 Tab 样式（仅 LevelConfigTab.vue 引用）
+@use "@/variables.scss" as *;
+@use "../styles/index.scss" as stats;
+
+.help-title {
+  margin: 0 0 $s-px6 0;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
+  color: var(--b3-theme-primary);
+}
+
+.help-list {
+  margin: 0;
+  padding-left: $s-4;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-surface);
+
+  li {
+    margin-bottom: $s-px2;
+  }
+
+  b {
+    color: var(--b3-theme-on-surface);
+    font-weight: $fw-bold;
+  }
+}
+
+// ═══════════════════════════════════════
+// Level config tab
+// ═══════════════════════════════════════
+
+.level-tab {
+  padding-top: $s-1;
+}
+
+.level-config-help {
+  padding: $s-px10 $s-3;
+  margin-bottom: $s-3;
+  background: rgba(var(--b3-theme-primary-rgb), 0.04);
+  border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
+  border-radius: stats.$r-sm;
+
+  .help-title {
+    margin: 0 0 $s-px6 0;
+    font-size: $t-xs;
+    font-weight: $fw-bold;
+    color: var(--b3-theme-primary);
+  }
+
+  .help-list {
+    margin: 0;
+    padding-left: $s-4;
+    font-size: $t-2xs;
+    line-height: $lh-normal;
+    color: var(--b3-theme-on-surface);
+
+    li { margin-bottom: $s-px2; }
+    b { color: var(--b3-theme-on-surface); font-weight: $fw-bold; }
+  }
+}
+
+.level-config-section {
+  margin-bottom: $s-px14;
+}
+
+.level-config-label {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+  margin-bottom: $s-2;
+}
+
+.tier-points-grid {
+  display: flex;
+  gap: $s-2;
+}
+
+.tier-point-item {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px6 $s-px10;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  background: var(--b3-theme-surface);
+}
+
+.tier-point-badge {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-px3;
+  min-width: 32px;
+  text-align: center;
+
+  &.tier-common { background: rgba(stats.$c-success, 0.15); color: stats.$c-success; }
+  &.tier-rare { background: rgba(var(--b3-theme-primary-rgb), 0.15); color: var(--b3-theme-primary); }
+  &.tier-epic { background: rgba(stats.$color-tier-epic, 0.15); color: stats.$color-tier-epic; }
+  &.tier-legendary { background: rgba(stats.$color-tier-legendary, 0.2); color: stats.$color-tier-legendary; }
+}
+
+.tier-point-input {
+  width: 56px;
+  padding: $s-px3 $s-px6;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  text-align: center;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.tier-point-unit {
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+}
+
+.curve-row {
+  display: flex;
+  align-items: center;
+  gap: $s-3;
+}
+
+.curve-input {
+  width: 64px;
+  padding: $s-1 $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  background: var(--b3-theme-surface);
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: $t-sm; // 数据突出展示（等级配置数值输入）
+  font-weight: $fw-semibold;
+  text-align: center;
+
+  &:focus {
+    outline: none;
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+.curve-formula-hint {
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+
+  code {
+    font-family: stats.$font-mono;
+    font-size: $t-2xs;
+    color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    padding: $s-px1 $s-1;
+    border-radius: $r-px2;
+  }
+}
+
+.curve-preview {
+  margin-top: $s-2;
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+}
+
+.curve-preview-label {
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+}
+
+.curve-preview-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-1;
+}
+
+.curve-preview-lv {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  background: var(--b3-theme-surface);
+  padding: $s-px2 $s-px6;
+  border-radius: $r-px3;
+  border: 1px solid var(--b3-border-color);
+}
+
+.level-config-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: $s-2;
+  border-top: 1px solid var(--b3-border-color);
+  margin-top: $s-2;
+}
+
+.btn-save-level {
+  padding: $s-px5 $s-4;
+  border: none;
+  border-radius: stats.$r-sm;
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}

@@ -1,0 +1,75 @@
+// MilestoneChip 里程碑 chip 三态样式（仅 MilestoneChip.vue 引用）
+@use "@/variables.scss" as *;
+@use "../styles/index.scss" as stats;
+
+// ===== Milestone Chip =====
+.milestone-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $s-px2;
+  padding: $s-2 $s-px10;
+  min-width: 68px;
+  border-radius: stats.$r-sm;
+  position: relative;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+
+  &.achieved {
+    @include stats.tier-chip-achieved;
+  }
+
+  &.next {
+    background: rgba(var(--b3-theme-primary-rgb), 0.06);
+    border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.3);
+    opacity: 1;
+
+    .chip-label {
+      color: var(--b3-theme-primary);
+      font-weight: $fw-semibold;
+    }
+  }
+
+  &.locked {
+    opacity: 0.3;
+    filter: grayscale(0.5);
+  }
+}
+
+.chip-icon {
+  font-size: $t-sm; // 图标字形尺寸（非正文文字）
+  line-height: $lh-tight;
+}
+
+.chip-label {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  text-align: center;
+  white-space: nowrap;
+  line-height: $lh-tight;
+}
+
+.chip-tier {
+  font-size: $t-2xs;
+  padding: 0 $s-1;
+  border-radius: $r-px3;
+  font-weight: $fw-bold;
+  line-height: $lh-normal;
+}
+
+.chip-progress {
+  width: 100%;
+  height: 2px;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
+  border-radius: stats.$r-sm;
+  overflow: hidden;
+  margin-top: $s-px2;
+}
+
+.chip-progress-fill {
+  height: 100%;
+  background: var(--b3-theme-primary);
+  border-radius: stats.$r-sm;
+  transition: width 0.6s ease;
+}

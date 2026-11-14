@@ -1,0 +1,148 @@
+// AchievementWall 成就墙样式（仅 AchievementWall.vue 引用）
+@use "@/variables.scss" as *;
+@use "../styles/index.scss" as stats;
+
+.section-label {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.45;
+  padding-bottom: $s-1;
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+// ===== 4. Achievement Wall =====
+.achievement-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.ach-category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-1;
+  margin: $s-2 0;
+}
+
+.ach-category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-1 $s-px10;
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
+    background: rgba(var(--b3-theme-primary-rgb), 0.04);
+  }
+
+  &.active {
+    border-color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    color: var(--b3-theme-primary);
+    font-weight: $fw-bold;
+  }
+}
+
+.ach-cat-icon {
+  font-size: $t-xs;
+  flex-shrink: 0;
+}
+
+.ach-cat-name {
+  font-weight: $fw-semibold;
+}
+
+.ach-cat-count {
+  font-size: $t-2xs;
+  opacity: 0.5;
+  font-weight: $fw-bold;
+}
+
+// Tier bar active colors
+.ach-tier-bar {
+  margin-top: 0;
+  margin-bottom: $s-1;
+}
+
+.ach-tier-tab {
+  &.tier-active-common {
+    border-color: stats.$c-success;
+    background: rgba(stats.$c-success, 0.08);
+    color: stats.$c-success;
+  }
+
+  &.tier-active-rare {
+    border-color: var(--b3-theme-primary);
+    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    color: var(--b3-theme-primary);
+  }
+
+  &.tier-active-epic {
+    border-color: stats.$color-tier-epic;
+    background: rgba(stats.$color-tier-epic, 0.08);
+    color: stats.$color-tier-epic;
+  }
+
+  &.tier-active-legendary {
+    border-color: stats.$color-tier-legendary;
+    background: rgba(stats.$color-tier-legendary, 0.08);
+    color: stats.$color-tier-legendary;
+  }
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: $s-px6;
+  margin-top: $s-2;
+
+  &.locked {
+    margin-top: $s-px6;
+  }
+}
+
+.locked-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: $s-px6 $s-px10;
+  margin-top: $s-2;
+  border: 1px dashed var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $t-2xs;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.8;
+    border-color: var(--b3-theme-primary);
+    color: var(--b3-theme-primary);
+  }
+
+  svg {
+    transition: transform 0.2s;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .achievement-grid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+}

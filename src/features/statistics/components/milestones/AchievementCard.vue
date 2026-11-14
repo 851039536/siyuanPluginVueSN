@@ -62,6 +62,6 @@ function achText(keyOrText: string): string {
 </script>
 
 <style scoped lang="scss">
-@use "../../styles/MilestonesCard.scss";
+@use "../../styles/AchievementCard.scss";
 @use '../../styles/index.scss' as stats;
 </style>

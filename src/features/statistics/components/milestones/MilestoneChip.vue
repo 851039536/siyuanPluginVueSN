@@ -58,6 +58,6 @@ const iconName = computed<IconKey>(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../../styles/MilestonesCard.scss";
+@use "../../styles/MilestoneChip.scss";
 @use '../../styles/index.scss' as stats;
 </style>

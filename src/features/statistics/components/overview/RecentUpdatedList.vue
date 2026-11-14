@@ -158,6 +158,6 @@ function formatRelativeTime(updated: string): string {
 </script>
 
 <style lang="scss" scoped>
-@use '../../styles/DocChangeSection.scss';
+@use '../../styles/RecentUpdatedList.scss';
 @use '../../styles/index.scss' as stats;
 </style>

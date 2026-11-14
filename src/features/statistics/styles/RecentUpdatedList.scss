@@ -1,0 +1,103 @@
+// 最近更新列表样式（仅 RecentUpdatedList.vue 引用）
+@use '../../../variables' as *;
+@use './index.scss' as stats;
+
+// ---- 最近更新列表 ----
+.recent-docs-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.recent-group-header {
+  padding: $s-3 $s-3 $s-1;
+  @include stats.codex-label;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+}
+
+.recent-doc-item {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-px6 $s-3;
+  border-radius: stats.$r-sm;
+  cursor: pointer;
+  transition: background 0.12s;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.recent-doc-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: stats.$r-sm;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  flex-shrink: 0;
+  background: rgba(stats.$c-warning, 0.12);
+  color: stats.$c-warning;
+}
+
+.recent-doc-item.new .recent-doc-badge {
+  background: rgba(stats.$c-success, 0.12);
+  color: stats.$c-success;
+}
+
+.recent-doc-notebook {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.4;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.recent-doc-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: $fw-medium;
+}
+
+.recent-doc-time {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+// 最近更新组件内的加载/空态（与列表共用）
+.changed-docs-loading {
+  text-align: center;
+  padding: $s-4;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.changed-docs-empty {
+  text-align: center;
+  padding: $s-4;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}

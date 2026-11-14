@@ -1,0 +1,155 @@
+// NotebookActivity 趋势图样式（仅 ActivityChart.vue 引用）
+@use "@/variables.scss" as *;
+@use '../styles/index.scss' as stats;
+
+// ========== Chart ==========
+.chart-card {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  padding: $s-px14;
+}
+
+// 卡片标题（图表卡与排行卡共用）
+.card-title {
+  font-family: stats.$font-mono;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: $s-3;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-px10;
+  margin-bottom: $s-px10;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: $s-px5;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  padding: $s-px3 $s-px6;
+  border-radius: stats.$r-sm;
+  transition: opacity 0.15s, background 0.15s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.dimmed {
+    opacity: 0.25;
+  }
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  white-space: nowrap;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.chart-svg {
+  display: block;
+}
+
+.grid-line {
+  stroke: var(--b3-border-color);
+  stroke-width: 0.5;
+  stroke-dasharray: 3 3;
+}
+
+.y-label {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  fill: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.x-label {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  fill: var(--b3-theme-on-surface);
+  opacity: 0.4;
+}
+
+.trend-line {
+  stroke-width: 2;
+  opacity: 0.75;
+  transition: opacity 0.15s;
+
+  &.dimmed {
+    opacity: 0.12;
+  }
+}
+
+.hit-area {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+.hover-line {
+  stroke: var(--b3-theme-primary);
+  stroke-width: 1;
+  stroke-dasharray: 4 2;
+}
+
+.tooltip {
+  position: absolute;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  padding: $s-2 $s-px10;
+  font-size: $t-xs;
+  min-width: 120px;
+  z-index: 10;
+}
+
+.tooltip-date {
+  font-family: stats.$font-mono;
+  font-weight: $fw-semibold;
+  margin-bottom: $s-1;
+  color: var(--b3-theme-on-surface);
+}
+
+.tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: $s-px5;
+  padding: $s-px2 0;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.85;
+}
+
+.tooltip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tooltip-name {
+  flex: 1;
+}
+
+.tooltip-val {
+  font-family: stats.$font-mono;
+  font-weight: $fw-semibold;
+}

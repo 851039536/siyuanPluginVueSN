@@ -119,6 +119,6 @@ defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@use '../../styles/HeatmapCard.scss';
+@use '../../styles/HeatmapDailyDetail.scss';
 @use '../../styles/index.scss' as stats;
 </style>

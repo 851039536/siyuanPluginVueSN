@@ -1,0 +1,116 @@
+// 文档变化列表样式（仅 DocChangeList.vue 引用）
+@use '../../../variables' as *;
+@use './index.scss' as stats;
+
+.changed-docs-loading {
+  text-align: center;
+  padding: $s-4;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.changed-docs-empty {
+  text-align: center;
+  padding: $s-4;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.changed-docs-content {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.changed-docs-group {
+  margin-bottom: $s-3;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.changed-docs-group-title {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: $s-px6;
+  padding: 0 $s-1;
+}
+
+.changed-doc-item {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-1 $s-2;
+  border-radius: stats.$r-sm;
+  cursor: pointer;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  .changed-doc-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: stats.$r-sm;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
+    flex-shrink: 0;
+  }
+
+  &.new .changed-doc-icon {
+    background: rgba(stats.$c-success, 0.15);
+    color: stats.$c-success;
+  }
+
+  &.modified .changed-doc-icon {
+    background: rgba(stats.$c-warning, 0.15);
+    color: stats.$c-warning;
+  }
+
+  &.deleted {
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+    }
+
+    .changed-doc-icon {
+      background: rgba(stats.$c-danger, 0.15);
+      color: stats.$c-danger;
+    }
+
+    .changed-doc-title {
+      opacity: 0.6;
+      text-decoration: line-through;
+    }
+  }
+
+  .changed-doc-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .changed-doc-time {
+    font-family: stats.$font-mono;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
+    color: var(--b3-theme-on-surface);
+    opacity: 0.35;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}

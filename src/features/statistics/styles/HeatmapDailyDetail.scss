@@ -1,0 +1,121 @@
+// 热力图日详情面板样式（仅 HeatmapDailyDetail.vue 引用）
+@use "@/variables.scss" as *;
+@use "index.scss" as stats;
+
+// ========== Daily Detail Panel ==========
+.daily-detail {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  padding: $s-3;
+}
+
+.daily-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $s-px10; // 无精确 Token
+}
+
+.daily-detail-title {
+  font-family: stats.$font-mono;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
+  color: var(--b3-theme-primary);
+}
+
+.daily-detail-close {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: stats.$r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--b3-list-hover);
+    color: var(--b3-theme-on-surface);
+  }
+}
+
+.daily-detail-status {
+  text-align: center;
+  padding: $s-3;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.daily-detail-list {
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.detail-group {
+  margin-bottom: $s-px10; // 无精确 Token
+  &:last-child { margin-bottom: 0; }
+}
+
+.detail-group-title {
+  @include stats.codex-label;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.55;
+  margin-bottom: $s-1;
+  padding: 0 $s-1;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: $s-px6; // 无精确 Token（$s-1=4px 偏小，$s-2=8px 偏大）
+  padding: $s-1 $s-2;
+  border-radius: stats.$r-sm;
+  cursor: pointer;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  transition: background 0.12s;
+
+  &:hover { background: var(--b3-list-hover); }
+}
+
+.detail-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: stats.$r-sm;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $t-2xs; // 图标字形尺寸（16px 容器内 +/~ 符号）
+  font-weight: $fw-bold;
+  flex-shrink: 0;
+}
+
+.detail-item.new .detail-icon {
+  background: rgba(stats.$c-success, 0.15);
+  color: stats.$c-success;
+}
+
+.detail-item.modified .detail-icon {
+  background: rgba(stats.$c-warning, 0.15);
+  color: stats.$c-warning;
+}
+
+.detail-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-time {
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.35;
+  flex-shrink: 0;
+}

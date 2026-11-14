@@ -1,0 +1,157 @@
+// NotebookActivity 笔记本排行表样式（仅 NotebookRankingTable.vue 引用）
+@use "@/variables.scss" as *;
+@use '../styles/index.scss' as stats;
+
+// 卡片标题（图表卡与排行卡共用）
+.card-title {
+  font-family: stats.$font-mono;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-surface);
+  margin-bottom: $s-3;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+// ========== Ranking Table ==========
+.ranking-card {
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: stats.$r-sm;
+  padding: $s-px14;
+}
+
+.ranking-table {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px2;
+}
+
+.ranking-header {
+  display: flex;
+  align-items: center;
+  padding: $s-px6 $s-1;
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--b3-theme-on-surface-light);
+  border-bottom: 1px solid var(--b3-border-color);
+}
+
+.ranking-row {
+  display: flex;
+  align-items: center;
+  padding: $s-2 $s-1;
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface);
+  border-radius: stats.$r-sm;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+}
+
+.col-rank {
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light);
+
+  // 前三名奖牌色徽章（装饰色，非语义色）
+  &.rank-gold {
+    background: rgba(stats.$color-rank-gold, 0.16);
+    color: stats.$color-rank-gold-text;
+    font-weight: $fw-bold;
+  }
+
+  &.rank-silver {
+    background: rgba(stats.$color-rank-silver, 0.22);
+    color: #4b5563;
+    font-weight: $fw-bold;
+  }
+
+  &.rank-bronze {
+    background: rgba(stats.$color-rank-bronze, 0.2);
+    color: #92400e;
+    font-weight: $fw-bold;
+  }
+}
+
+.col-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.col-total {
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: stats.$font-mono;
+  font-weight: $fw-semibold;
+}
+
+.col-days {
+  width: 55px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: stats.$font-mono;
+}
+
+.col-avg {
+  width: 55px;
+  text-align: right;
+  flex-shrink: 0;
+  font-family: stats.$font-mono;
+}
+
+.col-bar {
+  width: 120px;
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  flex-shrink: 0;
+  padding-left: $s-2;
+}
+
+.bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+  border-radius: stats.$r-sm;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: stats.$r-sm;
+  transition: width 0.3s ease;
+  min-width: 2px;
+}
+
+.bar-label {
+  width: 32px;
+  font-family: stats.$font-mono;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface-light);
+  text-align: right;
+}

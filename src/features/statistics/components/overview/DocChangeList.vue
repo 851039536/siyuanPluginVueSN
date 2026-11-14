@@ -133,6 +133,6 @@ const hasChanges = computed(() => groups.value.length > 0)
 </script>
 
 <style lang="scss" scoped>
-@use '../../styles/DocChangeSection.scss';
+@use '../../styles/DocChangeList.scss';
 @use '../../styles/index.scss' as stats;
 </style>

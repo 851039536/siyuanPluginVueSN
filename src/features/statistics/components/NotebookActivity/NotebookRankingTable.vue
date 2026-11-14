@@ -76,6 +76,6 @@ function rankClass(idx: number): string {
 </script>
 
 <style scoped lang="scss">
-@use '../../styles/NotebookActivity.scss';
+@use '../../styles/NotebookRankingTable.scss';
 @use '../../styles/index.scss' as stats;
 </style>

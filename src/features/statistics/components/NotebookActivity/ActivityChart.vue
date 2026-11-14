@@ -346,6 +346,6 @@ function dateAt(idx: number): string {
 </script>
 
 <style scoped lang="scss">
-@use '../../styles/NotebookActivity.scss';
+@use '../../styles/ActivityChart.scss';
 @use '../../styles/index.scss' as stats;
 </style>

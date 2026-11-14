@@ -429,6 +429,8 @@ export interface PushOutputEntry {
   label: string
   ok: boolean
   skipped: boolean
+  /** 用户主动取消：与失败区分，不计入失败统计，也不触发 AI 失败分析 */
+  canceled?: boolean
   duration: number
   summary: string
   fullStdout: string

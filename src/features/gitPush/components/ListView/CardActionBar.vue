@@ -178,6 +178,8 @@ function pushBtnText(status: string | undefined, label: string): string {
   if (status === 'pushing') return i18n.pushing
   if (status === 'ok') return i18n.done
   if (status === 'fail') return i18n.failed
+  // 取消是独立终态：显示「已取消」而不是「失败」，避免把用户主动停止当成推送出错
+  if (status === 'canceled') return i18n.canceled
   return label
 }
 

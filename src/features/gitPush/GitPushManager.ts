@@ -5,7 +5,7 @@ import type {
   LineStatsStore,
   ProjectStatsRecord,
 } from "./managers/LineStatsStore"
-import type { AllPlatformResult } from "./managers/RemoteOps"
+import type { AllPlatformResult, RemoteOpResult } from "./managers/RemoteOps"
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
 import type { NumstatCommit } from "./reportMetrics"
 import type {
@@ -968,11 +968,11 @@ export class GitPushManager {
 
   async pullToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.pullToAll(id) }
 
-  async pushSingle(id: string, target: PlatformKey): Promise<{ ok: boolean, stdout: string, stderr: string }> {
+  async pushSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
     return this.remoteOps.pushSingle(id, target)
   }
 
-  async pullSingle(id: string, target: PlatformKey): Promise<{ ok: boolean, stdout: string, stderr: string }> {
+  async pullSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
     return this.remoteOps.pullSingle(id, target)
   }
 

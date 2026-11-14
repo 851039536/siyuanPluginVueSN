@@ -23,10 +23,19 @@ export interface RemoteOpResult {
   stdout: string
   stderr: string
   skipped?: boolean
+  /** 用户主动取消：与失败区分，取消不计入失败统计，也不该触发「AI 分析失败原因」 */
+  canceled?: boolean
+  /** 该远程本次实际耗时；并行执行时不能共用总时长，否则每个平台都显示总耗时 */
+  durationMs?: number
 }
 
 /** 全平台操作结果类型（按平台 key 索引 + 总体成功标记，新增平台无需改类型） */
-export type AllPlatformResult = { success: boolean } & Record<PlatformKey, RemoteOpResult>
+export type AllPlatformResult = {
+  /** 至少有一个远程**真实执行**且成功（全跳过时为 false，与「全部已同步」区分） */
+  success: boolean
+  /** 全部远程都被智能跳过，本次没有真正执行任何推送 */
+  allSkipped: boolean
+} & Record<PlatformKey, RemoteOpResult>
 
 export class RemoteOps {
   private executor: GitExecutor
@@ -36,8 +45,17 @@ export class RemoteOps {
   private writeLock: ProjectWriteLock
   /** 推送分支模式：all=全部分支, head=仅当前分支 */
   private pushBranchMode: "all" | "head" = "all"
-  /** 推送状态缓存（用于智能跳过） */
-  private pushStatusCache: Record<string, PushStatusInfo> = {}
+  /**
+   * 推送状态缓存（用于智能跳过），带写入时间戳。
+   *
+   * 只有**本应用内**的写操作（commit / 推送 / 切分支 / 改项目）会失效该缓存；
+   * 用户在终端或其他客户端提交后，缓存仍停留在旧的 ahead=0，会导致「推送全部」静默跳过。
+   * 因此超过 TTL 一律视为不可信：宁可多跑一次真实推送，也不漏推。
+   */
+  private pushStatusCache: Record<string, { status: PushStatusInfo, at: number }> = {}
+
+  /** 智能跳过的缓存有效期（ms） */
+  private static readonly PUSH_STATUS_CACHE_TTL_MS = 30_000
 
   constructor(executor: GitExecutor, store: ProjectStore, storage: GitPushStorage, writeLock: ProjectWriteLock) {
     this.executor = executor
@@ -126,6 +144,10 @@ export class RemoteOps {
         const stdout = await this.executor.execGit(projectPath, args, signal)
         return { ok: true, stdout: stdout || "", stderr: "" }
       } catch (e: unknown) {
+        // 取消优先于错误归因：abort 会以子进程被杀的形式抛出，不能记成「推送失败」
+        if (signal?.aborted) {
+          return { ok: false, stdout: "", stderr: "操作已取消", canceled: true }
+        }
         const msg = this.enhancePullError(action, getErrorMessage(e) || String(e))
         // 超时不重试：一次超时已等满整个超时窗口（重试会翻倍耗时才反馈），且可调大超时解决；仅 DNS/连接类瞬态抖动保留 1 次重试
         const isTimeoutErr = /(git 命令超时|timed out)/i.test(msg)
@@ -135,7 +157,7 @@ export class RemoteOps {
         }
         // 重试 1 次（1s 延迟）
         if (signal?.aborted) {
-          return { ok: false, stdout: "", stderr: "操作已取消" }
+          return { ok: false, stdout: "", stderr: "操作已取消", canceled: true }
         }
         await new Promise<void>((resolve) => {
           const timer = setTimeout(() => {
@@ -147,12 +169,15 @@ export class RemoteOps {
           if (signal) { signal.addEventListener("abort", onAbort, { once: true }) }
         })
         if (signal?.aborted) {
-          return { ok: false, stdout: "", stderr: "操作已取消" }
+          return { ok: false, stdout: "", stderr: "操作已取消", canceled: true }
         }
         try {
           const stdout = await this.executor.execGit(projectPath, args, signal)
           return { ok: true, stdout: stdout || "", stderr: "" }
         } catch (e2: unknown) {
+          if (signal?.aborted) {
+            return { ok: false, stdout: "", stderr: "操作已取消", canceled: true }
+          }
           return { ok: false, stdout: "", stderr: this.enhancePullError(action, getErrorMessage(e2) || String(e2)) }
         }
       }
@@ -166,7 +191,22 @@ export class RemoteOps {
     const err: RemoteOpResult = { ok: false, stdout: "", stderr: "项目未找到" }
     const byPlatform = {} as Record<PlatformKey, RemoteOpResult>
     for (const pm of PLATFORM_META) byPlatform[pm.key] = err
-    return { success: false, ...byPlatform }
+    return { success: false, allSkipped: false, ...byPlatform }
+  }
+
+  /**
+   * 排队等锁期间被取消时的结果模板：尚未执行任何 git 命令，
+   * 已配置的远程标 canceled、未配置的标 skipped，与真实执行后的结果形状保持一致。
+   */
+  private canceledAllResult(project: GitProject): AllPlatformResult {
+    const byPlatform = {} as Record<PlatformKey, RemoteOpResult>
+    for (const { key } of getProjectRemoteNames(project)) {
+      byPlatform[key] = { ok: false, stdout: "", stderr: "操作已取消", canceled: true, durationMs: 0 }
+    }
+    for (const pm of PLATFORM_META) {
+      if (!byPlatform[pm.key]) byPlatform[pm.key] = RemoteOps.skippedResult
+    }
+    return { success: false, allSkipped: false, ...byPlatform }
   }
 
   /**
@@ -195,24 +235,32 @@ export class RemoteOps {
     const pathWarning = resolved.source === "fallback"
       ? "⚠ 所有已知路径均不存在，已回退主路径，请检查项目路径配置"
       : ""
-    /** 仅对实际执行且失败的结果前置路径告警（成功说明回退路径可用，无需打扰；与单平台路径一致） */
+    /** 仅对实际执行且失败的结果前置路径告警（成功说明回退路径可用，取消则本就没执行；与单平台路径一致） */
     const withPathWarning = (r: RemoteOpResult): RemoteOpResult =>
-      pathWarning && !r.skipped && !r.ok ? { ...r, stderr: pathWarning + (r.stderr ? `\n${r.stderr}` : "") } : r
+      pathWarning && !r.skipped && !r.canceled && !r.ok
+        ? { ...r, stderr: pathWarning + (r.stderr ? `\n${r.stderr}` : "") }
+        : r
 
-    // 智能跳过：推送前检查缓存，跳过 ahead===0 的远程
-    const cachedStatus = this.pushStatusCache[id]
+    // 智能跳过：推送前检查缓存，跳过 ahead===0 的远程。
+    // 缓存带 TTL：外部终端提交不会走本应用的失效通道，过期缓存一律不复用（见字段注释）。
+    const cached = action === "push" ? this.pushStatusCache[id] : undefined
+    const cacheFresh = !!cached && Date.now() - cached.at <= RemoteOps.PUSH_STATUS_CACHE_TTL_MS
     function shouldSkip(key: PlatformKey): boolean {
       if (action !== "push") return false
-      if (!cachedStatus) return false
-      const rs = cachedStatus.remotes[key]
+      if (!cacheFresh || !cached) return false
+      const rs = cached.status.remotes[key]
       if (!rs) return false
       // 状态检查失败（error 字段存在）时不能判定为已同步，否则会静默跳过应推送的远程
       return !rs.error && !mayAttemptPush(rs)
     }
 
-    // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥
-    return this.writeLock.runExclusive(cwd, () =>
-      this.executor.withAbortController(id, action, async (signal) => {
+    // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥。
+    // ⚠️ AbortController 必须在**锁外**注册：ProjectWriteLock 是纯 Promise 链、没有中断能力，
+    //    若在锁内注册，排队等锁期间 cancelOp 找不到控制器 —— 取消按钮点了没反应，锁一释放推送照跑。
+    return this.executor.withAbortController(id, action, (signal) =>
+      this.writeLock.runExclusive(cwd, async () => {
+        // 排队期间已被取消：不执行任何 git 命令，按取消结果返回
+        if (signal.aborted) return this.canceledAllResult(project)
         // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支；强制推送时同样需要分支名
         const pullBranch = action === "pull" ? await this.executor.getCurrentBranch(cwd) : undefined
         const forceBranch = action === "push" && forceWithLease ? await this.executor.getCurrentBranch(cwd) : undefined
@@ -238,9 +286,12 @@ export class RemoteOps {
 
         type SettledEntry = { key: PlatformKey } & RemoteOpResult
         const results = await Promise.allSettled(
-          entries.map(({ key, remoteName }): Promise<SettledEntry> =>
-            this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, { forceWithLease, forceBranch }).then((r) => ({ key, ...r })),
-          ),
+          entries.map(async ({ key, remoteName }): Promise<SettledEntry> => {
+            // 各远程并行执行，耗时必须各自计；共用总时长会让每个平台都显示同一个数字
+            const startedAt = Date.now()
+            const r = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, { forceWithLease, forceBranch })
+            return { key, ...r, durationMs: Date.now() - startedAt }
+          }),
         )
 
         // 单次遍历建 Map，避免 4 次 results.find() O(4N) 开销
@@ -273,8 +324,12 @@ export class RemoteOps {
         // push 成功后失效智能跳过缓存，保证下次 shouldSkip 走真实状态检查（commit 路径已失效，但 push 本身也需收尾）
         if (action === "push") { this.invalidatePushStatusCache(id) }
 
+        // success 只统计「真实执行且成功」：智能跳过返回的是 ok:true，
+        // 若一并计入，「全部已同步」会被误报成「推送成功」，调用方（如 BFG 强推收尾）无从区分。
+        const executed = PLATFORM_META.map((pm) => byPlatform[pm.key]).filter((r) => !r.skipped)
         return {
-          success: Object.values(byPlatform).some((r) => r.ok),
+          success: executed.some((r) => r.ok),
+          allSkipped: executed.length === 0,
           ...byPlatform,
         }
       }),
@@ -294,7 +349,7 @@ export class RemoteOps {
   async pushSingle(
     id: string,
     target: PlatformKey,
-  ): Promise<{ ok: boolean, stdout: string, stderr: string }> {
+  ): Promise<RemoteOpResult> {
     return this.remoteOpSingle(id, target, "push")
   }
 
@@ -304,7 +359,7 @@ export class RemoteOps {
   async pullSingle(
     id: string,
     target: PlatformKey,
-  ): Promise<{ ok: boolean, stdout: string, stderr: string }> {
+  ): Promise<RemoteOpResult> {
     return this.remoteOpSingle(id, target, "pull")
   }
 
@@ -313,7 +368,7 @@ export class RemoteOps {
     id: string,
     target: PlatformKey,
     action: "push" | "pull",
-  ): Promise<{ ok: boolean, stdout: string, stderr: string }> {
+  ): Promise<RemoteOpResult> {
     const project = await this.store.getProjectById(id)
     if (!project) {
       return { ok: false, stdout: "", stderr: "项目未找到" }
@@ -331,18 +386,29 @@ export class RemoteOps {
       return { ok: false, stdout: "", stderr: "该平台远程未配置" }
     }
 
-    // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥
-    return this.writeLock.runExclusive(cwd, () =>
-      this.executor.withAbortController(id, action, async (signal) => {
+    // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥。
+    // AbortController 在锁外注册，保证排队等锁期间取消同样生效（同 remoteOpAll）。
+    return this.executor.withAbortController(id, action, (signal) =>
+      this.writeLock.runExclusive(cwd, async () => {
+        // 排队期间已被取消：不执行任何 git 命令
+        if (signal.aborted) {
+          return { ok: false, stdout: "", stderr: "操作已取消", canceled: true, durationMs: 0 }
+        }
         // pull 时预解析当前分支，显式指定拉取分支
         const pullBranch = action === "pull" ? await this.executor.getCurrentBranch(cwd) : undefined
+        const startedAt = Date.now()
         const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch)
+        const durationMs = Date.now() - startedAt
         // push 成功后失效智能跳过缓存
         if (action === "push") { this.invalidatePushStatusCache(id) }
+        // 取消不是失败：不前置路径告警（路径问题与用户主动中止无关）
+        const needsPathWarning = pathWarning && !result.ok && !result.canceled
         return {
           ok: result.ok,
           stdout: result.stdout,
-          stderr: pathWarning && !result.ok ? `${pathWarning}\n${result.stderr}` : result.stderr,
+          stderr: needsPathWarning ? `${pathWarning}\n${result.stderr}` : result.stderr,
+          canceled: result.canceled,
+          durationMs,
         }
       }),
     )
@@ -576,7 +642,7 @@ export class RemoteOps {
           error: aheadBehind.error,
         }
       }
-      this.pushStatusCache[id] = status
+      this.pushStatusCache[id] = { status, at: Date.now() }
       return status
     }
 
@@ -600,8 +666,8 @@ export class RemoteOps {
       if (hasUnpushedCommits(result)) status.needsPush = true
     }
 
-    // 缓存用于智能跳过
-    this.pushStatusCache[id] = status
+    // 缓存用于智能跳过（带时间戳，超时不再复用）
+    this.pushStatusCache[id] = { status, at: Date.now() }
     return status
   }
 

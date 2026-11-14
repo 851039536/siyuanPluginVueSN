@@ -8,13 +8,13 @@ import { findProject, platformLabel, pruneRecordCache, resolveValidPath, opSumma
 /** 推送/拉取单平台结构化输出（类型定义迁移至 types/storage.ts，此处 re-export 保持向后兼容） */
 export type { PushOutputEntry } from "../types"
 
-export type ProgressStatus = "pending" | "pushing" | "ok" | "fail"
+export type ProgressStatus = "pending" | "pushing" | "ok" | "fail" | "canceled"
 type ProgressRef = Ref<Record<string, Record<string, ProgressStatus>>>
 type OutputsRef = Ref<Record<string, PushOutputEntry[]>>
 
 /**
  * 远程推送/拉取进度管理 composable
- * 封装 pushToAll / pullToAll / pushSingle / pullSingle 的进度追踪、超时清理、结构化输出
+ * 封装 pushToAll / forcePushToAll / pushSingle / pullSingle 的进度追踪、超时清理、结构化输出
  */
 export function useRemoteProgress(
   manager: GitPushManager,
@@ -37,6 +37,7 @@ export function useRemoteProgress(
   /** 将 AllPlatformResult 转换为结构化 PushOutputEntry[] */
   function buildOutputEntries(
     result: Record<string, any>,
+    action: "push" | "pull",
     durations: Record<string, number>,
     usedPath?: string,
   ): PushOutputEntry[] {
@@ -49,9 +50,11 @@ export function useRemoteProgress(
         label: pm.label,
         ok: r.ok ?? false,
         skipped: r.skipped ?? false,
-        duration: durations[pm.key] ?? 0,
+        canceled: r.canceled ?? false,
+        // 优先用执行层回传的单远程耗时；缺失时才回落调用方给的兜底值（全平台共用的总时长）
+        duration: r.durationMs ?? durations[pm.key] ?? 0,
         summary: opSummary({
-          action: "push",
+          action,
           ok: r.ok ?? false,
           i18n: opts.i18n,
           raw: r.ok ? r.stdout : r.stderr,
@@ -69,23 +72,24 @@ export function useRemoteProgress(
     return entries
   }
 
-  /** 从输出条目生成纯文本（用于复制） */
-  function entriesToText(entries?: PushOutputEntry[]): string {
-    if (!entries) return ""
-    const lines: string[] = []
-    for (const e of entries) {
-      lines.push(`[${e.label}] ${e.ok ? "成功" : e.skipped ? "已跳过" : "失败"} (${e.duration}ms)`)
-      if (e.fullStdout) lines.push(e.fullStdout)
-      if (e.fullStderr) lines.push(`错误: ${e.fullStderr}`)
-    }
-    return lines.join("\n")
-  }
-
   /** 获取项目有效路径 */
   function getUsedPath(id: string): string | undefined {
     const project = findProject(projects, id)
     if (!project) return undefined
     return resolveValidPath(project)
+  }
+
+  /**
+   * 合并单平台结果到既有输出：单推不应覆盖「推送全部」留下的其它平台结果。
+   * 按 PLATFORM_META 固定顺序排列，避免条目顺序随用户点击顺序漂移。
+   */
+  function mergeOutputEntry(outputsRef: OutputsRef, id: string, entry: PushOutputEntry): void {
+    const order = new Map(PLATFORM_META.map((pm, i) => [pm.key, i]))
+    const rank = (key: PlatformKey) => order.get(key) ?? Number.MAX_SAFE_INTEGER
+    const merged = [...(outputsRef.value[id] ?? []).filter((e) => e.platform !== entry.platform), entry]
+      .sort((a, b) => rank(a.platform) - rank(b.platform))
+    // 整体替换而非改属性：ref<Record> 的原地 delete/赋值不被深层响应式稳定追踪（项目内既有约定）
+    outputsRef.value = { ...outputsRef.value, [id]: merged }
   }
 
   // ── 通用推送/拉取实现 ──
@@ -131,7 +135,7 @@ export function useRemoteProgress(
     }
   }
 
-  /** 通用全平台 remote 操作（pushToAll / pullToAll 共用实现） */
+  /** 通用全平台 remote 操作（pushToAll / forcePushToAll 共用实现） */
   async function remoteOpAll(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
     managerFn: (id: string) => Promise<Record<string, any>>, id: string,
@@ -157,29 +161,31 @@ export function useRemoteProgress(
 
     try {
       const totalStart = Date.now()
-      for (const key of Object.keys(initProg)) {
-        progressRef.value = {
-          ...progressRef.value,
-          [id]: { ...progressRef.value[id], [key]: "pushing" },
-        }
+      // 一次构造全量进度：逐 key 展开整表会触发 N 次响应式更新（3~4 个平台时纯属浪费）
+      progressRef.value = {
+        ...progressRef.value,
+        [id]: Object.fromEntries(
+          Object.keys(initProg).map((key) => [key, "pushing" as ProgressStatus]),
+        ),
       }
 
       const result = await managerFn(id)
 
       const totalDuration = Date.now() - totalStart
+      const nextProg = { ...progressRef.value[id] }
       for (const pm of PLATFORM_META) {
         const key = pm.key
         if (!initProg[key]) continue
         const r = result[key] as any
-        progressRef.value = {
-          ...progressRef.value,
-          [id]: { ...progressRef.value[id], [key]: r?.ok ? "ok" : "fail" },
-        }
+        // 取消是独立终态：记成 fail 会让「用户主动停止」和「推送真的失败」混为一谈
+        nextProg[key] = r?.canceled ? "canceled" : r?.ok ? "ok" : "fail"
       }
+      progressRef.value = { ...progressRef.value, [id]: nextProg }
 
+      // 执行层已回传各远程真实耗时；这里的总时长仅作兜底（避免旧调用方缺字段时显示 0）
       const sharedDurations: Record<string, number> = {}
       for (const key of Object.keys(initProg)) { sharedDurations[key] = totalDuration }
-      outputsRef.value[id] = buildOutputEntries(result, sharedDurations, getUsedPath(id))
+      outputsRef.value[id] = buildOutputEntries(result, action, sharedDurations, getUsedPath(id))
       pruneRecordCache(outputsRef.value)
       opts.loadPushStatus(id).catch((e: any) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
       return result
@@ -197,7 +203,7 @@ export function useRemoteProgress(
   /** 通用单平台 remote 操作（pushSingle / pullSingle 共用实现） */
   async function remoteOpSingle(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
-    managerFn: (id: string, target: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string }>,
+    managerFn: (id: string, target: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string, canceled?: boolean, durationMs?: number }>,
     id: string, target: PlatformKey,
     oppositeProgressRef?: ProgressRef,
   ) {
@@ -216,10 +222,11 @@ export function useRemoteProgress(
     const startedAt = Date.now()
     try {
       const result = await managerFn(id, target)
-      const duration = Date.now() - startedAt
+      // 执行层的单远程耗时更准（含内部重试）；缺失时才用本层墙钟
+      const duration = result.durationMs ?? Date.now() - startedAt
       progressRef.value = {
         ...progressRef.value,
-        [id]: { ...progressRef.value[id], [target]: result.ok ? "ok" : "fail" },
+        [id]: { ...progressRef.value[id], [target]: result.canceled ? "canceled" : result.ok ? "ok" : "fail" },
       }
 
       const entries: PushOutputEntry[] = [{
@@ -227,6 +234,7 @@ export function useRemoteProgress(
         label: platformLabel(target),
         ok: result.ok,
         skipped: false,
+        canceled: result.canceled ?? false,
         duration,
         summary: opSummary({
           action: action as GitOpAction,
@@ -237,7 +245,7 @@ export function useRemoteProgress(
         fullStdout: result.stdout,
         fullStderr: result.stderr,
       }]
-      outputsRef.value[id] = entries
+      mergeOutputEntry(outputsRef, id, entries[0])
       pruneRecordCache(outputsRef.value)
       opts.loadPushStatus(id).catch((e: any) => console.warn(`[gitPush] 刷新${action === "push" ? "推送" : "拉取"}状态失败:`, e?.message || e))
       return result
@@ -248,16 +256,17 @@ export function useRemoteProgress(
         [id]: { ...progressRef.value[id], [target]: "fail" },
       }
       const errMsg = String(e?.message || e)
-      outputsRef.value[id] = [{
+      mergeOutputEntry(outputsRef, id, {
         platform: target,
         label: platformLabel(target),
         ok: false,
         skipped: false,
+        canceled: false,
         duration,
         summary: opSummary({ action: action as GitOpAction, ok: false, i18n: opts.i18n, raw: errMsg }),
         fullStdout: "",
         fullStderr: errMsg,
-      }]
+      })
       pruneRecordCache(outputsRef.value)
       // 与 remoteOpAll 策略统一：不重抛（调用方为模板事件处理器，无 catch），返回结构化错误
       return { ok: false, stdout: "", stderr: errMsg }
@@ -305,10 +314,6 @@ export function useRemoteProgress(
     return remoteOpSingle("push", pushProgress, pushOutputs, manager.pushSingle.bind(manager), id, target, pullProgress)
   }
 
-  function pullToAll(id: string) {
-    return remoteOpAll("pull", pullProgress, pullOutputs, manager.pullToAll.bind(manager), id, pushProgress)
-  }
-
   function pullSingle(id: string, target: PlatformKey) {
     return remoteOpSingle("pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target, pushProgress)
   }
@@ -353,14 +358,12 @@ export function useRemoteProgress(
     getPushStatus,
     isPushing,
     pushOutputs,
-    entriesToText,
     pullProgress,
     isPulling,
     pullOutputs,
     pushToAll,
     forcePushToAll,
     pushSingle,
-    pullToAll,
     pullSingle,
     cancelPush,
     cancelPull,

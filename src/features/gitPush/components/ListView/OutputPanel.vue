@@ -123,35 +123,41 @@ const emit = defineEmits<{
   clear: []
 }>()
 
-/** 是否存在失败条目（非跳过且失败，控制 AI 分析按钮显隐） */
+/** 是否存在失败条目（非跳过、非取消且失败，控制 AI 分析按钮显隐） */
 const hasFailed = computed(() =>
-  (props.entries ?? []).some((e) => !e.ok && !e.skipped),
+  (props.entries ?? []).some((e) => !e.ok && !e.skipped && !e.canceled),
 )
 
 /**
  * 结果摘要：把「本次操作整体怎么样」压缩成一行。
- * 三态优先级 —— 有失败 → 失败；全跳过 → 跳过；否则成功。
+ * 三态优先级 —— 有失败 → 失败；全跳过/全取消 → 跳过；否则成功。
  * counts 只列非零项，避免成功时出现「失败 0 · 跳过 0」的噪音。
  */
 const outcome = computed(() => {
   const all = props.entries ?? []
   const ok = all.filter((e) => e.ok && !e.skipped).length
-  const failed = all.filter((e) => !e.ok && !e.skipped).length
+  const failed = all.filter((e) => !e.ok && !e.skipped && !e.canceled).length
   const skipped = all.filter((e) => e.skipped).length
+  const canceled = all.filter((e) => e.canceled).length
 
-  const type = failed > 0 ? "fail" : ok === 0 && skipped > 0 ? "skip" : "ok"
+  const type = failed > 0 ? "fail" : ok === 0 && (skipped > 0 || canceled > 0) ? "skip" : "ok"
   const actionText = props.action === "push" ? props.i18n.push : props.i18n.pull
   const counts = [
     ok > 0 ? `${props.i18n.done} ${ok}` : "",
     failed > 0 ? `${props.i18n.failed} ${failed}` : "",
     skipped > 0 ? `${props.i18n.opSkipped} ${skipped}` : "",
+    canceled > 0 ? `${props.i18n.canceled} ${canceled}` : "",
   ].filter(Boolean).join(" · ")
 
   // 结论文案走带占位符的模板键：直接拼接「动作词 + 结果词」在英文下会粘成 "PushDone"/"PullFailed"
   // （中文因无需分隔符恰好可读，属跨语言缺陷），模板键让各语言自行决定语序与间隔
   const resultTemplate = type === "ok"
     ? props.i18n.opResultOk
-    : type === "fail" ? props.i18n.opResultFail : props.i18n.opResultSkip
+    : type === "fail"
+      ? props.i18n.opResultFail
+      : canceled > 0 && skipped === 0
+        ? props.i18n.opResultCanceled
+        : props.i18n.opResultSkip
 
   return {
     type,
@@ -210,14 +216,15 @@ function truncate(text: string): string {
 
 /** 单条结果 → 控制台行（头行 + 缩进详情行） */
 function entryToLines(entry: PushOutputEntry): ConsoleLine[] {
-  const type: ConsoleLineType = entry.ok ? "ok" : entry.skipped ? "skip" : "fail"
-  const marker = entry.ok ? "[ OK ]" : entry.skipped ? "[SKIP]" : "[FAIL]"
+  // 取消复用 skip 的中性色：它不是失败，不该出现红色告警，同时避免为此新增一套共享样式
+  const type: ConsoleLineType = entry.canceled ? "skip" : entry.ok ? "ok" : entry.skipped ? "skip" : "fail"
+  const marker = entry.canceled ? "[STOP]" : entry.ok ? "[ OK ]" : entry.skipped ? "[SKIP]" : "[FAIL]"
   const hasDetail = Boolean(entry.fullStdout || entry.fullStderr)
-  // 头行：无详情输出时附带摘要（有详情时摘要即其首行，避免重复显示）
+  // 头行：无详情输出时附带摘要（有详情时摘要即其首行，避免重复显示）；跳过与取消都没有有效耗时
   const head = [
     marker,
     entry.label,
-    entry.skipped ? "" : `${entry.duration}ms`,
+    entry.skipped || entry.canceled ? "" : `${entry.duration}ms`,
     hasDetail ? "" : entry.summary,
   ].filter(Boolean).join(" · ")
   const result: ConsoleLine[] = [{ text: head, type }]

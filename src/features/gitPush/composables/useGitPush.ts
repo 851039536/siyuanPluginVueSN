@@ -50,7 +50,6 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     getPushStatus: gitOps.getPushStatus,
     isPushing: gitOps.isPushing,
     pushOutputs: gitOps.pushOutputs,
-    entriesToText: gitOps.entriesToText,
     isPulling: gitOps.isPulling,
     pullOutputs: gitOps.pullOutputs,
     pushStatuses: gitOps.pushStatuses,

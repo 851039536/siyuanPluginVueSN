@@ -114,7 +114,7 @@ export interface CardOps {
   handleResolveConflict: (id: string, file: string, strategy: "theirs" | "ours") => void
   handleAbortMerge: (id: string) => void
   confirmPullSingle: (id: string, key: PlatformKey) => void
-  pushSingle: (id: string, key: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string }>
+  pushSingle: (id: string, key: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string, canceled?: boolean, durationMs?: number }>
   pushToAll: (id: string) => Promise<Record<string, any>>
   handleForcePushToAll: (id: string) => void
   cancelPush: (id: string) => void

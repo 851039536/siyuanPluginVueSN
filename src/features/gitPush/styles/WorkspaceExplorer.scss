@@ -81,14 +81,21 @@
   margin-right: auto;
 }
 
-// 文件数超出上限提示
+// 横幅提示（截断说明 / 刷新失败）：默认中性信息色，仅真错误才用错误色
 .we-notice {
   display: flex;
   align-items: center;
   gap: $s-px6;
   flex-shrink: 0;
   font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+// 「读取文件列表失败」这类真错误：错误色 + 不弱化
+.we-notice--error {
   color: var(--b3-theme-error);
+  opacity: 1;
 }
 
 // ── 主体：文件区 + 底部项目脚本面板 ──

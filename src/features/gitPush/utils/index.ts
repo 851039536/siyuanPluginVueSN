@@ -172,6 +172,7 @@ export type {
 export {
   classifyWorkspaceFile,
   IMAGE_PREVIEW_LIMIT,
+  pickInitialWorkspaceFile,
   readWorkspaceFilePreview,
   readWorkspaceImageDataUrl,
   resolveWorkspacePath,

@@ -17,6 +17,7 @@ import {
 import {
   classifyWorkspaceFile,
   IMAGE_PREVIEW_LIMIT,
+  pickInitialWorkspaceFile,
   readWorkspaceFilePreview,
   readWorkspaceImageDataUrl,
   resolveWorkspacePath,
@@ -58,6 +59,31 @@ describe("workspaceFileIcon", () => {
   it("未知类型回落通用文件图标；点号开头的文件名不算扩展名", () => {
     expect(workspaceFileIcon("a.unknownext")).toBe("mdi:file-outline")
     expect(workspaceFileIcon(".editorconfig")).toBe("mdi:file-outline")
+  })
+})
+
+describe("pickInitialWorkspaceFile（打开时的默认预览）", () => {
+  const files = ["docs/README.md", "README.md", "src/a.ts"]
+
+  it("优先上次看过的文件（仍存在时）", () => {
+    expect(pickInitialWorkspaceFile(files, "src/a.ts")).toBe("src/a.ts")
+  })
+
+  it("上次的文件已不存在 → 回落到根级 README", () => {
+    expect(pickInitialWorkspaceFile(files, "src/gone.ts")).toBe("README.md")
+  })
+
+  it("只认根级 README，大小写不敏感，.md 优先于无扩展", () => {
+    expect(pickInitialWorkspaceFile(["docs/README.md", "readme"])).toBe("readme")
+    expect(pickInitialWorkspaceFile(["Readme.md"])).toBe("Readme.md")
+    expect(pickInitialWorkspaceFile(["README", "README.md"])).toBe("README.md")
+    // 子目录里的 README 不算项目概览
+    expect(pickInitialWorkspaceFile(["docs/README.md"])).toBe("")
+  })
+
+  it("都没有时返回空串（保持空态）", () => {
+    expect(pickInitialWorkspaceFile(["src/a.ts"])).toBe("")
+    expect(pickInitialWorkspaceFile([])).toBe("")
   })
 })
 

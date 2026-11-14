@@ -242,6 +242,32 @@ export function readWorkspaceImageDataUrl(
   }
 }
 
+/** 根级 README 的候选名（小写、按优先级排列；命中索引越小越优先） */
+const README_CANDIDATES = ["readme.md", "readme.markdown", "readme.mdx", "readme"]
+
+/**
+ * 打开文件浏览器时自动选中的文件（避免右侧 62% 宽度一亮就是空白）。
+ *
+ * 优先级：上次看过的文件（仍存在时，保持连续性）→ 根级 README（项目概览）→ 空串（保持空态）。
+ * @param files 工作区文件相对路径列表
+ * @param lastPath 上次看过的文件相对路径（不存在于 `files` 时自动跳过）
+ */
+export function pickInitialWorkspaceFile(files: readonly string[], lastPath = ""): string {
+  if (lastPath && files.includes(lastPath)) return lastPath
+  let best = ""
+  let bestRank = README_CANDIDATES.length
+  for (const path of files) {
+    // 只认根级：子目录里的 README 往往不是「项目概览」
+    if (path.includes("/")) continue
+    const rank = README_CANDIDATES.indexOf(path.toLowerCase())
+    if (rank !== -1 && rank < bestRank) {
+      best = path
+      bestRank = rank
+    }
+  }
+  return best
+}
+
 /**
  * 只读预览工作区文件。
  * @param projectRoot 项目根绝对路径

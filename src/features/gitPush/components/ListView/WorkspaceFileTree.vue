@@ -1,9 +1,11 @@
 <!-- gitPush 工作区文件树（目录折叠 / 类型图标 / 变更角标 / 本地分页；选中与展开由父层持有） -->
 <template>
   <div
+    ref="treeEl"
     class="we-tree"
     role="tree"
     :aria-label="i18n.workspaceFilesTitle"
+    @keydown="onTreeKeydown"
   >
     <template
       v-for="row in pagedRows"
@@ -16,8 +18,11 @@
         :style="indentStyle(row.depth)"
         role="treeitem"
         :aria-expanded="isExpanded(row.path)"
-        tabindex="0"
+        :aria-level="row.depth + 1"
+        :tabindex="rowTabIndex(row)"
+        :data-row-key="row.key"
         :title="row.path"
+        @focus="activeKey = row.key"
         @click="emit('toggleDir', row.path)"
         @keydown.enter.prevent="emit('toggleDir', row.path)"
         @keydown.space.prevent="emit('toggleDir', row.path)"
@@ -57,8 +62,11 @@
         :style="indentStyle(row.depth)"
         role="treeitem"
         :aria-selected="row.path === selectedPath"
-        tabindex="0"
+        :aria-level="row.depth + 1"
+        :tabindex="rowTabIndex(row)"
+        :data-row-key="row.key"
         :title="row.path"
+        @focus="activeKey = row.key"
         @click="emit('select', row.path)"
         @keydown.enter.prevent="emit('select', row.path)"
         @keydown.space.prevent="emit('select', row.path)"
@@ -121,7 +129,7 @@ import type { FileChange } from "../../types"
 import type { PathTreeRow } from "../../utils"
 import type { TimerHandle } from "@/utils/timerRegistry"
 import { Icon } from "@iconify/vue"
-import { computed, onUnmounted, ref, watch } from "vue"
+import { computed, nextTick, onUnmounted, ref, watch } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
@@ -166,6 +174,110 @@ const {
 
 /** 展开/收起/筛选会重算行集合，此时回到首屏，避免新增子行落在已分页区之外 */
 watch(() => props.rows, reset)
+
+// ── 键盘导航（roving tabindex：整棵树只占一个 Tab 位，方向键在行间移动）──
+const treeEl = ref<HTMLElement | null>(null)
+/** 当前键盘焦点行的键（空串 = 尚未聚焦过，回落到首行） */
+const activeKey = ref("")
+
+/** 实际 tabindex=0 的行（activeKey 失效——被筛选/折叠掉——时回落到首行） */
+const activeRowKey = computed(() => {
+  const rows = pagedRows.value
+  if (rows.length === 0) return ""
+  return rows.some((row) => row.key === activeKey.value) ? activeKey.value : rows[0].key
+})
+
+/** 行 tabindex：只有「当前行」可 Tab 进入，其余 -1（否则 300 行要按 300 次 Tab） */
+function rowTabIndex(row: PathTreeRow): number {
+  return row.key === activeRowKey.value ? 0 : -1
+}
+
+/** 按行键把 DOM 焦点移到该行（行已在 DOM 里，无需等重渲染） */
+function focusRow(key: string) {
+  const nodes = treeEl.value?.querySelectorAll<HTMLElement>("[data-row-key]")
+  if (!nodes) return
+  for (const node of nodes) {
+    if (node.dataset.rowKey === key) {
+      node.focus()
+      return
+    }
+  }
+}
+
+/** 把键盘焦点行移到第 index 行（越界忽略） */
+function moveActive(index: number) {
+  const rows = pagedRows.value
+  if (index < 0 || index >= rows.length) return
+  activeKey.value = rows[index].key
+  focusRow(rows[index].key)
+}
+
+/** 当前行的父目录行下标（深度浅一层、且最近的目录行；找不到返回 -1） */
+function parentIndexOf(index: number): number {
+  const rows = pagedRows.value
+  const depth = rows[index].depth
+  for (let i = index - 1; i >= 0; i--) {
+    if (rows[i].type === "dir" && rows[i].depth === depth - 1) return i
+  }
+  return -1
+}
+
+/**
+ * 树内方向键导航（ARIA tree 语义）：
+ * ↑↓ 上下移动（到底且还有未渲染行时自动加载下一页）、→ 展开/进入子层、← 折叠/回到父层、
+ * Home/End 首末行。Enter/Space 仍由行内处理（展开或预览）。
+ */
+function onTreeKeydown(e: KeyboardEvent) {
+  const rows = pagedRows.value
+  if (rows.length === 0) return
+  const focusKey = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-row-key]")?.dataset.rowKey
+  const index = focusKey ? rows.findIndex((row) => row.key === focusKey) : -1
+  if (index === -1) return
+  const row = rows[index]
+
+  switch (e.key) {
+    case "ArrowDown":
+      e.preventDefault()
+      if (index === rows.length - 1 && hasMore.value) {
+        loadMore()
+        void nextTick(() => moveActive(index + 1))
+        return
+      }
+      moveActive(index + 1)
+      return
+    case "ArrowUp":
+      e.preventDefault()
+      moveActive(index - 1)
+      return
+    case "ArrowRight":
+      e.preventDefault()
+      // 目录：未展开则展开；已展开则进入第一项。文件不响应（与 VS Code 一致）
+      if (row.type !== "dir") return
+      if (!isExpanded(row.path)) emit("toggleDir", row.path)
+      else moveActive(index + 1)
+      return
+    case "ArrowLeft": {
+      e.preventDefault()
+      if (row.type === "dir" && isExpanded(row.path)) {
+        emit("toggleDir", row.path)
+        return
+      }
+      const parent = parentIndexOf(index)
+      if (parent !== -1) moveActive(parent)
+      return
+    }
+    case "Home":
+      e.preventDefault()
+      moveActive(0)
+      return
+    case "End":
+      e.preventDefault()
+      moveActive(rows.length - 1)
+      return
+    default:
+      return
+  }
+}
 
 // ── 行内「复制名称」（文件名 / 文件夹名）──
 /** 最近一次复制成功的行键（按钮临时换对勾） */

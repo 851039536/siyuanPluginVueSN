@@ -96,7 +96,7 @@
     <!-- 刷新失败但仍有缓存内容：横幅提示，不清空已展示的树（"读取文件列表失败"） -->
     <div
       v-if="error && files.length > 0"
-      class="we-notice"
+      class="we-notice we-notice--error"
     >
       <Icon
         icon="mdi:alert-circle-outline"
@@ -175,6 +175,7 @@ import {
   buildPathTreeRows,
   collectDirectoryPaths,
   filterPathsByQuery,
+  pickInitialWorkspaceFile,
   resolveValidPath,
 } from "../../utils"
 import { useCardServices } from "../../composables/useCardServices"
@@ -262,10 +263,13 @@ const truncatedNotice = computed(() => (
     : ""
 ))
 
-/** 计数文案：有筛选词时为命中数，否则为总数 */
-const countText = computed(() => (
-  i18n.workspaceFilesCount.replace("{0}", String(filteredFiles.value.length))
-))
+/** 计数文案：无筛选时为总数；有筛选时为「命中 / 总数」，避免「共 12 个文件」分不清是命中还是全库 */
+const countText = computed(() => {
+  const total = files.value.length
+  const matched = filteredFiles.value.length
+  const value = query.value.trim() ? `${matched} / ${total}` : String(matched)
+  return i18n.workspaceFilesCount.replace("{0}", value)
+})
 
 /** 变更映射（相对路径 → 变更条目；角标数据源） */
 const changeMap = computed(() => new Map(props.changes.map((f) => [f.path, f])))
@@ -299,6 +303,38 @@ const mainProps = computed(() => ({
   query: query.value,
   changeMap: changeMap.value,
 }))
+
+// ── 打开时的默认预览目标（右侧不留空白）──
+const LAST_FILE_KEY = "gitpush-workspace-explorer-last-file"
+
+/** 上次看过的文件（会话内记忆；不存在于本仓库时由 pickInitialWorkspaceFile 自动回落） */
+function readLastFile(): string {
+  try {
+    return sessionStorage.getItem(LAST_FILE_KEY) ?? ""
+  } catch {
+    return ""
+  }
+}
+
+/** 有文件后落一个预览目标：上次看过 > 根级 README > 保持空态；已有选中则完全不打扰 */
+watch(files, (list) => {
+  if (selectedPath.value || list.length === 0) return
+  const pick = pickInitialWorkspaceFile(list, readLastFile())
+  if (!pick) return
+  selectedPath.value = pick
+  // 目标在深层目录时展开父链，否则树上根本看不到选中项
+  const dirs = collectDirectoryPaths([pick])
+  if (dirs.length > 0) expandedDirs.value = new Set(dirs)
+}, { immediate: true })
+
+watch(selectedPath, (path) => {
+  if (!path) return
+  try {
+    sessionStorage.setItem(LAST_FILE_KEY, path)
+  } catch {
+    // 无存储能力（隐私模式）：仅本次打开生效
+  }
+})
 
 /** 展开/收起目录（替换式更新保证 Set 变更可被响应式追踪） */
 function toggleDir(path: string) {

@@ -12,7 +12,7 @@ import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 RemoteOps 无法在 Node 单测环境加载（fetchBehind.git.spec.ts 需要真实实例）
-import { getProjectRemoteNames, hasUnpushedCommits, mayAttemptPush, orderRemotesForPullCheck } from "../utils/platform"
+import { getProjectRemoteName, getProjectRemoteNames, hasUnpushedCommits, mayAttemptPush, orderRemotesForPullCheck } from "../utils/platform"
 import { parseAheadBehind } from "../utils/gitOutput"
 import { resolveValidPathWithSource } from "../utils/project"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -103,16 +103,6 @@ export class RemoteOps {
   async setPushBranchMode(mode: "all" | "head"): Promise<void> {
     this.pushBranchMode = mode
     await this.storage.pushBranchMode.save(mode)
-  }
-
-  /** 获取项目的远程名称（按平台类型，未配置时返回 undefined） */
-  private getRemoteName(project: GitProject, target: PlatformKey): string | undefined {
-    switch (target) {
-      case "github": return project.githubRemote
-      case "gitee": return project.giteeRemote
-      case "cnb": return project.cnbRemote
-      default: return project.giteaRemote
-    }
   }
 
   /** 推送操作的单个远程结果（已跳过） */
@@ -405,7 +395,7 @@ export class RemoteOps {
     const pathWarning = resolved.source === "fallback"
       ? "⚠ 所有已知路径均不存在，已回退主路径，请检查项目路径配置"
       : ""
-    const remoteName = this.getRemoteName(project, target)
+    const remoteName = getProjectRemoteName(project, target)
     // 纵深防御：未配置该平台远程时直接返回，避免对不存在的远程执行 git 命令
     if (!remoteName) {
       return { ok: false, stdout: "", stderr: "该平台远程未配置" }

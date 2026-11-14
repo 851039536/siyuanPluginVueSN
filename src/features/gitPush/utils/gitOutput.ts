@@ -97,6 +97,28 @@ export function parseWorktreeStatus(raw: string): WorktreeStatusParse {
   }
 }
 
+/**
+ * 找出会被 `git reset --hard` 覆盖的未跟踪文件。
+ *
+ * reset --hard 只删除「挡在写入路径上」的未跟踪文件/目录（其余未跟踪文件保持原样），
+ * 因此不能一概拒绝所有未跟踪文件（构建产物、.env 常驻），只拦截真正冲突的两类：
+ *   ① 与远端树中的文件同路径；
+ *   ② 本身是远端某个路径的父级文件（本地是文件 `config`，远端要写 `config/app.yaml`）。
+ */
+export function findBlockingUntracked(untrackedPaths: string[], remotePaths: string[]): string[] {
+  if (untrackedPaths.length === 0 || remotePaths.length === 0) return []
+  const remoteFiles = new Set(remotePaths)
+  const remoteDirs = new Set<string>()
+  for (const path of remotePaths) {
+    let idx = path.indexOf("/")
+    while (idx > 0) {
+      remoteDirs.add(path.slice(0, idx))
+      idx = path.indexOf("/", idx + 1)
+    }
+  }
+  return untrackedPaths.filter((path) => remoteFiles.has(path) || remoteDirs.has(path))
+}
+
 /** v2 工作区解析结果（在 v1 同形字段之外，附带一次 git 调用才能拿到的分支信息） */
 export interface WorktreeStatusV2Parse extends WorktreeStatusParse {
   /**

@@ -80,6 +80,7 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     forcePushToAll: gitOps.forcePushToAll,
     pushSingle: gitOps.pushSingle,
     pullSingle: gitOps.pullSingle,
+    smartPullSingle: gitOps.smartPullSingle,
     cancelPush: gitOps.cancelPush,
     clearRemoteOutput: gitOps.clearRemoteOutput,
     doStashSave: gitOps.doStashSave,

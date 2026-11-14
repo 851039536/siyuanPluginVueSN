@@ -80,6 +80,7 @@ import { RepoCleanOps } from "./managers/RepoCleanOps"
 import { RepoOps } from "./managers/RepoOps"
 import { ReportOps } from "./managers/ReportOps"
 import { scriptSessions } from "./managers/ScriptSessionStore"
+import { SmartPullOps } from "./managers/SmartPullOps"
 import { WorktreeOps } from "./managers/WorktreeOps"
 import {
   clampIndexMaxCommits,
@@ -127,6 +128,7 @@ export class GitPushManager {
   /** 令牌因 Git 版本过低被跳过时只告警一次 */
   private warnedTokenSkipped = false
   private remoteOps: RemoteOps
+  private smartPullOps: SmartPullOps
   private worktreeOps: WorktreeOps
   private repoOps: RepoOps
   private commitMsgGen: CommitMsgGenerator
@@ -187,6 +189,7 @@ export class GitPushManager {
     this.store = new ProjectStore(this.storage, this.executor)
     this.pushProfiles = new PushProfileStore(this.storage)
     this.remoteOps = new RemoteOps(this.executor, this.store, this.storage, this.writeLock)
+    this.smartPullOps = new SmartPullOps(this.executor, this.store, this.writeLock)
     this.worktreeOps = new WorktreeOps(this.executor)
     this.repoOps = new RepoOps(this.executor)
     this.commitMsgGen = new CommitMsgGenerator(plugin, this.executor, this.worktreeOps, this.storage)
@@ -969,6 +972,11 @@ export class GitPushManager {
 
   async pullSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
     return this.remoteOps.pullSingle(id, target)
+  }
+
+  /** 判断拉取：确认本地提交均为远端旧副本时，备份分支并强制对齐远程 */
+  async smartPullSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
+    return this.smartPullOps.smartPullSingle(id, target)
   }
 
   async fetchAllForProject(id: string, opts?: { timeoutMs?: number }): Promise<{ fetched: string[], errors: string[] }> {

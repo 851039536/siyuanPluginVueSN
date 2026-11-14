@@ -4,6 +4,7 @@
 // 不重复计数、shortstat 为可选行（merge/空改动无该行）导致的记录切分差异。
 import { describe, expect, it } from "vitest"
 import {
+  findBlockingUntracked,
   parseAheadBehind,
   parseBranches,
   parseChangesetDiff,
@@ -648,5 +649,24 @@ describe("parseChangesetDiff", () => {
       " y",
     ].join("\n")
     expect([...parseChangesetDiff(raw).keys()]).toEqual(["a.ts"])
+  })
+})
+
+describe("findBlockingUntracked", () => {
+  it("同路径的未跟踪文件会被 reset --hard 覆盖", () => {
+    expect(findBlockingUntracked(["a.ts", "b.ts"], ["b.ts", "c/d.ts"])).toEqual(["b.ts"])
+  })
+
+  it("未跟踪文件挡住远端目录时同样会被覆盖", () => {
+    expect(findBlockingUntracked(["config"], ["config/app.yaml"])).toEqual(["config"])
+  })
+
+  it("不冲突的未跟踪文件保持原样（构建产物、.env 不应阻塞判断拉取）", () => {
+    expect(findBlockingUntracked([".env", "dist/app.js"], ["src/index.ts", "dist2/x.js"])).toEqual([])
+  })
+
+  it("空输入返回空（无未跟踪或无远端文件时无需拦截）", () => {
+    expect(findBlockingUntracked([], ["a.ts"])).toEqual([])
+    expect(findBlockingUntracked(["a.ts"], [])).toEqual([])
   })
 })

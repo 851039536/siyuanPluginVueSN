@@ -40,6 +40,27 @@
           class="gp-inline-menu-divider"
           role="separator"
         />
+        <!-- 判断拉取：先判断本地是否只有远端旧副本，确认安全才备份分支并强制对齐（原拉取不变） -->
+        <button
+          v-for="r in remotes"
+          :key="`smart-pull-${r.key}`"
+          class="gp-inline-menu-item gp-inline-menu-item--muted"
+          role="menuitem"
+          :class="{ 'gp-inline-menu-item--active': derived.isPulling(project.id, r.key) }"
+          :disabled="!project[r.remoteProp] || derived.isPulling(project.id) || derived.isPushing(project.id)"
+          :title="`${i18n.smartPull} ${r.label} — ${i18n.smartPullHint}`"
+          @click="ops.confirmSmartPull(project.id, r.key); openMenu = null"
+        >
+          <Icon
+            icon="mdi:shield-check-outline"
+            height="12"
+          />
+          <span>{{ i18n.smartPull }} · {{ r.label }}</span>
+        </button>
+        <div
+          class="gp-inline-menu-divider"
+          role="separator"
+        />
         <!-- Fetch 项："更新远程状态"（悬停：仅刷新状态不合并代码） -->
         <button
           class="gp-inline-menu-item gp-inline-menu-item--muted"

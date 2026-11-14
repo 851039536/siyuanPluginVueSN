@@ -390,6 +390,7 @@ const {
   forcePushToAll,
   pushSingle,
   pullSingle,
+  smartPullSingle,
   cancelPush,
   clearRemoteOutput,
   addCategory: addCategoryFn,
@@ -483,6 +484,16 @@ function confirmPullSingle(id: string, key: PlatformKey) {
     props.i18n.pullConfirmBody.replace("{0}", label),
     () => { pullSingle(id, key) },
     props.i18n.pullConfirm,
+  )
+}
+/** 判断拉取二次确认：说明「无独有提交才覆盖，有则不改动」，正文 {0} 填充平台名 */
+function confirmSmartPull(id: string, key: PlatformKey) {
+  const label = PLATFORM_META.find((pm) => pm.key === key)?.label ?? key
+  showConfirm(
+    props.i18n.smartPullConfirm,
+    props.i18n.smartPullConfirmBody.replace("{0}", label),
+    () => { smartPullSingle(id, key) },
+    props.i18n.smartPullConfirm,
   )
 }
 /** 通用确认弹窗状态 */
@@ -1918,6 +1929,7 @@ provide(CARD_SERVICES_KEY, {
     handleResolveConflict,
     handleAbortMerge,
     confirmPullSingle,
+    confirmSmartPull,
     pushSingle,
     pushToAll: handlePushToAll,
     handleForcePushToAll,

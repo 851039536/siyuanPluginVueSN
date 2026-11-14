@@ -111,6 +111,12 @@ export interface ProjectRemoteName {
   name: string
 }
 
+/** 获取项目在指定平台上配置的远程名（未配置返回 undefined） */
+export function getProjectRemoteName(project: GitProject, target: PlatformKey): string | undefined {
+  const pm = PLATFORM_META.find((item) => item.key === target)
+  return pm ? (project[pm.remoteProp] as string | undefined) : undefined
+}
+
 /** 获取项目已配置的远程名称列表（消除 4 处 for PLATFORM_META + project[pm.remoteProp] 重复模式） */
 export function getProjectRemoteNames(project: GitProject): ProjectRemoteName[] {
   const result: ProjectRemoteName[] = []

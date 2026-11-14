@@ -79,6 +79,7 @@ src/features/gitPush/
 │   ├── indexIo.ts                   # 索引磁盘 IO 抽象（FsIndexIO 生产实现 / 接口注入使纯逻辑可单测）
 │   ├── indexDir.ts                  # 索引目录解析（resolvePluginDataDir() → <petal>/git-push-index）
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
+│   ├── SmartPullOps.ts              # 判断拉取：patch-id 判断独有提交，安全时备份分支并强制对齐远程
 │   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志（含历史提交消息重写）
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
 │   ├── HistoryRewriter.ts           # 提交历史 DAG 重建器（消息改写/提交删除双策略：预计算重建计划 + 侧链 identity 跳过 + CAS 切回）
@@ -267,13 +268,14 @@ src/features/gitPush/
 
 ## 架构
 
-`GitPushManager` 为**门面（Facade）**，自身不含业务逻辑，按职责委托给 8 个协作者：
+`GitPushManager` 为**门面（Facade）**，自身不含业务逻辑，按职责委托给 9 个协作者：
 
 ```
 GitPushManager (facade)
   ├── GitExecutor      ← 唯一接触 child_process 的类；execGit 双池并发 + abort/destroy
   ├── ProjectStore     ← 依赖 Executor（detectRemotes）+ Storage；项目/分类/标签 CRUD
   ├── RemoteOps        ← 依赖 Executor + Store + Storage；push/pull/fetch/checkPushStatus
+  ├── SmartPullOps     ← 依赖 Executor + Store + WriteLock；判断拉取（old-alignment 安全覆盖）
   ├── WorktreeOps      ← 依赖 Executor；工作区/stash/分支/提交日志/历史消息重写
   ├── RepoOps          ← 依赖 Executor；Tag/冲突/远程配置/Git 配置/扫描
   ├── BfgOps           ← Java 探测 + bfg.jar 下载缓存 + bfg 进程执行（直接接触 child_process/https）
@@ -296,6 +298,7 @@ GitPushManager (facade)
 | `pushSingle(id, target)` | 推送到指定远程 |
 | `pullToAll(id)` | 从全部已配置远程拉取（--ff-only） |
 | `pullSingle(id, target)` | 从指定远程拉取 |
+| `smartPullSingle(id, target)` | 判断拉取：fetch 后用 patch-id 判断本地提交是否均为远端改写后的旧副本；确认无独有提交时建 `backup/<branch>-<时间戳>` 备份分支再 `reset --hard` 对齐远程，有独有提交则不做任何修改 |
 | `checkPushStatus(id, opts?)` | 检查 ahead/behind/noUpstream（纯本地比对跟踪 ref，不发起网络请求） |
 | `getWorkingTreeStatus(path, opts?)` | 解析 `git status --porcelain` |
 | `getFileDiff(path, file, staged)` | 获取单个文件 diff（未跟踪/新增文件常规 diff 为空时回退 `--no-index` 展示完整内容；失败返回空串，文案由视图层 i18n 呈现） |

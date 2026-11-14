@@ -323,6 +323,11 @@ export function useRemoteProgress(
     return remoteOpSingle("pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target, pushProgress)
   }
 
+  /** 判断拉取：与普通拉取共用 pull 进度/输出/取消通道（--ff-only 拉取本身保持不变） */
+  function smartPullSingle(id: string, target: PlatformKey) {
+    return remoteOpSingle("pull", pullProgress, pullOutputs, manager.smartPullSingle.bind(manager), id, target, pushProgress)
+  }
+
   function cancelPush(id: string) { manager.cancelOp(id, "push") }
   function cancelPull(id: string) { manager.cancelOp(id, "pull") }
 
@@ -371,6 +376,7 @@ export function useRemoteProgress(
     forcePushToAll,
     pushSingle,
     pullSingle,
+    smartPullSingle,
     cancelPush,
     cancelPull,
     clearOutput,

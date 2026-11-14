@@ -1,4 +1,6 @@
-// 共享过渡动画
+// ========== 共享过渡动画（弹窗外壳 fade / scale） ==========
+// 单一事实源：htmlViewer 与 imageCreation 曾各存一份逐字相同的 _transitions.scss。
+// 通过 `<Transition name="fade">` / `name="scale"` 引用，由各功能按需 @use。
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

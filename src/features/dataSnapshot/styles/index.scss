@@ -3,25 +3,17 @@
 @use "@/variables.scss" as *;
 
 @mixin text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include si-text-ellipsis;
 }
 
 @mixin custom-scrollbar {
-  &::-webkit-scrollbar {
-    width: 4px; // 滚动条宽度，无对应 Token
-    height: 4px; // 滚动条高度，无对应 Token
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter, $c-border);
-    border-radius: $r-sm;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  @include si-scrollbar-thin(
+    $width: 4px,
+    $height: 4px,
+    $radius: $r-sm,
+    $thumb: var(--b3-theme-surface-lighter, $c-border),
+    $hover: null
+  );
 }
 
 /* ==================== 面板与头部 ==================== */

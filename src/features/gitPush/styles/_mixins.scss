@@ -86,11 +86,7 @@
 
 // 大写标签样式（.gp-label / .gp-tag-label 共享）
 @mixin gp-label-base {
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
+  @include si-meta-caps-label;
 }
 
 // ── 视图面板基座（列表 / 统计 / 日志 / 清理各视图共用）──
@@ -134,11 +130,9 @@
   font: inherit;
 }
 
-// 单行文本截断省略号
+// 单行文本截断省略号（实现见 kit/mixins.scss）
 @mixin text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include si-text-ellipsis;
 }
 
 // ── Markdown 徽章基础（.gp-md-badge 与折叠按钮 .gp-md-more 共享）──

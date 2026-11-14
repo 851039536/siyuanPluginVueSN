@@ -11,9 +11,7 @@
 // ============================================================
 
 @mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include si-flex-center;
 }
 
 @mixin flex-center-gap($gap: 8px) {
@@ -164,10 +162,5 @@
 // ============================================================
 
 @mixin uppercase-label {
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.45;
+  @include si-meta-caps-label($color: var(--b3-theme-on-surface));
 }

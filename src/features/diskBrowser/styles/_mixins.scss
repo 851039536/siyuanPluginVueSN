@@ -13,9 +13,7 @@ $db-columns: minmax(0, 1fr) 68px 78px auto;
 
 // ==================== Mixins ====================
 @mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include si-flex-center;
 }
 
 @mixin flex-align-center {
@@ -24,9 +22,7 @@ $db-columns: minmax(0, 1fr) 68px 78px auto;
 }
 
 @mixin text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include si-text-ellipsis;
 }
 
 @mixin scrollbar($width: 6px, $height: 6px) {
@@ -59,11 +55,7 @@ $db-columns: minmax(0, 1fr) 68px 78px auto;
 
 /// Codex 大写元信息标签
 @mixin meta-label {
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
+  @include si-meta-caps-label;
 }
 
 /// Codex 边框卡片

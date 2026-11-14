@@ -10,9 +10,7 @@
 // ========================================
 
 @mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include g.si-flex-center;
 }
 
 @mixin flex-between {
@@ -266,22 +264,11 @@
 // ========================================
 
 @mixin custom-scrollbar {
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: g.$r-px2;
-
-    &:hover {
-      background: var(--b3-theme-on-surface-variant);
-    }
-  }
+  @include g.si-scrollbar-thin(
+    $width: 5px,
+    $radius: g.$r-px2,
+    $hover: var(--b3-theme-on-surface-variant)
+  );
 }
 
 // ========================================

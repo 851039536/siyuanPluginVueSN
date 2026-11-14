@@ -40,8 +40,7 @@ $fc-pad-h: 10px; // 10px 定位偏移（无匹配全局Token）
 
     // 基础样式已把它定位为 absolute（top/right 10px），这里保留原定位
     .close-btn.si-button--icon-only {
-      --button-size: 32px;
-      @include touch-area(40px, absolute);
+      @include si-icon-button-touch($positioning: absolute);
     }
 
     .category-filter {
@@ -71,8 +70,7 @@ $fc-pad-h: 10px; // 10px 定位偏移（无匹配全局Token）
       gap: $s-2;
 
       .si-button.si-button--icon-only {
-        --button-size: 32px;
-        @include touch-area;
+        @include si-icon-button-touch;
       }
     }
   }

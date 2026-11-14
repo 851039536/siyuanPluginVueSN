@@ -1,29 +1,14 @@
-// SuperPanel 模块专属 Mixins（仅保留本模块实际使用的：scrollbar-thin / mobile-only）
+// SuperPanel 模块专属 Mixins（滚动条 / 响应式实现复用 kit 单一事实源）
 @use './variables' as *;
 
 // 滚动条样式
 @mixin scrollbar-thin {
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: $r-px3;
-
-    &:hover {
-      background: var(--b3-theme-on-surface);
-    }
-  }
+  @include si-scrollbar-thin;
 }
 
 // 响应式断点（窄屏回退单列）
 @mixin mobile-only {
-  @media (max-width: 480px) {
+  @include si-mobile-only {
     @content;
   }
 }

@@ -380,8 +380,7 @@ $fc-pad-nav: 14px; // 14px 水平内边距（无匹配全局Token）
     }
 
     .typing-reference__footer .si-button.si-button--icon-only {
-      --button-size: 32px;
-      @include touch-area;
+      @include si-icon-button-touch;
     }
 
     .typing-input {

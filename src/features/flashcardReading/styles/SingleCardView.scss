@@ -60,8 +60,7 @@
 
         // Button 根节点会带上本组件的 scope 属性，普通后代选择器即可命中，无需 :deep
         .si-button.si-button--icon-only {
-          --button-size: 32px;
-          @include touch-area;
+          @include si-icon-button-touch;
         }
       }
 
@@ -76,8 +75,7 @@
       gap: $s-2;
 
       .si-button.si-button--icon-only {
-        --button-size: 32px;
-        @include touch-area;
+        @include si-icon-button-touch;
       }
     }
   }

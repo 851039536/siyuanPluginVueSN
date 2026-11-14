@@ -333,7 +333,7 @@ $lh-relaxed: 1.75;
 
 ### 参考实现
 
-- `src/components/kit/mixins.scss`（`mobile` / `touch-area` / `touch-area-y`，经 `src/_variables.scss` 转发，`@use "@/variables.scss" as *` 即可获得）
+- `src/components/kit/mixins.scss`（`mobile` / `touch-area` / `touch-area-y` + 跨功能通用 mixins `si-text-ellipsis` / `si-flex-center` / `si-scrollbar-thin` / `si-mobile-only` / `si-meta-caps-label` / `si-card-panel` / `si-icon-button-touch`，经 `src/_variables.scss` 转发，`@use "@/variables.scss" as *` 即可获得；feature 内同名 mixin 只做 `@include` 委托）
 - `src/features/rssReader/`（首个落地功能：工具栏、筛选胶囊、卡片标题行内收藏）
 - `src/index.scss`（`.vp-dock-panel` 底部安全区）
 

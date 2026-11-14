@@ -44,3 +44,94 @@
     transform: translateY(-50%);
   }
 }
+
+// ========== 跨功能通用 mixin（单一事实源） ==========
+// 各 feature 的 _mixins.scss 中曾各自复制同名实现；此处只保留一份，
+// 功能侧改为 `@include si-xxx` 委托，禁止再复制声明体。
+
+// 单行文本省略
+@mixin si-text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 水平垂直居中
+@mixin si-flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// 细滚动条（WebKit）。$height 传 null 时不声明高度；$hover 传 null 时关闭悬停变色。
+@mixin si-scrollbar-thin(
+  $width: 5px,
+  $height: null,
+  $radius: $r-px3,
+  $thumb: var(--b3-theme-surface-lighter),
+  $hover: var(--b3-theme-on-surface),
+  $track: transparent
+) {
+  &::-webkit-scrollbar {
+    width: $width;
+
+    @if $height {
+      height: $height;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $track;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $thumb;
+    border-radius: $radius;
+
+    @if $hover {
+      &:hover {
+        background: $hover;
+      }
+    }
+  }
+}
+
+// 窄屏媒体查询（<480px）。仅按宽度判断，保留既有功能行为；
+// 需要「粗指针且无 hover」兜底时用 mobile。
+@mixin si-mobile-only {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
+
+// 大写小号元信息标签（font-size / weight / letter-spacing / 大写 / 透明度）
+// $color 传 null 时只输出排版与透明度，由调用方自行补色。
+@mixin si-meta-caps-label($opacity: 0.45, $color: null) {
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: $opacity;
+
+  @if $color {
+    color: $color;
+  }
+}
+
+// 卡片容器（上间距 + 内边距 + 表面底 + 描边 + 圆角）
+@mixin si-card-panel {
+  margin-top: $s-5;
+  padding: $s-3;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $r-md;
+}
+
+// 图标按钮：固定按钮尺寸并叠加 40px 透明命中区。
+// $positioning 供已定位的按钮（如弹窗 absolute 关闭钮）传入原定位值。
+@mixin si-icon-button-touch($size: 32px, $positioning: relative) {
+  // 自定义属性值按字面量解析，必须插值，否则会原样输出 `$size`
+  --button-size: #{$size};
+
+  @include touch-area(40px, $positioning);
+}

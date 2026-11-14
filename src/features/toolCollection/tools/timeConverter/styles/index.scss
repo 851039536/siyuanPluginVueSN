@@ -2,12 +2,7 @@
 @use '@/variables.scss' as *;
 
 @mixin label-style {
-  font-size: $t-2xs;
-  font-weight: $fw-bold;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.45;
-  color: var(--b3-theme-on-surface);
+  @include si-meta-caps-label($color: var(--b3-theme-on-surface));
 }
 
 .time-converter {

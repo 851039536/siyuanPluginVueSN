@@ -76,11 +76,8 @@ $spacing-2_5: $s-px10;
 }
 
 // ========== 公共动画 keyframes（spin） ==========
-@keyframes si-spin {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
+// @keyframes si-spin 定义在 src/index.scss（全局入口只发射一次）；
+// 本文件被 30+ 个组件样式 @use，若在此声明会按编译单元重复发射。
 
 // ========== 按钮 spinner（定位 + 动画） ==========
 @mixin btn-spinner {

@@ -1,5 +1,5 @@
 @use "@/variables.scss" as *;
-@use './transitions';
+@use "@/components/kit/transitions";
 
 // HTML展示功能样式（非 scoped，子组件共享类名）
 

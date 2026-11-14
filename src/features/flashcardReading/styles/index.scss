@@ -358,8 +358,7 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
 
     // 面板头部图标按钮：视觉 32px、命中 40px
     .panel-header .si-button.si-button--icon-only {
-      --button-size: 32px;
-      @include touch-area;
+      @include si-icon-button-touch;
     }
 
     // CardList 每张卡 6 个操作按钮：触摸设备无 hover，改为常驻。
@@ -370,8 +369,7 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
       opacity: 1;
 
       .si-button.si-button--icon-only {
-        --button-size: 32px;
-        @include touch-area;
+        @include si-icon-button-touch;
       }
     }
 
@@ -413,8 +411,7 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
 
     // 卡片导航（单卡视图 / 边学边写共用）：视觉 32px、命中 40px
     .card-navigation .si-button.si-button--icon-only {
-      --button-size: 32px;
-      @include touch-area;
+      @include si-icon-button-touch;
     }
 
     // 分页：Paginator 传的是 xsmall（22px），抬到 32px

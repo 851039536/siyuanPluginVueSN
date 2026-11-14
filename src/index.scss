@@ -12,12 +12,19 @@
   --vp-font-size-xs: #{$t-xs};
 }
 
+// 3. 共享 spinner 关键帧（唯一定义处，避免被组件样式重复发射）
+@keyframes si-spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
 .vp-dock-root,
 .vp-modal-mask {
   font-size: $t-xs;
 }
 
-// 3. Dock 面板基座
+// 4. Dock 面板基座
 //    桌面端由 addDock 的 size.width 定宽；移动端思源生成 mobileModel，宽度由侧栏控制（近全屏）。
 //    两种形态都要求铺满宿主元素，并允许在 flex 宿主中收缩，避免横向溢出。
 .vp-dock-root {

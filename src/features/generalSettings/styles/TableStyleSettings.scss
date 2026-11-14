@@ -4,11 +4,7 @@
 // 共享模式
 // ============================================================
 @mixin card-panel {
-  margin-top: $s-5;
-  padding: $s-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $r-md;
+  @include si-card-panel;
 }
 
 @mixin section-title {

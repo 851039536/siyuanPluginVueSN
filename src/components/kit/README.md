@@ -9,7 +9,8 @@
 |---|---|---|
 | `icons.ts` | 图标表**真源**（`FEATURE_ICONS` / `COMMON_ICONS` / `getIconConfig()` / `IconKey` 类型），零外部依赖 | `src/config/icons.ts` 是它的 `export *` 转发壳，48 处既有引用路径不变 |
 | `variables.scss` | 设计 Token **真源**（`$c-*` / `$ff-*` / `$t-*` / `$fw-*` / `$lh-*` / `$r-*` / `$s-*`） | `src/_variables.scss` 是它的 `@forward` 转发壳，336 处既有引用路径不变 |
-| `mixins.scss` | 响应式 mixins（`mobile` / `touch-area` / `touch-area-y`），实现 AGENTS_STYLE.md § 移动端密度与触摸目标 | 同样由 `src/_variables.scss` 转发，`@use "@/variables.scss" as *` 即可获得 |
+| `mixins.scss` | 响应式 mixins（`mobile` / `touch-area` / `touch-area-y`）+ 跨功能通用 mixins（`si-text-ellipsis` / `si-flex-center` / `si-scrollbar-thin` / `si-mobile-only` / `si-meta-caps-label` / `si-card-panel` / `si-icon-button-touch`），实现 AGENTS_STYLE.md § 移动端密度与触摸目标 | 同样由 `src/_variables.scss` 转发，`@use "@/variables.scss" as *` 即可获得；各 feature 的局部同名 mixin 只做 `@include` 委托，禁止复制声明体 |
+| `transitions.scss` | 共享过渡类（`fade` / `scale`，配合 `<Transition name>`） | 由 `htmlViewer` / `imageCreation` 的弹窗外壳 `@use`；含实际选择器，故不带 `_` 前缀 |
 | `theme.ts` | 默认主题注入：宿主（思源或目标项目）**未定义** `--b3-theme-*` 时才注入一套明暗变量；三层保险（检测 / `@layer` / `prepend`）保证不污染宿主主题 | 思源内为 no-op |
 | `iconify.ts` | mdi 图标数据离线注册（`addCollection`），由 `IconWrapper.vue` 副作用导入触发 | 与 `src/utils/iconifySetup.ts` 并存（后者额外注册 ph 图标集，供其它 feature 使用） |
 

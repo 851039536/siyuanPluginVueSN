@@ -6,23 +6,16 @@
 
 // ==================== 基础工具 ====================
 @mixin text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include si-text-ellipsis;
 }
 
 @mixin custom-scrollbar {
-  &::-webkit-scrollbar {
-    width: $s-1;
-    height: $s-1;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-lighter);
-    border-radius: $r-sm;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
+  @include si-scrollbar-thin(
+    $width: $s-1,
+    $height: $s-1,
+    $radius: $r-sm,
+    $hover: null
+  );
 }
 
 /// 弹窗/表单输入框基座（MoveAssetDialog 路径输入、主面板加载数量输入共用）

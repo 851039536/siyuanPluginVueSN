@@ -6,11 +6,7 @@
 
 /** 卡片面板（feature-description / update-interval / font-style-settings 共享） */
 @mixin card-panel {
-  margin-top: $s-5;
-  padding: $s-3;
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-surface-lighter);
-  border-radius: $r-md;
+  @include si-card-panel;
 }
 
 /** 下拉选择器交互状态（hover + focus 高亮边框，Codex 规范禁用 box-shadow） */

@@ -3,7 +3,5 @@
 
 // 单行文本截断省略号（卡片名称/URL/描述共用）
 @mixin wn-text-ellipsis {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include si-text-ellipsis;
 }

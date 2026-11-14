@@ -86,8 +86,7 @@ $fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
       padding: $s-2 $s-3;
 
       .si-button.si-button--icon-only {
-        --button-size: 32px;
-        @include touch-area;
+        @include si-icon-button-touch;
       }
     }
 

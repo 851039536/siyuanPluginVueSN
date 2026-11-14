@@ -47,49 +47,39 @@ class MyFeatureStorage {
 }
 ```
 
-### SQLite（结构化数据必用）
+### 记录集合（JSON 槽，禁止 SQLite）
 
-完整规范见 [AGENTS.md § SQLite 存储规范](./AGENTS.md#sqlite-存储规范强制2026-10-17)，参考实现 `src/utils/sharedStorage/websiteStorage.ts`。
+`plugin.db` 位于思源同步目录，Windows 下连接持有会让同步 rename 失败，插件已全面移除 SQLite。
+记录集合仍用 JSON 槽，但必须**写串行 + 设上限**。完整规范见
+[AGENTS.md § 存储规范](./AGENTS.md#存储规范强制2026-11-14)，参考实现
+`src/utils/sharedStorage/websiteStorage.ts` / `src/features/gitPush/managers/LineStatsStore.ts`。
 
 ```typescript
-import { featureTables, openWithRetry, type PluginDatabase } from '@/utils/sqliteDb'
+const STORAGE_KEY = 'my-feature-items'
+private readonly slot = new TypedStorage<Item[]>(new PluginStorage(plugin), STORAGE_KEY, [])
 
-// 1) 表名带功能前缀（统一单库 plugin.db，禁止按功能建库）
-const TABLE = featureTables('wn', ['entries', 'categories'] as const)
-// → { entries: 'wn_entries', categories: 'wn_categories' }
+// 读-改-写必须串行：并发操作会互相覆盖
+private writeQueue: Promise<unknown> = Promise.resolve()
+private runExclusive<T>(task: () => Promise<T>): Promise<T> {
+  const run = this.writeQueue.then(task, task)
+  this.writeQueue = run.catch(() => undefined)
+  return run
+}
 
-// 2) 打开 + 建表：openWithRetry 已封装绝对路径解析 / WAL / 启动早期 6 次退避重试 /
-//    「环境不支持」与「路径未就绪」的分类处理 / 建表失败时关闭句柄
-const db = await openWithRetry(plugin, (d) => {
-  // 建表（幂等，仅此而已——运行时不做数据迁移）
-  d.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.entries} (
-    id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL
-  )`)
-  d.exec(`CREATE INDEX IF NOT EXISTS idx_${TABLE.entries}_name ON ${TABLE.entries}(name)`)
-}, { logTag: '[myFeature]' })
-
-if (!db) return   // 不可用：由调用方决定 UI 兜底
-
-// 3) 读写：prepared statement 传参，禁止字符串拼接
-const rows = db.all<Row>(`SELECT * FROM ${TABLE.entries} ORDER BY created_at ASC`)
-db.run(`INSERT INTO ${TABLE.entries} (id, name, created_at) VALUES (?, ?, ?)`, id, name, Date.now())
-
-// 4) 批量用事务（异常自动回滚）
-db.withTransaction(() => {
-  db.run(`DELETE FROM ${TABLE.entries}`)
-  items.forEach((it, i) => db.run(`INSERT INTO ${TABLE.entries} (id, name, created_at) VALUES (?,?,?)`, it.id, it.name, i))
-})
-
-// 5) 备份：必须用 snapshotTo（WAL 模式下单独复制 .db 会得到空库）
-await db.snapshotTo('/path/to/snapshot.db')
-
-// 6) 卸载时关闭（归并 WAL、释放句柄）
-db.close()
+async addItem(item: Item): Promise<void> {
+  await this.runExclusive(async () => {
+    const list = await this.slot.loadOrDefault()
+    list.push(item)
+    // 增长型数组必须裁剪上限（日志 / 历史类）
+    if (list.length > MAX_ITEMS) list.length = MAX_ITEMS
+    if (!(await this.slot.save(list))) throw new Error('save failed')
+  })
+}
 ```
 
-**四个不可省略的点**：路径统一走 `openWithRetry()`（`plugin.dataDir` 为 `undefined`，自行拼接会建到错误目录）；重试用内置的，**不要手写循环**；在 `registerFeature()` 里预热（否则用户不开面板库永不创建）；卸载时 `close()`。
-
-> `openWithRetry` 的 `migrateFn` 里**只允许建表/播种**，禁止放历史数据迁移——迁移是一次性脚本行为。
+- **禁止** `node:sqlite` / `plugin.db` / 任何 `.db` 文件。
+- 体积大且只追加的数据用裸 NDJSON（参考 `src/features/gitPush/managers/indexIo.ts`）。
+- 旧 SQLite 数据用 `pnpm migrate:sqlite-to-json` 一次性迁移，运行时禁止启动侦测。
 
 ### Dock 面板
 

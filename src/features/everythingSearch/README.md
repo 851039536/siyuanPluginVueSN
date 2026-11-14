@@ -46,6 +46,7 @@ src/features/everythingSearch/
 │   └── storage.ts    # 配置 + 缓存清理偏好持久化
 ├── cacheScan/
 │   ├── roots.ts      # CACHE_ROOTS 白名单唯一真源 + resolveCacheRoots()
+│   ├── history.ts    # 清理历史 JSON 槽（everything-search-clean-history）
 │   ├── fsUtils.ts    # 递归体积统计 / 取消与让出事件循环（扫描与清理共用）
 │   ├── log.ts        # 带 [cacheClean] 前缀的分级诊断日志（info / warn / error）
 │   ├── scanner.ts    # scanCacheRoots()（只读扫描）
@@ -58,6 +59,17 @@ src/features/everythingSearch/
 │   └── cacheClean/   # 缓存清理面板（容器 + 根列表 + 条目列表 + 偏好）
 └── styles/           # 组件专属 SCSS + _mixins
 ```
+
+## 存储
+
+| 键 | 内容 |
+|---|---|
+| `everything-search-config`（JSON） | Everything HTTP 服务配置 |
+| `everything-search-options`（JSON） | 搜索选项 |
+| `everything-search-cache-clean`（JSON） | 缓存清理偏好 |
+| `everything-search-clean-history`（JSON） | 清理历史（上限 500 条，清理完成后整份重写） |
+
+清理历史为辅助数据，写入失败只打日志，不影响清理本身。插件不使用 SQLite。
 
 ## 审查记录
 

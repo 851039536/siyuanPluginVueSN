@@ -87,7 +87,7 @@ export class WebsiteNavigation {
   public destroy() {
     this.modal?.destroy()
     this.modal = null
-    // 释放 SQLite 连接（含 WAL 归并），避免插件卸载后句柄残留
+    // 释放共享存储单例，避免插件卸载后模块级引用残留
     closeWebsiteStorage()
   }
 }

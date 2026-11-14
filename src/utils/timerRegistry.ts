@@ -8,7 +8,7 @@ export type TimerHandle = number
 
 /**
  * 定时器宿主：渲染进程直接用 window；纯 Node（Vitest 纯函数单测）退化为 globalThis。
- * 不写死 window.* 是因为本工具也被无 DOM 的单测覆盖（如 sqliteDb 的空闲释放）。
+ * 不写死 window.* 是因为本工具也被无 DOM 的单测覆盖。
  */
 function timerHost(): Pick<Window, "setTimeout" | "clearTimeout" | "setInterval" | "clearInterval"> {
   return typeof window === "undefined" ? (globalThis as unknown as Window) : window

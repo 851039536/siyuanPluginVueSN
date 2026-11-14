@@ -4,7 +4,7 @@
     <div class="sm-slot__main">
       <!-- 槽位名称（注册表 defaultLabel） -->
       <span class="sm-slot__name">{{ slot?.defaultLabel || usage.key }}</span>
-      <!-- 类型标签："JSON" / "SQLite" / "文件" / "浏览器" -->
+      <!-- 类型标签："JSON" / "文件" / "浏览器" -->
       <Tag
         size="xsmall"
         :variant="kindVariant"
@@ -33,10 +33,9 @@
       />
     </div>
 
-    <!-- 大小 / 行数 / 更新时间 / 存储键 -->
+    <!-- 大小 / 更新时间 / 存储键 -->
     <div class="sm-slot__meta">
       <span v-if="usage.missing" class="sm-slot__missing">{{ t.missing }}</span>
-      <span v-else-if="usage.kind === 'sqlite'">{{ usage.items ?? 0 }} {{ t.rows }}</span>
       <span v-else>{{ formatBytes(usage.bytes) }}</span>
       <span v-if="usage.updatedAt">{{ formatTime(usage.updatedAt) }}</span>
       <code class="sm-slot__key" :title="usage.key">{{ usage.key }}</code>
@@ -81,8 +80,6 @@ const emit = defineEmits<{
 
 const kindVariant = (() => {
   switch (props.usage.kind) {
-    case "sqlite":
-      return "success"
     case "file":
       return "warning"
     case "localStorage":

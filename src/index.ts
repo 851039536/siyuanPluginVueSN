@@ -84,7 +84,6 @@ import { setupIconifyOffline } from "@/utils/iconifySetup"
 import { clearRendererCache } from "@/utils/mdRenderer"
 import { isMobileFrontend } from "@/utils/platform"
 import { resolvePluginDataDir, resolvePluginDataDirSync } from "@/utils/pluginDataDir"
-import { installSqliteSyncGuard } from "@/utils/sqliteDb"
 // ========== 全局样式导入 ==========
 // 使用普通 import 而非 @use，确保 CSS 在插件加载时就注入
 // Vite 会将此 CSS 编译到 index.css 并在入口点立即注入
@@ -136,17 +135,12 @@ export default class PluginSample extends Plugin {
     "__statistics", // 数据统计（自动刷新定时器 + 事件监听器，register 内部自挂载）
     "__componentPreview", // 组件预览（addTab 模型 + 独立窗口 + 全局事件监听）
     "__statusBar", // 状态栏（Vue app + 状态栏 DOM）
-    "__gitPush", // Git 推送（Dock/Tab Vue app + 探测链 + fs.watch + SQLite 句柄）
+    "__gitPush", // Git 推送（Dock/Tab Vue app + 探测链 + fs.watch + 行数统计内存缓存）
     "__storageManager", // 数据管理（Dock Vue app + 用量缓存）
-    "__sqliteSyncGuard", // SQLite 同步守卫（sync-start 事件监听）
   ] as const
 
   onload() {
     setupIconifyOffline() // 预加载 mdi + ph 图标数据，确保断网可用
-
-    // 必须在各功能注册前安装：注册阶段就会打开 plugin.db，
-    // 而思源同步用 rename 覆盖该文件，句柄不释放会让整轮同步失败
-    ;(this as any).__sqliteSyncGuard = installSqliteSyncGuard(this)
 
     // 关键：初始化功能开关文件持久化目录（必须在 loadFeatureFlagsSync 之前）
     // 不能用 (this as any).dataDir —— 运行时为 undefined，会导致 flags 文件永不落盘
@@ -203,9 +197,8 @@ export default class PluginSample extends Plugin {
    * ⚠️ 必须覆盖：SiYuan 3.8.9 用 `plugin.onDataChanged === Plugin.prototype.onDataChanged`
    * 判断插件是否自行处理，未覆盖时把每次数据变更**升级为整插件重载**（teardown →
    * 重新 eval 脚本 → onload）。同步会连续触发多次数据变更，插件于是被反复卸载/重载：
-   * 旧实例在途的 `loadData` 全部返回 410「Plugin lifecycle has ended」；新实例的模块级
-   * 同步守卫状态随脚本重新求值归零，若同步尚未结束就会重开 `plugin.db`，令本轮同步的
-   * rename 失败。这里只做无副作用刷新 —— 写入任何存储都会再次触发数据变更。
+   * 旧实例在途的 `loadData` 全部返回 410「Plugin lifecycle has ended」。
+   * 这里只做无副作用刷新 —— 写入任何存储都会再次触发数据变更。
    */
   public onDataChanged(reason?: "sync" | "overwrite"): void {
     if (this.unloaded) return
@@ -244,7 +237,7 @@ export default class PluginSample extends Plugin {
     clearRendererCache()
 
     // Git 推送的销毁已统一走 DESTROYABLE_KEYS（其内包含 Dock/Tab Vue app 卸载、
-    // 探测链与 fs.watch 释放、GitExecutor 子进程 kill、SQLite 句柄 close），
+    // 探测链与 fs.watch 释放、GitExecutor 子进程 kill、行数统计内存缓存清理），
     // 故此处不再保留个别功能的特例清理分支。
 
     // 统一销毁各功能实例（新增功能只需将实例字段名加入 DESTROYABLE_KEYS）

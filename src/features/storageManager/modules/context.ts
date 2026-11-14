@@ -30,8 +30,3 @@ export async function createStorageContext(plugin: Plugin): Promise<StorageConte
     path: node.path,
   }
 }
-
-/** 表名安全校验：来自注册表的受信值，仍拒绝非标识符字符以防拼接 */
-export function isSafeTableName(table: string): boolean {
-  return /^[a-z][a-z0-9_]*$/.test(table)
-}

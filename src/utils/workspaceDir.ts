@@ -6,7 +6,7 @@
  *
  * ⚠️ 模块纯度：这里**不 import `@/api`**。`api.ts` 顶层对 `siyuan` 做值导入，
  * 会把运行时依赖钉进本模块的模块图，使本模块无法在纯 Node 环境（单元测试）中加载。
- * （原位于 `utils/sqliteDb.ts`，因 skills 管理等消费方需要而抽出共享。）
+ * （原位于已删除的 `utils/sqliteDb.ts`，因 skills 管理等消费方需要而抽出共享。）
  */
 export function readWorkspaceDirSync(): string {
   try {

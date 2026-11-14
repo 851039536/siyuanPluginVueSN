@@ -8,15 +8,13 @@ export interface SlotUsage {
   slotId: string
   kind: StorageKind
   key: string
-  /** JSON 文件 / 文件目录 / localStorage 的字节数；SQLite 表为 0（库大小单独统计） */
+  /** JSON 文件 / 文件目录 / localStorage 的字节数 */
   bytes: number
-  /** SQLite 行数；其它形态不填 */
-  items?: number
   /** 最后修改时间（文件槽） */
   updatedAt?: number
   /** 槽位在磁盘/浏览器中不存在 */
   missing: boolean
-  /** 不可用原因码：no-node / no-data-dir / no-sqlite / read-failed */
+  /** 不可用原因码：no-node / no-data-dir / read-failed */
   unavailableReason?: string
 }
 
@@ -44,7 +42,6 @@ export interface StorageInventory {
   groups: StorageGroupUsage[]
   totals: {
     json: number
-    sqlite: number
     file: number
     localStorage: number
     bytes: number
@@ -68,10 +65,6 @@ export interface ModuleExportPayload {
   owners: StorageOwner[]
   /** JSON 槽：key → 值 */
   slots: Record<string, unknown>
-  /** SQLite 表：表名 → 行数组 */
-  tables: Record<string, Record<string, unknown>[]>
-  /** SQLite 建表语句：表名 → CREATE TABLE DDL（用于目标库缺表时重建） */
-  schemas?: Record<string, string>
 }
 
 /** 导入/还原报告 */

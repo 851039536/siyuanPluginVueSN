@@ -8,7 +8,7 @@
 // 设计说明：
 // - 注册表通过正则解析 `jsonSlot(...)` 等「一槽一行」工厂调用，不依赖 TS 运行时；
 // - 源码侧解析 TypedStorage 构造、带 KEY 的 load/save 调用、plugin.loadData、
-//   localStorage 与 featureTables；常量/import 做同文件 + 一层相对导入解析；
+//   localStorage；常量/import 做同文件 + 一层相对导入解析；
 // - 动态拼接的 key 只能报 warning（无法静态求值），不得因此让脚本失效。
 // ============================================================
 import fs from "node:fs"
@@ -19,10 +19,9 @@ import fg from "fast-glob"
 const ROOT = process.cwd()
 const SRC = path.join(ROOT, "src")
 const REGISTRY_DIR = path.join(SRC, "config", "storage")
-const REGISTRY_FILES = ["jsonSlots.ts", "sqliteSlots.ts", "fileSlots.ts", "localStorageSlots.ts"]
+const REGISTRY_FILES = ["jsonSlots.ts", "fileSlots.ts", "localStorageSlots.ts"]
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)+$/
-const SQLITE_TABLE = /^[a-z][a-z0-9]*_[a-z0-9_]+$/
-const SLOT_RE = /(json|sqlite|file|localStorage)Slot\(\s*"([^"]+)"\s*,\s*\[[^\]]*\]\s*,\s*"([^"]+)"/g
+const SLOT_RE = /(json|file|localStorage)Slot\(\s*"([^"]+)"\s*,\s*\[[^\]]*\]\s*,\s*"([^"]+)"/g
 
 const jsonMode = process.argv.includes("--json")
 
@@ -236,14 +235,6 @@ function scanSource(files) {
     for (const m of content.matchAll(/localStorage\.(?:getItem|setItem|removeItem)\s*\(\s*"([^"]+)"/g)) {
       push("localStorage", m[1], file, m.index, content, "localStorage")
     }
-
-    // SQLite 表
-    for (const m of content.matchAll(/featureTables\s*\(\s*"([^"]+)"\s*,\s*\[([^\]]*)\]/g)) {
-      for (const entity of m[2].matchAll(/"([^"]+)"/g)) {
-        const table = `${m[1]}_${entity[1]}`
-        push("sqlite", table, file, m.index, content, "featureTables")
-      }
-    }
   }
 
   // 去重（同 key 只保留首个来源）
@@ -259,7 +250,6 @@ function scanSource(files) {
   // 命名检查（存量键已在注册表标 legacy）
   for (const item of deduped) {
     if (item.kind === "json" && !KEBAB_CASE.test(item.key)) namingIssues.push(item)
-    if (item.kind === "sqlite" && !SQLITE_TABLE.test(item.key)) namingIssues.push(item)
   }
 
   return { found: deduped, unresolved, namingIssues }
@@ -311,7 +301,7 @@ function main() {
   const report = {}
   const errors = []
 
-  for (const kind of ["json", "sqlite", "file", "localStorage"]) {
+  for (const kind of ["json", "file", "localStorage"]) {
     const reg = registry.filter((entry) => entry.kind === kind)
     const regKeys = new Set(reg.map((entry) => entry.key))
     const srcKeys = new Set(found.filter((item) => item.kind === kind).map((item) => item.key))
@@ -346,7 +336,6 @@ function main() {
   const registryNaming = registry.filter((entry) => {
     if (entry.legacy) return false
     if (entry.kind === "json") return !KEBAB_CASE.test(entry.key)
-    if (entry.kind === "sqlite") return !SQLITE_TABLE.test(entry.key)
     return false
   })
   if (registryNaming.length) errors.push(`注册表：${registryNaming.length} 个条目命名不合规且未标 legacyName`)
@@ -361,7 +350,7 @@ function main() {
     }, null, 2))
   } else {
     console.log("[audit:storage] 存储槽审计")
-    for (const kind of ["json", "sqlite", "file", "localStorage"]) {
+    for (const kind of ["json", "file", "localStorage"]) {
       const item = report[kind]
       console.log(`  ${kind.padEnd(12)} 注册表 ${String(item.registry).padStart(3)} / 源码发现 ${String(item.discovered).padStart(3)}`)
       for (const entry of item.unregistered) console.log(`    ✗ 未登记 ${entry.key}  (${entry.at || "?"})`)

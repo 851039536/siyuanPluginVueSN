@@ -3,41 +3,17 @@
  *
  * 关键回归：
  * 1. SiYuan `saveData` 对字符串值原样落盘（`xsmall` / `head`），不是合法 JSON；
- * 2. 备份里的 `plugin.db` 可能为 0 字节（快照未 await），必须显式失败而非静默跳过；
- * 3. 正常备份需同时读出表数据与建表语句。
+ * 2. 旧备份里的 plugin.db 必须跳过（插件已移除 SQLite），但 JSON 槽仍要还原；
+ * 3. git-push-index 文件槽通过 fileSource 整目录写回。
  */
 import * as fs from "node:fs"
 import * as os from "node:os"
 import * as path from "node:path"
 import JSZip from "jszip"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import type { Plugin } from "siyuan"
 import { loadBackupZip } from "./backup"
 import type { StorageContext } from "./context"
-
-let realSqlite: typeof import("node:sqlite") | null = null
-try {
-  realSqlite = await import("node:sqlite")
-} catch {
-  // Node < 22.5 无 node:sqlite，跳过真实库用例
-}
-
-const state = vi.hoisted(() => ({ root: "" }))
-
-vi.mock("@/utils/workspaceDir", () => ({
-  readWorkspaceDir: async () => state.root,
-  readWorkspaceDirSync: () => state.root,
-}))
-
-vi.mock("@/utils/sqliteDb", async () => {
-  let sqlite: typeof import("node:sqlite") | null = null
-  try {
-    sqlite = await import("node:sqlite")
-  } catch {
-    sqlite = null
-  }
-  return { getSqlite: () => sqlite }
-})
 
 const ctx = {
   plugin: {} as Plugin,
@@ -64,7 +40,7 @@ async function makeZipFile(entries: Record<string, string | Uint8Array>): Promis
 }
 
 beforeEach(() => {
-  state.root = makeTempDir()
+  ctx.dataDir = makeTempDir()
 })
 
 afterEach(() => {
@@ -79,7 +55,7 @@ describe("loadBackupZip", () => {
       "component-preview-size": "xsmall",
       "git-push-branch-mode": "head",
     })
-    const { payload, report } = await loadBackupZip(ctx, file)
+    const { payload, report } = await loadBackupZip(file)
 
     expect(report.failed).toEqual([])
     expect(payload?.slots["component-preview-size"]).toBe("xsmall")
@@ -89,37 +65,43 @@ describe("loadBackupZip", () => {
   it("对象槽保留原文件文本（写回时 saveData 原样落盘）", async () => {
     const raw = "{\"aiApiKeys\":\"enc:xxx\"}"
     const file = await makeZipFile({ "plugin-settings": raw })
-    const { payload, report } = await loadBackupZip(ctx, file)
+    const { payload, report } = await loadBackupZip(file)
 
     expect(report.failed).toEqual([])
     expect(payload?.slots["plugin-settings"]).toBe(raw)
   })
 
-  it("0 字节 plugin.db 显式上报 backupDbEmpty，JSON 仍可还原", async () => {
+  it("旧备份中的 plugin.db 被跳过，JSON 槽仍可还原", async () => {
     const file = await makeZipFile({
       "component-preview-size": "small",
-      "plugin.db": new Uint8Array(0),
+      "plugin.db": new Uint8Array([1, 2, 3]),
     })
-    const { payload, report } = await loadBackupZip(ctx, file)
-
-    expect(report.failed).toContainEqual({ slotId: "core.pluginDb", error: "backupDbEmpty" })
-    expect(payload?.slots["component-preview-size"]).toBe("small")
-  })
-})
-
-describe.skipIf(!realSqlite)("loadBackupZip - SQLite", () => {
-  it("读出表数据与建表语句", async () => {
-    const dbPath = path.join(makeTempDir(), "plugin.db")
-    const db = new realSqlite!.DatabaseSync(dbPath)
-    db.exec("CREATE TABLE wn_entries (id TEXT PRIMARY KEY, name TEXT)")
-    db.exec("INSERT INTO wn_entries VALUES ('a', 'A')")
-    db.close()
-
-    const file = await makeZipFile({ "plugin.db": new Uint8Array(fs.readFileSync(dbPath)) })
-    const { payload, report } = await loadBackupZip(ctx, file)
+    const { payload, report } = await loadBackupZip(file)
 
     expect(report.failed).toEqual([])
-    expect(payload?.tables["wn_entries"]).toEqual([{ id: "a", name: "A" }])
-    expect(payload?.schemas?.["wn_entries"]).toMatch(/^CREATE TABLE/)
+    expect(report.skipped).toContainEqual({ slotId: "core.pluginDb", reason: "sqliteRemoved" })
+    expect(payload?.slots["component-preview-size"]).toBe("small")
+  })
+
+  it("git-push-index 通过 fileSource 整目录写回", async () => {
+    const file = await makeZipFile({
+      "git-push-index/a.commits.ndjson": "{\"h\":1}\n",
+    })
+    const { payload, report, fileSource } = await loadBackupZip(file)
+
+    expect(payload).not.toBeNull()
+    expect(report.failed).toEqual([])
+    expect(fileSource).not.toBeNull()
+    const count = await fileSource!.write(ctx)
+    expect(count).toBe(1)
+    expect(fs.readFileSync(path.join(ctx.dataDir, "git-push-index", "a.commits.ndjson"), "utf8")).toBe("{\"h\":1}\n")
+  })
+
+  it("没有可还原数据时显式失败", async () => {
+    const file = await makeZipFile({ "unrelated.txt": "x" })
+    const { payload, report } = await loadBackupZip(file)
+
+    expect(payload).toBeNull()
+    expect(report.failed).toContainEqual({ slotId: "*", error: "noRestorableData" })
   })
 })

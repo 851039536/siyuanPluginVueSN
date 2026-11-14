@@ -12,8 +12,7 @@
 > `AGENTS_BUILD.md` / `AGENTS_I18N.md` 是**长期规则**，不适用本索引的归档规则，原地维护。
 > 功能模块的 `src/features/*/README.md` 同样原地维护，不迁入 docs。
 
-**当前 `docs/` 根下的活跃文档**：
-- [plugin-persistence-audit.md](plugin-persistence-audit.md)（持久化审计：资产清单、写放大、SQLite 迁移 P0/P1、缺陷清单；状态：本轮修复项已落地，迁移待下一轮）
+**当前 `docs/` 根下的活跃文档**：无。
 
 ## 一、参考文档（`docs/参考/`，9 份）
 
@@ -27,9 +26,9 @@
 | [IconWrapper.README.md](参考/IconWrapper.README.md) | `IconWrapper` 图标组件用法（封装 `@iconify/vue`、样式与错误处理） | — |
 | [斜杠命令说明.md](参考/斜杠命令说明.md) | 斜杠命令模块（`src/commands/`）与已支持命令清单 | — |
 | [codex-ui-reference.html](参考/codex-ui-reference.html) | Codex UI 视觉参考页（静态 HTML，供截图/对照） | — |
-| [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 持久化规范（强制） |
+| [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 存储规范（强制） |
 
-## 二、归档文档（`docs/completed/`，17 份）
+## 二、归档文档（`docs/completed/`，18 份）
 
 前 11 份为 2026-10-28 提交 `caec10a5`「chore(docs): 清理过期审查报告并归档参考文档至参考目录」删除的审查报告，
 2026-11-01 从 git 历史恢复——**原因是代码/README 仍在引用它们**（引用点已改为指向本目录）；
@@ -39,7 +38,8 @@
 |---|---|---|
 | [gitPush-memory-cpu-review.md](completed/gitPush-memory-cpu-review.md) | gitPush 内存/CPU 专项审查（P0-3 轮询风暴等） | `gitPush/README.md` ×2 + 源码注释 6 处 |
 | [super-panel-code-review.md](completed/super-panel-code-review.md) | 超级面板代码审查（P1-1 密钥丢失、P2-1 加密风暴等） | `superPanel` 组件注释 ×4 |
-| [sqlite-persistence-review.md](completed/sqlite-persistence-review.md) | SQLite 持久化迁移与实测数据 | `AGENTS.md` § SQLite 存储规范 |
+| [sqlite-persistence-review.md](completed/sqlite-persistence-review.md) | SQLite 持久化迁移与实测数据（**SQLite 已于 2026-11-14 移除**，仅作历史记录） | — |
+| [plugin-persistence-audit.md](completed/plugin-persistence-audit.md) | 持久化审计（SQLite 迁移路线已作废；现行规则见 [persistence.md](参考/persistence.md)） | — |
 | [everything-search-redundancy-review.md](completed/everything-search-redundancy-review.md) | everywhereSearch 冗余与安全整改 | `everythingSearch/README.md` |
 | [component-preview-memory-diagnosis.md](completed/component-preview-memory-diagnosis.md) | 组件预览面板内存异常诊断 | `componentPreview/README.md` |
 | [script-launcher-code-review.md](completed/script-launcher-code-review.md) | 脚本启动器代码审查 | — |
@@ -50,7 +50,7 @@
 | [highlight-feature.md](completed/highlight-feature.md) | 双击高亮功能实现（**描述的实现已于 `7ac8100c` 并入 `generalSettings/components/HighlightSettings.vue`**） | — |
 | [mobile-dock-compatibility-plan.md](completed/mobile-dock-compatibility-plan.md) | 侧边栏 Dock 移动端兼容计划与执行记录（P0–P3 已落地，P4 真机回归由用户执行） | 无源码引用；规则落在 `DESKTOP_ONLY_FEATURE_IDS`、`.vp-dock-panel` 与各功能 README「平台支持」 |
 | [DOC-FIX-PLAN-2026-11-01.md](completed/DOC-FIX-PLAN-2026-11-01.md) | 文档缺陷修复（DOC-1 `AGENTS_STYLE.md` Token 短名迁移、DOC-2 注释路径、DOC-4 分片指引；DOC-3 明确不恢复） | `AGENTS.md` § 文档规范「Token 名真源」、[token-shorthand.md](参考/token-shorthand.md) |
-| [持久化治理与统一数据管理面板.md](completed/持久化治理与统一数据管理面板.md) | 持久化治理实施记录（Phase 0–4 落地：规则文档、注册表与审计、基础设施修复、`storageManager` 面板；Phase 5 SQLite 迁移按约定未执行） | [plugin-persistence-audit.md](plugin-persistence-audit.md) §4、`AGENTS.md` § 持久化规范、[persistence.md](参考/persistence.md) |
+| [持久化治理与统一数据管理面板.md](completed/持久化治理与统一数据管理面板.md) | 持久化治理实施记录（Phase 0–4 落地：规则文档、注册表与审计、基础设施修复、`storageManager` 面板；Phase 5 SQLite 迁移未执行，SQLite 已于 2026-11-14 移除） | `AGENTS.md` § 存储规范、[persistence.md](参考/persistence.md) |
 | [gitPush-accordion-review.md](completed/gitPush-accordion-review.md) | gitPush 手风琴模式审查与实施记录（整行列表/键盘可达/变更徽章/草稿保留 + E1/E3/E4/E5/B6/B7） | 无源码引用；行为约定落在 `src/features/gitPush/README.md` 卡片布局条目 |
 | [gitPush-detailed-mode-review.md](completed/gitPush-detailed-mode-review.md) | gitPush 详细模式审查与实施记录（网格几何/操作栏位置/分支折叠/刷新节流/页签高度/紧凑密度；E2/E3 等未做） | 无源码引用；行为约定落在 `src/features/gitPush/README.md` 卡片布局条目 |
 | [gitPush-settings-ui-review.md](completed/gitPush-settings-ui-review.md) | gitPush 设置弹窗 UI 审查与实施记录（数字输入钳位缺陷、保存模型统一、常规五分区分组、控件与密度统一、888→231 行拆分） | 无源码引用；结构约定落在 `src/features/gitPush/README.md` 组件树 |

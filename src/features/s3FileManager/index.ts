@@ -72,8 +72,6 @@ export class S3FileManager {
       this._openHandler = null
     }
     this.modal.destroy()
-    // 关闭 SQLite 日志仓库（幂等；初始化窗口期内到达的句柄也会被立即关闭）
-    this.storage.logs.close()
     // 清除 plugin 上的挂载点，避免卸载后留下悬挂引用
     if ((this.plugin as any).__s3FileManager === this) {
       delete (this.plugin as any).__s3FileManager

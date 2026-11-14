@@ -1,9 +1,9 @@
 // gitPush 本地提交索引 — 磁盘 IO 层（NDJSON 追加日志 + 小体积 meta.json）
 //
-// 为什么提交索引仍用 NDJSON 而非 sqlite：本索引的使用模式是「追加 + 全量载入内存 + 内存里查」，
+// 为什么提交索引用 NDJSON 而非单份 JSON：本索引的使用模式是「追加 + 全量载入内存 + 内存里查」，
 // 没有按条件查询/排序/聚合的需求，NDJSON 追加日志已是最简形态，且天然支持崩溃后丢尾行自愈。
-// 注：最初「环境无 node:sqlite」的理由**已过期**（思源 Electron 44 / Node 24 起 node:sqlite 已转正），
-// 行数统计（managers/LineStatsStore.ts）已迁移到 plugin.db；本索引将来若需要按条件查询可直接迁移。
+// 行数统计（managers/LineStatsStore.ts）同样不再使用 SQLite：`plugin.db` 位于思源同步目录，
+// Windows 下连接持有会让同步引擎的 rename 失败；改为 JSON 槽 + 内存态后不再持有文件句柄。
 // 本层只依赖 fs，接口注入使纯逻辑可单测（见 __tests__/commitIndex.test.ts）。
 import { getNodeModules } from "@/utils/nodeModules"
 

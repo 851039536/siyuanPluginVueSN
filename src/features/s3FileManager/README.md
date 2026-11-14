@@ -32,7 +32,7 @@
 - **组件划分**：`index.vue`（薄壳编排）+ `components/`（Toolbar / Breadcrumb / EntryList / ContextMenu / ConfigDialog / NameDialog / MoveCopyDialog / LogPanel）+ `composables/`（依赖注入，client / entries / selection / fileOps / transfer / logs / confirm / prefs）
 - **UI 复用共享组件**：弹窗外壳走 `Dialog`（遮罩点关「按下并抬起」语义、焦点接管与归还、`role="dialog"`、fade+scale 过渡）；确认走 `ConfirmDialog`；工具栏走 `Toolbar`；日志徽章走 `Tag`、失败清单折叠走 `Panel`；进度条走 `ProgressBar`；右键菜单走 `TieredMenu`（popup）。模块内**不再自建**同类控件
 - **确认入口单一**：`composables/useFmConfirm.ts` 提供唯一的 Promise 式 `requestConfirm`（回调式旧 API 与原生 `confirm` 回退已移除）
-- **存储**：PluginStorage + TypedStorage 持久化（config / logs / prefs），凭证经 AES-GCM 加解密
+- **存储**：PluginStorage + TypedStorage 持久化（`s3-file-manager-config` / `s3-file-manager-log` / `s3-file-manager-prefs`），凭证经 AES-GCM 加解密；日志上限 200 条，整份重写。不使用 SQLite
 - **UI**：Vue 3 persistent Modal（`72vw` × `85vh`），Codex 风格，全 Token 化样式
 
 ## 已知约束

@@ -1,4 +1,4 @@
-<!-- 数据管理 - 汇总卡片：JSON / SQLite / 文件 / 浏览器存储 / 敏感槽位 -->
+<!-- 数据管理 - 汇总卡片：JSON / 文件 / 浏览器存储 / 敏感槽位 -->
 <template>
   <div class="sm-summary">
     <Card
@@ -29,7 +29,6 @@ const cards = computed(() => {
   const totals = props.inventory?.totals
   return [
     { key: "json", label: props.t.summary?.json, value: formatBytes(totals?.json ?? 0) },
-    { key: "sqlite", label: props.t.summary?.sqlite, value: formatBytes(totals?.sqlite ?? 0) },
     { key: "file", label: props.t.summary?.file, value: formatBytes(totals?.file ?? 0) },
     { key: "local", label: props.t.summary?.localStorage, value: formatBytes(totals?.localStorage ?? 0) },
     { key: "sensitive", label: props.t.summary?.sensitive, value: String(totals?.sensitiveCount ?? 0) },

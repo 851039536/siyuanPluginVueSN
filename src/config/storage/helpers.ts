@@ -9,7 +9,6 @@ import type {
   JsonStorageSlot,
   LocalStorageSlot,
   SlotOptions,
-  SqliteStorageSlot,
   StorageOwner,
 } from "./types"
 
@@ -28,30 +27,6 @@ export function jsonSlot(
     defaultLabel,
     labelI18nKey: options.labelI18nKey,
     growth: options.growth ?? false,
-    sensitive: options.sensitive ?? false,
-    exportable: options.exportable ?? true,
-    resettable: options.resettable ?? true,
-    restorable: options.restorable ?? true,
-    legacyName: options.legacyName ?? false,
-    notes: options.notes,
-  }
-}
-
-export function sqliteSlot(
-  id: string,
-  owners: readonly StorageOwner[],
-  table: string,
-  defaultLabel: string,
-  options: SlotOptions = {},
-): SqliteStorageSlot {
-  return {
-    id,
-    owners,
-    kind: "sqlite",
-    key: table,
-    defaultLabel,
-    labelI18nKey: options.labelI18nKey,
-    growth: options.growth ?? true,
     sensitive: options.sensitive ?? false,
     exportable: options.exportable ?? true,
     resettable: options.resettable ?? true,

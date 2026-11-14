@@ -7,8 +7,8 @@
  */
 import type { FeatureId } from "@/features/config"
 
-/** 存储形态 */
-export type StorageKind = "json" | "sqlite" | "file" | "localStorage"
+/** 存储形态（插件只允许思源 saveData JSON 槽 / 普通文件 / 白名单 localStorage，禁止 SQLite） */
+export type StorageKind = "json" | "file" | "localStorage"
 
 /** 归属功能；core 表示插件级（plugin-settings / feature-flags 等） */
 export type StorageOwner = FeatureId | "core"
@@ -35,7 +35,7 @@ export interface StorageSlotBase {
   exportable: boolean
   /** 运行中可清空 / 恢复默认 */
   resettable: boolean
-  /** 可参与逻辑还原（JSON / SQLite 默认 true，文件与 localStorage 默认 false） */
+  /** 可参与逻辑还原（JSON 默认 true，文件与 localStorage 默认 false） */
   restorable: boolean
   /** 存量不合规命名（冻结，不做 kebab 校验） */
   legacyName: boolean
@@ -47,10 +47,6 @@ export interface JsonStorageSlot extends StorageSlotBase {
   kind: "json"
 }
 
-export interface SqliteStorageSlot extends StorageSlotBase {
-  kind: "sqlite"
-}
-
 export interface FileStorageSlot extends StorageSlotBase {
   kind: "file"
 }
@@ -59,7 +55,7 @@ export interface LocalStorageSlot extends StorageSlotBase {
   kind: "localStorage"
 }
 
-export type StorageSlot = JsonStorageSlot | SqliteStorageSlot | FileStorageSlot | LocalStorageSlot
+export type StorageSlot = JsonStorageSlot | FileStorageSlot | LocalStorageSlot
 
 /** 工厂可选参数 */
 export interface SlotOptions {

@@ -9,10 +9,6 @@ export const FILE_SLOTS = [
   fileSlot("core.featureFlags", ["core"], "feature-flags.json", "功能开关快照", {
     notes: "由 plugin-settings 派生；旧实现因 dataDir 为空从未落盘，已修复为启动时解析真实目录",
   }),
-  fileSlot("core.pluginDb", ["core"], "plugin.db", "插件数据库", {
-    growth: true,
-    notes: "SQLite 单库 + WAL（-wal/-shm）；备份必须走 snapshotTo，禁止直接复制",
-  }),
   fileSlot("gitPush.index", ["gitPush"], "git-push-index", "提交索引目录", {
     growth: true,
     restorable: true,

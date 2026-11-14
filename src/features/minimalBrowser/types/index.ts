@@ -186,9 +186,7 @@ export class BrowserManager {
   public destroy() {
     window.removeEventListener("openMinimalBrowser", this.boundOpenHandler)
     this.unmountPanel()
-    // 释放共享 SQLite 连接（与 websiteNavigation 共用同一实例，close 幂等）。
-    // 本功能通过 useBrowserState() → getSharedWebsiteStorage() 也会建立连接，
-    // 若不关闭，会在插件卸载后残留句柄且 WAL 不归并。
+    // 释放共享书签存储单例（与 websiteNavigation 共用，close 幂等）
     closeSharedWebsiteStorage()
   }
 }

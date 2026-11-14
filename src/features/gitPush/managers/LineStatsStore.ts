@@ -1,32 +1,26 @@
-// gitPush 行数统计持久层（SQLite）——存量行数 + 仓库生命周期时间的唯一数据源
-//
-// 为什么改 SQLite（原实现是 NDJSON 追加日志 + 每次分析全量重算）：
-// 1. 原「当前总行数」每次分析都对每个已跟踪文件 readFileSync 全文（只为了数 '\n'），
-//    几十个项目 × 数千文件时是几十万次全文件读取，这是行数排行「重新分析」慢的唯一根因；
-// 2. 原判据是 rootHash（HEAD 一变就整体作废），于是一次提交就导致全部文件重读。
-//
-// 本层把逐文件行数连同 (mtime, size) 一起落库，于是重新分析只需逐文件 statSync
-// （元数据查询，不读文件内容），仅对 mtime/size 变化的文件重读内容——正确性不变，I/O 量降两个数量级。
-//
-// 遵循 AGENTS.md §SQLite 存储规范：统一单库 plugin.db、表名带功能前缀（gp_）、
-// 运行时只 CREATE TABLE IF NOT EXISTS 不做数据迁移、全部走 prepared statement 传参。
+/**
+ * gitPush 行数统计持久层（JSON 槽 `git-push-line-stats-store`）
+ * 存量行数 + 仓库生命周期时间的唯一数据源。
+ *
+ * 为什么需要持久层：逐文件行数连同 (mtime, size) 一起落盘，重新分析时只需逐文件
+ * statSync（元数据查询，不读文件内容），仅对 mtime/size 变化的文件重读内容，
+ * I/O 量比每次全量 readFileSync 低两个数量级。
+ *
+ * 为什么不用 SQLite：`plugin.db` 位于思源同步目录，Windows 下 SQLite 连接持有文件句柄
+ * 会让同步引擎的 rename 覆盖失败（表现为「读写文件或访问网络权限不足」）。本层改为
+ * 单个 JSON 槽 + 内存态 + 串行合并写盘：写入由 `plugin.saveData` 完成，不持有文件句柄。
+ *
+ * 代价：整份 JSON 重写。行数分析是低频手动操作，且数据只在分析结束时写一次，可接受。
+ */
 import type { Plugin } from "siyuan"
-import type { PluginDatabase } from "@/utils/sqliteDb"
-import {
-  featureTables,
-  openWithRetry,
-
-} from "@/utils/sqliteDb"
+import { PluginStorage } from "@/utils/pluginStorage"
+import { TypedStorage } from "@/utils/typedStorage"
 
 /** 日志前缀（便于在多功能日志中区分） */
 const LOG_TAG = "[gitPush][行数统计]"
 
-/**
- * 表命名空间：行数统计 → gp。
- * gp_project_stats 每项目一行（汇总 + 生命周期时间）
- * gp_file_lines    逐文件存量行数（含 mtime/size 失效判据）
- */
-const TABLE = featureTables("gp", ["project_stats", "file_lines"] as const)
+/** 存储键（与 src/config/storage/jsonSlots.ts 注册表一致） */
+const STORAGE_KEY = "git-push-line-stats-store"
 
 /** 单项目行数统计汇总行 */
 export interface ProjectStatsRecord {
@@ -51,11 +45,6 @@ export interface ProjectStatsRecord {
    * 而 clone / 模板复制极常见。此时把项目路径改指向另一份克隆，
    * `headOid` 相同会命中缓存，返回**旧仓库的行数**（文件集合与行数都可能不同）。
    *
-   * 为什么选 `.git` 路径而非 gitdir 原值：判定只需要「是不是同一个仓库」，
-   * 而 `.git` 的规范化绝对路径可由 `fs` 直接得到（`path.resolve` + 处理
-   * worktree 的 `commondir`），**不需要任何 git 子进程**——
-   * 这正是原实现（`rev-parse --absolute-git-dir`，每项目多一次 ~300ms 调用）被去掉的原因。
-   *
    * 空串 = 旧数据行（升级前写入，未记录身份）→ 视为不匹配，触发一次重算并补写。
    */
   repoId: string
@@ -75,197 +64,157 @@ export interface FileLinesRecord {
   size: number
 }
 
-/** gp_project_stats 行形状（列名 ↔ ProjectStatsRecord 一一对应） */
-interface ProjectStatsRow {
-  project_id: string
-  name: string
-  total_lines: number
-  file_count: number
-  first_commit: string
-  last_commit: string
-  head_oid: string
-  /** 「时间已尝试」标记（**已废弃**，历史上是 gitdir；新代码不再写入，保留列不做迁移） */
-  git_dir: string
-  /** 仓库身份（.git 规范化路径）；旧库经 ALTER 补列后为空串 */
-  repo_id?: string
-  analyzed_at: string
+/** 落盘的单项目结构（files 用紧凑元组减小体积） */
+interface StoredProject extends ProjectStatsRecord {
+  /** [path, lines, mtimeMs, size] */
+  files: Array<[string, number | null, number, number]>
 }
 
-/** gp_file_lines 行形状 */
-interface FileLinesRow {
-  path: string
-  lines: number | null
-  mtime_ms: number
-  size: number
+/** 落盘结构 */
+interface LineStatsStoreData {
+  version: 1
+  projects: Record<string, StoredProject>
 }
 
-/** ProjectStatsRow → ProjectStatsRecord */
-function toProjectStats(row: ProjectStatsRow): ProjectStatsRecord {
+/** 新建存储时的默认值 */
+function emptyData(): LineStatsStoreData {
   return {
-    projectId: row.project_id,
-    name: row.name,
-    totalLines: Number(row.total_lines) || 0,
-    fileCount: Number(row.file_count) || 0,
-    firstCommit: row.first_commit ?? "",
-    lastCommit: row.last_commit ?? "",
-    headOid: row.head_oid ?? "",
-    // 旧库（ALTER 前写入）无此列 → 空串 → 视为不匹配，触发一次重算并补写
-    repoId: row.repo_id ?? "",
-    analyzedAt: row.analyzed_at ?? "",
+    version: 1,
+    projects: {},
   }
+}
+
+/** 把不可信的持久化数据收敛为合法结构（逐项校验，坏项丢弃） */
+function normalizeData(raw: LineStatsStoreData): LineStatsStoreData {
+  const out = emptyData()
+  const projects = raw?.projects
+  if (!projects || typeof projects !== "object" || Array.isArray(projects)) return out
+
+  for (const [projectId, value] of Object.entries(projects)) {
+    if (!value || typeof value !== "object") continue
+    const item = value as Partial<StoredProject>
+    const files: StoredProject["files"] = []
+    if (Array.isArray(item.files)) {
+      for (const entry of item.files) {
+        if (!Array.isArray(entry) || entry.length < 4) continue
+        const [filePath, lines, mtimeMs, size] = entry
+        if (typeof filePath !== "string") continue
+        files.push([
+          filePath,
+          typeof lines === "number" ? lines : null,
+          Number(mtimeMs) || 0,
+          Number(size) || 0,
+        ])
+      }
+    }
+    out.projects[projectId] = {
+      projectId,
+      name: typeof item.name === "string" ? item.name : "",
+      totalLines: Number(item.totalLines) || 0,
+      fileCount: Number(item.fileCount) || 0,
+      firstCommit: typeof item.firstCommit === "string" ? item.firstCommit : "",
+      lastCommit: typeof item.lastCommit === "string" ? item.lastCommit : "",
+      headOid: typeof item.headOid === "string" ? item.headOid : "",
+      repoId: typeof item.repoId === "string" ? item.repoId : "",
+      analyzedAt: typeof item.analyzedAt === "string" ? item.analyzedAt : "",
+      files,
+    }
+  }
+  return out
 }
 
 /**
- * 行数统计 SQLite 存储。
+ * 行数统计 JSON 存储。
  *
  * 单例由 GitPushManager 持有（与 CommitIndex 并列），构造走 {@link openLineStatsStore}。
- * 数据库不可用时返回 null，调用方据此降级到「每次全量重算」的原路径——功能不中断，只是变慢。
+ * 内存态为唯一读源；写操作合并后串行落盘，避免多个项目并发分析时互相覆盖。
  */
 export class LineStatsStore {
-  private readonly db: PluginDatabase
+  private readonly storage: TypedStorage<LineStatsStoreData>
+  private data: LineStatsStoreData
+  /** 合并写盘：多个并发修改只触发尽可能少次整份写入 */
+  private savePending: Promise<boolean> | null = null
+  private dirty = false
 
-  constructor(db: PluginDatabase) {
-    this.db = db
-  }
-
-  /**
-   * 关闭底层 SQLite 连接（插件卸载时由 manager 调用；幂等）。
-   *
-   * 不关闭的后果：每次插件重载都会新建一个 DatabaseSync 并持有 .db/-wal/-shm 句柄，
-   * 旧连接既不释放也不被 GC 及时回收（详见 docs/gitPush-memory-cpu-review.md §L2）。
-   * 关闭后本实例不可再用；manager 会在 destroy 时同步清空初始化 Promise 缓存。
-   */
-  close(): void {
-    try {
-      this.db.close()
-    } catch (e) {
-      console.warn("[gitPush] 关闭行数统计数据库失败", e)
-    }
-  }
-
-  /** 建表（幂等；运行时只建表/补列，不做数据迁移） */
-  static prepare(db: PluginDatabase): void {
-    db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.project_stats} (
-      project_id TEXT PRIMARY KEY,
-      name TEXT NOT NULL DEFAULT '',
-      total_lines INTEGER NOT NULL DEFAULT 0,
-      file_count INTEGER NOT NULL DEFAULT 0,
-      first_commit TEXT NOT NULL DEFAULT '',
-      last_commit TEXT NOT NULL DEFAULT '',
-      head_oid TEXT NOT NULL DEFAULT '',
-      git_dir TEXT NOT NULL DEFAULT '',
-      repo_id TEXT NOT NULL DEFAULT '',
-      analyzed_at TEXT NOT NULL DEFAULT ''
-    )`)
-    // 旧库补列：早期版本的 gp_project_stats 没有 repo_id。
-    // PRAGMA table_info 判定后 ALTER，幂等且不破坏既有数据；
-    // 补列后旧行 repo_id 为空串 → 判据视为不匹配 → 各自重算一次并回填。
-    const cols = db.all<{ name: string }>(`PRAGMA table_info(${TABLE.project_stats})`)
-    if (!cols.some((c) => c.name === "repo_id")) {
-      db.exec(`ALTER TABLE ${TABLE.project_stats} ADD COLUMN repo_id TEXT NOT NULL DEFAULT ''`)
-    }
-    // (project_id, path) 复合主键即天然索引；无需额外建 project_id 单列索引
-    db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.file_lines} (
-      project_id TEXT NOT NULL,
-      path TEXT NOT NULL,
-      lines INTEGER,
-      mtime_ms INTEGER NOT NULL DEFAULT 0,
-      size INTEGER NOT NULL DEFAULT 0,
-      PRIMARY KEY (project_id, path)
-    )`)
+  constructor(storage: TypedStorage<LineStatsStoreData>, data: LineStatsStoreData) {
+    this.storage = storage
+    this.data = data
   }
 
   /** 读取单项目汇总行（不存在返回 null） */
   getProjectStats(projectId: string): ProjectStatsRecord | null {
-    const row = this.db.get<ProjectStatsRow>(
-      `SELECT * FROM ${TABLE.project_stats} WHERE project_id = ?`,
-      projectId,
-    )
-    return row ? toProjectStats(row) : null
+    const item = this.data.projects[projectId]
+    if (!item) return null
+    return {
+      projectId: item.projectId,
+      name: item.name,
+      totalLines: item.totalLines,
+      fileCount: item.fileCount,
+      firstCommit: item.firstCommit,
+      lastCommit: item.lastCommit,
+      headOid: item.headOid,
+      repoId: item.repoId,
+      analyzedAt: item.analyzedAt,
+    }
   }
 
   /** 读取单项目全部文件行数（返回 Map<path, record>） */
   getFileLines(projectId: string): Map<string, FileLinesRecord> {
-    const rows = this.db.all<FileLinesRow>(
-      `SELECT path, lines, mtime_ms, size FROM ${TABLE.file_lines} WHERE project_id = ?`,
-      projectId,
-    )
     const out = new Map<string, FileLinesRecord>()
-    for (const r of rows) {
-      out.set(r.path, {
-        path: r.path,
-        lines: r.lines === null ? null : Number(r.lines),
-        mtimeMs: Number(r.mtime_ms) || 0,
-        size: Number(r.size) || 0,
+    const item = this.data.projects[projectId]
+    if (!item) return out
+    for (const [path, lines, mtimeMs, size] of item.files) {
+      out.set(path, {
+        path,
+        lines,
+        mtimeMs,
+        size,
       })
     }
     return out
   }
 
   /**
-   * 整体覆盖写单项目统计（汇总 + 文件明细在**同一事务**内完成）。
+   * 整体覆盖写单项目统计（汇总 + 文件明细）。
    *
    * 为什么整体覆盖而非逐条 upsert：仓库文件集合可能删除文件，
    * 逐条 upsert 会让已删除文件的旧记录永久残留（下次读出来参与合计，数字虚高）。
-   * 文件数通常在数百~数千，单事务整体重写仍是毫秒级，远快于原来的逐文件 readFileSync。
    */
-  saveProjectStats(record: ProjectStatsRecord, files: FileLinesRecord[]): void {
-    this.db.withTransaction(() => {
-      this.db.run(
-        `INSERT INTO ${TABLE.project_stats}
-          (project_id, name, total_lines, file_count, first_commit, last_commit, head_oid, git_dir, repo_id, analyzed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(project_id) DO UPDATE SET
-           name = excluded.name,
-           total_lines = excluded.total_lines,
-           file_count = excluded.file_count,
-           first_commit = excluded.first_commit,
-           last_commit = excluded.last_commit,
-           head_oid = excluded.head_oid,
-           git_dir = excluded.git_dir,
-           repo_id = excluded.repo_id,
-           analyzed_at = excluded.analyzed_at`,
-        record.projectId,
-        record.name,
-        record.totalLines,
-        record.fileCount,
-        record.firstCommit,
-        record.lastCommit,
-        record.headOid,
-        // git_dir 列已废弃（曾存「时间已尝试」标记），写入空串以清掉旧标记值
-        "",
-        record.repoId,
-        record.analyzedAt,
-      )
-      // 先清后写：保证文件集合与磁盘现状严格一致（不残留已删除文件）
-      this.db.run(`DELETE FROM ${TABLE.file_lines} WHERE project_id = ?`, record.projectId)
-      for (const f of files) {
-        this.db.run(
-          `INSERT INTO ${TABLE.file_lines} (project_id, path, lines, mtime_ms, size) VALUES (?, ?, ?, ?, ?)`,
-          record.projectId,
-          f.path,
-          f.lines,
-          f.mtimeMs,
-          f.size,
-        )
-      }
-    })
+  async saveProjectStats(record: ProjectStatsRecord, files: FileLinesRecord[]): Promise<void> {
+    // 不可变更新：写盘快照可能引用旧对象，替换而非原地修改
+    this.data = {
+      version: 1,
+      projects: {
+        ...this.data.projects,
+        [record.projectId]: {
+          ...record,
+          files: files.map((f): [string, number | null, number, number] => [f.path, f.lines, f.mtimeMs, f.size]),
+        },
+      },
+    }
+    await this.scheduleSave()
   }
 
   /**
    * 仅更新汇总行的生命周期字段（首/末次提交时间）。
-   * 供「HEAD 未变、只需补首末提交时间」的快路径使用，避免读一遍文件明细。
+   * 供「HEAD 未变、只需补首末提交时间」的快路径使用，避免重建文件明细。
    */
-  updateCommitTimes(projectId: string, firstCommit: string, lastCommit: string, analyzedAt: string): void {
-    this.db.run(
-      `UPDATE ${TABLE.project_stats} SET first_commit = ?, last_commit = ?, analyzed_at = ?,
-         git_dir = ''
-       WHERE project_id = ?`,
-      firstCommit,
-      lastCommit,
-      analyzedAt,
-      projectId,
-    )
+  async updateCommitTimes(projectId: string, firstCommit: string, lastCommit: string, analyzedAt: string): Promise<void> {
+    const item = this.data.projects[projectId]
+    if (!item) return
+    this.data = {
+      version: 1,
+      projects: {
+        ...this.data.projects,
+        [projectId]: {
+          ...item,
+          firstCommit,
+          lastCommit,
+          analyzedAt,
+        },
+      },
+    }
+    await this.scheduleSave()
   }
 
   /**
@@ -273,33 +222,60 @@ export class LineStatsStore {
    * 与 IndexMeta 的「淘汰最旧项目」同一目的：防止删除项目后数据无限堆积。
    * 单项目删除也走本方法（传不含该 id 的集合），故不再单独提供 removeProject。
    */
-  pruneProjects(keepIds: string[]): number {
-    const existing = this.db.all<{ project_id: string }>(
-      `SELECT project_id FROM ${TABLE.project_stats}`,
-    )
+  async pruneProjects(keepIds: string[]): Promise<number> {
     const keep = new Set(keepIds)
-    const stale = existing.map((r) => r.project_id).filter((id) => !keep.has(id))
+    const stale = Object.keys(this.data.projects).filter((id) => !keep.has(id))
     if (stale.length === 0) return 0
-    this.db.withTransaction(() => {
-      for (const id of stale) {
-        this.db.run(`DELETE FROM ${TABLE.project_stats} WHERE project_id = ?`, id)
-        this.db.run(`DELETE FROM ${TABLE.file_lines} WHERE project_id = ?`, id)
-      }
-    })
+
+    const projects = { ...this.data.projects }
+    for (const id of stale) delete projects[id]
+    this.data = {
+      version: 1,
+      projects,
+    }
+    await this.scheduleSave()
     return stale.length
+  }
+
+  /** 合并调度：连续修改只写一次；写入失败保留内存态，下次修改重试 */
+  private scheduleSave(): Promise<boolean> {
+    this.dirty = true
+    if (this.savePending) return this.savePending
+
+    this.savePending = (async () => {
+      let ok = true
+      while (this.dirty) {
+        this.dirty = false
+        // data 为不可变结构：传给 saveData 的引用不会被后续修改
+        const saved = await this.storage.save(this.data)
+        if (!saved) {
+          ok = false
+          console.warn(`${LOG_TAG} 行数统计数据落盘失败（内存态仍可用，下次修改会重试）`)
+        }
+      }
+      this.savePending = null
+      return ok
+    })()
+    return this.savePending
   }
 }
 
 /**
- * 打开行数统计存储（含启动早期路径未就绪的重试与建表）。
+ * 打开行数统计存储（读取 JSON 槽并收敛数据）。
  *
- * @returns 可用实例；数据库不可用（旧版思源 / 非 Electron / 打开失败）返回 null，
- *          调用方据此降级为企业原路径（每次全量重算），不影响功能可用性。
+ * @returns 可用实例；读取/解析彻底失败返回 null，调用方据此降级为「每次全量重算」
  */
 export async function openLineStatsStore(plugin: Plugin): Promise<LineStatsStore | null> {
-  const db = await openWithRetry(plugin, (d) => LineStatsStore.prepare(d), { logTag: LOG_TAG })
-  return db ? new LineStatsStore(db) : null
+  try {
+    const storage = new TypedStorage<LineStatsStoreData>(
+      new PluginStorage(plugin),
+      STORAGE_KEY,
+      emptyData(),
+    )
+    const loaded = await storage.loadOrDefault()
+    return new LineStatsStore(storage, normalizeData(loaded))
+  } catch (error) {
+    console.warn(`${LOG_TAG} 行数统计存储初始化失败`, error)
+    return null
+  }
 }
-
-/** 供单测/排障使用的表名导出（避免测试里硬编码字符串漂移） */
-export const LINE_STATS_TABLES = TABLE

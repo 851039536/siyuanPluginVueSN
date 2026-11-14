@@ -236,9 +236,7 @@ export default defineConfig(({
 
         // make sure to externalize deps that shouldn't be bundled
         // into your library
-        // node:sqlite 为思源 Electron（44 / Node 24）内置模块，无需原生编译；
-        // 必须外部化，否则 Rolldown 会尝试解析并打包失败
-        external: ["siyuan", "process", "stream", "node:fs", "node:path", "node:child_process", "node:os", "node:util", "node:stream", "node:http", "node:https", "node:crypto", "node:sqlite"],
+        external: ["siyuan", "process", "stream", "node:fs", "node:path", "node:child_process", "node:os", "node:util", "node:stream", "node:http", "node:https", "node:crypto"],
 
         output: {
           entryFileNames: "[name].js",

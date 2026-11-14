@@ -1,15 +1,12 @@
 /**
  * 数据管理 - 全量备份 / 逻辑还原
  *
- * 全量备份复用 `@/utils/settingsBackup`（内部已用 SQLite 在线快照）。
- * 运行中还原只做逻辑写回：JSON 按 key 写回，SQLite 从 zip 内的临时库读出后整表替换；
- * **禁止**在插件运行中覆盖 `plugin.db` 等被连接持有的文件。
+ * 全量备份复用 `@/utils/settingsBackup`（整目录 zip，不持有运行期文件句柄）。
+ * 运行中还原只做逻辑写回：JSON 槽按 key 写回，`git-push-index` 文件槽整目录替换。
+ * 旧版备份中的 `plugin.db` 会被忽略（插件已移除 SQLite）。
  */
 import JSZip from "jszip"
-import {
-  JSON_SLOTS,
-  SQLITE_SLOTS,
-} from "@/config/storage"
+import { JSON_SLOTS } from "@/config/storage"
 import type {
   BackupResult,
   PluginBackupListItem,
@@ -19,15 +16,13 @@ import {
   deletePluginBackup,
   listPluginBackups,
 } from "@/utils/settingsBackup"
-import type { SqliteDatabaseSync } from "@/utils/sqliteDb"
-import { getSqlite } from "@/utils/sqliteDb"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { readWorkspaceDir } from "@/utils/workspaceDir"
 import type {
   ImportReport,
   ModuleExportPayload,
 } from "../types/model"
-import { isSafeTableName, type StorageContext } from "./context"
+import type { StorageContext } from "./context"
 
 /** 可还原的文件槽前缀（与注册表 gitPush.index 对应） */
 const RESTORABLE_FILE_PREFIX = "git-push-index/"
@@ -60,95 +55,6 @@ export async function getBackupDir(): Promise<string> {
 export async function deleteBackup(fileName: string): Promise<boolean> {
   const root = await getWorkspaceRoot()
   return root ? deletePluginBackup(root, fileName) : false
-}
-
-/** 从 zip 中读出注册表内的 SQLite 表 */
-async function readSqliteTables(
-  ctx: StorageContext,
-  zip: JSZip,
-  payload: ModuleExportPayload,
-  report: ImportReport,
-): Promise<void> {
-  const dbEntry = zip.file("plugin.db")
-  if (!dbEntry) return
-
-  const root = await getWorkspaceRoot()
-  if (!root) {
-    report.failed.push({ slotId: "core.pluginDb", error: "workspaceUnresolved" })
-    return
-  }
-
-  const tempDir = ctx.path.join(root, "data-backup", ".tmp", `restore-${Date.now()}`)
-  try {
-    ctx.fs.mkdirSync(tempDir, { recursive: true })
-    const tempDbPath = ctx.path.join(tempDir, "plugin.db")
-    const buffer = await dbEntry.async("nodebuffer")
-    // 0 字节库是「备份时快照没写完」的典型产物（node:sqlite backup 未 await）。
-    // 必须显式失败：SQLite 会把空文件当合法空库打开，否则还原会假成功并丢掉全部表。
-    if (!buffer.length) {
-      report.failed.push({ slotId: "core.pluginDb", error: "backupDbEmpty" })
-      return
-    }
-    ctx.fs.writeFileSync(tempDbPath, buffer)
-    // 兼容旧备份（快照失败时可能连 -wal/-shm 一起打包）：一并解出，让 SQLite 自行恢复
-    for (const suffix of ["-wal", "-shm"]) {
-      const sidecar = zip.file(`plugin.db${suffix}`)
-      if (sidecar) {
-        ctx.fs.writeFileSync(`${tempDbPath}${suffix}`, await sidecar.async("nodebuffer"))
-      }
-    }
-
-    const sqlite = getSqlite()
-    if (!sqlite) {
-      for (const slot of SQLITE_SLOTS) {
-        report.failed.push({ slotId: slot.id, error: "sqliteUnavailable" })
-      }
-      return
-    }
-
-    let db: SqliteDatabaseSync | null = null
-    try {
-      // 临时库可写：允许 SQLite 自行恢复旧备份里可能附带的 -wal
-      db = new sqlite.DatabaseSync(tempDbPath)
-      const check = db.prepare("PRAGMA quick_check").get() as Record<string, unknown> | undefined
-      const checkValue = check ? Object.values(check)[0] : undefined
-      if (checkValue !== "ok") {
-        report.failed.push({ slotId: "core.pluginDb", error: "backupDbInvalid" })
-        return
-      }
-
-      payload.schemas ??= {}
-      for (const slot of SQLITE_SLOTS) {
-        if (!isSafeTableName(slot.key)) continue
-        const exists = db.prepare(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
-        ).get(slot.key)
-        if (!exists) continue
-        payload.tables[slot.key] = db.prepare(`SELECT * FROM "${slot.key}"`).all() as Record<string, unknown>[]
-        const schema = db.prepare(
-          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?",
-        ).get(slot.key) as { sql?: string } | undefined
-        if (schema?.sql) payload.schemas[slot.key] = schema.sql
-      }
-    } finally {
-      try {
-        db?.close()
-      } catch {
-        // 关闭失败不掩盖读取结果
-      }
-    }
-  } catch (error) {
-    report.failed.push({
-      slotId: "core.pluginDb",
-      error: error instanceof Error ? error.message : "sqliteReadFailed",
-    })
-  } finally {
-    try {
-      ctx.fs.rmSync(tempDir, { recursive: true, force: true })
-    } catch {
-      // 清理失败不阻塞还原
-    }
-  }
 }
 
 /** 还原可还原的文件槽（仅 git-push-index；带 zip-slip 防护） */
@@ -185,7 +91,6 @@ export interface RestorableFileSource {
  * 调用方先校验本步骤，再创建全量快照，最后调用 `applyPayload()` 与 `fileSource.write()`。
  */
 export async function loadBackupZip(
-  ctx: StorageContext,
   file: File,
 ): Promise<{ payload: ModuleExportPayload | null, report: ImportReport, fileSource: RestorableFileSource | null }> {
   const report: ImportReport = {
@@ -208,8 +113,6 @@ export async function loadBackupZip(
     exportedAt: Date.now(),
     owners: [],
     slots: {},
-    tables: {},
-    schemas: {},
   }
 
   for (const slot of JSON_SLOTS) {
@@ -227,9 +130,12 @@ export async function loadBackupZip(
     }
   }
 
-  await readSqliteTables(ctx, zip, payload, report)
+  // 旧备份可能含 plugin.db：插件已移除 SQLite，明确跳过而不是静默解压
+  if (zip.file("plugin.db") || zip.file("plugin.db-wal") || zip.file("plugin.db-shm")) {
+    report.skipped.push({ slotId: "core.pluginDb", reason: "sqliteRemoved" })
+  }
 
-  const hasData = Object.keys(payload.slots).length > 0 || Object.keys(payload.tables).length > 0
+  const hasData = Object.keys(payload.slots).length > 0
   const hasFiles = Object.keys(zip.files).some((rel) => {
     const normalized = rel.replace(/\\/g, "/")
     return normalized.startsWith(RESTORABLE_FILE_PREFIX) && zip.files[rel]?.dir !== true

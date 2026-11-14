@@ -1,16 +1,16 @@
-<!-- 数据管理 - 诊断：增长型槽位超过阈值的迁移提示 -->
+<!-- 数据管理 - 诊断：增长型槽位超过阈值的清理提示 -->
 <template>
   <div class="sm-diagnostics">
-    <!-- 说明："增长型槽位超过 150KB 时提示迁移……" -->
+    <!-- 说明："增长型槽位超过 150KB 时提示清理……" -->
     <p class="sm-desc">{{ t.diagnostics?.desc }}</p>
 
     <template v-if="warnings.length">
-      <!-- 告警项："「{槽位}」已占用 {大小}，建议迁移到 SQLite" -->
+      <!-- 告警项："「{槽位}」已占用 {大小}，建议清理" -->
       <Message
         v-for="warning in warnings"
         :key="warning.slotId"
         severity="warn"
-        icon="databaseRemoveOutline"
+        icon="warning"
       >
         {{ messageFor(warning) }}
       </Message>
@@ -24,9 +24,6 @@
     >
       {{ t.diagnostics?.empty }}
     </Message>
-
-    <!-- 迁移路线文档路径 -->
-    <p class="sm-hint">{{ t.diagnostics?.docsHint }}</p>
   </div>
 </template>
 

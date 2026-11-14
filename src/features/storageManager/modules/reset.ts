@@ -5,9 +5,8 @@
  */
 import { getSlot } from "@/config/storage"
 import { PluginStorage } from "@/utils/pluginStorage"
-import { openPluginDatabase } from "@/utils/sqliteDb"
 import type { SlotActionResult } from "../types/model"
-import { isSafeTableName, type StorageContext } from "./context"
+import type { StorageContext } from "./context"
 
 export async function resetSlot(ctx: StorageContext, slotId: string): Promise<SlotActionResult> {
   const slot = getSlot(slotId)
@@ -33,26 +32,6 @@ export async function resetSlot(ctx: StorageContext, slotId: string): Promise<Sl
         return { slotId, ok: true }
       } catch {
         return { slotId, ok: false, error: "removeFailed" }
-      }
-    }
-    case "sqlite": {
-      if (!isSafeTableName(slot.key)) {
-        return { slotId, ok: false, error: "unsafeTable" }
-      }
-      const open = await openPluginDatabase(ctx.plugin)
-      if (!open.ok) return { slotId, ok: false, error: "sqliteUnavailable" }
-      try {
-        const exists = open.db.get(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
-          slot.key,
-        )
-        if (!exists) return { slotId, ok: true }
-        open.db.exec(`DELETE FROM "${slot.key}"`)
-        return { slotId, ok: true }
-      } catch {
-        return { slotId, ok: false, error: "removeFailed" }
-      } finally {
-        open.db.close()
       }
     }
   }

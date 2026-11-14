@@ -56,11 +56,15 @@ export const JSON_SLOTS = [
   jsonSlot("gitPush.compareBase", ["gitPush"], "git-push-compare-base", "对比基准分支"),
   jsonSlot("gitPush.analysisCache", ["gitPush"], "git-push-analysis-cache", "提交分析缓存", {
     growth: true,
-    notes: "实测 1.49MB / 6786 条；P0 迁 SQLite",
+    notes: "实测 1.49MB / 6786 条；仅分析结束时整份重写（低频操作）",
   }),
-  jsonSlot("gitPush.lineStatsCache", ["gitPush"], "git-push-line-stats-cache", "行数统计缓存", {
+  jsonSlot("gitPush.lineStatsCache", ["gitPush"], "git-push-line-stats-cache", "行数统计快照", {
     growth: true,
-    notes: "与 gp_project_stats / gp_file_lines / filelines.ndjson 重复，P0 下线",
+    notes: "行数排行展示快照；逐文件增量缓存见 gitPush.lineStatsStore",
+  }),
+  jsonSlot("gitPush.lineStatsStore", ["gitPush"], "git-push-line-stats-store", "行数统计增量缓存", {
+    growth: true,
+    notes: "逐文件行数 + (mtime,size) 判据；JSON 槽 + 内存态，不持有文件句柄",
   }),
   jsonSlot("gitPush.analysisView", ["gitPush"], "git-push-analysis-view", "分析视图偏好"),
   jsonSlot("gitPush.reportPrefs", ["gitPush"], "git-push-report-prefs", "提交报告偏好"),
@@ -74,7 +78,7 @@ export const JSON_SLOTS = [
   jsonSlot("gitPush.bfgPrefs", ["gitPush"], "git-push-bfg-prefs", "BFG 清理偏好"),
   jsonSlot("gitPush.reportCache", ["gitPush"], "git-push-report-cache", "提交报告缓存", {
     growth: true,
-    notes: "整份 JSON 重写，P0 迁 SQLite",
+    notes: "整份 JSON 重写（低频报告生成）",
   }),
   jsonSlot("gitPush.indexMeta", ["gitPush"], "git-push-index-meta", "提交索引元数据"),
   jsonSlot("gitPush.indexEnabled", ["gitPush"], "git-push-index-enabled", "提交索引开关"),
@@ -144,6 +148,10 @@ export const JSON_SLOTS = [
     notes: "AK/SK 经 AES-GCM 加密",
   }),
   jsonSlot("s3FileManager.prefs", ["s3FileManager"], "s3-file-manager-prefs", "S3 文件管理偏好"),
+  jsonSlot("s3FileManager.logs", ["s3FileManager"], "s3-file-manager-log", "S3 文件操作日志", {
+    growth: true,
+    notes: "上限 200 条；整份重写",
+  }),
 
   // ==================== rssReader ====================
   jsonSlot("rssReader.settings", ["rssReader"], "rssReader-settings", "RSS 设置", { legacyName: true }),
@@ -151,7 +159,7 @@ export const JSON_SLOTS = [
   jsonSlot("rssReader.items", ["rssReader"], "rssReader-items", "RSS 文章", {
     growth: true,
     legacyName: true,
-    notes: "标记单篇已读会重写约 1.2MB；P0 迁 SQLite",
+    notes: "标记单篇已读会重写约 1.2MB（存量风险，暂不迁移）",
   }),
 
   // ==================== htmlViewer ====================
@@ -181,7 +189,7 @@ export const JSON_SLOTS = [
   // ==================== statistics ====================
   jsonSlot("statistics.history", ["statistics"], "statistics-history", "统计历史快照", {
     growth: true,
-    notes: "每天 +1 且无裁剪，整份重写；P1 迁 SQLite",
+    notes: "每天 +1 且无裁剪，整份重写（存量风险，暂不迁移）",
   }),
   jsonSlot("statistics.settings", ["statistics"], "statistics-settings", "统计设置"),
   jsonSlot("statistics.milestoneRules", ["statistics"], "milestone-rules", "里程碑规则"),
@@ -223,10 +231,23 @@ export const JSON_SLOTS = [
   jsonSlot("everythingSearch.config", ["everythingSearch"], "everything-search-config", "Everything 配置"),
   jsonSlot("everythingSearch.options", ["everythingSearch"], "everything-search-options", "Everything 选项"),
   jsonSlot("everythingSearch.cacheClean", ["everythingSearch"], "everything-search-cache-clean", "缓存清理偏好"),
+  jsonSlot("everythingSearch.cleanHistory", ["everythingSearch"], "everything-search-clean-history", "缓存清理历史", {
+    growth: true,
+    notes: "上限 500 条；清理完成后整份重写",
+  }),
 
   // ==================== imageCreation ====================
   jsonSlot("imageCreation.cover", ["imageCreation"], "image-creation-cover-settings", "封面设置"),
   jsonSlot("imageCreation.codeImage", ["imageCreation"], "image-creation-code-image-settings", "代码图片设置"),
+
+  // ==================== websiteNavigation / minimalBrowser ====================
+  jsonSlot("websiteNavigation.entries", ["websiteNavigation", "minimalBrowser"], "website-navigation-entries", "网站导航条目", {
+    growth: true,
+    notes: "书签条目；minimalBrowser 共享读取",
+  }),
+  jsonSlot("websiteNavigation.categories", ["websiteNavigation", "minimalBrowser"], "website-navigation-categories", "网站导航分类", {
+    notes: "未写入时返回内置默认分类",
+  }),
 
   // ==================== 单设置功能 ====================
   jsonSlot("docNavigation.settings", ["docNavigation"], "docNavigation-settings", "文档导航设置", { legacyName: true }),

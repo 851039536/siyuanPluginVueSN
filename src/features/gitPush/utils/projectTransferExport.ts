@@ -30,7 +30,10 @@ export interface ProjectTransferSlots {
   "git-push-commit-templates": CommitTemplate[]
 }
 
-/** 与插件 ModuleExportPayload v1 同形的载荷（桌面端无消费方，tables/schemas 恒空） */
+/**
+ * 与插件 ModuleExportPayload v1 的 `slots` 字段兼容；
+ * `tables` / `schemas` 是桌面端解析器仍要求存在的外壳字段，恒为空对象。
+ */
 export interface ProjectTransferPayload {
   version: 1
   exportedAt: number

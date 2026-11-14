@@ -162,7 +162,7 @@ export class GitPushManager {
    *
    * destroy() 之后必须阻止「异步链路恢复后再初始化」：getIndex/getLineStatsStore 的
    * await 期间若发生卸载，旧实现会把新建的实例重新写回字段（commitIndex/lineStatsStoreInit），
-   * 于是刚释放的内存与 SQLite 句柄被重新创建且再无人关闭。
+   * 于是刚释放的内存与缓存被重新创建且再无人回收。
    */
   private destroyed = false
   /**
@@ -174,7 +174,7 @@ export class GitPushManager {
   private indexInit: Promise<CommitIndex | null> | null = null
 
   /**
-   * 行数统计 SQLite 存储（延迟构造，理由同 commitIndex）。
+   * 行数统计 JSON 存储（延迟构造，理由同 commitIndex）。
    * 只经 getLineStatsStore() 访问；初始化 Promise 缓存见 lineStatsStoreInit。
    */
   /** 行数存储初始化 Promise（并发调用共享同一次初始化） */
@@ -238,10 +238,10 @@ export class GitPushManager {
   }
 
   /**
-   * 获取行数统计 SQLite 存储（首次调用构造；不可用返回 null 且只告警一次）。
+   * 获取行数统计 JSON 存储（首次调用构造；不可用返回 null 且只告警一次）。
    *
-   * 失败时**清空缓存的初始化 Promise**：与 getIndex 同理，一次瞬时失败
-   * （启动期工作区路径未就绪）不应把 `lineStatsStoreInit` 永久钉死为 null。
+   * 失败时**清空缓存的初始化 Promise**：与 getIndex 同理，一次瞬时读取失败
+   * 不应把 `lineStatsStoreInit` 永久钉死为 null。
    */
   async getLineStatsStore(): Promise<LineStatsStore | null> {
     if (this.destroyed) return null
@@ -250,7 +250,7 @@ export class GitPushManager {
       try {
         const store = await openLineStatsStore(this.plugin)
         if (!store) {
-          console.warn("[gitPush] 行数统计数据库不可用，行数扫描将每次全量重算（功能不受影响，仅较慢）")
+          console.warn("[gitPush] 行数统计存储不可用，行数扫描将每次全量重算（功能不受影响，仅较慢）")
         }
         return store
       } catch (e) {
@@ -260,11 +260,8 @@ export class GitPushManager {
     })()
     this.lineStatsStoreInit = init
     const store = await init
-    // 卸载竞态：await 期间已 destroy → 立即关闭新连接，且不写回缓存（否则句柄永不释放）
-    if (this.destroyed) {
-      try { store?.close() } catch { /* 关闭失败不影响卸载 */ }
-      return null
-    }
+    // 卸载竞态：await 期间已 destroy → 不写回缓存（内存态随实例回收即可）
+    if (this.destroyed) return null
     // 失败不保留缓存，允许后续调用重新尝试；成功则保持复用
     if (!store && this.lineStatsStoreInit === init) this.lineStatsStoreInit = null
     return store
@@ -311,16 +308,15 @@ export class GitPushManager {
     await this.storage.indexMaxCommits.save(clampIndexMaxCommits(n))
   }
 
-  // ── 行数统计（存量行数 + 仓库生命周期，增量扫描 + SQLite 复用）──
+  // ── 行数统计（存量行数 + 仓库生命周期，增量扫描 + JSON 缓存复用）──
 
   /**
    * 扫描单项目的存量行数（增量）与生命周期时间。
    *
    * 性能设计（本机实测单次 git 调用 ≈ 300–500ms，几乎全是进程创建开销，
    * 故**减少调用次数**比减少数据量更有效）：
-   * - 生命周期快照：`getRepoLifecycle` 用 **2 次** git 调用拿齐 HEAD oid / 末次提交 / 根提交
-   *   （原实现为 3 次：log -n1 + rev-parse --absolute-git-dir + log --reverse -1）；
-   * - `HEAD oid` 未变 → **直接读 SQLite 汇总行返回**，不再跑 ls-files、不再 statSync；
+   * - 生命周期快照：`getRepoLifecycle` 用 **2 次** git 调用拿齐 HEAD oid / 末次提交 / 根提交；
+   * - `HEAD oid` 未变 → **直接读内存缓存返回**，不再跑 ls-files、不再 statSync；
    * - HEAD 变了 → `git ls-files`（1 次）+ 逐文件 statSync 比对，只重读变化文件。
    *
    * 失效判据只用 `project.id + HEAD oid`（不再比较 gitdir）：正是为了省掉
@@ -401,7 +397,7 @@ export class GitPushManager {
       // 纠正后落库（rootDate 为空时保留旧值，不把正确数据冲掉）
       if (firstCommit !== cached.firstCommit || lastCommit !== cached.lastCommit) {
         try {
-          store!.updateCommitTimes(project.id, firstCommit, lastCommit, cached.analyzedAt)
+          await store!.updateCommitTimes(project.id, firstCommit, lastCommit, cached.analyzedAt)
         } catch {
           // 补写失败不影响返回（下次仍会尝试）
         }
@@ -453,7 +449,7 @@ export class GitPushManager {
 
     if (store) {
       try {
-        store.saveProjectStats({
+        await store.saveProjectStats({
           projectId: project.id,
           name: project.name,
           totalLines,
@@ -466,8 +462,8 @@ export class GitPushManager {
           analyzedAt: nowIso,
         }, scan.files)
       } catch (e) {
-        // 落库失败不影响本次结果：下次分析只是又走一遍增量扫描
-        console.warn(`[gitPush] 行数统计落库失败（项目 ${project.name}）`, e)
+        // 落盘失败不影响本次结果：下次分析只是又走一遍增量扫描
+        console.warn(`[gitPush] 行数统计落盘失败（项目 ${project.name}）`, e)
       }
     }
 
@@ -486,7 +482,7 @@ export class GitPushManager {
     const store = await this.getLineStatsStore()
     if (!store) return
     try {
-      store.pruneProjects(keepIds)
+      await store.pruneProjects(keepIds)
     } catch (e) {
       console.warn("[gitPush] 清理行数统计数据失败", e)
     }
@@ -497,7 +493,7 @@ export class GitPushManager {
     const store = await this.getLineStatsStore()
     if (!store) return
     try {
-      store.pruneProjects([])
+      await store.pruneProjects([])
     } catch (e) {
       console.warn("[gitPush] 清空行数统计缓存失败", e)
     }
@@ -578,8 +574,8 @@ export class GitPushManager {
    * 插件卸载 / 禁用时的统一销毁。
    *
    * 清理顺序刻意如此：先停探测侧入口（Dock 面板 unmount → 组件 onUnmounted → gitProbe.destroy），
-   * 再销毁执行器与写锁，最后释放索引/行数存储句柄——避免「已卸载但探测链仍在跑」的窗口期。
-   * 历史实现只清 writeLock/executor/tab，遗漏 Dock 面板与 SQLite 句柄，导致插件重载后
+   * 再销毁执行器与写锁，最后释放索引/行数统计内存缓存——避免「已卸载但探测链仍在跑」的窗口期。
+   * 历史实现只清 writeLock/executor/tab，遗漏 Dock 面板与索引，导致插件重载后
    * 旧探测链继续 spawn git（详见 docs/gitPush-memory-cpu-review.md §L1/L2）。
    */
   destroy() {
@@ -593,14 +589,8 @@ export class GitPushManager {
     this.executor.destroy()
     // 杀掉托管中的脚本会话进程（dev server 等长驻脚本关弹窗不杀，但卸载必须清，防孤儿）
     scriptSessions.destroyAll()
-    // 释放行数统计 SQLite 句柄（openWithRetry 每次新建 DatabaseSync，不 close 会随重载累积）
-    const storeInit = this.lineStatsStoreInit
+    // 释放行数统计存储的内存缓存（JSON 槽无文件句柄需要关闭）
     this.lineStatsStoreInit = null
-    if (storeInit) {
-      void storeInit.then((store) => {
-        try { store?.close() } catch { /* 关闭失败不影响卸载 */ }
-      })
-    }
     // 释放提交索引内存段（segments/fileLinesByProject 只增不减，见 §L2）
     this.commitIndex?.dispose()
     this.commitIndex = null

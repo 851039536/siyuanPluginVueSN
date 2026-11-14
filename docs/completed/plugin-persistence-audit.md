@@ -1,5 +1,12 @@
 # 插件持久化审计（plugin-persistence-audit）
 
+> **归档说明（2026-11-14）**：本报告提出把增长型数据迁往 SQLite，但 SQLite 库文件
+> `plugin.db` 位于思源同步目录，Windows 下连接持有文件句柄会让同步引擎的 rename 覆盖失败
+> （表现为「读写文件或访问网络权限不足」）。现已反向处理：全部 SQLite 存储回退为
+> 思源 `saveData` JSON 槽，SQLite 基础设施与同步守卫已删除。迁移路线（§4）作废，
+> 数据迁移见 `scripts/migrate-sqlite-to-json.mjs`；现行规则见 `AGENTS.md` § 存储规范
+> 与 `docs/参考/persistence.md`。以下内容仅作历史记录保留。
+
 - 日期：2026-11-05
 - 对象：本插件全部持久化形态（`plugin.saveData` JSON 槽、`plugin.db`、裸文件/NDJSON、localStorage）
 - 依据：静态走查 + 仓库内既有实测数据（`docs/completed/sqlite-persistence-review.md`）

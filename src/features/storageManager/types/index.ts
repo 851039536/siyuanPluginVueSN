@@ -134,7 +134,7 @@ export class StorageManager {
   /** 从 zip 逻辑还原（先解析校验，再自动全量快照，最后写回） */
   async restoreFromZip(file: File): Promise<ImportReport> {
     const ctx = await this.context()
-    const { payload, report, fileSource } = await loadBackupZip(ctx, file)
+    const { payload, report, fileSource } = await loadBackupZip(file)
     if (!payload) return report
 
     let backup: BackupResult
@@ -150,7 +150,7 @@ export class StorageManager {
         const restoredFiles = await fileSource.write(ctx)
         if (restoredFiles > 0) merged.applied.push("gitPush.index")
       } catch (error) {
-        // 文件槽写失败不回滚已写回的 JSON/SQLite，但必须在报告里显式失败
+        // 文件槽写失败不回滚已写回的 JSON 槽，但必须在报告里显式失败
         merged.failed.push({
           slotId: "gitPush.index",
           error: error instanceof Error ? error.message : "removeFailed",

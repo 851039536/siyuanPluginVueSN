@@ -153,7 +153,7 @@ export interface CacheCleanResult {
 /** 清理方式：移入回收站（默认，可还原）/ 永久删除 */
 export type CacheCleanMode = "recycle" | "permanent"
 
-/** 一条清理历史记录（对应 `es_clean_history` 表的一行） */
+/** 一条清理历史记录（`everything-search-clean-history` 槽的一项） */
 export interface CleanHistoryRecord {
   /** 清理完成时间（毫秒时间戳） */
   cleanedAt: number
@@ -167,7 +167,7 @@ export interface CleanHistoryRecord {
   freed: number
 }
 
-/** 清理历史的累计统计（全表聚合） */
+/** 清理历史的累计统计（内存聚合） */
 export interface CleanHistoryStats {
   /** 清理次数 */
   count: number

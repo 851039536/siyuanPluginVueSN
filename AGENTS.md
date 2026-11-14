@@ -154,7 +154,6 @@ pnpm audit:storage  # 存储键 ↔ src/config/storage/ 注册表双向核对
 | 场景 | 必须使用的 API | 位置 |
 |------|-------------|----------|
 | 存储 | `PluginStorage` / `TypedStorage<T>` | `@/utils/pluginStorage` / `@/utils/typedStorage` |
-| **结构化数据存储** | `openPluginDatabase()` / `featureTables()` | `@/utils/sqliteDb`（见 § SQLite 存储规范） |
 | AI 调用 | `callAI` / `callAIStream` / `callAISmart` / `callAIChat` / `getApiConfigFromPlugin` | `@/utils/aiApi` |
 | 自定义事件 | `emitCustomEvent` | `@/utils/eventBus` |
 | Dock 面板 | `createVueDockApp` | `@/utils/vueAppHelper` |
@@ -178,162 +177,83 @@ pnpm audit:storage  # 存储键 ↔ src/config/storage/ 注册表双向核对
 
 ---
 
-## SQLite 存储规范（强制，2026-10-17）
+## 存储规范（强制，2026-11-14）
 
-结构化数据（列表、日志、缓存、索引等**会增长的记录集合**）统一存入 **全插件唯一的 `plugin.db`**，
-按表名前缀隔离。参考实现：**`src/utils/sharedStorage/websiteStorage.ts`（websiteNavigation）**。
+> 完整参考见 [`docs/参考/persistence.md`](./docs/参考/persistence.md)。本节只列强制项。
 
-### 何时用 SQLite / 何时用 JSON
+### 禁止 SQLite
 
-| 数据形态 | 方案 | 理由 |
-|---------|------|------|
-| 设置项、开关、小对象（< 20 KB，整体读写） | `PluginStorage` / `TypedStorage`（JSON） | 无性能问题；保持同步可读与简单 |
-| 记录集合（≥ 数百条，或需按条增删改） | **SQLite** | 行级写入，避免整份 JSON 重写（实测 13x） |
-| 需按条件查询/排序/聚合 | **SQLite** | 索引 + SQL |
+全插件**禁止**使用 `node:sqlite` / `plugin.db` 或任何数据库文件。原因：插件数据目录位于思源
+同步目录内，同步引擎用「同目录临时文件 + `os.Rename`」覆盖目标；Windows 下只要 SQLite
+连接持有 `.db` 文件句柄，rename 就会失败，整轮同步报「读写文件或访问网络权限不足」。
+历史 `plugin.db` 数据用 `pnpm migrate:sqlite-to-json`（`scripts/migrate-sqlite-to-json.mjs`）
+一次性迁出为 JSON 槽，确认后删除库文件。
 
-判据是**写放大**而非绝对体积：单条改动要重写整个数组时，就该上 SQLite。
-
-### 三条强制规则
-
-**1. 绝不按功能新建库文件。**
-全插件只有 `plugin.db`（`PLUGIN_DB_NAME`，位于 `<插件数据目录>/plugin.db`）。
-每个功能一个 `.db` 会让文件数 ×3（`-wal`/`-shm`），与"减少散落文件"的初衷相悖。
-
-**2. 表名必须带功能前缀。**
-用 `featureTables("<前缀>", ["实体A","实体B"])` 生成，禁止手写裸表名：
-
-```ts
-import { featureTables, openWithRetry, type PluginDatabase } from "@/utils/sqliteDb"
-
-/** 表命名空间前缀：统一单库下按功能隔离（websiteNavigation → wn） */
-const TABLE = featureTables("wn", ["entries", "categories"] as const)
-// TABLE.entries === "wn_entries"，TABLE.categories === "wn_categories"
-```
-
-前缀取功能缩写，不得与已有冲突（现有：`wn_`）。
-
-**3. 运行时只建表，不做数据迁移。**
-历史数据迁移是一次性脚本行为，**不得**写进运行时的 `_prepare()`：
-否则每次启动都要侦测/判断/导入，既慢又容易反复触发。运行时职责仅为
-`CREATE TABLE IF NOT EXISTS` + 空库时播种默认行。
-
-### 标准写法（照 websiteStorage.ts 抄）
-
-```ts
-import { featureTables, openWithRetry, type PluginDatabase } from "@/utils/sqliteDb"
-
-// 1) 表命名空间 + 日志前缀
-const TABLE = featureTables("xx", ["items"] as const)   // → { items: "xx_items" }
-const LOG_TAG = "[myFeature]"
-
-// 2) 初始化：打开（含重试）→ 建表 → 播种。通用逻辑已由 openWithRetry 封装
-private async _init(plugin: Plugin): Promise<PluginDatabase | null> {
-  const db = await openWithRetry(plugin, (d) => this._prepare(d), { logTag: LOG_TAG })
-  this.db = db
-  return db
-}
-
-// 3) 建表 + 播种（幂等，只做 CREATE TABLE IF NOT EXISTS，不含数据迁移）
-private _prepare(db: PluginDatabase): void {
-  db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE.items} (
-    id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL
-  )`)
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_${TABLE.items}_name ON ${TABLE.items}(name)`)
-}
-
-// 4) 读写：全部用 prepared statement 传参，禁止拼接
-const rows = db.all<Row>(`SELECT * FROM ${TABLE.items} ORDER BY created_at ASC`)
-db.run(`INSERT INTO ${TABLE.items} (id, name, created_at) VALUES (?, ?, ?)`, id, name, now)
-
-// 5) 批量覆盖用事务
-db.withTransaction(() => { db.run(`DELETE FROM ${TABLE.items}`); /* ... */ })
-```
-
-**`openWithRetry(plugin, migrateFn, { logTag })` 已封装**：打开库、启动早期退避重试、
-按失败原因分流、建表失败时关闭句柄防泄漏、成功时打印库路径。**新功能不要再自己写这套循环。**
-
-失败原因由 `openPluginDatabase()` 以判别联合返回（`OpenResult`），**只有 `path-unresolved` 会重试**：
-
-| `reason` | 含义 | 是否重试 |
-|----------|------|---------|
-| `no-sqlite` | 环境无 node:sqlite（旧思源/浏览器） | ❌ 永久 |
-| `no-node` | 无 Node fs/path 能力 | ❌ 永久 |
-| `path-unresolved` | 工作区路径暂未就绪（启动早期） | ✅ **唯一重试项** |
-| `open-failed` | 打开失败：文件被独占 / 库损坏 / 磁盘只读（携带原始 `error`） | ❌ 需人工介入 |
-
-> 历史教训：早期实现把所有失败压成同一个 `null`，导致 `SQLITE_CANTOPEN` 这类**永久性错误**
-> 也被当成「路径未就绪」退避重试，白等约 10.5s 并刷出误导性的「插件数据目录暂未就绪」日志。
-> 新增失败场景时**必须**在 `OpenFailureReason` 中加分支，不要复用一个笼统的 null。
-
-### 实现要点（均为踩过的坑，勿省）
-
-| 要点 | 说明 |
-|------|------|
-| **路径必须绝对** | `plugin.dataDir` 在思源运行时是 `undefined`；拼出相对路径会把库建到渲染进程 CWD（实测落到 `E:\siyuan2\storage\...`）。统一走 `openWithRetry()` / `resolvePluginDataDir()`，勿自行拼路径；`buildDbPath()` 对相对路径一律返回空串 |
-| **启动早期要重试** | 已由 `openWithRetry()` 内置（6 次退避），**不要**再手写循环 |
-| **预热交给 registerFeature** | 存储只在面板挂载时构造会导致"用户不开面板→库永不创建"。在 `registerFeature()` 里调 `warmupSharedWebsiteStorage(plugin)`（非阻塞） |
-| **单例共享** | 多入口共用一份数据时用 `getSharedWebsiteStorage()` 模块级单例，避免重复打开库 |
-| **WAL 三件套** | 启用 `journal_mode=WAL` 后生成 `.db`/`-wal`/`-shm`。**单独复制 `.db` 会得到空库**（实测 `no such table`）。备份走 `snapshotTo()` 或先 `checkpoint()` |
-| **同步兼容（Windows）** | `plugin.db` 在工作区内，思源同步引擎用「临时文件 + `os.Rename`」覆盖它；Windows 上 SQLite 打开的文件不允许删除/重命名，常驻句柄会让整轮同步报「读写文件或访问网络权限不足」。`PluginDatabase` 已内置「空闲 2s 释放句柄 + 手动重开」与 `installSqliteSyncGuard()`（监听 `ws-main` 的 `syncing` 释放并在同步窗口内拒绝重开；`sync-start` 仅是兜底——3.8.9 该事件依赖状态栏 `#barSync` 存在），同步态另经 `globalThis` 跨脚本求值共享（插件重载后仍生效），**禁止**改回常驻连接或在外部缓存底层句柄。**必须覆盖 `PluginSample.onDataChanged`**：思源 3.8.9 对未覆盖该方法（`plugin.onDataChanged === Plugin.prototype.onDataChanged`）的插件，会把每次存储数据变更升级为**整插件重载**，同步连续触发多次变更时会造成重载风暴 + 410 报错 + 重开 `plugin.db`；覆盖后只允许做无副作用刷新（禁止写入存储）。详见 [`docs/参考/persistence.md`](./docs/参考/persistence.md) §2.1 |
-| **卸载要 close** | 实例 `destroy()` 里调 `closeSharedWebsiteStorage()`，让 WAL 归并、释放句柄 |
-| **`node:sqlite` 已外部化** | `vite.config.ts` 的 `external` 已含 `node:sqlite`，无需再改 |
-| **模块保持可测试** | `sqliteDb.ts` **不得 import `@/api`**（它对 `siyuan` 是值导入，会毒化模块图使纯 Node 测试无法加载）。**也不要**用 `await import("@/api")` 绕开——`@/api` 已被其它 feature 静态导入，动态 import 只会产生 `INEFFECTIVE_DYNAMIC_IMPORT` 警告且不分包。取工作区路径请用模块内自带的 `readWorkspaceDir()`（读 `window.siyuan.config`，回退原生 `fetch('/api/system/getConf')`） |
-| **环境门槛** | 思源 Electron 44+ / Node 24+ 才有 `node:sqlite`（实测 3.8.7 可用，SQLite 3.53.4） |
-
-### 当前状态
-
-| 项目 | 值 |
-|------|-----|
-| 库文件 | `plugin.db`（唯一） |
-| 已迁移功能 | `websiteNavigation`（`wn_entries` / `wn_categories`）——书签与分类，与 minimalBrowser 共享 |
-| 存储模式 | **纯 SQLite**，无 JSON 回退分支 |
-| 迁移脚本 | 已完成使命并删除；新功能不需要它 |
-
-> 迁移背景与实测数据见 [docs/completed/sqlite-persistence-review.md](./docs/completed/sqlite-persistence-review.md)。
-
----
-
-## 持久化规范（强制，2026-11-05）
-
-完整参考见 [`docs/参考/persistence.md`](./docs/参考/persistence.md)，资产清单与迁移路线见
-[`docs/plugin-persistence-audit.md`](./docs/plugin-persistence-audit.md)。本节只列强制项。
+**必须覆盖 `PluginSample.onDataChanged`**：思源 3.8.9 对未覆盖该方法的插件会把每次存储数据
+变更升级为**整插件重载**，同步连续触发多次变更时会造成重载风暴 + 410 报错；覆盖后只允许做
+无副作用刷新（禁止写入存储）。详见 [`docs/参考/persistence.md`](./docs/参考/persistence.md) §3。
 
 ### 分层与判据
 
 | 数据形态 | 方案 |
 |---------|------|
-| 设置项、开关、小对象（< 20 KB，整体读写） | `TypedStorage<T>`（JSON 槽） |
-| 记录集合且**单条改动会重写 > 50 KB**，或体积 > 150 KB | `plugin.db` 表（见 § SQLite 存储规范） |
-| 需条件查询/排序/聚合 | `plugin.db` 表 |
-| 加密单文档（密码箱条目） | `TypedStorage` + 应用层加密，不拆表 |
-| 增量追加日志/索引 | 裸 NDJSON 或 SQLite 表，禁止整份 JSON 重写 |
+| 设置项、开关、小对象（整体读写） | `TypedStorage<T>`（思源 saveData JSON 槽） |
+| 记录集合（书签 / 日志 / 历史 / 缓存） | `TypedStorage<T>` + 内存态 + 串行/合并写盘；**必须设上限或清理路径** |
+| 需条件查询/排序/聚合 | 读入内存后计算（数据量受上限约束，不接受无界增长） |
+| 加密单文档（密码箱条目） | `TypedStorage` + 应用层加密 |
+| 增量追加日志/索引（体积大、只追加） | 裸 NDJSON（如 `git-push-index/`），禁止整份 JSON 重写 |
+| 运行期缓存、可重建 | 内存 |
 
 ### 强制规则
 
-1. **槽位必须登记**：新增/修改 JSON 槽、SQLite 表、文件槽、localStorage 键时，必须在
+1. **槽位必须登记**：新增/修改 JSON 槽、文件槽、localStorage 键时，必须在
    `src/config/storage/` 添加/更新元数据（`id` / `owners` / `kind` / `key` / `growth` /
    `sensitive` / `exportable` / `resettable`），并与功能侧常量同一提交。`pnpm audit:storage` 双向核对。
-2. **命名**：JSON 槽 key 用 kebab-case 且**不带 `.json` 后缀**；SQLite 表名必须由
-   `featureTables()` 生成；文件目录用 kebab-case。存量不合规 key 在注册表标 `legacyName: true` 冻结，
-   改名必须与一次性迁移同批完成。
-3. **写放大**：`growth` 槽若命中「单条改动重写 > 50 KB」或体积 > 150 KB，必须迁 SQLite；
-   存量迁移按 `docs/plugin-persistence-audit.md §4` 的 P0/P1 顺序执行，不得临时起意。
-4. **备份一致性**：任何 zip 备份/导出，SQLite 必须用 `snapshotTo()` / `snapshotDatabaseFile()`
-   生成单文件快照，**禁止直接复制运行中的 `.db`**，**禁止只做 `wal_checkpoint`**；zip 内跳过
-   `-wal` / `-shm`；临时快照放扫描目录之外（如 `data-backup/.tmp/`）并 `finally` 清理。
-5. **还原**：运行中只允许「逻辑还原」（JSON 按 key 写回、SQLite 表 `DELETE + INSERT` 单表事务），
-   覆盖活动库文件必须由用户在**禁用插件后**手动进行。还原前必须先自动全量快照。
+2. **命名**：JSON 槽 key 用 kebab-case 且**不带 `.json` 后缀**；文件目录用 kebab-case。
+   存量不合规 key 在注册表标 `legacyName: true` 冻结，改名必须与一次性迁移同批完成。
+3. **写放大**：增长型槽单条改动会重写整份数据时，必须设上限（日志/历史）、合并写盘
+   （分析缓存），或改 NDJSON（提交索引）；禁止无界数组整份重写。
+4. **备份一致性**：zip 备份直接原样打包插件数据目录；所有数据均为 JSON 槽或普通文件，
+   **禁止**再引入需要快照/连接保活的存储形态。
+5. **还原**：运行中只允许「逻辑还原」（JSON 按 key 写回、`git-push-index` 整目录替换）；
+   覆盖文件必须由用户在**禁用插件后**手动进行。还原前必须先自动全量备份。
 6. **路径**：禁止用 `plugin.dataDir` 直接拼路径（运行时为 `undefined`）。统一走
    `resolvePluginDataDir()` / `resolvePluginDataDirSync()` / `joinPluginDataPath()`。
 7. **localStorage**：只允许白名单键（`sn-plugin-feature-flags`、`siyuan-ytdlp-path`、
    `siyuan-ffmpeg-path`），不得存业务数据；新增必须登记并在注册表标 `kind: "localStorage"`。
 8. **README**：新增或修改持久化槽位的功能，其 `src/features/<feature>/README.md` 必须有「存储」章节，
-   列出 key / 表名 / 文件目录 / 增长性与清理方式（存量 README 的补齐见
-   `docs/plugin-persistence-audit.md` 的缺口清单，不要求一次性全量回填）。
+   列出 key / 文件目录 / 增长性与清理方式。
 9. **一次性迁移/恢复**：必须由显式操作或一次性 marker 守卫，**禁止每次启动侦测**；
-   迁移不得塞进 `_prepare()`（`_prepare` 只 `CREATE TABLE IF NOT EXISTS` + 播种）。
+   迁移逻辑不得塞进功能初始化路径。
 10. **敏感数据**：含密码/密钥/令牌/请求凭据的槽位必须标 `sensitive: true` 并走
     `@/utils/settingsCrypto`；导出默认排除，需用户显式勾选。
+
+### 记录集合的标准写法（照 `websiteStorage.ts` / `LineStatsStore.ts` 抄）
+
+```ts
+const STORAGE_KEY = "my-feature-items"
+private readonly slot = new TypedStorage<MyItem[]>(new PluginStorage(plugin), STORAGE_KEY, [])
+
+// 读-改-写必须串行：并发操作会互相覆盖
+private writeQueue: Promise<unknown> = Promise.resolve()
+private runExclusive<T>(task: () => Promise<T>): Promise<T> {
+  const run = this.writeQueue.then(task, task)
+  this.writeQueue = run.catch(() => undefined)
+  return run
+}
+
+async addItem(item: MyItem): Promise<void> {
+  await this.runExclusive(async () => {
+    const list = await this.slot.loadOrDefault()
+    list.push(item)
+    if (!(await this.slot.save(list))) throw new Error("save failed")
+  })
+}
+```
+
+- 增长型数组必须在上限内裁剪（如日志 200 条、历史 500 条）。
+- 大对象缓存可只在分析/导入结束时写一次，并对并发写盘做合并。
+- 多入口共享数据用模块级单例（如 `getSharedWebsiteStorage()`），卸载时清空单例引用。
 
 ### 统一管理入口
 
@@ -654,7 +574,7 @@ src/
 ├── index.ts                # 插件入口（同步读开关 → 条件注册各功能）
 ├── config/
 │   ├── settings.ts         # PluginSettings 接口 + 功能开关持久化
-│   ├── storage/            # 存储槽注册表（元数据单一事实源：JSON/SQLite/文件/localStorage）
+│   ├── storage/            # 存储槽注册表（元数据单一事实源：JSON/文件/localStorage）
 │   └── icons.ts            # FEATURE_ICONS + COMMON_ICONS
 ├── utils/
 │   ├── aiApi.ts            # callAI / callAISmart / callAIChat — 所有 AI 调用唯一入口
@@ -662,10 +582,7 @@ src/
 │   ├── pluginStorage.ts    # PluginStorage — 统一存储抽象层
 │   ├── typedStorage.ts     # TypedStorage<T> — 类型安全存储槽
 │   ├── pluginDataDir.ts    # resolvePluginDataDir(Sync) / joinPluginDataPath — 插件数据目录唯一解析入口
-│   ├── sqliteDb.ts         # openPluginDatabase / openWithRetry / featureTables（对外汇聚，re-export 会话能力）
-│   ├── sqliteDatabase.ts   # PluginDatabase 会话 / 空闲释放 / installSqliteSyncGuard / snapshotTo
-│   ├── sqliteSnapshot.ts   # snapshotDatabaseFile / snapshotDatabasesInDir — 一致性备份
-│   ├── sharedStorage/      # 跨功能共享的 SQLite 单例（websiteStorage）
+│   ├── sharedStorage/      # 跨功能共享的 JSON 存储单例（websiteStorage / flashcardStorage）
 │   ├── vueAppHelper.ts     # createVueDockApp / createModalVueApp
 │   ├── domUtils.ts         # copyToClipboard / triggerDownload / injectStyle
 │   ├── nodeModules.ts      # getNodeModules / getNodeProcessModules / getNodeFsPathOs

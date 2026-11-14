@@ -5,7 +5,7 @@
  *
  * ⚠️ 绝不能用 `plugin.dataDir` 直接拼接：该字段在思源运行时通常为 undefined，
  * 拼出的相对路径会把文件写到渲染进程 CWD（实测落到 `E:\siyuan2\storage\...`）。
- * 所有需要插件数据目录的代码（SQLite、备份、索引、UI 路径展示）都必须走本模块。
+ * 所有需要插件数据目录的代码（备份、索引、UI 路径展示）都必须走本模块。
  */
 import type { Plugin } from "siyuan"
 import { getNodeFsPathOs } from "./nodeModules"

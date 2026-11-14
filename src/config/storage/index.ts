@@ -3,11 +3,12 @@
  *
  * `STORAGE_SLOTS` 是全部持久化资产的元数据单一事实源，
  * 供 storageManager 面板、导出/还原与 audit-storage.mjs 使用。
+ *
+ * 插件不使用 SQLite（`plugin.db` 位于思源同步目录，Windows 文件锁会让同步 rename 失败）。
  */
 import { FILE_SLOTS } from "./fileSlots"
 import { JSON_SLOTS } from "./jsonSlots"
 import { LOCAL_STORAGE_SLOTS } from "./localStorageSlots"
-import { SQLITE_SLOTS } from "./sqliteSlots"
 import type {
   StorageOwner,
   StorageSlot,
@@ -18,7 +19,6 @@ export type {
   JsonStorageSlot,
   LocalStorageSlot,
   SlotOptions,
-  SqliteStorageSlot,
   StorageKind,
   StorageOwner,
   StorageSlot,
@@ -26,12 +26,10 @@ export type {
 export { FILE_SLOTS } from "./fileSlots"
 export { JSON_SLOTS } from "./jsonSlots"
 export { LOCAL_STORAGE_SLOTS } from "./localStorageSlots"
-export { SQLITE_SLOTS } from "./sqliteSlots"
 
-/** 全部槽位（JSON → SQLite → 文件 → localStorage 的顺序即面板展示顺序） */
+/** 全部槽位（JSON → 文件 → localStorage 的顺序即面板展示顺序） */
 export const STORAGE_SLOTS: readonly StorageSlot[] = [
   ...JSON_SLOTS,
-  ...SQLITE_SLOTS,
   ...FILE_SLOTS,
   ...LOCAL_STORAGE_SLOTS,
 ]

@@ -5,7 +5,7 @@
 > **平台支持：仅桌面端**。功能 ID 已登记在 `src/features/config.ts` 的
 > `DESKTOP_ONLY_FEATURE_IDS`，`registerFeatures()` 在移动端（思源移动 App / 移动浏览器）
 > 直接跳过注册：不注册 Dock/Tab 模型、不构造 `GitPushManager`（git 子进程 / `fs.watch` /
-> SQLite 均依赖桌面端能力）、不执行启动清扫。
+> NDJSON 索引均依赖桌面端能力）、不执行启动清扫。
 
 ## 功能
 
@@ -35,7 +35,7 @@
 - **远程与本地一致性分析**：头部按钮打开弹窗，批量比对所有项目各本地分支与各远程分支（存在性/领先/落后/分叉），可选先 fetch --prune（默认开启），支持进度显示、七态汇总与"仅显示问题"过滤；结果持久化缓存（打开弹窗直接展示上次结果并显示分析时间）
 - **行数排行视图**：「提交分析」视图内的内部 Tab，展示各项目**当前代码行数**（存量口径：工作区已跟踪文件的实际行数）排行，并给出**新建日期**（仓库首次提交）与**最后修改**（最后一次提交），可按文件格式过滤（扩展名多选排除列表）。列表只保留存量口径——不再展示历史累计的「新增/删除/净增」，因此分析**完全不抓取全历史 numstat**，只做 `git ls-files` + 文件行数统计，这是本视图刷新速度的关键前提
   - ⚠️ **「新建日期」口径**：`rev-list --max-parents=0`（历史根提交，多根时取最早那个）——**不是** `git log --reverse -1`（该写法恒返回 HEAD 时间，会让两列日期永远相同，详见 §行数统计快路径）
-- **行数统计的增量刷新（SQLite）**：逐文件行数连同 `(mtime, size)` 一起落 `plugin.db` 的 `gp_file_lines` 表。重新分析时逐文件 `statSync` 比对判据，**只重读内容变化过的文件**；`HEAD` 与 `gitdir` 都未变的项目直接复用 `gp_project_stats` 汇总行，零 git 调用、零读盘。原实现每次分析都要 `readFileSync` 每个文件全文（只为数 `\n`），且判据是 `rootHash`（一次提交即全仓库重读），这是「行数分析慢」的唯一根因
+- **行数统计的增量刷新（JSON 槽）**：逐文件行数连同 `(mtime, size)` 一起落 `git-push-line-stats-store`。重新分析时逐文件 `statSync` 比对判据，**只重读内容变化过的文件**；`HEAD` 与 `gitdir` 都未变的项目直接复用项目汇总行，零 git 调用、零读盘。原实现每次分析都要 `readFileSync` 每个文件全文（只为数 `\n`），且判据是 `rootHash`（一次提交即全仓库重读），这是「行数分析慢」的唯一根因
 - **本地提交索引（增量刷新）**：插件数据目录下的 NDJSON 提交索引，使统计中心「秒开 + 后台增量」而非每次重跑全量 `git log`。HEAD 未变的项目零 git 调用、零逐文件读盘；索引不可用时全部路径自动回退直接扫描 git（详见「性能优化 § 本地提交索引」）
 - **扫描导入**：递归扫描目录批量导入 Git 仓库
 - **推送账号（多账号认证）**：同一平台可配置多个账号（HTTPS 令牌 / SSH 私钥 / 提交身份覆盖），项目可绑定账号或跟随全局默认；git 子进程环境按需注入，**不修改任何 .gitconfig**（详见「§ 推送账号」）
@@ -512,7 +512,7 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
   - Dock 建监听不再逐项目额外跑一次 `rev-parse HEAD`，gitdir 解析带 5 分钟缓存 + 并发 6；
   - `probe.start()` 幂等、轮询在途合并；`useRepoLinkAudit` 改为进入统计中心才跑且 6 并发；
   - Dock 面板注册 `destroy` 且 `init` 幂等卸载（旧实现只 mount 不 unmount，插件重载后探测链/f`fs.watch` 残留）；
-  - `GitExecutor` 增加销毁守卫、`LineStatsStore` 增加 `close()`、`CommitIndex` 落地段上限淘汰。
+  - `GitExecutor` 增加销毁守卫、`LineStatsStore` 改为 JSON 槽 + 内存态（卸载时清空缓存）、`CommitIndex` 落地段上限淘汰。
 - **刷新不白跑**（`useRefreshOps.handleRefresh`）：刷新前后各取一次工作区快照，仅在**确实变化**时才标脏 `log/branches/stash`。
   改造前无条件标脏，使每次「刷新」（绝大多数是 fetch 后确认无变化）都白跑 3+ 次 git 子进程 —— 按每次固定约 210ms 进程费计，单项目单次刷新即浪费约 0.6s。
   快照含分支名与各计数（覆盖提交/暂存/丢弃/切分支/commit 全部会改动这些域的本地操作）；
@@ -534,12 +534,12 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 2. **逐文件 `readFileSync` 全文只为数 `\n`** —— 已跟踪的 `dist/`、`*.min.js`、lock、2MB 以下的图片都会走这条路，几十个项目 × 数千文件 = 几十万次全文件读取。
 3. **判据是 `rootHash`（HEAD 一变即全部作废）** —— 一次提交就让整仓库重读。
 
-本层把逐文件行数连同 `(mtimeMs, size)` 一起落 `plugin.db`：
+本层把逐文件行数连同 `(mtimeMs, size)` 一起落 `git-push-line-stats-store`（JSON 槽）：
 
-| 表 | 用途 |
+| 数据结构 | 用途 |
 |----|------|
-| `gp_project_stats` | 每项目一行：存量总行数 / 文件数 / 首末次提交 / `HEAD oid` 判据 / 分析时间 |
-| `gp_file_lines` | `(project_id, path)` 主键：行数（`NULL` = 二进制/超 2MB/读失败）+ `mtime_ms` + `size` |
+| `projects[id]` 汇总 | 存量总行数 / 文件数 / 首末次提交 / `HEAD oid` 判据 / 仓库身份 / 分析时间 |
+| `projects[id].files` | `[path, lines, mtimeMs, size]` 元组：行数（`null` = 二进制/超 2MB/读失败） |
 
 **快路径**（`GitPushManager.scanProjectLineStats`，逐级降低开销）：
 
@@ -547,9 +547,9 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
    - ⚠️ **根提交时间不能用 `git log --reverse -1` 取**：`--reverse` 作用于**已按 `-n 1` 截断的输出**（先截成 1 条 = HEAD，再反转这一条），结果恒等于 **HEAD 的时间** ⇒ 「新建日期」与「最后修改」永远相同。`rev-list --max-parents=0` 按「无父提交」定位历史根，与条数无关。
    - **多个根提交时取时间最早的那个**（`rev-list` 按拓扑序输出、不按时间排序，取「第一条」会随机得到较晚的根）。
    - **根提交时间每次都重新探测**（不读缓存）：它与 HEAD 打包在同一次快照里，零额外进程开销；而「读缓存优先」会把旧版写错的 `firstCommit` 永久固化。旧库里的错值会在下次分析时**自动纠正**。
-2. `HEAD oid` 未变 → **直接读 `gp_project_stats` 汇总行返回**，不再 `ls-files`、不再 `statSync`。
+2. `HEAD oid` 未变 → **直接读内存缓存中的项目汇总行返回**，不再 `ls-files`、不再 `statSync`。
 3. `HEAD` 变了 → `git ls-files` + 逐文件 `statSync`，只对 `(mtime, size)` 变化的文件读内容（**刻意不用 `git status` 变更集**，原因见下）。
-4. 数据库不可用（旧版思源 / 打开失败）→ 全量扫，**功能不降级**，只是回到改造前的速度。
+4. 存储不可用（读取/写入失败）→ 全量扫，**功能不降级**，只是回到改造前的速度。
 
 **错误语义：只有「空仓库」算正常空结果**
 
@@ -573,7 +573,7 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 | worktree / submodule（`.git` 是文件） | `git:<解析后的 gitdir>`（各 worktree 路径不同，故正确区分） |
 | 无 `.git` | `dir:<root>`（仍能区分不同目录） |
 
-新旧库兼容：`gp_project_stats` 新增 `repo_id` 列，`prepare()` 用 `PRAGMA table_info` 判定后 `ALTER TABLE` 补列（幂等，不破坏既有数据）。补列后旧行 `repo_id` 为空串 → 判据不匹配 → 该项目重算一次并回填。
+旧数据兼容：JSON 槽内的项目记录缺少 `repoId` 时按空串处理 → 判据不匹配 → 该项目重算一次并回填（无需任何 schema 迁移）。
 
 **为什么最终不用 `git status` 变更集**（有过一版自适应方案，已回退）：
 
@@ -641,11 +641,11 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 **几个刻意的设计选择**：
 
 - **扩展名过滤不参与扫描**：被过滤掉的文件同样扫描并缓存，过滤只在 `sumScannedLines` 合计时生效。否则用户切换过滤条件时，未缓存的文件必须重读一遍——过滤开关就成了性能陷阱。
-- **整体覆盖写而非逐条 upsert**（`saveProjectStats` 单事务内 `DELETE` + 批量 `INSERT`）：仓库文件可能被删除，逐条 upsert 会让已删除文件的旧记录永久残留并计入合计，数字虚高。
-- **首末提交时间带「已尝试」标记**：`firstCommit`/`lastCommit` 在空仓库或 git 异常时为空串。若只按「值为空 ⇒ 重取」判断，这些项目**每次分析都会再跑一次 git**。故 `gp_project_stats.git_dir` 列（判据收敛后闲置，列名保留以免 schema 迁移）复用存 `"1"` 标记，空值也算已知结果，不再重试。
+- **整体覆盖写而非逐条 upsert**（`saveProjectStats` 直接替换该项目的汇总 + 文件明细）：仓库文件可能被删除，逐条 upsert 会让已删除文件的旧记录永久残留并计入合计，数字虚高。
+- **首末提交时间不缓存「已尝试」标记**：`firstCommit`/`lastCommit` 在空仓库或 git 异常时为空串，但每次分析都会重新探测根提交（与 HEAD 同一次快照，零额外调用），因此不需要额外的「已尝试」列。
 - **符号链接记 `null`**：`statSync` 会跟随链接，若跟踪路径指向 `/dev/zero` 或巨大文件，会把靶内容当源码行数读入。故先用 `lstatSync` 判链接，链接不读靶文件（与 `reportMetrics.countFileLines` 刻意不同，后者跟随链接）。
-- **项目删除后清理**：`runCore` 末尾调用 `pruneLineStats(当前项目 id 列表)`，删除不在保留集合中的行，防数据无界增长。
-- **降级不静默**：数据库不可用时 `getLineStatsStore()` 打 warn 并返回 `null`，`scanProjectLineStats` 立刻走全量路径；参数 `source` 字段（`cache` / `incremental` / `full`）可用于排障。
+- **项目删除后清理**：`runCore` 末尾调用 `pruneLineStats(当前项目 id 列表)`，删除不在保留集合中的项目，防数据无界增长。
+- **降级不静默**：存储不可用时 `getLineStatsStore()` 打 warn 并返回 `null`，`scanProjectLineStats` 立刻走全量路径；参数 `source` 字段（`cache` / `incremental` / `full`）可用于排障。
 
 **性能对比**（30 个项目、每项目数千文件的估算）：
 
@@ -655,13 +655,14 @@ v2 合并省下的那次进程又被赔回去。`loadStatus` / `handleRefreshWor
 | 本轮优化后（HEAD 未变） | **2** | **≈ 2 × 300ms × 30 / 并发 ≈ 2–4 s** |
 | 本轮优化后（HEAD 变了，中小仓库） | 3（+ls-files） | 略高，且只重读变化文件 |
 
-> 表命名遵循 [AGENTS.md § SQLite 存储规范](../../../AGENTS.md#sqlite-存储规范强制2026-10-17)：统一单库 `plugin.db`、功能前缀 `gp_`、运行时只 `CREATE TABLE IF NOT EXISTS` 不做数据迁移。
+> 槽位命名遵循 [AGENTS.md § 存储规范](../../../AGENTS.md#存储规范强制2026-11-14)：
+> 单个 JSON 槽 `git-push-line-stats-store`，内存态为读源，写盘合并串行；插件不使用 SQLite。
 
 ### 本地提交索引（`managers/CommitIndex.ts`）
 
 统计慢的根因是「每次进视图 → 对全部项目重跑全量 `git log --numstat`（全历史）」，且结果只落在无法按提交增量的 JSON 缓存里。索引把这部分变成增量：
 
-- **为什么提交索引仍不是 sqlite，而行数统计是**：本索引最初设计时假设运行环境无 `node:sqlite`（旧版思源 Electron 33 / Node 20）。该假设**现已过期**——思源 Electron 44 / Node 24 起 `node:sqlite` 已转正（见 [AGENTS.md § SQLite 存储规范](../../../AGENTS.md#sqlite-存储规范强制2026-10-17)）。**行数统计已迁移至 SQLite**（`gp_project_stats` / `gp_file_lines`，理由见「性能优化 § 行数统计的增量刷新」）；提交索引因「只有追加 + 全量载入、没有按条件查询需求」而暂留 NDJSON，但**不再是环境限制所致**，将来若需要按提交条件查询可直接迁移。
+- **为什么提交索引与行数统计都不是 SQLite**：SQLite 库文件位于思源同步目录，Windows 下连接持有会让同步引擎的 rename 覆盖失败（「读写文件或访问网络权限不足」）。提交索引采用 NDJSON 追加日志（`commits.ndjson` / `files.ndjson` / `filelines.ndjson` + `meta.json`），天然支持崩溃丢尾行自愈；行数统计采用 JSON 槽 `git-push-line-stats-store`（内存态 + 合并写盘），只在分析结束时写一次。
 - **数据模型**（每个项目一段，按「提交序号 = `commits.ndjson` 行号」关联）：
   `commits.ndjson`（一提交一行）/ `files.ndjson`（一「提交×文件」一行）/ `filelines.ndjson`（已跟踪文件存量行数）/ `meta.json`（每项目 `rootHash` 判据与游标）
 - **命中判据**：`rootHash = "<HEAD oid>:<gitdir 绝对路径>"`。gitdir 参与判据使「换机器 / 换仓库指向同一路径」自然失效重建，避免误用他仓库数据；同时它天然覆盖「切回某个已索引分支」的场景。

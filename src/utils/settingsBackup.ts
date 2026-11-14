@@ -2,24 +2,13 @@
  * 插件设置备份/恢复工具
  *
  * 将插件数据目录整体打包为 zip 备份到 `<workspace>/data-backup/`。
- *
- * ⚠️ SQLite/WAL 一致性（关键）：
- * 备份目录中可能含 SQLite 库（`plugin.db`）。WAL 模式下已提交数据可能仍在 `-wal`
- * 中，直接复制三个文件会得到「新 .db + 旧 -wal」的错配组合，只取 .db 更是空库。
- * 因此备份前必须用 SQLite 官方在线备份 API 产出单文件快照（见 `@/utils/sqliteSnapshot`），
- * zip 内用快照替换 `.db` 并**跳过 `-wal` / `-shm`**。
+ * 所有数据均为思源 saveData JSON 槽或普通文件，直接读取即可，不持有运行期文件句柄；
+ * 备份/还原不再需要数据库快照或 WAL 处理。
  */
 import JSZip from "jszip"
 import type { Plugin } from "siyuan"
 import { getNodeModules } from "@/utils/nodeModules"
 import { resolvePluginDataDir } from "@/utils/pluginDataDir"
-import type { DatabaseSnapshotEntry } from "@/utils/sqliteSnapshot"
-import {
-  cleanupSnapshotDir,
-  isSqliteSidecar,
-  sidecarBasePath,
-  snapshotDatabasesInDir,
-} from "@/utils/sqliteSnapshot"
 
 type NodeFS = typeof import("node:fs")
 type NodePath = typeof import("node:path")
@@ -41,8 +30,6 @@ export interface PluginBackupListItem {
   createdAt: number
 }
 
-/** SQLite 附属文件名后缀（WAL 模式产物） */
-const SQLITE_SIDECAR_SUFFIXES = ["-wal", "-shm"] as const
 const BACKUP_FILE_RE = /^sn-plugin-\d{6}-\d{6}\.zip$/
 
 /** 生成 `YYMMDD-HHmmss` 时间戳 */
@@ -52,15 +39,11 @@ function makeTimestamp(date: Date): string {
     + `-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`
 }
 
-/**
- * 递归添加目录到 zip。
- * `.db` 优先用一致性快照；对应快照成功时跳过 `-wal` / `-shm`。
- */
+/** 递归添加目录到 zip */
 function addDirToZip(
   zip: JSZip,
   dirPath: string,
   relativePath: string,
-  snapshotMap: Map<string, string>,
   fs: NodeFS,
   path: NodePath,
 ) {
@@ -69,15 +52,7 @@ function addDirToZip(
     const fullPath = path.join(dirPath, entry.name)
     const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name
     if (entry.isDirectory()) {
-      addDirToZip(zip, fullPath, relPath, snapshotMap, fs, path)
-      continue
-    }
-    if (entry.name.endsWith(".db")) {
-      const snapshotPath = snapshotMap.get(relPath)
-      zip.file(relPath, fs.readFileSync(snapshotPath || fullPath))
-      continue
-    }
-    if (isSqliteSidecar(relPath) && snapshotMap.has(sidecarBasePath(relPath))) {
+      addDirToZip(zip, fullPath, relPath, fs, path)
       continue
     }
     zip.file(relPath, fs.readFileSync(fullPath))
@@ -86,9 +61,7 @@ function addDirToZip(
 
 /**
  * 将 zip 内容解压到目标目录。
- *
- * SQLite 三件套处理：解压回 .db 时若同时存在 -wal/-shm，交由 SQLite 自行完成 WAL 恢复，
- * **禁止**手动删除 -wal（那会丢掉尚未归并的数据）。
+ * 不做任何文件类型特判：备份是整目录原样打包，还原也应当原样写回。
  */
 async function extractZipToDir(zip: JSZip, targetDir: string, fs: NodeFS, path: NodePath): Promise<number> {
   let count = 0
@@ -120,46 +93,33 @@ export async function backupPluginData(plugin: Plugin, workspaceRoot: string): P
 
   const now = new Date()
   const backupDir = node.path.join(workspaceRoot, "data-backup")
-  const tempDir = node.path.join(backupDir, ".tmp", `snapshot-${now.getTime()}`)
 
-  let snapshots: DatabaseSnapshotEntry[] = []
-  try {
-    snapshots = await snapshotDatabasesInDir(pluginDataDir, tempDir)
-    const snapshotMap = new Map<string, string>()
-    for (const entry of snapshots) {
-      if (entry.snapshotPath) snapshotMap.set(entry.relPath, entry.snapshotPath)
-    }
+  const zip = new JSZip()
+  addDirToZip(zip, pluginDataDir, "", node.fs, node.path)
+  const content = await zip.generateAsync({ type: "nodebuffer" })
 
-    const zip = new JSZip()
-    addDirToZip(zip, pluginDataDir, "", snapshotMap, node.fs, node.path)
-    const content = await zip.generateAsync({ type: "nodebuffer" })
+  if (!node.fs.existsSync(backupDir)) {
+    node.fs.mkdirSync(backupDir, { recursive: true })
+  }
 
-    if (!node.fs.existsSync(backupDir)) {
-      node.fs.mkdirSync(backupDir, { recursive: true })
-    }
+  const fileName = `sn-plugin-${makeTimestamp(now)}.zip`
+  const filePath = node.path.join(backupDir, fileName)
+  node.fs.writeFileSync(filePath, content)
 
-    const fileName = `sn-plugin-${makeTimestamp(now)}.zip`
-    const filePath = node.path.join(backupDir, fileName)
-    node.fs.writeFileSync(filePath, content)
-
-    return {
-      fileName,
-      filePath,
-      size: content.length,
-      fileCount: Object.keys(zip.files).length,
-      createdAt: now.getTime(),
-    }
-  } finally {
-    // 无 .db 时不会创建临时目录；rm -rf 是幂等的
-    cleanupSnapshotDir(tempDir)
+  return {
+    fileName,
+    filePath,
+    size: content.length,
+    fileCount: Object.keys(zip.files).length,
+    createdAt: now.getTime(),
   }
 }
 
 /**
  * 从上传的 zip 文件恢复插件数据（**二进制整目录覆盖**）
  *
- * ⚠️ 仅适用于插件禁用后的手动恢复；运行中请使用 storageManager 的「逻辑还原」，
- * 直接覆盖被连接持有的 `plugin.db` 会失败或损坏数据。
+ * ⚠️ 仅适用于插件禁用后的手动恢复；运行中请使用 storageManager 的「逻辑还原」。
+ * 备份内若残留旧版 `plugin.db`，会被原样解压但运行时不再读取（见迁移脚本说明）。
  */
 export async function restoreFromUpload(file: File, plugin: Plugin, workspaceRoot: string): Promise<{ restored: number }> {
   const node = getNodeModules()
@@ -169,23 +129,6 @@ export async function restoreFromUpload(file: File, plugin: Plugin, workspaceRoo
     || node.path.join(workspaceRoot, "data", "storage", "petal", plugin.name)
   const buffer = Buffer.from(await file.arrayBuffer())
   const zip = await JSZip.loadAsync(buffer)
-
-  // 恢复前清掉现存库的 WAL 附属文件：旧的 -wal 若与备份中的新 .db 混搭会损坏数据。
-  // （备份内自带的 -wal/-shm 会在下面正常解压回来，由 SQLite 自行恢复。）
-  const zipHasWal = Object.keys(zip.files).some((p) =>
-    SQLITE_SIDECAR_SUFFIXES.some((s) => p.endsWith(s)))
-  if (!zipHasWal) {
-    for (const rel of Object.keys(zip.files)) {
-      if (!rel.endsWith(".db")) continue
-      for (const suffix of SQLITE_SIDECAR_SUFFIXES) {
-        try {
-          node.fs.rmSync(node.path.join(pluginDataDir, rel + suffix), { force: true })
-        } catch {
-          // 忽略
-        }
-      }
-    }
-  }
 
   const restored = await extractZipToDir(zip, pluginDataDir, node.fs, node.path)
 

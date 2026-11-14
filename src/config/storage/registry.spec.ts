@@ -14,7 +14,6 @@ import {
 
 const FEATURE_IDS = new Set<string>(FEATURE_CONFIG.map((feature) => feature.id))
 const KEBAB_CASE = /^[a-z][a-z0-9]*(-[a-z0-9]+)+$/
-const SQLITE_TABLE = /^[a-z][a-z0-9]*_[a-z0-9_]+$/
 
 describe("storage registry", () => {
   it("id 唯一", () => {
@@ -43,13 +42,6 @@ describe("storage registry", () => {
     }
   })
 
-  it("SQLite 表名符合 <前缀>_<实体>", () => {
-    for (const slot of STORAGE_SLOTS) {
-      if (slot.kind !== "sqlite") continue
-      expect(SQLITE_TABLE.test(slot.key), `${slot.id} 的表名 ${slot.key} 不合规`).toBe(true)
-    }
-  })
-
   it("敏感槽位必须写明处理方式", () => {
     for (const slot of STORAGE_SLOTS) {
       if (!slot.sensitive) continue
@@ -65,17 +57,16 @@ describe("storage registry", () => {
     }
   })
 
-  it("restorable 只允许 JSON / SQLite / 文件槽", () => {
+  it("restorable 只允许 JSON / 文件槽", () => {
     for (const slot of STORAGE_SLOTS) {
       if (slot.kind === "localStorage") continue
       if (!slot.restorable) continue
-      expect(["json", "sqlite", "file"]).toContain(slot.kind)
+      expect(["json", "file"]).toContain(slot.kind)
     }
   })
 
   it("核心槽位已登记", () => {
     expect(getSlot("core.pluginSettings")).toBeDefined()
-    expect(getSlot("core.pluginDb")).toBeDefined()
     expect(getSlot("core.featureFlags")).toBeDefined()
   })
 

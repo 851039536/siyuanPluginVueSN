@@ -425,7 +425,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           }
         }
         perProjectFileLines.value = fileLinesMap
-        // 清理已删除项目的残留统计数据（防 SQLite 表随项目增减无界增长）
+        // 清理已删除项目的残留统计数据（防行数统计槽随项目增减无界增长）
         await manager.pruneLineStats(projects.value.map((p) => p.id))
       } else {
         // 子集局部刷新（保存修正后）：按项目合并——移除目标项目旧条目（amend/rebase 后 hash 已变，整体替换）+ 追加新数据，其他项目保留
@@ -609,7 +609,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /**
    * 单项目行数刷新（详情弹窗刷新按钮）：重扫该项目存量行数与首/末次提交，更新 per-project 内存缓存、
    * 项目排行对应条目（upsert 重排）与汇总合计。
-   * 结果由 manager.scanProjectLineStats 直接落 SQLite，并同步写行数统计快照缓存供下次复用；
+   * 结果由 manager.scanProjectLineStats 直接落 JSON 槽，并同步写行数统计快照缓存供下次复用；
    * analyzedAt 语义为全量分析完成时间，不因单项目刷新改动。
    */
   async function refreshLineStatsProject(projectId: string) {

@@ -86,7 +86,7 @@ describe("判断拉取（真实 git）", () => {
     try { rmSync(root, { recursive: true, force: true }) } catch { /* 清理失败不掩盖断言 */ }
   })
 
-  it("远端只改写提交信息：备份分支后对齐远端（旧副本不算独有提交）", async () => {
+  it("远端只改写提交信息：直接对齐远端（旧副本不算独有提交，不建备份分支）", async () => {
     git(peer, ["commit", "-q", "--amend", "-m", "c1 rewritten"])
     git(peer, ["push", "-q", "--force", "origin", "main"])
     const oldHead = git(local, ["rev-parse", "HEAD"])
@@ -97,9 +97,8 @@ describe("判断拉取（真实 git）", () => {
     expect(r.ok).toBe(true)
     expect(git(local, ["rev-parse", "HEAD"])).toBe(remoteTip)
     expect(git(local, ["rev-parse", "HEAD"])).not.toBe(oldHead)
-    expect(r.stdout).toContain("备份分支")
-    const backups = git(local, ["branch", "--list", "backup/*"]).split("\n").filter(Boolean)
-    expect(backups.length).toBe(1)
+    expect(r.stdout).toContain("未创建备份分支")
+    expect(git(local, ["branch", "--list", "backup/*"])).toBe("")
   })
 
   it("本地有真实独有提交：中止且 HEAD 与工作区保持不变", async () => {

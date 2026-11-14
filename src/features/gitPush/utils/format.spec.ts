@@ -2,7 +2,7 @@
 //
 // 覆盖重点：opSummary（推送/拉取输出条目与状态提示共用的摘要单一真源）。
 import { describe, expect, it } from "vitest"
-import { formatBackupBranchName, formatDateTime, opSummary } from "./format"
+import { formatDateTime, opSummary } from "./format"
 
 const i18n: Record<string, any> = {
   opPush: "推送",
@@ -46,17 +46,5 @@ describe("formatDateTime", () => {
 
   it("空值返回空串", () => {
     expect(formatDateTime("")).toBe("")
-  })
-})
-
-describe("formatBackupBranchName", () => {
-  it("按 backup/<分支>-YYYYMMDD-HHmmss 生成，保留分支中的斜杠", () => {
-    const now = new Date(2026, 10, 14, 9, 5, 3)
-    expect(formatBackupBranchName("feature/login", now)).toBe("backup/feature/login-20261114-090503")
-  })
-
-  it("月日时分秒补零到两位", () => {
-    const now = new Date(2026, 0, 2, 3, 4, 5)
-    expect(formatBackupBranchName("main", now)).toBe("backup/main-20260102-030405")
   })
 })

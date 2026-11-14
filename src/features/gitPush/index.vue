@@ -397,6 +397,7 @@ const {
   deleteCategory: deleteCategoryFn,
   updateCategory: updateCategoryFn,
   switchBranch,
+  deleteBranch,
   startScan,
   importScanResults,
   scanning,
@@ -1893,6 +1894,7 @@ provide(CARD_SERVICES_KEY, {
   ops: {
     toggleStar,
     switchBranch: handleSwitchBranch,
+    deleteBranch,
     handleRemove,
     openEditDialog,
     openMarkdownPreview,

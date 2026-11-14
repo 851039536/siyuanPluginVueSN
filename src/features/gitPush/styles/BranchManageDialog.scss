@@ -1,0 +1,71 @@
+@use "@/variables.scss" as *;
+
+// gitPush 分支管理弹窗（分支行 + 删除入口）
+
+.git-push-panel .gp-branch-manage {
+  min-width: 18rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.gp-branch-manage__hint {
+  margin: 0 0 $s-2;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.7;
+}
+
+.gp-branch-manage__empty {
+  padding: $s-3 0;
+  text-align: center;
+  font-size: $t-2xs;
+  opacity: 0.6;
+}
+
+.git-push-panel .gp-branch-manage__row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-px5 $s-1;
+  border-radius: $r-sm;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-list-hover);
+  }
+
+  &.is-current {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+.gp-branch-manage__icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.gp-branch-manage__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: $ff-mono;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+}
+
+.gp-branch-manage__delete {
+  flex-shrink: 0;
+  opacity: 0.55;
+
+  &:hover { opacity: 1; }
+}
+
+.gp-branch-manage__error {
+  margin-top: $s-2;
+  font-size: $t-2xs;
+  color: var(--b3-theme-error);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

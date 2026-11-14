@@ -79,7 +79,7 @@ src/features/gitPush/
 │   ├── indexIo.ts                   # 索引磁盘 IO 抽象（FsIndexIO 生产实现 / 接口注入使纯逻辑可单测）
 │   ├── indexDir.ts                  # 索引目录解析（resolvePluginDataDir() → <petal>/git-push-index）
 │   ├── RemoteOps.ts                 # push/pull/fetch 全平台与单平台、推送状态检查
-│   ├── SmartPullOps.ts              # 判断拉取：patch-id 判断独有提交，安全时备份分支并强制对齐远程
+│   ├── SmartPullOps.ts              # 判断拉取：patch-id 判断独有提交，安全时强制对齐远程（不建备份分支）
 │   ├── WorktreeOps.ts               # 工作区状态/差异/暂存/提交/stash/分支/提交日志（含历史提交消息重写）
 │   ├── RepoOps.ts                   # Tag 管理、冲突检测、远程配置、Git 配置查看、仓库扫描
 │   ├── HistoryRewriter.ts           # 提交历史 DAG 重建器（消息改写/提交删除双策略：预计算重建计划 + 侧链 identity 跳过 + CAS 切回）
@@ -166,6 +166,7 @@ src/features/gitPush/
 │   │   ├── CardActionBar.vue        # 拉取/推送操作栏（单远程/推送全部/强制推送/Fetch）
 │   │   ├── CardTabs.vue             # 多面板 Tab 切换条（CHANGES/LOG/STASH/TAG + 计数徽标，v-model）
 │   │   ├── BranchCommitList.vue     # 提交历史（含搜索）
+│   │   ├── BranchManageDialog.vue   # 分支管理弹窗（删除非当前分支；未合并时二次确认强制删除）
 │   │   ├── ConflictSection.vue      # 冲突区
 │   │   ├── OutputPanel.vue          # 命令输出面板（失败时内置 AI 分析入口）
 │   │   ├── AiErrorAnalysisDialog.vue# AI 错误日志分析弹窗（流式）
@@ -260,6 +261,7 @@ src/features/gitPush/
     ├── ScriptRunnerPanel.scss       # 项目脚本面板样式（头部栏/脚本行/输出控制台，与工作区同口径）
     ├── AiErrorAnalysisDialog.scss   # AI 错误分析弹窗样式
     ├── BranchCommitList.scss        # 提交历史列表样式
+    ├── BranchManageDialog.scss      # 分支管理弹窗样式（分支行 + 删除入口 + 错误提示）
     ├── variables.scss               # 全局 Token 透传（已废弃：引用方已统一为 @/variables.scss，可删除）
     ├── _mixins.scss                 # 共享混入
     ├── Buttons.scss                 # .vp-btn 按钮体系
@@ -298,7 +300,7 @@ GitPushManager (facade)
 | `pushSingle(id, target)` | 推送到指定远程 |
 | `pullToAll(id)` | 从全部已配置远程拉取（--ff-only） |
 | `pullSingle(id, target)` | 从指定远程拉取 |
-| `smartPullSingle(id, target)` | 判断拉取：fetch 后用 patch-id 判断本地提交是否均为远端改写后的旧副本；确认无独有提交时建 `backup/<branch>-<时间戳>` 备份分支再 `reset --hard` 对齐远程，有独有提交则不做任何修改 |
+| `smartPullSingle(id, target)` | 判断拉取：fetch 后用 patch-id 判断本地提交是否均为远端改写后的旧副本；确认无独有提交时直接 `reset --hard` 对齐远程（不建备份分支，旧提交仅能经 reflog 找回），有独有提交则不做任何修改 |
 | `checkPushStatus(id, opts?)` | 检查 ahead/behind/noUpstream（纯本地比对跟踪 ref，不发起网络请求） |
 | `getWorkingTreeStatus(path, opts?)` | 解析 `git status --porcelain` |
 | `getFileDiff(path, file, staged)` | 获取单个文件 diff（未跟踪/新增文件常规 diff 为空时回退 `--no-index` 展示完整内容；失败返回空串，文案由视图层 i18n 呈现） |
@@ -319,6 +321,7 @@ GitPushManager (facade)
 | `getIndexMaxCommits()` / `setIndexMaxCommits(n)` | 单项目索引提交上限读写（钳位 1000~100000） |
 | `getBranches(path)` | 获取本地分支列表 |
 | `switchBranch(path, branch)` | 切换分支（检测未提交变更） |
+| `deleteBranch(path, branch, force?)` | 删除本地分支（默认 `-d`，未合并时由 git 拒绝；`force=true` 走 `-D`；当前分支前置拦截） |
 | `getCategories / addCategory / updateCategory / deleteCategory` | 分类 CRUD |
 | `moveProject(projectId, categoryId)` | 移动项目到指定分类 |
 | `addRemote / removeRemote / setRemoteUrl / renameRemote` | 远程仓库管理 |

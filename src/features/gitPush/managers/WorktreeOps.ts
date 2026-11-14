@@ -10,9 +10,11 @@ import type {
 } from "../types/storage"
 import type { GitExecutor } from "./GitExecutor"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
+// 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
+// 使 WorktreeOps 无法在 Node 单测环境加载（branchDelete.git.spec.ts 需要真实实例）
+import { buildDiffContext } from "../utils/diffText"
+import { DEFAULT_LOG_LIMIT } from "../utils/format"
 import {
-  buildDiffContext,
-  DEFAULT_LOG_LIMIT,
   parseBranches,
   parseChangesetDiff,
   parseCommitFiles,
@@ -21,7 +23,7 @@ import {
   parseStashList,
   parseWorktreeStatus,
   parseWorktreeStatusV2,
-} from "../utils"
+} from "../utils/gitOutput"
 import { HistoryRewriter } from "./HistoryRewriter"
 
 /**
@@ -365,6 +367,20 @@ export class WorktreeOps {
       )
     }
     return await this.executor.execGit(projectPath, ["checkout", branch])
+  }
+
+  /**
+   * 删除本地分支。
+   * - 默认 `-d`：git 会拒绝删除含未合并提交的分支（由调用方二次确认后再强制）；
+   * - `force=true` 时 `-D`：连同未合并提交一并删除；
+   * - 当前分支前置拦截，避免只拿到 git 的英文报错。
+   */
+  async deleteBranch(projectPath: string, branch: string, force = false): Promise<string> {
+    const current = await this.executor.getCurrentBranch(projectPath)
+    if (current === branch) {
+      throw new Error(`不能删除当前分支 ${branch}，请先切换到其他分支`)
+    }
+    return await this.executor.execGit(projectPath, ["branch", force ? "-D" : "-d", "--", branch])
   }
 
   /** 暂存当前工作区变更 */

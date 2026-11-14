@@ -28,13 +28,6 @@ export function formatDateTime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-/** 判断拉取的备份分支名：backup/<分支>-<YYYYMMDD-HHmmss>（写锁保证同一仓库不会并发建同名分支） */
-export function formatBackupBranchName(branch: string, now: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
-  return `backup/${branch}-${stamp}`
-}
-
 /** 显示设置年份选项：数据年份 ∪ 今年 ∪ 已保存 range 年份，降序（分析视图 popover 与设置汇总弹窗共用） */
 export function buildYearOptions(entries: { date: string }[], range: "lastYear" | "all" | number): number[] {
   const years = new Set<number>([new Date().getFullYear()])

@@ -66,6 +66,7 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     ensureProjectStatus: gitOps.ensureProjectStatus,
     refreshProjectStatus: gitOps.refreshProjectStatus,
     switchBranch: gitOps.switchBranch,
+    deleteBranch: gitOps.deleteBranch,
     stageItem: gitOps.stageItem,
     stageAllItems: gitOps.stageAllItems,
     unstageItem: gitOps.unstageItem,

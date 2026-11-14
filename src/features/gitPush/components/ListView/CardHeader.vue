@@ -168,6 +168,19 @@
         >
           {{ branchesExpanded ? "−" : `+${hiddenBranchCount}` }}
         </Button>
+        <!-- 分支管理（tooltip："管理分支"）：打开弹窗删除非当前分支 -->
+        <Button
+          v-if="branches.length"
+          class="gp-branch-manage-btn"
+          variant="ghost"
+          text
+          size="xsmall"
+          dense
+          icon="cogOutline"
+          :title="i18n.branchManage"
+          :aria-label="i18n.branchManage"
+          @click.stop="branchManageVisible = true"
+        />
       </div>
       <!-- 项目标签（前 3 个直接展示，其余折叠为 "+N"；筛选入口在列表工具栏） -->
       <div
@@ -217,6 +230,13 @@
       :project="project"
       :open-workspace-files="openWorkspaceFiles"
     />
+
+    <!-- 分支管理弹窗（删除非当前分支；未合并分支二次确认后强制删除） -->
+    <BranchManageDialog
+      v-model:visible="branchManageVisible"
+      :project="project"
+      :branches="branches"
+    />
   </div>
 </template>
 
@@ -230,6 +250,7 @@ import { activityLevel, highlightSegments, relativeTime } from "../../utils"
 import { useCardServices } from "../../composables/useCardServices"
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
+import BranchManageDialog from "./BranchManageDialog.vue"
 import CardHeaderActions from "./CardHeaderActions.vue"
 
 const props = defineProps<{
@@ -307,6 +328,9 @@ const branchRowVisible = computed(() => props.branches.length > 0 || !!props.cur
 // ── 分支切换（切分支含 checkout + 两次状态重载，耗时可达数秒）──
 /** 正在切换的目标分支名（空串 = 空闲）；用于按钮转圈与防重复提交 */
 const switchingBranch = ref("")
+
+/** 分支管理弹窗开关 */
+const branchManageVisible = ref(false)
 
 /**
  * 切换分支：置位在途标记 → 等待 → 复位。

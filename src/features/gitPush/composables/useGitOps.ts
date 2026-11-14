@@ -96,6 +96,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     bumpCardRefresh(id, "log", "branches")
   }
 
+  /** 删除本地分支（force=true 时强制删除未合并分支）；仅需重载卡片分支列表 */
+  async function deleteBranch(id: string, branch: string, force = false) {
+    const project = requireProject(projects, id)
+    await manager.deleteBranch(resolveValidPath(project), branch, force)
+    bumpCardRefresh(id, "branches")
+  }
+
   // ── 工作区操作 ──
 
   /** 变更后重载工作区：复用缓存分支名，避免每次写操作再发一次 rev-parse */
@@ -269,6 +276,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     ensureProjectStatus,
     refreshProjectStatus,
     switchBranch,
+    deleteBranch,
     // 工作区
     stageItem,
     stageAllItems,

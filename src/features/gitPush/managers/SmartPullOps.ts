@@ -1,12 +1,11 @@
 // 判断拉取：fetch 后按 patch-id 判断本地独有提交；确认全是远端改写后的旧副本时，
-// 备份当前分支并 reset --hard 对齐远端，有真实独有提交则不做任何修改。
+// 直接 reset --hard 对齐远端；有真实独有提交则不做任何修改。
 import type { PlatformKey } from "../types/meta"
 import type { GitExecutor } from "./GitExecutor"
 import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 import type { RemoteOpResult } from "./RemoteOps"
 import { parseAheadBehind, parseWorktreeStatus, findBlockingUntracked } from "../utils/gitOutput"
-import { formatBackupBranchName } from "../utils/format"
 import { getProjectRemoteName } from "../utils/platform"
 import { resolveValidPathWithSource } from "../utils/project"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -30,7 +29,7 @@ export class SmartPullOps {
    *   1. 工作区无已跟踪文件的未提交改动；
    *   2. 本地领先提交按 patch-id 比较后，均为远程已包含的旧副本（提交信息/SHA 重写不会产生独有提交）；
    *   3. 未跟踪文件不会与远端新树冲突（reset --hard 只删除「挡路」的未跟踪文件）。
-   * 满足时建 `backup/<branch>-<时间戳>` 备份分支再强制对齐；任一不满足则不改动仓库。
+   * 满足时直接强制对齐远端（不建备份分支，旧提交仅能通过 reflog 找回）；任一不满足则不改动仓库。
    */
   async smartPullSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
     const project = await this.store.getProjectById(id)
@@ -142,16 +141,13 @@ export class SmartPullOps {
             }
           }
 
-          // 6. 安全：先留备份分支再强制对齐，任何时候都能复位回来
-          const backupName = formatBackupBranchName(branch, new Date())
-          await this.executor.execGit(cwd, ["branch", backupName, "HEAD"], signal)
+          // 6. 强制对齐（调用方已二次确认，不建备份分支）
           await this.executor.execGit(cwd, ["reset", "--hard", ref], signal)
 
-          return done([
-            `判断拉取完成：本地 ${stat.ahead} 个提交均为远端已包含的旧副本（历史被重写），已对齐到 ${ref}。`,
-            `备份分支：${backupName}`,
-            `如需找回：git reset --hard ${backupName}`,
-          ].join("\n"))
+          return done(
+            `判断拉取完成：本地 ${stat.ahead} 个提交均为远端已包含的旧副本（历史被重写），已对齐到 ${ref}。\n`
+            + "未创建备份分支；如需找回旧提交，可在该仓库执行 git reflog 查看并复位。",
+          )
         } catch (e: unknown) {
           if (signal.aborted) return canceled()
           return fail(`判断拉取失败：${getErrorMessage(e) || String(e)}`)

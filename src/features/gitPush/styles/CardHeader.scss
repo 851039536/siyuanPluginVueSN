@@ -212,6 +212,13 @@
   &:hover { opacity: 1; }
 }
 
+// 分支管理按钮：与折叠按钮同款弱化，避免抢分支标签的视觉焦点
+.gp-branch-row .gp-branch-manage-btn.si-button {
+  opacity: 0.6;
+
+  &:hover { opacity: 1; }
+}
+
 // ========== 卡片增强（顶栏信息区专属） ==========
 // 项目标签行（与分支行同构：图标 + 可换行 chips）
 .gp-card-tags {

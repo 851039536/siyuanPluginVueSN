@@ -74,6 +74,8 @@ export interface CardDerivedFns {
 export interface CardOps {
   toggleStar: (id: string) => void
   switchBranch: (id: string, branch: string) => Promise<void>
+  /** 删除本地分支（force=true 时强制删除未合并分支） */
+  deleteBranch: (id: string, branch: string, force?: boolean) => Promise<void>
   handleRemove: (project: GitProject) => void
   openEditDialog: (project: GitProject) => void
   openMarkdownPreview: (project: GitProject, fileName: string) => void

@@ -1079,6 +1079,11 @@ export class GitPushManager {
     return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.switchBranch(projectPath, branch))
   }
 
+  /** 删除本地分支（force=true 时强制删除未合并分支；写锁与切换/提交等写操作互斥） */
+  async deleteBranch(projectPath: string, branch: string, force = false): Promise<string> {
+    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.deleteBranch(projectPath, branch, force))
+  }
+
   async stashSave(projectPath: string, message?: string): Promise<void> {
     return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.stashSave(projectPath, message))
   }

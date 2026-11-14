@@ -72,5 +72,5 @@ defineEmits<{
 
 <style scoped lang="scss">
 @use "../styles/BackupListCard.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
 </style>

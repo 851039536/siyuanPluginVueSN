@@ -486,18 +486,19 @@ async addItem(item: MyItem): Promise<void> {
 |---------|------|------|
 | 组件专属 | `styles/<ComponentName>.scss`（PascalCase，无 `_`） | `PromptsGrid.scss`、`CategoryManageModal.scss` |
 | 纯 mixins/变量（partial） | `styles/_mixins.scss`（仅此类可用 `_` 前缀） | `_mixins.scss` |
-| 主入口 + 共享基座 | `styles/index.scss` | `index.scss` |
+| 主入口样式 | `styles/index.scss` 或 `styles/panel.scss` | 仅主入口 `index.vue` 引用 |
+| 跨组件共享 CSS | 按域拆分的 partial（无 `_` 前缀，含选择器） | `cards.scss` / `forms.scss` / `utilities.scss` |
 
 **导入规则**：
 
-- `index.vue`：单行导入 `@use './styles/index.scss'`
-- 子组件：双行导入——第一行组件专属，第二行共享 index.scss：
+- **禁止把跨组件共享的 CSS 类放进 `index.scss`**：每个 `@use` 它的 scoped 组件都会整份重复发射（N 个组件 = N 份）。`index.scss` 只放主入口自己的 CSS 或纯 Token/mixin（零 CSS 输出）。
+- 根面板样式放 `panel.scss`，仅 `index.vue` 引用；跨组件共享类按域拆分，由实际使用它的组件按需 `@use`：
   ```scss
   @use '../styles/MyComponent.scss';
-  @use '../styles/index.scss';
+  @use '../styles/cards.scss';   // 仅本组件用到的共享 partial
   ```
 - `_mixins.scss` 由各 SCSS 文件通过 `@use "./mixins" as m` 自行引用
-- 响应式 `@media` 查询就近放置：组件专属放在组件 SCSS 末尾，公共基座类放在 `index.scss` 末尾
+- 响应式 `@media` 查询就近放置：组件专属放在组件 SCSS 末尾，共享类放在其所属 partial 末尾
 
 Codex UI 风格要求（禁用 `box-shadow`、全套设计 Token、字体三要素禁止硬编码、弹窗表单 `<Input>`/`<Select>` 必须 `size="small"`）见上方「UI 风格：Codex」章节。
 

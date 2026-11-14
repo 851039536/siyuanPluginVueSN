@@ -119,5 +119,6 @@ const frequencyOptions = computed(() => [
 
 <style scoped lang="scss">
 @use "../styles/AutoBackupCard.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
+@use "../styles/backup.scss";
 </style>

@@ -1,0 +1,37 @@
+// S3 备份卡片区块（各 Tab / Card 共用）
+@use '@/variables.scss' as *;
+
+// ========== 卡片区块（共享基座） ==========
+
+.card-section {
+  border: 1px solid var(--b3-theme-surface-lighter);
+  border-radius: $r-base;
+  padding: $s-4;
+  margin-bottom: $s-4;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $s-3;
+
+  h4 {
+    margin: 0;
+    font-size: $t-base;
+    font-weight: $fw-semibold;
+  }
+}
+
+// ========== 空状态（BackupListCard / BackupLogCard / StoredChecksumsSection 共用） ==========
+
+.empty-state {
+  text-align: center;
+  padding: $s-8 0;
+  color: var(--b3-theme-on-surface-light);
+
+  p {
+    margin: 0;
+    font-size: $t-sm;
+  }
+}

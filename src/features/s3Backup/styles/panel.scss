@@ -1,0 +1,27 @@
+// S3 备份根面板样式
+// 仅 s3Backup/index.vue 的 scoped style 引用 → 全项目只发射一份。
+@use '@/variables.scss' as *;
+
+.s3-backup-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+}
+
+// ========== 头部 ==========
+
+.s3-backup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $s-3 $s-4;
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
+  flex-shrink: 0;
+
+  &-title {
+    font-size: $t-lg;
+    font-weight: $fw-semibold;
+  }
+}

@@ -215,5 +215,5 @@ async function copyDetail(log: BackupLog): Promise<void> {
 
 <style scoped lang="scss">
 @use "../styles/BackupLogCard.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
 </style>

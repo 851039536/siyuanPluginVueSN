@@ -39,5 +39,5 @@ defineProps<{
 
 <style scoped lang="scss">
 @use "../styles/BackupProgressSection.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
 </style>

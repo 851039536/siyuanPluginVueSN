@@ -240,4 +240,5 @@ const barOptions: ChartOptions = {
 <style scoped lang="scss">
 @use "../../styles/WeeklyReview.scss";
 @use "../../styles/index.scss";
+@use "../../styles/utilities.scss";
 </style>

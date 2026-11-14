@@ -1,0 +1,134 @@
+// 视频管理器根面板样式
+// 仅 video/index.vue 的 scoped style 引用 → 全项目只发射一份。
+@use "@/variables.scss" as *;
+
+.video-manager-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.video-manager {
+  background: var(--b3-theme-background);
+  border-radius: var(--b3-border-radius);
+  border: 1px solid var(--b3-border-color);
+  width: 90vw;
+  max-width: 1200px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $s-4 $s-5;
+    border-bottom: 1px solid var(--b3-border-color);
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: $s-3;
+
+      h2 {
+        margin: 0;
+        color: var(--b3-theme-on-background);
+        font-size: $t-base;
+        font-weight: $fw-semibold;
+      }
+
+      .video-count {
+        font-size: $t-sm;
+        color: var(--b3-theme-on-surface-light);
+      }
+    }
+
+    .header-right {
+      display: flex;
+      gap: $s-2;
+    }
+  }
+
+  .video-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: $s-5;
+
+    .video-list {
+      .video-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: $s-4;
+      }
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      color: var(--b3-theme-on-surface-light);
+
+      .empty-icon {
+        width: 64px;
+        height: 64px;
+        opacity: 0.3;
+        margin-bottom: $s-4;
+      }
+
+      p {
+        margin: $s-1 0;
+        font-size: $t-sm;
+      }
+
+      .empty-hint {
+        font-size: $t-xs;
+        opacity: 0.7;
+      }
+    }
+  }
+}
+
+// 响应式调整（仅根面板）
+@media (max-width: 768px) {
+  .video-manager {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+
+    .video-header {
+      padding: $s-3 $s-4;
+
+      .header-left {
+        gap: $s-2;
+
+        h2 {
+          font-size: $t-sm;
+        }
+
+        .video-count {
+          font-size: $t-xs;
+        }
+      }
+    }
+
+    .video-content {
+      padding: $s-3;
+
+      .video-list .video-grid {
+        grid-template-columns: 1fr;
+        gap: $s-3;
+      }
+    }
+  }
+}

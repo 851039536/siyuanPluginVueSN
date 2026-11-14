@@ -86,7 +86,9 @@ quickNote/
 │   ├── data.ts                 # 待办/灵感/项目数据模型 + 优先级/状态元数据映射表
 │   └── storage.ts              # QuickNoteStorage（data + settings 两个槽位）
 └── styles/
-    ├── index.scss              # 面板壳 + Tab 导航 + 分组列表 + 共享 %占位类（icon-btn/primary-btn/cancel-btn/helper-text/empty-state）
+    ├── index.scss              # 仅共享 %占位类（icon-btn/primary-btn/cancel-btn/helper-text/empty-state），零 CSS
+    ├── panel.scss              # 面板壳 + Tab 导航（仅 index.vue 引用）
+    ├── utilities.scss          # 跨组件共享类（qn-icon-btn / panel-section / 分组列表）
     ├── TodayFocus.scss         # 「今天要处理的」聚焦区
     ├── TodoItem.scss / TodoForm.scss
     ├── InspirationItem.scss / InspirationForm.scss

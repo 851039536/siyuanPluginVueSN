@@ -1,0 +1,98 @@
+// QuickNote 跨组件共享类
+// 由实际使用这些类名的组件在各自 scoped style 中 @use → 只在该组件的编译单元内发射一份。
+// 不要并入 index.scss（那会被全部 13 个组件整份拉入）。
+// index.scss 只导出 %占位类（@use 不转发成员），Token 需直接 @use 全局壳。
+@use "@/variables.scss" as *;
+@use './index.scss' as *;
+
+// 共享图标按钮（面板头部操作 + 条目编辑操作复用，20x20 无填充基础样式）
+.qn-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: $r-base;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-on-surface);
+    border-color: var(--b3-border-color);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  // 危险操作变体（删除按钮悬停变红）
+  &--danger:hover {
+    color: var(--b3-card-error-color);
+  }
+}
+
+.panel-section {
+  display: flex;
+  flex-direction: column;
+  gap: $s-3;
+}
+
+// ========== 待办分组 ==========
+
+.todo-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: $s-3;
+}
+
+.todo-group {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+}
+
+// 分组标题（辅助文字：标签级）
+.todo-group__label {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  // 辅助文字
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--b3-theme-on-surface-variant);
+  padding-left: $s-1;
+}
+
+.todo-group__count {
+  // 辅助文字
+  font-size: $t-2xs;
+  padding: 0 $s-1;
+  border-radius: $r-full;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+}
+
+// ========== 灵感/项目列表 ==========
+
+.insp-list,
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+}
+
+// 空态提示
+.insp-list__empty,
+.project-list__empty {
+  @extend %qn-empty-state;
+  text-align: center;
+  padding: $s-6 0;
+}

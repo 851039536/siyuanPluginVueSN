@@ -401,8 +401,9 @@ src/features/myFeature/
 ├── styles/
 │   ├── _mixins.scss          # 共享变量/mixins（_ 前缀 = partial，仅此用途）
 │   ├── MyComponent.scss      # 组件专属样式（PascalCase，无 _ 前缀）
-│   ├── index.scss            # 主入口 index.vue 的样式 + 共享基座样式
-│   └── ...                   # 其他组件对应 OtherComponent.scss
+│   ├── index.scss            # 主入口 index.vue 的样式；或仅放 Token/mixin（零 CSS）
+│   ├── panel.scss            # 根面板样式（仅主入口 index.vue 引用）
+│   └── ...                   # 其他组件对应 OtherComponent.scss / 按域拆分的共享 partial
 └── index.vue                 # <style lang="scss" scoped>
                               #   @use "./styles/index.scss";
                               # </style>
@@ -413,15 +414,19 @@ src/features/myFeature/
 1. **禁止在 `.vue` 文件中编写 SCSS 样式代码**。仅允许 `@use` 导入语句。
 2. 每个组件对应一个 `styles/<ComponentName>.scss` 文件（PascalCase，无 `_` 前缀）。
 3. **`_` 下划线前缀仅限纯 mixins/变量**（如 `_mixins.scss`、`components/styles/_overlay.scss` —— 后者只导出 `overlay-mask` / `overlay-positions` 两个 mixin，无顶层选择器）。包含实际 CSS 选择器的样式文件**禁止**使用 `_` 前缀。例外：`components/kit/variables.scss` 是组件库自包含迁移后的设计 Token 真源，为与组件 scss 的显式扩展名引用（`../kit/variables.scss`）保持字面一致而不带 `_` 前缀。
-4. Feature 主入口 `index.vue` 的样式放在 `styles/index.scss`。此文件同时作为**共享基座**（如 `.vp-overlay`、`.vp-modal-header` 等），子组件通过第二行 `@use "../styles/index.scss"` 导入。
-5. **子组件导入模式：双行导入**——第一行导入自身专属 SCSS，第二行导入共享的 `index.scss`：
+4. **禁止把跨组件共享的 CSS 类放进 `index.scss`**。每个 `@use` 它的 scoped 组件都会把该文件的全部顶层规则重新发射一遍（N 个组件 = N 份）。`index.scss` 只允许两类内容：
+   - 主入口 `index.vue` 自己的 CSS；或
+   - 纯 Token/mixin（零 CSS 输出），供所有组件安全共享。
+
+   跨组件共享类按域拆成独立 partial（如 `cards.scss` / `forms.scss` / `utilities.scss`，因含选择器**不带 `_` 前缀**），由实际使用它的组件各自 `@use`；根面板样式放 `panel.scss`，仅主入口 `index.vue` 引用。参考实现：`src/features/statistics/`、`src/features/quickNote/`、`src/features/s3Backup/`。
+5. **子组件导入模式：按需导入**——自身专属 SCSS + 只引入自己用到的共享 partial，禁止无脑引入全部共享文件：
    ```scss
    @use '../styles/MyComponent.scss';   // 组件专属样式
-   @use '../styles/index.scss';         // 共享模态基座 + 公共样式
+   @use '../styles/cards.scss';         // 仅本组件用到的共享 partial
    ```
 6. 导入路径使用相对路径（`../styles/` 或 `./styles/`）。
 7. `@use` 导入的 SCSS 文件会自动参与 Vue 的 scoped 样式编译。
-8. **响应式就近原则**：`@media` 查询放在对应基类所在文件末尾。组件专属选择器的响应式规则放入组件 SCSS，模态基座等公共类的响应式保留在 `index.scss`。
+8. **响应式就近原则**：`@media` 查询放在对应基类所在文件末尾。组件专属选择器的响应式规则放入组件 SCSS，跨组件共享类的响应式保留在其所属共享 partial（如 `panel.scss` / `cards.scss`）。
 
 ### 示例
 

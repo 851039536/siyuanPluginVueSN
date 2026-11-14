@@ -165,4 +165,5 @@ const progressPercent = computed(() =>
 <style scoped lang="scss">
 @use "../../styles/ProjectItem.scss";
 @use "../../styles/index.scss";
+@use "../../styles/utilities.scss";
 </style>

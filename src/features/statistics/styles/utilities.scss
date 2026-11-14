@@ -1,0 +1,53 @@
+// Statistics 跨组件工具类（section-title / subsection-title / chart-section / doc-change-section）
+// 由使用这些类名的组件在各自 scoped style 中 @use → 只在该组件的编译单元内发射一份。
+// 不要并入 index.scss（那会被全部 39 个组件整份拉入）。
+@use './index.scss' as *;
+
+.section-title {
+  margin: 0 0 $s-3 0;
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.02em;
+  color: var(--b3-theme-on-surface);
+}
+
+.doc-change-section {
+  margin: $s-1 0;
+}
+
+.subsection-title {
+  margin: 0 0 $s-2 0;
+  font-family: $font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.65;
+}
+
+.chart-section {
+  margin: $s-1 0;
+  padding: $s-px6;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+
+  .section-title {
+    margin-bottom: $s-4;
+    font-weight: $fw-bold;
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: var(--b3-theme-primary);
+      border-radius: $r-sm;
+    }
+  }
+}

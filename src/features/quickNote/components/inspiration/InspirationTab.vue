@@ -86,4 +86,5 @@ const handleSelectTag = (tag: string | null) => {
 
 <style scoped lang="scss">
 @use "../../styles/index.scss";
+@use "../../styles/utilities.scss";
 </style>

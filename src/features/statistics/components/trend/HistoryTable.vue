@@ -167,4 +167,5 @@ function getDiff(
 <style scoped lang="scss">
 @use "../../styles/HistoryTable.scss";
 @use '../../styles/index.scss' as stats;
+@use '../../styles/utilities.scss';
 </style>

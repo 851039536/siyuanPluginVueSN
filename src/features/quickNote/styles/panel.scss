@@ -1,0 +1,248 @@
+// QuickNote 根面板样式
+// 仅 quickNote/index.vue 的 scoped style 引用 → 全项目只发射一份。
+// index.scss 只导出 %占位类（@use 不转发成员），Token 需直接 @use 全局壳。
+@use "@/variables.scss" as *;
+@use './index.scss' as *;
+
+.quick-note-panel {
+  // 缩放把手定位锚点（把手绝对定位到面板右下角）
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  // 弹窗基准字号（防止内部未声明字号的文字继承思源全局默认字号）
+  font-size: $t-xs;
+}
+
+// ========== 右下角缩放把手（固定 14px 命中区，保证小面板下仍可抓取） ==========
+
+.quick-note-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  // Pointer 拖拽需禁用默认触控手势
+  touch-action: none;
+
+  // L 形折角提示（Codex 风格：细线代替图标）
+  &::before {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid var(--b3-border-color);
+    border-bottom: 2px solid var(--b3-border-color);
+    opacity: 0.7;
+    transition: border-color 0.12s, opacity 0.12s;
+  }
+
+  &:hover::before,
+  &:active::before {
+    border-color: var(--b3-theme-primary);
+    opacity: 1;
+  }
+}
+
+// ========== 最小化态：纯图标小按钮（点击展开） ==========
+
+.mini-bar {
+  // 30×30：容器由 Manager 固定为 32px，四周留 1px 兼容 border-box / content-box
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: $r-base;
+  background: transparent;
+  color: var(--b3-theme-primary);
+  // 可拖动把手（pointer 拖拽需禁用默认触控手势）
+  cursor: grab;
+  touch-action: none;
+  transition: background 0.12s;
+  animation: qn-mini-in 0.12s ease;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+// 右上角未完成待办计数徽标（超过 99 折叠为 99+）
+.mini-bar__count {
+  position: absolute;
+  top: $s-px2;
+  right: $s-px2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: $s-3;
+  height: $s-3;
+  padding: 0 $s-px3;
+  border: 1px solid var(--b3-theme-background);
+  border-radius: $r-full;
+  background: var(--b3-card-error-color);
+  color: var(--b3-theme-on-primary);
+  // 辅助文字
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+  line-height: $lh-tight;
+  pointer-events: none;
+}
+
+// 图标入场：缩小时轻微缩放淡入，配合容器尺寸过渡
+@keyframes qn-mini-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-bar {
+    animation: none;
+  }
+}
+
+// ========== 面板头部（紧凑拖拽把手） ==========
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $s-1 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+  // 拖拽把手：禁止选中文本/默认触控手势，grab 光标提示可拖动
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.panel-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-surface);
+}
+
+.panel-title__icon {
+  opacity: 0.85;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+}
+
+// 预设位置菜单容器（为下拉菜单提供定位锚点）
+.position-menu-wrap {
+  position: relative;
+}
+
+// 预设位置下拉菜单（Codex 风格：边框代替阴影）
+.position-menu {
+  position: absolute;
+  top: calc(100% + #{$s-1});
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 72px;
+  padding: $s-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-background);
+}
+
+.position-menu__item {
+  padding: $s-1 $s-2;
+  border: none;
+  border-radius: $r-base;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $t-xs;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter);
+  }
+
+  &--active {
+    background: var(--b3-theme-surface-lighter);
+    color: var(--b3-theme-primary);
+  }
+}
+
+// ========== Tab 导航栏（下划线式） ==========
+
+.panel-tabs {
+  display: flex;
+  gap: $s-3;
+  padding: $s-1 $s-3;
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+}
+
+.panel-tab {
+  padding: $s-1;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--b3-theme-on-surface-variant);
+  font-size: $t-xs;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+
+  // 激活态：品牌蓝下划线 + 文字
+  &--active {
+    color: var(--b3-theme-primary);
+    border-bottom-color: var(--b3-theme-primary);
+    font-weight: $fw-semibold;
+  }
+}
+
+// ========== Tab 内容区（可滚动，右侧留滚动条呼吸空间） ==========
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: $s-3 $s-2 $s-3 $s-3;
+  display: flex;
+  flex-direction: column;
+  gap: $s-3;
+}

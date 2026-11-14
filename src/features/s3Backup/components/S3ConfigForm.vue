@@ -320,5 +320,6 @@ watch(
 
 <style scoped lang="scss">
 @use "../styles/S3ConfigForm.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
+@use "../styles/forms.scss";
 </style>

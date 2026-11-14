@@ -20,7 +20,7 @@ src/features/statistics/
 │   └── milestones/index.vue        # 里程碑 Tab 入口
 ├── composables/                    # 共享逻辑（useStatistics/useHistoryData/useNotebookStats/useMilestoneStorage/useNotebookHover）
 ├── queries/                        # SQL 查询层（docChangeStats/heatmapStats/notebookStats/reportStats）
-├── styles/                         # SCSS（index.scss 为共享基座，组件样式独立文件）
+├── styles/                         # SCSS（index.scss 仅 Token/mixin，零 CSS；panel.scss 根面板；utilities.scss 跨组件工具类；其余为组件独立文件）
 ├── types/                          # 类型定义 + 存储 + 里程碑规则
 └── utils/                          # 纯工具函数（milestones/achievements 等）
 ```

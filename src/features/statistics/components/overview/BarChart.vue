@@ -89,4 +89,5 @@ function formatChartLabel(label: string): string {
 <style scoped lang="scss">
 @use "../../styles/BarChart.scss";
 @use '../../styles/index.scss' as stats;
+@use '../../styles/utilities.scss';
 </style>

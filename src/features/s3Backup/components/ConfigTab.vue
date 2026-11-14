@@ -80,5 +80,6 @@ async function handleConfigSaved(config: S3Config): Promise<void> {
 
 <style scoped lang="scss">
 @use "../styles/ConfigTab.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
+@use "../styles/layout.scss";
 </style>

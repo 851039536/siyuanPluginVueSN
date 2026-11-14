@@ -61,7 +61,7 @@
 
 配置保存已按此约定改为「配置」Tab 内联提示（成功/失败均写回共享 `Message`），不再依赖被遮罩遮挡的全局 toast。
 
-> 已知权衡：`styles/index.scss` 被 14 个子组件以 `scoped` 方式 `@use`，导致 `.card-section` / `.section-header` / `.form-hint` / `.empty-state` 等基座规则在 `dist/index.css` 中重复若干次。这是仓库 84 个组件共用的既有约定，单独调整会造成不一致，故保留现状。
+> 样式拆分（2026-11-14）：原先 `styles/index.scss` 被 16 个子组件以 `scoped` 方式整份 `@use`，导致所有基座规则在每个组件里重复发射。现已按域拆为 `panel.scss`（根面板，仅 index.vue）/ `cards.scss` / `forms.scss` / `paths.scss` / `layout.scss` / `backup.scss`，各组件只引入自己用到的部分。
 
 ## S3 兼容性
 

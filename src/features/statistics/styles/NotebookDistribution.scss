@@ -1,0 +1,72 @@
+// NotebookDistribution 笔记本分布 Tab 专属样式
+// 仅 NotebookDistribution/index.vue 引用 → 只发射一份。
+@use './index.scss' as *;
+
+.notebook-distribution-tab {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $s-2; // 纵向单列流，模块间距统一 8px
+}
+
+.dist-summary-bar {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-2 $s-3;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  flex-shrink: 0;
+}
+
+.dist-summary-item {
+  display: flex;
+  align-items: baseline;
+  gap: $s-1;
+}
+
+.dist-summary-label {
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.5;
+}
+
+.dist-summary-value {
+  font-family: $font-mono;
+  font-size: $t-xs;
+  font-weight: $fw-bold;
+  color: var(--b3-theme-primary);
+}
+
+.dist-summary-sep {
+  color: var(--b3-border-color);
+  font-size: $t-xs;
+}
+
+.dist-table {
+  min-height: 200px;
+}
+
+.dist-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  padding: $s-3;
+}
+
+.dist-section-title {
+  margin: 0 0 $s-px10 0;
+  font-family: $font-mono;
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--b3-theme-on-surface);
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+}

@@ -354,5 +354,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use "./styles/index.scss";
+@use "./styles/panel.scss";
+@use "./styles/utilities.scss";
 </style>

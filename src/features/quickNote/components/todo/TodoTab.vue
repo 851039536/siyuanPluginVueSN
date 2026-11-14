@@ -179,4 +179,5 @@ const handleTodoCancel = () => {
 
 <style scoped lang="scss">
 @use "../../styles/index.scss";
+@use "../../styles/utilities.scss";
 </style>

@@ -49,5 +49,7 @@ const SWITCHES: Array<{ key: keyof BackupMode; labelKey: string; hintKey: string
 
 <style scoped lang="scss">
 @use "../styles/BackupModeSelector.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
+@use "../styles/forms.scss";
+@use "../styles/backup.scss";
 </style>

@@ -472,4 +472,5 @@ defineExpose({ reload: loadData })
 <style lang="scss" scoped>
 @use '../../styles/HeatmapCard.scss';
 @use '../../styles/index.scss' as stats;
+@use '../../styles/utilities.scss';
 </style>

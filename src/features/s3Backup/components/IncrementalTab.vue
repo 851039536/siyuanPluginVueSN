@@ -169,5 +169,8 @@ onMounted(() => {
 
 <style scoped lang="scss">
 @use "../styles/IncrementalTab.scss";
-@use "../styles/index.scss";
+@use "../styles/layout.scss";
+@use "../styles/cards.scss";
+@use "../styles/paths.scss";
+@use "../styles/backup.scss";
 </style>

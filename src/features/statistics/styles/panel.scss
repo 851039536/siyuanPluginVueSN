@@ -1,0 +1,113 @@
+// Statistics 根面板样式
+// 仅 statistics/index.vue 的 scoped style 引用 → 全项目只发射一份。
+// 子组件私有样式不要放这里（会随根组件一次性铺满整棵 DOM）。
+@use './index.scss' as *;
+
+// ========== Main Container ==========
+.statistics-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-family: $ff-zh;
+  // Dock 根容器基准字号（防止继承思源全局 14px+ 默认字号）
+  font-size: $t-xs;
+
+  --stat-color-success: #2da44e;
+  --stat-color-danger: #cf222e;
+  --stat-color-warning: #d97706;
+}
+
+.statistics-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  // 右侧留白 8px，避免滚动条/内容紧贴侧边栏
+  padding: $s-1 $s-2;
+  background: var(--b3-theme-background);
+
+  // Custom scrollbar (6px width, themed colors)
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--b3-border-color);
+    border-radius: $r-sm;
+
+    &:hover {
+      background: var(--b3-theme-on-surface);
+      opacity: 0.2;
+    }
+  }
+}
+
+// ========== Tab Bar ==========
+.tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0 $s-3;
+  background: var(--b3-theme-surface);
+  border-bottom: 1px solid var(--b3-border-color);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.tab-item {
+  padding: $s-2 $s-px14;
+  border: none;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-family: $ff-zh;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  transition: color 0.12s;
+
+  &:hover {
+    color: var(--b3-theme-on-surface);
+  }
+
+  &.active {
+    color: var(--b3-theme-primary);
+    font-weight: $fw-bold;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: $s-2;
+      right: $s-2;
+      height: 2px;
+      background: var(--b3-theme-primary);
+      border-radius: 1px 1px 0 0;
+    }
+  }
+}
+
+.tab-badge {
+  font-family: $font-mono;
+  font-size: $t-2xs;
+  padding: $s-px1 $s-px6;
+  border-radius: $r-sm;
+  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  color: var(--b3-theme-primary);
+  font-weight: $fw-bold;
+}
+
+// ========== Notebook Distribution Tab ==========
+// 已迁至 NotebookDistribution.scss（该 Tab 由子组件渲染，不属于根面板）
+
+.loading-wrapper {
+  position: relative;
+  height: 200px;
+}

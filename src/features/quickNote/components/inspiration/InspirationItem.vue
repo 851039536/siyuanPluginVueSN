@@ -182,4 +182,5 @@ const formatTime = (ts: number) => {
 <style scoped lang="scss">
 @use "../../styles/InspirationItem.scss";
 @use "../../styles/index.scss";
+@use "../../styles/utilities.scss";
 </style>

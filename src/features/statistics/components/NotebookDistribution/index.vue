@@ -114,5 +114,6 @@ watch(() => props.active, (active) => {
 </script>
 
 <style scoped lang="scss">
+@use '../../styles/NotebookDistribution.scss';
 @use '../../styles/index.scss' as stats;
 </style>

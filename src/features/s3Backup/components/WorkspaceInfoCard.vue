@@ -44,5 +44,7 @@ defineEmits<{
 
 <style scoped lang="scss">
 @use "../styles/WorkspaceInfoCard.scss";
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
+@use "../styles/paths.scss";
+@use "../styles/layout.scss";
 </style>

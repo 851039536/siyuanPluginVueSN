@@ -23,5 +23,5 @@ defineProps<{
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss";
+@use "../styles/layout.scss";
 </style>

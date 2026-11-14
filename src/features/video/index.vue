@@ -1036,5 +1036,5 @@ function closeDownloadDialog() {
 </script>
 
 <style scoped lang="scss">
-@use "./styles/index.scss";
+@use "./styles/panel.scss";
 </style>

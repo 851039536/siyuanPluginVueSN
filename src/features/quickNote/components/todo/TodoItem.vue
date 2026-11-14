@@ -147,4 +147,5 @@ const priorityMeta = computed(() => PRIORITY_META[props.todo.priority])
 <style scoped lang="scss">
 @use "../../styles/TodoItem.scss";
 @use "../../styles/index.scss";
+@use "../../styles/utilities.scss";
 </style>

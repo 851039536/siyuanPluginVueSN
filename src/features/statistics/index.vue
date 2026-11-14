@@ -363,5 +363,5 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="scss">
-@use "./styles/index.scss" as stats;
+@use "./styles/panel.scss";
 </style>

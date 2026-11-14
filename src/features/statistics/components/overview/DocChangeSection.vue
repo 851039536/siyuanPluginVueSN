@@ -474,4 +474,5 @@ onMounted(() => {
 <style lang="scss" scoped>
 @use '../../styles/DocChangeSection.scss';
 @use '../../styles/index.scss' as stats;
+@use '../../styles/utilities.scss';
 </style>

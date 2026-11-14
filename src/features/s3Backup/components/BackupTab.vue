@@ -150,5 +150,6 @@ function openDownloadFolder(localPath: string): void {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss";
+@use "../styles/layout.scss";
+@use "../styles/backup.scss";
 </style>

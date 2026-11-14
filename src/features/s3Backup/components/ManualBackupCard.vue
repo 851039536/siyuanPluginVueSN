@@ -122,5 +122,8 @@ const backupHintText = computed(() => {
 </script>
 
 <style scoped lang="scss">
-@use "../styles/index.scss";
+@use "../styles/cards.scss";
+@use "../styles/forms.scss";
+@use "../styles/paths.scss";
+@use "../styles/backup.scss";
 </style>

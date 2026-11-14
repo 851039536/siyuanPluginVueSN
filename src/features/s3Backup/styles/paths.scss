@@ -1,0 +1,59 @@
+// S3 备份路径展示与预览（WorkspaceInfoCard / IncrementalTab / ManualBackupCard 共用）
+@use '@/variables.scss' as *;
+
+// ========== 路径/操作共享样式（WorkspaceInfoCard / ManualBackupCard 共用） ==========
+
+.workspace-path-row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  flex: 1;
+  min-width: 0;
+}
+
+.workspace-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.path-actions {
+  display: flex;
+  gap: $s-1;
+  flex-shrink: 0;
+}
+
+// ========== 路径预览（ManualBackupCard 共用） ==========
+
+.path-preview {
+  display: flex;
+  align-items: flex-start;
+  gap: $s-1;
+  margin-top: $s-1;
+  padding: $s-1 $s-2;
+  background: var(--b3-theme-surface-lighter);
+  border-radius: $r-base;
+  font-size: $t-xs;
+}
+
+.path-preview-label {
+  color: var(--b3-theme-on-surface-light);
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &::after {
+    content: "：";
+  }
+}
+
+.path-preview-value {
+  font-family: $ff-mono;
+  color: var(--b3-theme-primary);
+  word-break: break-all;
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+}

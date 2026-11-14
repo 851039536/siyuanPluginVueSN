@@ -1,0 +1,15 @@
+// S3 备份 Tab 内容容器与信息值
+@use '@/variables.scss' as *;
+
+// ========== 内容容器 ==========
+
+.settings-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: $s-4;
+}
+
+.info-value {
+  font-size: $t-sm;
+  color: var(--b3-theme-on-surface);
+}

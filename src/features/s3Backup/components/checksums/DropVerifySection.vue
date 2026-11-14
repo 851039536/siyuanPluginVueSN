@@ -234,5 +234,6 @@ function copyHash(hash: string): void {
 
 <style scoped lang="scss">
 @use "../../styles/DropVerifySection.scss";
-@use "../../styles/index.scss";
+@use "../../styles/cards.scss";
+@use "../../styles/backup.scss";
 </style>

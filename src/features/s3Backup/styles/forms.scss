@@ -1,0 +1,21 @@
+// S3 备份表单控件（ManualBackupCard / S3ConfigForm / BackupModeSelector 共用）
+@use '@/variables.scss' as *;
+
+// 字段组基座：ManualBackupCard / S3ConfigForm / BackupModeSelector 共用。
+// 原定义在 .s3-config-form 作用域内，导致作用域外的 .form-group 拿不到纵向布局。
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  min-width: 0;
+}
+
+.form-group-checkbox {
+  margin-top: $s-3;
+}
+
+.form-hint {
+  font-size: $t-xs;
+  color: var(--b3-theme-on-surface-light);
+  margin-top: $s-px2;
+}

@@ -177,5 +177,6 @@ function confirmClearAll(): void {
 
 <style scoped lang="scss">
 @use "../../styles/StoredChecksumsSection.scss";
-@use "../../styles/index.scss";
+@use "../../styles/cards.scss";
+@use "../../styles/backup.scss";
 </style>

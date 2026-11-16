@@ -73,7 +73,7 @@ export class SmartPullOps {
 
           // 2. 工作区必须干净：reset --hard 会丢弃已跟踪文件的未提交改动
           const statusRaw = await this.executor.execGit(
-            cwd, ["-c", "core.quotepath=false", "status", "--porcelain"], signal,
+            cwd, ["status", "--porcelain"], signal,
           )
           const status = parseWorktreeStatus(statusRaw)
           const dirtyTracked = status.files.filter((f) => f.status !== "untracked")
@@ -126,7 +126,7 @@ export class SmartPullOps {
           const untracked = status.files.filter((f) => f.status === "untracked").map((f) => f.path)
           if (untracked.length > 0) {
             const treeRaw = await this.executor.execGit(
-              cwd, ["-c", "core.quotepath=false", "ls-tree", "-r", "--name-only", ref], signal,
+              cwd, ["ls-tree", "-r", "--name-only", ref], signal,
             )
             const blocked = findBlockingUntracked(untracked, treeRaw.split("\n").filter(Boolean))
             if (blocked.length > 0) {

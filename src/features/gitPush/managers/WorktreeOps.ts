@@ -91,8 +91,6 @@ export class WorktreeOps {
   ): Promise<WorkingTreeInfo> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "-c",
-        "core.quotepath=false",
         "status",
         "--porcelain=v2",
         "--branch",
@@ -130,7 +128,7 @@ export class WorktreeOps {
     try {
       // git status 内部自带 index stat 刷新（无 --no-optional-locks 时会回写 index），
       // 无需先跑 update-index --refresh——那等于对工作区做两次全量扫描
-      const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "status", "--porcelain"])
+      const raw = await this.executor.execGit(projectPath, ["status", "--porcelain"])
       if (!raw) { return {
         ...empty,
         branch,
@@ -179,7 +177,7 @@ export class WorktreeOps {
       if (!staged && status === "untracked") {
         return await this.execNoIndexDiff(projectPath, file)
       }
-      const args = ["-c", "core.quotepath=false", "diff", "--text"]
+      const args = ["diff", "--text"]
       if (context > 0) args.push(`-U${context}`)
       if (staged) args.push("--cached")
       args.push("--", file)
@@ -212,7 +210,7 @@ export class WorktreeOps {
    */
   async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string> | null> {
     try {
-      const args = ["-c", "core.quotepath=false", "diff", "--text"]
+      const args = ["diff", "--text"]
       if (staged) args.push("--cached")
       const raw = await this.executor.execGit(projectPath, args)
       return Object.fromEntries(parseChangesetDiff(raw))
@@ -225,7 +223,7 @@ export class WorktreeOps {
   private async execNoIndexDiff(projectPath: string, file: string): Promise<string> {
     return await this.executor.execGit(
       projectPath,
-      ["-c", "core.quotepath=false", "diff", "--no-index", "--text", "--", "/dev/null", file],
+      ["diff", "--no-index", "--text", "--", "/dev/null", file],
       undefined,
       undefined,
       undefined,
@@ -350,7 +348,7 @@ export class WorktreeOps {
   }
 
   async commit(projectPath: string, message: string): Promise<string> {
-    return await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "commit", "-m", message])
+    return await this.executor.execGit(projectPath, ["commit", "-m", message])
   }
 
   /**
@@ -588,8 +586,6 @@ export class WorktreeOps {
   async getStagedDiff(projectPath: string): Promise<string> {
     try {
       return await this.executor.execGit(projectPath, [
-        "-c",
-        "core.quotepath=false",
         "diff",
         "--text",
         "--cached",
@@ -603,8 +599,6 @@ export class WorktreeOps {
   async getStagedFiles(projectPath: string): Promise<FileChange[]> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "-c",
-        "core.quotepath=false",
         "diff",
         "--cached",
         "--name-status",
@@ -628,8 +622,6 @@ export class WorktreeOps {
   async getCommitDeepContext(projectPath: string, hash: string, budget = 10000): Promise<string> {
     try {
       const text = await this.executor.execGit(projectPath, [
-        "-c",
-        "core.quotepath=false",
         "show",
         "--text",
         "--format=%B",
@@ -648,8 +640,6 @@ export class WorktreeOps {
   async getCommitFullMessage(projectPath: string, hash: string): Promise<string> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "-c",
-        "core.quotepath=false",
         "show",
         "-s",
         "--format=%B",
@@ -665,8 +655,6 @@ export class WorktreeOps {
   async getCommitFiles(projectPath: string, hash: string): Promise<FileChange[]> {
     try {
       const raw = await this.executor.execGit(projectPath, [
-        "-c",
-        "core.quotepath=false",
         "show",
         "--name-status",
         "--format=",
@@ -683,8 +671,6 @@ export class WorktreeOps {
   async getCommitFilePatch(projectPath: string, hash: string, filePath: string): Promise<string> {
     try {
       return await this.executor.execGit(projectPath, [
-        "-c",
-        "core.quotepath=false",
         "show",
         "--format=",
         hash,
@@ -699,8 +685,6 @@ export class WorktreeOps {
   /** 修改当前 HEAD 提交信息（仅允许最近一次提交，调用方负责前置校验） */
   async amendCommitMessage(projectPath: string, message: string): Promise<string> {
     return await this.executor.execGit(projectPath, [
-      "-c",
-      "core.quotepath=false",
       "commit",
       "--amend",
       "-m",
@@ -807,7 +791,7 @@ export class WorktreeOps {
           // timeoutMs 传 undefined：commit 是本地命令，走 GitExecutor 的可配置本地超时（默认 60s，设置面板持久化）
           return await this.executor.execGit(
             projectPath,
-            ["-c", "core.quotepath=false", "commit", "--amend", "-m", message],
+            ["commit", "--amend", "-m", message],
             undefined,
             undefined,
             undefined,

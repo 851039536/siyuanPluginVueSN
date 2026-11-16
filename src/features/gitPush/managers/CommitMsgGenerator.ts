@@ -33,7 +33,7 @@ export class CommitMsgGenerator {
     try {
       // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
       const diffText = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached", "--stat=200",
+        "diff", "--text", "--cached", "--stat=200",
       ])
       if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
 
@@ -43,7 +43,7 @@ export class CommitMsgGenerator {
       }
 
       const fullDiff = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached",
+        "diff", "--text", "--cached",
       ])
       const ruleConfig = await this.getRuleConfig()
       const diffContext = fullDiff ? buildDiffContext(fullDiff, ruleConfig.diffContextBudget) : diffText
@@ -102,7 +102,7 @@ ${diffContext}`,
     try {
       // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
       const diffText = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "diff", "--text", "--cached", "--stat=200",
+        "diff", "--text", "--cached", "--stat=200",
       ])
       if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
 

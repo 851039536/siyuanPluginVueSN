@@ -318,6 +318,21 @@ export class GitExecutor {
   }
 
   /**
+   * 给命令补上全局 `-c` 配置（目前只有 `core.quotepath=false`）。
+   *
+   * 为什么收敛到执行器：这个开关决定「非 ASCII 路径输出裸 UTF-8 还是八进制转义」，
+   * 而它几乎影响**所有**带路径输出的命令（status / diff / log / ls-files / ls-tree …）。
+   * 原先由每个调用点自己写 `["-c", "core.quotepath=false"]`，34 处散布在 5 个文件里，
+   * 任何一处漏写都会让中文/emoji 路径变成 `"\344\270\255..."`，表现为「文件列表出现乱码」
+   * 或「路径匹配不上 —— 暂存/丢弃这些操作静默失效」。放这里后新增调用点天然正确。
+   *
+   * 注意：`-c` 是**单次调用**的配置覆盖，不写任何配置文件；对写命令（commit/add）同样安全。
+   */
+  private applyDefaultConfig(args: string[]): string[] {
+    return ["-c", "core.quotepath=false", ...args]
+  }
+
+  /**
    * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
    * @param timeoutMs 显式超时（不传时自动路由：网络命令默认按设置项（240s），本地命令默认按设置项（60s）；clone 等长耗时操作可传更大值）
@@ -337,9 +352,12 @@ export class GitExecutor {
     },
   ): Promise<string> {
     if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
+    // 分类与统计一律基于**调用方原始 args**：注入的 `-c k=v` 会改变首 token，
+    // 让 gitSubcommand / isNetworkGitCommand 把选项值当子命令（分类错位比崩溃更难查）
     const isNetwork = isNetworkGitCommand(args)
     const command = gitSubcommand(args)
     const startedAt = Date.now()
+    const fullArgs = this.applyDefaultConfig(args)
     const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : this.localTimeoutMs)
     // 账号环境在排队前快照：入队后项目绑定被修改不应影响已提交的命令
     const resolverEnv = await this.resolveEnv(cwd, args)
@@ -375,7 +393,7 @@ export class GitExecutor {
         }
 
         const child = cp.execFile(
-          "git", args,
+          "git", fullArgs,
           {
             cwd,
             timeout: effectiveTimeout,

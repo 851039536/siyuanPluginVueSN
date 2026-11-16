@@ -29,13 +29,15 @@ export default defineConfig({
      * 真实 git 仓库用例的超时预算。
      *
      * `*.git.spec.ts` 会创建临时仓库并拉起多个 git 子进程（.git 目录创建、多次 add/commit、
-     * 重命名与 amend），单例在空闲机器上约 2~5s，但受磁盘与并发影响可达 10s+。
-     * Vitest 默认 5s 会让这些用例偶发「Test timed out」——这是超时预算不足，而非逻辑缺陷。
-     * 提到 30s：纯函数用例仍在毫秒级完成，只有 git 用例才会用到这个预算。
-     * hookTimeout 同步提到 30s：仓库创建在 beforeAll 钩子里，钩子默认 10s 同样会误报
-     * 「Hook timed out」（testTimeout 管不到钩子）。
+     * 重命名与 amend），单例在空闲机器上约 2~5s；机器有负载并发跑时实测可到 30s+（曾出现
+     * 单个用例 33s、`smartPull` 的 beforeAll 钩子超 30s —— 均为单跑即过的误报）。
+     * 故 testTimeout 60s、hookTimeout 45s：纯函数用例仍在毫秒级完成，只有 git 用例才会用到这份预算。
+     * （桌面端同类配置为 testTimeout 45s；两侧独立，不需要逐字一致。）
+     *
+     * hookTimeout 必须单独给：仓库创建在钩子里，钩子超时不受 testTimeout 管辖
+     * （原注释已指出过这点，本次只是把上限抬到实测需要的高度）。
      */
-    testTimeout: 30000,
-    hookTimeout: 30000,
+    testTimeout: 60000,
+    hookTimeout: 45000,
   },
 })

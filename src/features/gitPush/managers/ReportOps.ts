@@ -122,7 +122,6 @@ export class ReportOps {
     knownHashes: { has(hash: string): boolean } | null,
   ): Promise<IncrementalScan> {
     const args = [
-      "-c", "core.quotepath=false",
       "log", "--numstat", "--no-renames",
       "--pretty=format:%x1e%h%x1f%an%x1f%aI%x1f%s",
       `-${INCREMENTAL_MAX_COMMITS}`,
@@ -160,7 +159,7 @@ export class ReportOps {
     const empty: HeadSnapshot = { head: "", gitDir: "", lastAuthor: "", lastDate: "" }
     const [logRaw, gitDir] = await Promise.all([
       this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false", "log", "-n", "1", "--pretty=format:%H%x1f%an%x1f%aI",
+        "log", "-n", "1", "--pretty=format:%H%x1f%an%x1f%aI",
       ]).catch(() => ""),
       this.executor.execGit(projectPath, ["rev-parse", "--absolute-git-dir"]).catch(() => ""),
     ])
@@ -183,7 +182,6 @@ export class ReportOps {
    */
   async getNumstatLog(projectPath: string, since?: string, maxCount?: number): Promise<NumstatCommit[]> {
     const args = [
-      "-c", "core.quotepath=false",
       "log", "--numstat", "--no-renames",
       "--pretty=format:%x1e%an%x1f%aI",
     ]
@@ -203,7 +201,6 @@ export class ReportOps {
    */
   async getCommitStatsLog(projectPath: string, maxCount?: number): Promise<NumstatCommit[]> {
     const args = [
-      "-c", "core.quotepath=false",
       "log", "--numstat", "--no-renames",
       "--pretty=format:%x1e%h%x1f%an%x1f%aI%x1f%s",
     ]
@@ -215,12 +212,12 @@ export class ReportOps {
   }
 
   /**
-   * 获取仓库已跟踪文件列表（git ls-files，-c core.quotepath=false 避免中文/特殊字符路径被引号转义）。
+   * 获取仓库已跟踪文件列表（`core.quotepath=false` 由 GitExecutor 统一注入，避免中文/特殊字符路径被八进制转义）。
    * 只列已跟踪文件，自动排除未跟踪与被 .gitignore 忽略的文件（如 node_modules）。
    * git 失败/路径无效时抛出错误；空仓库返回空数组。
    */
   async getTrackedFiles(projectPath: string): Promise<string[]> {
-    const raw = await this.executor.execGit(projectPath, ["-c", "core.quotepath=false", "ls-files"])
+    const raw = await this.executor.execGit(projectPath, ["ls-files"])
     if (!raw) return []
     return raw.split("\n").filter((line) => line.trim().length > 0)
   }
@@ -240,7 +237,6 @@ export class ReportOps {
     let raw: string
     try {
       raw = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false",
         "ls-files", "-z", "--cached", "--others", "--exclude-standard",
       ])
     } catch (e) {
@@ -284,7 +280,6 @@ export class ReportOps {
     let raw: string
     try {
       raw = await this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false",
         "status", "--porcelain=v1", "-z", "-uno", "--no-renames",
       ], undefined, 60000)
     } catch {
@@ -341,7 +336,6 @@ export class ReportOps {
     const [headResult, rootResult] = await Promise.allSettled([
       this.executor.execGit(projectPath, ["log", "-n", "1", "--pretty=format:%H%x1f%aI"]),
       this.executor.execGit(projectPath, [
-        "-c", "core.quotepath=false",
         "rev-list", "--max-parents=0", "--format=%H%x1f%aI", "HEAD",
       ]),
     ])
@@ -393,7 +387,7 @@ export class ReportOps {
    * 超长截断防撑爆弹窗；git 失败/路径无效时抛出错误，由调用方兜底隐藏区块。
    */
   async getFileHistoryPatch(projectPath: string, file: string, since?: string): Promise<string> {
-    const args = ["-c", "core.quotepath=false", "log", "-p", "--max-count=5"]
+    const args = ["log", "-p", "--max-count=5"]
     if (since) args.push(`--since=${since}`)
     args.push("--", file)
     const raw = await this.executor.execGit(projectPath, args, undefined, 10000)

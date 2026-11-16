@@ -79,7 +79,7 @@ export class RepoCleanOps {
     // 3. 可达对象 hash→路径（树对象行无路径；blob 行路径即文件路径；同 blob 多路径时保留最后出现）
     const revRaw = await this.executor.execGit(
       projectPath,
-      ["-c", "core.quotepath=false", "rev-list", "--objects", "--all"],
+      ["rev-list", "--objects", "--all"],
       undefined, SCAN_TIMEOUT_MS,
     )
     const pathByHash = new Map<string, string>()

@@ -1,7 +1,7 @@
 // gitPush 提交分析纯函数：本地日期聚合、热力等级与格子展示、通用计数排行、规则原因文案
 // 直连 types/meta（纯类型与常量）而非 "../types" 桶：桶含 GitPushManager 等运行时模块，
 // 会把运行时 siyuan 依赖拉进模块图，使本纯函数模块无法在 Node 单测环境加载。
-import type { CommitAnalysisEntry, CommitHeatGranularity, CommitHeatMetric, CommitRuleReasonKey, CommitTrendGranularity } from "../types/meta"
+import type { AnalysisRange, CommitAnalysisEntry, CommitHeatGranularity, CommitHeatMetric, CommitRuleReasonKey, CommitTrendGranularity } from "../types/meta"
 import { ANALYSIS_WEEKDAY_KEYS, COMMIT_RULE_REASON_META, HEAT_BUCKET_DAYS, HEAT_LEVEL_THRESHOLDS } from "../types/meta"
 
 /** ISO 日期 → YYYY-MM-DD（git %aI 为 UTC ISO，切前 10 位即可；无值返回 —；报告视图文件详情/活跃范围共用） */
@@ -506,10 +506,17 @@ export function computeHeatThresholds(counts: ReadonlyArray<number>): number[] {
   return thresholds
 }
 
-/** 解析热力图显示范围：最近一年 = 今天−364 天 ~ 今天；年份 N = N-01-01 ~ 今年今天 / N-12-31 */
+/** 滚动范围预设对应的天数（含今天）：最近一个月 / 三个月 / 一年 */
+const ROLLING_RANGE_DAYS: Record<"lastMonth" | "last3Months" | "lastYear", number> = {
+  lastMonth: 30,
+  last3Months: 90,
+  lastYear: 365,
+}
+
 /**
  * 解析显示范围（起止均为本地零点）：
- * - "lastYear"：最近 365 天（含今天）
+ * - "lastWeek"：本周 —— 起点为 weekStart 指定的那一天（周一=1 / 周日=0），到今天
+ * - "lastMonth" / "last3Months" / "lastYear"：最近 30 / 90 / 365 天（含今天）
  * - "all"：已分析条目中最早一天 → 今天（无条目时回退最近一年，避免空数据把画布撑爆）
  * - number：单个年份；过去年份=该年全年（1-1 ~ 12-31），今年=1-1 至今
  *
@@ -517,26 +524,39 @@ export function computeHeatThresholds(counts: ReadonlyArray<number>): number[] {
  * 与选项文案「2020 至今」不符，也让所有可视化被迫按多年跨度渲染。
  */
 export function resolveAnalysisRange(
-  range: "lastYear" | "all" | number,
+  range: AnalysisRange,
   entries: { date: string }[] = [],
+  weekStart: 0 | 1 = 1,
 ): { start: Date, end: Date } {
   const end = new Date()
   end.setHours(0, 0, 0, 0)
-  if (range === "lastYear" || range === "all") {
-    if (range === "all") {
-      let earliest = ""
-      for (const e of entries) {
-        const d = new Date(e.date)
-        if (Number.isNaN(d.getTime())) continue
-        const key = formatLocalDate(d)
-        if (!earliest || key < earliest) earliest = key
-      }
-      if (earliest) return { start: parseLocalDate(earliest), end }
-    }
-    // lastYear 与「all 但无条目」共用回退范围
+
+  /** 滚动窗口起点（含今天共 days 天，与「最近一年 = 365 天」同口径） */
+  function rollingStart(days: number): Date {
     const start = new Date(end)
-    start.setDate(start.getDate() - 364)
+    start.setDate(start.getDate() - (days - 1))
+    return start
+  }
+
+  if (range === "all") {
+    let earliest = ""
+    for (const e of entries) {
+      const d = new Date(e.date)
+      if (Number.isNaN(d.getTime())) continue
+      const key = formatLocalDate(d)
+      if (!earliest || key < earliest) earliest = key
+    }
+    // 无条目：与 lastYear 共用回退范围
+    return { start: earliest ? parseLocalDate(earliest) : rollingStart(365), end }
+  }
+  if (range === "lastWeek") {
+    // 回溯 (今天星期 - 每周第一天) 天：周日(0) 在 weekStart=1 时需回退 6 天，故 +7 取模
+    const start = new Date(end)
+    start.setDate(start.getDate() - ((start.getDay() - weekStart + 7) % 7))
     return { start, end }
+  }
+  if (typeof range === "string") {
+    return { start: rollingStart(ROLLING_RANGE_DAYS[range]), end }
   }
   const start = new Date(range, 0, 1)
   if (range < end.getFullYear()) return { start, end: new Date(range, 11, 31) }

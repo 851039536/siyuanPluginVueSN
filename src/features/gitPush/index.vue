@@ -61,7 +61,6 @@
       :analyzed="analysisAnalyzed"
       :analyzed-at="analysisAnalyzedAt"
       :line-analyzed-at="lineAnalyzedAt"
-      :commit-count="analysisCommitCount"
       :view-settings="analysisViewSettings"
       :rule-config="ruleConfig"
       :rule-check-project-id="effectiveRuleCheckProjectId"
@@ -79,7 +78,6 @@
       @run-analysis="runAnalysis"
       @commits-rewritten="handleCommitsRewritten"
       @run-line-stats="runLineStatsAnalysis"
-      @update-count="setCommitCount"
       @update-view-settings="updateViewSettings"
       @update-selected-extensions="updateSelectedExtensions"
       @update-project="setRuleCheckProject"
@@ -912,8 +910,6 @@ const {
   lineAnalyzedAt,
   lineFailedCount,
   fetchFailures,
-  commitCount: analysisCommitCount,
-  setCommitCount,
   runAnalysis,
   runLineStatsAnalysis,
   ensureAnalysis,

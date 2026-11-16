@@ -141,7 +141,6 @@ src/features/gitPush/
 │   │   ├── BatchFixDialog.vue       # 提交信息批量修正弹窗（规则检查多选：AI 逐条生成 + 逐条保存 + 逐项状态）
 │   │   ├── PanelHeader.vue          # 面板头部（搜索 + 三入口视图切换 + 批量旋转进度指示器）
 │   │   ├── SectionTabs.vue          # 视图内分区切换条（提交分析 / 代码报告 / 统计中心共用）
-│   │   ├── CommitCountSelect.vue    # 分析条数选择下拉（共享 Select xsmall 档，提交分析与规则检查工具条共用）
 │   │   ├── AnalysisToolbar.vue      # 分析/统计类视图统一工具条（状态文案 + 控件插槽 + 可选运行按钮）
 │   │   ├── AnalysisGate.vue         # 分析类视图状态门（分析中占位/未分析空态/失败提示条 + 默认插槽；四分析视图共用）
 │   │   ├── StatCardGrid.vue         # KPI 卡片网格（数值+标签+语义色，stat-card mixin 驱动；五处总览卡片共用）

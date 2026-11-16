@@ -1,5 +1,6 @@
 // gitPush 展示格式化（纯函数）：相对/绝对时间、年份选项、分析状态文案、活动分级、操作结果摘要
 import type { GitOpAction } from "../types"
+import type { AnalysisRange } from "../types/meta"
 
 /** LOG 默认显示条数（与 BranchCommitList.countOptions 首项保持一致） */
 export const DEFAULT_LOG_LIMIT = 200
@@ -29,7 +30,7 @@ export function formatDateTime(iso: string): string {
 }
 
 /** 显示设置年份选项：数据年份 ∪ 今年 ∪ 已保存 range 年份，降序（分析视图 popover 与设置汇总弹窗共用） */
-export function buildYearOptions(entries: { date: string }[], range: "lastYear" | "all" | number): number[] {
+export function buildYearOptions(entries: { date: string }[], range: AnalysisRange): number[] {
   const years = new Set<number>([new Date().getFullYear()])
   if (typeof range === "number") years.add(range)
   for (const e of entries) {

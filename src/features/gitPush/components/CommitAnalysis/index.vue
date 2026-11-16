@@ -73,13 +73,6 @@
               @click="showExtDialog = true"
             />
           </Badge>
-          <!-- 提交概览 / 规则检查视角：条数选择（行数排行按全量 numstat，与条数无关故不显示） -->
-          <CommitCountSelect
-            v-if="activeTab !== 'linestats'"
-            :i18n="i18n"
-            :commit-count="commitCount"
-            @update-count="emit('updateCount', $event)"
-          />
           <!-- 提交概览视角：热力图显示设置 -->
           <CommitAnalysisSettings
             v-if="activeTab === 'overview'"
@@ -304,7 +297,6 @@
 // 三者同属一次 runCore 抓取（entries 供概览与规则检查，numstat/totalLines 供行数排行），
 // 故合并为一个视图 + 内部 Tab：运行按钮只有一个，Tab 切换只切视角不重跑 git。
 import type { CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleConfig, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
-import type { CommitCount } from "../../composables/useCommitAnalysis"
 import type { HeatBucketSpan } from "../../utils"
 import type { StatCardItem } from "../common/StatCardGrid.vue"
 import type { SectionTabItem } from "../common/sectionTabs"
@@ -315,12 +307,12 @@ import Select from "@/components/Select.vue"
 import EmptyState from "../common/EmptyState.vue"
 import AnalysisGate from "../common/AnalysisGate.vue"
 import AnalysisToolbar from "../common/AnalysisToolbar.vue"
-import CommitCountSelect from "../common/CommitCountSelect.vue"
 import SectionTabs from "../common/SectionTabs.vue"
 import StatCardGrid from "../common/StatCardGrid.vue"
 import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
+import { isAnalysisRangePreset } from "../../types/meta"
 import { buildAnalysisRangeOptions } from "./analysisRangeOptions"
 import {
   buildYearOptions,
@@ -359,7 +351,6 @@ const props = defineProps<{
   analyzedAt: string
   /** 上次行数抓取完成时间（ISO，行数域与提交域独立维护） */
   lineAnalyzedAt: string
-  commitCount: CommitCount
   viewSettings: CommitAnalysisViewSettings
   /** 提交规则配置（规则提示文案随可选规则开关变化） */
   ruleConfig: CommitRuleConfig
@@ -383,7 +374,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   runAnalysis: [projectIds?: string | string[]]
   runLineStats: []
-  updateCount: [n: CommitCount]
   updateViewSettings: [patch: Record<string, any>]
   updateSelectedExtensions: [exts: string[]]
   updateProject: [projectId: string]
@@ -451,10 +441,10 @@ const yearOptions = computed(() => buildYearOptions(props.stats.entries, props.v
 /** 工具条显示范围下拉选项（与显示设置表单共用同一份构建逻辑） */
 const rangeOptions = computed(() => buildAnalysisRangeOptions(props.i18n, yearOptions.value))
 
-/** 工具条范围切换（字符串分支固定为 lastYear / all，其余视为年份） */
+/** 工具条范围切换（字符串分支为预设：本周/最近一月/三月/一年/全部，其余视为年份） */
 function onRangeChange(v: string | number | boolean | null) {
   if (typeof v !== "string") return
-  if (v === "lastYear" || v === "all") {
+  if (isAnalysisRangePreset(v)) {
     emit("updateViewSettings", { range: v })
     return
   }
@@ -466,7 +456,7 @@ const rangeBounds = computed(() => {
   const {
     start,
     end,
-  } = resolveAnalysisRange(props.viewSettings.range, props.stats.entries)
+  } = resolveAnalysisRange(props.viewSettings.range, props.stats.entries, props.viewSettings.weekStart)
   return {
     start: formatLocalDate(start),
     end: formatLocalDate(end),
@@ -487,14 +477,10 @@ const rangeActiveDays = computed(() =>
   new Set(rangeEntries.value.map((e) => formatLocalDate(new Date(e.date)))).size,
 )
 
-/** 抓取条数口径（数据只覆盖每项目最近 N 条；与范围一起交代，避免 KPI/排行被误读为全量） */
-const capHint = computed(() =>
-  props.commitCount === "all"
-    ? String(props.i18n.analysisTrendCapAll || "")
-    : String(props.i18n.analysisTrendCapHint || "").replace("{0}", String(props.commitCount)),
-)
+/** 抓取口径说明（条数选择已移除，口径固定为每项目全部提交；与范围一起交代，避免 KPI/排行被误读） */
+const capHint = computed(() => String(props.i18n.analysisTrendCapAll || ""))
 
-/** 范围口径说明（KPI 卡片下方一行：范围 + 抓取条数上限） */
+/** 范围口径说明（KPI 卡片下方一行：范围 + 抓取口径） */
 const rangeScopeText = computed(() => {
   const scope = String(props.i18n.analysisScopeNote || "")
     .replace("{0}", rangeBounds.value.start)

@@ -448,6 +448,30 @@ describe("resolveAnalysisRange（范围语义）", () => {
     expect(formatLocalDate(fallback.start)).toBe(formatLocalDate(expectedStart))
     expect(formatLocalDate(fallback.end)).toBe(today)
   })
+
+  it("本周 = 每周第一天起算（起点星期 = weekStart，最多回退 6 天）", () => {
+    for (const weekStart of [0, 1] as const) {
+      const { start, end } = resolveAnalysisRange("lastWeek", [], weekStart)
+      // 起点必须落在 weekStart 指定的那一天（1=周一 / 0=周日）
+      expect(start.getDay()).toBe(weekStart)
+      expect(formatLocalDate(end)).toBe(today)
+      // 同一周内：跨度不超过 6 天（夏令时按四舍五入吸收，不会跨周）
+      const span = Math.round((end.getTime() - start.getTime()) / 86400000)
+      expect(span).toBeGreaterThanOrEqual(0)
+      expect(span).toBeLessThanOrEqual(6)
+    }
+  })
+
+  it("最近一个月 / 三个月 / 一年 = 含今天共 30 / 90 / 365 天", () => {
+    const cases = [["lastMonth", 30], ["last3Months", 90], ["lastYear", 365]] as const
+    for (const [range, days] of cases) {
+      const { start, end } = resolveAnalysisRange(range, [])
+      const expected = new Date()
+      expected.setDate(expected.getDate() - (days - 1))
+      expect(formatLocalDate(start)).toBe(formatLocalDate(expected))
+      expect(formatLocalDate(end)).toBe(today)
+    }
+  })
 })
 
 describe("buildHeatMetricMap（桶级聚合，去重口径跨天成立）", () => {

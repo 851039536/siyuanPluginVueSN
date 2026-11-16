@@ -12,7 +12,7 @@
       <span class="gp-analysistoolbar-status">{{ resolvedStatusText }}</span>
     </template>
     <template #end>
-      <!-- 视图特有控件（条数选择 / 项目过滤 / 扩展名过滤 / 刷新等） -->
+      <!-- 视图特有控件（范围选择 / 项目过滤 / 扩展名过滤 / 刷新等） -->
       <slot name="controls" />
       <!-- 运行按钮（统计页无“分析”动作 → showRun=false 不渲染；loading 态由共享 Button 保宽） -->
       <Button

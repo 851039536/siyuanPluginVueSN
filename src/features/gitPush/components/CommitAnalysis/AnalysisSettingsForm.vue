@@ -2,7 +2,7 @@
      popover 隐藏已上提到工具条与区块标题的常用项，设置汇总弹窗展示完整表单） -->
 <template>
   <div class="gpa-settings-form">
-    <!-- 设置项：显示范围（最近一年 / 全部 / 指定年份；已上提到分析工具条，popover 内隐藏） -->
+    <!-- 设置项：显示范围（本周 / 最近一月 / 三月 / 一年 / 全部 / 指定年份；已上提到分析工具条，popover 内隐藏） -->
     <div
       v-if="!omitPrimary"
       class="gpa-settings-row"
@@ -125,7 +125,7 @@ import { computed, ref, watch } from "vue"
 import Button from "@/components/Button.vue"
 import ColorField from "@/components/ColorField.vue"
 import Select from "@/components/Select.vue"
-import { COMMIT_HEAT_METRIC_META } from "../../types"
+import { COMMIT_HEAT_METRIC_META, isAnalysisRangePreset } from "../../types/meta"
 import { buildAnalysisRangeOptions } from "./analysisRangeOptions"
 
 const props = defineProps<{
@@ -172,7 +172,7 @@ const metricOptions = computed(() =>
 
 function onRangeChange(v: string | number | boolean | null) {
   if (typeof v !== "string") return
-  if (v === "lastYear" || v === "all") {
+  if (isAnalysisRangePreset(v)) {
     update({ range: v })
     return
   }

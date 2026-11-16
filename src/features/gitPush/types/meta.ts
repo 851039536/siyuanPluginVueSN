@@ -412,7 +412,11 @@ export interface CommitAnalysisStats {
 
 /** 提交分析结果缓存（持久化到插件存储，进入视图直接复用上次结果，避免每次重跑 git log） */
 export interface CommitAnalysisCache {
-  /** 每项目抓取条数（"all" = 全部提交；缓存对应的设置，加载时回填选择器） */
+  /**
+   * 每项目抓取条数（"all" = 全部提交）。
+   * 条数选择器已移除，新缓存恒为 "all"；数字分支只出现在旧版本缓存里，
+   * 加载时据此判定「口径不完整」并触发一次全量重跑。
+   */
   commitCount: number | "all"
   /** 上次分析完成时间（ISO，面板展示"上次分析"文案） */
   analyzedAt: string
@@ -538,15 +542,35 @@ export const HEAT_CELL_SIZES: Record<CommitHeatDensity, number> = {
   normal: 14,
 }
 
+/**
+ * 显示范围预设（非年份）：
+ * - "lastWeek"：本周（起点跟随「每周第一天」设置，周一或周日 00:00 至今）
+ * - "lastMonth"：最近一个月（30 天，含今天）
+ * - "last3Months"：最近三个月（90 天，含今天）
+ * - "lastYear"：最近一年（365 天，含今天）
+ * - "all"：全部有提交的年份（起始日取已分析条目中最早一天，无条目回退最近一年）
+ */
+export type AnalysisRangePreset = "lastWeek" | "lastMonth" | "last3Months" | "lastYear" | "all"
+
+/** 范围预设顺序（下拉选项顺序：由近及远；工具条与设置表单共用一份，避免两处顺序/文案漂移） */
+export const ANALYSIS_RANGE_PRESETS = ["lastWeek", "lastMonth", "last3Months", "lastYear", "all"] as const satisfies readonly AnalysisRangePreset[]
+
+/** 字符串是否范围预设（Select 回传字符串：非预设即视为年份） */
+export function isAnalysisRangePreset(v: string): v is AnalysisRangePreset {
+  return (ANALYSIS_RANGE_PRESETS as readonly string[]).includes(v)
+}
+
+/** 显示范围取值：预设或指定年份 */
+export type AnalysisRange = AnalysisRangePreset | number
+
 /** 提交分析显示设置（热力图视图配置，持久化到 git-push-analysis-view） */
 export interface CommitAnalysisViewSettings {
   /**
    * 显示范围：
-   * - "lastYear"：最近一年
+   * - 预设（本周 / 最近一个月 / 最近三个月 / 最近一年 / 全部），见 AnalysisRangePreset
    * - number：单个年份（过去年份=该年全年；今年=1-1 至今）
-   * - "all"：全部有提交的年份（起始日取已分析条目中最早一天）
    */
-  range: "lastYear" | "all" | number
+  range: AnalysisRange
   /** 每周第一天（与 Date.getDay 一致）：1=周一, 0=周日 */
   weekStart: 0 | 1
   /** 热力主色（#RRGGBB，格子由主色按等级加透明度渲染） */

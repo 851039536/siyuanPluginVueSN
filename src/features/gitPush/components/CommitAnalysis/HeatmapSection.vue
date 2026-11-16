@@ -120,9 +120,9 @@ function onMetricChange(v: string | number | boolean | null) {
   }
 }
 
-/** 当前显示范围起止（YYYY-MM-DD；"all" 用已分析条目推算最早一天） */
+/** 当前显示范围起止（YYYY-MM-DD；"all" 用已分析条目推算最早一天，"本周" 起点跟随每周第一天） */
 const range = computed(() => {
-  const { start, end } = resolveAnalysisRange(props.viewSettings.range, props.stats.entries)
+  const { start, end } = resolveAnalysisRange(props.viewSettings.range, props.stats.entries, props.viewSettings.weekStart)
   return { start: formatLocalDate(start), end: formatLocalDate(end) }
 })
 

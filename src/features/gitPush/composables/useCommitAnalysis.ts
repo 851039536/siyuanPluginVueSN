@@ -37,10 +37,14 @@ import {
   resolveValidPath,
 } from "../utils"
 
-/** 每项目抓取条数选项（"all" = 全部提交，省略 git log -n 限制；仿 BranchCommitList.countOptions） */
-export const COMMIT_COUNT_OPTIONS = [30, 50, 100, 200, 300, 500, "all"] as const
-/** 提交抓取条数类型（数字 = 条数上限；"all" = 全部提交） */
+/**
+ * 提交抓取条数类型（数字 = 条数上限；"all" = 全部提交）。
+ * 工具条已不再提供条数选择（固定按「全部提交」抓取），保留数字分支仅为兼容旧缓存结构。
+ */
 export type CommitCount = number | "all"
+
+/** 当前固定的抓取口径：每项目全部提交（省略 git log -n 限制） */
+const COMMIT_COUNT_FIXED: CommitCount = "all"
 
 /** 行数统计可选的常见文件扩展名（配置弹窗多选排除列表，空数组 = 不过滤） */
 export const LINE_STATS_EXTENSIONS = [
@@ -87,8 +91,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const analyzing = ref(false)
   /** 是否已完成过至少一轮分析（区分"未分析"与"分析结果为空"） */
   const analyzed = ref(false)
-  /** 每项目抓取的提交条数（默认 100，可改 30/50/100/200/300/500 或 "all" 全部） */
-  const commitCount = ref<CommitCount>(100)
+  /** 每项目抓取的提交条数（固定 "all"：工具条已移除条数选择，统计口径一律全量） */
+  const commitCount = ref<CommitCount>(COMMIT_COUNT_FIXED)
   /** 上次提交分析完成时间（ISO） */
   const analyzedAt = ref("")
 
@@ -512,20 +516,28 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /**
    * 从存储载入上次提交分析结果（有有效条目时直接复用，不再重新分析）。
    * 旧版把行数排行一起存在此缓存里，故同时回填行数域（lineAnalyzed/lineAnalyzedAt），供升级用户的行数视图直接复用。
+   *
+   * 条数口径已固定为「全部提交」：缓存里的 commitCount 若是按 N 条截断的旧值，
+   * 说明 entries 覆盖不完整（KPI/趋势/热力图会少算），此时**不恢复提交域**（保持未分析，
+   * 由 ensureAnalysis 用全量口径重跑一次）；行数排行与条数无关，照常恢复。
    */
   async function loadCachedAnalysis() {
     if (cacheLoaded) return
     cacheLoaded = true
     const cache = await manager.storage.commitAnalysisCache.loadOrDefault()
+    commitCount.value = COMMIT_COUNT_FIXED
     if (cache.entries.length === 0) return
     // 过滤已删除项目的残留条目（项目删除后缓存不再展示其数据）
     const valid = cache.entries.filter((e) => validProjectIds.value.has(e.projectId))
     if (valid.length === 0) return
-    commitCount.value = cache.commitCount
-    failedCount.value = cache.failedCount
-    analyzedAt.value = cache.analyzedAt
-    entries.value = valid
-    analyzed.value = true
+    /** 旧缓存是否产生于「按条数截断」的分析（口径不全，不可直接展示） */
+    const cappedLegacy = cache.commitCount !== COMMIT_COUNT_FIXED
+    if (!cappedLegacy) {
+      failedCount.value = cache.failedCount
+      analyzedAt.value = cache.analyzedAt
+      entries.value = valid
+      analyzed.value = true
+    }
     // 行数排行随缓存恢复（旧缓存无此字段时按空数组兜底；行数数据同样过滤已删除项目）
     projectLineRanking.value = (cache.projectLineRanking ?? []).filter((r) => validProjectIds.value.has(r.id))
     // commitAnalysisCache 不含 summary 字段，降级从排行累加（重新点「重新分析」后得到精确值）
@@ -581,19 +593,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /** 进入行数统计视图的统一入口：复用独立行数统计缓存（含上次行数排行），无有效缓存时需用户手动点击「开始行数分析」 */
   async function ensureLineStats() {
     await loadLineStatsCache()
-  }
-
-  /** 修改抓取条数后置为未分析并自动重跑（条数只影响提交分析域，不触发 numstat 抓取） */
-  async function setCommitCount(n: CommitCount, needNumstat = false) {
-    if (commitCount.value === n) return
-    commitCount.value = n
-    analyzed.value = false
-    const ran = await runCore(needNumstat)
-    // 分析进行中被拒绝：保持 analyzed=false 并标记待重跑，下次进入视图由 ensureAnalysis 强制执行
-    if (!ran) {
-      pendingReanalyze = true
-      console.warn("[gitPush] 分析进行中，已按新条数排队待下次重跑")
-    }
   }
 
   /** 更新扩展名过滤并即时持久化到行数统计缓存（弹窗确定后调用；下次分析按新过滤生效，切换视图后选择不丢失） */
@@ -758,8 +757,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     failedCount,
     lineFailedCount,
     fetchFailures,
-    commitCount,
-    setCommitCount,
     runAnalysis,
     runLineStatsAnalysis,
     ensureAnalysis,

@@ -29,7 +29,10 @@
 // ── 限高区块（项目提交排行：内容超高时列表内部滚动，标题保持可见）──
 // 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白。
 .gpa-section--scroll {
-  max-height: 320px; // 上限约 8 行，超出内部滚动；无对应 Token（区块限高）
+  // 定值而非桌面端的 `clamp(360px, 50vh, 640px)`：思源里本面板挂在 Dock 中，
+  // 面板高度由 Dock 决定、与窗口高度无关，用 vh 会按整窗高算，撑出远超面板的滚动区。
+  // 420px ≈ 11 行（36px 行高），与改行高之前的可见行数持平。
+  max-height: 420px; // 无对应 Token（区块限高）
   display: flex;
   flex-direction: column;
 
@@ -107,6 +110,10 @@
 
 // ── 项目提交排行：横向进度条行（名次 | 色点 | 项目名 | 次数 | 占比）──
 // 条宽由行内 --gpa-rank-pct 直接给出百分比（不做 calc 乘法）；颜色由 --gpa-rank-color 提供。
+// 行高下限：dense 档位 + 6px 内边距只有 ~28px，单行文字顶满、相邻行黏在一起；
+// 抬到 36px 让行间透气且整行更易点中（仍低于 BlockButton 的 44px 触控档，保持列表密度）。
+$_gpa-rank-row-h: 36px;
+
 .gpa-rank-list {
   display: flex;
   flex-direction: column;
@@ -118,6 +125,7 @@
 .gpa-panel .gpa-rank-list .gpa-rank-row.si-button {
   position: relative;
   width: 100%;
+  min-height: $_gpa-rank-row-h;
   overflow: hidden;
   padding: $s-px6 $s-2;
   border: none;

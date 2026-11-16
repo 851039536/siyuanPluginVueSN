@@ -303,11 +303,38 @@ export class CommitIndex {
 
   /**
    * 已索引的提交条数。
-   * 返回的是**内存段长度**，未加载（未调用 ensureLoaded）的项目恒为 0，
-   * 故调用前应先 ensureLoaded —— 需要展示真实条数时尤其如此（如设置面板的索引状态）。
+   * 返回的是**内存段长度**，未加载（未调用 ensureLoaded）的项目恒为 0。
+   * 只想展示条数、不想把段读进内存时用 `getCommitCountWithoutLoading`（设置面板走这条）。
    */
   getCommitCount(projectId: string): number {
     return this.segments.get(projectId)?.commits.length ?? 0
+  }
+
+  /**
+   * 取「已索引提交条数」而**不把段载入内存**（设置面板的索引状态用）。
+   *
+   * 优先读 `meta.commitCount`（`append` 时随 meta 落盘）。该字段引入前写入的旧 meta 没有它，
+   * 此时退化为「数一遍本项目 commits.ndjson 的行数」：只做一次读盘计数，既不构造内存段、
+   * 也不让它常驻，随后把结果回填进 meta —— 下次打开设置面板即不再读盘。
+   *
+   * 回填走同一把项目写锁：期间若有 append 抢先写入真实计数（meta 已是 number），
+   * 直接采用它，不用更早读到的行数覆盖。
+   */
+  async getCommitCountWithoutLoading(projectId: string): Promise<number> {
+    const meta = this.getProjectMeta(projectId)
+    if (!meta) return 0
+    if (typeof meta.commitCount === "number") return meta.commitCount
+    const counted = (await this.io.readLines(projectIndexFile("commits", projectId))).length
+    return this.withProjectLock(projectId, async () => {
+      const latest = this.getProjectMeta(projectId)
+      if (!latest || typeof latest.commitCount === "number") return latest?.commitCount ?? counted
+      this.setProjectMeta({
+        ...latest,
+        commitCount: counted,
+      })
+      await this.persistMeta()
+      return counted
+    })
   }
 
   /**
@@ -445,6 +472,9 @@ export class CommitIndex {
       this.setProjectMeta({
         ...patch,
         projectId,
+        // 提交条数随 meta 一起落盘：设置面板展示索引状态时直接读 meta，不必 ensureLoaded
+        // （段一旦载入就常驻到 invalidate/clearAll，几十个项目叠加可达数百 MB）
+        commitCount: segment.commits.length,
       } as ProjectIndexMeta)
       await this.persistMeta()
     })

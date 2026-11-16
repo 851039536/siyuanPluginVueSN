@@ -236,14 +236,18 @@ export class ProjectStore {
     })
   }
 
-  /** 记录最后活动时间 */
+  /** 记录最后活动时间（时间未变则不落盘，见 P2-1 写放大说明） */
   async recordLastActivity(id: string, isoTime: string): Promise<void> {
     await this.serializeWrite(async () => {
+      // 每次 loadLog 都会回传最近提交时间，而大多数刷新并不产生新提交。
+      // 原实现无条件 saveProjects：全量序列化整份项目 JSON + 失效缓存，
+      // 磁盘慢时会直接拖慢「打开卡片详情」这条链。
       const r = await this.mutateProject(id, (project) => {
+        if (project.lastActivity === isoTime) return false
         project.lastActivity = isoTime
         return true
       })
-      if (!r) return
+      if (!r || !r.changed) return
       await this.saveProjects(r.projects)
     })
   }
@@ -263,42 +267,50 @@ export class ProjectStore {
     return this.storage.tags.loadOrDefault()
   }
 
-  /** 重新检测项目远程仓库并更新（path 缺省时按项目持久化路径检测） */
+  /**
+   * 重新检测项目远程仓库并更新（path 缺省时按项目持久化路径检测）。
+   *
+   * `git remote -v` 在**写锁外**执行：一个本地 git 进程不应阻塞其他项目的提交/编辑等写操作
+   * （「刷新全部远程」会对 N 个项目各跑一次 `remote -v`，放进锁内就变成 N 次串行阻塞）。
+   */
   async refreshRemotes(id: string, path?: string): Promise<GitProject | null> {
-    return this.serializeWrite(async () => {
-      const r = await this.mutateProject(id, () => true)
-      if (!r) return null
-      this.applyRemotesToProject(r.project, await this.detectRemotes(path || resolveValidPath(r.project)))
-      await this.saveProjects(r.projects)
-      return r.project
-    })
+    const current = await this.getProjectById(id)
+    if (!current) return null
+    const remotes = await this.detectRemotes(path || resolveValidPath(current))
+    return this.applyRemotes(id, remotes)
   }
 
-  /** 将已检测的远程列表写入项目（避免调用方为"按指定路径刷新"重复执行 git remote -v） */
+  /**
+   * 将已检测的远程列表写入项目（避免调用方为"按指定路径刷新"重复执行 git remote -v）。
+   * 远程映射未变时不落盘：原实现无条件 saveProjects，导致「刷新全部远程」= N 次全量项目 JSON 写。
+   */
   async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> {
     return this.serializeWrite(async () => {
-      const r = await this.mutateProject(id, () => true)
+      const r = await this.mutateProject(id, (project) => this.applyRemotesToProject(project, remotes))
       if (!r) return null
-      this.applyRemotesToProject(r.project, remotes)
-      await this.saveProjects(r.projects)
+      if (r.changed) await this.saveProjects(r.projects)
       return r.project
     })
   }
 
-  /** 将检测到的远程仓库信息应用到项目对象（仅管理远程名称，不触碰用户手动输入的仓库链接） */
-  private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]) {
-    // 只清空远程名称字段（git 操作依赖），仓库链接 xxxUrl 由用户手动管理，不受检测覆盖
-    for (const pm of PLATFORM_META) {
-      project[pm.remoteProp] = undefined
-    }
+  /**
+   * 将检测到的远程仓库信息应用到项目对象（仅管理远程名称，不触碰用户手动输入的仓库链接）。
+   * @returns 是否真的有字段变化（false 时调用方无需落盘）
+   */
+  private applyRemotesToProject(project: GitProject, remotes: GitRemoteInfo[]): boolean {
+    let changed = false
     // 由 PLATFORM_META 驱动：每个平台取首个检测标志命中的远程名（消除 4 连 if 重复）
     for (const pm of PLATFORM_META) {
       const flagProp = PLATFORM_FLAG_BY_KEY[pm.key]
       const remote = remotes.find((r) => r[flagProp])
-      if (remote) {
-        project[pm.remoteProp] = remote.name
+      // 未命中即清空该平台的远程名（git 操作依赖它，仓库链接 xxxUrl 由用户手动管理，不受检测覆盖）
+      const next = remote?.name
+      if (project[pm.remoteProp] !== next) {
+        project[pm.remoteProp] = next
+        changed = true
       }
     }
+    return changed
   }
 
   /**

@@ -190,7 +190,6 @@ export function useProjectQueryScheduler(
       const branch = opts?.branch
       const tree = await manager.getWorkingTreeStatus(resolveValidPath(project), {
         branch,
-        fastWhenClean: opts?.fastWhenClean,
       })
       if (!isLatest() || !isCurrentGeneration(id, gen)) return
       workingTrees.value[id] = tree
@@ -239,7 +238,7 @@ export function useProjectQueryScheduler(
     // 工作区查询：仅在调用方显式给了分支名时透传（走 v1）；
     // 否则**一律留空**交给 v2 刷新分支名 —— 即便缓存里已有值也不透传（见上方说明）。
     const workingTreeTask = needWorkingTree
-      ? loadWorkingTree(id, { branch: explicitBranch || undefined, fastWhenClean: opts?.fastWhenClean })
+      ? loadWorkingTree(id, { branch: explicitBranch || undefined })
       : Promise.resolve()
 
     /**

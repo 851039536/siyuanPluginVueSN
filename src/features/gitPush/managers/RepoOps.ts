@@ -63,11 +63,6 @@ export class RepoOps {
 
   // ── 冲突检测 ──
 
-  async hasConflict(projectPath: string): Promise<boolean> {
-    const conflicts = await this.getConflictFiles(projectPath)
-    return conflicts.length > 0
-  }
-
   async getConflictFiles(projectPath: string): Promise<ConflictFile[]> {
     try {
       const raw = await this.executor.execGit(projectPath, ["diff", "--name-only", "--diff-filter=U"])
@@ -206,10 +201,20 @@ export class RepoOps {
     } catch { /* 删除不存在的配置项无需报错 */ }
   }
 
-  /** 获取项目 Git 配置文件路径（<projectPath>/.git/config） */
-  getProjectGitConfigFilePath(projectPath: string): string {
+  /**
+   * 获取项目 Git 配置文件绝对路径。
+   *
+   * 不能直接拼 `<projectPath>/.git/config`：worktree / submodule 的 gitdir 是
+   * `<repo>/.git/worktrees/<name>` 或 `<repo>/.git/modules/<name>`，配置文件不在 `.git/` 下。
+   * 改问 git 自己（`rev-parse --git-path config`，输出可能相对 cwd，也可能是绝对路径）。
+   */
+  async getProjectGitConfigFilePath(projectPath: string): Promise<string> {
     const modules = getNodeFsPathOs()
-    return modules?.path?.join(projectPath, ".git", "config") || ""
+    const raw = await this.executor.execGit(projectPath, ["rev-parse", "--git-path", "config"]).catch(() => "")
+    const gitPath = raw.trim()
+    if (!gitPath) return modules?.path?.join(projectPath, ".git", "config") || ""
+    // resolve 同时处理相对（".git/config"）与绝对（worktree 下多为绝对）两种输出
+    return modules?.path?.resolve(projectPath, gitPath) || gitPath
   }
 
   // ── 仓库扫描 ──

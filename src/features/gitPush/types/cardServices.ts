@@ -123,11 +123,8 @@ export interface CardOps {
   handleForcePushToAll: (id: string) => void
   cancelPush: (id: string) => void
   handleFetchAll: (id: string) => void
-  /**
-   * 卡片首次展开/点击时补齐项目状态（ensure 语义 + 最小间隔节流，防首屏批量后立刻重刷同一项目）。
-   * @param fastWhenClean 兼容保留（当前 no-op；原干净工作区快速路径因净亏已移除）
-   */
-  ensureProjectStatus: (id: string, fastWhenClean?: boolean) => Promise<void>
+  /** 卡片首次展开/点击时补齐项目状态（ensure 语义 + 最小间隔节流，防首屏批量后立刻重刷同一项目） */
+  ensureProjectStatus: (id: string) => Promise<void>
   /**
    * 项目状态显式刷新（refresh 语义 + 最小间隔节流）。
    * `minIntervalMs` 缺省 2s；卡片「进入可见详情」用更大的间隔，避免详细模式下整批卡片同时重查。

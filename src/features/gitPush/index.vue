@@ -448,9 +448,12 @@ const {
 
 /** 卡片加载提交日志后回传最近活动时间（原 useGitOps.loadCommitLog 的副作用） */
 async function recordCommitActivity(id: string, isoTime: string) {
-  await props.manager.recordLastActivity(id, isoTime).catch(() => {})
   const project = findProject(projects, id)
-  if (project && project.lastActivity !== isoTime) {
+  // 时间未变即早退：连 store 调用都省掉（store 侧虽已会跳过落盘，但仍要排一次项目写锁）。
+  // 绝大多数「刷新日志」并不产生新提交，这条早退覆盖的正是那批高频无变化调用。
+  if (project && project.lastActivity === isoTime) return
+  await props.manager.recordLastActivity(id, isoTime).catch(() => {})
+  if (project) {
     project.lastActivity = isoTime
     projects.value = [...projects.value]
   }
@@ -791,7 +794,7 @@ async function ensureSmartViewData(
     if (isStale()) return
     try {
       if (opts?.statusOnly) await scheduler.loadPushStatus(p.id)
-      else await ensureProjectStatus(p.id, true)
+      else await ensureProjectStatus(p.id)
     } catch {
       // 单项目失败静默：不阻断其余项目，也不影响渲染（失败详情由卡片 / 统计入口呈现）
     }
@@ -1340,16 +1343,12 @@ function closeIdeMenuOnOutside(e: MouseEvent) {
  * 智能视图（收藏 / 归档 / 需推送 / 有变更 / 需拉取）一律走 `ensureSmartViewData`：
  * 本函数经 `runProjectLoadBatch` → `useBatchProgress.runChain` 全局串行，
  * 一批长任务会把后续视图切换的补载堵在队列里，且切走不会停手。
- *
- * @param fastWhenClean 兼容保留（当前 no-op）。原「干净工作区快速路径」已移除：
- *   实测探测 + 全量 ≈ 2× 单次全量（瓶颈是每次 git 调用的进程启动费 ~310ms，而非文件扫描量），
- *   故全场景统一走单次 `git status --porcelain`。详见 WorktreeOps.getWorkingTreeStatus。
  */
-async function ensureStatusFor(list: GitProject[], fastWhenClean = false) {
+async function ensureStatusFor(list: GitProject[]) {
   if (gitOpsPaused.value) return
   // 进入加载即视为「已展示」：探测层随后按增量判定，不再做无谓的全量首查
   markProjectsDisplayed(list.map((p) => p.id))
-  await runProjectLoadBatch(list, (id) => ensureProjectStatus(id, fastWhenClean))
+  await runProjectLoadBatch(list, (id) => ensureProjectStatus(id))
 }
 
 /**
@@ -1464,7 +1463,7 @@ async function ensureStatsDataLoadedBudgeted(budgetMs: number): Promise<void> {
     // 暂停/卸载后不再发起剩余项目（已完成的结果仍保留）
     if (gitOpsPaused.value || statsLoadAborted) return
     try {
-      await ensureProjectStatus(p.id, true)
+      await ensureProjectStatus(p.id)
     } catch {
       // 单项目失败静默：不阻断其余项目（失败详情由卡片/统计刷新入口呈现）
     } finally {
@@ -1559,8 +1558,7 @@ async function refreshStatsData() {
     if (inFlight) await inFlight
     markProjectsDisplayed(projects.value.map((p) => p.id))
     await runBatchWithProgress(projects.value, tf("refreshingLabel"), async (p) => {
-      // 显式刷新同样开快速路径：批量重查全部项目，干净工作区的比例通常很高
-      await scheduler.loadStatus(p.id, { mode: "refresh", fastWhenClean: true })
+      await scheduler.loadStatus(p.id, { mode: "refresh" })
     })
     statsRefreshedAt.value = new Date().toISOString()
     scheduleStatsAudit()

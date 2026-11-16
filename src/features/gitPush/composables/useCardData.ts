@@ -223,7 +223,9 @@ export function useCardData(project: () => GitProject) {
     if (seq !== state.logRequestSeq) return
     state.logEntries.value = entries
     const latest = entries[0]?.date
-    if (latest) await services.recordCommitActivity(state.projectId, latest)
+    // 最近活动时间是纯展示用的副产物（时间未变时上层直接早退），不值得让详情加载等一次磁盘写：
+    // 原实现 await 在这里，磁盘慢时表现为「详情加载慢半拍」。
+    if (latest) void services.recordCommitActivity(state.projectId, latest).catch(() => {})
   }
 
   /**

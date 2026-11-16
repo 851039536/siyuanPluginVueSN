@@ -46,20 +46,15 @@ export class WorktreeOps {
   /**
    * 获取工作区变更状态（单次 `git status --porcelain`）。
    *
-   * ⚠ 曾有一条 `fastWhenClean` 快速路径：先跑 `status --porcelain --untracked-files=no` 探测已跟踪
-   * 文件是否干净，再**无条件**补跑一次全量 `--porcelain`。它在语义上是无害的（最终结果一律以全量为准），
-   * 但在性能上是净亏 —— 实测（Windows 10 / git 2.53，i7-11800H）：
-   *   `status --porcelain`                 ≈ 255ms
-   *   `status --porcelain -uno`            ≈ 250ms   ← 与全量几乎同价，探测省不下时间
-   *   探测 + 全量（旧 fastWhenClean 行为）  ≈ 505ms   ← 恰为单次全量的 2 倍
-   * 根因：本机 `git --version` 单独就要 ~310ms，即**每次 git 调用都是「进程启动费」主导**，
+   * 为什么不做「先探测再全量」的快速路径：实测（Windows 10 / git 2.53，i7-11800H）
+   *   `status --porcelain`        ≈ 255ms
+   *   `status --porcelain -uno`   ≈ 250ms   ← 与全量几乎同价，探测省不下时间
+   *   探测 + 全量                  ≈ 505ms   ← 恰为单次全量的 2 倍
+   * 根因：`git --version` 单独就要 ~310ms，即**每次 git 调用都由「进程启动费」主导**，
    * 文件扫描量（1000 → 5000 文件仅 251ms → 278ms）几乎不影响耗时。
-   * 故减少 git 进程调用次数才是有效优化方向，凡不能减少调用次数的「探测式快速路径」都是负收益。
-   * 结论：该路径已移除，全场景统一走单次全量命令（语义与改造前完全一致）。
-   *
-   * 保留 `opts.fastWhenClean` 形参仅为兼容既有调用签名（当前为 no-op）。
+   * 故有效方向只有「减少 git 进程调用次数」，凡不能减少调用次数的探测式路径都是负收益。
    */
-  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string, fastWhenClean?: boolean }): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string }): Promise<WorkingTreeInfo> {
     const empty: WorkingTreeInfo = {
       branch: "",
       files: [],

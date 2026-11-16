@@ -62,6 +62,20 @@ function parseLsRemoteSha(raw: string): string {
   return line.split(/\s+/)[0] || ""
 }
 
+/**
+ * 解析 `for-each-ref --format=%(refname)%00%(objectname) refs/remotes` 的输出。
+ * 用 NUL 分隔而非空格：ref 名不含空白，但 sha 与 ref 之间用空格切也不稳（保留字段扩展余地）。
+ */
+function parseRemoteRefShas(raw: string): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const line of raw.split("\n")) {
+    if (!line.trim()) continue
+    const [refName, objectName] = line.split("\0")
+    if (refName && objectName) map.set(refName.trim(), objectName.trim())
+  }
+  return map
+}
+
 export class RemoteOps {
   private executor: GitExecutor
   private store: ProjectStore
@@ -595,6 +609,19 @@ export class RemoteOps {
     // 不能让预检把「网络慢」变成「推不出去」
     const timeoutMs = opts?.timeoutMs ?? 5000
     const remotes = getProjectRemoteNames(project)
+    /**
+     * 本地跟踪 ref 的 sha 一次批量读齐。
+     *
+     * 原实现对每个远程各跑一次 `rev-parse --verify refs/remotes/<remote>/<branch>`，
+     * 4 个远程就是 4 次本地进程（每次 ~250ms 进程启动费）。改成循环前一次
+     * `for-each-ref refs/remotes` 后，本地进程从 `1 + R` 降到 2（分支解析 + 批量 refs），
+     * 总进程 `1 + 2R` → `2 + R`。
+     *
+     * ⚠️ 刻意保持「先读本地、再并行 ls-remote」的顺序：若把这次读取与下方网络查询塞进同一个
+     * `Promise.all` 的解构声明里，回调会在 `localShas` 初始化前读它（TDZ），异常又被 catch
+     * 吞成 unknown —— 表现为预检从此永不报告 moved。省下的 ~250ms 不值得这个坑。
+     */
+    const localShas = await this.readRemoteTrackingShas(cwd)
     const results = await Promise.all(
       remotes.map(async ({ key, name }): Promise<PushPreflightRemote> => {
         try {
@@ -607,7 +634,7 @@ export class RemoteOps {
           const remoteSha = parseLsRemoteSha(raw)
           if (!remoteSha) return { key, remoteName: name, moved: false, unknown: false }
 
-          const localSha = await this.readRemoteTrackingSha(cwd, name, branch)
+          const localSha = localShas.get(`refs/remotes/${name}/${branch}`) ?? ""
           if (!localSha) {
             return {
               key,
@@ -633,18 +660,22 @@ export class RemoteOps {
     return { needsDecision: results.some((r) => r.moved), remotes: results }
   }
 
-  /** 读取本地远程跟踪引用的 sha（不存在时返回空串，供预检判定「无法比较」） */
-  private async readRemoteTrackingSha(cwd: string, remoteName: string, branch: string): Promise<string> {
+  /**
+   * 一次 `for-each-ref` 读取全部远程跟踪 ref 的 sha（`refs/remotes/<remote>/<branch>` → sha）。
+   *
+   * 失败返回空映射：与原先逐远程 `rev-parse --verify` 失败同义 —— 预检据此判定
+   * 「本地无该分支的远程跟踪引用」→ `unknown=true` 放行直推，不能因为本地 ref 读不到就阻塞推送。
+   */
+  private async readRemoteTrackingShas(cwd: string): Promise<Map<string, string>> {
     try {
-      const sha = await this.executor.execGit(cwd, [
-        "rev-parse",
-        "--verify",
-        "--quiet",
-        `refs/remotes/${remoteName}/${branch}`,
+      const raw = await this.executor.execGit(cwd, [
+        "for-each-ref",
+        "--format=%(refname)%00%(objectname)",
+        "refs/remotes",
       ])
-      return sha.trim()
+      return parseRemoteRefShas(raw)
     } catch {
-      return ""
+      return new Map()
     }
   }
 

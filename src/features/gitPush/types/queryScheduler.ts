@@ -41,12 +41,6 @@ export interface LoadStatusOptions {
   branch?: string
   /** 绕过单飞共享，始终发起新查询（写操作后必须拿到写后状态时用） */
   force?: boolean
-  /**
-   * 兼容保留（当前为 no-op）。曾用于「干净工作区快速路径」，该路径已因净亏被移除
-   * （探测 + 全量 ≈ 2× 单次全量；瓶颈是每次 git 调用的进程启动费，而非文件扫描量）。
-   * 详见 WorktreeOps.getWorkingTreeStatus 的说明。
-   */
-  fastWhenClean?: boolean
 }
 
 /** `loadStatus` 选项（在 LoadStatusOptions 之上增加模式与节流） */

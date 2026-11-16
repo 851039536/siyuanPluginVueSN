@@ -98,7 +98,7 @@ import {
 } from "./utils"
 import type { ProjectTransferPayload } from "./utils/projectTransferExport"
 
-/** 索引状态查询的加载并发上限（每项目 2 次 NDJSON 读盘 + 解析；限流压住设置面板打开时的 IO 峰值） */
+/** 索引状态查询的并发上限（旧 meta 回填需数一遍 NDJSON 行数；限流压住设置面板打开时的 IO 峰值） */
 const INDEX_STATUS_LOAD_CONCURRENCY = 4
 
 /** 自定义 Tab 模型实例的最小结构（init 回调的 this） */
@@ -505,14 +505,14 @@ export class GitPushManager {
   /**
    * 索引状态摘要（设置面板展示：目录 + 已索引项目数 + 各项目提交数与截断标记）。
    *
-   * 必须逐项目 `ensureLoaded` 后再取提交数：`getCommitCount` 返回的是**内存段长度**，
-   * 未加载的项目恒为 0，直接展示会让设置面板对每个项目都显示「0 条提交」。
-   * 单项目读取失败（文件损坏/被删）按 0 呈现，不让整个状态查询失败。
+   * 提交条数走 `getCommitCountWithoutLoading`：优先读 meta.commitCount，**不再逐项目
+   * `ensureLoaded`**。原实现为展示条数把每个项目的完整提交/文件历史读进内存，且段一旦载入
+   * 就常驻到 invalidate/clearAll —— 打开一次设置面板即可让数十个项目段常驻，
+   * 单项目两万提交叠加可达数百 MB，与「看报告」同时进行时长会话内存持续偏高。
    *
-   * 并发受限：`ensureLoaded` 每项目要读盘解析两份 NDJSON，且解析后的段会常驻内存
-   * （仅 invalidate/clearAll 时释放）。原实现用 `Promise.all` 对全部项目并发，
-   * 在索引项目较多时打开设置面板即形成一次性 N 路读盘 + 解析峰值。改为经
-   * poolProcess 限流（恒定并发、无批次屏障），既压住峰值又不拖慢整体。
+   * 旧 meta 缺 commitCount 时该方法会数一遍 NDJSON 行数并回填 meta（一次性，不驻留内存）。
+   * 单项目读取失败（文件损坏/被删）按 0 呈现，不让整个状态查询失败。
+   * 并发仍经 poolProcess 限流：旧 meta 回填要读盘，避免一次 N 路 IO。
    */
   async getIndexStatus(): Promise<{ dir: string, projects: Array<{ projectId: string, commits: number, complete: boolean, analyzedAt: string }> }> {
     const index = await this.getIndex()
@@ -528,8 +528,7 @@ export class GitPushManager {
     await poolProcess(metas, INDEX_STATUS_LOAD_CONCURRENCY, async (p, i) => {
       let commits = 0
       try {
-        await index.ensureLoaded(p.projectId)
-        commits = index.getCommitCount(p.projectId)
+        commits = await index.getCommitCountWithoutLoading(p.projectId)
       } catch {
         // 单项目读取失败不影响其余项目（文件被删/损坏时按 0 展示）
       }
@@ -1022,7 +1021,7 @@ export class GitPushManager {
 
   // ── 工作区本地操作（WorktreeOps；写操作经项目级写锁串行，防 index.lock 竞争）──
 
-  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string, fastWhenClean?: boolean }): Promise<WorkingTreeInfo> {
+  async getWorkingTreeStatus(projectPath: string, opts?: { branch?: string }): Promise<WorkingTreeInfo> {
     return this.worktreeOps.getWorkingTreeStatus(projectPath, opts)
   }
 
@@ -1242,8 +1241,6 @@ export class GitPushManager {
     return this.repoOps.getRemoteTags(projectPath, remoteName)
   }
 
-  async hasConflict(projectPath: string): Promise<boolean> { return this.repoOps.hasConflict(projectPath) }
-
   async getConflictFiles(projectPath: string): Promise<ConflictFile[]> { return this.repoOps.getConflictFiles(projectPath) }
 
   async abortMerge(projectPath: string): Promise<void> {
@@ -1328,7 +1325,7 @@ export class GitPushManager {
     return this.writeLock.runExclusive(projectPath, () => this.repoOps.unsetProjectGitConfig(projectPath, key))
   }
 
-  getProjectGitConfigFilePath(projectPath: string): string { return this.repoOps.getProjectGitConfigFilePath(projectPath) }
+  async getProjectGitConfigFilePath(projectPath: string): Promise<string> { return this.repoOps.getProjectGitConfigFilePath(projectPath) }
 
   async scanForGitRepos(dirPath: string): Promise<ScannedGitRepo[]> { return this.repoOps.scanForGitRepos(dirPath) }
 

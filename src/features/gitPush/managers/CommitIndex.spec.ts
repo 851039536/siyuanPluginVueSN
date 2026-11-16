@@ -5,6 +5,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest"
 // 刻意从 indexCache / indexIo 直接导入而非 "../types" 桶：桶会经 storage.ts 拉入运行时的
 // siyuan 包（其 exports 字段在 Vitest 的 node 条件下不可解析），而这三个模块是零依赖纯逻辑。
@@ -254,5 +255,65 @@ describe("foldMessage 保证单行 NDJSON 前提", () => {
   it("多行提交信息折叠为单行空格", () => {
     expect(foldMessage("feat: a\n\nbody line")).toBe("feat: a body line")
     expect(foldMessage("chore: x\r\n  indented")).toBe("chore: x indented")
+  })
+})
+
+// P2-5：设置面板的「索引状态」只展示条数，不该为此把每个项目的完整段读进内存
+// （段一旦载入就常驻到 invalidate/clearAll，数十个项目叠加可达数百 MB）。
+describe("索引状态读取不载入内存段", () => {
+  it("commitCount 随 append 落盘，读取时不触发任何读盘", async () => {
+    const io = new MemoryIndexIO()
+    const index = new CommitIndex(io, {
+      version: INDEX_META_VERSION,
+      projects: [],
+    })
+    await index.append("p1", [
+      commit("a1", "2024-01-01T10:00:00+08:00", "alice", [["src/a.ts", 10, 2]]),
+      commit("b2", "2024-01-02T10:00:00+08:00", "bob", [["src/b.ts", 5, 0]]),
+    ], metaPatch(buildRootHash("head1", "/repo/.git")))
+    expect(index.getProjectMeta("p1")?.commitCount).toBe(2)
+
+    // 模拟重启：meta 从磁盘载入，段尚未加载
+    const reopened = new CommitIndex(io, {
+      version: INDEX_META_VERSION,
+      projects: index.getProjectMetas(),
+    })
+    const spy = vi.spyOn(io, "readLines")
+    expect(await reopened.getCommitCountWithoutLoading("p1")).toBe(2)
+    expect(spy).not.toHaveBeenCalled()
+    // 段仍未载入（内存口径为 0），证明确实没有顺手 ensureLoaded
+    expect(reopened.getCommitCount("p1")).toBe(0)
+  })
+
+  it("旧 meta 缺 commitCount：只数一遍 commits.ndjson 行数并回填 meta，不构造内存段", async () => {
+    const io = new MemoryIndexIO()
+    const source = new CommitIndex(io, {
+      version: INDEX_META_VERSION,
+      projects: [],
+    })
+    await source.append("p1", [
+      commit("a1", "2024-01-01T10:00:00+08:00", "alice", [["src/a.ts", 10, 2]]),
+      commit("b2", "2024-01-02T10:00:00+08:00", "bob", [["src/b.ts", 5, 0]]),
+    ], metaPatch(buildRootHash("head1", "/repo/.git")))
+
+    // 还原成「commitCount 字段引入前」的旧 meta
+    const legacy = { ...source.getProjectMetas()[0] }
+    delete legacy.commitCount
+    const reopened = new CommitIndex(io, {
+      version: INDEX_META_VERSION,
+      projects: [legacy],
+    })
+    expect(reopened.getProjectMeta("p1")?.commitCount).toBeUndefined()
+
+    const spy = vi.spyOn(io, "readLines")
+    expect(await reopened.getCommitCountWithoutLoading("p1")).toBe(2)
+    // 只读 commits 一份（不读 files/filelines，也不解析成段）
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy.mock.calls[0][0]).toBe(projectIndexFile("commits", "p1"))
+    // 回填已生效：再次读取直接命中 meta
+    expect(reopened.getProjectMeta("p1")?.commitCount).toBe(2)
+    expect(await reopened.getCommitCountWithoutLoading("p1")).toBe(2)
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(reopened.getCommitCount("p1")).toBe(0)
   })
 })

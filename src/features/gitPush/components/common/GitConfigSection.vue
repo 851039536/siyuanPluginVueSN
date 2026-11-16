@@ -306,7 +306,7 @@ async function load() {
       filePath.value = props.manager.getGitConfigFilePath()
     } else {
       rawText.value = await props.manager.getProjectGitConfig(props.projectPath || "")
-      filePath.value = props.manager.getProjectGitConfigFilePath(props.projectPath || "")
+      filePath.value = await props.manager.getProjectGitConfigFilePath(props.projectPath || "")
     }
     entries.value = parseGitConfigText(rawText.value)
   } catch (e: unknown) {

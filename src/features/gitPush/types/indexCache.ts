@@ -61,6 +61,14 @@ export interface ProjectIndexMeta {
    * 0 = 无覆盖保证（例如被截断）。用于判断所选时间范围是否需要重建索引。
    */
   sinceCoveredDays: number
+  /**
+   * 已索引提交条数（`append` 时随 meta 一起落盘）。
+   *
+   * 为什么要冗余存一份：`getCommitCount` 读的是**内存段长度**，未 `ensureLoaded` 的项目恒为 0，
+   * 而设置面板的「索引状态」只想展示条数、不该为此把几十个项目的完整提交/文件历史读进内存
+   * 常驻（单项目两万提交可达数十 MB）。可选是为了兼容本字段引入前的旧 meta。
+   */
+  commitCount?: number
 }
 
 /** 索引目录元数据（git-push-index-meta 槽位持久化） */

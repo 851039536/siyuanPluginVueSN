@@ -14,7 +14,7 @@ import { execFileSync } from "node:child_process"
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { GitExecutor } from "./GitExecutor"
 import { ProjectWriteLock } from "./ProjectWriteLock"
 import { RemoteOps } from "./RemoteOps"
@@ -30,6 +30,7 @@ describe("推送前预检（真实 git + 真实 ls-remote）", () => {
   let local = ""
   let peer = ""
   let ops: RemoteOps
+  let executor: GitExecutor
   const projectsById: Record<string, GitProject> = {}
 
   beforeAll(async () => {
@@ -68,7 +69,9 @@ describe("推送前预检（真实 git + 真实 ls-remote）", () => {
       getProjectById: async (id: string) => projectsById[id] ?? null,
     } as never
 
-    ops = new RemoteOps(new GitExecutor(fakeStorage), fakeStore, fakeStorage, new ProjectWriteLock())
+    // 预检的进程数断言需要观察真实发出的命令，故单独持有 executor 引用
+    executor = new GitExecutor(fakeStorage)
+    ops = new RemoteOps(executor, fakeStore, fakeStorage, new ProjectWriteLock())
 
     projectsById.main = {
       id: "main",
@@ -81,6 +84,15 @@ describe("推送前预检（真实 git + 真实 ls-remote）", () => {
       name: "preflight-bad",
       get path() { return local },
       githubRemote: "does-not-exist",
+    } as unknown as GitProject
+    // 3 个已配置远程：用于验证「本地跟踪 ref 的读取次数不随远程数增长」
+    projectsById.multi = {
+      id: "multi",
+      name: "preflight-multi",
+      get path() { return local },
+      githubRemote: "origin",
+      giteeRemote: "upstream-missing",
+      cnbRemote: "mirror-missing",
     } as unknown as GitProject
   }, 120000)
 
@@ -129,4 +141,22 @@ describe("推送前预检（真实 git + 真实 ls-remote）", () => {
     expect(pre.remotes).toHaveLength(0)
     expect(pre.needsDecision).toBe(false)
   }, 30000)
+
+  /**
+   * P1-6 回归：本地跟踪 ref 必须**一次批量**读取，不能按远程逐个 `rev-parse --verify`。
+   * 3 个远程时进程数应为 `1（分支解析）+ 1（批量 refs）+ 3（ls-remote 网络）`，
+   * 原实现是 `1 + 3 + 3 = 7` 次本地进程里的 3 次纯属浪费。
+   */
+  it("本地跟踪 ref 一次批量读取：进程数不随远程数增长", async () => {
+    const spy = vi.spyOn(executor, "execGit")
+    try {
+      await ops.preflightPush("multi", { timeoutMs: 30000 })
+      const commands = spy.mock.calls.map((call) => (call[1] as string[]).join(" "))
+      expect(commands.filter((c) => c.startsWith("rev-parse --verify"))).toHaveLength(0)
+      expect(commands.filter((c) => c.startsWith("for-each-ref") && c.includes("refs/remotes"))).toHaveLength(1)
+      expect(commands.filter((c) => c.startsWith("ls-remote"))).toHaveLength(3)
+    } finally {
+      spy.mockRestore()
+    }
+  }, 60000)
 })

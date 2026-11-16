@@ -305,8 +305,14 @@ async function load() {
       rawText.value = await props.manager.getGitGlobalConfig()
       filePath.value = props.manager.getGitConfigFilePath()
     } else {
-      rawText.value = await props.manager.getProjectGitConfig(props.projectPath || "")
-      filePath.value = await props.manager.getProjectGitConfigFilePath(props.projectPath || "")
+      // 两份都要起一次 git 进程（读配置 + 问配置文件路径），彼此独立 → 并行，省掉一次进程启动费
+      const projectPath = props.projectPath || ""
+      const [raw, cfgPath] = await Promise.all([
+        props.manager.getProjectGitConfig(projectPath),
+        props.manager.getProjectGitConfigFilePath(projectPath),
+      ])
+      rawText.value = raw
+      filePath.value = cfgPath
     }
     entries.value = parseGitConfigText(rawText.value)
   } catch (e: unknown) {

@@ -10,12 +10,12 @@ import type { GitExecutor } from "./GitExecutor"
 import { ProjectWriteLock } from "./ProjectWriteLock"
 import { PLATFORM_META } from "../types/meta"
 import { UNGROUPED_ID } from "../types/storage"
-import {
-  getCurrentDeviceName,
-  normalizePathKey,
-  PLATFORM_FLAG_BY_KEY,
-  resolveValidPath,
-} from "../utils"
+// 直连纯模块而非 "../utils" 桶：桶会转出 utils/fileStatus，其 `../types` 桶从
+// "GitPushManager" 拉入运行时 siyuan 包，使 ProjectStore 无法在 Node 单测环境加载
+// （ProjectStore.writeGuard.spec.ts 需要真实实例）。与 WorktreeOps/RemoteOps 同一处理口径。
+import { PLATFORM_FLAG_BY_KEY } from "../utils/platform"
+import { getCurrentDeviceName, resolveValidPath } from "../utils/project"
+import { normalizePathKey } from "../utils/pushProfile"
 
 /** 递增计数器（与时间戳组合成唯一 ID，避免同毫秒碰撞） */
 let idCounter = 0
@@ -272,25 +272,46 @@ export class ProjectStore {
    *
    * `git remote -v` 在**写锁外**执行：一个本地 git 进程不应阻塞其他项目的提交/编辑等写操作
    * （「刷新全部远程」会对 N 个项目各跑一次 `remote -v`，放进锁内就变成 N 次串行阻塞）。
+   *
+   * 代价是探测期间项目可能被改路径，故落盘前在锁内复核一次：探测结果属于**旧路径**时丢弃
+   * （否则会把旧仓库的 remote 名写到新路径项目上，后续 push 报 remote not found）。
+   * 调用方显式给了 path 的场景（如「按指定路径刷新」紧接着保存新路径）不做复核 ——
+   * 那时 path 就是调用方刚要落盘的值，天然一致。
    */
   async refreshRemotes(id: string, path?: string): Promise<GitProject | null> {
     const current = await this.getProjectById(id)
     if (!current) return null
-    const remotes = await this.detectRemotes(path || resolveValidPath(current))
-    return this.applyRemotes(id, remotes)
+    const probePath = path || resolveValidPath(current)
+    const remotes = await this.detectRemotes(probePath)
+    return this.serializeWrite(() => this.applyRemotesLocked(
+      id,
+      remotes,
+      path ? undefined : (project) => resolveValidPath(project) === probePath,
+    ))
+  }
+
+  /** 将已检测的远程列表写入项目（避免调用方为"按指定路径刷新"重复执行 git remote -v）。
+   *  远程映射未变时不落盘：原实现无条件 saveProjects，导致「刷新全部远程」= N 次全量项目 JSON 写。 */
+  async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> {
+    return this.serializeWrite(() => this.applyRemotesLocked(id, remotes))
   }
 
   /**
-   * 将已检测的远程列表写入项目（避免调用方为"按指定路径刷新"重复执行 git remote -v）。
-   * 远程映射未变时不落盘：原实现无条件 saveProjects，导致「刷新全部远程」= N 次全量项目 JSON 写。
+   * 远程映射的落盘实现（调用方必须已持有项目写锁）。
+   * @param stillValid 锁内复核：返回 false 时放弃本次写入（探测结果已过期）
    */
-  async applyRemotes(id: string, remotes: GitRemoteInfo[]): Promise<GitProject | null> {
-    return this.serializeWrite(async () => {
-      const r = await this.mutateProject(id, (project) => this.applyRemotesToProject(project, remotes))
-      if (!r) return null
-      if (r.changed) await this.saveProjects(r.projects)
-      return r.project
+  private async applyRemotesLocked(
+    id: string,
+    remotes: GitRemoteInfo[],
+    stillValid?: (project: GitProject) => boolean,
+  ): Promise<GitProject | null> {
+    const r = await this.mutateProject(id, (project) => {
+      if (stillValid && !stillValid(project)) return false
+      return this.applyRemotesToProject(project, remotes)
     })
+    if (!r) return null
+    if (r.changed) await this.saveProjects(r.projects)
+    return r.project
   }
 
   /**

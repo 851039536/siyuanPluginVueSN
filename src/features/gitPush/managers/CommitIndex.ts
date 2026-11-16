@@ -296,6 +296,9 @@ export class CommitIndex {
         ...meta,
         lastCommit: "",
         analyzedAt: new Date().toISOString(),
+        // 条数同样随截断变化：漏更新会让设置面板按裁前的条数展示（commitCount 是唯一
+        // 供「不载入内存读条数」使用的字段，必须与段长保持一致）
+        commitCount: segment.commits.length,
       })
       await this.persistMeta()
     }
@@ -317,17 +320,25 @@ export class CommitIndex {
    * 此时退化为「数一遍本项目 commits.ndjson 的行数」：只做一次读盘计数，既不构造内存段、
    * 也不让它常驻，随后把结果回填进 meta —— 下次打开设置面板即不再读盘。
    *
-   * 回填走同一把项目写锁：期间若有 append 抢先写入真实计数（meta 已是 number），
-   * 直接采用它，不用更早读到的行数覆盖。
+   * 回填的两个前提（都是「别把不可信的数字写进持久化元数据」）：
+   * 1. 读盘必须**确认成功**：`readLines` 把读失败折叠成空数组，直接据此回填 0 会把一次瞬时
+   *    错误（文件被 AV 占用等）固化成永久值，此后 meta 命中、再也算不出真实条数。故走
+   *    `readLinesStrict`，读失败就只返回 0、不回填。
+   * 2. 回填走同一把项目写锁：期间若有 append 抢先写入真实计数（meta 已是 number），
+   *    直接采用它，不用更早读到的行数覆盖；项目已被 invalidate/删除则返回 0。
    */
   async getCommitCountWithoutLoading(projectId: string): Promise<number> {
     const meta = this.getProjectMeta(projectId)
     if (!meta) return 0
     if (typeof meta.commitCount === "number") return meta.commitCount
-    const counted = (await this.io.readLines(projectIndexFile("commits", projectId))).length
+    const counted = await this.countIndexedCommits(projectId)
+    // 读失败：本次按 0 呈现（与旧行为一致），但**不写回 meta**，下次打开面板会重试
+    if (counted === null) return 0
     return this.withProjectLock(projectId, async () => {
       const latest = this.getProjectMeta(projectId)
-      if (!latest || typeof latest.commitCount === "number") return latest?.commitCount ?? counted
+      // 排队期间项目被删除/重建索引：此时报旧条数没有意义
+      if (!latest) return 0
+      if (typeof latest.commitCount === "number") return latest.commitCount
       this.setProjectMeta({
         ...latest,
         commitCount: counted,
@@ -335,6 +346,20 @@ export class CommitIndex {
       await this.persistMeta()
       return counted
     })
+  }
+
+  /**
+   * 数本项目 commits.ndjson 的行数（不构造内存段）。
+   * @returns 行数；**null 表示读取失败**（区别于「文件不存在」= 0 行，见 readLinesStrict）
+   */
+  private async countIndexedCommits(projectId: string): Promise<number | null> {
+    const file = projectIndexFile("commits", projectId)
+    if (!this.io.readLinesStrict) {
+      // 替身未实现严格读：退化为旧口径（无法区分「空」与「读失败」）
+      return (await this.io.readLines(file)).length
+    }
+    const lines = await this.io.readLinesStrict(file)
+    return lines === null ? null : lines.length
   }
 
   /**

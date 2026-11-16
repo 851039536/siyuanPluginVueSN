@@ -49,6 +49,18 @@ function metaPatch(rootHash: string, extra?: Partial<{ complete: boolean, sinceC
   }
 }
 
+/**
+ * 可模拟「读盘失败」的内存 IO：`failStrictRead` 为 true 时 `readLinesStrict` 返回 null
+ * （对应生产 FsIndexIO 里文件被占用 / 权限异常的分支），用于验证「别把瞬时错误固化成 meta」。
+ */
+class FlakyReadIndexIO extends MemoryIndexIO {
+  failStrictRead = false
+
+  async readLinesStrict(file: string): Promise<string[] | null> {
+    return this.failStrictRead ? null : super.readLines(file)
+  }
+}
+
 describe("commitIndex 基础 IO", () => {
   let io: MemoryIndexIO
   let index: CommitIndex
@@ -315,5 +327,33 @@ describe("索引状态读取不载入内存段", () => {
     expect(await reopened.getCommitCountWithoutLoading("p1")).toBe(2)
     expect(spy).toHaveBeenCalledTimes(1)
     expect(reopened.getCommitCount("p1")).toBe(0)
+  })
+
+  it("读盘失败：按 0 呈现但不回填 meta（不让瞬时错误固化成永久值）", async () => {
+    const io = new FlakyReadIndexIO()
+    const source = new CommitIndex(io, {
+      version: INDEX_META_VERSION,
+      projects: [],
+    })
+    await source.append("p1", [
+      commit("a1", "2024-01-01T10:00:00+08:00", "alice", [["src/a.ts", 10, 2]]),
+      commit("b2", "2024-01-02T10:00:00+08:00", "bob", [["src/b.ts", 5, 0]]),
+    ], metaPatch(buildRootHash("head1", "/repo/.git")))
+    const legacy = { ...source.getProjectMetas()[0] }
+    delete legacy.commitCount
+    const reopened = new CommitIndex(io, {
+      version: INDEX_META_VERSION,
+      projects: [legacy],
+    })
+
+    // 模拟文件被占用：严格读返回 null（readLines 的旧口径会把这种情况折叠成 0 行）
+    io.failStrictRead = true
+    expect(await reopened.getCommitCountWithoutLoading("p1")).toBe(0)
+    expect(reopened.getProjectMeta("p1")?.commitCount).toBeUndefined()
+
+    // 恢复正常后仍能算出真实条数（若上一步把 0 写进 meta，这里会永远显示 0）
+    io.failStrictRead = false
+    expect(await reopened.getCommitCountWithoutLoading("p1")).toBe(2)
+    expect(reopened.getProjectMeta("p1")?.commitCount).toBe(2)
   })
 })

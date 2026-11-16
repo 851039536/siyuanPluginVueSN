@@ -609,21 +609,12 @@ export class RemoteOps {
     // 不能让预检把「网络慢」变成「推不出去」
     const timeoutMs = opts?.timeoutMs ?? 5000
     const remotes = getProjectRemoteNames(project)
-    /**
-     * 本地跟踪 ref 的 sha 一次批量读齐。
-     *
-     * 原实现对每个远程各跑一次 `rev-parse --verify refs/remotes/<remote>/<branch>`，
-     * 4 个远程就是 4 次本地进程（每次 ~250ms 进程启动费）。改成循环前一次
-     * `for-each-ref refs/remotes` 后，本地进程从 `1 + R` 降到 2（分支解析 + 批量 refs），
-     * 总进程 `1 + 2R` → `2 + R`。
-     *
-     * ⚠️ 刻意保持「先读本地、再并行 ls-remote」的顺序：若把这次读取与下方网络查询塞进同一个
-     * `Promise.all` 的解构声明里，回调会在 `localShas` 初始化前读它（TDZ），异常又被 catch
-     * 吞成 unknown —— 表现为预检从此永不报告 moved。省下的 ~250ms 不值得这个坑。
-     */
-    const localShas = await this.readRemoteTrackingShas(cwd)
-    const results = await Promise.all(
-      remotes.map(async ({ key, name }): Promise<PushPreflightRemote> => {
+    // 没有配置远程：预检无事可做。放在这里早退，省掉一次纯白跑的 `for-each-ref`（~250ms）
+    if (remotes.length === 0) return { needsDecision: false, remotes: [] }
+
+    /** 第一步：并行探测各远程 head（网络）。单远程失败只记错误，不拖累其余远程。 */
+    const probes = await Promise.all(
+      remotes.map(async ({ key, name }) => {
         try {
           const raw = await this.executor.execGit(
             cwd,
@@ -631,31 +622,43 @@ export class RemoteOps {
             undefined,
             timeoutMs,
           )
-          const remoteSha = parseLsRemoteSha(raw)
-          if (!remoteSha) return { key, remoteName: name, moved: false, unknown: false }
-
-          const localSha = localShas.get(`refs/remotes/${name}/${branch}`) ?? ""
-          if (!localSha) {
-            return {
-              key,
-              remoteName: name,
-              moved: false,
-              unknown: true,
-              message: "本地无该分支的远程跟踪引用",
-            }
-          }
-          return { key, remoteName: name, moved: localSha !== remoteSha, unknown: false }
+          return { key, name, remoteSha: parseLsRemoteSha(raw), error: "" }
         } catch (e: unknown) {
-          return {
-            key,
-            remoteName: name,
-            moved: false,
-            unknown: true,
-            message: getErrorMessage(e) || String(e),
-          }
+          return { key, name, remoteSha: "", error: getErrorMessage(e) || String(e) }
         }
       }),
     )
+
+    /**
+     * 第二步：本地跟踪 ref 的 sha 一次批量读齐。
+     *
+     * ⚠️ 必须排在网络探测**之后**（这是审查发现的一处顺序缺陷）。本地 refs 会被并发 fetch
+     * 写入 —— 后台「需拉取」检测、另一视图的刷新都会跑 fetch。若先读本地再读远程，那句
+     * 「本地旧值 vs 远程新值」的不等就等价于 moved，于是弹出假的「远程已被推送，先拉取再推送」
+     * 决策框。反序之后本地值只会比远程结果更新，最坏情况退化为漏报（仍由 git 推送本身兜底）。
+     *
+     * 原实现对每个远程各跑一次 `rev-parse --verify refs/remotes/<remote>/<branch>`，
+     * 4 个远程就是 4 次本地进程（每次 ~250ms 进程启动费）。改为一次 `for-each-ref refs/remotes`
+     * 后，本地进程从 `1 + R` 降到 2（分支解析 + 批量 refs），总进程 `1 + 2R` → `2 + R`。
+     */
+    const localShas = await this.readRemoteTrackingShas(cwd)
+
+    const results = probes.map(({ key, name, remoteSha, error }): PushPreflightRemote => {
+      if (error) return { key, remoteName: name, moved: false, unknown: true, message: error }
+      // 远程无该分支（首次推送）：不存在被拒风险
+      if (!remoteSha) return { key, remoteName: name, moved: false, unknown: false }
+      const localSha = localShas.get(`refs/remotes/${name}/${branch}`) ?? ""
+      if (!localSha) {
+        return {
+          key,
+          remoteName: name,
+          moved: false,
+          unknown: true,
+          message: "本地无该分支的远程跟踪引用",
+        }
+      }
+      return { key, remoteName: name, moved: localSha !== remoteSha, unknown: false }
+    })
 
     return { needsDecision: results.some((r) => r.moved), remotes: results }
   }

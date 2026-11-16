@@ -87,8 +87,20 @@ export interface IndexFileIO {
   appendLine: (file: string, line: string) => Promise<void>
   /** 批量追加多行（一次调用减少 fs 往返；空数组为无操作） */
   appendLines: (file: string, lines: string[]) => Promise<void>
-  /** 读取全部行（文件不存在返回空数组；不解析 JSON） */
+  /**
+   * 读取全部行（文件不存在返回空数组；不解析 JSON）。
+   * 注意：**读取失败也返回空数组**（历史上与「文件不存在」折叠成同一结果，供自愈逻辑无脑续跑）。
+   * 需要区分两者的调用方用 `readLinesStrict`。
+   */
   readLines: (file: string) => Promise<string[]>
+  /**
+   * 读取全部行，**区分「文件不存在」（返回空数组）与「读取失败」（返回 null）**。
+   *
+   * 为什么需要：`readLines` 把读失败也折叠成空数组，一旦某处据此得出「0 条」并写进持久化
+   * 元数据，一次瞬时错误（Windows 上被 AV / 索引服务短暂占用即可）就会被固化成永久错误值。
+   * 可选成员：只实现 `readLines` 的测试替身自动退化到旧口径，不强制补齐。
+   */
+  readLinesStrict?: (file: string) => Promise<string[] | null>
   /** 写入整个文件（覆盖） */
   writeText: (file: string, text: string) => Promise<void>
   /** 读取整个文件（不存在返回 null） */
@@ -157,6 +169,20 @@ export class FsIndexIO implements IndexFileIO {
     } catch {
       return []
     }
+  }
+
+  async readLinesStrict(file: string): Promise<string[] | null> {
+    const { fs } = this.node()
+    const abs = this.abs(file)
+    let raw: string
+    try {
+      if (!fs.existsSync(abs)) return []
+      raw = await fs.promises.readFile(abs, "utf8")
+    } catch {
+      // 读失败（被占用 / 权限 / 目录被换）：显式返回 null，让调用方知道「这个 0 不可信」
+      return null
+    }
+    return splitLines(raw)
   }
 
   async writeText(file: string, text: string): Promise<void> {

@@ -266,6 +266,22 @@ describe("parseCommitLog", () => {
     expect(parseCommitLog(raw)).toHaveLength(1)
   })
 
+  it("末尾根提交的父行被整体剥掉时仍能解析", () => {
+    // execGit 会 strip 输出末尾换行：根提交 %p 为空 → 最后一条只剩 5 行
+    // （曾经的 `for (i + 5 < lines.length; i += 6)` 写法会把这条整份丢掉，
+    //   单提交仓库则直接返回空历史）
+    const rootWithoutParent = ["h2", "s2", "Author", "2 days ago", "2026-07-06T16:19:23+08:00"].join("\n")
+    const raw = [makeEntry("h1", "s1", "p"), rootWithoutParent].join("\n")
+    const r = parseCommitLog(raw)
+    expect(r.map((e) => e.hash)).toEqual(["h1", "h2"])
+    expect(r[1].isMerge).toBe(false)
+  })
+
+  it("单提交仓库（唯一记录就是根提交）也必须返回该条", () => {
+    const only = ["h1", "init", "Author", "now", "2026-07-06T16:19:23+08:00"].join("\n")
+    expect(parseCommitLog(only).map((e) => e.hash)).toEqual(["h1"])
+  })
+
   it("空输入返回空数组", () => {
     expect(parseCommitLog("")).toEqual([])
   })

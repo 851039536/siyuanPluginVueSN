@@ -186,3 +186,51 @@ describe("ProjectStore 写放大守卫", () => {
     expect(projects.box.saves).toBe(1)
   })
 })
+
+// P2-9：findProjectByPath 原本每次遍历全部项目、对每个路径做归一化，
+// 而它在**每条 git 命令**执行前都会被调用一次（推送账号环境解析），60 个项目就是「命令数 × 60」次归一化。
+// 改成「归一化路径 → 项目 id」索引后，语义必须完全不变（主路径、多设备备选路径、大小写/斜杠差异、先出现者优先）。
+describe("ProjectStore.findProjectByPath 路径索引", () => {
+  it("主路径命中（大小写与斜杠方向不敏感）", async () => {
+    const { store } = makeStore({
+      projects: [project({ path: "E:/code/repo" })],
+    })
+    expect((await store.findProjectByPath("E:\\code\\repo"))?.id).toBe("p1")
+    expect((await store.findProjectByPath("e:/CODE/repo"))?.id).toBe("p1")
+    expect((await store.findProjectByPath("E:/code/repo/"))?.id).toBe("p1")
+    expect(await store.findProjectByPath("E:/code/other")).toBeUndefined()
+  })
+
+  it("多设备备选路径（localPaths）同样命中", async () => {
+    const { store } = makeStore({
+      projects: [project({
+        path: "E:/code/repo",
+        localPaths: ["D:/work/repo", "/home/me/repo"],
+      })],
+    })
+    expect((await store.findProjectByPath("D:/work/repo"))?.id).toBe("p1")
+    expect((await store.findProjectByPath("/home/me/repo"))?.id).toBe("p1")
+  })
+
+  it("路径被修改后索引随之重建（旧路径不再命中）", async () => {
+    const { store } = makeStore({
+      projects: [project({ path: "E:/code/repo" })],
+    })
+    expect((await store.findProjectByPath("E:/code/repo"))?.id).toBe("p1")
+
+    await store.updateProjectMeta("p1", { path: "E:/code/repo-moved" })
+
+    expect(await store.findProjectByPath("E:/code/repo")).toBeUndefined()
+    expect((await store.findProjectByPath("E:/code/repo-moved"))?.id).toBe("p1")
+  })
+
+  it("同一路径被两个项目引用时取先出现者（与原遍历语义一致）", async () => {
+    const { store } = makeStore({
+      projects: [
+        project({ id: "first", path: "E:/code/repo" }),
+        project({ id: "second", path: "E:/code/repo" }),
+      ],
+    })
+    expect((await store.findProjectByPath("E:/code/repo"))?.id).toBe("first")
+  })
+})

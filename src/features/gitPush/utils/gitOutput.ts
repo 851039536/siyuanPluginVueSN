@@ -327,17 +327,26 @@ export function parseStashList(raw: string): StashEntry[] {
  * hash 为 %H 完整 40 位：UI 短展示自行截取，后续 git 定位（修正/删除/打 Tag）直接用完整值。
  */
 export function parseCommitLog(raw: string): CommitLogEntry[] {
-  const allLines = raw.split("\n")
+  const lines = raw.split("\n")
   const entries: CommitLogEntry[] = []
-  for (let i = 0; i + 5 < allLines.length; i += 6) {
+  // 每条记录 6 行（hash / subject / author / relativeDate / isoDate / parents）。
+  // ⚠️ 根提交的 `%p` 为空，而 execGit 会剥掉输出末尾的换行，
+  // 因此**最后一条记录可能只有 5 行**（父行整体消失）——不能按「凑满 6 行」丢弃。
+  // 曾经的 `for (i + 5 < lines.length; i += 6)` 写法会让「单提交仓库」的整份历史变空，
+  // 也会让「列表末尾恰为根提交」时少一条记录。
+  let i = 0
+  while (i + 4 < lines.length) {
+    // 空 hash 说明落到了截断残块或分隔空行上，不应再产出记录
+    if (!lines[i]) break
     entries.push({
-      hash: allLines[i],
-      message: allLines[i + 1],
-      author: allLines[i + 2],
-      relativeDate: allLines[i + 3],
-      date: allLines[i + 4],
-      isMerge: allLines[i + 5].trim().split(/\s+/).filter(Boolean).length > 1,
+      hash: lines[i],
+      message: lines[i + 1] ?? "",
+      author: lines[i + 2] ?? "",
+      relativeDate: lines[i + 3] ?? "",
+      date: lines[i + 4] ?? "",
+      isMerge: (lines[i + 5] ?? "").trim().split(/\s+/).filter(Boolean).length > 1,
     })
+    i += 6
   }
   return entries
 }

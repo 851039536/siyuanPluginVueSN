@@ -1381,6 +1381,7 @@
     "preflightTitle": "Remote has new commits",
     "preflightBody": "The branch on {0} has been updated by another client; pushing directly will be rejected. Pull first and then push?",
     "preflightPullFirst": "Pull first, then push",
+    "preflightChecking": "Checking remote…",
     "remotesLabel": "Remotes",
     "stashSave": "Stash changes",
     "stashRestore": "Restore",

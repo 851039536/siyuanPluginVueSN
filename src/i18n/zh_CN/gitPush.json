@@ -68,6 +68,7 @@
     "preflightTitle": "远程有新提交",
     "preflightBody": "远程 {0} 的分支已被其他客户端更新，直接推送会被拒绝。是否先拉取再推送？",
     "preflightPullFirst": "先拉取再推送",
+    "preflightChecking": "检查远程…",
     "remotesLabel": "远程",
     "stashSave": "暂存变更",
     "stashRestore": "恢复",

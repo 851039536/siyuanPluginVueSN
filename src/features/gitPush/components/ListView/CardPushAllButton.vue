@@ -7,11 +7,12 @@
     variant="primary"
     size="xsmall"
     dense
+    :loading="busy"
     :disabled="!hasAnyRemote(project) || derived.isPulling(project.id) || !pushStatus?.needsPush"
     :title="disabledHint"
-    @click.stop="ops.pushToAll(project.id)"
+    @click.stop="handlePushAll"
   >
-    {{ i18n.pushAll }}
+    {{ busy ? i18n.preflightChecking : i18n.pushAll }}
   </Button>
   <!-- 推送中：主操作切换为取消 -->
   <Button
@@ -29,7 +30,7 @@
 <script setup lang="ts">
 // gitPush 主推送按钮（推送全部 / 取消推送；状态派生与操作经 useCardServices 注入）
 import type { GitProject } from "../../types"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { hasAnyRemote } from "../../utils"
 import { useCardServices } from "../../composables/useCardServices"
 import Button from "@/components/Button.vue"
@@ -39,6 +40,22 @@ const props = defineProps<{ project: GitProject }>()
 const { services, pushStatus } = useCardServices(() => props.project)
 const { shared, derived, ops } = services
 const i18n = shared.i18n
+
+/**
+ * 点击后到进入推送进度之间还有一段「推送前预检」（并行 ls-remote，最长 5s）。
+ * 预检期间进度表尚未置位，按钮必须自持忙碌态，否则点击像没反应。
+ */
+const busy = ref(false)
+
+async function handlePushAll() {
+  if (busy.value) return
+  busy.value = true
+  try {
+    await ops.pushToAll(props.project.id)
+  } finally {
+    busy.value = false
+  }
+}
 
 /** 禁用原因（仅在推送状态已明确且确实无待推送提交时给出，避免「检测中」时误导） */
 const disabledHint = computed(() =>

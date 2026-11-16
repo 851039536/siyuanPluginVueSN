@@ -349,4 +349,49 @@ describe("useGitProbe —— 工作区内容改动的兜底发现", () => {
 
     probe.destroy()
   })
+
+  /**
+   * P1-4 回归：一轮内多项目必须**并发**探测。
+   *
+   * 原实现对项目 `for...await` 串行：3 个项目各 80ms ⇒ 一轮 ≥240ms，20 个项目就要 8~12s
+   * （基准间隔才 15s，等于轮询「一轮接一轮」）；并发 3 后应接近单项目耗时。
+   */
+  it("一轮内多项目并发探测：墙钟时间接近单项目耗时", async () => {
+    const { scheduler } = makeScheduler(() => CLEAN)
+    // 注入 80ms 延迟，等价于一次真查（status + for-each-ref 两次进程）
+    const slowLoadStatus = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 80))
+    })
+    ;(scheduler as unknown as { loadStatus: unknown }).loadStatus = slowLoadStatus
+    const manager = {
+      getGitDir: async () => gitDir,
+    }
+    const projects = ref(["A", "B", "C"].map((id) => ({
+      id,
+      name: id,
+      path: repoDir,
+      categoryId: "c1",
+      addedAt: 0,
+    } as GitProject)))
+
+    const probe = useGitProbe({
+      manager: manager as any,
+      projects,
+      scheduler,
+      getConfig: () => makeConfig(),
+      isPaused: () => false,
+      isActive: () => true,
+    })
+
+    const startedAt = Date.now()
+    await probe.probeNow()
+    const elapsed = Date.now() - startedAt
+
+    expect(slowLoadStatus).toHaveBeenCalledTimes(3)
+    // 串行下限 240ms；并发 3 实测约 80~110ms。上界取 200ms 以避开定时器粒度噪音，
+    // 真正的语义证明是「远小于 3×单次」这个量级关系
+    expect(elapsed).toBeLessThan(200)
+
+    probe.destroy()
+  })
 })

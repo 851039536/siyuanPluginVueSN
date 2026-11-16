@@ -69,6 +69,15 @@ export interface ProjectQueryScheduler {
   pushStatuses: Ref<Record<string, PushStatusInfo>>
   /** 工作区状态缓存（所有权在此，经 useGitOps 重导出保持公共面不变） */
   workingTrees: Ref<Record<string, WorkingTreeInfo>>
+  /**
+   * 每项目「工作区状态真的查过一次」的代数（只增不减，clearProject 时归零）。
+   *
+   * 为什么不直接 watch `workingTrees[id]` 的引用：P1-5 做了「值未变不替换对象」的去重，
+   * 引用变化已经**不能**代表「刚刚查过一次」。而单文件 diff 缓存必须靠「查过」失效 ——
+   * 用户把同一个已修改文件再改一次时，status 仍是 M、路径不变、计数不变（快照完全相同），
+   * 但 diff 内容已经变了。故 diff 缓存看本代数，其余派生计算看对象引用。
+   */
+  workingTreeEpoch: Ref<Record<string, number>>
 
   // ── 通用单飞原语 ──
   /** 单飞执行任意项目级查询（同 id+kind 在飞时共享同一 Promise） */

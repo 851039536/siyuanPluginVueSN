@@ -12,6 +12,47 @@ interface WaitQueueItem {
   signal?: AbortSignal
 }
 
+/** 单个子命令的调用统计（只读诊断，不做任何耗时开销控制） */
+export interface GitCallStat {
+  /** 调用次数（含排队等待后失败/取消的） */
+  calls: number
+  /** 失败次数（异常/超时/取消都计入） */
+  failures: number
+  /** 累计墙钟耗时（含排队），ms */
+  totalMs: number
+}
+
+/** 进程计数快照（供 `window.__gitdeskGitStats` 与单测断言） */
+export interface GitStatsSnapshot {
+  /** 统计起点时间戳 */
+  since: number
+  /** 全部子命令调用总数 */
+  total: number
+  /** 按子命令分组 */
+  byCommand: Record<string, GitCallStat>
+}
+
+/**
+ * 取 git 子命令名（跳过 `-c k=v` / `-C <dir>` 这类前置选项及其值）。
+ *
+ * 用途有两个：① 进程计数按子命令归类；② 判断该命令是否只读（决定能否注入
+ * `GIT_OPTIONAL_LOCKS=0`）。写死的选项值对必须与调用点实际用法一致，漏一个就会把
+ * 选项值当成子命令名（分类错位比崩溃更难查）。
+ */
+export function gitSubcommand(args: string[]): string {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+    if (!arg) continue
+    if (arg === "-c" || arg === "--config-env" || arg === "-C" || arg === "--git-dir" || arg === "--work-tree") {
+      i++ // 跳过该选项的值
+      continue
+    }
+    if (arg.startsWith("-")) continue
+    return arg
+  }
+  return ""
+}
+
 /**
  * git 子进程环境解析器（由 GitPushManager 注入）。
  * 按 cwd 与命令参数返回账号环境；返回 undefined 表示不覆盖父进程环境。
@@ -52,9 +93,93 @@ export class GitExecutor {
   private abortControllers: Map<string, AbortController[]> = new Map()
   /** execFile maxBuffer 10MB（防止全量 diff / 大仓库 status 超 Node 默认 1MB 报错） */
   private static readonly MAX_BUFFER = 10 * 1024 * 1024
+  /**
+   * 是否给命令注入 `GIT_OPTIONAL_LOCKS=0`（默认开）。
+   *
+   * 为什么：后台/只读调用（尤其 `git status`）会「顺手」刷新并回写 index ——
+   * 一次回写就改掉 `.git/index` 的 mtime，触发文件监听标脏 → 又一轮 status，
+   * 并且与 commit/stash/discard/push 抢 `index.lock`。Git 官方文档对后台脚本的建议
+   * 正是 `git --no-optional-locks status`（等价环境变量 `GIT_OPTIONAL_LOCKS=0`）。
+   * 该变量只抑制**可选**加锁子操作，写命令真正必需的锁不受影响，故可全局注入。
+   *
+   * 保留开关是为了 A/B 对照（设置面板/单测可临时关掉比较 status 耗时）。
+   */
+  private optionalLocksDisabled = true
+  /** 进程计数（按子命令；只读诊断，永不参与业务判定） */
+  private callStats = new Map<string, GitCallStat>()
+  /** 统计起点（reset 时更新） */
+  private statsSince = Date.now()
 
   constructor(storage: GitPushStorage) {
     this.storage = storage
+    this.exposeStats()
+  }
+
+  /**
+   * 把只读诊断挂到 `window.__gitdeskGitStats`（开发排查用，不进任何 UI）。
+   *
+   * 存在的理由：审查里所有「减了多少进程」原本只能靠猜。挂上后可以在真实项目集合上
+   * 前后对照（`__gitdeskGitStats.snapshot()` / `.reset()`），比读代码估算可靠。
+   * Node 单测环境没有 window，静默跳过（单测直接调 `getGitStats()`）。
+   */
+  private exposeStats(): void {
+    if (typeof window === "undefined") return
+    try {
+      ;(window as unknown as Record<string, unknown>).__gitdeskGitStats = {
+        snapshot: () => this.getGitStats(),
+        reset: () => this.resetGitStats(),
+      }
+    } catch {
+      // 只读诊断，挂不上不影响业务
+    }
+  }
+
+  /** 进程计数快照（按子命令） */
+  getGitStats(): GitStatsSnapshot {
+    const byCommand: Record<string, GitCallStat> = {}
+    let total = 0
+    for (const [command, stat] of this.callStats) {
+      byCommand[command] = { ...stat }
+      total += stat.calls
+    }
+    return {
+      since: this.statsSince,
+      total,
+      byCommand,
+    }
+  }
+
+  /** 清零计数（A/B 对照的起点） */
+  resetGitStats(): void {
+    this.callStats.clear()
+    this.statsSince = Date.now()
+  }
+
+  /** 记录一次调用结束（含失败），command 为空时归入 "(unknown)" */
+  private recordCall(command: string, startedAt: number, ok: boolean): void {
+    const key = command || "(unknown)"
+    let stat = this.callStats.get(key)
+    if (!stat) {
+      stat = {
+        calls: 0,
+        failures: 0,
+        totalMs: 0,
+      }
+      this.callStats.set(key, stat)
+    }
+    stat.calls++
+    if (!ok) stat.failures++
+    stat.totalMs += Date.now() - startedAt
+  }
+
+  /** 开关 `GIT_OPTIONAL_LOCKS=0` 注入（A/B 对照用） */
+  setOptionalLocksDisabled(disabled: boolean): void {
+    this.optionalLocksDisabled = disabled
+  }
+
+  /** 当前是否注入 `GIT_OPTIONAL_LOCKS=0` */
+  isOptionalLocksDisabled(): boolean {
+    return this.optionalLocksDisabled
   }
 
   /** 从存储加载并发上限（init 时调用） */
@@ -213,14 +338,14 @@ export class GitExecutor {
   ): Promise<string> {
     if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
     const isNetwork = isNetworkGitCommand(args)
+    const command = gitSubcommand(args)
+    const startedAt = Date.now()
     const effectiveTimeout = timeoutMs ?? (isNetwork ? this.networkTimeoutMs : this.localTimeoutMs)
     // 账号环境在排队前快照：入队后项目绑定被修改不应影响已提交的命令
     const resolverEnv = await this.resolveEnv(cwd, args)
-    const mergedEnv = resolverEnv || options?.env
-      ? { ...process.env, ...resolverEnv, ...options?.env }
-      : undefined
+    const mergedEnv = this.buildEnv(resolverEnv, options?.env)
 
-    return new Promise<string>((resolve, reject) => {
+    const task = new Promise<string>((resolve, reject) => {
       let killed = false
 
       const run = () => {
@@ -344,13 +469,58 @@ export class GitExecutor {
         }
       }
     })
+
+    // 计数在 Promise 边界统一记：成功/失败/取消都走到这里，不会因为新增 reject 分支漏记
+    return task.then(
+      (out) => {
+        this.recordCall(command, startedAt, true)
+        return out
+      },
+      (e: unknown) => {
+        this.recordCall(command, startedAt, false)
+        throw e
+      },
+    )
   }
 
   /**
-   * 解析当前分支名（单一真源）：detached HEAD 归一化为空串；
-   * 空仓库（unborn branch）时 rev-parse 失败，回退 symbolic-ref 取待建立的分支名。
+   * 合并子进程环境：父进程 + 账号环境 + 调用方环境，并按需注入 `GIT_OPTIONAL_LOCKS=0`。
+   *
+   * 调用方（或账号解析器）显式给了 `GIT_OPTIONAL_LOCKS` 时以它为准：
+   * A/B 对照与现场排障都要能覆盖默认值，否则「关了还生效」会被当成玄学。
+   */
+  private buildEnv(
+    resolverEnv: Record<string, string> | undefined,
+    callerEnv: Record<string, string> | undefined,
+  ): Record<string, string> | undefined {
+    const inject = this.optionalLocksDisabled
+      && !resolverEnv?.GIT_OPTIONAL_LOCKS
+      && !callerEnv?.GIT_OPTIONAL_LOCKS
+    if (!resolverEnv && !callerEnv && !inject) return undefined
+    return {
+      ...process.env,
+      ...resolverEnv,
+      ...(inject ? { GIT_OPTIONAL_LOCKS: "0" } : {}),
+      ...callerEnv,
+    }
+  }
+
+  /**
+   * 解析当前分支名（单一真源）：detached HEAD 归一化为空串。
+   *
+   * 首选 `git branch --show-current`（git 2.22+）：**一次进程**同时覆盖三种情形 ——
+   *   正常分支 → 分支名；空仓库(unborn) → 待建立的分支名；detached → 空串（退出码仍为 0）。
+   * 原实现先 `rev-parse --abbrev-ref HEAD`（detached 返回 "HEAD"）再补 `symbolic-ref`，
+   * 最坏要两次进程，而这是轮询热路径上每个项目都要走的解析。
+   * 旧版 git 不认识该选项会直接抛错，此时回落原来的两步逻辑（行为完全不变）。
    */
   async getCurrentBranch(cwd: string): Promise<string> {
+    try {
+      // 成功即信任：空串只可能来自 detached（不支持该选项的旧 git 会抛错，落到下方兜底）
+      return (await this.execGit(cwd, ["branch", "--show-current"])).trim()
+    } catch {
+      // 旧版 git（< 2.22）或不支持该选项的环境，走兜底
+    }
     try {
       const branch = await this.execGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
       if (branch && branch !== "HEAD") return branch
@@ -378,7 +548,10 @@ export class GitExecutor {
   ): Promise<Buffer> {
     if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
     const timeoutMs = options?.timeoutMs ?? 600000
-    return new Promise<Buffer>((resolve, reject) => {
+    const command = gitSubcommand(args)
+    const startedAt = Date.now()
+    const mergedEnv = this.buildEnv(undefined, options?.env)
+    const task = new Promise<Buffer>((resolve, reject) => {
       let killed = false
       let settled = false
       let stderrTail = ""
@@ -407,7 +580,7 @@ export class GitExecutor {
           {
             cwd,
             windowsHide: true,
-            ...(options?.env ? { env: { ...process.env, ...options.env } } : {}),
+            ...(mergedEnv ? { env: mergedEnv } : {}),
           },
         )
         this.activeProcesses.add(child)
@@ -463,6 +636,17 @@ export class GitExecutor {
         this.gitWaitQueue.push({ run, reject: (e: Error) => { if (!settled) { settled = true; reject(e) } } })
       }
     })
+
+    return task.then(
+      (out) => {
+        this.recordCall(command, startedAt, true)
+        return out
+      },
+      (e: unknown) => {
+        this.recordCall(command, startedAt, false)
+        throw e
+      },
+    )
   }
 
   destroy() {

@@ -6,27 +6,24 @@ import type {
   ConsistencySummary,
   GitProject,
   GitPushManager,
-  GitRemoteInfo,
   ProjectLimit,
 } from "../types"
 import { computed, onUnmounted, ref } from "vue"
-import { resolveValidPath } from "../utils"
+// 直连纯模块而非 "../utils" 桶：桶会经 platform/meta 拉入运行时 "siyuan"，
+// 使本模块无法在 Node 单测环境加载（useConsistencyAudit.spec.ts 需要假 manager）
+import { getProjectRemoteNames } from "../utils/platform"
+import { resolveValidPath } from "../utils/project"
+import { poolProcess } from "../utils/runtime"
 import { getErrorMessage } from "@/utils/stringUtils"
 
-/** 从跟踪 ref（如 origin/feature/x）解析所属远程名：优先匹配已检测远程名的最长前缀，兜底取首段 */
-function resolveRefRemote(ref: string, remoteNames: string[]): { remote: string, branch: string } {
-  let best = ""
-  for (const name of remoteNames) {
-    if (ref.startsWith(`${name}/`) && name.length > best.length) {
-      best = name
-    }
-  }
-  if (best) {
-    return { remote: best, branch: ref.slice(best.length + 1) }
-  }
-  const idx = ref.indexOf("/")
-  return idx === -1 ? { remote: ref, branch: ref } : { remote: ref.slice(0, idx), branch: ref.slice(idx + 1) }
-}
+/**
+ * 一致性分析的项目并发上限。
+ *
+ * 分析是「用户主动点一次、盯着进度条」的长任务，但它和点卡片/暂存/提交共用
+ * GitExecutor 的**同一个本地池**：原实现用 `Promise.allSettled` 把全部项目一次压进去，
+ * 20 个项目会把本地池占满，期间界面明显变慢。取 2 是有意让出池子（analysis 不该抢占交互）。
+ */
+const AUDIT_PROJECT_CONCURRENCY = 2
 
 export function useConsistencyAudit(manager: GitPushManager) {
   const rows = ref<ConsistencyProjectRow[]>([])
@@ -90,7 +87,16 @@ export function useConsistencyAudit(manager: GitPushManager) {
     }
   }
 
-  /** 对单个项目执行分析（路径无效/git 失败 → error 行） */
+  /**
+   * 对单个项目执行分析（路径无效/git 失败 → error 行）。
+   *
+   * 进程预算（P1-3 改造后）：
+   *   · 远程名取项目记录里配好的平台远程，**不再每项目跑一次 `git remote -v`**
+   *     （记录为空时才回落检测，见下）；
+   *   · 本地分支 + 远程跟踪 ref 由**一次** `for-each-ref` 取齐（原先是两次）；
+   *   · 远端 ref 与本地分支 sha 相同即「已同步」，直接跳过 `rev-list`（原实现每对都跑）。
+   * 于是单项目本地进程数从 `3 + B×R` 降到 `2 + 仅真正有差异的 (分支, 远程) 对`。
+   */
   async function auditProject(p: GitProject): Promise<ConsistencyProjectRow> {
     const row: ConsistencyProjectRow = {
       id: p.id,
@@ -109,16 +115,19 @@ export function useConsistencyAudit(manager: GitPushManager) {
       return row
     }
 
-    let remotes: GitRemoteInfo[]
-    try {
-      remotes = await manager.detectRemotes(cwd)
-    } catch (e: unknown) {
-      // 非 git 仓库 / 权限问题等
-      console.warn(`[gitPush] 一致性分析：检测远程失败 ${p.name}:`, getErrorMessage(e))
-      row.error = true
-      return row
+    // 远程名优先取项目记录（面板里配好的平台远程），避免每个项目多付一次 `git remote -v`
+    let remoteNames = getProjectRemoteNames(p).map((r) => r.name)
+    if (remoteNames.length === 0) {
+      try {
+        const remotes = await manager.detectRemotes(cwd)
+        remoteNames = [...new Set(remotes.map((r) => r.name))]
+      } catch (e: unknown) {
+        // 非 git 仓库 / 权限问题等
+        console.warn(`[gitPush] 一致性分析：检测远程失败 ${p.name}:`, getErrorMessage(e))
+        row.error = true
+        return row
+      }
     }
-    const remoteNames = [...new Set(remotes.map((r) => r.name))]
     if (remoteNames.length === 0) {
       row.noRemote = true
       return row
@@ -129,69 +138,113 @@ export function useConsistencyAudit(manager: GitPushManager) {
       const signal = abortController?.signal
       await Promise.allSettled(remoteNames.map(async (name) => {
         try {
-          await manager.fetchRemoteAt(cwd, name, { prune: true, signal })
+          await manager.fetchRemoteAt(cwd, name, {
+            prune: true,
+            signal,
+          })
         } catch (e: unknown) {
           row.fetchErrors[name] = getErrorMessage(e) || String(e)
         }
       }))
     }
 
-    const [branches, trackingRefs] = await Promise.all([
-      manager.getBranches(cwd),
-      manager.getRemoteTrackingRefs(cwd),
-    ])
+    // 一次进程取齐「本地分支 + 远程跟踪 ref」，两边都带 sha 供相等短路
+    const snapshot = await manager.getRefSnapshot(cwd, remoteNames)
 
     // fetch 失败且无任何缓存跟踪 ref 的远程不可信（缓存可能为空），跳过其比对避免误报
-    const validRemoteNames = remoteNames.filter((name) => !row.fetchErrors[name] || trackingRefs.some((r) => r.startsWith(`${name}/`)))
+    const validRemoteNames = remoteNames.filter((name) => !row.fetchErrors[name] || snapshot.remoteRefs.some((r) => r.remote === name))
     const validRemoteSet = new Set(validRemoteNames)
-    if (validRemoteNames.length === 0 && branches.length === 0) {
+    if (validRemoteNames.length === 0 && snapshot.branches.length === 0) {
       row.noBranches = true
       return row
     }
 
     // 跟踪 ref 按远程分组（排除 fetch 失败且无缓存的远程）
-    const refsByRemote = new Map<string, Set<string>>()
-    for (const ref of trackingRefs) {
-      const { remote, branch } = resolveRefRemote(ref, remoteNames)
-      if (!validRemoteSet.has(remote)) { continue }
-      const set = refsByRemote.get(remote)
-      if (set) { set.add(branch) }
-      else { refsByRemote.set(remote, new Set([branch])) }
+    const branchesByRemote = new Map<string, Set<string>>()
+    for (const ref of snapshot.remoteRefs) {
+      if (!validRemoteSet.has(ref.remote)) { continue }
+      const set = branchesByRemote.get(ref.remote)
+      if (set) { set.add(ref.branch) }
+      else { branchesByRemote.set(ref.remote, new Set([ref.branch])) }
     }
 
-    if (branches.length === 0 && trackingRefs.length === 0) {
+    if (snapshot.branches.length === 0 && snapshot.remoteRefs.length === 0) {
       row.noBranches = true
       return row
     }
 
+    /** 远程跟踪 ref 的 sha（`<remote>/<branch>` → sha），用于「相等即同步」短路 */
+    const remoteShaByKey = new Map(snapshot.remoteRefs.map((ref) => [`${ref.remote}/${ref.branch}`, ref.sha]))
+
     // 本地分支 × 有效远程：存在性 + ahead/behind
     const matchedRefs = new Set<string>()
-    for (const b of branches) {
+    for (const b of snapshot.branches) {
       for (const remote of validRemoteNames) {
-        if (!refsByRemote.get(remote)?.has(b.name)) {
-          row.branches.push({ branch: b.name, current: b.current, remote, state: "localOnly", ahead: 0, behind: 0 })
+        const key = `${remote}/${b.name}`
+        if (!branchesByRemote.get(remote)?.has(b.name)) {
+          row.branches.push({
+            branch: b.name,
+            current: b.current,
+            remote,
+            state: "localOnly",
+            ahead: 0,
+            behind: 0,
+          })
           continue
         }
-        matchedRefs.add(`${remote}/${b.name}`)
+        matchedRefs.add(key)
+        // 两侧 sha 相同 ⇒ 指向同一提交 ⇒ ahead=0、behind=0，无需跑 rev-list（省下绝大多数进程）
+        if (remoteShaByKey.get(key) === b.sha) {
+          row.branches.push({
+            branch: b.name,
+            current: b.current,
+            remote,
+            state: "synced",
+            ahead: 0,
+            behind: 0,
+          })
+          continue
+        }
         try {
-          const { ahead, behind } = await manager.countAheadBehind(cwd, `${remote}/${b.name}`, b.name)
+          const { ahead, behind } = await manager.countAheadBehind(cwd, key, b.name)
           let state: ConsistencyState = "synced"
           if (ahead > 0 && behind > 0) { state = "diverged" }
           else if (ahead > 0) { state = "ahead" }
           else if (behind > 0) { state = "behind" }
-          row.branches.push({ branch: b.name, current: b.current, remote, state, ahead, behind })
+          row.branches.push({
+            branch: b.name,
+            current: b.current,
+            remote,
+            state,
+            ahead,
+            behind,
+          })
         } catch (e: unknown) {
           console.warn(`[gitPush] 一致性分析：rev-list 失败 ${p.name}/${b.name}@${remote}:`, getErrorMessage(e))
-          row.branches.push({ branch: b.name, current: b.current, remote, state: "error", ahead: 0, behind: 0 })
+          row.branches.push({
+            branch: b.name,
+            current: b.current,
+            remote,
+            state: "error",
+            ahead: 0,
+            behind: 0,
+          })
         }
       }
     }
 
     // 远程独有分支（含陈旧远程残留跟踪 ref，提示可清理）
     for (const remote of validRemoteNames) {
-      for (const branch of refsByRemote.get(remote) || []) {
+      for (const branch of branchesByRemote.get(remote) || []) {
         if (!matchedRefs.has(`${remote}/${branch}`)) {
-          row.branches.push({ branch, current: false, remote, state: "remoteOnly", ahead: 0, behind: 0 })
+          row.branches.push({
+            branch,
+            current: false,
+            remote,
+            state: "remoteOnly",
+            ahead: 0,
+            behind: 0,
+          })
         }
       }
     }
@@ -199,7 +252,12 @@ export function useConsistencyAudit(manager: GitPushManager) {
     return row
   }
 
-  /** 批量分析全部项目（GitExecutor 双池限流自动排队，无需额外节流） */
+  /**
+   * 批量分析全部项目。
+   *
+   * 项目级并发限到 `AUDIT_PROJECT_CONCURRENCY`（原因见常量注释）；单项目失败不中断整轮，
+   * 结果按 **targets 下标**回填（poolProcess 是乱序完成的，不能 push）。
+   */
   async function runAudit() {
     if (analyzing.value) { return }
     analyzing.value = true
@@ -211,14 +269,28 @@ export function useConsistencyAudit(manager: GitPushManager) {
       const projects = await manager.getProjects()
       const limited = projectLimit.value === "all" ? projects : projects.slice(0, projectLimit.value)
       progress.value = { done: 0, total: limited.length }
-      const settled = await Promise.allSettled(limited.map(async (p) => {
-        const row = await auditProject(p)
-        progress.value.done++
-        return row
-      }))
-      rows.value = settled
-        .filter((r): r is PromiseFulfilledResult<ConsistencyProjectRow> => r.status === "fulfilled")
-        .map((r) => r.value)
+      const results: ConsistencyProjectRow[] = []
+      await poolProcess(limited, AUDIT_PROJECT_CONCURRENCY, async (p, index) => {
+        try {
+          results[index] = await auditProject(p)
+        } catch (e: unknown) {
+          // auditProject 内部已兜住绝大多数失败；这里兜住意外异常，保证「一轮结果行数 = 项目数」
+          console.warn(`[gitPush] 一致性分析：项目失败 ${p.name}:`, getErrorMessage(e))
+          results[index] = {
+            id: p.id,
+            name: p.name,
+            path: p.path,
+            error: true,
+            noRemote: false,
+            noBranches: false,
+            fetchErrors: {},
+            branches: [],
+          }
+        } finally {
+          progress.value.done++
+        }
+      })
+      rows.value = results.filter((row): row is ConsistencyProjectRow => !!row)
       analyzedAt.value = new Date().toISOString()
       analyzed.value = true
       await saveCache()

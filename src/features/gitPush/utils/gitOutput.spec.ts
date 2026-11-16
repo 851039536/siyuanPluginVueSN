@@ -11,6 +11,7 @@ import {
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,
+  parseRefSnapshot,
   parseStashList,
   parseWorktreeStatus,
   parseWorktreeStatusV2,
@@ -670,3 +671,51 @@ describe("findBlockingUntracked", () => {
     expect(findBlockingUntracked(["a.ts"], [])).toEqual([])
   })
 })
+
+describe("parseRefSnapshot（本地分支 + 远程跟踪 ref 一次取齐）", () => {
+  const NUL = "\0"
+
+  it("切分本地分支与远程 ref，并保留 sha 与当前分支标记", () => {
+    const raw = [
+      `refs/heads/main${NUL}aaa${NUL}*`,
+      `refs/heads/feature/login${NUL}bbb${NUL} `,
+      `refs/remotes/origin/main${NUL}aaa${NUL} `,
+      `refs/remotes/origin/feature/login${NUL}bbb${NUL} `,
+    ].join("\n")
+    const snap = parseRefSnapshot(raw, ["origin"])
+    expect(snap.branches).toEqual([
+      { name: "main", sha: "aaa", current: true },
+      { name: "feature/login", sha: "bbb", current: false },
+    ])
+    expect(snap.remoteRefs).toEqual([
+      { remote: "origin", branch: "main", sha: "aaa" },
+      { remote: "origin", branch: "feature/login", sha: "bbb" },
+    ])
+  })
+
+  it("远程名/分支名都含斜杠时按最长前缀切分", () => {
+    const raw = [
+      `refs/remotes/company/origin/main${NUL}ccc${NUL} `,
+      `refs/remotes/company/origin/feature/x${NUL}ddd${NUL} `,
+    ].join("\n")
+    const snap = parseRefSnapshot(raw, ["company/origin", "company"])
+    expect(snap.remoteRefs).toEqual([
+      { remote: "company/origin", branch: "main", sha: "ccc" },
+      { remote: "company/origin", branch: "feature/x", sha: "ddd" },
+    ])
+  })
+
+  it("未知远程名回落首段；origin/HEAD 这类符号 ref 被剔除", () => {
+    const raw = [
+      `refs/remotes/backup/main${NUL}eee${NUL} `,
+      `refs/remotes/origin/HEAD${NUL}aaa${NUL} `,
+    ].join("\n")
+    const snap = parseRefSnapshot(raw, [])
+    expect(snap.remoteRefs).toEqual([{ remote: "backup", branch: "main", sha: "eee" }])
+  })
+
+  it("空输出返回空快照", () => {
+    expect(parseRefSnapshot("", ["origin"])).toEqual({ branches: [], remoteRefs: [] })
+  })
+})
+

@@ -3,6 +3,9 @@
 // 背景：RemoteOps 与 WorktreeOps 曾有各自的分支解析实现，前者做 detached 归一化与
 // symbolic-ref 兜底，后者只跑 rev-parse（detached 会返回字符串 "HEAD"）。
 // 统一到 GitExecutor 后，这里锁住三态语义，防止后续退回两套实现。
+//
+// P2-7 之后还锁住「一次进程」这条预算：`branch --show-current`（git 2.22+）一条命令就能
+// 同时给出正常分支 / 空仓库（unborn）/ detached（空串）三种结果，原实现最坏要两次进程。
 import type { GitExecutor } from "./GitExecutor"
 import { execFileSync } from "node:child_process"
 import {
@@ -52,6 +55,10 @@ describe("GitExecutor.getCurrentBranch（真实 git）", () => {
     git(repo, ["commit", "-qm", "c1"])
 
     expect(await executor.getCurrentBranch(repo)).toBe("main")
+    // 正常分支只应发一条命令（branch --show-current）
+    const stats = executor.getGitStats()
+    expect(stats.byCommand.branch?.calls).toBeGreaterThanOrEqual(1)
+    expect(stats.byCommand["rev-parse"]?.calls ?? 0).toBe(0)
   })
 
   it("detached HEAD 归一化为空串（不得返回字符串 HEAD）", async () => {

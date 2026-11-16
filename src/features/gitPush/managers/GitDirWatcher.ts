@@ -9,23 +9,33 @@
 //   不能捕获：编辑器里修改了工作区文件（未暂存）
 //             —— 这类改动不写 .git 任何文件，只能靠第 2 层轮询。
 //
-// ⚠️ 只监听**具体文件**而非递归监听目录：Windows 的 fs.watch 递归能力有限且不可靠，
-//   而 gitdir 下的关键文件是固定集合，逐个监听更稳。
+// ⚠️ 为什么优先 `fs.watch(gitDir, { recursive: true })` 而不是逐个文件：
+//   非递归监听 `refs` 只能收到「其直接子目录项」的变化，收不到 `refs/heads/main`、
+//   `refs/remotes/origin/main` 这类**文件内容**的变化 —— 而 fetch / push / commit 改的正是它们。
+//   递归监听一次覆盖整棵 gitdir，也不怕 git 版本新增文件。Windows / macOS 支持；
+//   平台不支持时（部分 Linux）回退到显式目标列表，深层 ref 变化交给第 2 层轮询兜底
+//   （轮询的 index/HEAD 预筛会命中，最坏延迟一个轮询周期）。
 import type { FSWatcher } from "node:fs"
 import { getNodeModules } from "@/utils/nodeModules"
 
 /** 单项目监听状态 */
 interface WatchEntry {
-  /** 已建立的 watcher（可能挂多个路径，任一变化都触发） */
+  /** 已建立的 watcher（递归一个，或回退时的多个） */
   watchers: FSWatcher[]
   /** 防抖定时器句柄 */
   timer: ReturnType<typeof setTimeout> | null
+  /**
+   * 防抖窗口内累积的变化路径（相对 gitdir、posix 分隔符）。
+   * 事件**必须**按路径分类再上抛，否则「任何事件都标脏全部域」会让一次 fetch
+   * 触发每张卡 3 个查询（见 gitDirDomains.ts）。
+   */
+  pending: Set<string>
 }
 
 /**
  * `.git` 关键文件监听器。
  *
- * 职责单一：检测到变化后回调 `onChange(projectId)`，**不自己发 git 命令**——
+ * 职责单一：检测到变化后回调 `onChange(projectId, changedPaths)`，**不自己发 git 命令**——
  * 是否重载、重载什么由调度器与调用方决定（避免第三条派发路径）。
  */
 export class GitDirWatcher {
@@ -33,10 +43,10 @@ export class GitDirWatcher {
   private entries = new Map<string, WatchEntry>()
   /** 事件合并窗口（ms） */
   private debounceMs: number
-  /** 变化回调 */
-  private onChange: (projectId: string) => void
+  /** 变化回调（第 2 参为防抖窗口内累积的变化路径） */
+  private onChange: (projectId: string, changedPaths: string[]) => void
 
-  constructor(debounceMs: number, onChange: (projectId: string) => void) {
+  constructor(debounceMs: number, onChange: (projectId: string, changedPaths: string[]) => void) {
     this.debounceMs = debounceMs
     this.onChange = onChange
   }
@@ -47,15 +57,17 @@ export class GitDirWatcher {
   }
 
   /**
-   * gitdir 下的关键监听目标（相对 gitdir 的路径）。
+   * gitdir 下的关键监听目标（相对 gitdir 的路径）——**仅在递归监听不可用时**使用。
    *
    * 选择依据（哪些文件能反映「状态变了」）：
    *   HEAD            切分支 / detached 切换 / 复位
    *   index           暂存 / 取消暂存 / commit / checkout（工作区与 index 的分界）
-   *   refs            本地分支提交推进（目录，含 heads/）；用目录而非具体文件，
-   *                   否则新增分支文件时收不到事件
+   *   refs            引用根目录（含 heads / remotes / tags 这些子目录的增删）
+   *   refs/heads      本地分支文件（**直接子项**，故非递归也能收到 main 的改写）
+   *   refs/remotes    远程跟踪引用目录（fetch / push 产物；注意其下还有一层远程名目录）
+   *   refs/tags       Tag 增删
    *   packed-refs     引用被打包后 refs 下的文件会消失，改动落在本文件
-   *   refs/remotes    远程跟踪引用（fetch / push 的直接产物 → 唯一能反映 behind 变化）
+   *   FETCH_HEAD      fetch 的落盘痕迹（即使 refs 未变也能标识一次 fetch）
    *   ORIG_HEAD       reset / merge / rebase / pull 的痕迹
    *   MERGE_HEAD      merge 中断状态
    *   rebase-merge / rebase-apply  rebase 中断状态
@@ -67,7 +79,11 @@ export class GitDirWatcher {
     "HEAD",
     "index",
     "refs",
+    "refs/heads",
+    "refs/remotes",
+    "refs/tags",
     "packed-refs",
+    "FETCH_HEAD",
     "ORIG_HEAD",
     "MERGE_HEAD",
     "rebase-merge",
@@ -93,21 +109,42 @@ export class GitDirWatcher {
     const entry: WatchEntry = {
       watchers: [],
       timer: null,
+      pending: new Set(),
     }
 
-    for (const target of GitDirWatcher.TARGETS) {
-      const abs = path.join(gitDir, target)
-      try {
-        // 不存在则跳过（如 packed-refs 仅在 gc 后出现、rebase-merge 仅 rebase 中出现）：
-        // 这些是「可选存在」的文件，缺失属正常，不能因此判定整体失败
-        if (!fs.existsSync(abs)) continue
-        const watcher = fs.watch(abs, { persistent: false }, () => this.scheduleNotify(projectId))
-        // watch 可能因权限/文件被删而抛错，也可能返回后立刻 emit error（如被监听文件删除），
-        // 后者不处理会成为未捕获异常
-        watcher.on("error", () => { /* 单点失效不影响其余监听；下轮 ensureWatch 会重建 */ })
-        entry.watchers.push(watcher)
-      } catch {
-        // 单个目标失败不影响其余目标
+    // 首选递归监听：一次覆盖 refs/heads/main、refs/remotes/origin/main 这类深层路径。
+    // 平台不支持时 fs.watch 会同步抛错（ERR_FEATURE_UNAVAILABLE_ON_PLATFORM），回退到显式目标。
+    let recursive = false
+    try {
+      const watcher = fs.watch(gitDir, { persistent: false, recursive: true }, (_event, filename) => {
+        this.scheduleNotify(projectId, normalizeRelPath(filename))
+      })
+      watcher.on("error", () => { /* 单点失效不影响其余监听；下轮 ensureWatch 会重建 */ })
+      entry.watchers.push(watcher)
+      recursive = true
+    } catch {
+      recursive = false
+    }
+
+    if (!recursive) {
+      for (const target of GitDirWatcher.TARGETS) {
+        const abs = path.join(gitDir, target)
+        try {
+          // 不存在则跳过（如 packed-refs 仅在 gc 后出现、rebase-merge 仅 rebase 中出现）：
+          // 这些是「可选存在」的文件，缺失属正常，不能因此判定整体失败
+          if (!fs.existsSync(abs)) continue
+          const watcher = fs.watch(abs, { persistent: false }, (_event, filename) => {
+            // 非递归时 filename 是「相对于被监听目录」的，必须带上 target 前缀才能分类
+            const rel = normalizeRelPath(filename)
+            this.scheduleNotify(projectId, rel ? `${target}/${rel}` : target)
+          })
+          // watch 可能因权限/文件被删而抛错，也可能返回后立刻 emit error（如被监听文件删除），
+          // 后者不处理会成为未捕获异常
+          watcher.on("error", () => { /* 单点失效不影响其余监听；下轮 ensureWatch 会重建 */ })
+          entry.watchers.push(watcher)
+        } catch {
+          // 单个目标失败不影响其余目标
+        }
       }
     }
 
@@ -151,16 +188,33 @@ export class GitDirWatcher {
    * （如 commit 同时动 index + refs/heads/xxx + logs/HEAD），
    * 必须合并成一次通知，否则一次 commit 会触发 3~5 轮重载。
    *
+   * 合并期间**累积变化路径**而不是只记「有变化」：上层要按路径分类决定重载哪些域
+   * （fetch 只影响 pushStatus，commit 才影响 log/branches）。
+   *
    * 已有待发定时器时不重置：持续事件（如长时间的 fetch 逐步写 refs）不应无限推迟通知。
    */
-  private scheduleNotify(projectId: string): void {
+  private scheduleNotify(projectId: string, relPath: string): void {
     const entry = this.entries.get(projectId)
-    if (!entry || entry.timer !== null) return
+    if (!entry) return
+    entry.pending.add(relPath)
+    if (entry.timer !== null) return
     entry.timer = setTimeout(() => {
       const cur = this.entries.get(projectId)
       if (!cur) return
       cur.timer = null
-      this.onChange(projectId)
+      const changed = [...cur.pending]
+      cur.pending.clear()
+      this.onChange(projectId, changed)
     }, this.debounceMs)
   }
+}
+
+/**
+ * 归一化 fs.watch 给的 filename：可能是 Buffer、可能带反斜杠、可能为 null。
+ * 统一成 posix 分隔符的相对路径（分类函数只认这种形态）；null → 空串（上层按「无法判定」保守处理）。
+ */
+function normalizeRelPath(filename: string | Buffer | null): string {
+  if (filename === null) return ""
+  const raw = typeof filename === "string" ? filename : filename.toString()
+  return raw.replace(/\\/g, "/").replace(/^\.\//, "")
 }

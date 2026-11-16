@@ -19,10 +19,22 @@ export class RepoOps {
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> {
     try {
       // 用不可见分隔符 0x1F（Unit Separator）替代 |，避免 subject 含 | 时解析错乱
-      // 注意：git tag --format 是 for-each-ref 语法，十六进制转义为 %1f；%x1f 是 git log --pretty 专属，在此会被原样输出导致切分失败
+      // 注意：for-each-ref 的十六进制转义为 %1f；%x1f 是 git log --pretty 专属，在此会被原样输出导致切分失败
       // hash 段：annotated tag 取 %(*objectname)（解引用后的 commit），lightweight tag 回落 %(objectname)（即 commit 本身）
-      const raw = await this.executor.execGit(projectPath, ["tag", "-l", `--sort=-creatordate`, `--format=%(refname:short)%1f%(subject)%1f%(creatordate:iso)%1f%(*objectname)%1f%(objectname)`])
-      return raw.trim().split("\n").filter(Boolean).slice(0, limit).map((line) => {
+      //
+      // 用 `for-each-ref --count` 而不是 `git tag -l` + JS `.slice()`：千级 Tag 的仓库原先每次
+      // 详情加载都要把全量输出传过来再丢掉，交给 git 在输出侧截断即可（limit<=0 时不加 --count）。
+      const args = ["for-each-ref"]
+      if (limit > 0) args.push(`--count=${limit}`)
+      args.push(
+        "--sort=-creatordate",
+        `--format=%(refname:short)%1f%(subject)%1f%(creatordate:iso)%1f%(*objectname)%1f%(objectname)`,
+        "refs/tags",
+      )
+      const raw = await this.executor.execGit(projectPath, args)
+      const rows = raw.trim().split("\n").filter(Boolean)
+      // 兜底再截一次（--count 对 limit<=0 不生效）
+      return (limit > 0 ? rows.slice(0, limit) : rows).map((line) => {
         const [name, message, date, peeledHash, objectHash] = line.split("\x1F")
         return {
           name,
@@ -51,12 +63,12 @@ export class RepoOps {
 
   /** 获取远程已存在的 Tag 名列表（git ls-remote --tags，网络命令走可配置的网络超时） */
   async getRemoteTags(projectPath: string, remoteName: string): Promise<string[]> {
-    const raw = await this.executor.execGit(projectPath, ["ls-remote", "--tags", "--", remoteName])
+    // `--refs` 让 ls-remote 直接不输出 annotated tag 的 `^{}` peel 行（省一次全量过滤与传输）
+    const raw = await this.executor.execGit(projectPath, ["ls-remote", "--tags", "--refs", "--", remoteName])
     const names: string[] = []
     for (const line of raw.trim().split("\n").filter(Boolean)) {
       const m = line.match(/refs\/tags\/(.+)$/)
-      // 过滤 annotated tag 的 ^{} peel 行，仅保留 tag 名
-      if (m && !m[1].endsWith("^{}")) names.push(m[1])
+      if (m) names.push(m[1])
     }
     return names
   }

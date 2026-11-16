@@ -7,6 +7,7 @@ import type {
 } from "./managers/LineStatsStore"
 import type { AllPlatformResult, PushPreflightResult, RemoteOpResult } from "./managers/RemoteOps"
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
+import type { RefSyncSnapshot } from "./types/gitRefs"
 import type { NumstatCommit } from "./reportMetrics"
 import type {
   BfgCleanPlan,
@@ -1002,6 +1003,14 @@ export class GitPushManager {
   /** 列出全部远程跟踪分支短名（如 origin/main），供一致性比对 */
   async getRemoteTrackingRefs(projectPath: string): Promise<string[]> {
     return this.worktreeOps.getRemoteTrackingRefs(projectPath)
+  }
+
+  /**
+   * 一次 `for-each-ref` 取齐本地分支 + 远程跟踪 ref（含 sha），供一致性分析比对。
+   * `remoteNames` 用于把 `refs/remotes/<remote>/<branch>` 正确切分（两者都可能含斜杠）。
+   */
+  async getRefSnapshot(projectPath: string, remoteNames: string[]): Promise<RefSyncSnapshot> {
+    return this.worktreeOps.getRefSnapshot(projectPath, remoteNames)
   }
 
   /** 计算 localBranch 相对 remoteRef 的领先/落后提交数（左=remote→behind，右=local→ahead） */

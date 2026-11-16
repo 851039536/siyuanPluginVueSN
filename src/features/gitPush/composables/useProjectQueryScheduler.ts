@@ -20,6 +20,11 @@ import {
   findProject,
   resolveValidPath,
 } from "../utils/project"
+// 直连纯模块（同上）：只做值比较，无任何运行时依赖
+import {
+  isSamePushStatus,
+  isSameWorkingTree,
+} from "../utils/queryStateCompare"
 import { PLATFORM_META } from "../types/meta"
 
 /** 在飞查询 / 新鲜度时间戳的复合键 */
@@ -50,6 +55,8 @@ export function useProjectQueryScheduler(
   const pushStatuses = ref<Record<string, PushStatusInfo>>({})
   /** 工作区状态缓存（所有权在此） */
   const workingTrees = ref<Record<string, WorkingTreeInfo>>({})
+  /** 每项目「工作区状态真的查过一次」的代数（diff 缓存失效判据，见类型注释） */
+  const workingTreeEpoch = ref<Record<string, number>>({})
   /** 响应式脏信号：任何 invalidate 递增（卡片只 watch 此单值） */
   const epoch = ref(0)
 
@@ -171,6 +178,9 @@ export function useProjectQueryScheduler(
       const status = await manager.checkPushStatus(id, { branch })
       // 期间被编辑/删除，或被更新的同域查询抢占：迟到结果不得覆盖新状态
       if (!isLatest() || !isCurrentGeneration(id, gen)) return
+      // 值未变就**不替换对象引用**：下游（卡片 diff 缓存、统计 computed、watch）全靠引用判变化，
+      // 后台探测每轮无条件赋新对象会让「什么都没变的一轮」也触发整片重算与缓存失效。
+      if (isSamePushStatus(pushStatuses.value[id], status)) return
       pushStatuses.value[id] = status
     }, { force: opts?.force })
   }
@@ -192,6 +202,10 @@ export function useProjectQueryScheduler(
         branch,
       })
       if (!isLatest() || !isCurrentGeneration(id, gen)) return
+      // 「刚查过一次」是 diff 缓存唯一可靠的失效信号（内容可能变了，即使快照完全相同）
+      workingTreeEpoch.value[id] = (workingTreeEpoch.value[id] ?? 0) + 1
+      // 同 pushStatus：无变化轮次保持原引用，避免卡片 watcher / 统计 computed 被无谓触发
+      if (isSameWorkingTree(workingTrees.value[id], tree)) return
       workingTrees.value[id] = tree
       // 分支名回填缓存 —— **这是本模块唯一的写入点**（另两处曾各写一次，守卫还不一致，
       // 已移除）。理由：只有这里刚读过 HEAD（v2 路径）或由调用方显式提供，
@@ -357,6 +371,7 @@ export function useProjectQueryScheduler(
   function clearProject(id: string): void {
     delete pushStatuses.value[id]
     delete workingTrees.value[id]
+    delete workingTreeEpoch.value[id]
     branchCache.delete(id)
     dirty.delete(id)
     // 递增代数：在飞查询完成时据此丢弃结果，避免旧路径状态回写
@@ -374,6 +389,7 @@ export function useProjectQueryScheduler(
     epoch,
     pushStatuses,
     workingTrees,
+    workingTreeEpoch,
     run,
     has,
     isFresh,

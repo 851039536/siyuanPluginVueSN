@@ -404,3 +404,120 @@ describe("useProjectQueryScheduler —— 并发顺序守卫（run token）", ()
     expect(manager.getBranch).not.toHaveBeenCalled()
   })
 })
+
+// P1-5：无变化轮次不得替换状态对象
+//
+// 后台探测每轮都会重查，但仓库没变时「写入新对象」会让所有按引用判变化的消费者白跑：
+//   · 每张卡 watch(workingTrees[id]) → diffTreeVersion++ → 单文件 diff 缓存整体过期；
+//   · useGitStats 的 projectStats 聚合 computed 反复求值；
+//   · 表现为「刷新时界面抖」，而进程数其实没增加。
+describe("useProjectQueryScheduler —— 无变化轮次不替换状态对象", () => {
+  let projects: Ref<GitProject[]>
+
+  beforeEach(() => {
+    projects = ref<GitProject[]>([makeProject()])
+  })
+
+  it("两次相同的工作区状态：对象引用保持不变，但查询代数递增", async () => {
+    const { manager } = makeManager("main")
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    await scheduler.loadWorkingTree("P1", { force: true })
+    const first = scheduler.workingTrees.value.P1
+    expect(first).toBeDefined()
+    const epoch1 = scheduler.workingTreeEpoch.value.P1
+
+    await scheduler.loadWorkingTree("P1", { force: true })
+    const second = scheduler.workingTrees.value.P1
+
+    // 引用未变（不触发下游重算）
+    expect(second).toBe(first)
+    // 但「查过一次」的信号必须推进：同一文件被再改一次时快照相同、diff 内容已变
+    expect(scheduler.workingTreeEpoch.value.P1).toBe(epoch1 + 1)
+  })
+
+  it("工作区状态变化（新增文件）：替换对象引用", async () => {
+    let dirty = false
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(async () => ({
+        branch: "main",
+        files: dirty
+          ? [{
+              path: "a.ts",
+              status: "modified",
+              staged: false,
+            }]
+          : [],
+        stagedCount: 0,
+        unstagedCount: dirty ? 1 : 0,
+        untrackedCount: 0,
+        hasChanges: dirty,
+      })),
+      checkPushStatus: vi.fn(async () => ({
+        branch: "main",
+        remotes: {},
+        needsPush: false,
+      })),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    await scheduler.loadWorkingTree("P1", { force: true })
+    const first = scheduler.workingTrees.value.P1
+    dirty = true
+    await scheduler.loadWorkingTree("P1", { force: true })
+    expect(scheduler.workingTrees.value.P1).not.toBe(first)
+    expect(scheduler.workingTrees.value.P1?.files).toHaveLength(1)
+  })
+
+  it("两次相同的推送状态：对象引用保持不变", async () => {
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(async () => makeWorkingTree("main")),
+      checkPushStatus: vi.fn(async () => ({
+        branch: "main",
+        remotes: {
+          github: {
+            ahead: 0,
+            behind: 0,
+            noUpstream: false,
+          },
+        },
+        needsPush: false,
+      })),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    await scheduler.loadPushStatus("P1", { force: true })
+    const first = scheduler.pushStatuses.value.P1
+    await scheduler.loadPushStatus("P1", { force: true })
+    expect(scheduler.pushStatuses.value.P1).toBe(first)
+  })
+
+  it("推送状态变化（ahead 从 0 变 1）：替换对象引用", async () => {
+    let ahead = 0
+    const manager = {
+      getBranch: vi.fn(async () => "main"),
+      getWorkingTreeStatus: vi.fn(async () => makeWorkingTree("main")),
+      checkPushStatus: vi.fn(async () => ({
+        branch: "main",
+        remotes: {
+          github: {
+            ahead,
+            behind: 0,
+            noUpstream: false,
+          },
+        },
+        needsPush: ahead > 0,
+      })),
+    }
+    const scheduler = useProjectQueryScheduler(manager as any, projects)
+
+    await scheduler.loadPushStatus("P1", { force: true })
+    const first = scheduler.pushStatuses.value.P1
+    ahead = 1
+    await scheduler.loadPushStatus("P1", { force: true })
+    expect(scheduler.pushStatuses.value.P1).not.toBe(first)
+    expect(scheduler.pushStatuses.value.P1?.needsPush).toBe(true)
+  })
+})

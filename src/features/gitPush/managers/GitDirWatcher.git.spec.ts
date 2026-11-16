@@ -12,6 +12,8 @@
 //   ③ 切分支改 HEAD → 必须触发
 //   ④ 纯工作区改动（未 add/commit）→ **不**触发（这是有意的边界，由轮询层覆盖）
 //   ⑤ destroy 后不再触发（防止卸载后回调打到已销毁的宿主）
+//   ⑥ fetch 改 refs/remotes → 必须触发，且变化路径只能分类为 pushStatus
+//      （非递归监听 refs 收不到 refs/remotes/origin/main 这类深层文件变化，这正是 P1-1 的修复点）
 import { execFileSync } from "node:child_process"
 import {
   mkdtempSync,
@@ -27,6 +29,7 @@ import {
   it,
 } from "vitest"
 import { GitDirWatcher } from "./GitDirWatcher"
+import { classifyGitDirChanges } from "./gitDirDomains"
 
 /** 屏蔽开发者真实 git 配置的隔离环境（与本目录其它 *.git.spec.ts 同策略） */
 const ISOLATED_ENV: NodeJS.ProcessEnv = (() => {
@@ -93,15 +96,25 @@ describe("GitDirWatcher（真实 fs.watch + 真实 git）", () => {
     repos.length = 0
   })
 
-  /** 建仓库 + 建监听，返回事件收集器 */
+  /** 建仓库 + 建监听，返回事件收集器（同时收集每次通知带上的变化路径） */
   function setup(projectId = "p1", debounceMs = 150) {
     const repo = makeRepo()
     repos.push(repo.path)
     const events: string[] = []
-    const watcher = new GitDirWatcher(debounceMs, (id) => events.push(id))
+    const paths: string[] = []
+    const watcher = new GitDirWatcher(debounceMs, (id, changed) => {
+      events.push(id)
+      paths.push(...changed)
+    })
     watchers.push(watcher)
     const ok = watcher.watch(projectId, repo.gitDir)
-    return { repo, events, watcher, ok }
+    return {
+      repo,
+      events,
+      paths,
+      watcher,
+      ok,
+    }
   }
 
   it("能在真实仓库上建立监听（.git 下确实存在可监听目标）", () => {
@@ -181,4 +194,72 @@ describe("GitDirWatcher（真实 fs.watch + 真实 git）", () => {
     expect(watcher.watch("bad", join(tmpdir(), "definitely-not-a-gitdir-xyz"))).toBe(false)
     expect(watcher.watchedCount).toBe(0)
   })
+
+  /**
+   * P1-1 核心回归：fetch 必须被感知，且变化路径**只**能分类为 pushStatus。
+   *
+   * 旧实现的监听目标里没有 refs/remotes，且对目录是非递归监听（收不到
+   * `refs/remotes/origin/main` 这种深层文件的变化），于是「fetch 之后 ahead/behind 不刷新」
+   * 只能等 15~120s 轮询。这里用真实 fetch 锁住该链路。
+   */
+  it("fetch 被感知，且变化路径只分类为 pushStatus", async () => {
+    // 注意顺序：`git remote add` 会写 .git/config，必须**在建立监听之前**完成，
+    // 否则 config 的改动会和 fetch 事件混进同一个防抖窗口，掩盖「仅 fetch」的分类结论
+    const repo = makeRepo()
+    repos.push(repo.path)
+    const peer = mkdtempSync(join(tmpdir(), "gp-watch-peer-"))
+    repos.push(peer)
+    git(peer, ["clone", "-q", repo.path, "."])
+    writeFileSync(join(peer, "remote.txt"), "r\n")
+    git(peer, ["add", "-A"])
+    git(peer, ["commit", "-q", "-m", "remote-commit"])
+    git(repo.path, ["remote", "add", "origin", peer])
+
+    const events: string[] = []
+    const paths: string[] = []
+    const watcher = new GitDirWatcher(200, (id, changed) => {
+      events.push(id)
+      paths.push(...changed)
+    })
+    watchers.push(watcher)
+    expect(watcher.watch("p9", repo.gitDir)).toBe(true)
+
+    git(repo.path, ["fetch", "-q", "origin"])
+
+    const fired = await waitFor(() => events.length > 0)
+    expect(fired).toBe(true)
+    // 必须看到远程跟踪引用的变化（不是只靠 FETCH_HEAD 兜底）
+    expect(paths.some((p) => p.startsWith("refs/remotes/"))).toBe(true)
+
+    const kinds = classifyGitDirChanges(paths)
+    expect(kinds).toContain("pushStatus")
+    // 关键：一次 fetch 不该让卡片重载日志/分支/stash（3 个进程/卡）
+    expect(kinds).not.toContain("log")
+    expect(kinds).not.toContain("branches")
+    expect(kinds).not.toContain("stash")
+  }, 60000)
+
+  it("commit 的变化路径分类包含 log / branches / stash", async () => {
+    const { repo, events, paths } = setup("p10", 200)
+    writeFileSync(join(repo.path, "g.txt"), "7\n")
+    git(repo.path, ["add", "-A"])
+    git(repo.path, ["commit", "-q", "-m", "classified"])
+
+    await waitFor(() => events.length > 0)
+    const kinds = classifyGitDirChanges(paths)
+    expect(kinds).toContain("log")
+    expect(kinds).toContain("branches")
+    expect(kinds).toContain("stash")
+    expect(kinds).toContain("workingTree")
+  }, 60000)
+
+  it("新建分支被感知（refs/heads 下的新文件）", async () => {
+    const { repo, events, paths } = setup("p11", 200)
+    git(repo.path, ["branch", "brand-new"])
+
+    const fired = await waitFor(() => events.length > 0)
+    expect(fired).toBe(true)
+    expect(paths.some((p) => p.startsWith("refs/heads/"))).toBe(true)
+    expect(classifyGitDirChanges(paths)).toContain("branches")
+  }, 60000)
 })

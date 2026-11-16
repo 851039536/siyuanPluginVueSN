@@ -9,6 +9,7 @@ import type {
   WorkingTreeInfo,
 } from "../types/storage"
 import type { GitExecutor } from "./GitExecutor"
+import type { RefSyncSnapshot } from "../types/gitRefs"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 WorktreeOps 无法在 Node 单测环境加载（branchDelete.git.spec.ts 需要真实实例）
@@ -20,6 +21,7 @@ import {
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,
+  parseRefSnapshot,
   parseStashList,
   parseWorktreeStatus,
   parseWorktreeStatusV2,
@@ -495,6 +497,34 @@ export class WorktreeOps {
       return raw.split("\n").map((l) => l.trim()).filter((l) => l && !l.endsWith("/HEAD"))
     } catch {
       return []
+    }
+  }
+
+  /**
+   * 一次 `for-each-ref` 取齐「本地分支 + 远程跟踪 ref」的名字与 sha（一致性分析专用）。
+   *
+   * 取代原先的 `getBranches` + `getRemoteTrackingRefs` 两次进程；更关键的是带上 sha：
+   * 本地分支 sha 与远程跟踪 ref sha 相等即「已同步」，无需再跑
+   * `rev-list --left-right --count`（健康仓库里绝大多数分支都命中，B×R 次进程直接归零）。
+   *
+   * @param remoteNames 已知远程名（用于切分 `refs/remotes/<remote>/<branch>`）
+   */
+  async getRefSnapshot(projectPath: string, remoteNames: string[]): Promise<RefSyncSnapshot> {
+    try {
+      const raw = await this.executor.execGit(projectPath, [
+        "for-each-ref",
+        // %(HEAD) 对当前分支输出 "*"，其余为空格 —— 用来标记「当前分支」而不额外跑一次解析
+        "--format=%(refname)%00%(objectname)%00%(HEAD)",
+        "refs/heads",
+        "refs/remotes",
+      ])
+      return parseRefSnapshot(raw, remoteNames)
+    } catch {
+      // 失败返回空快照：审计侧会把该项目呈现为「无分支/无远程」，与原来两次调用都失败时一致
+      return {
+        branches: [],
+        remoteRefs: [],
+      }
     }
   }
 

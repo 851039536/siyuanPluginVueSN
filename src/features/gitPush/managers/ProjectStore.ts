@@ -27,6 +27,8 @@ export class ProjectStore {
   private projectCache: Map<string, GitProject> = new Map()
   /** 全量项目列表缓存（null 表示未初始化） */
   private projectsCache: GitProject[] | null = null
+  /** 归一化路径 → 项目 id 索引（findProjectByPath 用；随项目缓存一起失效，null = 待重建） */
+  private pathIndex: Map<string, string> | null = null
   /** 项目写操作串行链（防止并发 mutate 的 lost update：后写覆盖先写） */
   private writeLock = new ProjectWriteLock()
 
@@ -68,16 +70,38 @@ export class ProjectStore {
   /**
    * 按本地路径查找项目（git 子进程 cwd → 项目，供推送账号环境解析）。
    * 同时匹配主路径与多设备备选路径；比较键忽略斜杠方向与 Windows 大小写差异。
+   *
+   * O(1) 查表而非遍历全部项目：本方法在**每条 git 命令**执行前都会被调用一次
+   * （`GitPushManager.resolveGitEnv`），60 个项目 × 批量查询时是「命令数 × 60」次路径归一化，
+   * 属纯浪费（也容易被性能剖析误认为热点）。索引随项目缓存一起失效重建。
    */
   async findProjectByPath(path: string): Promise<GitProject | undefined> {
     const key = normalizePathKey(path)
     if (!key) return undefined
-    const projects = await this.getProjects()
-    for (const p of projects) {
-      if (normalizePathKey(p.path) === key) return p
-      if (p.localPaths?.some((lp) => normalizePathKey(lp) === key)) return p
+    await this.getProjects()
+    const id = this.ensurePathIndex().get(key)
+    // 索引与 projectCache 同一份失效周期；再取一次缓存保证不会返回已删项目的悬空对象
+    return id ? this.projectCache.get(id) : undefined
+  }
+
+  /**
+   * 归一化路径 → 项目 id（首次查询时按需构建）。
+   * 同一路径被多个项目引用时**先出现者优先**，与原遍历语义一致（主路径先于 localPaths 注册）。
+   */
+  private ensurePathIndex(): Map<string, string> {
+    if (this.pathIndex) return this.pathIndex
+    const index = new Map<string, string>()
+    const register = (raw: string | undefined, id: string): void => {
+      if (!raw) return
+      const key = normalizePathKey(raw)
+      if (key && !index.has(key)) index.set(key, id)
     }
-    return undefined
+    for (const project of this.projectCache.values()) {
+      register(project.path, project.id)
+      for (const localPath of project.localPaths ?? []) register(localPath, project.id)
+    }
+    this.pathIndex = index
+    return index
   }
 
   /** 获取项目列表的可写浅克隆副本（写操作基于此，避免污染缓存 + save 失败时缓存不变脏） */
@@ -112,6 +136,8 @@ export class ProjectStore {
   invalidateProjectCache(): void {
     this.projectsCache = null
     this.projectCache.clear()
+    // 路径索引与 projectCache 同源：漏清会让改名/改路径后的项目查不到或查到旧 id
+    this.pathIndex = null
   }
 
   /**

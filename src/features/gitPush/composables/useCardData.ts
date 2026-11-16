@@ -517,8 +517,11 @@ export function useCardData(project: () => GitProject) {
     if (kinds.has("conflicts")) safeReload(loadConflicts(true))
   }
 
-  // 工作区版本号：workingTrees 条目每次整体替换（新对象引用）即递增
-  watch(() => scheduler.workingTrees.value[state.projectId], () => {
+  // 工作区「查过一次」的代数：每查询一次即递增，作为单文件 diff 缓存的失效判据。
+  // ⚠️ 不能改成 watch `workingTrees[id]` 的对象引用：P1-5 之后值未变就不替换引用，
+  //    「引用没变」不再等于「没查过」；而用户把同一个已修改文件再改一次时快照完全相同、
+  //    diff 内容却已变化，只能靠这个代数发现。
+  watch(() => scheduler.workingTreeEpoch.value[state.projectId], () => {
     state.diffTreeVersion++
   })
 

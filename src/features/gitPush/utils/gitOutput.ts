@@ -9,6 +9,7 @@ import type {
   FileChangeStatus,
   StashEntry,
 } from "../types/storage"
+import type { LocalBranchRef, RefSyncSnapshot, RemoteTrackingRef } from "../types/gitRefs"
 
 /** porcelain v1 的 unmerged 状态组合（两位状态码均为冲突标记，须整体判定而非逐位解读） */
 const UNMERGED_CODES = new Set(["DD", "AU", "UD", "UA", "DU", "AA", "UU"])
@@ -415,6 +416,59 @@ export function parseBranches(raw: string): BranchInfo[] {
       current: head === "*",
     }
   })
+}
+
+/**
+ * 解析 `for-each-ref --format=%(refname)%00%(objectname)%00%(HEAD) refs/heads refs/remotes`
+ * 为「本地分支 + 远程跟踪 ref」快照（一次进程取齐两边的名字与 sha）。
+ *
+ * 为什么需要 sha：一致性分析里「本地分支 sha === 远程跟踪 ref sha」是**同步**的充分判据，
+ * 命中即可跳过 `rev-list --left-right --count`。健康仓库里绝大多数分支都命中，
+ * 于是 `B × R` 次进程在常见情形下退化为 0 —— 这比任何批量技巧都直接。
+ *
+ * @param remoteNames 已知远程名，用于把 `refs/remotes/<remote>/<branch>` 正确切分
+ *                    （远程名与分支名都可能含斜杠，必须按最长前缀匹配；未知时回落首段）
+ */
+export function parseRefSnapshot(raw: string, remoteNames: string[]): RefSyncSnapshot {
+  const branches: LocalBranchRef[] = []
+  const remoteRefs: RemoteTrackingRef[] = []
+  const sortedRemotes = [...remoteNames].sort((a, b) => b.length - a.length)
+  const HEADS = "refs/heads/"
+  const REMOTES = "refs/remotes/"
+
+  for (const line of raw.split("\n")) {
+    if (!line) continue
+    const [fullRef, sha, head] = line.split("\0")
+    if (!fullRef || !sha) continue
+    if (fullRef.startsWith(HEADS)) {
+      const name = fullRef.slice(HEADS.length)
+      if (!name) continue
+      branches.push({
+        name,
+        sha,
+        current: head === "*",
+      })
+      continue
+    }
+    if (!fullRef.startsWith(REMOTES)) continue
+    const rest = fullRef.slice(REMOTES.length)
+    // `origin/HEAD` 这类符号 ref 指向某个分支，不是真实远程分支（会让「远程独有」误报一个 HEAD）
+    if (!rest || rest.endsWith("/HEAD")) continue
+    const matched = sortedRemotes.find((name) => rest.startsWith(`${name}/`))
+    const slash = rest.indexOf("/")
+    const remote = matched ?? (slash === -1 ? rest : rest.slice(0, slash))
+    const branch = rest.slice(remote.length + 1)
+    if (!branch) continue
+    remoteRefs.push({
+      remote,
+      branch,
+      sha,
+    })
+  }
+  return {
+    branches,
+    remoteRefs,
+  }
 }
 
 /**

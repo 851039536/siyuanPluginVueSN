@@ -21,6 +21,7 @@ import type { TimerHandle } from "@/utils/timerRegistry"
 import { getNodeModules } from "@/utils/nodeModules"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import { GitDirWatcher } from "../managers/GitDirWatcher"
+import { classifyGitDirChanges } from "../managers/gitDirDomains"
 import { nextProbeInterval } from "../types/probeConfig"
 import { resolveValidPath } from "../utils/project"
 import { poolProcess } from "../utils/runtime"
@@ -111,6 +112,41 @@ const FOCUS_MIN_INTERVAL_MS = 2000
 
 /** 建 .git 监听时解析 gitdir 的并发上限（每项目一次 rev-parse；并发 6 在本地池 10 之内） */
 const GIT_DIR_RESOLVE_CONCURRENCY = 6
+
+/**
+ * 一轮轮询的项目并发上限。
+ *
+ * 原实现对项目 `for...await` 串行：单项目真查要走 `status` + `for-each-ref` 两次进程
+ * （本机每次 ~210ms 进程启动费），20 个项目一轮 8~12s，而基准间隔才 15s —— 轮询几乎
+ * 「一轮接一轮」，界面看起来持续有 git.exe；一个慢项目（网络盘 / 失效路径 / 杀软拦截）
+ * 还会把后面所有项目堵在队头。
+ *
+ * 取 3 而非满额 `gitConcurrency`：这是后台探测，必须给用户交互（点卡片 / 暂存 / 提交）
+ * 留池内余量。
+ */
+const PROBE_ROUND_CONCURRENCY = 3
+
+/**
+ * 单项目探测超时（ms）。
+ *
+ * 并发后一个卡住的项目只占一个槽位，但整轮仍要等它——3 个项目同时卡住就等于回到串行。
+ * 故给单项目设一个远小于本地命令默认超时（60s）的上限：超时按「无变化」处理，
+ * 让整轮照常结束；被落下的那次查询仍在后台跑完（`loadStatus` 有单飞，不会叠加）。
+ */
+const PROBE_PROJECT_TIMEOUT_MS = 10_000
+
+/** 给 Promise 套一层超时（超时/失败一律回退到 fallback，绝不抛出） */
+async function withTimeout<T>(task: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  const timeout = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms)
+  })
+  try {
+    return await Promise.race([task.catch(() => fallback), timeout])
+  } finally {
+    if (timer !== null) clearTimeout(timer)
+  }
+}
 
 export function useGitProbe(deps: GitProbeDeps) {
   const {
@@ -229,17 +265,38 @@ export function useGitProbe(deps: GitProbeDeps) {
   }
 
   /**
-   * 文件监听命中：只标脏、不直接查询。
+   * 文件监听命中：按**变化路径**分类，只重载真正受影响的域。
    *
-   * 标脏后由既有 `consumeDirty` 链路驱动卡片按域重载，无需新增派发路径。
-   * 六个域全标：一次 git 操作（尤其 fetch / commit）可能同时影响日志、分支、stash。
+   * 旧实现「任何事件都标脏六个域」，问题有二：
+   *   ① `pushStatus` 标记没有任何消费者（卡片侧 applyDirty 只消费 log/branches/stash/tags/conflicts），
+   *      是个死信号 —— fetch 之后 ahead/behind 永远不会因此刷新；
+   *   ② 一旦把 `refs/remotes` 真正监听上，一次 fetch 就会让每张可见卡重载
+   *      log + branches + stash（3 个进程/卡），「实时」换来新的进程风暴。
+   *
+   * 现在：本地/远程/合并三类事件各映射到自己的域（见 gitDirDomains.ts），
+   * 需要**立即拿到新值**的两类（pushStatus / workingTree）直接走调度器重查，
+   * 其余（log / branches / stash / tags / conflicts）只标脏，由卡片按需懒重载。
+   *
    * 同时重置退避——用户刚动过仓库，接下来大概率还会动。
    */
-  function handleWatchChange(projectId: string): void {
+  function handleWatchChange(projectId: string, changedPaths: string[]): void {
     if (destroyed || isPaused()) return
-    scheduler.invalidate(projectId, "pushStatus", "workingTree", "log", "branches", "stash")
+    const kinds = classifyGitDirChanges(changedPaths)
     const entry = pollEntries.get(projectId)
     if (entry) entry.interval = getConfig().poll.intervalMs
+
+    // 这两类没有（或不该依赖）卡片侧消费者：徽章与工作区摘要必须在卡片收起时也保持新鲜。
+    // 走调度器而非直接调 manager：单飞/代数/迟到结果丢弃都由调度器统一保证。
+    if (kinds.includes("pushStatus")) {
+      void scheduler.loadPushStatus(projectId, { force: true }).catch(() => {})
+    }
+    if (kinds.includes("workingTree")) {
+      void scheduler.loadWorkingTree(projectId, { force: true }).catch(() => {})
+    }
+
+    // 其余域只标脏：卡片挂载时由 applyDirty 按需重载（收起/未展示的卡片不付这个成本）
+    const lazyKinds = kinds.filter((kind) => kind !== "pushStatus" && kind !== "workingTree")
+    if (lazyKinds.length > 0) scheduler.invalidate(projectId, ...lazyKinds)
     onProbeResult?.(true, Date.now())
   }
 
@@ -734,10 +791,15 @@ export function useGitProbe(deps: GitProbeDeps) {
       do {
         roundPending = false
         let anyChanged = false
-        for (const project of projects.value) {
+        // 并发跑（见 PROBE_ROUND_CONCURRENCY 说明）：串行 `for...await` 会让 20 个项目
+        // 一轮耗掉 8~12s，且单个慢项目堵住整轮。anyChanged 在单线程里并发累加是安全的。
+        await poolProcess(projects.value, PROBE_ROUND_CONCURRENCY, async (project) => {
           if (destroyed) return
-          if (await pollOnce(project)) anyChanged = true
-        }
+          // 单项目超时按「无变化」处理：整轮不能被一个卡死的仓库拖住（见 PROBE_PROJECT_TIMEOUT_MS）
+          if (await withTimeout(pollOnce(project), PROBE_PROJECT_TIMEOUT_MS, false)) anyChanged = true
+        })
+        // 销毁后不再回调（池内守卫只能拦住「还没开始的项目」，拦不住本轮已跑完的部分）
+        if (destroyed) return
         onProbeResult?.(anyChanged, Date.now())
       } while (roundPending && !destroyed)
     } finally {

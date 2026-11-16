@@ -31,7 +31,7 @@
 .gpa-section--scroll {
   // 定值而非桌面端的 `clamp(360px, 50vh, 640px)`：思源里本面板挂在 Dock 中，
   // 面板高度由 Dock 决定、与窗口高度无关，用 vh 会按整窗高算，撑出远超面板的滚动区。
-  // 420px ≈ 11 行（36px 行高），与改行高之前的可见行数持平。
+  // 420px ≈ 17 行（24px 行高），约为 Dock 面板一半高，超出内部滚动。
   max-height: 420px; // 无对应 Token（区块限高）
   display: flex;
   flex-direction: column;
@@ -110,14 +110,16 @@
 
 // ── 项目提交排行：横向进度条行（名次 | 色点 | 项目名 | 次数 | 占比）──
 // 条宽由行内 --gpa-rank-pct 直接给出百分比（不做 calc 乘法）；颜色由 --gpa-rank-color 提供。
-// 行高下限：dense 档位 + 6px 内边距只有 ~28px，单行文字顶满、相邻行黏在一起；
-// 抬到 36px 让行间透气且整行更易点中（仍低于 BlockButton 的 44px 触控档，保持列表密度）。
-$_gpa-rank-row-h: 36px;
+// 行高 24px（距 12px 字号行盒约 21px 只有 3px 余量）+ 行间 0.5px：真正的密集列表档，
+// 整块排行 10 行只占 250px，视觉重心回到数据本身而不是行与行之间的空气。
+$_gpa-rank-row-h: 24px;
 
 .gpa-rank-list {
   display: flex;
   flex-direction: column;
-  gap: $s-px2;
+  // 0.5px 亚像素行距：1px 在高 DPI（Windows 125%/150%）下仍显成一道缝，0.5px 只留发丝级分隔。
+  // Token 最细只到 $s-px1(1px)，故此处直写；DPR=1 的屏上浏览器会按 1px 贴边渲染，效果等同贴合。
+  gap: 0.5px;
 }
 
 // 排行行：共享 Button 承担交互与键盘可达性；条为绝对定位底纹，文字层留在 grid 内。
@@ -127,7 +129,7 @@ $_gpa-rank-row-h: 36px;
   width: 100%;
   min-height: $_gpa-rank-row-h;
   overflow: hidden;
-  padding: $s-px6 $s-2;
+  padding: $s-px1 $s-2;
   border: none;
   border-radius: $r-sm;
   background: transparent;
@@ -149,8 +151,10 @@ $_gpa-rank-row-h: 36px;
 // 底纹进度条：宽度按榜首归一，低透明度避免压过文字
 .gpa-rank-bar {
   position: absolute;
-  top: -$s-px6; // 与行上下 padding 抵消，使条覆盖整行高度
-  bottom: -$s-px6;
+  // 上下贴边即覆盖整行（含内边距）：绝对定位的包含块是行的 padding box，
+  // 圆角靠行的 overflow:hidden 裁；不再用负偏移去抵 padding，避免改内边距时要跟着改两处
+  top: 0;
+  bottom: 0;
   left: 0;
   width: var(--gpa-rank-pct, 0%);
   border-radius: $r-sm;

@@ -16,34 +16,39 @@ export class RepoOps {
 
   // ── Tag 管理 ──
 
+  /**
+   * 读取本地 Tag（按 creatordate 倒序，最多 limit 条）。
+   *
+   * ⚠️ 命令失败时**抛出**，不吞成 `[]`：调用方要能区分「确实没有 Tag」与「读不到仓库」。
+   * 后者若伪装成空列表，卡片会显示「暂无 Tag」并把 `detailsLoaded` 置真，之后再也不会重试
+   * （仓库被删/权限失效时用户只能靠别的现象猜）。
+   */
   async getTags(projectPath: string, limit = 10): Promise<TagInfo[]> {
-    try {
-      // 用不可见分隔符 0x1F（Unit Separator）替代 |，避免 subject 含 | 时解析错乱
-      // 注意：for-each-ref 的十六进制转义为 %1f；%x1f 是 git log --pretty 专属，在此会被原样输出导致切分失败
-      // hash 段：annotated tag 取 %(*objectname)（解引用后的 commit），lightweight tag 回落 %(objectname)（即 commit 本身）
-      //
-      // 用 `for-each-ref --count` 而不是 `git tag -l` + JS `.slice()`：千级 Tag 的仓库原先每次
-      // 详情加载都要把全量输出传过来再丢掉，交给 git 在输出侧截断即可（limit<=0 时不加 --count）。
-      const args = ["for-each-ref"]
-      if (limit > 0) args.push(`--count=${limit}`)
-      args.push(
-        "--sort=-creatordate",
-        `--format=%(refname:short)%1f%(subject)%1f%(creatordate:iso)%1f%(*objectname)%1f%(objectname)`,
-        "refs/tags",
-      )
-      const raw = await this.executor.execGit(projectPath, args)
-      const rows = raw.trim().split("\n").filter(Boolean)
-      // 兜底再截一次（--count 对 limit<=0 不生效）
-      return (limit > 0 ? rows.slice(0, limit) : rows).map((line) => {
-        const [name, message, date, peeledHash, objectHash] = line.split("\x1F")
-        return {
-          name,
-          message: message || undefined,
-          date: date || undefined,
-          hash: peeledHash || objectHash || undefined,
-        }
-      })
-    } catch { return [] }
+    // 用不可见分隔符 0x1F（Unit Separator）替代 |，避免 subject 含 | 时解析错乱
+    // 注意：for-each-ref 的十六进制转义为 %1f；%x1f 是 git log --pretty 专属，在此会被原样输出导致切分失败
+    // hash 段：annotated tag 取 %(*objectname)（解引用后的 commit），lightweight tag 回落 %(objectname)（即 commit 本身）
+    //
+    // 用 `for-each-ref --count` 而不是 `git tag -l` + JS `.slice()`：千级 Tag 的仓库原先每次
+    // 详情加载都要把全量输出传过来再丢掉，交给 git 在输出侧截断即可（limit<=0 时不加 --count）。
+    const args = ["for-each-ref"]
+    if (limit > 0) args.push(`--count=${limit}`)
+    args.push(
+      "--sort=-creatordate",
+      `--format=%(refname:short)%1f%(subject)%1f%(creatordate:iso)%1f%(*objectname)%1f%(objectname)`,
+      "refs/tags",
+    )
+    const raw = await this.executor.execGit(projectPath, args)
+    const rows = raw.trim().split("\n").filter(Boolean)
+    // 兜底再截一次（--count 对 limit<=0 不生效）
+    return (limit > 0 ? rows.slice(0, limit) : rows).map((line) => {
+      const [name, message, date, peeledHash, objectHash] = line.split("\x1F")
+      return {
+        name,
+        message: message || undefined,
+        date: date || undefined,
+        hash: peeledHash || objectHash || undefined,
+      }
+    })
   }
 
   async createTag(projectPath: string, name: string, message?: string, commitRef?: string): Promise<void> {
@@ -75,14 +80,13 @@ export class RepoOps {
 
   // ── 冲突检测 ──
 
+  /** 列出合并冲突文件（`diff --diff-filter=U`）；命令失败抛出，与「无冲突」区分开（同 getTags） */
   async getConflictFiles(projectPath: string): Promise<ConflictFile[]> {
-    try {
-      const raw = await this.executor.execGit(projectPath, ["diff", "--name-only", "--diff-filter=U"])
-      return raw.trim().split("\n").filter(Boolean).map((path) => ({
-        path: path.trim(),
-        status: "both-modified",
-      }))
-    } catch { return [] }
+    const raw = await this.executor.execGit(projectPath, ["diff", "--name-only", "--diff-filter=U"])
+    return raw.trim().split("\n").filter(Boolean).map((path) => ({
+      path: path.trim(),
+      status: "both-modified",
+    }))
   }
 
   /**

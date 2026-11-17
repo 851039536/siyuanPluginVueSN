@@ -68,6 +68,27 @@
       @clear="ops.clearRemoteOutput(project.id, 'push')"
     />
 
+    <!-- 详情读取失败（仓库被删 / 改名 / 无权限）：不得把「读不到」呈现成「暂无提交记录」 -->
+    <div
+      v-if="!collapsed && detailsError"
+      class="gp-card-error"
+      role="alert"
+    >
+      <Icon
+        icon="mdi:alert-circle-outline"
+        height="12"
+        class="gp-card-error-icon"
+      />
+      <div class="gp-card-error-body">
+        <div class="gp-card-error-title">
+          {{ detailsErrorTitle }}
+        </div>
+        <div class="gp-card-error-hint">
+          {{ i18n.cardDataErrorHint }}
+        </div>
+      </div>
+    </div>
+
     <!-- 多面板 Tab 切换（工作区 / 提交日志 / Stash / Tag）；面板经具名插槽下发，未激活面板不挂载 -->
     <CardTabs
       v-if="!collapsed"
@@ -231,6 +252,7 @@ import {
   ref,
   watch,
 } from "vue"
+import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { checkCommitRule } from "../../commitRuleChecker"
@@ -243,6 +265,7 @@ import {
   getProjectRemoteNames,
   platformLabel,
 } from "../../utils"
+import { fmtTemplate } from "../../utils/i18nFormat"
 import CommitFilesDialog from "../common/CommitFilesDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
@@ -313,6 +336,7 @@ const {
   fileDiffs,
   diffLoading,
   mdFiles,
+  detailsError,
   ensureDetailsLoaded,
   ensureLogStats,
   ensureRemoteTags,
@@ -323,6 +347,14 @@ const {
   logLimit,
   setLogLimit,
 } = useCardData(() => props.project)
+
+/**
+ * 详情读取失败标题（`{0}` = 原始 git 错误串）。
+ * 模板里不做字符串拼接：错误信息可能含换行与长路径，交给 scss 的 pre-wrap/break-all 处理。
+ */
+const detailsErrorTitle = computed(() => detailsError.value
+  ? fmtTemplate(i18n.cardDataError, detailsError.value)
+  : "")
 
 /** Stash / Tag 面板 Tab 切换（恢复该项目上次激活的 Tab，切分类 / 切视图后不丢） */
 const stashTagTab = ref<CardTabId>(getCardTab(props.project.id))
@@ -592,3 +624,7 @@ const {
   },
 })
 </script>
+
+<style lang="scss">
+@use "../../styles/CardDataError.scss";
+</style>

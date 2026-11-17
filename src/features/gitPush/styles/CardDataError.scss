@@ -1,0 +1,43 @@
+// 卡片详情读取失败提示：仓库被删 / 改名 / 无权限时，替代「暂无提交记录 / 暂无 stash」这类空态。
+//
+// 设计意图：**阻断性但可恢复**的信息 —— 错误色描边 + 浅底，占一行高度，
+// 视觉优先级低于冲突区（红底实心），高于普通提示。刻意不设 font-size：
+// 卡片沿用面板两级字号制基线，这里只调颜色与间距，跨宿主同步时无需重新定值。
+@use "@/variables.scss" as *;
+
+.gp-card-error {
+  display: flex;
+  align-items: flex-start;
+  gap: $s-1;
+  margin: $s-px3 0;
+  padding: $s-px6 $s-2;
+  border: 1px solid var(--b3-theme-error);
+  border-radius: $r-sm;
+  background: var(--b3-theme-error-lightest);
+  color: var(--b3-theme-on-background);
+}
+
+.gp-card-error-icon {
+  flex-shrink: 0;
+  margin-top: $s-px1;
+  color: var(--b3-theme-error);
+}
+
+.gp-card-error-body {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px2;
+  // 错误串可能很长（git stderr 多行、含无空格路径）：必须允许收缩换行，不能撑破卡片
+  min-width: 0;
+}
+
+.gp-card-error-title {
+  color: var(--b3-theme-error);
+  word-break: break-all;
+  // git stderr 自带换行，保留换行但允许折行
+  white-space: pre-wrap;
+}
+
+.gp-card-error-hint {
+  opacity: 0.75;
+}

@@ -378,15 +378,17 @@ export class WorktreeOps {
     await this.executor.execGit(projectPath, args)
   }
 
-  /** 列出所有 stash 条目 */
+  /**
+   * 列出所有 stash 条目。
+   *
+   * ⚠️ 命令失败时**抛出**，不吞成 `[]`：调用方（卡片详情）必须能区分「没有 stash」与
+   * 「读不到仓库」。后者伪装成空列表会让卡片显示「无 stash」并把详情标记为已加载，
+   * 此后再不重试；失败抛出才能进入错误态与失败冷却（见 useCardData.ensureDetailsLoaded）。
+   */
   async stashList(projectPath: string): Promise<StashEntry[]> {
-    try {
-      const raw = await this.executor.execGit(projectPath, ["stash", "list"])
-      if (!raw) return []
-      return parseStashList(raw)
-    } catch {
-      return []
-    }
+    const raw = await this.executor.execGit(projectPath, ["stash", "list"])
+    if (!raw) return []
+    return parseStashList(raw)
   }
 
   /** 恢复最近一次 stash（pop） */
@@ -405,24 +407,23 @@ export class WorktreeOps {
   }
 
   /**
-   * 获取当前分支最近 N 条提交记录
+   * 获取当前分支最近 N 条提交记录。
+   *
+   * ⚠️ 命令失败时**抛出**（同 `stashList`）：空仓库/无提交属于「成功但为空」，返回 `[]`；
+   * 仓库被删、路径失效、git 报错则抛出，交给调用方呈现错误态并进入失败冷却。
    */
   async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
-    try {
-      // 每行一条的格式串（含 %p 父 hash 列表以识别 merge）；解析见 utils/gitOutput.parseCommitLog。
-      // %H 完整 hash 作为单一真源：UI 需要短展示时自行截取前 7 位；修正/删除/打 Tag 等
-      // 后续 git 定位直接拿完整 hash（短 hash 在大仓库有歧义风险，见 HistoryRewriter 注释）
-      const format = "%H%n%s%n%an%n%ar%n%aI%n%p"
-      // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
-      const args = count === "all"
-        ? ["log", "-n", "5000", `--format=${format}`]
-        : ["log", `-${count}`, `--format=${format}`]
-      const raw = await this.executor.execGit(projectPath, args)
-      if (!raw) return []
-      return parseCommitLog(raw)
-    } catch {
-      return []
-    }
+    // 每行一条的格式串（含 %p 父 hash 列表以识别 merge）；解析见 utils/gitOutput.parseCommitLog。
+    // %H 完整 hash 作为单一真源：UI 需要短展示时自行截取前 7 位；修正/删除/打 Tag 等
+    // 后续 git 定位直接拿完整 hash（短 hash 在大仓库有歧义风险，见 HistoryRewriter 注释）
+    const format = "%H%n%s%n%an%n%ar%n%aI%n%p"
+    // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
+    const args = count === "all"
+      ? ["log", "-n", "5000", `--format=${format}`]
+      : ["log", `-${count}`, `--format=${format}`]
+    const raw = await this.executor.execGit(projectPath, args)
+    if (!raw) return []
+    return parseCommitLog(raw)
   }
 
   /**
@@ -459,16 +460,14 @@ export class WorktreeOps {
   }
 
   /**
-   * 获取本地分支列表
+   * 获取本地分支列表。
+   *
+   * ⚠️ 命令失败时**抛出**（同 `getCommitLog`）：空仓库没有分支属于「成功但为空」。
    */
   async getBranches(projectPath: string): Promise<BranchInfo[]> {
-    try {
-      const raw = await this.executor.execGit(projectPath, ["branch", "--format=%(refname:short)%00%(HEAD)"])
-      if (!raw) return []
-      return parseBranches(raw)
-    } catch {
-      return []
-    }
+    const raw = await this.executor.execGit(projectPath, ["branch", "--format=%(refname:short)%00%(HEAD)"])
+    if (!raw) return []
+    return parseBranches(raw)
   }
 
   /** 当前分支名（detached 归一化为空串；与 RemoteOps 共用 GitExecutor 的单一实现） */

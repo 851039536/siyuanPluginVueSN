@@ -287,7 +287,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       const fetchOne = async (p: GitProject) => {
         const path = resolveValidPath(p)
         // 路径无效的项目直接 throw 计入失败
-        // （预检绕过 getCommitLog 内部吞错的语义，避免静默缺席）
+        // （先做路径预检是为了给出 pathMissing 这种可读原因；getCommitLog 现在失败也会抛出，
+        //   两者不冲突：预检命中就省掉一次注定失败的 git 进程）
         if (modules && !modules.fs.existsSync(path)) {
           throw new ProjectFetchError("pathMissing", `Path not found: ${path}`)
         }
@@ -311,7 +312,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             fileLines,
           }
         }
-        // 提交分析：保持 getCommitLog 链路（内部吞错返回 []，路径预检已在上方兜底）。
+        // 提交分析：走 getCommitLog（读失败会抛出，由本函数上方的调用方计入 failedCount，
+        // 不再静默缺数据 —— 路径预检只是省掉一次注定失败的命令）。
         // 刻意不接本地索引：该分支需要 isMerge（规则检查豁免 merge 提交、
         // 修正/删除历史弹窗据此阻断），而 numstat 索引不携带父提交信息；
         // 且此分支只取提交元信息（无 --numstat），本身已是廉价命令。

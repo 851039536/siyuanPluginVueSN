@@ -23,6 +23,7 @@ import {
   watch,
 } from "vue"
 import { CARD_SERVICES_KEY } from "../types"
+import { getErrorMessage } from "@/utils/stringUtils"
 import {
   DEFAULT_LOG_LIMIT,
   diffCacheKey,
@@ -73,6 +74,14 @@ interface CardDataState {
   detailsPromise: Promise<void> | null
   detailsFailures: number
   detailsCooldownUntil: number
+  /**
+   * 详情读取失败的错误信息（空串 = 正常）。
+   *
+   * 为什么需要：manager 的只读方法（log/branches/stash/tags/conflicts）现在「失败即抛出」，
+   * 卡片必须把「读不到」与「确实为空」分开呈现 —— 仓库被删除/改名/权限失效时显示
+   * 「暂无提交记录」等于骗人，而且会把详情标记成已加载、此后再不重试。
+   */
+  detailsError: Ref<string>
   logStatsRequested: boolean
   remoteTagsRequested: boolean
   /** 差异缓存的在飞去重表与版本记录 */
@@ -124,6 +133,7 @@ function createState(project: () => GitProject): CardDataState {
     detailsPromise: null,
     detailsFailures: 0,
     detailsCooldownUntil: 0,
+    detailsError: ref(""),
     logStatsRequested: false,
     remoteTagsRequested: false,
     diffInflight: new Map<string, Promise<unknown>>(),
@@ -335,6 +345,7 @@ export function useCardData(project: () => GitProject) {
         await Promise.all([loadLog(), loadBranches(), loadStash(), loadTags()])
         state.detailsLoaded = true
         state.detailsFailures = 0
+        state.detailsError.value = ""
         // conflicts 改为后台异步补齐（不阻塞详情展示，语义不变）：
         // 若项目在打开面板前即处于冲突合并态，仅靠 dirty 信号（resolve/abort 触发）
         // 永远拉不到，故仍必须在首载时发起，只是不再占用首屏等待窗口。
@@ -343,8 +354,10 @@ export function useCardData(project: () => GitProject) {
         //    不再在首载时发起：它们只被 LOG / TAG 面板消费，首载就发等于让「点一下卡片」
         //    额外付最多 4 次网络命令 + 一次全历史 diff 扫描（审查报告 §P1）。
         //    改为对应面板首次可见时懒加载（ensureRemoteTags / ensureLogStats）。
-      } catch {
-        // 加载失败不标记为已加载，允许重试；但连续失败后进入冷却，避免错误路径被反复触发
+      } catch (e: unknown) {
+        // 加载失败不标记为已加载，允许重试；但连续失败后进入冷却，避免错误路径被反复触发。
+        // 错误信息落进 detailsError：卡片据此显示错误态，而不是把「读不到」显示成「没有」。
+        state.detailsError.value = getErrorMessage(e) || String(e)
         state.detailsFailures++
         if (state.detailsFailures >= 2) state.detailsCooldownUntil = Date.now() + 30_000
       } finally {
@@ -384,8 +397,13 @@ export function useCardData(project: () => GitProject) {
     const endLoading = beginLogLoading()
     try {
       await loadLog(count, true)
-    } catch {
-      // 刷新失败静默降级：调用方（点击/切换条数）不处理拒绝，避免未处理的 Promise 拒绝
+      // 手动刷新成功即认为仓库可读：清掉上一次的错误态
+      state.detailsError.value = ""
+      state.detailsFailures = 0
+    } catch (e: unknown) {
+      // 手动刷新失败必须**可见**（不静默降级）：用户主动点了刷新，还显示空列表会被当成「真的没有提交」。
+      // 不计入 detailsFailures / 不触发冷却 —— 这是用户显式动作，重试由他自己决定。
+      state.detailsError.value = getErrorMessage(e) || String(e)
     } finally {
       endLoading()
     }
@@ -399,6 +417,9 @@ export function useCardData(project: () => GitProject) {
       await loadTags(true)
       // 远程 Tag 状态若已在 TAG 面板加载过，跟随刷新（否则等面板打开再懒加载）
       if (state.remoteTagsRequested) await loadRemoteTags(true).catch(() => {})
+    } catch (e: unknown) {
+      // 与 reloadLog 同口径：手动刷新失败写错误态，不向模板抛未处理的 Promise 拒绝
+      state.detailsError.value = getErrorMessage(e) || String(e)
     } finally {
       state.tagsLoading.value = false
     }
@@ -550,6 +571,7 @@ export function useCardData(project: () => GitProject) {
     fileDiffs: state.fileDiffs,
     diffLoading: state.diffLoading,
     mdFiles: state.mdFiles,
+    detailsError: state.detailsError,
     ensureDetailsLoaded,
     ensureLogStats,
     ensureRemoteTags,

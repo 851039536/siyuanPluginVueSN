@@ -1514,6 +1514,8 @@
     "copyHash": "复制完整提交哈希",
     "commitListEmpty": "暂无提交记录",
     "commitListNoMatch": "无匹配结果",
+    "cardDataError": "读取项目详情失败：{0}",
+    "cardDataErrorHint": "常见原因：仓库目录已被删除或改名、没有访问权限，或 git 进程被安全软件拦截。修复后点卡片上的「刷新提交日志」重试。",
     "commitStatFiles": "{0} 个文件变更",
     "commitStatInsertions": "{0} 行插入(+)",
     "commitStatDeletions": "{0} 行删除(−)",

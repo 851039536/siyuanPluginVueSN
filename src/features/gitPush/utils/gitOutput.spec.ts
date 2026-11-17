@@ -578,6 +578,57 @@ describe("parseWorktreeStatusV2", () => {
     expect(r.branch).toBe("master")
     expect(r.untrackedCount).toBe(1)
   })
+
+  // ── `-z` 模式（生产路径）：记录以 NUL 终止，rename 的两个路径是两个独立记录 ──
+  // 下方样本按真实 `git status --porcelain=v2 --branch -z` 的字节结构采集
+  // （git 2.53 / Windows：头部行同样以 NUL 结尾；`2 ... R100 b.txt\0a.txt\0`）。
+
+  it("-z：头部行与普通项均以 NUL 分隔，分支名与状态照常解析", () => {
+    const raw = [
+      "# branch.oid 7e0baf23d3480d7ca926add6e6afc0baf753c3a\0",
+      "# branch.head master\0",
+      "1 .M N... 100644 100644 100644 587be6b4c3f93f93c489c0111bba5596147a26cb 587be6b4c3f93f93c489c0111bba5596147a26cb a.txt\0",
+      "? c.txt\0",
+      "? d e.txt\0",
+    ].join("")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.branch).toBe("master")
+    expect(r.unstagedCount).toBe(1)
+    expect(r.untrackedCount).toBe(2)
+    expect(r.files.map((f) => f.path)).toEqual(["a.txt", "c.txt", "d e.txt"])
+  })
+
+  it("-z：重命名的新/旧路径是两个 NUL 记录，旧路径不得被当成新记录解析", () => {
+    // 实测：2 R. N... ... R100 b.txt\0a.txt\0
+    const raw = [
+      "# branch.head master\0",
+      "2 R. N... 100644 100644 100644 78981922613b2afb6025042ff6bd878ac1994e85 78981922613b2afb6025042ff6bd878ac1994e85 R100 b.txt\0",
+      "a.txt\0",
+    ].join("")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.files).toHaveLength(1)
+    expect(first(r.files)?.path).toBe("b.txt")
+    expect(first(r.files)?.oldPath).toBe("a.txt")
+    expect(first(r.files)?.status).toBe("renamed")
+    expect(r.stagedCount).toBe(1)
+  })
+
+  it("-z：文件名含换行/制表符时记录边界不被切断（文本格式下会错位）", () => {
+    // 文本格式下路径里的换行会把一条记录劈成两条；-z 用 NUL 定界后长度、路径都完整
+    const weird = "nl\nname\twith\ttab.txt"
+    const record = "1 A. N... 000000 100644 100644 0000000000000000000000000000000000000000 587be6b4c3f93f93c489c0111bba5596147a26cb " + weird
+    const raw = ["# branch.head master", record, "? plain.txt"].join("\0")
+    const r = parseWorktreeStatusV2(raw)
+    expect(r.files).toHaveLength(2)
+    expect(first(r.files)?.path).toBe(weird)
+    expect(r.files.map((f) => f.path)).toContain("plain.txt")
+    expect(r.untrackedCount).toBe(1)
+  })
+
+  it("-z：detached 与空仓库的头部行同样归一化为空串", () => {
+    const r = parseWorktreeStatusV2("# branch.oid abc\0# branch.head (detached)\0")
+    expect(r.branch).toBe("")
+  })
 })
 
 describe("parseChangesetDiff", () => {

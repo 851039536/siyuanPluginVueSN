@@ -34,7 +34,12 @@ export interface WorktreeStatusParse {
 
 /**
  * 解析 `git status --porcelain`（v1）输出。
- * 基于 core.quotepath=false + 文本解析；路径含换行等极端字符仍有局限，未用 -z 是权衡。
+ *
+ * ⚠️ **仅作兼容回退**：生产路径统一走 `parseWorktreeStatusV2`（`--porcelain=v2 --branch -z`，
+ * 一次调用拿分支 + 工作区，且路径不受控制字符影响）。本函数只在「git 太旧、不认 v2」时被调用，
+ * 新功能不要再用它 —— 两条路径并存过的代价就是状态码语义各写一遍（见 P2-3 审查项）。
+ *
+ * 基于 core.quotepath=false + 文本解析；路径含换行等极端字符仍有局限，未用 -z 是历史权衡。
  * git porcelain 仅对含特殊字符的路径加引号（core.quotepath=false 下非 ASCII 不加），去引号按 -> 拆分后分别处理。
  */
 export function parseWorktreeStatus(raw: string): WorktreeStatusParse {
@@ -138,17 +143,24 @@ export interface WorktreeStatusV2Parse extends WorktreeStatusParse {
 const V2_UNTRACKED_PREFIX = "? "
 
 /**
- * 解析 `git status --porcelain=v2 --branch` 输出（一次调用同时拿工作区状态与分支名）。
+ * 解析 `git status --porcelain=v2 --branch [-z]` 输出（一次调用同时拿工作区状态与分支名）。
  *
  * 为什么要有 v2 版本：旧实现每个项目要发两次进程 —— `rev-parse --abbrev-ref HEAD`
  * 取分支名 + `status --porcelain` 取工作区。而 v2 的 `# branch.head` 已含分支名，
  * 合并后每项目省掉一次进程（实测本机单次 git 进程启动约 0.6~1.3s，故接近减半）。
  *
+ * 为什么还要 `-z`：v1/v2 的**文本**格式按 `\n` 切行、按 `\t` / `" -> "` 拆路径，
+ * 文件名含换行时必然错位（`core.quotepath=false` 只解决非 ASCII 引号，不解决控制字符）。
+ * `-z` 让每个记录以 NUL 终止、重命名的两个路径成为两个独立记录，路径不再需要任何转义猜测。
+ * 本函数**自动识别**：路径不可能含 NUL，故「输出里有 NUL」等价于「这次调用带了 `-z`」，
+ * 于是两种分隔方式共用下面同一套状态码映射与计数逻辑（只有记录边界与 rename 旧路径位置不同）。
+ *
  * 格式差异（均为实测确认，勿凭直觉推断）：
  *   头部行 `# branch.oid <oid|(initial)>` / `# branch.head <name|(detached)>`
  *           / `# branch.upstream <ref>` / `# branch.ab +N -M`
  *   普通项 `1 <XY> <sub> <mH> <mI> <mW> <hH> <hI> <path>`
- *   重命名 `2 <XY> <sub> ... <X><score> <path><TAB><origPath>`  ← **新路径在前**，与 v1 的 `old -> new` 相反
+ *   重命名 `2 <XY> <sub> ... <X><score> <path><TAB><origPath>`   ← **新路径在前**，与 v1 的 `old -> new` 相反
+ *          `-z` 下则是 `<path>\0<origPath>\0`（两个 NUL 记录，没有 TAB）
  *   冲突   `u <XY> <sub> <m1> <m2> <m3> <mW> <h1> <h2> <h3> <path>`
  *   未跟踪 `? <path>`
  *   忽略   `! <path>`
@@ -163,7 +175,12 @@ export function parseWorktreeStatusV2(raw: string): WorktreeStatusV2Parse {
   const files: FileChange[] = []
   let branch = ""
 
-  for (const line of raw.split("\n")) {
+  // `-z` 输出以 NUL 分隔（含头部行），文本输出以换行分隔
+  const zMode = raw.includes("\0")
+  const records = zMode ? raw.split("\0") : raw.split("\n")
+
+  for (let i = 0; i < records.length; i++) {
+    const line = records[i]
     if (!line) continue
 
     // ── 头部行：只取分支名，其余（oid/upstream/ab）本函数不用 ──
@@ -196,6 +213,8 @@ export function parseWorktreeStatusV2(raw: string): WorktreeStatusV2Parse {
     const kind = line.charAt(0)
     let statusCode: string
     let rawPath: string
+    /** `-z` 下重命名的旧路径来自**下一条记录**，在此暂存 */
+    let zOrigPath: string | undefined
 
     if (kind === "1") {
       // 1 XY sub mH mI mW hH hI path —— 前 7 个字段之后才是 path（path 可含空格，故按字段切）
@@ -210,8 +229,17 @@ export function parseWorktreeStatusV2(raw: string): WorktreeStatusV2Parse {
       if (parts.length < 10) continue
       statusCode = parts[1]
       const rest = parts.slice(9).join(" ")
-      const tabIdx = rest.indexOf("\t")
-      rawPath = tabIdx === -1 ? rest : rest.substring(0, tabIdx)
+      if (zMode) {
+        rawPath = rest
+        // `path\0origPath\0`：下一条记录就是旧路径，消费掉以免被当成新记录解析
+        if (i + 1 < records.length) {
+          zOrigPath = records[i + 1]
+          i++
+        }
+      } else {
+        const tabIdx = rest.indexOf("\t")
+        rawPath = tabIdx === -1 ? rest : rest.substring(0, tabIdx)
+      }
     } else if (kind === "u") {
       // u XY sub m1 m2 m3 mW h1 h2 h3 path —— 比 kind=1 多三个 hash
       const parts = line.split(" ")
@@ -249,8 +277,12 @@ export function parseWorktreeStatusV2(raw: string): WorktreeStatusV2Parse {
     // 重命名/复制：v2 的 origPath 就是旧路径，直接取，无需解析 "->"
     let oldPath: string | undefined
     if (kind === "2") {
-      const tabIdx = line.indexOf("\t")
-      if (tabIdx !== -1) oldPath = line.substring(tabIdx + 1)
+      if (zMode) {
+        oldPath = zOrigPath
+      } else {
+        const tabIdx = line.indexOf("\t")
+        if (tabIdx !== -1) oldPath = line.substring(tabIdx + 1)
+      }
     }
 
     files.push({

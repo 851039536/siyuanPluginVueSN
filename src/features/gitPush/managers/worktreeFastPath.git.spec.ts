@@ -1,5 +1,6 @@
 // 工作区状态读取语义单测：对真实 git 仓库断言
-// `status --porcelain` 单次调用即可完整覆盖「已跟踪变更 / 未跟踪文件 / 暂存变更」三类语义。
+// `status --porcelain=v2 --branch -z` 单次调用即可完整覆盖「已跟踪变更 / 未跟踪文件 / 暂存变更」三类语义，
+// 并同时给出分支名（省掉一次 rev-parse）。
 //
 // 历史背景：本文件原用于验证 `fastWhenClean` 快速路径（先探测 `--untracked-files=no` 再补跑全量）
 // 与全量路径的等价性。该快速路径已移除（实测其为净亏：探测+全量 ≈ 2× 单次全量，
@@ -22,7 +23,7 @@ import {
   expect,
   it,
 } from "vitest"
-import { parseWorktreeStatus } from "../utils/gitOutput"
+import { parseWorktreeStatusV2 } from "../utils/gitOutput"
 
 /**
  * 屏蔽开发者真实 git 配置的隔离环境（与 incrementalScan.spec.ts 同策略）：
@@ -56,23 +57,16 @@ function git(cwd: string, args: string[]): string {
 }
 
 /**
- * 复刻 WorktreeOps.getWorkingTreeStatus 的生产路径（单次 `status --porcelain` + parseWorktreeStatus）。
+ * 复刻 WorktreeOps.getWorkingTreeStatus 的生产路径
+ * （单次 `status --porcelain=v2 --branch -z` + parseWorktreeStatusV2）。
  * 不经 GitExecutor，避免拉起插件依赖。
  */
 function readStatus(cwd: string) {
-  const raw = git(cwd, ["-c", "core.quotepath=false", "status", "--porcelain"])
-  // hasChanges 由 files.length 派生（与 WorktreeOps.readFullWorktreeStatus 一致）
-  if (!raw.trim()) {
-    return {
-      hasChanges: false,
-      stagedCount: 0,
-      unstagedCount: 0,
-      untrackedCount: 0,
-      paths: [] as string[],
-    }
-  }
-  const parsed = parseWorktreeStatus(raw)
+  const raw = git(cwd, ["-c", "core.quotepath=false", "status", "--porcelain=v2", "--branch", "-z"])
+  const parsed = parseWorktreeStatusV2(raw)
+  // hasChanges 由 files.length 派生（与 WorktreeOps.readWorktreeStatusV2 一致）
   return {
+    branch: parsed.branch,
     hasChanges: parsed.files.length > 0,
     stagedCount: parsed.stagedCount,
     unstagedCount: parsed.unstagedCount,
@@ -117,6 +111,24 @@ describe("工作区状态单次读取语义", () => {
     expect(status.unstagedCount).toBe(0)
     expect(status.untrackedCount).toBe(0)
     expect(status.paths).toEqual([])
+  })
+
+  it("分支名随同一次调用返回（不再单独发 rev-parse 取分支）", () => {
+    expect(readStatus(repo).branch).toBe("main")
+  })
+
+  it("文件名含空格/中文：-z 下路径完整保留（文本格式会因引号与转义错位）", () => {
+    // 空格会触发 git 加引号、中文要看 core.quotepath，这两类在文本格式下最容易失真。
+    // ⚠️ 不在这里造「制表符/换行」文件名：本机文件系统（含安全软件）会拒绝或改写控制字符，
+    //    那类输入由 gitOutput.spec.ts 的 -z 解析用例用真实字节结构覆盖。
+    const names = ["with space.txt", "中文 名称.txt"]
+    for (const name of names) writeFileSync(join(repo, name), "z\n")
+
+    const status = readStatus(repo)
+
+    expect(status.untrackedCount).toBe(2)
+    expect(status.paths).toEqual([...names].sort())
+    for (const name of names) rmSync(join(repo, name), { force: true })
   })
 
   it("仅有未跟踪文件：必须带出未跟踪清单（历史快速路径最易吞掉的一类）", () => {

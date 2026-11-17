@@ -5,7 +5,7 @@ import type { GitExecutor } from "./GitExecutor"
 import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 import type { RemoteOpResult } from "./RemoteOps"
-import { parseAheadBehind, parseWorktreeStatus, findBlockingUntracked } from "../utils/gitOutput"
+import { parseAheadBehind, parseWorktreeStatusV2, findBlockingUntracked } from "../utils/gitOutput"
 import { getProjectRemoteName } from "../utils/platform"
 import { resolveValidPathWithSource } from "../utils/project"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -63,19 +63,21 @@ export class SmartPullOps {
 
         if (signal.aborted) return canceled()
         try {
-          const branch = await this.executor.getCurrentBranch(cwd)
+          // 1. 一次调用同时拿「分支 + 工作区」：porcelain v2 的 `# branch.head` 与文件列表同源，
+          //    取代原先 `getCurrentBranch` + `status --porcelain` 的两次进程（省 1 次进程/次操作）。
+          //    顺带把「工作区必须干净」的判定提到 fetch **之前** —— 脏工作区连网络都不必发，
+          //    也不必先动远程跟踪引用。v2 的 branch 已在解析层把 `(detached)` 归一化为空串。
+          //    `-z` 让含换行/制表符的文件名不再错位（未跟踪清单会直接用于 reset --hard 的挡路判定）。
+          const statusRaw = await this.executor.execGit(
+            cwd, ["status", "--porcelain=v2", "--branch", "-z"], signal,
+          )
+          const status = parseWorktreeStatusV2(statusRaw)
+          const branch = status.branch
           if (!branch) {
             return fail("判断拉取失败：当前处于 detached HEAD，无法确定要覆盖的本地分支。")
           }
 
-          // 1. 只更新远程跟踪引用，不动工作区（失败时工作区与分支均保持原状）
-          await this.executor.execGit(cwd, ["fetch", "--prune", remoteName], signal)
-
           // 2. 工作区必须干净：reset --hard 会丢弃已跟踪文件的未提交改动
-          const statusRaw = await this.executor.execGit(
-            cwd, ["status", "--porcelain"], signal,
-          )
-          const status = parseWorktreeStatus(statusRaw)
           const dirtyTracked = status.files.filter((f) => f.status !== "untracked")
           if (dirtyTracked.length > 0) {
             return fail(
@@ -84,7 +86,9 @@ export class SmartPullOps {
             )
           }
 
-          // 3. 远程分支必须存在，且相对 HEAD 的领先/落后关系可判定
+          // 3. 只更新远程跟踪引用，不动工作区（失败时工作区与分支均保持原状）
+          await this.executor.execGit(cwd, ["fetch", "--prune", remoteName], signal)
+          // 4. 远程分支必须存在，且相对 HEAD 的领先/落后关系可判定
           const ref = `${remoteName}/${branch}`
           const refRaw = await this.executor.execGit(cwd, [
             "for-each-ref",
@@ -104,7 +108,7 @@ export class SmartPullOps {
             return done(`判断拉取完成：本地无独有提交，已快进到 ${ref}。`)
           }
 
-          // 4. 关键判据：patch-id 忽略提交信息与 SHA，只有真正独有的改动才计入
+          // 5. 关键判据：patch-id 忽略提交信息与 SHA，只有真正独有的改动才计入
           const uniqueRaw = await this.executor.execGit(cwd, [
             "rev-list", "--cherry-pick", "--right-only", "--count", `${ref}...HEAD`,
           ], signal)
@@ -122,7 +126,7 @@ export class SmartPullOps {
             ].filter(Boolean).join("\n"))
           }
 
-          // 5. 未跟踪文件只在会与远端新树冲突时阻塞（reset --hard 会删除挡路项）
+          // 6. 未跟踪文件只在会与远端新树冲突时阻塞（reset --hard 会删除挡路项）
           const untracked = status.files.filter((f) => f.status === "untracked").map((f) => f.path)
           if (untracked.length > 0) {
             const treeRaw = await this.executor.execGit(
@@ -141,7 +145,7 @@ export class SmartPullOps {
             }
           }
 
-          // 6. 强制对齐（调用方已二次确认，不建备份分支）
+          // 7. 强制对齐（调用方已二次确认，不建备份分支）
           await this.executor.execGit(cwd, ["reset", "--hard", ref], signal)
 
           return done(

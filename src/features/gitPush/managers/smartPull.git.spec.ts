@@ -1,13 +1,13 @@
 // src/features/gitPush/managers/smartPull.git.spec.ts — 判断拉取端到端回归（真实 git 仓库）
 //
 // 锁住三条不变量（任何一条被破坏都会导致「覆盖正在写代码的人」这类不可逆事故）：
-//   1. 远端只改写提交信息：本机旧副本不算独有提交，应备份分支后对齐远端；
+//   1. 远端只改写提交信息：本机旧副本不算独有提交，应直接对齐远端（不建备份分支）；
 //   2. 本地有真实独有提交：必须中止且 HEAD 保持不变；
 //   3. 未跟踪文件只在会被远端新树覆盖时阻塞，其余（.env / 构建产物）必须保留。
 //
 // ⚠️ 用真实 git 而非 mock：patch-id、reset --hard 覆盖语义、tracked ref 更新
 //   都是 git 自身行为，mock 只能验证我们对语义的假设。
-import type { GitProject } from "../types/storage"
+import type { GitPushStorage, GitProject } from "../types/storage"
 import type { ProjectStore } from "./ProjectStore"
 import { execFileSync } from "node:child_process"
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
@@ -18,9 +18,37 @@ import { GitExecutor } from "./GitExecutor"
 import { ProjectWriteLock } from "./ProjectWriteLock"
 import { SmartPullOps } from "./SmartPullOps"
 
+const ISOLATED_ENV: NodeJS.ProcessEnv = (() => {
+  const dir = mkdtempSync(join(tmpdir(), "gp-gitcfg-smartpull-"))
+  const globalCfg = join(dir, "gitconfig")
+  const systemCfg = join(dir, "gitsystemconfig")
+  writeFileSync(globalCfg, "")
+  writeFileSync(systemCfg, "")
+  return {
+    ...process.env,
+    GIT_CONFIG_GLOBAL: globalCfg,
+    GIT_CONFIG_SYSTEM: systemCfg,
+    GIT_CONFIG_NOSYSTEM: "1",
+    TZ: "UTC",
+    LC_ALL: "C",
+    LANG: "C",
+  }
+})()
+
+// GitExecutor 不覆盖子进程环境（无账号解析器时直接继承 process.env），
+// 故把隔离配置写进本 worker 进程（vitest 默认按文件隔离 worker）。
+process.env.GIT_CONFIG_GLOBAL = ISOLATED_ENV.GIT_CONFIG_GLOBAL
+process.env.GIT_CONFIG_SYSTEM = ISOLATED_ENV.GIT_CONFIG_SYSTEM
+process.env.GIT_CONFIG_NOSYSTEM = "1"
+
 /** 真实执行 git（测试编排用，不经过被测的 GitExecutor 并发池） */
 function git(cwd: string, args: string[]): string {
-  return execFileSync("git", args, { cwd, encoding: "utf8", windowsHide: true }).trim()
+  return execFileSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    windowsHide: true,
+    env: ISOLATED_ENV,
+  }).trim()
 }
 
 function configure(cwd: string): void {
@@ -43,6 +71,9 @@ describe("判断拉取（真实 git）", () => {
   let local = ""
   let peer = ""
   let ops: SmartPullOps
+  let executor: GitExecutor
+  /** 本轮实际发出的 git 命令参数序列（用于锁住进程数：只记参数，不改变行为） */
+  let calls: string[][]
 
   const project = (): GitProject => ({
     id: "p1",
@@ -73,14 +104,18 @@ describe("判断拉取（真实 git）", () => {
     configure(peer)
     git(peer, ["checkout", "-q", "main"])
 
-    const fakeStorage = {
-      networkTimeout: { loadOrDefault: async () => 240 },
-      gitConcurrency: { loadOrDefault: async () => 10 },
-    } as never
-    const executor = new GitExecutor(fakeStorage)
+    executor = new GitExecutor({} as GitPushStorage)
+    // 记录命令序列：既不 mock git，也不改变被测行为，只为一件事 ——
+    // 断言「分支与工作区一次取齐」没有退回到「先 getCurrentBranch 再 status」的两次进程。
+    calls = []
+    const rawExec = executor.execGit.bind(executor)
+    executor.execGit = ((cwd, args, signal, timeoutMs, onOutput, options) => {
+      calls.push(args)
+      return rawExec(cwd, args, signal, timeoutMs, onOutput, options)
+    }) as GitExecutor["execGit"]
     const store = { getProjectById: async () => project() } as unknown as ProjectStore
     ops = new SmartPullOps(executor, store, new ProjectWriteLock())
-  })
+  }, 120000)
 
   afterAll(() => {
     try { rmSync(root, { recursive: true, force: true }) } catch { /* 清理失败不掩盖断言 */ }
@@ -169,5 +204,47 @@ describe("判断拉取（真实 git）", () => {
 
     expect(r.ok).toBe(true)
     expect(git(local, ["rev-parse", "HEAD"])).toBe(git(origin, ["rev-parse", "main"]))
+  })
+
+  it("分支与工作区一次取齐：只发一次 status（v2 --branch），不额外解析分支", async () => {
+    write(peer, "b.txt", "2")
+    commitAll(peer, "c2")
+    git(peer, ["push", "-q", "origin", "main"])
+
+    const r = await ops.smartPullSingle("p1", "gitee")
+
+    expect(r.ok).toBe(true)
+    // 只允许一次 status，且必须是 v2 + --branch -z（分支名由同一次调用的头部行给出，
+    // NUL 定界保证未跟踪清单里的特殊文件名不会错位）
+    expect(calls.filter((a) => a[0] === "status")).toEqual([
+      ["status", "--porcelain=v2", "--branch", "-z"],
+    ])
+    // getCurrentBranch 的任何实现路径都不得再出现（rev-parse / branch --show-current / symbolic-ref）
+    expect(calls.filter((a) => ["rev-parse", "branch", "symbolic-ref"].includes(a[0]))).toEqual([])
+  })
+
+  it("工作区有未提交改动时在 fetch 之前就中止（不发网络请求）", async () => {
+    write(peer, "b.txt", "2")
+    commitAll(peer, "c2")
+    git(peer, ["push", "-q", "origin", "main"])
+    write(local, "a.txt", "dirty")
+
+    const r = await ops.smartPullSingle("p1", "gitee")
+
+    expect(r.ok).toBe(false)
+    expect(r.stderr).toContain("未提交改动")
+    expect(calls.some((a) => a[0] === "fetch")).toBe(false)
+  })
+
+  it("detached HEAD：`(detached)` 归一化为空串，直接中止且不改动仓库", async () => {
+    git(local, ["checkout", "-q", "--detach"])
+    const oldHead = git(local, ["rev-parse", "HEAD"])
+
+    const r = await ops.smartPullSingle("p1", "gitee")
+
+    expect(r.ok).toBe(false)
+    expect(r.stderr).toContain("detached")
+    expect(calls.some((a) => a[0] === "fetch" || a[0] === "reset" || a[0] === "merge")).toBe(false)
+    expect(git(local, ["rev-parse", "HEAD"])).toBe(oldHead)
   })
 })

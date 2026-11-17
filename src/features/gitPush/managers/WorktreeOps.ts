@@ -46,7 +46,7 @@ export class WorktreeOps {
   }
 
   /**
-   * 获取工作区变更状态（单次 `git status --porcelain`）。
+   * 获取工作区变更状态（单次 `git status --porcelain=v2 --branch -z`）。
    *
    * 为什么不做「先探测再全量」的快速路径：实测（Windows 10 / git 2.53，i7-11800H）
    *   `status --porcelain`        ≈ 255ms
@@ -66,20 +66,14 @@ export class WorktreeOps {
       hasChanges: false,
     }
 
-    // 调用方已持有分支名（如 loadStatus 从缓存/入参透传）时，无需再取：
-    // 走 v1 路径即可，省不下这一次进程（分支名本来就不用查）。
-    if (opts?.branch) {
-      return this.readFullWorktreeStatus(projectPath, opts.branch, empty)
-    }
-
-    // 调用方未提供分支名 ⇒ 用 porcelain v2 --branch **一次调用**同时取分支名与工作区状态，
-    // 取代原先「rev-parse --abbrev-ref HEAD + status --porcelain」的两次进程。
-    // 实测本机单次 git 进程启动约 0.6~1.3s，故此项在冷路径上近乎减半。
-    return this.readWorktreeStatusV2(projectPath, empty)
+    // 统一走 porcelain v2 + `-z`：一次调用同时取分支名与工作区状态，且路径不再受控制字符影响。
+    // `opts.branch` 从「决定走哪条解析路径」降级为「v2 不可用时的回退提示」——
+    // 若调用方认为分支名已知就改跑 v1，等于把两套解析器永久保留下来（P2-3 要消除的正是这个）。
+    return this.readWorktreeStatusV2(projectPath, opts?.branch ?? "", empty)
   }
 
   /**
-   * v2 单调用路径（分支名 + 工作区一次取齐）。
+   * v2 单调用路径（分支名 + 工作区一次取齐，`-z` 分隔）。
    *
    * ⚠️ 失败时**不得**静默返回「无变更」：这会让卡片把「查询失败」误呈现为「工作区干净」。
    * 故此处 catch 后回退到 v1 双调用路径重试一次 —— 若连 v1 也失败，才按空结果降级
@@ -87,6 +81,7 @@ export class WorktreeOps {
    */
   private async readWorktreeStatusV2(
     projectPath: string,
+    fallbackBranch: string,
     empty: WorkingTreeInfo,
   ): Promise<WorkingTreeInfo> {
     try {
@@ -94,6 +89,7 @@ export class WorktreeOps {
         "status",
         "--porcelain=v2",
         "--branch",
+        "-z",
       ])
       // 注意：即便工作区干净，v2 也总会输出 # branch.* 头部行，故 raw 正常非空。
       // 但极端情况下（git 版本过旧不支持 v2）可能抛错，由下方 catch 回退。
@@ -108,18 +104,15 @@ export class WorktreeOps {
         hasChanges: parsed.files.length > 0,
       }
     } catch {
-      // 回退：旧的双调用路径（兼容极旧 git / v2 被禁用等情形）
-      let branch = ""
-      try {
-        branch = await this.executor.execGit(projectPath, ["rev-parse", "--abbrev-ref", "HEAD"])
-      } catch {
-        return empty
-      }
+      // 回退：v1 文本解析（兼容极旧 git / v2 被禁用等情形）。
+      // 分支名优先用调用方提示，其次走 getCurrentBranch（detached 归一化为空串，语义与 v2 一致）；
+      // 拿不到分支名也继续读状态 —— detached / 空仓库的工作区仍然需要如实呈现。
+      const branch = fallbackBranch || await this.executor.getCurrentBranch(projectPath)
       return this.readFullWorktreeStatus(projectPath, branch, empty)
     }
   }
 
-  /** 工作区状态读取（git status 单次调用，全场景唯一路径） */
+  /** v1 兼容回退：仅当 v2 不可用时使用（旧 git），不再是任何调用方的首选路径 */
   private async readFullWorktreeStatus(
     projectPath: string,
     branch: string,

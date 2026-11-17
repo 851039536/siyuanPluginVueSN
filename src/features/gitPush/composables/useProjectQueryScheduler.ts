@@ -197,6 +197,9 @@ export function useProjectQueryScheduler(
       //    独立调用 loadWorkingTree（卡片工作区刷新、handleRefresh 等）都先付一次
       //    rev-parse，v2 合并省下的进程又被赔回去。缓存命中时看似免费，但
       //    缓存未命中/被 clearProject 后就是一次白跑的进程。
+      //
+      //    P2-3 之后 v2 是唯一生产路径（`opts.branch` 只作 v1 回退提示），
+      //    这条「不传缓存分支名」的约定依然要守：传了就放弃了「顺带刷新 HEAD」。
       const branch = opts?.branch
       const tree = await manager.getWorkingTreeStatus(resolveValidPath(project), {
         branch,

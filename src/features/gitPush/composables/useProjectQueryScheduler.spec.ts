@@ -11,9 +11,15 @@
 //        副作用：外部 checkout 后缓存分支名不会失效，静默陈旧。
 //
 // 修复后的契约：
-//   ① 只有**调用方显式** opts.branch 才透传给 loadWorkingTree（走 v1，省得合理）
+//   ① 只有**调用方显式** opts.branch 才透传给 loadWorkingTree
 //   ② 缓存命中的 branch **绝不**透传 —— 必须留空让 v2 刷新分支名
 //   ③ loadWorkingTree 是分支名缓存的**唯一写入点**
+//
+// ⚠️ 2026-11-17 起前提变了（P2-3 收敛）：`WorktreeOps.getWorkingTreeStatus` 无论有没有
+// `opts.branch` 都走 `status --porcelain=v2 --branch -z`，`opts.branch` 只在 v2 不可用时
+// 作为 v1 回退提示。因此上面「走 v1 ⇒ 收益归零」的进程数论证不再成立，但 ② 仍然必须守：
+// 透传缓存分支名等于放弃「顺带刷新 HEAD」这件事，外部 checkout 后分支名会静默陈旧。
+// 本文件断言的是「传了什么 opts」，与新路径无关，故继续有效。
 //
 // 用假 manager，不启动任何 git 子进程。
 import type { Ref } from "vue"

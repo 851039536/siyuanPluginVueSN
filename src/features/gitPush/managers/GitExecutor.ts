@@ -392,67 +392,89 @@ export class GitExecutor {
           this.gitRunning++
         }
 
-        const child = cp.execFile(
-          "git", fullArgs,
-          {
-            cwd,
-            timeout: effectiveTimeout,
-            encoding: "utf8",
-            windowsHide: true,
-            maxBuffer: GitExecutor.MAX_BUFFER,
-            ...(mergedEnv ? { env: mergedEnv } : {}),
-          },
-          (error: (Error & { code?: number | string, killed?: boolean }) | null, stdout: string, stderr: string) => {
-            if (isNetwork) {
-              this.networkRunning--
-            } else {
-              this.gitRunning--
-            }
-            this.activeProcesses.delete(child)
-            this.scheduleNext(isNetwork)
+        // 子进程退出的统一收尾：成功 / 失败 / 超时 / 取消都走这一条路径
+        const handleExit = (
+          error: (Error & { code?: number | string, killed?: boolean }) | null,
+          stdout: string,
+          stderr: string,
+        ): void => {
+          if (isNetwork) {
+            this.networkRunning--
+          } else {
+            this.gitRunning--
+          }
+          this.activeProcesses.delete(spawned)
+          this.scheduleNext(isNetwork)
 
-            // 正常完成时移除 abort 监听器，防止泄漏
-            if (signal) {
-              signal.removeEventListener("abort", onAbort)
-            }
+          // 正常完成时移除 abort 监听器，防止泄漏
+          if (signal) {
+            signal.removeEventListener("abort", onAbort)
+          }
 
-            if (killed) { reject(new Error("操作已取消")); return }
-            // 白名单退出码视为正常结束：git diff --no-index 发现差异时退出码为 1（等同 --exit-code 语义），属预期而非失败。
-            // 只认数字型 code，ENOENT / maxBuffer 等字符串码错误仍走下方 reject 分支。
-            const exitCode = error?.code
-            const allowedExit = typeof exitCode === "number" && (options?.allowExitCodes?.includes(exitCode) ?? false)
-            if (error && !allowedExit) {
-              // 错误信息自带超时/退出码标识：execFile 超时以 SIGTERM 终止（killed=true）时 stderr 可能为空，
-              // 否则用户只能看到通用 "Command failed" 文案，无从得知是超时
-              // "timed out" 字样同时供用户识别超时（超时不参与 RemoteOps 网络错误重试）
-              const reason = error.killed
-                ? `git 命令超时（timed out, ${effectiveTimeout}ms，已终止子进程）`
-                : `git 命令执行失败（exit code: ${error.code ?? "未知"}）`
-              // index.lock 残留（超时硬终止 commit/add 等可导致）附加解法指引，避免后续写操作全部失败却无从下手
-              const lockHint = /index\.lock|another git process/i.test(`${stderr}\n${error.message}`)
-                ? "\n检测到 index.lock 冲突：若确认无其他 git 进程运行（IDE/终端），可删除仓库下 .git/index.lock 后重试"
-                : ""
-              // 超时附加解法指引：指向设置面板可调的网络超时项（大仓库弱网络超时的直接对应解法）
-              const timeoutHint = error.killed
-                ? "\n推送/拉取大仓库时网络较慢易超时，可在 gitPush 设置中调大「网络超时」后重试"
-                : ""
-              reject(new Error((stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`) + lockHint + timeoutHint))
-            } else {
-              resolve(stdout.replace(/[\r\n]+$/, ""))
-            }
-          },
-        )
-        this.activeProcesses.add(child)
+          if (killed) { reject(new Error("操作已取消")); return }
+          // 白名单退出码视为正常结束：git diff --no-index 发现差异时退出码为 1（等同 --exit-code 语义），属预期而非失败。
+          // 只认数字型 code，ENOENT / maxBuffer 等字符串码错误仍走下方 reject 分支。
+          const exitCode = error?.code
+          const allowedExit = typeof exitCode === "number" && (options?.allowExitCodes?.includes(exitCode) ?? false)
+          if (error && !allowedExit) {
+            // 错误信息自带超时/退出码标识：execFile 超时以 SIGTERM 终止（killed=true）时 stderr 可能为空，
+            // 否则用户只能看到通用 "Command failed" 文案，无从得知是超时
+            // "timed out" 字样同时供用户识别超时（超时不参与 RemoteOps 网络错误重试）
+            const reason = error.killed
+              ? `git 命令超时（timed out, ${effectiveTimeout}ms，已终止子进程）`
+              : `git 命令执行失败（exit code: ${error.code ?? "未知"}）`
+            // index.lock 残留（超时硬终止 commit/add 等可导致）附加解法指引，避免后续写操作全部失败却无从下手
+            const lockHint = /index\.lock|another git process/i.test(`${stderr}\n${error.message}`)
+              ? "\n检测到 index.lock 冲突：若确认无其他 git 进程运行（IDE/终端），可删除仓库下 .git/index.lock 后重试"
+              : ""
+            // 超时附加解法指引：指向设置面板可调的网络超时项（大仓库弱网络超时的直接对应解法）
+            const timeoutHint = error.killed
+              ? "\n推送/拉取大仓库时网络较慢易超时，可在 gitPush 设置中调大「网络超时」后重试"
+              : ""
+            reject(new Error((stderr ? `${reason}\n${stderr}` : `${reason}: ${error.message}`) + lockHint + timeoutHint))
+          } else {
+            resolve(stdout.replace(/[\r\n]+$/, ""))
+          }
+        }
+
+        // ⚠️ execFile 可能**同步**抛错（参数非法、fd 耗尽、cwd 已被删除等）：此时回调永远不会来，
+        // 而并发计数已经加上 —— 不在这里回滚就会永久漏掉一个槽位（池子越跑越小），
+        // 且 scheduleNext 不被调用会让排队的命令全部悬挂。低概率但后果不可逆。
+        let spawned: ChildProcess
+        try {
+          spawned = cp.execFile(
+            "git", fullArgs,
+            {
+              cwd,
+              timeout: effectiveTimeout,
+              encoding: "utf8",
+              windowsHide: true,
+              maxBuffer: GitExecutor.MAX_BUFFER,
+              ...(mergedEnv ? { env: mergedEnv } : {}),
+            },
+            handleExit,
+          )
+        } catch (e: unknown) {
+          if (isNetwork) {
+            this.networkRunning--
+          } else {
+            this.gitRunning--
+          }
+          this.scheduleNext(isNetwork)
+          reject(new Error(`git 命令启动失败：${e instanceof Error ? e.message : String(e)}`))
+          return
+        }
+        this.activeProcesses.add(spawned)
 
         // 流式输出：execFile 的完成回调仍收全量缓冲，此处额外逐块回传（git progress 走 stderr）
         if (onOutput) {
-          child.stdout?.on("data", (d: Buffer | string) => onOutput(String(d)))
-          child.stderr?.on("data", (d: Buffer | string) => onOutput(String(d)))
+          spawned.stdout?.on("data", (d: Buffer | string) => onOutput(String(d)))
+          spawned.stderr?.on("data", (d: Buffer | string) => onOutput(String(d)))
         }
 
         const onAbort = () => {
           killed = true
-          try { child.kill("SIGTERM") } catch {}
+          try { spawned.kill("SIGTERM") } catch {}
           // 过滤并 reject 与当前 signal 关联的排队项，防止僵尸 Promise
           const removeFromQueue = (queue: WaitQueueItem[]): WaitQueueItem[] => {
             const remaining: typeof this.gitWaitQueue = []
@@ -593,14 +615,27 @@ export class GitExecutor {
         }
         this.gitRunning++
 
-        const child = cp.spawn(
-          "git", args,
-          {
-            cwd,
-            windowsHide: true,
-            ...(mergedEnv ? { env: mergedEnv } : {}),
-          },
-        )
+        // spawn 同样可能**同步**抛错（参数非法、fd 耗尽）：与 execGit 同理，
+        // 计数已加、事件回调永不到来，必须在这里回滚并调度下一个，否则本地池会漏掉槽位
+        let child: ChildProcess
+        try {
+          child = cp.spawn(
+            "git", args,
+            {
+              cwd,
+              windowsHide: true,
+              ...(mergedEnv ? { env: mergedEnv } : {}),
+            },
+          )
+        } catch (e: unknown) {
+          this.gitRunning--
+          this.scheduleNext(false)
+          if (!settled) {
+            settled = true
+            reject(new Error(`git 命令启动失败：${e instanceof Error ? e.message : String(e)}`))
+          }
+          return
+        }
         this.activeProcesses.add(child)
 
         const timer = setTimeout(() => {

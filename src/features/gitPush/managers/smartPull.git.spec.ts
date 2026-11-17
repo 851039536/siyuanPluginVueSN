@@ -65,7 +65,9 @@ function commitAll(cwd: string, message: string): void {
   git(cwd, ["commit", "-qm", message])
 }
 
-describe("判断拉取（真实 git）", () => {
+// 每个用例都要建 bare 仓库 + clone + 多次 push/pull：单跑 7~20s，全量并发 60+ worker 时会翻数倍。
+// 全局 testTimeout 不够用（会偶发把「慢」报成「错」），这里显式放宽到 120s，与 beforeEach 的建仓预算同口径。
+describe("判断拉取（真实 git）", { timeout: 120_000 }, () => {
   let root = ""
   let origin = ""
   let local = ""

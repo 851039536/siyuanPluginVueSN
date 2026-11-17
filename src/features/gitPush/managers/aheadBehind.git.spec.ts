@@ -79,7 +79,9 @@ describe("远程 ahead/behind 批量读取（for-each-ref）", () => {
   let branch = ""
 
   // 本 hook 要建两个真实仓库（clone + 多次 commit），本机每次 git 调用约 300ms 的进程启动费，
-  // 累计远超 Vitest 默认 10s 的 hookTimeout，故显式放宽（与 testTimeout 的 30s 预算同口径）。
+  // 累计远超 Vitest 默认 10s 的 hookTimeout，故显式放宽。
+  // 上限取 120s 而非 60s：全量 `pnpm test` 并发 60+ worker 各自 spawn git 时，
+  // 这段建仓实测会顶到 60s 边界并偶发超时（同一文件单跑 40s 内完成），属环境抖动而非逻辑问题。
   beforeAll(() => {
     base = mkdtempSync(join(tmpdir(), "gp-aheadbehind-"))
     upstream = join(base, "upstream")
@@ -101,7 +103,7 @@ describe("远程 ahead/behind 批量读取（for-each-ref）", () => {
     git(work, ["config", "user.name", "tester"])
     git(work, ["config", "core.autocrlf", "false"])
     branch = git(work, ["branch", "--show-current"]).trim()
-  }, 60000)
+  }, 120000)
 
   afterAll(() => {
     try {

@@ -2985,7 +2985,8 @@
       "promptCardLabel": "提示词",
       "clickCopyAria": "点击复制",
       "categoryColor": "分类颜色",
-      "categoryNav": "分类导航"
+      "categoryNav": "分类导航",
+      "limitReached": "已达数量上限，请先删除部分条目"
     }
   },
   "pronunciation": "谐音翻译",

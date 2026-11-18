@@ -10,6 +10,7 @@ import type { ShallowRef } from "vue"
 import type { PromptsStorage } from "../types/storage"
 import { MAX_PROMPTS } from "../types"
 import { ref } from "vue"
+import { PROMPTS_LIMIT_ERROR } from "../utils"
 
 export function usePrompts(storageRef: ShallowRef<PromptsStorage | null>): PromptsManager {
   const prompts = ref<Prompt[]>([])
@@ -39,10 +40,11 @@ export function usePrompts(storageRef: ShallowRef<PromptsStorage | null>): Promp
 
     // P2-3：读-改-写包进串行队列，避免并发操作交错覆盖
     await s.runExclusive(async () => {
-      prompts.value.push(prompt)
-      if (prompts.value.length > MAX_PROMPTS) {
-        prompts.value = prompts.value.slice(0, MAX_PROMPTS)
+      // 达到上限时拒绝新增（原先 push 后 slice 会把"新加的那条"裁掉，界面却提示成功）
+      if (prompts.value.length >= MAX_PROMPTS) {
+        throw new Error(PROMPTS_LIMIT_ERROR)
       }
+      prompts.value.push(prompt)
       try {
         // P1-1：必须检查写入结果，失败抛错使下方回滚不再是不可达死代码
         await s.persistOrThrow(s.prompts, prompts.value)

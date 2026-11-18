@@ -52,7 +52,8 @@
       "promptCardLabel": "Prompt",
       "clickCopyAria": "Click to copy",
       "categoryColor": "Category color",
-      "categoryNav": "Category navigation"
+      "categoryNav": "Category navigation",
+      "limitReached": "Reached the limit. Delete some items first."
     }
   }
 }

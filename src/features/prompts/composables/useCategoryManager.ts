@@ -10,11 +10,12 @@ import type { ShallowRef } from "vue"
 import type { PromptsStorage } from "../types/storage"
 import {
   DEFAULT_CATEGORY_COLOR,
+  MAX_CATEGORIES,
   PROMPTS_ALL_CATEGORY_ID,
   PROMPTS_DEFAULT_CATEGORY_ID,
 } from "../types"
 import { computed, ref } from "vue"
-import { resolvePromptsI18n } from "../utils"
+import { PROMPTS_LIMIT_ERROR, resolvePromptsI18n } from "../utils"
 
 /** 内置分类 ID 集合（禁止持久化、禁止删除） */
 const BUILTIN_CATEGORY_IDS = new Set([PROMPTS_DEFAULT_CATEGORY_ID, PROMPTS_ALL_CATEGORY_ID])
@@ -70,8 +71,12 @@ export function useCategoryManager(
     if (BUILTIN_CATEGORY_IDS.has(category.id)) return
 
     await s.runExclusive(async () => {
+      // 达到上限时拒绝新增（原先 clampCategories 会把"新加的这条"裁掉，界面却提示成功）
+      if (categories.value.length >= MAX_CATEGORIES) {
+        throw new Error(PROMPTS_LIMIT_ERROR)
+      }
       const previous = categories.value
-      categories.value = s.clampCategories([...categories.value, category])
+      categories.value = [...categories.value, category]
       try {
         await s.persistOrThrow(s.categories, categories.value)
       } catch (error) {

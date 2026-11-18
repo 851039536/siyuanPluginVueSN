@@ -14,6 +14,12 @@ export const MSG_DURATION = {
 } as const
 
 /**
+ * 达到条数上限时的错误标识。
+ * manager 在写入前抛出它，UI 据此区分"上限"与普通写入失败，避免静默丢弃新条目。
+ */
+export const PROMPTS_LIMIT_ERROR = "PROMPTS_LIMIT_REACHED"
+
+/**
  * 生成带前缀的唯一 ID（随机 UUID 优先，避免同毫秒批量创建时碰撞）
  * 用于提示词、分类、内容块，替换原先散落各处的 Date.now() 拼接。
  */
@@ -40,6 +46,6 @@ export function withAlpha(hex: string, alpha: number): string {
  * 调用方统一用返回值访问文案，杜绝 `(i18n || {}).key!` 产生 undefined。
  */
 export function resolvePromptsI18n(partial?: Record<string, string>): PromptsI18n {
-  if (!partial) return DEFAULT_PROMPTS_I18N
-  return { ...DEFAULT_PROMPTS_I18N, ...partial } as PromptsI18n
+  // 始终返回新对象：避免调用方误改共享的 DEFAULT_PROMPTS_I18N
+  return { ...DEFAULT_PROMPTS_I18N, ...(partial || {}) } as PromptsI18n
 }

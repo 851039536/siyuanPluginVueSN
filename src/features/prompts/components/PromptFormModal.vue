@@ -173,6 +173,7 @@ import {
 import {
   genId,
   MSG_DURATION,
+  PROMPTS_LIMIT_ERROR,
   resolvePromptsI18n,
 } from "../utils"
 
@@ -312,8 +313,10 @@ async function handleSave(): Promise<void> {
     } else {
       await props.promptManager.add(prompt)
     }
-  } catch {
-    showMessage(t.value.saveFailed, MSG_DURATION.SHORT, "error")
+  } catch (error) {
+    // 上限与普通写入失败区分提示，避免"静默没保存"
+    const isLimit = error instanceof Error && error.message === PROMPTS_LIMIT_ERROR
+    showMessage(isLimit ? t.value.limitReached : t.value.saveFailed, MSG_DURATION.SHORT, "error")
     return
   }
   emit("close")

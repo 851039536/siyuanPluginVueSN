@@ -103,6 +103,7 @@ import {
 import {
   genId,
   MSG_DURATION,
+  PROMPTS_LIMIT_ERROR,
   resolvePromptsI18n,
 } from "../utils"
 
@@ -140,9 +141,10 @@ async function handleAdd(): Promise<void> {
   }
   try {
     await props.categoryManager.add(newCategory)
-  } catch {
-    // manager 已回滚内存态，提示后保留表单内容供重试
-    showMessage(t.value.saveFailed, MSG_DURATION.SHORT, "error")
+  } catch (error) {
+    // manager 已回滚内存态，提示后保留表单内容供重试；上限单独提示
+    const isLimit = error instanceof Error && error.message === PROMPTS_LIMIT_ERROR
+    showMessage(isLimit ? t.value.limitReached : t.value.saveFailed, MSG_DURATION.SHORT, "error")
     return
   }
   form.name = ""

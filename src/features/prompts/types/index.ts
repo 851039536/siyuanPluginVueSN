@@ -132,6 +132,8 @@ export interface PromptsI18n {
   clickCopyAria: string
   categoryColor: string
   categoryNav: string
+  /** 达到条数上限的提示（新增被拒绝，非静默丢弃） */
+  limitReached: string
 }
 
 /**
@@ -186,4 +188,5 @@ export const DEFAULT_PROMPTS_I18N: PromptsI18n = {
   clickCopyAria: "点击复制",
   categoryColor: "分类颜色",
   categoryNav: "分类导航",
+  limitReached: "已达数量上限，请先删除部分条目",
 }

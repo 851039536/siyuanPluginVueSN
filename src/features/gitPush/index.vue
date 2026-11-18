@@ -131,9 +131,15 @@
       :selected-tags="selectedTagList"
       :search-active="searchActive"
       :search-result-count="searchResultCount"
+      :batch-push-running="batchPushRunning"
+      :batch-push-done="batchPushDone"
+      :batch-push-total="batchPushTotal"
+      :batch-push-eligible="batchPushEligible"
       @toggle-tag="toggleTag"
       @clear-tag-filter="clearTags"
       @clear-search="clearSearch"
+      @batch-push="handleBatchPush"
+      @cancel-batch-push="cancelBatchPush"
     />
     <!-- 列表视图结束 -->
 
@@ -303,6 +309,7 @@ import GitConfigDialog from "./components/common/GitConfigDialog.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useGitProbe } from "./composables/useGitProbe"
 import { useBatchProgress } from "./composables/useBatchProgress"
+import { useBatchPush } from "./composables/useBatchPush"
 import { usePushStatusView } from "./composables/usePushStatusView"
 import { useIdeManagement } from "./composables/useIdeManagement"
 import {
@@ -620,6 +627,25 @@ const {
 
 /** 已选标签（Set → 数组，供列表工具栏 chips 做包含判断） */
 const selectedTagList = computed(() => [...selectedTags.value])
+
+// ── 批量推送（当前列表内所有待推送项目；串行执行，复用项目级推送进度与取消通道）──
+const {
+  running: batchPushRunning,
+  done: batchPushDone,
+  total: batchPushTotal,
+  run: runBatchPush,
+  cancel: cancelBatchPush,
+  collectTargets: collectBatchPushTargets,
+} = useBatchPush({
+  visibleProjects: () => filteredGroups.value.flatMap((g) => g.projects),
+  pushStatuses,
+  isPushing,
+  pushToAll,
+  cancelPush,
+})
+
+/** 当前列表内待推送项目数（按钮计数与禁用判据；批次运行中按钮已切换为取消） */
+const batchPushEligible = computed(() => collectBatchPushTargets().length)
 
 /** 卡片布局偏好（详细 / 手风琴，持久化；工具栏切换即保存） */
 const { cardLayout, loadCardLayout } = useCardLayout(props.manager.storage.cardLayout)
@@ -1711,6 +1737,24 @@ function onViewProject(projectId: string) {
   }
   // 设置搜索词为项目名称，方便快速定位
   searchQuery.value = project.name
+}
+
+/**
+ * 批量推送当前列表内所有待推送项目（串行）。
+ * 不走逐项目预检：预检是逐项目网络探测，批量并行会打满网络池，命中后也无法连续弹确认框；
+ * 非快进等失败会落到该项目的输出面板，并在汇总提示里计为失败。
+ */
+async function handleBatchPush() {
+  if (batchPushRunning.value) return
+  const summary = await runBatchPush()
+  if (!summary) {
+    showMessage(tf("pushAllNoPending"), 3000, "info")
+    return
+  }
+  const message = summary.canceled > 0
+    ? tf("batchPushDoneCanceled", summary.ok, summary.failed)
+    : tf("batchPushDone", summary.ok, summary.failed)
+  showMessage(message, 5000, summary.failed > 0 ? "error" : "info")
 }
 
 /** 预检去重：连点「推送全部」不叠加多次 ls-remote（预检只读，但没必要重复发网络请求） */

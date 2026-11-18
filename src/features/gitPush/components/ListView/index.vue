@@ -12,8 +12,14 @@
     :grouped-projects="groupedProjects"
     :all-tags="allTags"
     :selected-tags="selectedTags"
+    :batch-push-running="batchPushRunning"
+    :batch-push-done="batchPushDone"
+    :batch-push-total="batchPushTotal"
+    :batch-push-eligible="batchPushEligible"
     @toggle-tag="emit('toggleTag', $event)"
     @clear-tag-filter="emit('clearTagFilter')"
+    @batch-push="emit('batchPush')"
+    @cancel-batch-push="emit('cancelBatchPush')"
   />
 
   <!-- 全局搜索提示条：说明搜索已忽略当前视图/分类，并给出命中数与清除入口 -->
@@ -128,12 +134,19 @@ const props = defineProps<{
   searchActive: boolean
   /** 全局搜索命中总数（提示条展示） */
   searchResultCount: number
+  /** 批量推送批次状态（编排与提示由根组件负责，本层只透传） */
+  batchPushRunning: boolean
+  batchPushDone: number
+  batchPushTotal: number
+  batchPushEligible: number
 }>()
 
 const emit = defineEmits<{
   toggleTag: [tag: string]
   clearTagFilter: []
   clearSearch: []
+  batchPush: []
+  cancelBatchPush: []
 }>()
 
 const viewMode = defineModel<ViewMode>("viewMode", { required: true })

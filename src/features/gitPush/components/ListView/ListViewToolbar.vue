@@ -71,6 +71,44 @@
         :aria-label="i18n.cardCompact"
         :title="i18n.cardCompactTip"
       />
+      <!-- 批量推送：只在「需推送」视图出现，避免在其他视图占用工具栏；运行中切换为取消 -->
+      <div
+        v-if="viewMode === 'needsPush'"
+        class="gp-batch-push"
+      >
+        <span
+          v-if="batchPushRunning"
+          class="gp-batch-progress"
+        >{{ batchProgressText }}</span>
+        <Button
+          v-if="!batchPushRunning"
+          class="gp-batch-push-btn"
+          variant="primary"
+          size="xsmall"
+          dense
+          icon="cloudUpload"
+          :disabled="batchPushEligible === 0"
+          :title="batchPushEligible === 0 ? i18n.pushAllNoPending : i18n.batchPushTooltip"
+          @click="emit('batchPush')"
+        >
+          {{ i18n.pushAllPending }}
+          <span
+            v-if="batchPushEligible > 0"
+            class="gp-batch-count"
+          >{{ batchPushEligible }}</span>
+        </Button>
+        <Button
+          v-else
+          class="gp-batch-push-btn"
+          variant="danger"
+          size="xsmall"
+          dense
+          :title="i18n.cancelAllPush"
+          @click="emit('cancelBatchPush')"
+        >
+          {{ i18n.cancelAllPush }}
+        </Button>
+      </div>
     </div>
   </div>
 
@@ -168,12 +206,28 @@ const props = defineProps<{
   allTags: string[]
   /** 已选标签（多选，空数组 = 不筛选） */
   selectedTags: string[]
+  /** 批量推送批次是否运行中（运行中按钮切换为取消） */
+  batchPushRunning: boolean
+  /** 批次已完成 / 总数（运行中进度文案） */
+  batchPushDone: number
+  batchPushTotal: number
+  /** 当前列表内待推送项目数（按钮禁用判据与计数展示） */
+  batchPushEligible: number
 }>()
 
 const emit = defineEmits<{
   toggleTag: [tag: string]
   clearTagFilter: []
+  batchPush: []
+  cancelBatchPush: []
 }>()
+
+/** 批量推送进度文案（运行中替换 {0}/{1}） */
+const batchProgressText = computed(() =>
+  String(props.i18n.batchPushRunning ?? "")
+    .replace("{0}", String(props.batchPushDone))
+    .replace("{1}", String(props.batchPushTotal)),
+)
 
 /**
  * 是否存在任何项目（工具栏整体显隐判据，原 projects prop 的唯一用途）。

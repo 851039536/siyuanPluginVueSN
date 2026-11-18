@@ -57,6 +57,29 @@
   flex-shrink: 0;
 }
 
+// 批量推送：主操作与运行中进度并排放在右侧开关组内，避免额外占一行高度
+.gp-batch-push {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px3;
+  flex-shrink: 0;
+  margin-left: $s-px3;
+}
+
+// 运行中进度（"推送中 3/12"）：等宽数字避免位数变化抖动
+.gp-batch-progress {
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.gp-batch-count {
+  margin-left: 4px;
+  font-family: $ff-mono;
+  opacity: 0.75;
+}
+
 // ========== 标签筛选栏 ==========
 // 标签较多时横向滚动（与分类 TAB 同策略），不换行挤占列表高度
 .gp-tag-filter-bar {

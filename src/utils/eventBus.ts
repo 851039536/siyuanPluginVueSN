@@ -14,6 +14,10 @@
  * // 使用微任务（当前执行栈完成后派发）
  * emitCustomEvent("openDialog", { content }, { useMicrotask: true })
  */
+export const CUSTOM_EVENTS = {
+  OPEN_PROMPTS: "openPrompts",
+} as const
+
 export function emitCustomEvent<T = any>(
   eventName: string,
   detail?: T,

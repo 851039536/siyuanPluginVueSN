@@ -16,16 +16,14 @@
           :size="24"
           class="vp-modal-icon"
         />
-        <!-- 面板标题："提示词库" -->
-        <h2>{{ i18n?.title }}</h2>
+        <h2>{{ t.title }}</h2>
       </div>
       <div class="vp-modal-actions">
-        <!-- 按钮提示："管理分类" -->
         <Button
           variant="ghost"
           size="xsmall"
           icon="listBulleted"
-          :title="i18n?.manageCategories"
+          :title="t.manageCategories"
           @click="showCategoryManage = true"
         />
         <Button
@@ -44,7 +42,7 @@
       :search-query="searchQuery"
       :category-counts="categoryCounts"
       :loading="loading"
-      :i18n="i18n"
+      :i18n="t"
       @update:searchQuery="searchQuery = $event"
       @selectCategory="selectedCategory = $event"
       @manageCategories="showCategoryManage = true"
@@ -61,7 +59,7 @@
     :editing-id="editingId"
     :prompt-manager="promptsManager"
     :category-manager="categoryManager"
-    :i18n="i18n"
+    :i18n="t"
     @close="closeAddModal"
   />
 
@@ -70,14 +68,14 @@
     :show="showCategoryManage"
     :category-manager="categoryManager"
     :prompt-manager="promptsManager"
-    :i18n="i18n"
+    :i18n="t"
     @close="showCategoryManage = false"
   />
 
   <!-- 删除确认弹窗 -->
   <DeleteConfirmModal
     :target-id="deleteConfirmTarget"
-    :i18n="i18n"
+    :i18n="t"
     @confirm="confirmDelete"
     @cancel="deleteConfirmTarget = null"
   />
@@ -85,11 +83,15 @@
 
 <script setup lang="ts">
 import type { Plugin } from "siyuan"
-import type { Prompt } from "./types"
+import type {
+  Prompt,
+  PromptDisplay,
+} from "./types"
 import { showMessage } from "siyuan"
 import {
   computed,
   onMounted,
+  onUnmounted,
   ref,
   shallowRef,
   watch,
@@ -103,14 +105,25 @@ import PromptFormModal from "./components/PromptFormModal.vue"
 import PromptsGrid from "./components/PromptsGrid.vue"
 import { useCategoryManager } from "./composables/useCategoryManager"
 import { usePrompts } from "./composables/usePrompts"
-import { DEFAULT_CATEGORY_COLOR } from "./types"
+import {
+  DEFAULT_CATEGORY_COLOR,
+  PROMPTS_ALL_CATEGORY_ID,
+} from "./types"
 import { PromptsStorage } from "./types/storage"
+import {
+  MSG_DURATION,
+  resolvePromptsI18n,
+  withAlpha,
+} from "./utils"
 
 const props = defineProps<{
   i18n?: Record<string, string>
   plugin?: Plugin
   onClose?: () => void
 }>()
+
+/** 完整 i18n（含默认值兜底），替代散落的 `(props.i18n || {}).x!` */
+const t = computed(() => resolvePromptsI18n(props.i18n))
 
 // --- UI 状态 ---
 const showModal = ref(true)
@@ -119,7 +132,7 @@ const showCategoryManage = ref(false)
 /** 正在编辑的提示词 id（null = 新增；完整表单数据由 PromptFormModal 自行加载） */
 const editingId = ref<string | null>(null)
 const searchQuery = ref("")
-const selectedCategory = ref<string>("all")
+const selectedCategory = ref<string>(PROMPTS_ALL_CATEGORY_ID)
 const deleteConfirmTarget = ref<string | null>(null)
 
 // --- 数据层 ---
@@ -127,7 +140,7 @@ const storage = shallowRef<PromptsStorage | null>(null)
 const promptsManager = usePrompts(storage)
 const { prompts, loading, load: loadPrompts, remove: removePrompt } = promptsManager
 const categoryManager = useCategoryManager(storage, props.i18n)
-const { categories: categoriesRaw, allCategories, load: loadCategories } = categoryManager
+const { allCategories, load: loadCategories } = categoryManager
 
 // --- 分类统计 ---
 const categoryCounts = computed(() => {
@@ -139,23 +152,23 @@ const categoryCounts = computed(() => {
 })
 
 // --- 过滤计算 ---
-// 缓存分类元数据，仅在分类列表变化时重建
+// 缓存分类元数据，仅在分类列表变化时重建（含内置 default，保证旧数据正确着色）
 const categoryMetaMap = computed(() => {
   const map = new Map<string, { name: string, color: string, bg: string }>()
-  for (const cat of categoriesRaw.value) {
+  for (const cat of allCategories.value) {
     map.set(cat.id, {
       name: cat.name,
       color: cat.color,
-      bg: `${cat.color}20`,
+      bg: withAlpha(cat.color, 0.125),
     })
   }
   return map
 })
 
-const filteredPrompts = computed(() => {
+const filteredPrompts = computed<PromptDisplay[]>(() => {
   let result = prompts.value
 
-  if (selectedCategory.value !== "all") {
+  if (selectedCategory.value !== PROMPTS_ALL_CATEGORY_ID) {
     result = result.filter((p) => p.category === selectedCategory.value)
   }
 
@@ -172,12 +185,12 @@ const filteredPrompts = computed(() => {
   }
 
   const metaMap = categoryMetaMap.value
-  const defaultMeta = metaMap.get(categoriesRaw.value[0]?.id) || {
-    name: (props.i18n || {}).defaultCategory!,
+  const defaultMeta = {
+    name: t.value.defaultCategory,
     color: DEFAULT_CATEGORY_COLOR,
-    bg: `${DEFAULT_CATEGORY_COLOR}20`,
+    bg: withAlpha(DEFAULT_CATEGORY_COLOR, 0.125),
   }
-  return result.map((prompt) => {
+  return result.map((prompt): PromptDisplay => {
     const cat = metaMap.get(prompt.category) || defaultMeta
     return {
       ...prompt,
@@ -188,7 +201,8 @@ const filteredPrompts = computed(() => {
   })
 })
 
-// --- 初始化 ---
+// --- 初始化（迁移已在 showPromptsModal 打开前显式完成，此处仅纯加载）---
+let unmounted = false
 onMounted(async () => {
   if (!props.plugin) return
 
@@ -197,14 +211,21 @@ onMounted(async () => {
     await Promise.all([loadPrompts(), loadCategories()])
   } catch (error) {
     console.error("初始化提示词库失败:", error)
-    showMessage((props.i18n || {}).loadFailed!, 3000, "error")
+    if (!unmounted) showMessage(t.value.loadFailed, MSG_DURATION.LONG, "error")
   }
 })
+onUnmounted(() => {
+  // 异步加载完成后若组件已销毁，不再写回状态/弹提示
+  unmounted = true
+})
 
-// 所选分类被删除后回退"全部"（分类增删已下沉 CategoryManageModal，此处仅做视图状态对账）
-watch(categoriesRaw, (cats) => {
-  if (selectedCategory.value !== "all" && !cats.some((c) => c.id === selectedCategory.value)) {
-    selectedCategory.value = "all"
+// 所选分类被删除后回退"全部"（监听完整分类视图，内置分类恒定存在）
+watch(allCategories, (cats) => {
+  if (
+    selectedCategory.value !== PROMPTS_ALL_CATEGORY_ID
+    && !cats.some((c) => c.id === selectedCategory.value)
+  ) {
+    selectedCategory.value = PROMPTS_ALL_CATEGORY_ID
   }
 })
 
@@ -218,15 +239,20 @@ function closeAddModal(): void {
 async function confirmDelete(): Promise<void> {
   const id = deleteConfirmTarget.value
   if (!id) return
-  await removePrompt(id)
-  deleteConfirmTarget.value = null
-  showMessage((props.i18n || {}).promptDeleted!, 2000, "info")
+  try {
+    // P1-2：仅在持久化成功后提示"已删除"，失败时保留弹窗供重试
+    await removePrompt(id)
+    deleteConfirmTarget.value = null
+    showMessage(t.value.promptDeleted, MSG_DURATION.SHORT, "info")
+  } catch {
+    showMessage(t.value.saveFailed, MSG_DURATION.SHORT, "error")
+  }
 }
 
 // --- 工具函数 ---
 async function copyContent(content: string): Promise<void> {
   const ok = await copyToClipboard(content)
-  if (!ok) showMessage((props.i18n || {}).copyFailed!, 2000, "error")
+  if (!ok) showMessage(t.value.copyFailed, MSG_DURATION.SHORT, "error")
 }
 
 function closeModal(): void {

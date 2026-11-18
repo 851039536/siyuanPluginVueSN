@@ -109,6 +109,7 @@ import PasswordVaultDialog from "@/features/passwordVault/index.vue"
 import SkillsManagerDialog from "@/features/aiContentGenerator/skills/components/SkillsManagerDialog.vue"
 import VideoManager from "@/features/video/index.vue"
 import { usePlugin } from "@/main"
+import { CUSTOM_EVENTS } from "@/utils/eventBus"
 
 const plugin = usePlugin() as PluginSample
 const imageCreationEnabled = plugin.settings.enableImageCreation !== false
@@ -246,9 +247,10 @@ onMounted(() => {
     toggleFlashcardDialog()
   })
 
-  // 监听打开提示词库事件（来自悬浮框）
-  addWindowListener("openPrompts", () => {
-    showPromptsModal(plugin as any)
+  // 监听打开提示词库事件（来自悬浮框）；功能关闭时不响应，避免开关被绕过
+  addWindowListener(CUSTOM_EVENTS.OPEN_PROMPTS, () => {
+    if (plugin.settings.enablePrompts === false) return
+    void showPromptsModal(plugin)
   })
 
   // 监听工具合集面板切换事件

@@ -3,12 +3,13 @@
  */
 import type { Plugin } from "siyuan"
 import type { FloatingTool } from "../types"
+import { CUSTOM_EVENTS } from "@/utils/eventBus"
 import { createEventDispatchTool } from "./utils"
 
 export function createPromptsTool(plugin: Plugin): FloatingTool {
   return createEventDispatchTool(plugin, {
     id: "prompts",
     icon: "mdi:star",
-    eventName: "openPrompts",
+    eventName: CUSTOM_EVENTS.OPEN_PROMPTS,
   })
 }

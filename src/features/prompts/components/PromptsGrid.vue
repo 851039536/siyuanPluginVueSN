@@ -155,17 +155,12 @@
 import type {
   Prompt,
   PromptCategory,
+  PromptDisplay,
 } from "../types"
 
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import CategorySidebar from "./CategorySidebar.vue"
-
-interface PromptDisplay extends Prompt {
-  catName: string
-  catColor: string
-  catBgColor: string
-}
 
 defineProps<{
   filteredPrompts: PromptDisplay[]

@@ -13,8 +13,7 @@
       @click.stop
     >
       <div class="vp-modal-header">
-        <!-- 弹窗标题："编辑提示词" / "添加提示词" -->
-        <h2>{{ editingPrompt ? i18n?.editPrompt : i18n?.addPrompt }}</h2>
+        <h2>{{ editingPrompt ? t.editPrompt : t.addPrompt }}</h2>
         <Button
           variant="ghost"
           icon="close"
@@ -30,15 +29,13 @@
         >
           <!-- 标题字段 -->
           <div class="vp-form-group">
-            <!-- 标签文案："标题" -->
-            <label for="prompt-title">{{ i18n?.titleLabel }}</label>
-            <!-- 占位文案："请输入提示词标题" -->
+            <label for="prompt-title">{{ t.titleLabel }}</label>
             <input
               id="prompt-title"
               v-model="form.title"
               type="text"
               class="vp-input"
-              :placeholder="i18n?.titlePlaceholder"
+              :placeholder="t.titlePlaceholder"
               required
               aria-required="true"
             />
@@ -46,23 +43,19 @@
 
           <!-- 描述字段 -->
           <div class="vp-form-group">
-            <!-- 标签文案："描述" -->
-            <label for="prompt-description">{{ i18n?.description }}</label>
-            <!-- 占位文案："请输入提示词描述" -->
+            <label for="prompt-description">{{ t.description }}</label>
             <textarea
               id="prompt-description"
               v-model="form.description"
               class="vp-textarea"
-              :placeholder="i18n?.descriptionPlaceholder"
+              :placeholder="t.descriptionPlaceholder"
               rows="3"
             />
           </div>
 
           <!-- 分类字段 -->
           <div class="vp-form-group">
-            <!-- 标签文案："分类" -->
-            <label for="prompt-category">{{ i18n?.category }}</label>
-            <!-- 分类：共享 Select（纯受控 ⇒ 显式回写 form.category） -->
+            <label for="prompt-category">{{ t.category }}</label>
             <Select
               id="prompt-category"
               class="vp-select-field"
@@ -70,95 +63,86 @@
               :options="categoryOptions"
               size="xsmall"
               required
-              :aria-label="i18n?.category"
+              :aria-label="t.category"
               @update:model-value="(v) => form.category = v === null ? '' : String(v)"
             />
           </div>
 
           <!-- 动态内容块编辑区 -->
           <div class="vp-content-editor">
-            <!-- 标签文案："内容块" -->
-            <label class="vp-form-label">{{ i18n?.contents }}</label>
+            <label class="vp-form-label">{{ t.contents }}</label>
             <div
               v-for="(block, index) in form.contents"
               :key="block.id"
               class="vp-content-editor-item"
             >
               <div class="vp-content-editor-inputs">
-                <!-- 占位文案："内容标签"；无障碍标签："内容标签 N" -->
                 <input
                   v-model="block.label"
                   type="text"
                   class="vp-input vp-input--label"
-                  :placeholder="i18n?.contentLabelPlaceholder"
-                  :aria-label="`${i18n?.contentLabel} ${index + 1}`"
+                  :placeholder="t.contentLabelPlaceholder"
+                  :aria-label="`${t.contentLabel} ${index + 1}`"
                 />
-                <!-- 占位文案："请输入提示词内容"；无障碍标签："内容 N" -->
                 <textarea
                   v-model="block.text"
                   class="vp-textarea"
-                  :placeholder="i18n?.contentPlaceholder"
+                  :placeholder="t.contentPlaceholder"
                   rows="5"
                   required
-                  :aria-label="`${i18n?.content} ${index + 1}`"
+                  :aria-label="`${t.content} ${index + 1}`"
                 />
               </div>
               <div class="vp-content-editor-actions">
-                <!-- 按钮提示："上移" -->
                 <Button
                   variant="ghost"
                   icon="up"
                   size="xsmall"
-                  :title="i18n?.moveUp"
+                  :title="t.moveUp"
                   :disabled="index === 0"
                   @click="moveContentBlock(index, -1)"
                 />
-                <!-- 按钮提示："下移" -->
                 <Button
                   variant="ghost"
                   icon="down"
                   size="xsmall"
-                  :title="i18n?.moveDown"
+                  :title="t.moveDown"
                   :disabled="index === form.contents.length - 1"
                   @click="moveContentBlock(index, 1)"
                 />
-                <!-- 按钮提示："删除内容块" -->
                 <Button
                   variant="danger"
                   icon="delete"
                   size="xsmall"
-                  :title="i18n?.removeContent"
+                  :title="t.removeContent"
                   :disabled="form.contents.length <= 1"
                   @click="removeContentBlock(index)"
                 />
               </div>
             </div>
-            <!-- 按钮文案："添加内容块" -->
             <Button
               variant="secondary"
               icon="add"
               class="vp-content-editor-add"
               @click="addContentBlock"
             >
-              {{ i18n?.addContentBlock }}
+              {{ t.addContentBlock }}
             </Button>
           </div>
 
           <div class="vp-form-actions">
-            <!-- 按钮文案："取消" -->
             <Button
               type="button"
               variant="secondary"
               @click="$emit('close')"
             >
-              {{ i18n?.cancel }}
+              {{ t.cancel }}
             </Button>
-            <!-- 按钮文案："保存" -->
             <Button
               type="submit"
               variant="primary"
             >
-              {{ i18n?.save }}
+              {{ t.save }}
             </Button>
           </div>
         </form>
@@ -168,13 +152,12 @@
 </template>
 
 <script setup lang="ts">
-import type { CategoryManager } from "../composables/useCategoryManager"
-import type { PromptsManager } from "../composables/usePrompts"
 import type {
+  CategoryManager,
+  PromptsManager,
   Prompt,
   PromptContent,
 } from "../types"
-
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -183,6 +166,15 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
+import {
+  PROMPTS_ALL_CATEGORY_ID,
+  PROMPTS_DEFAULT_CATEGORY_ID,
+} from "../types"
+import {
+  genId,
+  MSG_DURATION,
+  resolvePromptsI18n,
+} from "../utils"
 
 const props = defineProps<{
   show: boolean
@@ -197,17 +189,26 @@ const emit = defineEmits<{
   (e: "close"): void
 }>()
 
+const t = computed(() => resolvePromptsI18n(props.i18n))
+
 // manager 内的 Ref 经 props 传入不会自动解包，统一以 computed 暴露
 const editingPrompt = computed(() =>
   props.editingId
     ? props.promptManager.prompts.value.find((p) => p.id === props.editingId) ?? null
     : null,
 )
-const categories = computed(() => props.categoryManager.categories.value)
+
+/**
+ * 表单可选分类 = 默认 + 用户自定义（排除筛选专用的"全部"伪分类）。
+ * 使用 allCategories 保证内置 default 恒定在列，即使 categories 当前为空。
+ */
+const assignableCategories = computed(() =>
+  props.categoryManager.allCategories.value.filter((c) => c.id !== PROMPTS_ALL_CATEGORY_ID),
+)
 
 /** 分类选项（值 = 分类 id，与 form.category 语义一致） */
 const categoryOptions = computed(() =>
-  categories.value.map((cat) => ({
+  assignableCategories.value.map((cat) => ({
     value: cat.id,
     label: cat.name,
   })),
@@ -239,7 +240,10 @@ function initForm(): void {
     form.title = ""
     form.description = ""
     form.contents = [createEmptyContentBlock()]
-    form.category = categories.value[0]?.id || "default"
+    // P2-6：回退到恒定存在的内置默认分类 id，不再指向可能已删除的 categories[0]
+    form.category = assignableCategories.value.some((c) => c.id === PROMPTS_DEFAULT_CATEGORY_ID)
+      ? PROMPTS_DEFAULT_CATEGORY_ID
+      : assignableCategories.value[0]?.id || PROMPTS_DEFAULT_CATEGORY_ID
   }
 }
 watch(
@@ -252,7 +256,8 @@ watch(
 
 function createEmptyContentBlock(): PromptContent {
   return {
-    id: `c${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    // P2-8：统一 ID 生成，替换 Date.now() 拼接
+    id: genId("c"),
     label: "",
     text: "",
   }
@@ -277,26 +282,26 @@ function moveContentBlock(index: number, direction: -1 | 1): void {
 
 async function handleSave(): Promise<void> {
   if (!form.title.trim()) {
-    showMessage((props.i18n || {}).titleRequired!, 2000, "error")
+    showMessage(t.value.titleRequired, MSG_DURATION.SHORT, "error")
     return
   }
+  // P2-7：只过滤一次，复用结果，避免校验与实际保存内容漂移
   const validContents = form.contents.filter((c) => c.text.trim())
   if (validContents.length === 0) {
-    showMessage((props.i18n || {}).contentRequired!, 2000, "error")
+    showMessage(t.value.contentRequired, MSG_DURATION.SHORT, "error")
     return
   }
 
   const prompt: Prompt = {
-    id: editingPrompt.value?.id || Date.now().toString(),
+    // P2-8：统一 ID 生成
+    id: editingPrompt.value?.id || genId("p"),
     title: form.title.trim(),
     description: form.description.trim(),
-    contents: form.contents
-      .filter((c) => c.text.trim())
-      .map((c) => ({
-        id: c.id,
-        label: c.label.trim() || (props.i18n || {}).contentBlockLabel!,
-        text: c.text.trim(),
-      })),
+    contents: validContents.map((c) => ({
+      id: c.id,
+      label: c.label.trim() || t.value.contentBlockLabel,
+      text: c.text.trim(),
+    })),
     category: form.category,
   }
 
@@ -308,7 +313,7 @@ async function handleSave(): Promise<void> {
       await props.promptManager.add(prompt)
     }
   } catch {
-    showMessage((props.i18n || {}).saveFailed!, 2000, "error")
+    showMessage(t.value.saveFailed, MSG_DURATION.SHORT, "error")
     return
   }
   emit("close")

@@ -43,7 +43,6 @@ import {
   registerMinimalBrowser,
   registerPageLock,
   registerPasswordVault,
-  registerPrompts,
   registerQuickNote,
   registerResourceManager,
   registerRssReader,
@@ -109,7 +108,7 @@ export default class PluginSample extends Plugin {
   /** 持有持久资源（定时器/监听器/Modal）、需在 onunload 统一 destroy 的实例字段清单 */
   private static readonly DESTROYABLE_KEYS = [
     "__pageLock", // 页面锁定（interval + 事件监听器）
-    "__promptsModal", // 提示词库（persistent Modal，惰性创建，prompts 功能自挂载）
+    "__promptsModal", // 提示词库（实例对象惰性自挂载；Vue app 随弹窗关闭销毁）
     "__flashcardReading", // 单词阅读
     "__floatingBox", // 悬浮框
     "__floatingToolbar", // 浮动工具栏
@@ -287,7 +286,6 @@ export default class PluginSample extends Plugin {
     if (s.enableTextDiff) registerTextDiff(this)
     if (s.enableFlashcardReading) registerFlashcardReading(this)
     if (s.enablePasswordVault) registerPasswordVault(this)
-    if (s.enablePrompts) registerPrompts(this)
     if (s.enableDocAnalysis) registerDocAnalysis(this)
     if (s.enableFormatAssistant) registerFormatAssistant(this)
     if (s.enableHtmlViewer) registerHtmlViewer(this)

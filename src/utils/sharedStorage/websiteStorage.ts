@@ -59,7 +59,7 @@ export const DEFAULT_CATEGORY_ID = "default"
 /** “全部”分类筛选 ID（面板/筛选栏共用） */
 export const ALL_CATEGORY_ID = "all"
 /** 默认分类颜色（FilterBar/WebsiteCard/Storage 共用） */
-export const DEFAULT_CATEGORY_COLOR = "#b0aea5"
+export const WEBSITE_DEFAULT_CATEGORY_COLOR = "#b0aea5"
 /** 分类管理弹窗预设色（CategoryManager/Storage 共用） */
 export const PRESET_CATEGORY_COLORS = [
   "#3b82f6",
@@ -87,7 +87,7 @@ const DEFAULT_CATEGORIES: WebsiteCategory[] = [
   {
     id: DEFAULT_CATEGORY_ID,
     name: "默认",
-    color: DEFAULT_CATEGORY_COLOR,
+    color: WEBSITE_DEFAULT_CATEGORY_COLOR,
   },
   {
     id: "dev",

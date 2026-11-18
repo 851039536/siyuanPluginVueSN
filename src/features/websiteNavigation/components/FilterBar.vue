@@ -36,7 +36,7 @@ import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import {
   ALL_CATEGORY_ID,
-  DEFAULT_CATEGORY_COLOR,
+  WEBSITE_DEFAULT_CATEGORY_COLOR,
 } from "@/utils/sharedStorage/websiteStorage"
 
 const props = defineProps<{
@@ -54,7 +54,7 @@ const allCategories = computed(() => [
   {
     id: ALL_CATEGORY_ID,
     name: props.i18n.allCategories,
-    color: DEFAULT_CATEGORY_COLOR,
+    color: WEBSITE_DEFAULT_CATEGORY_COLOR,
   },
   ...props.categories,
 ])

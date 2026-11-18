@@ -78,8 +78,8 @@ import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import {
-  DEFAULT_CATEGORY_COLOR,
   DEFAULT_CATEGORY_ID,
+  WEBSITE_DEFAULT_CATEGORY_COLOR,
 } from "@/utils/sharedStorage/websiteStorage"
 import { getCategoryById } from "../composables/useWebsiteNavigation"
 
@@ -99,7 +99,7 @@ const category = computed(() =>
   getCategoryById(props.entry.category) ?? {
     id: DEFAULT_CATEGORY_ID,
     name: props.i18n.uncategorized ?? "",
-    color: DEFAULT_CATEGORY_COLOR,
+    color: WEBSITE_DEFAULT_CATEGORY_COLOR,
   },
 )
 </script>

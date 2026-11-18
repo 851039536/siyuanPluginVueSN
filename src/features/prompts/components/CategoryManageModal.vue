@@ -13,14 +13,12 @@
       @click.stop
     >
       <div class="vp-modal-header">
-        <!-- 弹窗标题："管理分类" -->
-        <h2>{{ i18n?.manageCategories }}</h2>
-        <!-- 按钮提示："关闭" -->
+        <h2>{{ t.manageCategories }}</h2>
         <Button
           variant="ghost"
           icon="close"
           size="xsmall"
-          :title="i18n?.close"
+          :title="t.close"
           @click="$emit('close')"
         />
       </div>
@@ -29,34 +27,31 @@
         <!-- 新建分类表单 -->
         <div class="vp-category-form">
           <div class="vp-form-row">
-            <!-- 占位文案："分类名称" -->
             <input
               v-model="form.name"
               type="text"
               class="vp-input"
-              :placeholder="i18n?.categoryName"
-              :aria-label="i18n?.categoryName"
+              :placeholder="t.categoryName"
+              :aria-label="t.categoryName"
               @keyup.enter="handleAdd"
             />
-            <!-- 分类颜色：改用共享 ColorField（原生 input[type=color] 在 Electron 下不弹窗） -->
             <ColorField
               class="vp-category-color-field"
               :model-value="form.color"
-              :placeholder="i18n?.categoryColor"
+              :placeholder="t.categoryColor"
               @update:model-value="form.color = $event"
             />
-            <!-- 按钮文案："添加" -->
             <Button
               variant="success"
               icon="add"
               @click="handleAdd"
             >
-              {{ i18n?.add }}
+              {{ t.add }}
             </Button>
           </div>
         </div>
 
-        <!-- 分类列表 -->
+        <!-- 分类列表：仅用户自定义分类（内置 default/all 由 manager 分离，不可删） -->
         <div
           class="vp-category-list"
           role="list"
@@ -72,14 +67,13 @@
               :style="{ backgroundColor: cat.color }"
             />
             <span class="vp-category-name">{{ cat.name }}</span>
-            <!-- 按钮文案："删除" -->
             <Button
               variant="danger"
               icon="delete"
               size="xsmall"
               @click="handleDelete(cat.id)"
             >
-              {{ i18n?.delete }}
+              {{ t.delete }}
             </Button>
           </div>
         </div>
@@ -89,9 +83,11 @@
 </template>
 
 <script setup lang="ts">
-import type { CategoryManager } from "../composables/useCategoryManager"
-import type { PromptsManager } from "../composables/usePrompts"
-import type { PromptCategory } from "../types"
+import type {
+  CategoryManager,
+  PromptsManager,
+  PromptCategory,
+} from "../types"
 import { showMessage } from "siyuan"
 import {
   computed,
@@ -99,7 +95,16 @@ import {
 } from "vue"
 import Button from "@/components/Button.vue"
 import ColorField from "@/components/ColorField.vue"
-import { DEFAULT_CATEGORY_COLOR } from "../types"
+import {
+  DEFAULT_CATEGORY_COLOR,
+  PROMPTS_ALL_CATEGORY_ID,
+  PROMPTS_DEFAULT_CATEGORY_ID,
+} from "../types"
+import {
+  genId,
+  MSG_DURATION,
+  resolvePromptsI18n,
+} from "../utils"
 
 const props = defineProps<{
   show: boolean
@@ -112,6 +117,8 @@ const emit = defineEmits<{
   (e: "close"): void
 }>()
 
+const t = computed(() => resolvePromptsI18n(props.i18n))
+
 // manager 内的 Ref 经 props 传入不会自动解包，以 computed 暴露
 const categories = computed(() => props.categoryManager.categories.value)
 
@@ -120,10 +127,14 @@ const form = reactive({
   color: DEFAULT_CATEGORY_COLOR,
 })
 
+/** 内置分类 id（禁止删除，双重保险：manager 层已拒绝，UI 层再拦截） */
+const BUILTIN_IDS = new Set([PROMPTS_DEFAULT_CATEGORY_ID, PROMPTS_ALL_CATEGORY_ID])
+
 async function handleAdd(): Promise<void> {
   if (!form.name.trim()) return
   const newCategory: PromptCategory = {
-    id: Date.now().toString(),
+    // P2-8：统一 ID 生成
+    id: genId("cat"),
     name: form.name.trim(),
     color: form.color,
   }
@@ -131,21 +142,26 @@ async function handleAdd(): Promise<void> {
     await props.categoryManager.add(newCategory)
   } catch {
     // manager 已回滚内存态，提示后保留表单内容供重试
-    showMessage((props.i18n || {}).saveFailed!, 2000, "error")
+    showMessage(t.value.saveFailed, MSG_DURATION.SHORT, "error")
     return
   }
   form.name = ""
   form.color = DEFAULT_CATEGORY_COLOR
 }
 
-/** 删除分类：有提示词占用的分类拒绝删除（manager 内存态即时可查） */
+/** 删除分类：内置分类与有提示词占用的分类均拒绝删除 */
 async function handleDelete(id: string): Promise<void> {
+  if (BUILTIN_IDS.has(id)) return
   const hasPrompts = props.promptManager.prompts.value.some((p) => p.category === id)
   if (hasPrompts) {
-    showMessage((props.i18n || {}).categoryNotEmpty!, 2000, "error")
+    showMessage(t.value.categoryNotEmpty, MSG_DURATION.SHORT, "error")
     return
   }
-  await props.categoryManager.remove(id)
+  try {
+    await props.categoryManager.remove(id)
+  } catch {
+    showMessage(t.value.saveFailed, MSG_DURATION.SHORT, "error")
+  }
 }
 </script>
 

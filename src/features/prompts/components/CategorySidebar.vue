@@ -20,7 +20,7 @@
       >
         <!-- "全部"入口用网格图标，其余分类用颜色圆点 -->
         <IconWrapper
-          v-if="cat.id === 'all'"
+          v-if="cat.id === PROMPTS_ALL_CATEGORY_ID"
           name="viewGrid"
           :size="16"
           class="vp-sidebar-icon"
@@ -34,7 +34,7 @@
         <span class="vp-sidebar-name">{{ cat.name }}</span>
         <!-- 分类计数徽章（"全部"不显示） -->
         <span
-          v-if="cat.id !== 'all'"
+          v-if="cat.id !== PROMPTS_ALL_CATEGORY_ID"
           class="vp-sidebar-count"
         >{{ categoryCounts[cat.id] || 0 }}</span>
       </button>
@@ -60,6 +60,7 @@
 <script setup lang="ts">
 import type { PromptCategory } from "../types"
 import IconWrapper from "@/components/IconWrapper.vue"
+import { PROMPTS_ALL_CATEGORY_ID } from "../types"
 
 defineProps<{
   allCategories: PromptCategory[]

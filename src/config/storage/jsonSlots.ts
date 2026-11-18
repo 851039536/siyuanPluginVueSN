@@ -175,6 +175,11 @@ export const JSON_SLOTS = [
     resettable: false,
     notes: "只回读不删除",
   }),
+  jsonSlot("prompts.migration", ["prompts"], "siyuan-prompts-migration-v1", "提示词库迁移标记", {
+    exportable: false,
+    resettable: false,
+    notes: "一次性迁移标记（旧 key / content* → contents），不导出不重置",
+  }),
 
   // ==================== quickNote ====================
   jsonSlot("quickNote.data", ["quickNote"], "quick-note-data", "速记数据", { growth: true }),

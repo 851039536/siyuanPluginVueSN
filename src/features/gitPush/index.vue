@@ -889,8 +889,8 @@ const listEmptyHint = computed(() => {
 const {
   auditRows,
   auditing,
-  audited,
   runAudit,
+  runAuditIfChanged,
 } = useRepoLinkAudit(props.manager, projects, {
   // 手动加载模式：用户尚未点击加载时不跑链接审计（进入页面零自动 git 调用）
   enabled: () => currentView.value === "stats" && statsLoaded.value,
@@ -1215,6 +1215,16 @@ function markProjectsDisplayed(ids: Iterable<string>): void {
   if (changed) displayedProjectIds.value = new Set(displayedProjectIds.value)
 }
 
+/** 删除项目后裁剪「已展示」集合，避免长会话反复增删时 id 集合只增不减 */
+function pruneDisplayedProjects(): void {
+  const current = new Set(projects.value.map((p) => p.id))
+  const stale = [...displayedProjectIds.value].filter((id) => !current.has(id))
+  if (stale.length === 0) return
+  const next = new Set(displayedProjectIds.value)
+  for (const id of stale) next.delete(id)
+  displayedProjectIds.value = next
+}
+
 const gitProbe = useGitProbe({
   manager: props.manager,
   projects,
@@ -1306,6 +1316,7 @@ const projectProbeSignature = computed(() =>
   projects.value.map((p) => `${p.id}:${p.path}`).join("|"),
 )
 watch(projectProbeSignature, () => {
+  pruneDisplayedProjects()
   gitProbe.syncProjects()
   // 项目集合/路径变化后，「本会话已检查过」不再成立：新项目的 behind 尚未拉取。
   // 不清会导致新增项目永远进不了「需拉取」列表（直到面板重挂载）。
@@ -1500,10 +1511,14 @@ let statsAuditPending = false
  * 它与状态加载共用同一个本地 git 池，进入即跑会让首屏峰值从 2N 变成 3N，
  * 且与状态查询互相抢槽位。这里改为等状态全量加载完成后再后台跑；
  * 由于是用户手动加载触发的链路，即使期间切走统计页也会跑完（force 绕过 enabled）。
+ *
+ * @param opts.onlyIfChanged true = 仅当项目指纹（含 *Url）变化时重跑；
+ *   用于「切回统计页」——链接编辑发生在列表视图时 watch 被 enabled 门控挡掉，
+ *   回到统计页必须按指纹补审，否则矩阵长期停留在旧结果。
  */
-function scheduleStatsAudit(): void {
-  // 已在审计中则不重复排队（在飞审计完成后以 audited 状态为准）
-  if (statsAuditPending || auditing.value) return
+function scheduleStatsAudit(opts?: { onlyIfChanged?: boolean }): void {
+  // 同一轮只排一次：加载/刷新/切回统计页在等待状态加载期间合并
+  if (statsAuditPending) return
   statsAuditPending = true
   const full = statsLoadFull ?? Promise.resolve()
   void (async () => {
@@ -1513,10 +1528,13 @@ function scheduleStatsAudit(): void {
       // 状态加载失败不影响审计（审计自身按项目隔离失败）
     }
     statsAuditPending = false
-    if (gitOpsPaused.value || audited.value) return
-    void runAudit({ force: true }).catch((e: unknown) => {
+    if (gitOpsPaused.value) return
+    try {
+      if (opts?.onlyIfChanged) await runAuditIfChanged()
+      else await runAudit({ force: true })
+    } catch (e: unknown) {
       console.warn("[gitPush] 仓库链接一致性校验失败", e)
-    })
+    }
   })()
 }
 
@@ -1573,6 +1591,11 @@ watch(currentView, async (view) => {
   }
   // 项目状态采用手动加载模式：进入只展示会话内已有数据或未加载空态，
   // 不发起任何 git（含链接审计）；由用户点击「加载项目状态」触发。
+  // 但已加载过时切回统计页需要按项目指纹补审：链接/路径编辑通常发生在列表视图，
+  // 那时的项目 watch 被 enabled 门控挡掉，不补审会让矩阵长期陈旧。
+  if (view === "stats" && statsLoaded.value && !gitOpsPaused.value) {
+    scheduleStatsAudit({ onlyIfChanged: true })
+  }
   if (view === "analysis" && !gitOpsPaused.value) await ensureAnalysis()
   // 行数排行是「提交分析」视图的内部 Tab，其缓存加载是纯本地存储读取、不触发 git，
   // 故与 ensureAnalysis 一并无条件执行（暂停 git 操作时仍须恢复过滤选择与上次行数数据，否则重启后勾选丢失）

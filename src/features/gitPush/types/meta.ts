@@ -65,7 +65,6 @@ export interface RemoteCoverage {
   gitee: number
   gitea: number
   cnb: number
-  hasRemote: number
   multiple: number
 }
 
@@ -77,10 +76,22 @@ export interface PushStatusStats {
   noRemote: number
 }
 
+/** 单远程待推送计数（统计视图与待处理表格共用同一形状） */
+export interface RemoteAheadCount {
+  key: PlatformKey
+  ahead: number
+}
+
+/** 单远程待拉取计数（统计视图与待处理表格共用同一形状） */
+export interface RemoteBehindCount {
+  key: PlatformKey
+  behind: number
+}
+
 /** 需要推送的项目项 */
 export interface NeedsPushItem {
   project: GitProject
-  aheadByRemote: { key: string, ahead: number }[]
+  aheadByRemote: RemoteAheadCount[]
   totalAhead: number
 }
 
@@ -95,16 +106,16 @@ export interface UncommittedItem {
 /** 需要拉取的项目项 */
 export interface NeedsPullItem {
   project: GitProject
-  behindByRemote: { key: string, behind: number }[]
+  behindByRemote: RemoteBehindCount[]
   totalBehind: number
 }
 
 /** 待处理项目（需要推送 + 需要拉取 + 有未提交变更 的合并视图） */
 export interface PendingProjectItem {
   project: GitProject
-  aheadByRemote: { key: string, ahead: number }[]
+  aheadByRemote: RemoteAheadCount[]
   totalAhead: number
-  behindByRemote: { key: string, behind: number }[]
+  behindByRemote: RemoteBehindCount[]
   totalBehind: number
   staged: number
   unstaged: number
@@ -148,10 +159,30 @@ export interface RepoLinkAuditRow {
   hasIssue: boolean
 }
 
-// ── 统计视图平台矩阵表格视图模型（PlatformSection 消费）──
+// ── 统计视图表格视图模型（StatsTable 骨架 + 各区块行插槽消费）──
+/** 表格行最小形状：StatsTable 只负责 id/name/path 与可选错误后缀，其余列由插槽渲染 */
+export interface StatsTableRow {
+  id: string
+  name: string
+  path: string
+  /** 名称后缀标注（如审计「路径无效或检测失败」；空串不渲染） */
+  nameSuffix?: string
+}
+
+/** 待处理项目表格行视图（PendingProjectsSection 消费） */
+export interface PendingProjectRowView extends StatsTableRow {
+  aheadByRemote: RemoteAheadCount[]
+  totalAhead: number
+  behindByRemote: RemoteBehindCount[]
+  totalBehind: number
+  staged: number
+  unstaged: number
+  untracked: number
+}
+
 /** 平台单元格视图（icon 为空串时渲染占位符 -） */
 export interface PlatformTableCellView {
-  key: string
+  key: PlatformKey
   /** hover 提示原文（状态名 / 链接与远程 URL 原文等，由调用方预计算） */
   title: string
   /** 图标名（空串 = 渲染占位符 -） */
@@ -161,12 +192,7 @@ export interface PlatformTableCellView {
 }
 
 /** 平台矩阵表格行视图（项目名 + 平台单元格序列） */
-export interface PlatformTableRowView {
-  id: string
-  name: string
-  path: string
-  /** 名称后缀标注（审计"路径无效或检测失败"；空串不渲染） */
-  nameSuffix?: string
+export interface PlatformTableRowView extends StatsTableRow {
   cells: PlatformTableCellView[]
 }
 

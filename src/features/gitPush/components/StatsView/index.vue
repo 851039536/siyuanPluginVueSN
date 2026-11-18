@@ -27,14 +27,17 @@
             :aria-label="i18n.consistencyTitle"
             @click="emit('openConsistency')"
           />
+          <!-- 已加载后才有刷新动作；未加载态由下方主按钮承担，避免同屏两个「加载」入口 -->
           <Button
+            v-if="loaded"
             variant="ghost"
             size="xsmall"
-            :icon="loaded ? 'refresh' : 'downloadOutline'"
+            icon="refresh"
             :loading="refreshing || loading"
             :disabled="refreshing || loading"
-            :title="loaded ? i18n.refreshAll : i18n.statsLoadAction"
-            @click="onPrimaryAction"
+            :title="i18n.statsRefreshHint"
+            :aria-label="i18n.statsRefreshHint"
+            @click="emit('refresh')"
           />
         </template>
       </AnalysisToolbar>
@@ -133,12 +136,6 @@ const emit = defineEmits<{
   /** 打开「分支一致性分析」弹窗（入口位于平台区块标题右侧） */
   openConsistency: []
 }>()
-
-/** 工具条主按钮：未加载时触发加载，已加载时触发全量刷新 */
-function onPrimaryAction() {
-  if (props.loaded) emit("refresh")
-  else emit("load")
-}
 
 /** 快照状态文案：加载中（含进度）→ 未加载 → 刷新中 → 上次刷新相对时间 → 项目总数 */
 const statusText = computed(() => {

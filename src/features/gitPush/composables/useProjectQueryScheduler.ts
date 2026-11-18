@@ -386,6 +386,10 @@ export function useProjectQueryScheduler(
     for (const key of [...lastLoadedAt.keys()]) {
       if (key.startsWith(prefix)) lastLoadedAt.delete(key)
     }
+    // 查询序号仅用于丢弃迟到结果；项目已删除后无需继续保留其键
+    for (const key of [...runSeq.keys()]) {
+      if (key.startsWith(prefix)) runSeq.delete(key)
+    }
   }
 
   return {

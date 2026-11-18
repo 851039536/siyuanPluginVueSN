@@ -10,6 +10,8 @@ import type {
   NeedsPushItem,
   PendingProjectItem,
   PlatformStatusItem,
+  RemoteAheadCount,
+  RemoteBehindCount,
   StatsView,
   UncommittedItem,
 } from "../types/meta"
@@ -86,7 +88,6 @@ export function useGitStats(
     let gitee = 0
     let gitea = 0
     let cnb = 0
-    let hasRemote = 0
     let multipleRemote = 0
     let ahead = 0
     let behind = 0
@@ -138,7 +139,6 @@ export function useGitStats(
         else if (key === "gitea") gitea++
         else cnb++
       }
-      if (remoteCount > 0) hasRemote++
       if (remoteCount >= 2) multipleRemote++
 
       // ── Push 状态统计 ──
@@ -149,6 +149,9 @@ export function useGitStats(
         noRemote++
       } else if (status && Object.keys(status.remotes).length > 0) {
         const vals = Object.values(status.remotes)
+        // 四态分布条必须互斥（分段占比才有意义）：优先级 推送 > 拉取 > 已同步。
+        // 因此 diverged 项目只计入 ahead，behind 图例会低估「需要拉取」的项目数；
+        // 该规则通过 HealthOverview 图例 tooltip（healthPriorityHint）向用户说明。
         if (vals.some((r) => hasUnpushedCommits(r))) ahead++
         else if (vals.some((r) => r.behind > 0)) behind++
         // 全部 0/0 但存在检查失败：无法确认已同步，故不计入 synced
@@ -159,14 +162,16 @@ export function useGitStats(
 
       // ── 待推送 / 待拉取项目（同时累积合并条目）──
       if (status) {
-        const aheadByRemote: { key: string; ahead: number }[] = []
-        const behindByRemote: { key: string; behind: number }[] = []
+        const aheadByRemote: RemoteAheadCount[] = []
+        const behindByRemote: RemoteBehindCount[] = []
         for (const pm of PLATFORM_META) {
           const rs = status.remotes[pm.key]
           if (rs && hasUnpushedCommits(rs)) aheadByRemote.push({ key: pm.key, ahead: rs.ahead })
           if (rs && rs.behind > 0) behindByRemote.push({ key: pm.key, behind: rs.behind })
         }
         if (aheadByRemote.length > 0) {
+          // 跨远程求和：列语义是「各远程待补提交合计」，镜像到多个远程时同一批提交会重复计入。
+          // 逐远程明细在 tooltip 中保留；若未来改为「唯一提交数」，需同步调整列名与排序口径。
           const totalAhead = aheadByRemote.reduce((s, r) => s + r.ahead, 0)
           needsPush.push({ project: p, aheadByRemote, totalAhead })
           Object.assign(pendingEntry(p), { aheadByRemote, totalAhead })
@@ -223,7 +228,7 @@ export function useGitStats(
     return {
       grouped,
       count: projects.value.length,
-      remoteCoverage: { github, gitee, gitea, cnb, hasRemote, multiple: multipleRemote },
+      remoteCoverage: { github, gitee, gitea, cnb, multiple: multipleRemote },
       pushStatusStats: { ahead, behind, synced, noRemote },
       needsPush: needsPush.sort((a, b) => b.totalAhead - a.totalAhead),
       needsPull,

@@ -18,7 +18,10 @@
     </div>
 
     <!-- 四态图例：色点 + 状态名 + 计数（与上方分布条同源，作为可读的数值补充） -->
-    <div class="gps-health-legend">
+    <div
+      class="gps-health-legend"
+      :title="i18n.healthPriorityHint"
+    >
       <span
         v-for="seg in distribution"
         :key="seg.key"

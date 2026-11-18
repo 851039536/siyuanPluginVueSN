@@ -11,6 +11,7 @@ import type {
 import { onUnmounted, ref, watch } from "vue"
 import { PLATFORM_META } from "../types"
 import { findPlatformRemote, normalizeGitUrl, resolveValidPath } from "../utils"
+import { buildRepoAuditKey } from "../utils/platformAudit"
 import { poolProcess } from "../utils/runtime"
 
 /** 判定单平台比对状态（link/remoteUrl 为原文，内部归一化比较） */
@@ -41,8 +42,8 @@ export function useRepoLinkAudit(
   const auditRows = ref<Record<string, RepoLinkAuditRow>>({})
   /** 是否正在批量校验 */
   const auditing = ref(false)
-  /** 是否已完成过至少一轮校验（区分"校验中"与"校验结果为空"） */
-  const audited = ref(false)
+  /** 最近一次成功校验时对应的项目指纹（用于「进入统计页」按变更决定是否重跑） */
+  let lastAuditedKey = ""
   /** 卸载标记：卸载后在飞结果不再写回（避免写已卸载组件的 ref） */
   let cancelled = false
   /** 在途期间又有校验请求：结束后补跑一轮（避免项目变更被静默丢弃） */
@@ -53,7 +54,9 @@ export function useRepoLinkAudit(
     let cells: RepoLinkAuditCell[] = []
     let error = false
     try {
-      const remotes = await manager.detectRemotes(resolveValidPath(p))
+      // 必须用 strict 版本：detectRemotes 会把「路径失效 / 非仓库」吞成空数组，
+      // 从而被误判为「没有远程」，链接侧反而报成 linkOnly（虚假问题）
+      const remotes = await manager.detectRemotesStrict(resolveValidPath(p))
       cells = PLATFORM_META.map((pl) => {
         const link = p[pl.urlProp] || ""
         const remoteUrl = findPlatformRemote(remotes, pl.key)?.url || ""
@@ -101,12 +104,31 @@ export function useRepoLinkAudit(
         // 卸载后不写回：避免向已销毁组件的 ref 提交结果、延长对象存活
         if (cancelled) return
         auditRows.value = next
-        // 无论部分失败都标记「已跑过」：否则失败后没有重试入口（只能离开统计视图再进）
-        audited.value = true
+        lastAuditedKey = buildRepoAuditKey(projects.value)
       } while (auditPending && !cancelled)
     } finally {
       auditing.value = false
     }
+  }
+
+  /**
+   * 按指纹决定是否重跑：项目集合/路径/远程名/手动链接都没变时直接跳过。
+   *
+   * 供「进入统计页」使用：链接编辑通常发生在列表视图，此时 enabled() 为 false，
+   * 项目 watch 不会跑；回到统计页必须能根据指纹补审，否则矩阵长期停留在旧结果。
+   */
+  function runAuditIfChanged(): Promise<void> {
+    if (lastAuditedKey === buildRepoAuditKey(projects.value)) return Promise.resolve()
+    return runAudit()
+  }
+
+  /** 删除项目后裁剪审计行，避免已删除项目长期占用内存（审计可能因门控不再重跑） */
+  function pruneAuditRows(currentIds: Set<string>): void {
+    const stale = Object.keys(auditRows.value).filter((id) => !currentIds.has(id))
+    if (stale.length === 0) return
+    const next = { ...auditRows.value }
+    for (const id of stale) delete next[id]
+    auditRows.value = next
   }
 
   /**
@@ -119,14 +141,16 @@ export function useRepoLinkAudit(
    * 已有结果时保留旧值直到新一轮完成，避免单元格在校验期间闪烁回"未校验"态。
    */
   /**
-   * 项目集合变化（新增/删除/编辑路径或链接）后重跑：去掉了 `audited` 门槛。
+   * 项目集合/路径/远程名/手动链接变化后重跑（仅在统计视图已加载时）。
    *
-   * 原条件 `enabled() && audited.value` 的问题是「首次整体失败 → audited 恒 false →
-   * 之后项目变更也不再重试」，但每次成功都会置 audited=true，故门槛去掉不会放大成本。
+   * 指纹必须包含 `*Url`：审计比对的是手动链接与实际远程 URL，只盯 `*Remote`
+   * 会让「改链接不重审」——这是本页面历史缺陷之一。
+   * 删除项目时即使不满足 enabled 也先裁剪旧行，避免内存长期滞留。
    */
   watch(
-    () => projects.value.map((p) => `${p.id}:${p.path}:${p.githubRemote}:${p.giteeRemote}:${p.giteaRemote}:${p.cnbRemote}`).join("|"),
+    () => buildRepoAuditKey(projects.value),
     () => {
+      pruneAuditRows(new Set(projects.value.map((p) => p.id)))
       if (enabled()) void runAudit()
     },
   )
@@ -138,7 +162,7 @@ export function useRepoLinkAudit(
   return {
     auditRows,
     auditing,
-    audited,
     runAudit,
+    runAuditIfChanged,
   }
 }

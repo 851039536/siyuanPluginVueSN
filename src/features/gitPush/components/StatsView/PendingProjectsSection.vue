@@ -80,7 +80,12 @@
 // 计数列展示每组的远程合计（原来每远程一个徽章会把 40px 列宽挤爆），逐远程明细下沉到 tooltip，
 // 既保留了「哪个远程落后几笔」的排错信息，又让窄 Dock 下的表格保持可读。
 // 表格骨架（表头/可点击行/项目名/操作箭头）已收敛至共享 StatsTable，本区块只负责计数列。
-import type { StatsView } from "../../types"
+import type {
+  PendingProjectRowView,
+  RemoteAheadCount,
+  RemoteBehindCount,
+  StatsView,
+} from "../../types"
 import { computed } from "vue"
 import { platformLabel } from "../../utils"
 import AllClear from "./common/AllClear.vue"
@@ -106,7 +111,7 @@ const COUNT_COLUMNS = [
 
 /** 表格行视图：把 PendingProjectItem 的嵌套 project 展平为 StatsTable 需要的 id/name/path，
  * 其余计数字段原样带出（row 插槽按 field 取用）。 */
-const rows = computed(() => props.stats.pendingProjects.map((item) => ({
+const rows = computed<PendingProjectRowView[]>(() => props.stats.pendingProjects.map((item) => ({
   id: item.project.id,
   name: item.project.name,
   path: item.project.path,
@@ -120,12 +125,10 @@ const rows = computed(() => props.stats.pendingProjects.map((item) => ({
 })))
 
 /** 逐远程明细 tooltip："GitHub ↑3 · Gitee ↑1"（平台名取统一 platformLabel，缺失时回落 key） */
-function remoteTitle(byRemote: { key: string, ahead?: number, behind?: number }[], dir: "ahead" | "behind"): string {
+function remoteTitle(byRemote: readonly (RemoteAheadCount | RemoteBehindCount)[], dir: "ahead" | "behind"): string {
+  const arrow = dir === "ahead" ? "↑" : "↓"
   return byRemote
-    .map((r) => {
-      const arrow = dir === "ahead" ? "↑" : "↓"
-      return `${platformLabel(r.key)} ${arrow}${r[dir] ?? 0}`
-    })
+    .map((r) => `${platformLabel(r.key)} ${arrow}${"ahead" in r ? r.ahead : r.behind}`)
     .join(" · ")
 }
 </script>

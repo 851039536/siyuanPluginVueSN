@@ -937,6 +937,9 @@ export class GitPushManager {
 
   async detectRemotes(projectPath: string): Promise<GitRemoteInfo[]> { return this.store.detectRemotes(projectPath) }
 
+  /** 与 detectRemotes 相同，但检测失败抛错（链接一致性校验需要区分失败与无远程） */
+  async detectRemotesStrict(projectPath: string): Promise<GitRemoteInfo[]> { return this.store.detectRemotesStrict(projectPath) }
+
   async getCategories(): Promise<ProjectCategory[]> { return this.store.getCategories() }
 
   async addCategory(name: string, color?: string): Promise<ProjectCategory> { return this.store.addCategory(name, color) }

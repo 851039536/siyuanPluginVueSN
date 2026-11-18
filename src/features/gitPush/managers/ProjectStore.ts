@@ -361,42 +361,55 @@ export class ProjectStore {
   }
 
   /**
-   * 检测项目目录下所有 git 远程仓库
+   * 检测项目目录下所有 git 远程仓库。
+   *
+   * 路径失效 / 非仓库时返回空数组（历史契约，供「最佳努力」调用方使用）。
+   * 需要区分「没有远程」与「检测失败」的场景（链接一致性校验）请用 detectRemotesStrict。
    */
   async detectRemotes(projectPath: string): Promise<GitRemoteInfo[]> {
     try {
-      const remotes = await this.executor.execGit(projectPath, ["remote", "-v"])
-      if (!remotes) return []
-
-      const result: GitRemoteInfo[] = []
-      const lines = remotes.trim().split("\n").filter(Boolean)
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/)
-        if (parts.length >= 2 && parts[1]) {
-          const name = parts[0]
-          const url = parts[1]
-          if (line.includes("(fetch)")) {
-            const lowerUrl = url.toLowerCase()
-            const lowerName = name.toLowerCase()
-            const isGithub = lowerUrl.includes("github.com") || lowerName === "github"
-            const isGitee = lowerUrl.includes("gitee.com") || lowerUrl.includes("gitcode.com") || lowerName === "gitee"
-            const isCnb = lowerUrl.includes("cnb.cool") || lowerName === "cnb"
-            const isGitea = lowerUrl.includes("gitea.") || lowerName === "gitea"
-            result.push({
-              name,
-              url,
-              isGithub,
-              isGitee,
-              isCnb,
-              isGitea: isGitea && !isGithub && !isGitee && !isCnb,
-            })
-          }
-        }
-      }
-      return result
+      return await this.detectRemotesStrict(projectPath)
     } catch {
       return []
     }
+  }
+
+  /**
+   * 与 detectRemotes 相同，但命令失败时抛错。
+   *
+   * 链接一致性校验必须能区分「该平台没有远程」与「整个仓库读不出来」：
+   * 前者是 remoteOnly/linkOnly，后者应显式标记为路径无效/检测失败。
+   */
+  async detectRemotesStrict(projectPath: string): Promise<GitRemoteInfo[]> {
+    const remotes = await this.executor.execGit(projectPath, ["remote", "-v"])
+    if (!remotes) return []
+
+    const result: GitRemoteInfo[] = []
+    const lines = remotes.trim().split("\n").filter(Boolean)
+    for (const line of lines) {
+      const parts = line.trim().split(/\s+/)
+      if (parts.length >= 2 && parts[1]) {
+        const name = parts[0]
+        const url = parts[1]
+        if (line.includes("(fetch)")) {
+          const lowerUrl = url.toLowerCase()
+          const lowerName = name.toLowerCase()
+          const isGithub = lowerUrl.includes("github.com") || lowerName === "github"
+          const isGitee = lowerUrl.includes("gitee.com") || lowerUrl.includes("gitcode.com") || lowerName === "gitee"
+          const isCnb = lowerUrl.includes("cnb.cool") || lowerName === "cnb"
+          const isGitea = lowerUrl.includes("gitea.") || lowerName === "gitea"
+          result.push({
+            name,
+            url,
+            isGithub,
+            isGitee,
+            isCnb,
+            isGitea: isGitea && !isGithub && !isGitee && !isCnb,
+          })
+        }
+      }
+    }
+    return result
   }
 
   /** 获取所有分类 */

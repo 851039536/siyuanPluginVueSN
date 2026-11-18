@@ -37,7 +37,7 @@
 
     <!-- 一致性问题汇总：仅在后台校验发现不一致/缺失/失败时出现；链接与远程全部一致则不占视觉空间 -->
     <div
-      v-if="!auditing && issueCount > 0"
+      v-if="!auditing && issueChips.length > 0"
       class="gps-status-bar"
     >
       <div
@@ -80,6 +80,7 @@ import { Icon } from "@iconify/vue"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import { PLATFORM_META } from "../../types"
+import { buildPlatformAuditRows } from "../../utils/platformAudit"
 import AllClear from "./common/AllClear.vue"
 import PlatformTable from "./common/PlatformTable.vue"
 import StatsSection from "./common/StatsSection.vue"
@@ -125,11 +126,14 @@ const AUDIT_CELL_META: Record<Exclude<RepoLinkAuditState, "none">, { icon: strin
   remoteOnly: { icon: "mdi:source-branch", iconCls: "gps-audit-remoteonly", labelKey: "auditRemoteOnly" },
 }
 
-// 问题汇总 chip 配置（仅显示确实有问题的三类；一致项数量巨大且无行动价值，不占位置）
+// 问题汇总 chip 配置（仅显示确实有问题的项；一致项数量巨大且无行动价值，不占位置）
+// error = 路径无效/检测失败，它在 issueCount 与矩阵行里都会被计入，必须有自己的 chip，
+// 否则「问题 1」会配上一排全 0 的分类计数。
 const ISSUE_CHIPS = [
   { key: "mismatch", icon: "mdi:alert-circle-outline", cls: "error", labelKey: "auditMismatch" },
   { key: "linkOnly", icon: "mdi:link-variant-off", cls: "behind", labelKey: "auditLinkOnly" },
   { key: "remoteOnly", icon: "mdi:source-branch", cls: "ahead", labelKey: "auditRemoteOnly" },
+  { key: "error", icon: "mdi:alert-octagon-outline", cls: "error", labelKey: "auditError" },
 ] as const
 
 /** 单元格 tooltip：校验态名称 + 链接与远程原文（排错必需；无校验结果时回落到已配置/未配置） */
@@ -141,35 +145,49 @@ function cellTitle(cell: { state: RepoLinkAuditState, link: string, remoteUrl: s
 }
 
 /**
- * 一致性校验结果单次遍历聚合：问题项目数 + 分类计数 + 平台矩阵行视图一次产出。
+ * 平台矩阵行来源：配置缺失项目 ∪ 校验异常项目（按 id 去重）。
  *
- * 原实现分三个 computed（issueCount / issueChips / platformRows）各自 Object.values(auditRows)
- * 遍历一遍，且 platformRows 内层还有 `audit.cells.find(...)` 嵌在 PLATFORM_META.map 里，
- * 构成 O(项目 × 平台²)。此处改为单次遍历 + 单元格按 key 建索引，与 useGitStats.projectStats
- * 的「单次遍历、派生 computed 只取字段」模式保持一致。
+ * 原实现只遍历 `stats.platformStatusProjects`（仅缺配置项目），导致
+ * 「四平台齐全但链接不一致 / 路径失效」的项目完全不显示、也不进入问题计数。
+ * 合并与计数逻辑抽到纯函数 `utils/platformAudit`，便于单测锁住这两类场景。
  */
-const auditAggregate = computed(() => {
-  const counts: Record<string, number> = { mismatch: 0, linkOnly: 0, remoteOnly: 0 }
-  let issueCount = 0
+const auditAggregate = computed(() =>
+  buildPlatformAuditRows({
+    platformStatusProjects: props.stats.platformStatusProjects,
+    auditRows: props.auditRows,
+  }),
+)
 
-  const rows: PlatformTableRowView[] = props.stats.platformStatusProjects.map((item) => {
-    const audit = props.auditRows[item.project.id]
-    if (audit?.hasIssue) issueCount++
+/** 存在一致性问题的项目数（一个项目多个平台有问题只计一次） */
+const issueCount = computed(() => auditAggregate.value.issueCount)
 
+/** 问题分类计数（仅展示非零项：避免「问题 1」配上一排 0 的误导，也省掉窄面板的无效占位） */
+const issueChips = computed(() =>
+  ISSUE_CHIPS
+    .map((c) => ({
+      key: c.key,
+      icon: c.icon,
+      cls: c.cls,
+      label: props.i18n[c.labelKey],
+      value: auditAggregate.value.counts[c.key],
+    }))
+    .filter((c) => c.value > 0),
+)
+
+/** 平台状态行视图模型：单元格图标与 tooltip 已预计算，模板只做渲染 */
+const platformRows = computed<PlatformTableRowView[]>(() =>
+  auditAggregate.value.rows.map((row) => {
     // 单元格按 key 建索引，避免在平台循环内做线性 find
     const cellByKey = new Map<string, RepoLinkAuditCell>()
-    for (const c of audit?.cells ?? []) {
-      cellByKey.set(c.key, c)
-      if (c.state !== "none" && c.state !== "match") counts[c.state]++
-    }
+    for (const c of row.audit?.cells ?? []) cellByKey.set(c.key, c)
 
     return {
-      id: item.project.id,
-      name: item.project.name,
-      path: item.project.path,
-      nameSuffix: audit?.error ? props.i18n.auditError : "",
+      id: row.id,
+      name: row.name,
+      path: row.path,
+      nameSuffix: row.audit?.error ? props.i18n.auditError : "",
       cells: PLATFORM_META.map((pm) => {
-        const ok = item[pm.key]
+        const ok = row.configured[pm.key]
         const cell = cellByKey.get(pm.key)
         // 有可比对信息（校验态非 none）→ 用四态图标；否则回落为「已配置/未配置」
         const state = cell && cell.state !== "none" ? cell.state : null
@@ -181,25 +199,6 @@ const auditAggregate = computed(() => {
         }
       }),
     }
-  })
-
-  return { issueCount, counts, rows }
-})
-
-/** 存在一致性问题的项目数（一个项目多个平台有问题只计一次） */
-const issueCount = computed(() => auditAggregate.value.issueCount)
-
-/** 问题分类计数（跨全部项目的全部平台单元格；hover 显示状态名） */
-const issueChips = computed(() =>
-  ISSUE_CHIPS.map((c) => ({
-    key: c.key,
-    icon: c.icon,
-    cls: c.cls,
-    label: props.i18n[c.labelKey],
-    value: auditAggregate.value.counts[c.key],
-  })),
+  }),
 )
-
-/** 平台状态行视图模型：单元格图标与 tooltip 已预计算，模板只做渲染 */
-const platformRows = computed<PlatformTableRowView[]>(() => auditAggregate.value.rows)
 </script>

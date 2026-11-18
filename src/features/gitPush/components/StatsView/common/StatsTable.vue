@@ -45,16 +45,8 @@
 //
 // 泛型 `<T extends StatsTableRow>`：row 插槽把调用方传入的完整行类型透出，
 // 使插槽内可用 totalAhead / cells 等派生字段（非泛型时会被拓宽为基类型而报 TS2339）。
+import type { StatsTableRow } from "../../../types"
 import { Icon } from "@iconify/vue"
-
-/** 行最小形状：本组件只负责 id/name/path 与可选错误后缀，其余列由调用方经 row 插槽渲染 */
-export interface StatsTableRow {
-  id: string
-  name: string
-  path: string
-  /** 名称后缀标注（如审计「路径无效或检测失败」；空串不渲染） */
-  nameSuffix?: string
-}
 
 defineProps<{
   i18n: Record<string, any>

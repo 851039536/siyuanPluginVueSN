@@ -353,30 +353,39 @@ export function parseStashList(raw: string): StashEntry[] {
 }
 
 /**
- * 解析 `git log --format=%H%n%s%n%an%n%ar%n%aI%n%p`（固定 6 行一条）输出。
- * 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则固定切分错位；
- * %p（父 hash 列表）用于识别 merge 提交（父数 > 1）。
+ * 解析 `git log --format=%H%n%s%n%an%n%ar%n%aI%n%P%x1f%D`（固定 6 行一条）输出。
+ * 依赖 %s(subject) 单行，勿加入 %b(body) 等多行字段，否则固定切分错位。
+ *
+ * 最后一行是 `%P（父 hash，空格分隔）%x1f%D（引用装饰）`：
+ *   - 用 0x1f 分隔两个字段，保证「根提交且无引用」时该行仍非空，
+ *     不会被 execGit 的末尾剥行吞掉；
+ *   - 旧格式（最后一行只有 %p）仍可解析：没有 0x1f 时整行按父 hash 处理，refs 为空。
  * hash 为 %H 完整 40 位：UI 短展示自行截取，后续 git 定位（修正/删除/打 Tag）直接用完整值。
  */
 export function parseCommitLog(raw: string): CommitLogEntry[] {
+  const FIELD_SEP = "\u001f"
   const lines = raw.split("\n")
   const entries: CommitLogEntry[] = []
-  // 每条记录 6 行（hash / subject / author / relativeDate / isoDate / parents）。
-  // ⚠️ 根提交的 `%p` 为空，而 execGit 会剥掉输出末尾的换行，
-  // 因此**最后一条记录可能只有 5 行**（父行整体消失）——不能按「凑满 6 行」丢弃。
-  // 曾经的 `for (i + 5 < lines.length; i += 6)` 写法会让「单提交仓库」的整份历史变空，
-  // 也会让「列表末尾恰为根提交」时少一条记录。
   let i = 0
   while (i + 4 < lines.length) {
     // 空 hash 说明落到了截断残块或分隔空行上，不应再产出记录
     if (!lines[i]) break
+    const tail = lines[i + 5] ?? ""
+    const sep = tail.indexOf(FIELD_SEP)
+    const parentsRaw = sep >= 0 ? tail.slice(0, sep) : tail
+    // `%D` 的分隔符是 ", "，而 git ref 名不允许空格，按 ", " 拆不会误伤含逗号的引用名
+    const refsRaw = sep >= 0 ? tail.slice(sep + 1) : ""
+    const parents = parentsRaw.trim() ? parentsRaw.trim().split(/\s+/).filter(Boolean) : []
+    const refs = refsRaw.split(", ").map((ref) => ref.trim()).filter(Boolean)
     entries.push({
       hash: lines[i],
       message: lines[i + 1] ?? "",
       author: lines[i + 2] ?? "",
       relativeDate: lines[i + 3] ?? "",
       date: lines[i + 4] ?? "",
-      isMerge: (lines[i + 5] ?? "").trim().split(/\s+/).filter(Boolean).length > 1,
+      isMerge: parents.length > 1,
+      parents,
+      refs,
     })
     i += 6
   }

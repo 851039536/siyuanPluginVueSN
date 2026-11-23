@@ -360,6 +360,10 @@ export interface CommitLogEntry {
   date: string
   /** 是否 merge 提交（父提交数 > 1；规则检查豁免、修正弹窗阻止） */
   isMerge: boolean
+  /** 父提交完整 hash 列表（根提交为空数组；merge 提交含多个）。日志读模型产出。 */
+  parents?: string[]
+  /** 引用装饰：HEAD / 本地分支 / 远程分支 / Tag（原始 `%D` 文本按 ", " 拆分）。 */
+  refs?: string[]
 }
 
 /**

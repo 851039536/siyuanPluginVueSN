@@ -460,10 +460,11 @@ export class WorktreeOps {
    * 仓库被删、路径失效、git 报错则抛出，交给调用方呈现错误态并进入失败冷却。
    */
   async getCommitLog(projectPath: string, count: number | "all" = 30): Promise<CommitLogEntry[]> {
-    // 每行一条的格式串（含 %p 父 hash 列表以识别 merge）；解析见 utils/gitOutput.parseCommitLog。
+    // 每行一条的格式串；末行 `%P%x1f%D` = 完整父 hash + 引用装饰（0x1f 保证根提交行非空）。
+    // 解析见 utils/gitOutput.parseCommitLog。
     // %H 完整 hash 作为单一真源：UI 需要短展示时自行截取前 7 位；修正/删除/打 Tag 等
     // 后续 git 定位直接拿完整 hash（短 hash 在大仓库有歧义风险，见 HistoryRewriter 注释）
-    const format = "%H%n%s%n%an%n%ar%n%aI%n%p"
+    const format = "%H%n%s%n%an%n%ar%n%aI%n%P%x1f%D"
     // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
     const args = count === "all"
       ? ["log", "-n", "5000", `--format=${format}`]

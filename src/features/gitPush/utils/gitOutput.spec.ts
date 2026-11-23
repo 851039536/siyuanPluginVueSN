@@ -227,9 +227,9 @@ describe("parseStashList", () => {
 })
 
 describe("parseCommitLog", () => {
-  /** 构造 6 行一组的 log 输出 */
-  const makeEntry = (hash: string, subject: string, parents: string): string =>
-    [hash, subject, "Author", "2 days ago", "2026-07-06T16:19:23+08:00", parents].join("\n")
+  /** 构造 6 行一组的 log 输出；末行为 `parents\x1frefs`，与 WorktreeOps 的格式串一致 */
+  const makeEntry = (hash: string, subject: string, parents: string, refs = ""): string =>
+    [hash, subject, "Author", "2 days ago", "2026-07-06T16:19:23+08:00", `${parents}\u001f${refs}`].join("\n")
 
   it("解析单条记录的全部字段", () => {
     const r = parseCommitLog(makeEntry("abc123", "feat: x", "p1"))
@@ -240,19 +240,39 @@ describe("parseCommitLog", () => {
       relativeDate: "2 days ago",
       date: "2026-07-06T16:19:23+08:00",
       isMerge: false,
+      parents: ["p1"],
+      refs: [],
     }])
+  })
+
+  it("解析父 hash 与引用装饰", () => {
+    const [entry] = parseCommitLog(makeEntry("h", "merge", "p1 p2", "HEAD -> main, origin/main, tag: v1"))
+    expect(entry.parents).toEqual(["p1", "p2"])
+    expect(entry.refs).toEqual(["HEAD -> main", "origin/main", "tag: v1"])
+    expect(entry.isMerge).toBe(true)
   })
 
   it("单父提交 isMerge=false", () => {
     expect(parseCommitLog(makeEntry("h", "s", "p1"))[0].isMerge).toBe(false)
   })
 
-  it("多父提交 isMerge=true（%p 父 hash 空格分隔）", () => {
-    expect(parseCommitLog(makeEntry("h", "s", "p1 p2"))[0].isMerge).toBe(true)
+  it("多父提交 isMerge=true（%P 父 hash 空格分隔）", () => {
+    const [entry] = parseCommitLog(makeEntry("h", "s", "p1 p2"))
+    expect(entry.parents).toEqual(["p1", "p2"])
+    expect(entry.isMerge).toBe(true)
   })
 
-  it("根提交（%p 为空）isMerge=false", () => {
-    expect(parseCommitLog(makeEntry("h", "s", ""))[0].isMerge).toBe(false)
+  it("根提交（父 hash 为空）parents/refs 均为空数组", () => {
+    const [entry] = parseCommitLog(makeEntry("h", "s", ""))
+    expect(entry.isMerge).toBe(false)
+    expect(entry.parents).toEqual([])
+    expect(entry.refs).toEqual([])
+  })
+
+  it("根提交且无引用时末行是纯分隔符，记录不丢", () => {
+    const raw = makeEntry("h", "init", "", "")
+    expect(raw.endsWith("\u001f")).toBe(true)
+    expect(parseCommitLog(raw)).toHaveLength(1)
   })
 
   it("多条记录按固定 6 行切分，顺序保持", () => {
@@ -267,15 +287,16 @@ describe("parseCommitLog", () => {
     expect(parseCommitLog(raw)).toHaveLength(1)
   })
 
-  it("末尾根提交的父行被整体剥掉时仍能解析", () => {
-    // execGit 会 strip 输出末尾换行：根提交 %p 为空 → 最后一条只剩 5 行
-    // （曾经的 `for (i + 5 < lines.length; i += 6)` 写法会把这条整份丢掉，
-    //   单提交仓库则直接返回空历史）
+  it("末尾根提交的旧格式父行被整体剥掉时仍能解析", () => {
+    // 旧格式 `%p` 为空的根提交，execGit 剥掉末尾换行后只剩 5 行；
+    // 新格式末行有 0x1f 不会为空，这里保留兼容旧数据的断言。
     const rootWithoutParent = ["h2", "s2", "Author", "2 days ago", "2026-07-06T16:19:23+08:00"].join("\n")
     const raw = [makeEntry("h1", "s1", "p"), rootWithoutParent].join("\n")
     const r = parseCommitLog(raw)
     expect(r.map((e) => e.hash)).toEqual(["h1", "h2"])
     expect(r[1].isMerge).toBe(false)
+    expect(r[1].parents).toEqual([])
+    expect(r[1].refs).toEqual([])
   })
 
   it("单提交仓库（唯一记录就是根提交）也必须返回该条", () => {
@@ -288,7 +309,22 @@ describe("parseCommitLog", () => {
   })
 
   it("父 hash 含多余空白时仍正确判定 merge", () => {
-    expect(parseCommitLog(makeEntry("h", "s", "  p1   p2  "))[0].isMerge).toBe(true)
+    const [entry] = parseCommitLog(makeEntry("h", "s", "  p1   p2  "))
+    expect(entry.parents).toEqual(["p1", "p2"])
+    expect(entry.isMerge).toBe(true)
+  })
+
+  it("兼容旧格式：末行没有 0x1f 时整行按父 hash 处理", () => {
+    const old = ["h", "s", "Author", "now", "2026-07-06T16:19:23+08:00", "p1 p2"].join("\n")
+    const [entry] = parseCommitLog(old)
+    expect(entry.parents).toEqual(["p1", "p2"])
+    expect(entry.refs).toEqual([])
+    expect(entry.isMerge).toBe(true)
+  })
+
+  it("引用名含逗号但不含空格时不被拆分", () => {
+    const [entry] = parseCommitLog(makeEntry("h", "s", "p", "feature,a, main"))
+    expect(entry.refs).toEqual(["feature,a", "main"])
   })
 })
 

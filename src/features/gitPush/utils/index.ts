@@ -67,6 +67,11 @@ export type {
 export { filterOnlyChanges, isChangeLine, toSplitRows } from "./diffLayout"
 export type { DiffLayout, DiffSplitRow } from "./diffLayout"
 
+export { isSelectableLine, parsePatch } from "./patchModel"
+export type { FilePatch, PatchHunk, PatchLine, PatchLineKind } from "./patchModel"
+export { buildHunkPatch, buildSelectedPatch, selectHunkLines } from "./hunkPatch"
+export type { LineSelection } from "./hunkPatch"
+
 export {
   buildLogPatchArgs,
   buildNoIndexDiffArgs,

@@ -9,18 +9,27 @@ import type {
   WorkingTreeInfo,
 } from "../types/storage"
 import type { GitExecutor } from "./GitExecutor"
+import type { FileDiffResult } from "../types/diff"
 import type { RefSyncSnapshot } from "../types/gitRefs"
+import type { NumstatEntry } from "../utils/gitOutput"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 WorktreeOps 无法在 Node 单测环境加载（branchDelete.git.spec.ts 需要真实实例）
-import { buildDiffContext } from "../utils/diffText"
+import { buildDiffContext, detectBinaryDiff } from "../utils/diffText"
+import { GitBufferOverflowError } from "../utils/errors"
 import { DEFAULT_LOG_LIMIT } from "../utils/format"
+import {
+  buildNoIndexDiffArgs,
+  buildShowPatchArgs,
+  buildWorktreeDiffArgs,
+} from "../utils/gitDiffArgs"
 import {
   parseBranches,
   parseChangesetDiff,
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,
+  parseNumstatZ,
   parseRefSnapshot,
   parseStashList,
   parseWorktreeStatus,
@@ -165,27 +174,52 @@ export class WorktreeOps {
    * 与既有调用完全一致。未跟踪文件走 `--no-index` 展示全文，上下文对其无意义。
    */
   async getFileDiff(projectPath: string, file: string, staged = false, status?: string, context = 0): Promise<string> {
+    return (await this.getFileDiffResult(projectPath, file, staged, status, context)).text
+  }
+
+  /**
+   * 获取文件差异及取数状态（二进制 / 超出缓冲区 / 失败与「无差异」分开）。
+   * 视图层必须区分这几类，否则只能显示空态，用户无从得知是文件没改还是加载失败。
+   */
+  async getFileDiffResult(projectPath: string, file: string, staged = false, status?: string, context = 0): Promise<FileDiffResult> {
     try {
       // 快速路径：未跟踪文件的常规 diff 与基线检查都是注定空手的进程，直接展示完整新增内容
       if (!staged && status === "untracked") {
-        return await this.execNoIndexDiff(projectPath, file)
+        return this.classifyPatch(await this.execNoIndexDiff(projectPath, file))
       }
-      const args = ["diff", "--text"]
-      if (context > 0) args.push(`-U${context}`)
-      if (staged) args.push("--cached")
-      args.push("--", file)
-      const text = await this.executor.execGit(projectPath, args)
-      if (text) return text
+      const text = await this.executor.execGit(
+        projectPath,
+        buildWorktreeDiffArgs({
+          staged,
+          context,
+          paths: [file],
+        }),
+      )
+      if (text) return this.classifyPatch(text)
       // 空差异按比较基线判定是否兜底：工作区范围比 index、暂存范围比 HEAD——
       // 文件在基线中而 diff 为空 = 真无差异；不在基线中（未跟踪 / git rm --cached / 新增未提交）则回退 --no-index
       const inBaseline = staged
         ? await this.isFileInHead(projectPath, file)
         : await this.isFileInIndex(projectPath, file)
-      if (inBaseline) return ""
-      return await this.execNoIndexDiff(projectPath, file)
-    } catch {
-      return ""
+      if (inBaseline) return { status: "empty", text: "" }
+      return this.classifyPatch(await this.execNoIndexDiff(projectPath, file))
+    } catch (e: unknown) {
+      return this.failureResult(e)
     }
+  }
+
+  /** 把补丁文本归类为 ok / empty / binary */
+  private classifyPatch(text: string): FileDiffResult {
+    if (!text) return { status: "empty", text: "" }
+    if (detectBinaryDiff(text)) return { status: "binary", text }
+    return { status: "ok", text }
+  }
+
+  /** 取数失败归类：缓冲区溢出与其它错误分开，前者是「太大」而非「读不到」 */
+  private failureResult(e: unknown): FileDiffResult {
+    return e instanceof GitBufferOverflowError
+      ? { status: "tooLarge", text: "" }
+      : { status: "error", text: "" }
   }
 
   /**
@@ -203,10 +237,23 @@ export class WorktreeOps {
    */
   async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string> | null> {
     try {
-      const args = ["diff", "--text"]
-      if (staged) args.push("--cached")
-      const raw = await this.executor.execGit(projectPath, args)
+      const raw = await this.executor.execGit(projectPath, buildWorktreeDiffArgs({ staged }))
       return Object.fromEntries(parseChangesetDiff(raw))
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * 变更集规模概览（git diff --numstat -z）。
+   * 仅在整包补丁取数失败后使用：按文件规模决定哪些自动拉取、哪些等用户点击，
+   * 避免 20+ 个文件同时 spawn。失败返回 null（调用方按「规模未知」处理）。
+   */
+  async getChangesetOverview(projectPath: string, staged = false): Promise<Record<string, NumstatEntry> | null> {
+    try {
+      const args = ["diff", "--numstat", "-z", "--no-color", "--no-ext-diff", "--no-textconv"]
+      if (staged) args.push("--cached")
+      return parseNumstatZ(await this.executor.execGit(projectPath, args))
     } catch {
       return null
     }
@@ -216,7 +263,7 @@ export class WorktreeOps {
   private async execNoIndexDiff(projectPath: string, file: string): Promise<string> {
     return await this.executor.execGit(
       projectPath,
-      ["diff", "--no-index", "--text", "--", "/dev/null", file],
+      buildNoIndexDiffArgs(file),
       undefined,
       undefined,
       undefined,
@@ -577,11 +624,7 @@ export class WorktreeOps {
    */
   async getStagedDiff(projectPath: string): Promise<string> {
     try {
-      return await this.executor.execGit(projectPath, [
-        "diff",
-        "--text",
-        "--cached",
-      ]) || ""
+      return await this.executor.execGit(projectPath, buildWorktreeDiffArgs({ staged: true })) || ""
     } catch {
       return ""
     }
@@ -613,12 +656,10 @@ export class WorktreeOps {
    */
   async getCommitDeepContext(projectPath: string, hash: string, budget = 10000): Promise<string> {
     try {
-      const text = await this.executor.execGit(projectPath, [
-        "show",
-        "--text",
-        "--format=%B",
-        hash,
-      ]) || ""
+      const text = await this.executor.execGit(
+        projectPath,
+        buildShowPatchArgs({ hash, format: "--format=%B" }),
+      ) || ""
       // 行首锚定匹配 diff 起点，防提交消息体恰好包含 "diff --git " 字符串时误判为 diff 开头
       const diffStart = /^diff --git /m.exec(text)?.index ?? -1
       if (diffStart < 0) { return text.substring(0, 10000) }
@@ -661,16 +702,16 @@ export class WorktreeOps {
 
   /** 获取某次提交对指定文件的补丁（git show --format= <hash> -- <path>），无内容/失败返回空串 */
   async getCommitFilePatch(projectPath: string, hash: string, filePath: string): Promise<string> {
+    return (await this.getCommitFilePatchResult(projectPath, hash, filePath)).text
+  }
+
+  /** 提交内单文件补丁及状态（二进制 / 超限 / 失败与无差异分开） */
+  async getCommitFilePatchResult(projectPath: string, hash: string, filePath: string): Promise<FileDiffResult> {
     try {
-      return await this.executor.execGit(projectPath, [
-        "show",
-        "--format=",
-        hash,
-        "--",
-        filePath,
-      ])
-    } catch {
-      return ""
+      const text = await this.executor.execGit(projectPath, buildShowPatchArgs({ hash, filePath }))
+      return this.classifyPatch(text)
+    } catch (e: unknown) {
+      return this.failureResult(e)
     }
   }
 

@@ -49,6 +49,16 @@
       >
         {{ i18n.diffOnlyChanges }}
       </Button>
+      <Button
+        variant="ghost"
+        text
+        size="xsmall"
+        :aria-pressed="wrap"
+        :title="i18n.diffWrap"
+        @click="wrap = !wrap"
+      >
+        {{ i18n.diffWrap }}
+      </Button>
     </div>
   </div>
 </template>
@@ -68,6 +78,8 @@ const layout = defineModel<DiffLayout>("layout", { default: "auto" })
 const showLineNumbers = defineModel<boolean>("showLineNumbers", { default: true })
 /** 仅改动：隐去未变行与折叠条 */
 const onlyChanges = defineModel<boolean>("onlyChanges", { default: false })
+/** 自动换行（false = 单行 + 横向滚动） */
+const wrap = defineModel<boolean>("wrap", { default: true })
 
 /** 布局三态选项（labelKey 指向 i18n） */
 const LAYOUT_OPTIONS: { value: DiffLayout, labelKey: string }[] = [

@@ -10,6 +10,7 @@ import type {
   CommitLogEntry,
   CommitStat,
   ConflictFile,
+  DiffStatus,
   GitProject,
   StashEntry,
   TagInfo,
@@ -25,6 +26,7 @@ import {
 import { CARD_SERVICES_KEY } from "../types"
 import { getErrorMessage } from "@/utils/stringUtils"
 import {
+  createSemaphore,
   DEFAULT_LOG_LIMIT,
   diffCacheKey,
   getProjectRemoteNames,
@@ -35,6 +37,19 @@ import { scanMarkdownFiles } from "./useMarkdownFiles"
 
 /** Tag→commit 映射拉取上限（防异常大仓库失控） */
 const TAG_COMMIT_MAP_LIMIT = 500
+
+/**
+ * 单文件 diff 并发上限。
+ * 变更集取数失败后会退化为逐文件加载，若不限流，20 个可见文件会同时 spawn，
+ * 挤占 status / commit 等常规命令的并发槽位。
+ */
+const DIFF_LOAD_CONCURRENCY = 3
+
+/** 跨卡片共享：弹窗同一时刻只会打开一个，全局 3 路足够 */
+const diffLoadSemaphore = createSemaphore(DIFF_LOAD_CONCURRENCY)
+
+/** 单文件差异缓存条目上限（两范围 + 多档上下文，30 条在几十个文件时会互相挤出） */
+const FILE_DIFF_CACHE_LIMIT = 60
 
 /**
  * 卡片态缓存上限（按项目数计；超出后淘汰最久未访问的条目）。
@@ -63,6 +78,8 @@ interface CardDataState {
   conflicts: Ref<ConflictFile[]>
   fileDiffs: Ref<Record<string, string>>
   diffLoading: Ref<Record<string, boolean>>
+  /** 单文件取数状态（与 fileDiffs 同键；二进制 / 超限 / 失败与无差异区分） */
+  diffStatus: Ref<Record<string, DiffStatus>>
   mdFiles: Ref<MdFileEntry[]>
   logLimit: Ref<number | "all">
   /** logLoading 引用计数（详情首载与手动刷新可能并发） */
@@ -124,6 +141,7 @@ function createState(project: () => GitProject): CardDataState {
     conflicts: ref<ConflictFile[]>([]),
     fileDiffs: ref<Record<string, string>>({}),
     diffLoading: ref<Record<string, boolean>>({}),
+    diffStatus: ref<Record<string, DiffStatus>>({}),
     mdFiles: ref<MdFileEntry[]>([]),
     logLimit: ref<number | "all">(DEFAULT_LOG_LIMIT),
     logLoadingRefCount: 0,
@@ -444,20 +462,35 @@ export function useCardData(project: () => GitProject) {
     // 取数时快照版本：响应期间工作区若刷新，本条结果自动降级为「过期」（下次读取重新取）
     const fetchedAtVersion = state.diffTreeVersion
     const exec = (async () => {
+      const release = await diffLoadSemaphore.acquire()
       try {
-        const text = await manager.getFileDiff(path(), file, staged, opts?.status, opts?.context ?? 0)
-        state.fileDiffs.value[key] = text
+        const result = await manager.getFileDiffResult(path(), file, staged, opts?.status, opts?.context ?? 0)
+        // 失败不写 fileDiffs / diffMeta：写空串会让 ensureMissingDiffs 误以为已加载而永不重试，
+        // 只在状态表留 error，由视图层提供「重试」；下次打开也会因未命中自动重取。
+        if (result.status === "error") {
+          delete state.fileDiffs.value[key]
+          state.diffStatus.value[key] = "error"
+          delete state.diffMeta[key]
+          return
+        }
+        state.fileDiffs.value[key] = result.text
+        state.diffStatus.value[key] = result.status
         state.diffMeta[key] = fetchedAtVersion
-        pruneRecordCache(state.fileDiffs.value, 30)
-        // 与 fileDiffs 同步淘汰：prune 删掉的键不再保留版本记录
+        pruneRecordCache(state.fileDiffs.value, FILE_DIFF_CACHE_LIMIT)
+        // 与 fileDiffs 同步淘汰：prune 删掉的键不再保留版本/状态记录
         for (const k of Object.keys(state.diffMeta)) {
           if (!(k in state.fileDiffs.value)) delete state.diffMeta[k]
         }
+        for (const k of Object.keys(state.diffStatus.value)) {
+          if (!(k in state.fileDiffs.value)) delete state.diffStatus.value[k]
+        }
       } catch {
-        // 取差异失败按空差异呈现（弹窗显示空态），不向上抛以免调用方产生未处理的 Promise 拒绝
-        state.fileDiffs.value[key] = ""
-        state.diffMeta[key] = fetchedAtVersion
+        // 编程错误（取数层已把 git 失败状态化）：同样不写缓存，保留可重试的 error 状态
+        delete state.fileDiffs.value[key]
+        state.diffStatus.value[key] = "error"
+        delete state.diffMeta[key]
       } finally {
+        release()
         delete state.diffLoading.value[key]
         state.diffInflight.delete(key)
       }
@@ -570,6 +603,7 @@ export function useCardData(project: () => GitProject) {
     conflicts: state.conflicts,
     fileDiffs: state.fileDiffs,
     diffLoading: state.diffLoading,
+    diffStatus: state.diffStatus,
     mdFiles: state.mdFiles,
     detailsError: state.detailsError,
     ensureDetailsLoaded,

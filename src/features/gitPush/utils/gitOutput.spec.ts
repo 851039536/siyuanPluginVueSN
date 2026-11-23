@@ -11,6 +11,7 @@ import {
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,
+  parseNumstatZ,
   parseRefSnapshot,
   parseStashList,
   parseWorktreeStatus,
@@ -783,6 +784,36 @@ describe("parseRefSnapshot（本地分支 + 远程跟踪 ref 一次取齐）", (
 
   it("空输出返回空快照", () => {
     expect(parseRefSnapshot("", ["origin"])).toEqual({ branches: [], remoteRefs: [] })
+  })
+})
+
+describe("parseNumstatZ（--numstat -z）", () => {
+  const NUL = "\0"
+
+  it("普通文件、二进制与含空格路径", () => {
+    const raw = [
+      `3\t0\ta.ts`,
+      `-\t-\tlogo.png`,
+      `1\t2\tmy file.ts`,
+      "",
+    ].join(NUL)
+    expect(parseNumstatZ(raw)).toEqual({
+      "a.ts": { add: 3, del: 0, binary: false },
+      "logo.png": { add: 0, del: 0, binary: true },
+      "my file.ts": { add: 1, del: 2, binary: false },
+    })
+  })
+
+  it("重命名：空路径段后依次是旧路径与新路径，取新路径为键", () => {
+    const raw = [`5\t5\t`, `old/name.ts`, `new/name.ts`, ""].join(NUL)
+    expect(parseNumstatZ(raw)).toEqual({
+      "new/name.ts": { add: 5, del: 5, binary: false },
+    })
+  })
+
+  it("空输出与残缺条目安全忽略", () => {
+    expect(parseNumstatZ("")).toEqual({})
+    expect(parseNumstatZ(`bad-line${NUL}`)).toEqual({})
   })
 })
 

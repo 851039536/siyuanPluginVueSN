@@ -99,6 +99,7 @@
         v-model:layout="layout"
         v-model:show-line-numbers="showLineNumbers"
         v-model:only-changes="onlyChanges"
+        v-model:wrap="wrap"
         :i18n="i18n"
       />
 
@@ -113,6 +114,14 @@
           height="12"
         />
         <span>{{ i18n.diffChangesetUnavailable }}</span>
+        <Button
+          variant="ghost"
+          size="xsmall"
+          dense
+          @click="refreshChangesets(true)"
+        >
+          {{ i18n.diffRetry }}
+        </Button>
       </div>
 
       <div
@@ -147,6 +156,7 @@
             v-model:layout="layout"
             v-model:show-line-numbers="showLineNumbers"
             v-model:only-changes="onlyChanges"
+            v-model:wrap="wrap"
             :i18n="i18n"
             :file="file"
             :scope="scopeOf(file)"
@@ -155,10 +165,13 @@
             :loading="loadingOf(file)"
             :git-op-loading="gitOpLoading"
             :project-path="projectPath"
+            :status="statusOf(file)"
+            :auto-load="shouldAutoLoad(file)"
             @stage-toggle="handleSectionStageToggle"
             @discard="handleSectionDiscard"
             @scope-change="handleScopeChange"
             @expand-context="expandContext(file)"
+            @retry="handleSectionRetry(file)"
           />
           <!-- 文件数分页：一次只挂前 N 个文件段，避免上百个文件同时建 DOM -->
           <LoadMoreButton
@@ -177,11 +190,12 @@
 <script setup lang="ts">
 // gitPush 改动审阅流（自含：changeset 取数、侧栏联动、滚动定位、关键字导航；
 // 单文件操作仍 emit 回工作区面板，复用既有的暂存/丢弃确认链路）
-import type { FileChange } from "../../types"
+import type { DiffStatus, FileChange } from "../../types"
 import type { DiffLayout } from "../../utils"
 import { Icon } from "@iconify/vue"
 import {
   computed,
+  inject,
   nextTick,
   onMounted,
   onUnmounted,
@@ -192,7 +206,10 @@ import {
 import Button from "@/components/Button.vue"
 import Dialog from "@/components/Dialog.vue"
 import Divider from "@/components/Divider.vue"
-import { buildSectionedTreeRows, countRawDiffLines, diffCacheKey, nextDiffContext } from "../../utils"
+import { diffViewPrefs } from "../../composables/useDiffViewPrefs"
+import { CARD_SERVICES_KEY } from "../../types"
+import type { NumstatEntry } from "../../utils"
+import { buildSectionedTreeRows, countRawDiffLines, diffCacheKey, nextDiffContext, shouldAutoLoadDiff } from "../../utils"
 import DiffViewBar from "../common/DiffViewBar.vue"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 import DiffFileSection from "./DiffFileSection.vue"
@@ -206,6 +223,8 @@ const props = defineProps<{
   fileDiffs: Record<string, string>
   /** 单文件取数在途标记（与 fileDiffs 同键） */
   diffLoading: Record<string, boolean>
+  /** 单文件取数状态（与 fileDiffs 同键；变更集路径的二进制由内容识别） */
+  diffStatus: Record<string, DiffStatus>
   gitOpLoading: boolean
   /** 打开时要定位到的文件（从文件列表 / 目录树 / 文件浏览器点进来） */
   focusFile: FileChange | null
@@ -218,6 +237,9 @@ const props = defineProps<{
   /** 项目绝对路径（各文件段据此拼出所在目录，供「打开所在文件夹」用） */
   projectPath: string
 }>()
+
+// 卡片服务注入（仅用于变更集失败后的 numstat 概览；必须在 setup 同步阶段调用）
+const services = inject(CARD_SERVICES_KEY)
 
 const emit = defineEmits<{
   close: []
@@ -235,10 +257,24 @@ const emit = defineEmits<{
 const STREAM_FILE_INITIAL = 20
 const STREAM_FILE_STEP = 20
 
-/** 视图偏好（全局共用一条工具条） */
-const layout = defineModel<DiffLayout>("layout", { default: "auto" })
-const showLineNumbers = defineModel<boolean>("showLineNumbers", { default: true })
-const onlyChanges = defineModel<boolean>("onlyChanges", { default: false })
+/** 视图偏好（模块级单例，重开弹窗保持上次选择） */
+const prefs = diffViewPrefs()
+const layout = computed<DiffLayout>({
+  get: () => prefs.layout,
+  set: (v) => { prefs.layout = v },
+})
+const showLineNumbers = computed<boolean>({
+  get: () => prefs.showLineNumbers,
+  set: (v) => { prefs.showLineNumbers = v },
+})
+const onlyChanges = computed<boolean>({
+  get: () => prefs.onlyChanges,
+  set: (v) => { prefs.onlyChanges = v },
+})
+const wrap = computed<boolean>({
+  get: () => prefs.wrap,
+  set: (v) => { prefs.wrap = v },
+})
 
 /**
  * 变更集不可用时的占位空映射。
@@ -265,6 +301,51 @@ const changesets = shallowRef<{ staged: Record<string, string>, unstaged: Record
 const changesetLoading = ref(true)
 /** 变更集是否取数失败（超 maxBuffer / git 报错）：已降级为逐文件加载，需要给用户一个可见原因 */
 const changesetFailed = ref(false)
+
+/**
+ * 变更集失败后的文件规模概览（numstat）。
+ * 用于区分「自动拉取」与「等用户点击」：整包都超限时，逐个 spawn 20+ 个 git 进程比失败本身更糟。
+ */
+const EMPTY_OVERVIEW: Record<string, NumstatEntry> = {}
+const overview = shallowRef<{ staged: Record<string, NumstatEntry>, unstaged: Record<string, NumstatEntry> }>({
+  staged: EMPTY_OVERVIEW,
+  unstaged: EMPTY_OVERVIEW,
+})
+const overviewLoaded = ref(false)
+const overviewStarted = ref(false)
+
+async function loadOverview() {
+  if (overviewStarted.value) return
+  overviewStarted.value = true
+  if (!services) {
+    overviewLoaded.value = true
+    return
+  }
+  const [unstaged, staged] = await Promise.all([
+    services.manager.getChangesetOverview(props.projectPath, false).catch(() => null),
+    services.manager.getChangesetOverview(props.projectPath, true).catch(() => null),
+  ])
+  overview.value = {
+    staged: staged ?? EMPTY_OVERVIEW,
+    unstaged: unstaged ?? EMPTY_OVERVIEW,
+  }
+  overviewLoaded.value = true
+}
+
+watch(changesetFailed, (failed) => {
+  if (failed) void loadOverview()
+})
+
+/**
+ * 是否自动拉取该文件补丁。
+ * 变更集可用时不需要门槛；失败后等概览到达，再按 numstat 规模判定（二进制/超大改为点击加载）。
+ */
+function shouldAutoLoad(file: FileChange): boolean {
+  if (!changesetFailed.value) return true
+  if (!overviewLoaded.value) return false
+  const map = overview.value[scopeOf(file) === "staged" ? "staged" : "unstaged"]
+  return shouldAutoLoadDiff(map[file.path])
+}
 /** 用户手动切过范围的文件（path → 是否暂存区），未记录时按文件自身暂存态决定 */
 const scopeOverride = ref<Record<string, boolean>>({})
 /** 已展开上下文的文件（path → 上下文行数），缺省 = git 默认 3 行 */
@@ -400,6 +481,8 @@ async function refreshChangesets(force = false) {
     ])
     // null = 该范围取数失败（超 maxBuffer / git 报错），与「空变更集」区分
     changesetFailed.value = unstagedRaw === null || stagedRaw === null
+    // 值未变化时 watch 不会触发：刷新后仍失败要主动重取概览，避免沿用旧规模的加载门槛
+    if (changesetFailed.value) void loadOverview()
     const next = {
       staged: stagedRaw ?? EMPTY_CHANGESET,
       unstaged: unstagedRaw ?? EMPTY_CHANGESET,
@@ -475,6 +558,20 @@ function handleScroll() {
   })
 }
 
+/** 当前文件段对应的取数状态（键与 fileDiffs 同源，含上下文档位） */
+function statusOf(file: FileChange): DiffStatus | undefined {
+  return props.diffStatus[diffCacheKey(file.path, scopeOf(file) === "staged", contextOf(file))]
+}
+
+/** 失败/超限重试：force 绕过缓存与在飞去重，按当前范围与档位重取 */
+function handleSectionRetry(file: FileChange) {
+  emit("loadDiff", file.path, scopeOf(file) === "staged", {
+    force: true,
+    status: file.status,
+    context: contextOf(file),
+  })
+}
+
 /** 文件段内切换差异范围（只改查看对象，不改暂存状态） */
 function handleScopeChange(file: FileChange, staged: boolean) {
   scopeOverride.value = {
@@ -535,6 +632,8 @@ function ensureMissingDiffs() {
     if (changesetLoading.value) continue
     const map = changesets.value[scopeOf(file)]
     if (file.path in map) continue
+    // 变更集失败后的超大/二进制文件：等用户点击加载，避免一次性 spawn 全部
+    if (!shouldAutoLoad(file)) continue
     const key = diffCacheKey(file.path, staged)
     if (key in props.fileDiffs) continue
     // 已在途：同一轮 flush 里被重复触及时不再 emit 一次（否则同一个文件 spawn 两个 git 进程）
@@ -545,12 +644,19 @@ function ensureMissingDiffs() {
 
 // changesetLoading 也要监听：变更集为空/失败时 changesets 可能不发生引用变化，
 // 只靠它无法触发第二轮；「取数结束」这个信号才是让逐文件回退真正启动的那个。
-watch([visibleStreamFiles, changesets, contextByPath, changesetLoading], ensureMissingDiffs)
+watch([visibleStreamFiles, changesets, contextByPath, changesetLoading, overview], ensureMissingDiffs)
 
 // 文件集合变化（暂存 / 丢弃 / 提交 / 外部改动刷新）→ 重取变更集（数据层按版本决定是否真的重跑）；
 // 同时收起已展开的上下文：展开档位的内容是按旧版本取的，回到默认档才能跟着变更集一起刷新
 watch(() => props.files, () => {
   if (Object.keys(contextByPath.value).length) contextByPath.value = {}
+  // 文件集合变化 → 旧 numstat 概览失效（下次失败时按新树重新取）
+  overviewStarted.value = false
+  overviewLoaded.value = false
+  overview.value = {
+    staged: EMPTY_OVERVIEW,
+    unstaged: EMPTY_OVERVIEW,
+  }
   void refreshChangesets()
 })
 

@@ -98,10 +98,36 @@
           <span>{{ i18n.loading }}</span>
         </div>
 
+        <!-- 二进制 / 超限 / 失败：给可解释状态，不再只是空白内容区 -->
+        <div
+          v-else-if="effectiveStatus === 'binary' || effectiveStatus === 'tooLarge' || effectiveStatus === 'error'"
+          class="wt-diff-content wt-diff-notice"
+          role="status"
+        >
+          <Icon
+            icon="mdi:alert-circle-outline"
+            height="12"
+          />
+          <span>{{ noticeText }}</span>
+          <Button
+            v-if="effectiveStatus !== 'binary'"
+            variant="ghost"
+            size="xsmall"
+            dense
+            @click="load"
+          >
+            {{ i18n.diffRetry }}
+          </Button>
+        </div>
+
         <!-- 图例 + 着色行（复用共享 DiffLines 片段；本地分页 1500 行，大补丁经「加载更多」增量渲染，
              与 WorkingTreeDiffDialog / FileDetailModal 同口径——全量建 DOM 会让大 diff 打开即卡死） -->
         <template v-else>
           <DiffLines
+            v-model:layout="layout"
+            v-model:show-line-numbers="showLineNumbers"
+            v-model:only-changes="onlyChanges"
+            v-model:wrap="wrap"
             :i18n="i18n"
             :lines="visibleLines"
           />
@@ -122,6 +148,7 @@
 <script setup lang="ts">
 // gitPush 提交内文件 diff 弹窗（自包含：按 hash+file 拉取补丁并着色展示，复用共享 DiffLines 片段）
 import type {
+  DiffStatus,
   FileChange,
   GitProject,
 } from "../../types"
@@ -134,12 +161,15 @@ import {
   ref,
   watch,
 } from "vue"
+import Button from "@/components/Button.vue"
+import { diffViewPrefs } from "../../composables/useDiffViewPrefs"
 import { copyToClipboard } from "@/utils/domUtils"
 import { useCopyFeedback } from "../../composables/useCopyFeedback"
 import { usePagedList } from "../../composables/usePagedList"
 import { CARD_SERVICES_KEY } from "../../types"
 import {
-  countDiffStats,
+  countRawDiffLines,
+  detectBinaryDiff,
   parseDiffLines,
   resolveValidPath,
 } from "../../utils"
@@ -166,6 +196,25 @@ const emit = defineEmits<{
 const services = inject(CARD_SERVICES_KEY)!
 const { manager } = services
 
+// 视图偏好（与审阅流共用；弹窗重开后保持上次布局/换行选择）
+const prefs = diffViewPrefs()
+const layout = computed({
+  get: () => prefs.layout,
+  set: (v) => { prefs.layout = v },
+})
+const showLineNumbers = computed({
+  get: () => prefs.showLineNumbers,
+  set: (v) => { prefs.showLineNumbers = v },
+})
+const onlyChanges = computed({
+  get: () => prefs.onlyChanges,
+  set: (v) => { prefs.onlyChanges = v },
+})
+const wrap = computed({
+  get: () => prefs.wrap,
+  set: (v) => { prefs.wrap = v },
+})
+
 /** hash 徽章复制反馈（2s 对勾；定时器清理由 composable 承担） */
 const {
   copied,
@@ -181,9 +230,12 @@ async function copyHash() {
 /** 原始 diff 文本（按文件加载） */
 const diffText = ref("")
 const loading = ref(true)
+const status = ref<DiffStatus>("ok")
 
-/** 将 diff 文本解析为带类型/行号/词级分段的行数组 */
-const lines = computed(() => parseDiffLines(diffText.value))
+/** 将 diff 文本解析为带类型/行号/词级分段的行数组（词级对齐只算首屏可见页） */
+const lines = computed(() => parseDiffLines(diffText.value, {
+  inlineDiffLimit: DIFF_PAGE_SIZE,
+}))
 
 // ── diff 正文本地分页：解析全量（供标题统计与截断计数）、只分页渲染（与 WorkingTreeDiffDialog 同口径），
 //    切换文件时 diff 文本变化 → watch 重置回首页
@@ -197,8 +249,21 @@ const {
 } = usePagedList(lines, DIFF_PAGE_SIZE)
 watch(diffText, resetDiffPage)
 
-/** 增/删行数统计（标题行展示；按全量行计算） */
-const stats = computed(() => countDiffStats(lines.value))
+/** 增/删行数统计（标题行展示；直接扫原文行首，不复用行数组） */
+const stats = computed(() => countRawDiffLines(diffText.value))
+
+/** 有效状态：取数层状态优先，变更集/补丁文本里的二进制标记兜底 */
+const effectiveStatus = computed<DiffStatus>(() => {
+  if (status.value === "tooLarge" || status.value === "error") return status.value
+  if (status.value === "binary" || detectBinaryDiff(diffText.value)) return "binary"
+  return status.value
+})
+
+const noticeText = computed(() => {
+  if (effectiveStatus.value === "binary") return props.i18n.diffBinaryNotice
+  if (effectiveStatus.value === "tooLarge") return props.i18n.diffTooLargeNotice
+  return props.i18n.diffLoadFailed
+})
 
 /** 当前文件在列表中的下标（路径匹配；单个提交内路径唯一） */
 const fileIndex = computed(() => props.files.findIndex((f) => f.path === props.file.path))
@@ -215,11 +280,15 @@ async function load() {
     const path = resolveValidPath(props.project)
     if (!path) {
       diffText.value = ""
+      status.value = "error"
       return
     }
-    diffText.value = await manager.getCommitFilePatch(path, props.hash, props.file.path)
+    const result = await manager.getCommitFilePatchResult(path, props.hash, props.file.path)
+    diffText.value = result.text
+    status.value = result.status
   } catch {
     diffText.value = ""
+    status.value = "error"
   } finally {
     loading.value = false
   }

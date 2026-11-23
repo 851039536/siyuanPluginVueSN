@@ -13,6 +13,7 @@ export type {
   CommitType,
   ConflictFile,
   CustomIde,
+  DiffViewPrefs,
   DiscardTarget,
   FileChange,
   FileChangeStatus,
@@ -44,6 +45,7 @@ export {
   clampNetworkTimeout,
   COMMIT_TYPE_VALUES,
   DEFAULT_ANALYSIS_VIEW_SETTINGS,
+  DEFAULT_DIFF_VIEW_PREFS,
   DEFAULT_LOCAL_TIMEOUT,
   DEFAULT_NETWORK_TIMEOUT,
   DIFF_CONTEXT_BUDGET_MAX,
@@ -59,6 +61,9 @@ export {
   NETWORK_TIMEOUT_MIN,
   UNGROUPED_ID,
 } from "./storage"
+
+// ── 差异取数结果（二进制 / 超限 / 失败与「无差异」区分）──
+export type { DiffStatus, FileDiffResult } from "./diff"
 
 // ── 推送账号（多账号认证 + 提交身份覆盖）──
 export {

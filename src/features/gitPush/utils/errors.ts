@@ -21,6 +21,20 @@ export class ProjectFetchError extends Error {
   }
 }
 
+/**
+ * git 输出超过缓冲区上限（execFile maxBuffer）专用错误。
+ * 单文件 diff 溢出必须与「无差异」区分，否则视图层只能显示空态，用户无从得知原因。
+ */
+export class GitBufferOverflowError extends Error {
+  readonly limitBytes: number
+
+  constructor(limitBytes: number) {
+    super(`git 输出超过缓冲区上限（${limitBytes} 字节）`)
+    this.name = "GitBufferOverflowError"
+    this.limitBytes = limitBytes
+  }
+}
+
 /** 从 git 报错文本推断失败分类（execGit 已把 stderr 拼进 message，此处只做关键字判别；无法判定归入 other） */
 export function classifyFetchFailure(reason: unknown): FetchFailureKind {
   const text = fetchFailureReason(reason).toLowerCase()

@@ -7,6 +7,7 @@ import type {
 } from "./managers/LineStatsStore"
 import type { AllPlatformResult, PushPreflightResult, RemoteOpResult } from "./managers/RemoteOps"
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
+import type { FileDiffResult } from "./types/diff"
 import type { RefSyncSnapshot } from "./types/gitRefs"
 import type { NumstatCommit } from "./reportMetrics"
 import type {
@@ -1045,6 +1046,11 @@ export class GitPushManager {
     return this.worktreeOps.getFileDiff(projectPath, file, staged, status, context)
   }
 
+  /** 同 getFileDiff，但带取数状态（二进制 / 超限 / 失败与「无差异」区分） */
+  async getFileDiffResult(projectPath: string, file: string, staged = false, status?: string, context = 0): Promise<FileDiffResult> {
+    return this.worktreeOps.getFileDiffResult(projectPath, file, staged, status, context)
+  }
+
   /**
    * 一次取回整个变更集的补丁并按文件切分（审阅流用；单进程覆盖全部 tracked 变更）。
    * 未跟踪文件不在结果中，调用方对缺失路径回退 getFileDiff。
@@ -1052,6 +1058,11 @@ export class GitPushManager {
    */
   async getChangesetDiff(projectPath: string, staged = false): Promise<Record<string, string> | null> {
     return this.worktreeOps.getChangesetDiff(projectPath, staged)
+  }
+
+  /** 变更集规模概览（仅整包补丁失败后用于决定按文件加载门槛） */
+  async getChangesetOverview(projectPath: string, staged = false) {
+    return this.worktreeOps.getChangesetOverview(projectPath, staged)
   }
 
   async stageFile(projectPath: string, file: string): Promise<void> {
@@ -1130,6 +1141,11 @@ export class GitPushManager {
   /** 获取某次提交对指定文件的补丁（提交文件弹窗内点击查看修改差异用） */
   async getCommitFilePatch(projectPath: string, hash: string, filePath: string) {
     return this.worktreeOps.getCommitFilePatch(projectPath, hash, filePath)
+  }
+
+  /** 提交内单文件补丁及状态（二进制 / 超限 / 失败与无差异区分） */
+  async getCommitFilePatchResult(projectPath: string, hash: string, filePath: string): Promise<FileDiffResult> {
+    return this.worktreeOps.getCommitFilePatchResult(projectPath, hash, filePath)
   }
 
   async getBranches(projectPath: string): Promise<BranchInfo[]> { return this.worktreeOps.getBranches(projectPath) }

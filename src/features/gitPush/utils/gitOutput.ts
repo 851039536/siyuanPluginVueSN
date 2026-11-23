@@ -532,6 +532,48 @@ export function parseChangesetDiff(raw: string): Map<string, string> {
   return result
 }
 
+/** numstat 单文件规模（binary 为 git 输出的 `-\t-`） */
+export interface NumstatEntry {
+  add: number
+  del: number
+  binary: boolean
+}
+
+/**
+ * 解析 `git diff --numstat -z` 输出。
+ * `-z` 下条目以 NUL 分隔；重命名的路径段为空，紧随其后依次是旧路径与新路径。
+ * 用于变更集过大时按文件规模决定「自动加载 / 点击加载」。
+ */
+export function parseNumstatZ(raw: string): Record<string, NumstatEntry> {
+  const result: Record<string, NumstatEntry> = {}
+  if (!raw) return result
+  const parts = raw.split("\0")
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+    if (!part) continue
+    const firstTab = part.indexOf("\t")
+    if (firstTab < 0) continue
+    const secondTab = part.indexOf("\t", firstTab + 1)
+    if (secondTab < 0) continue
+    const addRaw = part.slice(0, firstTab)
+    const delRaw = part.slice(firstTab + 1, secondTab)
+    let path = part.slice(secondTab + 1)
+    if (!path) {
+      // 重命名：当前条目只带两列计数，路径在后续两个 NUL 段（旧、新）
+      const oldPath = parts[++i] ?? ""
+      path = parts[++i] ?? oldPath
+    }
+    if (!path) continue
+    const binary = addRaw === "-" || delRaw === "-"
+    result[path] = {
+      add: binary ? 0 : Number(addRaw) || 0,
+      del: binary ? 0 : Number(delRaw) || 0,
+      binary,
+    }
+  }
+  return result
+}
+
 /** 从单个文件补丁块中解析新文件路径（按可靠性依次尝试四种文件头写法） */
 function changesetChunkPath(chunk: string): string | null {
   // 正文行可能恰好渲染成 `+++ b/xxx`，故只看首个 hunk 之前的头部区域

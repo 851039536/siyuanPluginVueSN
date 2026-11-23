@@ -113,6 +113,7 @@
           :generated-msg="generatingMsg?.text || ''"
           :file-diffs="fileDiffs"
           :diff-loading="diffLoading"
+          :diff-status="diffStatus"
           :git-op-loading="gitOpLoading || false"
           :refreshing-working-tree="refreshingWorkingTree || false"
           :commit-templates="commitTemplates"
@@ -245,6 +246,7 @@ import type {
   GitProject,
 } from "../../types"
 import type { CardTabId } from "../../types/cardTab"
+import { ensureDiffViewPrefs } from "../../composables/useDiffViewPrefs"
 import {
   computed,
   nextTick,
@@ -310,6 +312,9 @@ const {
   ops,
 } = services
 const i18n = shared.i18n
+
+// diff 查看偏好（布局/行号/仅改动/换行）全局共享，卡片挂载时懒加载一次
+onMounted(() => ensureDiffViewPrefs(services.manager.storage.diffPrefs))
 /** 提交模板（顶层 ref 绑定，模板中自动解包后下发给工作区面板） */
 const commitTemplates = shared.commitTemplates
 
@@ -335,6 +340,7 @@ const {
   conflicts,
   fileDiffs,
   diffLoading,
+  diffStatus,
   mdFiles,
   detailsError,
   ensureDetailsLoaded,

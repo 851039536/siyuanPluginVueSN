@@ -7,6 +7,7 @@ import {
   buildDiffContext,
   countDiffStats,
   countRawDiffLines,
+  detectBinaryDiff,
   diffCacheKey,
   nextDiffContext,
   pairChangeBlock,
@@ -491,5 +492,51 @@ describe("pairChangeBlock 块内行配对", () => {
     expect(pairChangeBlock([], [])).toEqual([])
     expect(pairChangeBlock(["a"], [])).toEqual([{ del: 0, add: -1 }])
     expect(pairChangeBlock([], ["a"])).toEqual([{ del: -1, add: 0 }])
+  })
+})
+
+describe("detectBinaryDiff", () => {
+  it("识别 Binary files … differ（含 --no-index 形式）", () => {
+    expect(detectBinaryDiff("diff --git a/x.png b/x.png\nBinary files a/x.png and b/x.png differ\n")).toBe(true)
+    expect(detectBinaryDiff("diff --git a/dev/null b/x.bin\nBinary files /dev/null and b/x.bin differ\n")).toBe(true)
+  })
+
+  it("识别 GIT binary patch", () => {
+    expect(detectBinaryDiff("GIT binary patch\nliteral 3\n")).toBe(true)
+  })
+
+  it("普通补丁、空文本与正文里的相似字符串不算二进制", () => {
+    expect(detectBinaryDiff("@@ -1 +1 @@\n-a\n+b\n")).toBe(false)
+    expect(detectBinaryDiff("")).toBe(false)
+    expect(detectBinaryDiff("+const label = \"Binary files a and b differ\"")).toBe(false)
+  })
+})
+
+describe("parseDiffLines inlineDiffLimit", () => {
+  const raw = [
+    "diff --git a/a.ts b/a.ts",
+    "index 111..222 100644",
+    "--- a/a.ts",
+    "+++ b/a.ts",
+    "@@ -1,1 +1,1 @@",
+    "-const a = 1",
+    "+const a = 2",
+  ].join("\n")
+
+  it("limit 覆盖全文时与全量解析逐字段一致", () => {
+    expect(parseDiffLines(raw, { inlineDiffLimit: 999 })).toEqual(parseDiffLines(raw))
+  })
+
+  it("limit 未到达改动块时不做词级对齐", () => {
+    const lines = parseDiffLines(raw, { inlineDiffLimit: 0 })
+    expect(lines.every((line) => line.segments === undefined)).toBe(true)
+  })
+
+  it("limit 落在改动块之后（块起点 < limit）时仍生成分段", () => {
+    const full = parseDiffLines(raw)
+    const delIndex = full.findIndex((line) => line.type === "del")
+    expect(delIndex).toBeGreaterThan(0)
+    const limited = parseDiffLines(raw, { inlineDiffLimit: delIndex + 1 })
+    expect(limited[delIndex].segments).toBeDefined()
   })
 })

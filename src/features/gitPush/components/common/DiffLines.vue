@@ -9,6 +9,7 @@
     v-model:layout="layout"
     v-model:show-line-numbers="showLineNumbers"
     v-model:only-changes="onlyChanges"
+    v-model:wrap="wrap"
     :i18n="i18n"
   />
 
@@ -16,6 +17,7 @@
   <div
     ref="contentEl"
     class="wt-diff-content"
+    :class="{ 'is-nowrap': !wrap }"
   >
     <div
       v-if="!renderedLines.length"
@@ -47,8 +49,21 @@
               v-if="showLineNumbers"
               class="wt-dl-no"
             ></span>
-            <span class="wt-dl-sign">{{ DIFF_SIGN[row.full.type] }}</span>
-            <DiffLineText :line="row.full" />
+            <span class="wt-dl-text">
+              <template v-if="row.full.segments">
+                <span
+                  v-for="(seg, j) in row.full.segments"
+                  :key="j"
+                  :class="{ 'wt-dl-seg-changed': seg.changed }"
+                >{{ seg.text }}</span>
+              </template>
+              <template v-else>{{ row.full.text }}</template>
+              <span
+                v-if="row.full.type === 'hunk' && row.full.scope"
+                class="wt-dl-scope"
+                :title="row.full.scope"
+              >{{ row.full.scope }}</span>
+            </span>
           </template>
         </template>
         <template v-else>
@@ -61,11 +76,24 @@
               v-if="showLineNumbers"
               class="wt-dl-no"
             >{{ row.left?.oldNo ?? "" }}</span>
-            <span class="wt-dl-sign">{{ row.left ? DIFF_SIGN[row.left.type] : "" }}</span>
-            <DiffLineText
+            <span
               v-if="row.left"
-              :line="row.left"
-            />
+              class="wt-dl-text"
+            >
+              <template v-if="row.left.segments">
+                <span
+                  v-for="(seg, j) in row.left.segments"
+                  :key="j"
+                  :class="{ 'wt-dl-seg-changed': seg.changed }"
+                >{{ seg.text }}</span>
+              </template>
+              <template v-else>{{ row.left.text }}</template>
+              <span
+                v-if="row.left.type === 'hunk' && row.left.scope"
+                class="wt-dl-scope"
+                :title="row.left.scope"
+              >{{ row.left.scope }}</span>
+            </span>
           </div>
           <!-- 右（新文件）单元格 -->
           <div
@@ -76,11 +104,24 @@
               v-if="showLineNumbers"
               class="wt-dl-no"
             >{{ row.right?.newNo ?? "" }}</span>
-            <span class="wt-dl-sign">{{ row.right ? DIFF_SIGN[row.right.type] : "" }}</span>
-            <DiffLineText
+            <span
               v-if="row.right"
-              :line="row.right"
-            />
+              class="wt-dl-text"
+            >
+              <template v-if="row.right.segments">
+                <span
+                  v-for="(seg, j) in row.right.segments"
+                  :key="j"
+                  :class="{ 'wt-dl-seg-changed': seg.changed }"
+                >{{ seg.text }}</span>
+              </template>
+              <template v-else>{{ row.right.text }}</template>
+              <span
+                v-if="row.right.type === 'hunk' && row.right.scope"
+                class="wt-dl-scope"
+                :title="row.right.scope"
+              >{{ row.right.scope }}</span>
+            </span>
           </div>
         </template>
       </div>
@@ -113,8 +154,21 @@
             v-if="showLineNumbers"
             class="wt-dl-no"
           >{{ line.newNo ?? "" }}</span>
-          <span class="wt-dl-sign">{{ DIFF_SIGN[line.type] }}</span>
-          <DiffLineText :line="line" />
+          <span class="wt-dl-text">
+            <template v-if="line.segments">
+              <span
+                v-for="(seg, j) in line.segments"
+                :key="j"
+                :class="{ 'wt-dl-seg-changed': seg.changed }"
+              >{{ seg.text }}</span>
+            </template>
+            <template v-else>{{ line.text }}</template>
+            <span
+              v-if="line.type === 'hunk' && line.scope"
+              class="wt-dl-scope"
+              :title="line.scope"
+            >{{ line.scope }}</span>
+          </span>
         </template>
       </div>
     </template>
@@ -131,9 +185,8 @@ import {
   ref,
   watch,
 } from "vue"
-import { DIFF_SIGN, filterOnlyChanges, isChangeLine, toSplitRows } from "../../utils"
+import { filterOnlyChanges, isChangeLine, toSplitRows } from "../../utils"
 import DiffGapRow from "./DiffGapRow.vue"
-import DiffLineText from "./DiffLineText.vue"
 import DiffViewBar from "./DiffViewBar.vue"
 
 const props = withDefaults(defineProps<{
@@ -160,6 +213,8 @@ const layout = defineModel<DiffLayout>("layout", { default: "auto" })
 const showLineNumbers = defineModel<boolean>("showLineNumbers", { default: true })
 /** 仅改动：隐去未变行与折叠条（过滤在宿主的分页之前完成，此处只做开关状态） */
 const onlyChanges = defineModel<boolean>("onlyChanges", { default: false })
+/** 自动换行（false = 保留原始单行 + 横向滚动） */
+const wrap = defineModel<boolean>("wrap", { default: true })
 
 /**
  * 并排视图的最小可用宽度：每列低于约 440px 时代码折行严重，

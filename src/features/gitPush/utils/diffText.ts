@@ -48,6 +48,17 @@ export interface DiffLine {
 const DIFF_META_RE = /^(?:diff --git|index |--- |\+\+\+ |new file|deleted file|old mode|new mode|rename |copy |similarity |dissimilarity |Binary files|\\ No newline)/
 
 /**
+ * 二进制差异标记。
+ * git 只在文件头输出这两类行，扫前 8KB 足够；避免对 10MB 级文本做全量正则。
+ */
+const BINARY_DIFF_RE = /^(?:Binary files .* differ|GIT binary patch)$/m
+
+/** 原始 diff 文本是否表示二进制文件（无补丁内容） */
+export function detectBinaryDiff(raw: string): boolean {
+  return !!raw && BINARY_DIFF_RE.test(raw.slice(0, 8192))
+}
+
+/**
  * hunk 头：`@@ -旧起始,旧行数 +新起始,新行数 @@ 所属作用域`。
  * 行数省略时按 1 计（`@@ -5 +7 @@`）；作用域由 git 按语言规则带出（可能为空）。
  */
@@ -62,6 +73,12 @@ export interface ParseDiffOptions {
    * 全压在打开弹窗的那一帧；超大 diff 可传 false，牺牲行内染色换取首屏不卡。
    */
   inlineDiff?: boolean
+  /**
+   * 只对起始行号小于该值的改动块做词级对齐（渲染分页用）。
+   * 解析本身仍是 O(n) 轻量扫描，只有更贵的 LCS 被限制在可见窗口内；
+   * 缺省/Infinity 表示全量，与旧行为一致。
+   */
+  inlineDiffLimit?: number
 }
 
 /**
@@ -138,7 +155,7 @@ export function parseDiffLines(diffText: string, opts?: ParseDiffOptions): DiffL
   // 去掉文本末尾换行符经 split 产生的空行
   const last = result[result.length - 1]
   if (last && (last.type === "ctx" || last.type === "meta") && last.text === "") result.pop()
-  if (opts?.inlineDiff !== false) markInlineDiff(result)
+  if (opts?.inlineDiff !== false) markInlineDiff(result, opts?.inlineDiffLimit)
   return result
 }
 
@@ -533,11 +550,13 @@ export function pairChangeBlock(delTexts: string[], addTexts: string[]): { del: 
 }
 
 /** 后处理：将连续 del 块与紧随的 add 块按「文本锚点 + 位置补足」配对，为每对行生成词级差异分段 */
-function markInlineDiff(lines: DiffLine[]): void {
+function markInlineDiff(lines: DiffLine[], limit = Number.POSITIVE_INFINITY): void {
   let i = 0
   while (i < lines.length) {
     if (lines[i].type !== "del") { i++; continue }
     const delStart = i
+    // 改动块按行序排列：起点越过可见窗口后，后续块都不需要词级对齐
+    if (delStart >= limit) break
     while (i < lines.length && lines[i].type === "del") i++
     const addStart = i
     while (i < lines.length && lines[i].type === "add") i++

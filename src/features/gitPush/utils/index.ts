@@ -49,6 +49,7 @@ export {
   buildDiffContext,
   countDiffStats,
   countRawDiffLines,
+  detectBinaryDiff,
   diffCacheKey,
   DIFF_CONTEXT_LEVELS,
   DIFF_SIGN,
@@ -67,17 +68,37 @@ export { filterOnlyChanges, isChangeLine, toSplitRows } from "./diffLayout"
 export type { DiffLayout, DiffSplitRow } from "./diffLayout"
 
 export {
+  buildLogPatchArgs,
+  buildNoIndexDiffArgs,
+  buildShowPatchArgs,
+  buildWorktreeDiffArgs,
+  DIFF_SAFE_ARGS,
+} from "./gitDiffArgs"
+export type {
+  LogPatchArgsOptions,
+  ShowPatchArgsOptions,
+  WorktreeDiffArgsOptions,
+} from "./gitDiffArgs"
+
+export { createSemaphore } from "./semaphore"
+export type { Semaphore } from "./semaphore"
+
+export {
   parseAheadBehind,
   parseBranches,
   parseChangesetDiff,
   parseCommitFiles,
   parseCommitLog,
   parseCommitShortStats,
+  parseNumstatZ,
   parseStashList,
   parseWorktreeStatus,
   parseWorktreeStatusV2,
 } from "./gitOutput"
-export type { WorktreeStatusParse, WorktreeStatusV2Parse } from "./gitOutput"
+export type { NumstatEntry, WorktreeStatusParse, WorktreeStatusV2Parse } from "./gitOutput"
+
+export { DIFF_AUTO_MAX_CHANGED_LINES, shouldAutoLoadDiff } from "./diffPolicy"
+export { normalizeDiffViewPrefs } from "./diffPrefs"
 
 export {
   buildDayCountMap,

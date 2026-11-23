@@ -230,6 +230,7 @@
         :files="sortedFiles"
         :file-diffs="fileDiffs"
         :diff-loading="diffLoading"
+        :diff-status="diffStatus"
         :git-op-loading="gitOpLoading"
         :focus-file="activeDiffFile"
         :get-changeset="getChangeset"
@@ -400,6 +401,7 @@ import {
   COMMIT_ANALYSIS_TYPE_META,
   COMMIT_TYPE_VALUES,
 } from "../../types"
+import type { DiffStatus } from "../../types"
 import {
   fileStatusIcon,
   fileStatusIconKey,
@@ -422,6 +424,8 @@ const props = defineProps<{
   fileDiffs: Record<string, string>
   /** 差异加载中标记（与 fileDiffs 同键同构，供弹窗区分「加载中」与「无差异」） */
   diffLoading: Record<string, boolean>
+  /** 差异取数状态（二进制 / 超限 / 失败与无差异区分） */
+  diffStatus: Record<string, DiffStatus>
   generatedMsg: string
   gitOpLoading: boolean
   /** 工作区刷新加载中 */

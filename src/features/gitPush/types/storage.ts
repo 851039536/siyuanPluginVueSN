@@ -537,6 +537,22 @@ const DEFAULT_UNGROUPED: ProjectCategory = {
   order: 0,
 }
 
+/** diff 查看偏好（跨弹窗持久化；layout 用内联联合避免 types 反向依赖 utils） */
+export interface DiffViewPrefs {
+  layout: "unified" | "split" | "auto"
+  showLineNumbers: boolean
+  onlyChanges: boolean
+  wrap: boolean
+}
+
+/** diff 查看默认偏好（wrap 默认开，保持旧版恒换行行为） */
+export const DEFAULT_DIFF_VIEW_PREFS: DiffViewPrefs = {
+  layout: "auto",
+  showLineNumbers: true,
+  onlyChanges: false,
+  wrap: true,
+}
+
 export class GitPushStorage {
   readonly projects: TypedStorage<GitProject[]>
   readonly categories: TypedStorage<ProjectCategory[]>
@@ -561,6 +577,8 @@ export class GitPushStorage {
   readonly cardCompact: TypedStorage<boolean>
   /** Compare / 创建 PR 深链的基线分支（默认 main；仓库默认分支为 master 时可改） */
   readonly compareBaseBranch: TypedStorage<string>
+  /** diff 查看偏好（布局 / 行号 / 仅改动 / 换行） */
+  readonly diffPrefs: TypedStorage<DiffViewPrefs>
   /** 提交分析结果缓存（跨会话复用，进入分析视图直接展示上次结果，手动重新分析后更新） */
   readonly commitAnalysisCache: TypedStorage<CommitAnalysisCache>
   /** 行数统计独立缓存（与提交分析缓存解耦，进入行数统计视图直接复用上次结果） */
@@ -620,6 +638,7 @@ export class GitPushStorage {
     this.cardLayout = new TypedStorage<CardLayout>(storage, "git-push-card-layout", "detailed")
     this.cardCompact = new TypedStorage<boolean>(storage, "git-push-card-compact", false)
     this.compareBaseBranch = new TypedStorage(storage, "git-push-compare-base", "main")
+    this.diffPrefs = new TypedStorage(storage, "git-push-diff-prefs", DEFAULT_DIFF_VIEW_PREFS)
     this.commitAnalysisCache = new TypedStorage(storage, "git-push-analysis-cache", DEFAULT_ANALYSIS_CACHE)
     this.lineStatsCache = new TypedStorage(storage, "git-push-line-stats-cache", DEFAULT_LINE_STATS_CACHE)
     this.commitAnalysisView = new TypedStorage(storage, "git-push-analysis-view", DEFAULT_ANALYSIS_VIEW_SETTINGS)

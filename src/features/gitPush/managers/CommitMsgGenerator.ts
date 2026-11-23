@@ -3,7 +3,7 @@ import type { Plugin } from "siyuan"
 import type { CommitTemplate, FileChange, GitPushStorage } from "../types/storage"
 import type { CommitRuleConfig } from "../types/meta"
 import { buildCommitRulePrompt, fixCommitMessageHeuristically, normalizeCommitMessageFormat } from "../commitRuleChecker"
-import { buildDiffContext } from "../utils"
+import { buildDiffContext, buildWorktreeDiffArgs } from "../utils"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
 import type { GitExecutor } from "./GitExecutor"
 import type { WorktreeOps } from "./WorktreeOps"
@@ -32,9 +32,10 @@ export class CommitMsgGenerator {
   async generateCommitMessage(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     try {
       // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
-      const diffText = await this.executor.execGit(projectPath, [
-        "diff", "--text", "--cached", "--stat=200",
-      ])
+      const diffText = await this.executor.execGit(projectPath, buildWorktreeDiffArgs({
+        staged: true,
+        statWidth: 200,
+      }))
       if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
 
       const aiConfig = getApiConfigFromPlugin(this.plugin)
@@ -42,9 +43,7 @@ export class CommitMsgGenerator {
         return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
       }
 
-      const fullDiff = await this.executor.execGit(projectPath, [
-        "diff", "--text", "--cached",
-      ])
+      const fullDiff = await this.executor.execGit(projectPath, buildWorktreeDiffArgs({ staged: true }))
       const ruleConfig = await this.getRuleConfig()
       const diffContext = fullDiff ? buildDiffContext(fullDiff, ruleConfig.diffContextBudget) : diffText
 
@@ -100,10 +99,10 @@ ${diffContext}`,
    */
   async generateCommitMessageDeep(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
     try {
-      // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
-      const diffText = await this.executor.execGit(projectPath, [
-        "diff", "--text", "--cached", "--stat=200",
-      ])
+      const diffText = await this.executor.execGit(projectPath, buildWorktreeDiffArgs({
+        staged: true,
+        statWidth: 200,
+      }))
       if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
 
       const aiConfig = getApiConfigFromPlugin(this.plugin)

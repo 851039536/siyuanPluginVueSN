@@ -3,6 +3,7 @@ import type { ChildProcess } from "node:child_process"
 import { getNodeProcessModules } from "@/utils/nodeModules"
 import type { GitPushStorage } from "../types/storage"
 import { clampGitConcurrency, clampLocalTimeout, clampNetworkTimeout, DEFAULT_GIT_CONCURRENCY, DEFAULT_LOCAL_TIMEOUT, DEFAULT_NETWORK_TIMEOUT } from "../types/storage"
+import { GitBufferOverflowError } from "../utils/errors"
 import { isNetworkGitCommand } from "../utils/pushProfile"
 
 /** 等待队列条目（本地池/网络池共用结构） */
@@ -349,6 +350,8 @@ export class GitExecutor {
       env?: Record<string, string>
       /** 视为成功的退出码白名单（如 git diff --no-index 有差异时退出码为 1）；仅匹配数字型 code，spawn/超时/缓冲区错误不受影响 */
       allowExitCodes?: number[]
+      /** 覆盖默认输出上限（单测用小值触发溢出；业务调用保持默认 10MB） */
+      maxBuffer?: number
     },
   ): Promise<string> {
     if (this.destroyed) return Promise.reject(new Error("插件已卸载，git 操作已取消"))
@@ -417,6 +420,11 @@ export class GitExecutor {
           const exitCode = error?.code
           const allowedExit = typeof exitCode === "number" && (options?.allowExitCodes?.includes(exitCode) ?? false)
           if (error && !allowedExit) {
+            // 缓冲区溢出单独成类：调用方需要把「输出太大」与「git 报错/无差异」分开呈现
+            if (error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" || /maxbuffer/i.test(error.message)) {
+              reject(new GitBufferOverflowError(options?.maxBuffer ?? GitExecutor.MAX_BUFFER))
+              return
+            }
             // 错误信息自带超时/退出码标识：execFile 超时以 SIGTERM 终止（killed=true）时 stderr 可能为空，
             // 否则用户只能看到通用 "Command failed" 文案，无从得知是超时
             // "timed out" 字样同时供用户识别超时（超时不参与 RemoteOps 网络错误重试）
@@ -449,7 +457,7 @@ export class GitExecutor {
               timeout: effectiveTimeout,
               encoding: "utf8",
               windowsHide: true,
-              maxBuffer: GitExecutor.MAX_BUFFER,
+              maxBuffer: options?.maxBuffer ?? GitExecutor.MAX_BUFFER,
               ...(mergedEnv ? { env: mergedEnv } : {}),
             },
             handleExit,

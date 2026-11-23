@@ -14,9 +14,9 @@
       tabindex="0"
       :aria-expanded="!collapsed"
       :aria-label="`${collapsed ? i18n.diffFileExpand : i18n.diffFileCollapse} — ${file.path}`"
-      @click="collapsed = !collapsed"
-      @keydown.enter.prevent="collapsed = !collapsed"
-      @keydown.space.prevent="collapsed = !collapsed"
+      @click="toggleCollapsed"
+      @keydown.enter.prevent="toggleCollapsed"
+      @keydown.space.prevent="toggleCollapsed"
     >
       <Icon
         icon="mdi:chevron-right"
@@ -57,6 +57,11 @@
         <span class="wt-stat-add">+{{ stats.add }}</span>
         <span class="wt-stat-del">−{{ stats.del }}</span>
       </span>
+      <!-- 内容尚未取数（大文件/变更集失败后的门槛文件）：明确「尚未加载」而非无差异 -->
+      <span
+        v-if="collapsed && !diffText"
+        class="wt-diff-large-hint"
+      >{{ i18n.diffLoadDiff }}</span>
 
       <span class="wt-stream-head-actions">
         <!-- 范围切换：仅「已暂存 + 工作区又改动」的文件存在两份差异 -->
@@ -148,11 +153,43 @@
         />
         <span>{{ i18n.loading }}</span>
       </div>
+      <!-- 二进制 / 超限 / 失败：给可解释状态，不再只是空白内容区 -->
+      <div
+        v-else-if="effectiveStatus === 'binary' || effectiveStatus === 'tooLarge' || effectiveStatus === 'error'"
+        class="wt-diff-notice"
+        role="status"
+      >
+        <Icon
+          icon="mdi:alert-circle-outline"
+          height="12"
+        />
+        <span>{{ noticeText }}</span>
+        <Button
+          v-if="effectiveStatus === 'binary'"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :disabled="!projectPath"
+          @click.stop="handleOpenFolder"
+        >
+          {{ i18n.diffOpenFolder }}
+        </Button>
+        <Button
+          v-else
+          variant="ghost"
+          size="xsmall"
+          dense
+          @click.stop="emit('retry', file)"
+        >
+          {{ i18n.diffRetry }}
+        </Button>
+      </div>
       <template v-else>
         <DiffLines
           v-model:layout="layout"
           v-model:show-line-numbers="showLineNumbers"
           v-model:only-changes="onlyChanges"
+          v-model:wrap="wrap"
           :i18n="i18n"
           :lines="visibleLines"
           :show-bar="false"
@@ -180,7 +217,7 @@
 
 <script setup lang="ts">
 // gitPush 审阅流单文件段（自含折叠 / 范围切换 / 复制；行解析与渲染交给共享 DiffLines）
-import type { FileChange } from "../../types"
+import type { DiffStatus, FileChange } from "../../types"
 import type { DiffLayout } from "../../utils"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
@@ -188,6 +225,7 @@ import {
   computed,
   onUnmounted,
   ref,
+  watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import Divider from "@/components/Divider.vue"
@@ -196,7 +234,8 @@ import { copyToClipboard } from "@/utils/domUtils"
 import { openFolderInExplorer } from "@/utils/electronDialog"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import {
-  countDiffStats,
+  countRawDiffLines,
+  detectBinaryDiff,
   fileStatusIcon,
   fileStatusIconKey,
   fileStatusTitle,
@@ -222,6 +261,10 @@ const props = defineProps<{
   gitOpLoading: boolean
   /** 项目绝对路径（与 file.path 拼出该文件所在目录） */
   projectPath: string
+  /** 单文件取数状态（变更集路径没有该字段，靠文本内容识别二进制） */
+  status?: DiffStatus
+  /** 是否允许自动取数（变更集失败后的超大/二进制文件为 false，等用户点击加载） */
+  autoLoad?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -232,15 +275,27 @@ const emit = defineEmits<{
   scopeChange: [file: FileChange, staged: boolean]
   /** 点击折叠条：请求该文件下一档上下文的 diff */
   expandContext: []
+  /** 取数失败/超限后重试（force 重取该文件当前范围） */
+  retry: [file: FileChange]
 }>()
 
 /** 视图偏好由弹窗统一持有，逐段透传（一条工具条控制所有文件段） */
 const layout = defineModel<DiffLayout>("layout", { default: "auto" })
 const showLineNumbers = defineModel<boolean>("showLineNumbers", { default: true })
 const onlyChanges = defineModel<boolean>("onlyChanges", { default: false })
+const wrap = defineModel<boolean>("wrap", { default: true })
 
-/** 本段折叠态（默认展开；大文件靠用户主动折叠或行数上限控制开销） */
+/** 本段折叠态（大文件默认折叠；用户手动切换后不再被自动折叠覆盖） */
 const collapsed = ref(false)
+const userToggledCollapse = ref(false)
+
+function toggleCollapsed() {
+  userToggledCollapse.value = true
+  const opening = collapsed.value
+  collapsed.value = !collapsed.value
+  // 用户主动展开一个尚未自动加载的文件（超大/二进制门槛）：此时才发取数请求
+  if (opening && !props.diffText && !props.loading) emit("retry", props.file)
+}
 
 /** 仅「已暂存 + 工作区又改动」的文件有两份差异可切 */
 const canSwitchScope = computed(() => !!(props.file.staged && props.file.unstaged))
@@ -271,22 +326,37 @@ const lineCap = ref(STREAM_LINE_INITIAL)
  */
 const INLINE_DIFF_MAX_LINES = 3000
 
+/** 大文件默认折叠阈值：超过后不建行数组、不渲染，用户点击文件头才加载 */
+const STREAM_AUTO_COLLAPSE_LINES = 2000
+
 /**
  * 原始行数是否超过阈值。
  * 数到阈值即返回（不数完全文、不建行数组）：只需要一个布尔判断，没必要为它 split 一遍。
  */
-const isHugeDiff = computed(() => {
-  const text = props.diffText
+function exceedsLineCount(text: string, limit: number): boolean {
   if (!text) return false
   let count = 1
   for (let i = 0; i < text.length; i++) {
-    if (text.charCodeAt(i) === 10 /* '\n' */ && ++count > INLINE_DIFF_MAX_LINES) return true
+    if (text.charCodeAt(i) === 10 /* '\n' */ && ++count > limit) return true
   }
   return false
-})
+}
 
-/** 解析后的全量行（供统计与截断计数） */
-const allLines = computed(() => parseDiffLines(props.diffText, { inlineDiff: !isHugeDiff.value }))
+const isHugeDiff = computed(() => exceedsLineCount(props.diffText, INLINE_DIFF_MAX_LINES))
+const largeDiff = computed(() => exceedsLineCount(props.diffText, STREAM_AUTO_COLLAPSE_LINES))
+
+// 变更集到达后才知道行数：大文件自动折叠；门槛文件（autoLoad=false）保持折叠等用户点击。
+// 用户手动展开/折叠后不再覆盖其选择。
+watch([largeDiff, () => props.autoLoad], ([large, autoLoad]) => {
+  if (userToggledCollapse.value) return
+  collapsed.value = large || autoLoad === false
+}, { immediate: true })
+
+/** 解析后的全量行（词级高亮只算当前可见窗口，展开更多时随 lineCap 扩大） */
+const allLines = computed(() => parseDiffLines(props.diffText, {
+  inlineDiff: !isHugeDiff.value,
+  inlineDiffLimit: lineCap.value,
+}))
 /**
  * 「仅改动」必须在截断之前过滤：否则只显示「前 200 行里的改动」，
  * 而文件后半段的增删要一直点「展开更多」才会露出来。空结果回退全量（纯元数据变更不算无差异）。
@@ -300,8 +370,24 @@ const filteredLines = computed(() => {
 const visibleLines = computed(() => filteredLines.value.slice(0, lineCap.value))
 /** 未渲染的行数（0 = 已全部展示） */
 const hiddenCount = computed(() => Math.max(0, filteredLines.value.length - lineCap.value))
-/** 增删统计（始终按全量行计算，与过滤/展开状态无关） */
-const stats = computed(() => countDiffStats(allLines.value))
+/** 增删统计：直接扫原文行首，不复用行数组（省掉为数字付的解析成本） */
+const stats = computed(() => countRawDiffLines(props.diffText))
+
+/**
+ * 有效展示状态：取数层给出的 binary/tooLarge/error 优先；
+ * 变更集路径没有状态字段，用文本内容识别二进制。
+ */
+const effectiveStatus = computed<DiffStatus>(() => {
+  if (props.status === "tooLarge" || props.status === "error") return props.status
+  if (props.status === "binary" || detectBinaryDiff(props.diffText)) return "binary"
+  return props.status ?? "ok"
+})
+
+const noticeText = computed(() => {
+  if (effectiveStatus.value === "binary") return props.i18n.diffBinaryNotice
+  if (effectiveStatus.value === "tooLarge") return props.i18n.diffTooLargeNotice
+  return props.i18n.diffLoadFailed
+})
 
 /** 丢弃按钮提示：按暂存/未跟踪状态区分文案 */
 const discardTitle = computed(() =>

@@ -67,7 +67,7 @@
       class="bcl-list"
     >
       <div
-        v-for="entry in filteredEntries"
+        v-for="entry in renderedEntries"
         :key="entry.hash"
         :ref="(el) => setRowEl(entry.hash, el)"
         class="bcl-entry"
@@ -192,6 +192,14 @@
           </span>
         </Tooltip>
       </div>
+      <!-- 「全部」模式下按页追加渲染：先挂首页，避免一次创建数千行 DOM -->
+      <LoadMoreButton
+        v-if="isAllMode && hasMore"
+        :i18n="i18n"
+        :visible="paged.length"
+        :total="filteredEntries.length"
+        @load-more="loadMore"
+      />
     </div>
   </div>
 </template>
@@ -205,6 +213,7 @@ import { Icon } from "@iconify/vue"
 import {
   computed,
   ref,
+  watch,
 } from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
@@ -212,7 +221,9 @@ import Select from "@/components/Select.vue"
 import Tag from "@/components/Tag.vue"
 import Tooltip from "@/components/Tooltip.vue"
 import { copyToClipboard } from "@/utils/domUtils"
+import LoadMoreButton from "../common/LoadMoreButton.vue"
 import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import { usePagedList } from "../../composables/usePagedList"
 import {
   DEFAULT_LOG_LIMIT,
   formatDateTime,
@@ -262,6 +273,24 @@ const filteredEntries = computed(() => {
   }
   return displayCount.value === "all" ? list : list.slice(0, displayCount.value)
 })
+
+/** 「全部」模式的单页渲染条数：数据仍是一次取回，DOM 按页追加，避免一次挂载数千行 */
+const ALL_PAGE_SIZE = 500
+const isAllMode = computed(() => displayCount.value === "all")
+const {
+  paged,
+  hasMore,
+  loadMore,
+  reset: resetPaging,
+} = usePagedList(filteredEntries, ALL_PAGE_SIZE)
+/** 实际渲染的行：数字模式沿用按所选条数全量渲染，仅「全部」走分页 */
+const renderedEntries = computed(() => (isAllMode.value ? paged.value : filteredEntries.value))
+// 换搜索词、换条数或底层日志换了新数组时回到首页，避免沿用旧的可见条数
+watch([
+  searchKeyword,
+  displayCount,
+  () => props.entries,
+], resetPaging)
 
 /** 短 hash（前 7 位）→ Tag 名数组。tagCommitMap 键与日志条目 hash 均为完整 hash（%H / %(objectname)），直接精确匹配 */
 const shortTagMap = computed(() => props.tagCommitMap ?? new Map<string, string[]>())

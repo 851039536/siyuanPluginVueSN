@@ -5,6 +5,7 @@ import { showMessage } from "siyuan"
 import type { GitProject, ProjectQueryKind } from "../types"
 import type { DiscardTarget } from "../types/storage"
 import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag } from "../utils"
+import { describeAiFallback } from "../utils/i18nFormat"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useGitHandlers(deps: {
@@ -20,9 +21,9 @@ export function useGitHandlers(deps: {
   /** 批量丢弃（全部 / 选中）：一次写锁 + 分组命令 */
   discardFiles: (id: string, files: DiscardTarget[]) => Promise<void>
   doCommit: (id: string, message: string) => Promise<string>
-  generateCommitMsg: (id: string) => Promise<{ message: string, source: string }>
+  generateCommitMsg: (id: string) => Promise<{ message: string, source: string, fallback?: string, detail?: string }>
   /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
-  deepGenerateCommitMsg: (id: string) => Promise<{ message: string, source: string }>
+  deepGenerateCommitMsg: (id: string) => Promise<{ message: string, source: string, fallback?: string, detail?: string }>
   doStashSave: (id: string, msg: string) => Promise<void>
   doStashPop: (id: string, index: number) => Promise<void>
   doStashApply: (id: string, index: number) => Promise<void>
@@ -262,7 +263,7 @@ export function useGitHandlers(deps: {
   async function runGenerateMsg(
     id: string,
     mode: "generating" | "deepGenerating",
-    generate: (id: string) => Promise<{ message: string, source: string }>,
+    generate: (id: string) => Promise<{ message: string, source: string, fallback?: string, detail?: string }>,
   ) {
     // 两标记互斥：手动点击另一入口时先清掉旧标记，避免两个按钮同时转圈
     generatingMsgs.value = {
@@ -281,7 +282,8 @@ export function useGitHandlers(deps: {
         [id]: { generating: false, deepGenerating: false, text: result.message },
       }
       if (result.source === "heuristic") {
-        commitOutputs.value[id] = tf("aiHeuristic")
+        // 按降级原因给不同提示：没配密钥 / 无改动 / 调用失败 / 输出不合规，不能都压成「AI 未返回有效信息」
+        commitOutputs.value[id] = describeAiFallback(result, tf)
       }
     } catch (e: unknown) {
       reportFailure(id, tf("generateFailed", getErrorMessage(e)))

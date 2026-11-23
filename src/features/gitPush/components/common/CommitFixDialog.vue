@@ -252,6 +252,7 @@ import { getErrorMessage } from "@/utils/stringUtils"
 import { checkCommitRule } from "../../commitRuleChecker"
 import { useCommitFixCommon, computeCommitBlockedReason } from "../../composables/useCommitFixCommon"
 import { useCopyFeedback } from "../../composables/useCopyFeedback"
+import { describeAiFallback, fmtTemplate } from "../../utils/i18nFormat"
 import { CARD_SERVICES_KEY } from "../../types"
 
 import {
@@ -270,6 +271,11 @@ const emit = defineEmits<{
   close: []
   saved: [projectId: string]
 }>()
+
+/** i18n 取值 + {n} 占位替换（降级提示要拼接具体错误，走与列表页同一个 fmtTemplate 真源） */
+function tf(key: string, ...args: (string | number)[]): string {
+  return fmtTemplate(props.i18n[key] as string, ...args)
+}
 
 const services = inject(CARD_SERVICES_KEY)!
 const { manager } = services
@@ -373,8 +379,8 @@ async function runAiFix() {
     const result = await manager.generateCommitFix(projectPath.value, props.target.hash, fullMessage.value || props.target.message)
     if (result.message) {
       newMessage.value = result.message
-      // 启发式降级说明：让用户知道这条不是 AI 原样产出，需复核（避免误以为"生成没按规则来"）
-      if (result.source === "heuristic") aiNote.value = props.i18n.aiHeuristic
+      // 启发式降级说明：按具体原因提示（没配密钥 / 无 diff / 调用失败 / 输出不合规），保持与工作区生成同口径
+      if (result.source === "heuristic") aiNote.value = describeAiFallback(result, tf)
     } else {
       aiError.value = props.i18n.ruleFixAiFailed
     }
@@ -397,7 +403,7 @@ async function runDeepAnalyze() {
     if (result.message) {
       newMessage.value = result.message
       // 启发式降级说明：与单行生成同口径，明确告知不是 AI 原样产出
-      if (result.source === "heuristic") aiNote.value = props.i18n.aiHeuristic
+      if (result.source === "heuristic") aiNote.value = describeAiFallback(result, tf)
     } else {
       aiError.value = props.i18n.ruleFixDeepAnalyzeFailed
     }

@@ -59,6 +59,7 @@ import {
   rootHashGitDir,
 } from "./managers/CommitIndex"
 import { CommitMsgGenerator } from "./managers/CommitMsgGenerator"
+import type { CommitMsgResult } from "./managers/CommitMsgGenerator"
 import { GitExecutor } from "./managers/GitExecutor"
 import {
   canSkipScan,
@@ -1365,21 +1366,21 @@ export class GitPushManager {
 
   // ── AI 提交信息（CommitMsgGenerator）──
 
-  async generateCommitMessage(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async generateCommitMessage(projectPath: string): Promise<CommitMsgResult> {
     return this.commitMsgGen.generateCommitMessage(projectPath)
   }
 
   /** 深度生成提交信息：读取暂存区完整 diff 让 AI 生成「标题行 + 改动要点」多行信息 */
-  async generateCommitMessageDeep(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async generateCommitMessageDeep(projectPath: string): Promise<CommitMsgResult> {
     return this.commitMsgGen.generateCommitMessageDeep(projectPath)
   }
 
-  async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<CommitMsgResult> {
     return this.commitMsgGen.generateCommitFix(projectPath, hash, currentMessage)
   }
 
   /** 深度分析修正：基于完整 diff 让 AI 生成贴合实际改动的修正提交信息 */
-  async deepAnalyzeCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async deepAnalyzeCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<CommitMsgResult> {
     return this.commitMsgGen.deepAnalyzeCommitFix(projectPath, hash, currentMessage)
   }
 

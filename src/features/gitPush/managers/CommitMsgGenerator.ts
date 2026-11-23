@@ -5,8 +5,25 @@ import type { CommitRuleConfig } from "../types/meta"
 import { buildCommitRulePrompt, fixCommitMessageHeuristically, normalizeCommitMessageFormat } from "../commitRuleChecker"
 import { buildDiffContext, buildWorktreeDiffArgs } from "../utils"
 import { callAI, getApiConfigFromPlugin } from "@/utils/aiApi"
+import { getErrorMessage } from "@/utils/stringUtils"
 import type { GitExecutor } from "./GitExecutor"
 import type { WorktreeOps } from "./WorktreeOps"
+
+/**
+ * 提交信息生成结果。
+ *
+ * 降级（source === "heuristic"）时必须带 fallback 原因：旧实现把
+ * 「没配密钥 / 网络或鉴权失败 / 输出不合规」压成同一句「AI 未返回有效信息」，
+ * 用户看到提示也无从判断该去填 Key、还是该重试、还是该换模型。
+ */
+export interface CommitMsgResult {
+  message: string
+  source: "ai" | "heuristic"
+  /** 降级原因（source 为 ai 时无值） */
+  fallback?: "no-key" | "no-diff" | "api-error" | "invalid-format"
+  /** fallback 为 api-error 时的原始错误摘要（UI 拼进提示，便于自查） */
+  detail?: string
+}
 
 export class CommitMsgGenerator {
   private plugin: Plugin
@@ -29,18 +46,20 @@ export class CommitMsgGenerator {
   /**
    * 根据暂存区差异自动生成提交信息
    */
-  async generateCommitMessage(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async generateCommitMessage(projectPath: string): Promise<CommitMsgResult> {
     try {
       // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
       const diffText = await this.executor.execGit(projectPath, buildWorktreeDiffArgs({
         staged: true,
         statWidth: 200,
       }))
-      if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
+      if (!diffText) {
+        return { message: "chore: update files", source: "heuristic", fallback: "no-diff" }
+      }
 
       const aiConfig = getApiConfigFromPlugin(this.plugin)
       if (!aiConfig.apiKey) {
-        return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
+        return { message: this.heuristicCommitMessage(diffText), source: "heuristic", fallback: "no-key" }
       }
 
       const fullDiff = await this.executor.execGit(projectPath, buildWorktreeDiffArgs({ staged: true }))
@@ -80,13 +99,18 @@ ${diffContext}`,
           return { message: normalized, source: "ai" }
         }
         console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
+        return { message: this.heuristicCommitMessage(diffText), source: "heuristic", fallback: "invalid-format" }
       } catch (e: unknown) {
         console.error("[gitPush] AI 调用失败:", e)
+        return {
+          message: this.heuristicCommitMessage(diffText),
+          source: "heuristic",
+          fallback: "api-error",
+          detail: getErrorMessage(e).slice(0, 200),
+        }
       }
-
-      return { message: this.heuristicCommitMessage(diffText), source: "heuristic" }
     } catch {
-      return { message: "chore: update files", source: "heuristic" }
+      return { message: "chore: update files", source: "heuristic", fallback: "no-diff" }
     }
   }
 
@@ -97,19 +121,22 @@ ${diffContext}`,
    * - 输出：标题行 + 空行 + 3~6 条 "- " 中文要点，便于直接提交多改动维度的内容
    * 无 API Key / AI 失败 / 输出不合规时降级启发式单行（与普通生成同源，不返回空串）。
    */
-  async generateCommitMessageDeep(projectPath: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async generateCommitMessageDeep(projectPath: string): Promise<CommitMsgResult> {
     try {
+      // --stat=200 拓宽输出宽度，避免长路径被中间省略导致文件清单不完整
       const diffText = await this.executor.execGit(projectPath, buildWorktreeDiffArgs({
         staged: true,
         statWidth: 200,
       }))
-      if (!diffText) { return { message: "chore: update files", source: "heuristic" } }
+      if (!diffText) {
+        return { message: "chore: update files", source: "heuristic", fallback: "no-diff" }
+      }
 
       const aiConfig = getApiConfigFromPlugin(this.plugin)
       const ruleConfig = await this.getRuleConfig()
       const heuristic = this.heuristicCommitMessage(diffText)
       if (!aiConfig.apiKey) {
-        return { message: heuristic, source: "heuristic" }
+        return { message: heuristic, source: "heuristic", fallback: "no-key" }
       }
 
       const fullDiff = await this.worktreeOps.getStagedDiff(projectPath)
@@ -153,13 +180,18 @@ ${diffContext}`,
           return { message: normalized, source: "ai" }
         }
         console.warn("[gitPush] AI 未返回有效 commit 格式，降级启发式:", trimmed.substring(0, 80))
+        return { message: heuristic, source: "heuristic", fallback: "invalid-format" }
       } catch (e: unknown) {
         console.error("[gitPush] AI 深度生成提交信息失败:", e)
+        return {
+          message: heuristic,
+          source: "heuristic",
+          fallback: "api-error",
+          detail: getErrorMessage(e).slice(0, 200),
+        }
       }
-
-      return { message: heuristic, source: "heuristic" }
     } catch {
-      return { message: "chore: update files", source: "heuristic" }
+      return { message: "chore: update files", source: "heuristic", fallback: "no-diff" }
     }
   }
 
@@ -197,19 +229,19 @@ ${diffContext}`,
   }
 
   /** 根据原提交信息 + 完整 diff 实际改动，生成符合提交规则的单行修正提交信息（降级启发式） */
-  async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async generateCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<CommitMsgResult> {
     const aiConfig = getApiConfigFromPlugin(this.plugin)
     const ruleConfig = await this.getRuleConfig()
     const heuristic = fixCommitMessageHeuristically(currentMessage, ruleConfig)
     if (!aiConfig.apiKey) {
-      return { message: heuristic, source: "heuristic" }
+      return { message: heuristic, source: "heuristic", fallback: "no-key" }
     }
 
     try {
       // 与深度分析同源：读取完整 diff 理解实际改动，仅输出格式不同（单行 vs 多行）；diff 按文件分块分配预算
       const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash, ruleConfig.diffContextBudget)
       if (!diffContext) {
-        return { message: heuristic, source: "heuristic" }
+        return { message: heuristic, source: "heuristic", fallback: "no-diff" }
       }
       const fileListSection = this.buildCommitFileListSection(await this.worktreeOps.getCommitFiles(projectPath, hash))
       const result = await callAI(
@@ -241,26 +273,31 @@ ${diffContext}`,
         return { message: normalized, source: "ai" }
       }
       console.warn("[gitPush] AI 未返回有效提交规则格式，降级启发式:", trimmed.substring(0, 80))
+      return { message: heuristic, source: "heuristic", fallback: "invalid-format" }
     } catch (e: unknown) {
       console.error("[gitPush] AI 修正提交信息失败:", e)
+      return {
+        message: heuristic,
+        source: "heuristic",
+        fallback: "api-error",
+        detail: getErrorMessage(e).slice(0, 200),
+      }
     }
-
-    return { message: heuristic, source: "heuristic" }
   }
 
   /** 深度分析修正：基于完整 diff 补丁让 AI 理解实际改动，生成贴合改动的修正提交信息（降级启发式） */
-  async deepAnalyzeCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async deepAnalyzeCommitFix(projectPath: string, hash: string, currentMessage: string): Promise<CommitMsgResult> {
     const aiConfig = getApiConfigFromPlugin(this.plugin)
     const ruleConfig = await this.getRuleConfig()
     const heuristic = fixCommitMessageHeuristically(currentMessage, ruleConfig)
     if (!aiConfig.apiKey) {
-      return { message: heuristic, source: "heuristic" }
+      return { message: heuristic, source: "heuristic", fallback: "no-key" }
     }
 
     try {
       const diffContext = await this.worktreeOps.getCommitDeepContext(projectPath, hash, ruleConfig.diffContextBudget)
       if (!diffContext) {
-        return { message: heuristic, source: "heuristic" }
+        return { message: heuristic, source: "heuristic", fallback: "no-diff" }
       }
       const fileListSection = this.buildCommitFileListSection(await this.worktreeOps.getCommitFiles(projectPath, hash))
       const result = await callAI(
@@ -298,11 +335,16 @@ ${diffContext}`,
         return { message: normalized, source: "ai" }
       }
       console.warn("[gitPush] AI 深度分析未返回有效提交规则格式，降级启发式:", trimmed.substring(0, 80))
+      return { message: heuristic, source: "heuristic", fallback: "invalid-format" }
     } catch (e: unknown) {
       console.error("[gitPush] AI 深度分析修正提交信息失败:", e)
+      return {
+        message: heuristic,
+        source: "heuristic",
+        fallback: "api-error",
+        detail: getErrorMessage(e).slice(0, 200),
+      }
     }
-
-    return { message: heuristic, source: "heuristic" }
   }
 
   /** AI 生成 stash 描述 */

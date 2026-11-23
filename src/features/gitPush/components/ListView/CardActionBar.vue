@@ -40,7 +40,7 @@
           class="gp-inline-menu-divider"
           role="separator"
         />
-        <!-- 判断拉取：先判断本地是否只有远端旧副本，确认安全才备份分支并强制对齐（原拉取不变） -->
+        <!-- 判断拉取：先判断本地是否只有远端旧副本，确认安全才强制对齐（原拉取不变） -->
         <button
           v-for="r in remotes"
           :key="`smart-pull-${r.key}`"

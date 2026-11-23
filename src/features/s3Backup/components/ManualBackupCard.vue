@@ -98,8 +98,7 @@ const props = defineProps<{
   resolvedS3Path: string
   backupModeLocalZip: boolean
   backupModeS3Upload: boolean
-  backupModeS3Incremental?: boolean
-  isZipBackingUp?: boolean
+  isZipBackingUp: boolean
   i18n: Record<string, string>
 }>()
 
@@ -113,7 +112,6 @@ const backupHintText = computed(() => {
   const modes: string[] = []
   if (props.backupModeLocalZip) { modes.push(props.i18n.localZipBackup) }
   if (props.backupModeS3Upload) { modes.push(props.i18n.s3Upload) }
-  if (props.backupModeS3Incremental) { modes.push(props.i18n.s3Incremental) }
   if (modes.length === 0) {
     return props.i18n.backupNowHintNone
   }

@@ -2,7 +2,7 @@
 <template>
   <section class="card-section">
     <div class="section-header">
-      <h4>{{ i18n.workspaceInfo}}</h4>
+      <h4>{{ i18n.workspaceInfo }}</h4>
     </div>
     <div class="workspace-info-grid">
       <div class="workspace-info-item">
@@ -11,7 +11,7 @@
           <span class="info-value workspace-path">{{ workspaceRoot || (i18n.notSet) }}</span>
           <div class="path-actions">
             <Button variant="ghost" size="xsmall" @click="$emit('selectPath')">
-              {{ i18n.selectPath  }}
+              {{ i18n.selectPath }}
             </Button>
             <Button variant="ghost" size="xsmall" :disabled="!workspaceRoot" @click="$emit('openFolder')">
               {{ i18n.openFolder }}

@@ -31,7 +31,6 @@
       :resolved-s3-path="orch.resolvedS3Path"
       :backup-mode-local-zip="orch.backupModeLocal.localZip"
       :backup-mode-s3-upload="orch.backupModeLocal.s3Upload"
-      :backup-mode-s3-incremental="orch.backupModeLocal.s3Incremental"
       :is-zip-backing-up="orch.isZipBackingUp"
       :i18n="i18n"
       @perform-backup="orch.performManualBackup()"

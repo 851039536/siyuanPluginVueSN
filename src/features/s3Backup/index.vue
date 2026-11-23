@@ -27,10 +27,6 @@
           :value="tab.value"
         >
           {{ i18n[tab.labelKey] }}
-          <!-- 实验性徽标："实验"（仅增量 Tab） -->
-          <Tag v-if="tab.experimental" variant="warning" size="xsmall">
-            {{ i18n.experimentalBadge }}
-          </Tag>
         </Tab>
       </TabList>
 
@@ -54,11 +50,6 @@
         <TabPanel value="checksums">
           <ChecksumsTab :orch="orch" :i18n="i18n" />
         </TabPanel>
-
-        <!-- Tab: 增量（实验性） -->
-        <TabPanel value="incremental">
-          <IncrementalTab :orch="orch" :i18n="i18n" />
-        </TabPanel>
       </TabPanels>
     </Tabs>
   </div>
@@ -73,14 +64,12 @@ import BackupTab from "./components/BackupTab.vue"
 import ConfigTab from "./components/ConfigTab.vue"
 import LogTab from "./components/LogTab.vue"
 import ChecksumsTab from "./components/ChecksumsTab.vue"
-import IncrementalTab from "./components/IncrementalTab.vue"
 import Button from "@/components/Button.vue"
 import Tabs from "@/components/Tabs.vue"
 import TabList from "@/components/TabList.vue"
 import Tab from "@/components/Tab.vue"
 import TabPanels from "@/components/TabPanels.vue"
 import TabPanel from "@/components/TabPanel.vue"
-import Tag from "@/components/Tag.vue"
 
 // ========== Props ==========
 
@@ -96,13 +85,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 // ========== Tab 状态 ==========
 
-/** Tab 渲染元数据：值 → i18n 标签键（experimental 决定是否附实验性徽标） */
-type TabValue = "backup" | "config" | "log" | "checksums" | "incremental"
+/** Tab 渲染元数据：值 → i18n 标签键 */
+type TabValue = "backup" | "config" | "log" | "checksums"
 
 interface TabMeta {
   value: TabValue
   labelKey: string
-  experimental?: boolean
 }
 
 const TABS: TabMeta[] = [
@@ -110,7 +98,6 @@ const TABS: TabMeta[] = [
   { value: "config", labelKey: "configTab" },
   { value: "log", labelKey: "logTab" },
   { value: "checksums", labelKey: "checksumsTab" },
-  { value: "incremental", labelKey: "incrementalTab", experimental: true },
 ]
 
 /** 当前激活 Tab（Tabs 的 value 载荷为 string | number，保持宽类型以匹配 v-model） */

@@ -28,6 +28,15 @@ export function useAutoBackupTrigger(deps: AutoBackupTriggerDeps) {
   const BUSY_LOG_THROTTLE_MS = 5 * 60 * 1000
   let lastBusyLogAt = 0
 
+  /**
+   * 失败重试的最小间隔。
+   * 备份失败后防重标记被回滚，下一 tick（60s 后）就会重试；若失败是持续性的
+   * （S3 不可达 / 凭证失效），会演变成「每分钟一次请求 + 一条日志 + 全量日志落盘」。
+   * 这里对失败重试限幅，同时保留「条件恢复后自动补备」的能力。
+   */
+  const FAILURE_RETRY_INTERVAL_MS = 5 * 60 * 1000
+  let lastFailureAt = 0
+
   async function handleAutoBackupTrigger(): Promise<void> {
     // 定时触发不经过 UI 按钮禁用，需自行互斥：另一任务运行中时跳过并记日志
     if (deps.isAnyTaskRunning.value) {
@@ -47,11 +56,18 @@ export function useAutoBackupTrigger(deps: AutoBackupTriggerDeps) {
       // 若在任务进行中回滚，长任务结束后会触发"完成后 1 分钟再次备份"的重复调度。
       return
     }
-    // runAutoBackup 内部吞掉所有错误并返回是否成功；失败/跳过时回滚标记，允许下一 tick 重试
-    const ok = await deps.runAutoBackup()
-    if (!ok) {
-      getS3BackupInstance()?.resetExecutionMarks()
+    // 上次失败后的限幅期内直接跳过（不重置标记，到点后自然重试）
+    if (lastFailureAt > 0 && Date.now() - lastFailureAt < FAILURE_RETRY_INTERVAL_MS) {
+      return
     }
+    // runAutoBackup 内部吞掉所有错误并返回是否成功；失败/跳过时回滚标记，允许限幅期后重试
+    const ok = await deps.runAutoBackup()
+    if (ok) {
+      lastFailureAt = 0
+      return
+    }
+    lastFailureAt = Date.now()
+    getS3BackupInstance()?.resetExecutionMarks()
   }
 
   // 初始化完成后才允许 watch 触发定时器重启，避免与 initAutoBackup 重复启动

@@ -7,12 +7,18 @@
  */
 import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
-import { DEFAULT_S3_CONFIG, INCREMENTAL_SUBDIR } from "../types"
+import { DEFAULT_S3_CONFIG } from "../types"
 import { S3Client } from "@/utils/s3/s3Client"
 import { uploadFileSmart as uploadFileSmartShared } from "@/utils/s3/s3Multipart"
 import type { BackupProgress } from "../modules/BackupManager"
 import { buildS3Key } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
+
+/**
+ * 历史遗留：旧版本「增量备份」写入桶中的子目录名。
+ * 功能已移除，但云端旧对象仍在，列举时必须过滤，避免污染备份列表与去重集合。
+ */
+const LEGACY_INCREMENTAL_SUBDIR = "incremental"
 
 export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefix: () => string }) {
   const { i18n, getSubPrefix } = options
@@ -72,7 +78,8 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
   /** 保存并应用 S3 配置（表单保存场景，配置已校验） */
   function applyConfig(config: S3Config): void {
     s3Config.value = { ...config }
-    isConfigured.value = true
+    // 与 loadConfig 同口径：仅 endpoint 非空才算已配置，避免空配置下 canBackup 误判可上传
+    isConfigured.value = Boolean(config.endpoint)
     initClient(config)
   }
 
@@ -96,22 +103,10 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     await client.download(s3Key, localPath, onProgress)
   }
 
-  /** 直接上传文件内容到 S3（跳过本地打包，用于 manifest 等内存 Buffer 场景；onProgress 上报字节级发送进度） */
-  async function uploadFileContent(buffer: Buffer, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
-    const client = requireClient()
-    await client.uploadBuffer(buffer, key, onProgress ?? (() => { /* 恒传回调使 256KB 分块写入生效，规避 req.write 整写双倍驻留 */ }))
-  }
-
   /** 大文件感知上传（磁盘文件路径版）：>100MB 自动 Multipart 分片，存储端不支持时降级单 PUT；onProgress 按文件总字节上报 */
   async function uploadFileSmart(filePath: string, key: string, onProgress?: (sent: number, total: number) => void): Promise<void> {
     const client = requireClient()
     await uploadFileSmartShared(client, filePath, key, onProgress)
-  }
-
-  /** 读取 S3 对象文本内容（404 返回 null，供增量清单读取使用） */
-  async function getObjectText(key: string): Promise<string | null> {
-    const client = requireClient()
-    return client.getObjectText(key)
   }
 
   /** 删除 S3 对象；syncList 为 true 时同步从 backupList 移除（云端列表删除场景） */
@@ -135,11 +130,11 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     const all = await client.list(fullPrefix)
     // 防御性过滤：仅保留当前工作区子路径 {prefix}/{sub}/ 下的对象，防止 S3 服务端
     // 对子前缀匹配不严导致其他工作区/无关文件夹的内容混入列表；
-    // 同时过滤增量备份的小文件与清单（避免污染云端备份列表与去重集合）、
+    // 同时过滤旧版增量备份的小文件与清单（避免污染云端备份列表与去重集合）、
     // 文件夹占位对象（0 字节，如 S3 Browser 的 ThisIsAnEmptyFolderInTheS3Bucket）与目录标记键（以 / 结尾）
     const files = all.filter((f) =>
       f.key.startsWith(fullPrefix)
-      && !f.key.includes(`/${INCREMENTAL_SUBDIR}/`)
+      && !f.key.includes(`/${LEGACY_INCREMENTAL_SUBDIR}/`)
       && !f.key.endsWith("/")
       && f.size > 0,
     )
@@ -181,9 +176,7 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
     testConnection,
     applyConfig,
     getListPrefix,
-    uploadFileContent,
     uploadFileSmart,
-    getObjectText,
     deleteObject,
     listBackups,
     listExistingKeys,

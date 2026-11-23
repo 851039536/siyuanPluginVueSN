@@ -7,7 +7,7 @@
 import { getErrorMessage } from "@/utils/stringUtils"
 import { isArchiveFile } from "../utils"
 import { BackupError } from "../types"
-import type { LocalBackupInfo, IncrementalFileEntry } from "../types"
+import type { DataFileEntry, LocalBackupInfo } from "../types"
 
 /**
  * 扫描时始终跳过的目录（思源临时目录/回收站/内核健康检查目录）
@@ -88,22 +88,23 @@ export async function scanBackupDir(deps: ScannerDeps, backupDir: string): Promi
  * 统一递归扫描目录
  * - 跳过 skipDirs 中指定的目录
  * - 收集所有文件的完整路径和相对路径（含 mtime/size）
+ * - 单个文件 stat 失败不中止整次扫描，交回调登记为「跳过文件」由调用方汇总上报
  */
 export async function scanDirectory(
   deps: ScannerDeps,
   dirPath: string,
   zipPath: string,
   skipDirs: Set<string>,
-  result: IncrementalFileEntry[],
+  result: DataFileEntry[],
+  onFileError: (relativePath: string, error: unknown) => void,
 ): Promise<void> {
   const { fs, path } = deps
   let entries
   try {
     entries = await fs.readdir(dirPath, { withFileTypes: true })
   } catch (err: unknown) {
-    // 目录不可读会导致整个子树被静默遗漏：
-    // 全量备份会产出不完整 ZIP，增量备份则会把“本地不存在”的远端文件误判为已删除。
-    // 因此这里不再吞错，由调用方决定中止还是降级。
+    // 目录不可读意味着整棵子树被静默遗漏（备份会产出不完整 ZIP），
+    // 因此这里不吞错，由调用方中止本次备份并提示用户
     throw new BackupError("scanDirFailed", `${dirPath} → ${getErrorMessage(err)}`)
   }
 
@@ -113,7 +114,7 @@ export async function scanDirectory(
 
     if (entry.isDirectory()) {
       if (skipDirs.has(entry.name)) { continue }
-      await scanDirectory(deps, fullPath, relativePath, skipDirs, result)
+      await scanDirectory(deps, fullPath, relativePath, skipDirs, result, onFileError)
     } else if (entry.isFile()) {
       try {
         const stats = await fs.stat(fullPath)
@@ -124,9 +125,9 @@ export async function scanDirectory(
           size: stats.size,
         })
       } catch (err: unknown) {
-        // 单个文件 stat 失败仍继续（与 performFullBackup 的可跳过语义一致），
-        // 但至少把问题暴露给上层调用方。
-        throw new BackupError("scanFileFailed", `${fullPath} → ${getErrorMessage(err)}`)
+        // 单文件不可读（被占用/权限不足/扫描后被删）不应让整次备份失败：
+        // 登记为跳过文件，最终通过 BackupResult.skippedCount 与日志如实上报
+        onFileError(relativePath, err)
       }
     }
   }

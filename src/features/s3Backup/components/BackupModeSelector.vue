@@ -1,4 +1,4 @@
-<!-- 备份模式选择组件 — 本地 ZIP / S3 上传 / S3 增量备份三个开关（元数据驱动渲染） -->
+<!-- 备份模式选择组件 — 本地 ZIP / S3 上传两个开关（元数据驱动渲染） -->
 <template>
   <section class="card-section backup-mode-section">
     <div class="section-header">
@@ -19,7 +19,7 @@
       />
       <span class="form-hint">{{ i18n[s.hintKey] }}</span>
     </div>
-    <!-- 模式组合提示："三种模式可任意组合勾选，执行顺序：本地 ZIP → S3 上传 → S3 增量" -->
+    <!-- 模式组合提示："两种模式可任意组合勾选，执行顺序：本地 ZIP → S3 上传" -->
     <p class="backup-hint">
       {{ i18n.backupModeHint }}
     </p>
@@ -42,8 +42,6 @@ const SWITCHES: Array<{ key: keyof BackupMode; labelKey: string; hintKey: string
   { key: "localZip", labelKey: "localZipBackup", hintKey: "localZipHint" },
   // 标签："上传到 S3"；提示："逐文件上传到 S3 兼容存储（需先完成 S3 配置）"
   { key: "s3Upload", labelKey: "s3Upload", hintKey: "s3UploadHint" },
-  // 标签："S3 增量备份"；提示："仅上传 data/ 中新增或变更的文件到 S3（需先完成 S3 配置）"
-  { key: "s3Incremental", labelKey: "s3Incremental", hintKey: "s3IncrementalHint" },
 ]
 </script>
 

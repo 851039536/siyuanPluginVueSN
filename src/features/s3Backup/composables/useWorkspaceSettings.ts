@@ -25,6 +25,9 @@ export interface WorkspaceSettingsDeps {
 export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   const { i18n } = deps
 
+  /** 合法频率集合：持久化数据可能来自旧版本/手改存储，非法值会让定时器 switch 全不命中 */
+  const FREQUENCIES: readonly BackupFrequency[] = ["minute", "hourly", "daily"]
+
   // 工作区根目录为运行时单一事实源（持久化对象的 workspacePath 字段仅作旧数据兼容保留）
   const workspaceRoot = ref("")
   const lastBackupTime = ref("")
@@ -118,19 +121,19 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
         lastBackupTime.value = data.lastBackupTime
         useDateFolder.value = data.useDateFolder
         autoBackupEnabled.value = data.autoBackupEnabled
-        backupFrequency.value = data.backupFrequency
+        backupFrequency.value = FREQUENCIES.includes(data.backupFrequency) ? data.backupFrequency : "daily"
         backupTime.value = data.backupTime
-        keepBackupCount.value = data.keepBackupCount
+        // 保留份数下限 1：0 会让保留清理把刚生成的备份立即删掉（旧数据/手改存储可能为 0）
+        keepBackupCount.value = Math.max(1, Math.floor(data.keepBackupCount) || 7)
         // 空字符串视为未设置，回退默认目录
         localBackupDir.value = data.localBackupDir || DEFAULT_BACKUP_DIR
         s3SubPrefix.value = data.s3SubPrefix || DEFAULT_BACKUP_DIR
 
         // 备份模式（同一份数据，无需二次读取存储）
+        // 旧数据可能残留已下线的 s3Incremental 字段，读取时直接忽略（不再回填到运行时状态）
         if (data.backupMode) {
           backupModeLocal.localZip = data.backupMode.localZip ?? true
           backupModeLocal.s3Upload = data.backupMode.s3Upload ?? false
-          // 旧数据缺 s3Incremental 字段（浅合并不补嵌套字段），显式兜底为关闭
-          backupModeLocal.s3Incremental = data.backupMode.s3Incremental ?? false
         }
 
         // 持久化路径兜底：API 不可用时从设置恢复（detectWorkspacePath 检测到已有路径会跳过 API）

@@ -3,14 +3,12 @@
  *
  * 不依赖 Vue 响应式的纯函数：数字补零、备份时间戳生成、
  * S3 对象 key 构建（含备份上传 key 归一化）、主机名获取（模块级缓存）、
- * 增量备份的 manifest 解析/对比与 key 生成、插件备份文件名判定、
- * 归档文件识别与惰性读取流创建、错误本地化与重试执行器。
+ * 插件备份文件名判定、归档文件识别与惰性读取流创建、错误本地化与重试执行器。
  */
 import { getNodeModules, getNodeStream } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { runWithRetries } from "@/utils/s3/concurrency"
-import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, INCREMENTAL_SUBDIR, INCREMENTAL_MANIFEST_NAME, MAX_LOG_DETAIL_FILES, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES, BACKUP_ERROR_KEYS, BackupError } from "./types"
-import type { BackupManifest, IncrementalDiff, IncrementalFileEntry } from "./types"
+import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES, BACKUP_ERROR_KEYS, BackupError } from "./types"
 
 // 并发池与主机名已提升至共享层，再导出保持模块内既有 import 零改动
 export { getHostname, runWithConcurrency } from "@/utils/s3/concurrency"
@@ -40,7 +38,7 @@ export async function withRetry(task: () => Promise<void>, failLabel: string): P
   return ok
 }
 
-/** 解析本地备份目录绝对路径（云端下载与增量还原共用；非桌面环境回退字符串拼接） */
+/** 解析本地备份目录绝对路径（云端下载与本地列表共用；非桌面环境回退字符串拼接） */
 export function resolveBackupDir(workspaceRoot: string, localBackupDir: string): string {
   const localDir = localBackupDir || DEFAULT_BACKUP_DIR
   const pathMod = getNodeModules()?.path
@@ -171,84 +169,4 @@ export function buildBackupUploadKey(
 ): string {
   const { datePath, baseName } = splitBackupRelativePath(relativePath, fallbackDate)
   return buildS3Key(prefix, sub, baseName, useDateFolder ? datePath : "")
-}
-
-// ========== 增量备份纯函数 ==========
-
-/** 按存储上限截断文件清单，返回 [截断后清单, 被省略条数]（空清单返回 undefined 不占存储） */
-export function capFileList(files: string[]): [string[] | undefined, number] {
-  if (files.length === 0) { return [undefined, 0] }
-  return [files.slice(0, MAX_LOG_DETAIL_FILES), Math.max(0, files.length - MAX_LOG_DETAIL_FILES)]
-}
-
-/**
- * 判断清单相对路径是否不安全（绝对路径/盘符/父目录穿越/空段），
- * 还原时必须跳过，防止恶意或损坏的清单覆盖工作区外文件
- */
-export function isUnsafeRelativePath(relativePath: string): boolean {
-  if (relativePath.startsWith("/") || relativePath.startsWith("\\")) { return true }
-  if (/^[A-Za-z]:[\/]/.test(relativePath)) { return true }
-  const parts = relativePath.split(/[\/]+/)
-  return parts.some((part) => part === ".." || part === "")
-}
-
-/**
- * 构建增量备份对象 key
- * 数据文件：{prefix}/{sub}/incremental/data/{relativePath}
- * 复用 buildS3Key 的空段过滤与斜杠规范化
- */
-export function buildIncrementalKey(prefix: string, sub: string, relativePath: string): string {
-  return buildS3Key(prefix, sub, `${INCREMENTAL_SUBDIR}/data/${relativePath.replace(/^\/+/, "")}`)
-}
-
-/** 构建增量清单对象 key：{prefix}/{sub}/incremental/manifest.json */
-export function buildManifestKey(prefix: string, sub: string): string {
-  return buildS3Key(prefix, sub, `${INCREMENTAL_SUBDIR}/${INCREMENTAL_MANIFEST_NAME}`)
-}
-
-/**
- * 解析 manifest 文本并校验结构（备份/还原两处共用）
- * @throws 解析失败或缺少 files 字段时抛错，错误策略由调用方决定
- */
-export function parseManifest(text: string): BackupManifest {
-  const parsed = JSON.parse(text) as BackupManifest
-  if (!parsed || typeof parsed.files !== "object" || parsed.files === null) {
-    throw new TypeError("manifest 缺少 files 字段")
-  }
-  return parsed
-}
-
-/**
- * 对比本次扫描结果与旧清单，产出增量差异
- * - mtime 或 size 任一变化即视为修改（宽松触发，宁多传不漏传）
- * - oldManifest 为 null 时视为首次备份，全部文件进入 toUpload
- */
-export function diffManifest(
-  scanned: IncrementalFileEntry[],
-  oldManifest: BackupManifest | null,
-): IncrementalDiff {
-  if (!oldManifest) {
-    return { toUpload: [...scanned], toDelete: [], unchangedCount: 0, unchanged: {} }
-  }
-
-  const toUpload: IncrementalFileEntry[] = []
-  const unchanged: BackupManifest["files"] = {}
-  let unchangedCount = 0
-  const scannedPaths = new Set<string>()
-
-  for (const file of scanned) {
-    scannedPaths.add(file.relativePath)
-    const old = oldManifest.files[file.relativePath]
-    if (old && old.mtime === file.mtime && old.size === file.size) {
-      unchanged[file.relativePath] = old
-      unchangedCount++
-    } else {
-      toUpload.push(file)
-    }
-  }
-
-  // 旧清单有、本次扫描无 → 本地已删除，需清理 S3 对象
-  const toDelete = Object.keys(oldManifest.files).filter((p) => !scannedPaths.has(p))
-
-  return { toUpload, toDelete, unchangedCount, unchanged }
 }

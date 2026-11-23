@@ -86,7 +86,11 @@ export function useLocalZipBackup(deps: LocalZipBackupDeps) {
         fileName: result.fileName,
         fileSize: result.size,
         success: true,
-        message: `${result.totalFiles} 文件`,
+        // "N 个文件"，无法读取而跳过的文件单独补充计数
+        message: i18n.filesCount.replace("{count}", String(result.totalFiles))
+          + (result.skippedCount > 0
+            ? i18n.localBackupSkippedPart.replace("{count}", String(result.skippedCount))
+            : ""),
       })
       // 计算 ZIP 文件校验值并持久化
       try {

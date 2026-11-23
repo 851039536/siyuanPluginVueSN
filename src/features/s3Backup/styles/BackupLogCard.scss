@@ -36,7 +36,7 @@
   }
 }
 
-// 类型徽章：外观与配色由共享组件 Tag 承担（7 种类型均在组件内映射 variant），
+// 类型徽章：外观与配色由共享组件 Tag 承担（5 种类型均在组件内映射 variant），
 // 此处只保留密集 flex 行所需的最小布局约束
 .log-type {
   flex-shrink: 0;
@@ -108,14 +108,14 @@
   }
 }
 
-/* 详情区：全宽块，结构化文件清单或旧日志完整 message */
+/* 详情区：全宽块，展示日志完整 message */
 .log-detail {
   position: relative;
   margin: 0 $s-2 $s-1;
   padding: $s-1 $s-2;
   /* Codex 边框风格：左侧 2px 细边框缩进标识层级，禁 box-shadow */
   border-left: 2px solid var(--b3-border-color);
-  /* 240px：大清单展开时的详情区高度上限，内部滚动防止撑爆日志列表 */
+  /* 240px：长消息展开时的高度上限，内部滚动防止撑爆日志列表 */
   max-height: 240px;
   overflow-y: auto;
   font-size: $t-2xs;
@@ -127,55 +127,7 @@
   right: $s-1;
 }
 
-.log-detail-group {
-  & + & {
-    margin-top: $s-1;
-  }
-}
-
-/* 分组标题（上传文件/删除文件/失败文件 + 计数），大写标签风格 */
-.log-detail-title {
-  font-size: $t-2xs;
-  font-weight: $fw-semibold;
-  letter-spacing: 0.06em;
-  color: var(--b3-theme-on-surface-light);
-  margin-bottom: $s-px2;
-
-  &.log-detail-title-uploaded {
-    color: var(--b3-theme-primary);
-  }
-
-  &.log-detail-title-deleted {
-    color: var(--b3-theme-warning);
-  }
-
-  &.log-detail-title-failed {
-    color: var(--b3-theme-error);
-  }
-}
-
-.log-detail-files {
-  display: flex;
-  flex-direction: column;
-  gap: $s-px2;
-}
-
-/* 文件相对路径：mono 字体，长路径折行不截断 */
-.log-detail-file {
-  font-family: $ff-mono;
-  font-size: $t-2xs;
-  line-height: $lh-normal;
-  word-break: break-all;
-  color: var(--b3-theme-on-background);
-}
-
-/* 超出存储上限的省略提示："+N 更多" */
-.log-detail-more {
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-light);
-}
-
-/* 旧日志降级显示：完整 message 折行 */
+/* 完整 message 折行显示 */
 .log-detail-message {
   font-size: $t-2xs;
   line-height: $lh-normal;

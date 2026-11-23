@@ -63,34 +63,14 @@
             <Button
               variant="ghost"
               size="xsmall"
-              @click.stop="copyDetail(log)"
+              @click.stop="copyMessage(log)"
             >
               <!-- 复制详情按钮："复制详情" -->
               {{ i18n.logCopyDetail }}
             </Button>
           </div>
-          <!-- 结构化文件清单：按 上传/删除/失败 分组 -->
-          <template v-if="log.detail">
-            <div
-              v-for="group in detailGroups(log)"
-              :key="group.key"
-              class="log-detail-group"
-            >
-              <!-- 分组标题（i18n："上传文件/删除文件/失败文件"）+ 总数 -->
-              <div class="log-detail-title" :class="`log-detail-title-${group.key}`">
-                {{ group.label }} ({{ group.files.length + group.omitted }})
-              </div>
-              <div class="log-detail-files">
-                <div v-for="f in group.files" :key="f" class="log-detail-file">{{ f }}</div>
-                <!-- 超出存储上限的省略提示："+N 更多" -->
-                <div v-if="group.omitted > 0" class="log-detail-more">
-                  {{ i18n.logMoreFiles.replace("{count}", String(group.omitted)) }}
-                </div>
-              </div>
-            </div>
-          </template>
-          <!-- 旧日志（无结构化清单）：完整 message 折行显示 -->
-          <div v-else-if="log.message" class="log-detail-message">{{ log.message }}</div>
+          <!-- 完整 message 折行显示（列表行内为单行省略） -->
+          <div v-if="log.message" class="log-detail-message">{{ log.message }}</div>
         </div>
       </div>
     </div>
@@ -102,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from "vue"
+import { computed, reactive, watch } from "vue"
 import { showMessage } from "siyuan"
 import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
 import { copyToClipboard } from "@/utils/domUtils"
@@ -131,13 +111,22 @@ function toggleExpand(id: string): void {
   }
 }
 
-/** 条目是否有可展开的详情（结构化清单或任意 message，旧日志兼容） */
-function hasDetail(log: BackupLog): boolean {
-  return Boolean(log.detail || log.message)
+/** 条目是否有可展开的详情（有 message 即可展开查看完整内容） */
+function isExpandable(log: BackupLog): boolean {
+  return Boolean(log.message)
 }
 
-/** 可展开日志 id 集合（一次遍历产出，避免模板内每条日志重复调用 hasDetail） */
-const expandableIds = computed(() => new Set(props.logs.filter(hasDetail).map((log) => log.id)))
+/** 可展开日志 id 集合（一次遍历产出，避免模板内每条日志重复调用 isExpandable） */
+const expandableIds = computed(() => new Set(props.logs.filter(isExpandable).map((log) => log.id)))
+
+// 日志被截断/清空时剔除已不存在的 id，避免展开集合随会话无界增长（长期运行的内存泄漏）
+watch(() => props.logs, (logs) => {
+  if (expandedIds.size === 0) { return }
+  const alive = new Set(logs.map((log) => log.id))
+  for (const id of expandedIds) {
+    if (!alive.has(id)) { expandedIds.delete(id) }
+  }
+})
 
 function confirmClear(): void {
   // 清空确认："确定要清空全部日志吗？"
@@ -152,8 +141,6 @@ const TYPE_LABEL_KEYS: Record<BackupLog["type"], string> = {
   s3Upload: "logTypeS3Upload",
   s3Download: "logTypeS3Download",
   s3Delete: "logTypeS3Delete",
-  s3Incremental: "logTypeS3Incremental",
-  s3IncrementalRestore: "logTypeS3IncrementalRestore",
   autoBackup: "logTypeAutoBackup",
 }
 
@@ -161,51 +148,18 @@ function typeLabel(type: BackupLog["type"]): string {
   return props.i18n[TYPE_LABEL_KEYS[type]]
 }
 
-/** 操作类型 → 共享 Tag 配色（7 种类型全覆盖，避免出现无配色的裸徽章） */
+/** 操作类型 → 共享 Tag 配色（5 种类型全覆盖，避免出现无配色的裸徽章） */
 const TYPE_VARIANTS = {
   localZip: "primary",
   s3Upload: "info",
   s3Download: "info",
   s3Delete: "danger",
-  s3Incremental: "warning",
-  s3IncrementalRestore: "warning",
   autoBackup: "default",
 } as const
 
-/** 详情区分组视图模型 */
-interface DetailGroup {
-  key: "uploaded" | "deleted" | "failed"
-  label: string
-  files: string[]
-  omitted: number
-}
-
-/** 将 log.detail 转为有序分组列表（空组不产出） */
-function detailGroups(log: BackupLog): DetailGroup[] {
-  const d = log.detail
-  if (!d) { return [] }
-  const groups: DetailGroup[] = []
-  if (d.uploaded?.length) {
-    groups.push({ key: "uploaded", label: props.i18n.logUploadedFiles, files: d.uploaded, omitted: d.omitted?.uploaded ?? 0 })
-  }
-  if (d.deleted?.length) {
-    groups.push({ key: "deleted", label: props.i18n.logDeletedFiles, files: d.deleted, omitted: d.omitted?.deleted ?? 0 })
-  }
-  if (d.failed?.length) {
-    groups.push({ key: "failed", label: props.i18n.logFailedFiles, files: d.failed, omitted: d.omitted?.failed ?? 0 })
-  }
-  return groups
-}
-
-/** 复制详情：摘要 + 各分组清单的纯文本拼接 */
-async function copyDetail(log: BackupLog): Promise<void> {
-  const parts: string[] = []
-  if (log.message) { parts.push(log.message) }
-  for (const group of detailGroups(log)) {
-    const omittedSuffix = group.omitted > 0 ? `\n+${group.omitted}` : ""
-    parts.push(`${group.label}:\n${group.files.join("\n")}${omittedSuffix}`)
-  }
-  const ok = await copyToClipboard(parts.join("\n"))
+/** 复制日志详情（完整 message） */
+async function copyMessage(log: BackupLog): Promise<void> {
+  const ok = await copyToClipboard(log.message ?? "")
   if (ok) {
     // 复制成功提示："已复制"
     showMessage(props.i18n.logCopied, 2000, "info")

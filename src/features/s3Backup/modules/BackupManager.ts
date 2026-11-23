@@ -7,7 +7,7 @@
  * 扫描实现（scanBackupDir/scanDirectory/SKIP_DIRS）拆分至 backupScanner.ts，此处仅委托调用。
  */
 import type {
-  IncrementalFileEntry,
+  DataFileEntry,
   LocalBackupInfo,
 } from "../types"
 import JSZip from "jszip"
@@ -37,7 +37,7 @@ import {
 // ========== 类型定义 ==========
 
 export interface BackupProgress {
-  phase: "scanning" | "packing" | "compressing" | "saving" | "uploading" | "downloading"
+  phase: "scanning" | "packing" | "compressing" | "saving" | "uploading"
   currentFile: string
   filesProcessed: number
   totalFiles: number
@@ -72,8 +72,8 @@ export interface BackupOptions {
   onProgress?: (progress: BackupProgress) => void
 }
 
-/** 上传候选文件（增量扫描条目的路径投影，避免与 IncrementalFileEntry 字段双写） */
-export type WorkspaceFile = Pick<IncrementalFileEntry, "fullPath" | "relativePath">
+/** 上传候选文件（扫描条目的路径投影，避免字段双写） */
+export type WorkspaceFile = Pick<DataFileEntry, "fullPath" | "relativePath">
 
 // ========== 工具函数 ==========
 
@@ -139,7 +139,7 @@ export class BackupManager {
     this.workspaceRoot = workspaceRoot
   }
 
-  // ========== 文件扫描（S3 上传 / 增量） ==========
+  // ========== 文件扫描（S3 全量上传） ==========
 
   /**
    * 收集 data-backup/ 目录中的备份归档列表（供 S3 上传使用）
@@ -162,38 +162,6 @@ export class BackupManager {
       fullPath: a.path,
       relativePath: a.name,
     }))
-
-    onProgress?.({
-      phase: "scanning",
-      currentFile: "",
-      filesProcessed: files.length,
-      totalFiles: files.length,
-      percent: 100,
-    })
-
-    return files
-  }
-
-  /**
-   * 扫描 {workspaceRoot}/data 目录中的原始文件（供 S3 增量备份使用）
-   * 返回含 mtime/size 的完整条目，供 manifest 对比
-   */
-  async scanDataFiles(
-    onProgress?: (progress: BackupProgress) => void,
-  ): Promise<IncrementalFileEntry[]> {
-    await this.validatePath(this.dataPath)
-
-    const files: IncrementalFileEntry[] = []
-
-    onProgress?.({
-      phase: "scanning",
-      currentFile: "",
-      filesProcessed: 0,
-      totalFiles: 0,
-      percent: 0,
-    })
-
-    await scanDirectoryImpl(this.scannerDeps(), this.dataPath, "", new Set(SKIP_DIRS), files)
 
     onProgress?.({
       phase: "scanning",
@@ -234,8 +202,13 @@ export class BackupManager {
       percent: 0,
     })
 
-    const allFiles: IncrementalFileEntry[] = []
-    await scanDirectoryImpl(this.scannerDeps(), backupSourcePath, "", skipDirs, allFiles)
+    const allFiles: DataFileEntry[] = []
+    // 单文件 stat 失败不中止整次备份：登记为跳过文件，最终随 BackupResult 上报
+    const skippedFiles: string[] = []
+    await scanDirectoryImpl(this.scannerDeps(), backupSourcePath, "", skipDirs, allFiles, (relativePath, err) => {
+      skippedFiles.push(relativePath)
+      console.warn(`无法读取文件信息，已跳过: ${relativePath}`, getErrorMessage(err))
+    })
 
     const totalFiles = allFiles.length
     // 空数据目录多为路径配置错误，拒绝产出空 ZIP 占用备份保留槽位
@@ -244,7 +217,6 @@ export class BackupManager {
     }
 
     // 阶段2：登记文件（流式输入：仅探测可访问性并挂载惰性读取流，内容在压缩阶段逐个消费）
-    const skippedFiles: string[] = []
     // 登记本批次全部惰性读取流：压缩中断时统一销毁，避免底层 fd 泄漏
     const lazyStreams: { destroy: (err?: Error) => void }[] = []
     for (let i = 0; i < allFiles.length; i++) {
@@ -257,8 +229,7 @@ export class BackupManager {
         percent: Math.round(((i + 1) / totalFiles) * 70),
       })
       try {
-        // 预探测可访问性：无法访问的文件跳过并记录（压缩阶段的残余流错误会使整次备份失败，
-        // 对备份工具而言“响亮失败”优于静默丢数据）
+        // 预探测可访问性：扫描与打包之间文件可能被删除/占用，此处兜底登记为跳过
         await this.fs.access(file.fullPath)
         const lazy = createLazyReadStream(this.fsRaw, file.fullPath)
         lazyStreams.push(lazy)
@@ -380,7 +351,8 @@ export class BackupManager {
       fileName,
       filePath: zipFilePath,
       size: stats.size,
-      totalFiles,
+      // 实际入包文件数（排除了无法读取而跳过的文件），与日志/提示文案保持一致
+      totalFiles: totalFiles - backupInfo.skippedFiles.length,
       skippedCount: backupInfo.skippedFiles.length,
     }
   }

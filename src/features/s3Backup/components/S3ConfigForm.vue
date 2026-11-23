@@ -311,7 +311,8 @@ watch(
   () => props.config,
   (newConfig) => {
     if (newConfig) {
-      Object.assign(localConfig, newConfig)
+      // allowSelfSigned 旧配置可能缺字段，语义为「开启」，显式兜底避免表单显示为关闭后被静默写回
+      Object.assign(localConfig, newConfig, { allowSelfSigned: newConfig.allowSelfSigned ?? true })
     }
   },
   { immediate: true },

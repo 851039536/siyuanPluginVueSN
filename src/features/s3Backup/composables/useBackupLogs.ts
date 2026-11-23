@@ -12,12 +12,14 @@ import { getHostname } from "../utils"
 
 export function useBackupLogs(deps: { persist: PersistFn }) {
   const backupLogs = ref<BackupLog[]>([])
+  /** 同一毫秒内可能连续写入多条日志，Date.now() 单独做 id 会重复（v-for key 冲突、展开态错位） */
+  let logSeq = 0
 
   /** 追加一条日志（自动补 id/时间/主机名）并异步落盘，超出上限截断；落盘失败仅告警不产生 unhandled rejection */
   function addLog(entry: Omit<BackupLog, "id" | "time" | "hostname">): void {
     const log: BackupLog = {
       ...entry,
-      id: Date.now().toString(),
+      id: `${Date.now()}-${logSeq++}`,
       time: new Date().toISOString(),
       hostname: getHostname(),
     }

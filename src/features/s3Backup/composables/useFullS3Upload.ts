@@ -152,7 +152,9 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
           withRetry(
             // 字节级进度：单文件内发送比例折算到总进度（否则单大 ZIP 上传全程 0% 直跳 100%）
             () => deps.uploadFileSmart(file.fullPath, s3Key, (sent, total) => {
-              const percent = Math.round(((processedCount + sent / total) / files.length) * 100)
+              // 空文件 total 为 0（避免 0/0 得到 NaN）；并发 worker 共享 processedCount 时上限截断到 100
+              const fileRatio = total > 0 ? sent / total : 1
+              const percent = Math.min(100, Math.round(((processedCount + fileRatio) / files.length) * 100))
               if (percent !== lastReportedPercent) { // 整数百分比变化才更新，避免高频响应式触发
                 lastReportedPercent = percent
                 backupProgress.value = { ...backupProgress.value, percent }
@@ -225,8 +227,8 @@ export function useFullS3Upload(deps: FullS3UploadDeps) {
     addLog({
       type: "s3Upload",
       action: i18n.s3Upload,
-      // 日志文件名："N 个文件"（多文件时）
-      fileName: uploadedCount > 1 ? i18n.filesCount.replace("{count}", String(uploadedCount)) : uploadedNames[0],
+      // 日志文件名："N 个文件"（多文件时）；全部跳过时无文件名
+      fileName: uploadedCount > 1 ? i18n.filesCount.replace("{count}", String(uploadedCount)) : (uploadedNames[0] ?? ""),
       success: failedCount === 0,
       message: msg,
     })

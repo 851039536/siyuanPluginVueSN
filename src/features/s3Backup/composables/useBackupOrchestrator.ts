@@ -2,10 +2,9 @@
  * S3 备份编排 composable
  *
  * 聚合 useS3Backup/useWorkspaceSettings/useLocalBackupList/useFullS3Upload/
- * useIncrementalPanel/useCloudBackupActions 六个领域 composable，
- * 统一持有备份管理器初始化、四入口互斥守卫（进入即置位、finally 复位）、
+ * useCloudBackupActions 五个领域 composable，
+ * 统一持有备份管理器初始化、备份入口互斥守卫（进入即置位、finally 复位）、
  * 自动备份触发与状态栏进度上报，以 reactive 聚合对象供面板与各 Tab 绑定。
- * 增量备份/还原的触发入口与实验 Tab 专属状态（清单信息/还原目录）由 useIncrementalPanel 提供。
  */
 import type { BackupResult } from "../modules/BackupManager"
 import type { BackupMode } from "../types"
@@ -33,7 +32,6 @@ import { useAutoBackupTrigger } from "./useAutoBackupTrigger"
 import { useBackupRecords } from "./useBackupRecords"
 import { useCloudBackupActions } from "./useCloudBackupActions"
 import { useFullS3Upload } from "./useFullS3Upload"
-import { useIncrementalPanel } from "./useIncrementalPanel"
 import { useLocalBackupList } from "./useLocalBackupList"
 import { useLocalZipBackup } from "./useLocalZipBackup"
 import { useS3Backup } from "./useS3Backup"
@@ -74,9 +72,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     phaseLabel,
     testConnection,
     applyConfig,
-    uploadFileContent,
     uploadFileSmart,
-    getObjectText,
     deleteObject,
     listBackups,
     listExistingKeys,
@@ -102,7 +98,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   const isZipBackingUp = ref(false)
 
-  // 状态栏后台任务：备份/还原进度显示在底部状态栏（自动备份时弹窗隐藏，状态栏是唯一可见反馈）
+  // 状态栏后台任务：备份进度显示在底部状态栏（自动备份时弹窗隐藏，状态栏是唯一可见反馈）
   const statusTask = useStatusBarTask("s3Backup", "mdi:cloud-upload")
 
   // ========== Manager 实例 ==========
@@ -165,52 +161,16 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     )
   }
 
-  // ========== 增量面板（运行标志+触发入口+清单信息/还原目录，实验 Tab 专属状态） ==========
-
-  const {
-    isIncrementalRunning,
-    isIncrementalRestoring,
-    lastRestoreDir,
-    manifestInfo,
-    isLoadingManifest,
-    manifestLoadFailed,
-    runIncrementalBackup,
-    triggerIncrementalOnly,
-    triggerIncrementalRestore,
-    refreshIncrementalManifest,
-    openRestoreFolder,
-  } = useIncrementalPanel({
-    i18n,
-    addLog: (entry) => addLog(entry),
-    getBackupManager: () => backupManager,
-    uploadFileSmart,
-    uploadFileContent,
-    getObjectText,
-    deleteObject,
-    downloadObject: downloadBackup,
-    isConfigured,
-    s3Config,
-    s3SubPrefix,
-    workspaceRoot,
-    localBackupDir,
-    backupProgress,
-    statusTask,
-    // 互斥守卫惰性求值：isAnyTaskRunning 依赖本块解构的运行标志，构造期不可直接读值
-    isAnyTaskRunning: () => isAnyTaskRunning.value,
-    ensureWorkspaceReady,
-  })
-
   // ========== 计算属性 ==========
 
   /** 是否有任一备份模式被选中 */
   const canBackup = computed(() => {
-    return backupModeLocal.localZip
-      || ((backupModeLocal.s3Upload || backupModeLocal.s3Incremental) && isConfigured.value)
+    return backupModeLocal.localZip || (backupModeLocal.s3Upload && isConfigured.value)
   })
 
-  /** 是否有任一备份/还原任务正在运行（互斥守卫，防止流程并发写共享进度与 manifest） */
+  /** 是否有任一备份/下载任务正在运行（互斥守卫，防止流程并发写共享进度与状态栏） */
   const isAnyTaskRunning = computed(() => {
-    return isBackingUp.value || isZipBackingUp.value || isIncrementalRunning.value || isIncrementalRestoring.value
+    return isBackingUp.value || isZipBackingUp.value
   })
 
   // ========== 备份管理器初始化 ==========
@@ -237,7 +197,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   function onBackupModeChanged(mode: BackupMode): void {
     backupModeLocal.localZip = mode.localZip
     backupModeLocal.s3Upload = mode.s3Upload
-    backupModeLocal.s3Incremental = mode.s3Incremental
   }
 
   /** 确保工作区路径就绪：未设置时提示并弹出目录选择，返回是否就绪（含用户取消） */
@@ -347,13 +306,13 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     i18n,
   })
 
-  // 任务运行中实时同步进度到状态栏（还原与备份区分标签）；结束时的 complete/fail 由各入口函数显式调用
-  // 注：watch 会在 setup 阶段立即求值源 computed，必须放在 isIncrementalRunning/isIncrementalRestoring 声明之后，否则触发 TDZ 错误
+  // 任务运行中实时同步进度到状态栏；结束时的 complete/fail 由各入口函数显式调用
+  // 注：watch 会在 setup 阶段立即求值源 computed，必须放在状态声明之后，否则触发 TDZ 错误
   watch([isAnyTaskRunning, backupProgress], () => {
     if (!isAnyTaskRunning.value) { return }
     statusTask.progress({
-      // 状态栏主文本："还原中" / "备份中"
-      label: isIncrementalRestoring.value ? i18n.statusRestoring : i18n.statusBackingUp,
+      // 状态栏主文本："备份中"
+      label: i18n.statusBackingUp,
       percent: backupProgress.value.percent,
       phase: phaseLabel.value,
     })
@@ -374,9 +333,9 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
       console.warn("[S3备份] backupManager 未初始化，无法执行备份")
       return false
     }
-    // 互斥守卫：任一备份/还原任务运行中都不启动新的全量流程（防止并发写共享进度与 manifest）
+    // 互斥守卫：任一备份/下载任务运行中都不启动新的全量流程（防止并发写共享进度）
     if (isAnyTaskRunning.value) { return false }
-    // 三个备份模式全关（或 S3 模式未配置）时直接跳过，避免空跑却更新备份时间并显示"备份完成"
+    // 备份模式全关（或 S3 模式未配置）时直接跳过，避免空跑却更新备份时间并显示"备份完成"
     if (!canBackup.value) { return false }
 
     // 进入即置位：目录对话框挂起期间也纳入互斥范围，防止自动备份 tick 穿透空窗并发执行
@@ -405,10 +364,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
       if (backupModeLocal.s3Upload) {
         // 同时勾选本地+S3 时，只上传本次生成的 ZIP，避免重复上传历史备份
         await performS3Backup(localResult)
-      }
-      if (backupModeLocal.s3Incremental) {
-        // 增量上传 data/ 中新增/变更文件（逻辑全部在 useIncrementalBackup）
-        await runIncrementalBackup()
       }
 
       // 更新备份时间并持久化（含定时器防重时间戳同步）
@@ -439,14 +394,8 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     backupFrequency,
     backupTime,
     addLog: (entry) => addLog(entry),
-    runAutoBackup: async () => {
-      // performManualBackup 内部吞掉所有错误并返回是否成功；失败/跳过时回滚标记，允许下一 tick 重试
-      const ok = await performManualBackup(true)
-      if (!ok) {
-        getS3BackupInstance()?.resetExecutionMarks()
-      }
-      return ok
-    },
+    // 失败/跳过时的防重标记回滚由 useAutoBackupTrigger 统一处理（此处不再重复回滚）
+    runAutoBackup: () => performManualBackup(true),
   })
 
   // ========== 初始化序列 ==========
@@ -491,13 +440,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     canBackup,
     isAnyTaskRunning,
     isZipBackingUp,
-    isIncrementalRunning,
-    isIncrementalRestoring,
-    // 增量实验 Tab 专属状态（来自 useIncrementalPanel）
-    lastRestoreDir,
-    manifestInfo,
-    isLoadingManifest,
-    manifestLoadFailed,
     localBackupList,
     isLoadingLocal,
     uploadingItems,
@@ -526,11 +468,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     lastDownloadResult,
     performManualBackup,
     triggerZipBackupOnly,
-    triggerIncrementalOnly,
-    triggerIncrementalRestore,
-    // 增量实验 Tab 专属方法（来自 useIncrementalPanel）
-    refreshIncrementalManifest,
-    openRestoreFolder,
     handleAutoBackupTrigger,
     init,
     statusTask,

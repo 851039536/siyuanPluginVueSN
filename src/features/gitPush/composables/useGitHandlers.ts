@@ -4,8 +4,10 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import type { GitProject, ProjectQueryKind } from "../types"
 import type { DiscardTarget } from "../types/storage"
-import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag } from "../utils"
+import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag, shouldUseDeepCommitMessage, summarizeCommitSize } from "../utils"
+import type { NumstatEntry } from "../utils"
 import { describeAiFallback } from "../utils/i18nFormat"
+import { checkCommitRule } from "../commitRuleChecker"
 import { getErrorMessage } from "@/utils/stringUtils"
 
 export function useGitHandlers(deps: {
@@ -20,6 +22,10 @@ export function useGitHandlers(deps: {
   discardFile: (id: string, file: string, staged: boolean, status: string) => Promise<void>
   /** 批量丢弃（全部 / 选中）：一次写锁 + 分组命令 */
   discardFiles: (id: string, files: DiscardTarget[]) => Promise<void>
+  /** 全部暂存 */
+  stageAllItems: (id: string) => Promise<void>
+  /** 暂存区变更规模（numstat）：一键提交据此选择简单/深度生成 */
+  getStagedOverview: (id: string) => Promise<Record<string, NumstatEntry> | null>
   doCommit: (id: string, message: string) => Promise<string>
   generateCommitMsg: (id: string) => Promise<{ message: string, source: string, fallback?: string, detail?: string }>
   /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
@@ -41,7 +47,7 @@ export function useGitHandlers(deps: {
 }) {
   const {
     projects, showConfirm, safeGitOp, tf,
-    discardFile, discardFiles, doCommit, generateCommitMsg, deepGenerateCommitMsg,
+    discardFile, discardFiles, stageAllItems, getStagedOverview, doCommit, generateCommitMsg, deepGenerateCommitMsg,
     doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
     createTagOp, deleteTagOp, pushTagOp,
     abortMergeOp, resolveConflictOp,
@@ -303,6 +309,54 @@ export function useGitHandlers(deps: {
     await runGenerateMsg(id, "deepGenerating", deepGenerateCommitMsg)
   }
 
+  /**
+   * 一键暂存并提交：全部暂存 → 自动生成提交信息 → 规则校验 → 提交。
+   * 生成结果先写回草稿：校验不通过时只填框不提交，避免绕过硬阻止。
+   */
+  async function handleStageGenerateCommit(id: string) {
+    commitOutputs.value[id] = ""
+    // 复用生成中标记：按钮转圈并阻止重复点击
+    generatingMsgs.value = {
+      ...generatingMsgs.value,
+      [id]: { generating: true, deepGenerating: false, text: "" },
+    }
+    try {
+      // 先暂存全部变更（无变更时为空操作），再按暂存区规模选择生成方式
+      await stageAllItems(id)
+      // numstat 取规模：多文件 / 大改动走深度生成（标题 + 要点），小改动保持单行、少耗 token
+      const overview = await getStagedOverview(id)
+      const useDeep = shouldUseDeepCommitMessage(summarizeCommitSize(overview ?? {}))
+      const result = await (useDeep ? deepGenerateCommitMsg : generateCommitMsg)(id)
+      generatingMsgs.value = {
+        ...generatingMsgs.value,
+        [id]: { generating: false, deepGenerating: false, text: result.message },
+      }
+      if (!result.message.trim() || result.fallback === "no-diff") {
+        commitOutputs.value[id] = tf("quickCommitNoChanges")
+        return
+      }
+      if (checkCommitRule(result.message)) {
+        commitOutputs.value[id] = tf("quickCommitInvalid")
+        return
+      }
+      const commitResult = await doCommit(id, result.message)
+      let output = commitResult || tf("commitSuccess")
+      if (result.source === "heuristic") {
+        // 一键提交也要说明消息由启发式降级产出
+        output = `${describeAiFallback(result, tf)}\n${output}`
+      }
+      commitOutputs.value[id] = output
+      pruneRecordCache(commitOutputs.value)
+      bumpCardRefresh(id, "log")
+    } catch (e: unknown) {
+      reportFailure(id, tf("quickCommitFailed", getErrorMessage(e)))
+      generatingMsgs.value = {
+        ...generatingMsgs.value,
+        [id]: { generating: false, deepGenerating: false, text: "" },
+      }
+    }
+  }
+
   return {
     commitOutputs,
     generatingMsgs,
@@ -326,5 +380,6 @@ export function useGitHandlers(deps: {
     handleCommit,
     handleGenerateMsg,
     handleDeepGenerateMsg,
+    handleStageGenerateCommit,
   }
 }

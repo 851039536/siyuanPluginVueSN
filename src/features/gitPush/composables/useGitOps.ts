@@ -7,6 +7,8 @@ import type {
   LoadStatusOptions,
   ProjectQueryKind,
 } from "../types"
+import type { CommitMsgResult } from "../managers/CommitMsgGenerator"
+import type { NumstatEntry } from "../utils"
 import { onUnmounted, ref } from "vue"
 import {
   findProject,
@@ -123,6 +125,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     await withProjectPath(id, (path) => manager.stageAll(path))
   }
 
+  /** 暂存区变更规模（numstat）：一键提交据此选择简单/深度生成 */
+  async function getStagedOverview(id: string): Promise<Record<string, NumstatEntry> | null> {
+    const project = findProject(projects, id)
+    if (!project) return null
+    return manager.getChangesetOverview(resolveValidPath(project), true)
+  }
+
   async function unstageItem(id: string, file: string) {
     await withProjectPath(id, (path) => manager.unstageFile(path, file))
   }
@@ -165,16 +174,16 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     }
   }
 
-  async function generateCommitMsg(id: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async function generateCommitMsg(id: string): Promise<CommitMsgResult> {
     const project = findProject(projects, id)
-    if (!project) { return { message: "chore: update files", source: "heuristic" } }
+    if (!project) { return { message: "chore: update files", source: "heuristic", fallback: "no-diff" } }
     return manager.generateCommitMessage(resolveValidPath(project))
   }
 
   /** 深度生成提交信息（读取暂存区完整 diff，输出标题行 + 改动要点） */
-  async function deepGenerateCommitMsg(id: string): Promise<{ message: string, source: "ai" | "heuristic" }> {
+  async function deepGenerateCommitMsg(id: string): Promise<CommitMsgResult> {
     const project = findProject(projects, id)
-    if (!project) { return { message: "chore: update files", source: "heuristic" } }
+    if (!project) { return { message: "chore: update files", source: "heuristic", fallback: "no-diff" } }
     return manager.generateCommitMessageDeep(resolveValidPath(project))
   }
 
@@ -277,6 +286,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     // 工作区
     stageItem,
     stageAllItems,
+    getStagedOverview,
     unstageItem,
     unstageAllItems,
     discardFile,

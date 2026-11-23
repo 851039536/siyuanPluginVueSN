@@ -61,6 +61,20 @@
             />
           </template>
           <template v-else>
+            <!-- 一键暂存并提交：全部暂存 → 自动生成提交信息 → 规则校验通过后直接提交 -->
+            <Button
+              v-if="!hasConflicts"
+              variant="primary"
+              size="xsmall"
+              dense
+              icon="sourceCommit"
+              :loading="committing || generating"
+              :disabled="gitOpLoading || committing || generating || deepGenerating"
+              :title="i18n.quickCommitTip"
+              @click.stop="$emit('stageGenerateCommit')"
+            >
+              {{ i18n.quickCommit }}
+            </Button>
             <!-- 无可暂存内容时隐藏按钮，避免 disabled 常驻占位 -->
             <Button
               v-if="hasUnstaged"
@@ -430,6 +444,8 @@ const props = defineProps<{
   gitOpLoading: boolean
   /** 工作区刷新加载中 */
   refreshingWorkingTree?: boolean
+  /** 存在未解决冲突：一键暂存提交会绕过冲突处理，隐藏入口 */
+  hasConflicts?: boolean
   /** 提交模板（卡内共享数据下发；空数组 = 未配置模板） */
   commitTemplates: CommitTemplate[]
   /**
@@ -452,6 +468,8 @@ const emit = defineEmits<{
   unstageFile: [file: string]
   stageAll: []
   unstageAll: []
+  /** 一键暂存并提交（全部暂存 → 自动生成提交信息 → 校验通过后提交） */
+  stageGenerateCommit: []
   commit: [message: string]
   generateMsg: []
   /** 深度生成提交信息（暂存区完整 diff → 标题行 + 改动要点） */

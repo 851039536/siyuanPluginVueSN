@@ -99,6 +99,13 @@ export type { NumstatEntry, WorktreeStatusParse, WorktreeStatusV2Parse } from ".
 
 export { DIFF_AUTO_MAX_CHANGED_LINES, shouldAutoLoadDiff } from "./diffPolicy"
 export { normalizeDiffViewPrefs } from "./diffPrefs"
+export {
+  DEEP_COMMIT_FILE_THRESHOLD,
+  DEEP_COMMIT_LINE_THRESHOLD,
+  shouldUseDeepCommitMessage,
+  summarizeCommitSize,
+} from "./commitMessagePolicy"
+export type { CommitSizeSummary } from "./commitMessagePolicy"
 
 export {
   buildDayCountMap,

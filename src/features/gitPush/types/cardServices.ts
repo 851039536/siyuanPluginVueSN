@@ -99,6 +99,8 @@ export interface CardOps {
   handleGenerateMsg: (id: string) => void
   /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
   handleDeepGenerateMsg: (id: string) => void
+  /** 一键暂存并提交（全部暂存 → 自动生成提交信息 → 校验通过后提交） */
+  handleStageGenerateCommit: (id: string) => Promise<void>
   clearOutput: (id: string) => void
   /** 关闭推送/拉取结果面板（清除该操作的输出记录；运行中不生效） */
   clearRemoteOutput: (id: string, action: "push" | "pull") => void
@@ -116,7 +118,7 @@ export interface CardOps {
   handleResolveConflict: (id: string, file: string, strategy: "theirs" | "ours") => void
   handleAbortMerge: (id: string) => void
   confirmPullSingle: (id: string, key: PlatformKey) => void
-  /** 判断拉取前置确认（fetch 后判断本地是否只有远端旧副本，安全时备份并强制对齐） */
+  /** 判断拉取前置确认（fetch 后判断本地是否只有远端旧副本，安全时强制对齐） */
   confirmSmartPull: (id: string, key: PlatformKey) => void
   pushSingle: (id: string, key: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string, canceled?: boolean, durationMs?: number }>
   pushToAll: (id: string) => Promise<Record<string, any>>

@@ -89,7 +89,7 @@
           />
           <template v-else>{{ shortHash(entry.hash) }}</template>
         </span>
-        <!-- 该提交已命中的 Tag 徽标（tag→hash 映射；徽标内附已推送远程名，未推送时提示） -->
+        <!-- 该提交已命中的 Tag 徽标（tag→hash 映射；远程推送状态见徽标悬停提示） -->
         <span
           v-if="entryTags(entry.hash).length"
           class="bcl-tags"
@@ -103,18 +103,7 @@
             size="xsmall"
             icon="tagOutline"
             :title="tagPushTitle(tagName)"
-          >
-            {{ tagName }}
-            <!-- 已推送的远程名（远程数据缺失时不显示，避免误标） -->
-            <span
-              v-if="tagRemotes(tagName).length"
-              class="bcl-tag-chip-remotes"
-            >{{ tagRemotes(tagName).join(" ") }}</span>
-            <span
-              v-else-if="hasRemoteData"
-              class="bcl-tag-chip-unpushed"
-            >{{ i18n.tagNotPushed }}</span>
-          </Tag>
+          >{{ tagName }}</Tag>
           <Tag
             v-if="entryTags(entry.hash).length > 2"
             class="bcl-tag-more"
@@ -131,7 +120,7 @@
           @keydown.enter.stop.prevent="$emit('fixCommit', entry)"
           @keydown.space.stop.prevent="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
-        <!-- 打 Tag 按钮（常显） -->
+        <!-- 打 Tag 按钮（行悬停/聚焦时显示） -->
         <Button
           class="bcl-tag-btn"
           variant="ghost"
@@ -141,7 +130,7 @@
           :title="i18n.createTag"
           @click.stop="$emit('addTag', entry)"
         />
-        <!-- 重置到此提交（常显；点击弹出模式选择弹窗） -->
+        <!-- 重置到此提交（行悬停/聚焦时显示；点击弹出模式选择弹窗） -->
         <Button
           class="bcl-reset-btn"
           variant="ghost"
@@ -151,7 +140,7 @@
           :title="i18n.resetOpen"
           @click.stop="$emit('resetTo', entry)"
         />
-        <!-- 删除提交按钮（常显；点击弹出删除确认弹窗） -->
+        <!-- 删除提交按钮（行悬停/聚焦时显示；点击弹出删除确认弹窗） -->
         <Button
           class="bcl-drop-btn"
           variant="ghost"
@@ -167,8 +156,8 @@
             class="bcl-date"
             :title="entry.date"
           >
-            <span class="bcl-date-relative">{{ relativeTime(entry.date, i18n) }}</span>
-            <span class="bcl-date-absolute">{{ formatDateTime(entry.date) }}</span>
+            <span>{{ relativeTime(entry.date, i18n) }}</span>
+            <span class="bcl-date-day">{{ formatDate(entry.date) }}</span>
           </span>
         </span>
 
@@ -226,7 +215,7 @@ import { useCopyFeedback } from "../../composables/useCopyFeedback"
 import { usePagedList } from "../../composables/usePagedList"
 import {
   DEFAULT_LOG_LIMIT,
-  formatDateTime,
+  formatDate,
   relativeTime,
 } from "../../utils"
 
@@ -298,9 +287,6 @@ const shortTagMap = computed(() => props.tagCommitMap ?? new Map<string, string[
 function entryTags(hash: string): string[] {
   return shortTagMap.value.get(hash) ?? []
 }
-
-/** 是否已获取到任一远程的 Tag 数据（全失败/无远程时 UI 不显示推送状态，避免误标） */
-const hasRemoteData = computed(() => !!props.remoteTags && props.remoteTags.size > 0)
 
 /** Tag 名 → 已推送的远程名数组 */
 const tagRemoteMap = computed(() => {

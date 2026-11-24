@@ -29,6 +29,15 @@ export function formatDateTime(iso: string): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+/** 将 ISO 绝对时间格式化为 "YYYY-MM-DD"（不含时分秒；空值返回空串，无效日期返回原字符串） */
+export function formatDate(iso: string): string {
+  if (!iso) return ""
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 /** 显示设置年份选项：数据年份 ∪ 今年 ∪ 已保存 range 年份，降序（分析视图 popover 与设置汇总弹窗共用） */
 export function buildYearOptions(entries: { date: string }[], range: AnalysisRange): number[] {
   const years = new Set<number>([new Date().getFullYear()])

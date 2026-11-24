@@ -155,6 +155,7 @@ export {
   analysisStatusText,
   buildYearOptions,
   DEFAULT_LOG_LIMIT,
+  formatDate,
   formatDateTime,
   opSummary,
   relativeTime,

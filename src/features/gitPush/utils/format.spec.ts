@@ -2,7 +2,7 @@
 //
 // 覆盖重点：opSummary（推送/拉取输出条目与状态提示共用的摘要单一真源）。
 import { describe, expect, it } from "vitest"
-import { formatDateTime, opSummary } from "./format"
+import { formatDate, formatDateTime, opSummary } from "./format"
 
 const i18n: Record<string, any> = {
   opPush: "推送",
@@ -46,5 +46,19 @@ describe("formatDateTime", () => {
 
   it("空值返回空串", () => {
     expect(formatDateTime("")).toBe("")
+  })
+})
+
+describe("formatDate", () => {
+  it("有效 ISO 只输出年月日（不含时分秒）", () => {
+    expect(formatDate("2026-08-12T14:35:09.000Z")).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it("无效日期降级返回原串", () => {
+    expect(formatDate("garbage")).toBe("garbage")
+  })
+
+  it("空值返回空串", () => {
+    expect(formatDate("")).toBe("")
   })
 })

@@ -25,6 +25,7 @@
       :open-workspace-files="openWorkspaceFiles"
       :collapsible="isAccordion"
       @toggle-collapse="toggle"
+      @open-reflog="showReflog = true"
     />
 
     <!-- 远程仓库状态（当前分支名统一由顶栏分支行展示，此处不再重复） -->
@@ -153,6 +154,7 @@
           @refresh-commit-log="() => reloadLog()"
           @fix-commit="openCommitFix"
           @add-tag="openTagCreate"
+          @reset-to="openReset"
           @drop-commit="openCommitDrop"
           @view-files="openCommitFiles"
         />
@@ -209,6 +211,25 @@
       @saved="handleDropSaved"
     />
 
+    <!-- 重置分支弹窗（LOG Tab 行内入口 / Reflog 浏览器恢复入口） -->
+    <ResetDialog
+      v-if="resetTarget"
+      :i18n="i18n"
+      :project-path="projectPath"
+      :target="resetTarget"
+      @close="resetTarget = null"
+      @saved="handleResetSaved"
+    />
+
+    <!-- Reflog 浏览器（顶栏入口；找回 reset / 变基后丢失的提交） -->
+    <ReflogDialog
+      v-if="showReflog"
+      :i18n="i18n"
+      :project-path="projectPath"
+      @close="showReflog = false"
+      @restore="onReflogRestore"
+    />
+
     <!-- 提交文件弹窗（LOG Tab 行内入口；列出该提交修改的文件清单） -->
     <CommitFilesDialog
       v-if="filesTarget"
@@ -246,6 +267,7 @@ import type {
   CommitTemplate,
   DiscardTarget,
   GitProject,
+  RefLogEntry,
 } from "../../types"
 import type { CardTabId } from "../../types/cardTab"
 import { ensureDiffViewPrefs } from "../../composables/useDiffViewPrefs"
@@ -258,6 +280,7 @@ import {
 } from "vue"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
+import { showUndoMessage } from "../../notify"
 import { getErrorMessage } from "@/utils/stringUtils"
 import { checkCommitRule } from "../../commitRuleChecker"
 import { useCardAccordion } from "../../composables/useCardAccordion"
@@ -268,11 +291,14 @@ import { useWorkspaceExplorer } from "../../composables/useWorkspaceExplorer"
 import {
   getProjectRemoteNames,
   platformLabel,
+  resolveValidPath,
 } from "../../utils"
 import { fmtTemplate } from "../../utils/i18nFormat"
 import CommitFilesDialog from "../common/CommitFilesDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
+import ReflogDialog from "../common/ReflogDialog.vue"
+import ResetDialog from "../common/ResetDialog.vue"
 import TagCommitDialog from "../common/TagCommitDialog.vue"
 import BranchCommitList from "./BranchCommitList.vue"
 import CardActionBar from "./CardActionBar.vue"
@@ -498,6 +524,55 @@ async function handleSaveCommitTemplates(list: CommitTemplate[]) {
   } catch (e: unknown) {
     showMessage(`${i18n.saveTemplatesFailed}: ${getErrorMessage(e)}`, 4000, "error")
   }
+}
+
+/** 当前项目有效路径（多设备路径实时解析；重置/Reflog 弹窗打开时取一次） */
+const projectPath = computed(() => resolveValidPath(props.project))
+
+/** 当前正在重置到的目标提交（null = 未打开重置弹窗） */
+const resetTarget = ref<{ hash: string, message: string } | null>(null)
+
+/** Reflog 浏览器开关 */
+const showReflog = ref(false)
+
+/** LOG Tab 点击重置：打开模式选择弹窗（不直接执行 git） */
+function openReset(entry: CommitLogEntry) {
+  resetTarget.value = { hash: entry.hash, message: entry.message }
+}
+
+/** Reflog 选择恢复：关闭浏览器，转由重置弹窗决定模式 */
+function onReflogRestore(entry: RefLogEntry) {
+  showReflog.value = false
+  resetTarget.value = { hash: entry.hash, message: entry.subject }
+}
+
+/**
+ * 历史被改写后的统一刷新：日志/分支/Stash 走脏标记（卡片按需重载），
+ * 工作区与推送状态立即重查（重置会直接改变文件内容与 ahead 计数）。
+ */
+function reloadAfterHistoryChange() {
+  void reloadLog()
+  reloadPushStatusAfterRewrite()
+  void services.scheduler.loadWorkingTree(props.project.id, { force: true }).catch(() => {})
+  services.scheduler.invalidate(props.project.id, "branches", "stash", "reflog", "graph", "branchCompare")
+}
+
+/**
+ * 重置成功：刷新卡片并挂 10 秒撤销入口（撤销走写日志，失败只提示）。
+ * key 与提交撤销共用 `undo-<项目>`：新操作覆盖旧入口，点击永远撤销最新一次记账操作。
+ */
+function handleResetSaved() {
+  reloadAfterHistoryChange()
+  showUndoMessage(i18n.resetUndoAvailable, () => {
+    void (async () => {
+      try {
+        await services.manager.undoLastOp(resolveValidPath(props.project))
+        reloadAfterHistoryChange()
+      } catch (e: unknown) {
+        showMessage(fmtTemplate(i18n.resetUndoFailed, getErrorMessage(e)), 5000, "error")
+      }
+    })()
+  }, `undo-${props.project.id}`, i18n.undoAction)
 }
 
 /** 当前正在删除的提交条目（null = 未打开删除弹窗） */

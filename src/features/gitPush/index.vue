@@ -263,6 +263,9 @@
         @view-project="handleViewProjectFromConsistency"
       />
     </Transition>
+
+    <!-- 带操作按钮的提示（撤销入口）；普通提示仍走思源 showMessage -->
+    <GitPushToaster />
   </div>
 </template>
 
@@ -308,6 +311,7 @@ import CommitAnalysisPanel from "./components/CommitAnalysis/index.vue"
 import CodeReportPanel from "./components/CodeReport/index.vue"
 import RepoCleanPanel from "./components/RepoCleanPanel/index.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
+import GitPushToaster from "./components/GitPushToaster.vue"
 import { useGitPush } from "./composables/useGitPush"
 import { useGitProbe } from "./composables/useGitProbe"
 import { useBatchProgress } from "./composables/useBatchProgress"
@@ -389,6 +393,7 @@ const {
   discardFile,
   discardFiles,
   doCommit,
+  undoLastOp,
   generateCommitMsg,
   deepGenerateCommitMsg,
   addProject,
@@ -1087,7 +1092,7 @@ const {
   handleStageGenerateCommit,
 } = useGitHandlers({
   projects, showConfirm, safeGitOp, tf,
-  discardFile, discardFiles, stageAllItems, getStagedOverview, doCommit, generateCommitMsg, deepGenerateCommitMsg,
+  discardFile, discardFiles, stageAllItems, getStagedOverview, doCommit, undoLastOp, generateCommitMsg, deepGenerateCommitMsg,
   doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
   createTagOp, deleteTagOp, pushTagOp,
   abortMergeOp, resolveConflictOp,

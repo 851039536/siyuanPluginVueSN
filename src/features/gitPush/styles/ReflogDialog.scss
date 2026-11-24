@@ -1,0 +1,89 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// Reflog 浏览器（组合选择器提升优先级，理由同 ResetDialog）
+.gp-dialog.gp-reflog-dialog {
+  width: 760px;
+  max-width: 94vw;
+}
+
+.gp-reflog-hint {
+  margin: 0 0 $s-2;
+  font-size: $t-2xs;
+  opacity: 0.7;
+}
+
+.gp-reflog-list {
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid var(--b3-border-color, $c-border);
+  border-radius: $r-sm;
+}
+
+.gp-reflog-row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-1 $s-2;
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
+  font-size: $t-xs;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--b3-theme-surface-lighter, $c-surface);
+  }
+}
+
+.gp-reflog-hash {
+  flex: none;
+  width: 64px;
+  font-family: $ff-mono;
+  opacity: 0.65;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.gp-reflog-subject {
+  flex: 1;
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+.gp-reflog-selector {
+  flex: none;
+  max-width: 230px;
+  font-size: $t-2xs;
+  opacity: 0.5;
+  @include text-ellipsis;
+}
+
+.gp-reflog-restore {
+  flex: none;
+}
+
+.gp-reflog-error {
+  display: flex;
+  align-items: flex-start;
+  gap: $s-1;
+  color: var(--b3-theme-error, $c-danger);
+  font-size: $t-2xs;
+  white-space: pre-wrap;
+
+  svg {
+    flex: none;
+    margin-top: 1px;
+  }
+}
+
+.gp-reflog-empty {
+  padding: $s-4;
+  text-align: center;
+  font-size: $t-xs;
+  opacity: 0.6;
+}

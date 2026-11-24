@@ -9,6 +9,8 @@ import type { AllPlatformResult, PushPreflightResult, RemoteOpResult } from "./m
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
 import type { FileDiffResult } from "./types/diff"
 import type { RefSyncSnapshot } from "./types/gitRefs"
+import type { RefLogEntry } from "./types/reflog"
+import type { ResetMode, UndoOutcome } from "./types/undo"
 import type { NumstatCommit } from "./reportMetrics"
 import type {
   BfgCleanPlan,
@@ -49,6 +51,7 @@ import {
 } from "vue"
 import { getApiConfigFromPlugin } from "@/utils/aiApi"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { getWorkspaceDir } from "@/api"
 import { createVueDockApp } from "@/utils/vueAppHelper"
 import { clearMarkdownScanCacheFor } from "./composables/useMarkdownFiles"
 import GitPushPanel from "./index.vue"
@@ -82,6 +85,10 @@ import { RemoteOps } from "./managers/RemoteOps"
 import { RepoCleanOps } from "./managers/RepoCleanOps"
 import { RepoOps } from "./managers/RepoOps"
 import { ReportOps } from "./managers/ReportOps"
+import { BackupOps } from "./managers/BackupOps"
+import { UndoOps } from "./managers/UndoOps"
+import { WriteJournal, journalLabel, parsePreWriteState } from "./managers/WriteJournal"
+import type { PreWriteState } from "./managers/WriteJournal"
 import { scriptSessions } from "./managers/ScriptSessionStore"
 import { SmartPullOps } from "./managers/SmartPullOps"
 import { WorktreeOps } from "./managers/WorktreeOps"
@@ -138,6 +145,10 @@ export class GitPushManager {
   private reportOps: ReportOps
   /** BFG 运行时层（Java 探测 + jar 下载 + 进程执行） */
   private bfgOps: BfgOps
+  /** 破坏性操作前的 bundle 备份（BFG / reset 共用） */
+  private backupOps: BackupOps
+  /** 撤销 / reset / reflog（F6） */
+  private undoOps: UndoOps
   /** 仓库清理编排（体检扫描 + BFG 六步工作流） */
   private repoCleanOps: RepoCleanOps
   /** 项目级写锁：git 写操作（本地写 + push/pull）按项目路径串行，防 index.lock 竞争 */
@@ -177,6 +188,11 @@ export class GitPushManager {
   private commitIndex: CommitIndex | null = null
   /** 索引初始化 Promise（并发调用共享同一次初始化，失败只告警一次） */
   private indexInit: Promise<CommitIndex | null> | null = null
+  /**
+   * 写操作日志初始化 Promise（撤销功能的唯一线索；与索引共用数据目录，
+   * 但不受 indexEnabled 影响，失败返回 null 且下次调用重试）。
+   */
+  private writeJournalInit: Promise<WriteJournal | null> | null = null
 
   /**
    * 行数统计 JSON 存储（延迟构造，理由同 commitIndex）。
@@ -198,7 +214,15 @@ export class GitPushManager {
     this.commitMsgGen = new CommitMsgGenerator(plugin, this.executor, this.worktreeOps, this.storage)
     this.reportOps = new ReportOps(this.executor)
     this.bfgOps = new BfgOps(plugin, { load: () => this.storage.bfgPrefs.loadOrDefault() })
-    this.repoCleanOps = new RepoCleanOps(this.executor, this.bfgOps, this.worktreeOps, plugin.name)
+    this.backupOps = new BackupOps(this.executor, async () => {
+      const workspaceRoot = await getWorkspaceDir()
+      if (!workspaceRoot) throw new Error("无法获取工作区路径，无法创建备份")
+      const node = getNodeFsPathOs()
+      if (!node) throw new Error("Node 环境不可用")
+      return node.path.join(workspaceRoot, "data", "storage", "petal", plugin.name)
+    })
+    this.undoOps = new UndoOps(this.executor, this.backupOps)
+    this.repoCleanOps = new RepoCleanOps(this.executor, this.bfgOps, this.worktreeOps, this.backupOps)
     this.registerTabModel()
   }
 
@@ -241,6 +265,58 @@ export class GitPushManager {
     if (!index && this.indexInit === init) this.indexInit = null
     this.commitIndex = index
     return index
+  }
+
+  /**
+   * 获取写操作日志（首次调用解析目录并构造；不可用返回 null 且下次调用重试）。
+   *
+   * 与 `getIndex` 的差别：不受 `indexEnabled` 影响 —— 索引是可选加速，写日志是撤销功能的
+   * 唯一线索，两者生命周期独立；只共用同一个目录。
+   */
+  async getWriteJournal(): Promise<WriteJournal | null> {
+    if (this.destroyed) return null
+    if (this.writeJournalInit) return this.writeJournalInit
+    const init = (async () => {
+      const io = await createIndexIo(this.plugin)
+      return io ? new WriteJournal(io) : null
+    })().catch((e) => {
+      console.warn("[gitPush] 写操作日志初始化失败，将不记录撤销线索", e)
+      return null
+    })
+    this.writeJournalInit = init
+    const journal = await init
+    // 卸载竞态：await 期间已 destroy → 丢弃实例并允许下次重建
+    if (this.destroyed) {
+      this.writeJournalInit = null
+      return null
+    }
+    // 初始化失败不钉死缓存，允许后续（如目录暂时不可用恢复后）重试
+    if (!journal && this.writeJournalInit === init) this.writeJournalInit = null
+    return journal
+  }
+
+  /**
+   * 采集写操作前的状态快照。
+   *
+   * 只发两条本地只读命令（并行）：`log -1` 取 HEAD 与装饰（当前分支），`reflog -1` 取上一条
+   * reflog 说明。任一失败都退化为空串，不阻断主操作 —— 撤销线索缺一条优于提交失败。
+   */
+  private async capturePreWriteState(projectPath: string): Promise<PreWriteState> {
+    const read = (args: string[]) => this.executor.execGit(projectPath, args).catch(() => "")
+    const [logRaw, reflogRaw] = await Promise.all([
+      read(["log", "-1", "--format=%H%x00%D"]),
+      read(["reflog", "show", "-1", "--format=%gD%x00%gs"]),
+    ])
+    return parsePreWriteState(logRaw, reflogRaw)
+  }
+
+  /** 日志按项目隔离：优先项目 id，项目未登记（直接以路径调用）时退回路径 */
+  private async journalKeyFor(projectPath: string): Promise<string> {
+    try {
+      return (await this.store.findProjectByPath(projectPath))?.id ?? projectPath
+    } catch {
+      return projectPath
+    }
   }
 
   /**
@@ -600,6 +676,8 @@ export class GitPushManager {
     this.commitIndex?.dispose()
     this.commitIndex = null
     this.indexInit = null
+    // 写日志无长驻句柄，只需丢弃缓存的初始化结果
+    this.writeJournalInit = null
     this.gitDirCache.clear()
     this.gitDirPending.clear()
   }
@@ -882,6 +960,9 @@ export class GitPushManager {
     const project = await this.store.getProjectById(id)
     const paths = project ? [project.path, ...(project.localPaths || [])] : []
     await this.store.removeProject(id)
+    // 项目删除后撤销线索一并失效：清掉其日志文件，避免索引目录留下无主记录
+    const journal = await this.getWriteJournal()
+    await journal?.clear(id)
     // 项目删除后卡片消失，运行中的脚本会话将失去停止入口，必须一并结束
     scriptSessions.stopByProject(id)
     // 智能跳过缓存独立于 store，删除后一并失效，避免残留旧 ahead
@@ -1094,8 +1175,79 @@ export class GitPushManager {
     return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.discardFiles(projectPath, files))
   }
 
+  /**
+   * 提交，并在提交成功后补一条写操作日志（撤销提交用，见 F6）。
+   *
+   * 采集必须在锁内（否则并发写会把 headBefore 采到别人操作后的状态）；
+   * 落盘在锁外（写日志是旁路，不占用写队列），且 `record` 内部吞掉一切失败。
+   * 日志不可用（目录解析失败）时整条旁路跳过，不为一条线索白付两次 git 进程。
+   */
   async commit(projectPath: string, message: string): Promise<string> {
-    return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.commit(projectPath, message))
+    const journal = await this.getWriteJournal()
+    if (!journal) {
+      return this.writeLock.runExclusive(projectPath, () => this.worktreeOps.commit(projectPath, message))
+    }
+    const { hash, before } = await this.writeLock.runExclusive(projectPath, async () => {
+      const before = await this.capturePreWriteState(projectPath)
+      const hash = await this.worktreeOps.commit(projectPath, message)
+      return { hash, before }
+    })
+    // 空仓库首个提交没有 headBefore，撤销语义不成立，不入账
+    if (before.headBefore) {
+      await journal.record(await this.journalKeyFor(projectPath), {
+        op: "commit",
+        ...before,
+        label: journalLabel(message),
+      })
+    }
+    return hash
+  }
+
+  /** 读取 reflog（最新在前，供 Reflog 浏览器恢复丢失提交） */
+  async listReflog(projectPath: string, limit = 100): Promise<RefLogEntry[]> {
+    return this.undoOps.listReflog(projectPath, limit)
+  }
+
+  /**
+   * 显式重置到指定提交（soft / mixed / hard）。
+   * hard 会丢暂存与工作区改动，服务层先备份；操作本身在写锁内执行，
+   * 日志采集在锁内、落盘在锁外（与 commit 同一口径）。
+   */
+  async resetTo(projectPath: string, mode: ResetMode, ref: string): Promise<{ backupPath?: string }> {
+    const journal = await this.getWriteJournal()
+    const key = await this.journalKeyFor(projectPath)
+    const { result, before } = await this.writeLock.runExclusive(projectPath, async () => {
+      const before = journal ? await this.capturePreWriteState(projectPath) : undefined
+      const result = await this.undoOps.reset(projectPath, mode, ref)
+      return { result, before }
+    })
+    if (journal && before?.headBefore) {
+      await journal.record(key, {
+        op: "reset",
+        ...before,
+        label: `重置(${mode}) 到 ${ref.length > 10 ? `${ref.slice(0, 10)}…` : ref}`,
+      })
+    }
+    this.remoteOps.invalidatePushStatusCache(key)
+    return result
+  }
+
+  /**
+   * 撤销写操作日志中的最后一条操作。
+   * 取日志与 git 写入都在写锁内：锁外先读会拿到「已被后续写操作取代」的旧记录。
+   * 不记录「撤销」本身 —— 否则撤销会变成可再撤销的操作，用户连点两下就回到原点。
+   */
+  async undoLastOp(projectPath: string): Promise<UndoOutcome> {
+    const journal = await this.getWriteJournal()
+    if (!journal) throw new Error("写操作日志不可用，无法撤销")
+    const key = await this.journalKeyFor(projectPath)
+    const { outcome, op } = await this.writeLock.runExclusive(projectPath, async () => {
+      const [entry] = await journal.list(key, 1)
+      const outcome = await this.undoOps.undo(projectPath, entry)
+      return { outcome, op: entry?.op ?? null }
+    })
+    this.remoteOps.invalidatePushStatusCache(key)
+    return { op, ...outcome }
   }
 
   async switchBranch(projectPath: string, branch: string): Promise<string> {
@@ -1634,19 +1786,19 @@ export class GitPushManager {
     return this.bfgOps.downloadJar(onProgress)
   }
 
-  /** 创建项目 bundle 全量备份（BFG 清理/删除历史提交等破坏性操作前调用；复用 BFG 备份目录与 3 份轮换） */
+  /** 创建项目 bundle 全量备份（BFG 清理/删除历史提交等破坏性操作前调用；bfg 目录与 3 份轮换） */
   async createProjectBackup(projectPath: string): Promise<string> {
-    return this.repoCleanOps.createBackup(projectPath)
+    return this.backupOps.createBackup(projectPath, "bfg")
   }
 
   /** 清空项目备份目录下全部 bundle 备份（删除历史提交弹窗内用户主动清理；返回清理份数） */
   async deleteProjectBackups(projectPath: string): Promise<number> {
-    return this.repoCleanOps.deleteBackups(projectPath)
+    return this.backupOps.deleteBackups(projectPath, "bfg")
   }
 
   /** 获取项目备份目录路径（删除历史提交弹窗常驻操作条展示用） */
   async getProjectBackupDir(projectPath: string): Promise<string> {
-    return this.repoCleanOps.backupDirOf(projectPath)
+    return this.backupOps.backupDirOf(projectPath, "bfg")
   }
 
   /**

@@ -2,7 +2,8 @@
 import type { Ref } from "vue"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
-import type { GitProject, ProjectQueryKind } from "../types"
+import { showUndoMessage } from "../notify"
+import type { GitProject, ProjectQueryKind, UndoOutcome } from "../types"
 import type { DiscardTarget } from "../types/storage"
 import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag, shouldUseDeepCommitMessage, summarizeCommitSize } from "../utils"
 import type { NumstatEntry } from "../utils"
@@ -27,6 +28,8 @@ export function useGitHandlers(deps: {
   /** 暂存区变更规模（numstat）：一键提交据此选择简单/深度生成 */
   getStagedOverview: (id: string) => Promise<Record<string, NumstatEntry> | null>
   doCommit: (id: string, message: string) => Promise<string>
+  /** 撤销上一次写操作（日志驱动；提交用 soft，merge/reset 用 hard） */
+  undoLastOp: (id: string) => Promise<UndoOutcome>
   generateCommitMsg: (id: string) => Promise<{ message: string, source: string, fallback?: string, detail?: string }>
   /** 深度生成提交信息（读取暂存区完整 diff，输出多行标题 + 改动要点） */
   deepGenerateCommitMsg: (id: string) => Promise<{ message: string, source: string, fallback?: string, detail?: string }>
@@ -47,7 +50,7 @@ export function useGitHandlers(deps: {
 }) {
   const {
     projects, showConfirm, safeGitOp, tf,
-    discardFile, discardFiles, stageAllItems, getStagedOverview, doCommit, generateCommitMsg, deepGenerateCommitMsg,
+    discardFile, discardFiles, stageAllItems, getStagedOverview, doCommit, undoLastOp, generateCommitMsg, deepGenerateCommitMsg,
     doStashSave, doStashPop, doStashApply, doStashDrop, generateStashDesc,
     createTagOp, deleteTagOp, pushTagOp,
     abortMergeOp, resolveConflictOp,
@@ -249,6 +252,25 @@ export function useGitHandlers(deps: {
     })
   }
 
+  /**
+   * 提交成功后的 10 秒撤销入口（F0.5 Toast + F6 日志驱动撤销）。
+   * 撤销失败只提示、不改写提交输出：那时用户更需要「为什么没撤成」而不是提交回显。
+   * key 与 reset 共用 `undo-<项目>`：撤销始终针对**最新一条记账操作**，
+   * 否则连续提交/重置时旧 Toast 会把点击带到已经变化的历史上。
+   * 刷新由 `undoLastOp` 内部完成（工作区 / 推送状态 / 各域脏标记），这里不再重复。
+   */
+  function offerCommitUndo(id: string) {
+    showUndoMessage(tf("commitUndoAvailable"), () => {
+      void (async () => {
+        try {
+          await undoLastOp(id)
+        } catch (e: unknown) {
+          showMessage(tf("commitUndoFailed", getErrorMessage(e)), 5000, "error")
+        }
+      })()
+    }, `undo-${id}`, tf("undoAction"))
+  }
+
   async function handleCommit(id: string, message: string) {
     commitOutputs.value[id] = ""
     try {
@@ -257,6 +279,7 @@ export function useGitHandlers(deps: {
       pruneRecordCache(commitOutputs.value)
       // 提交日志已下沉卡片，提交后经信号通知重载
       bumpCardRefresh(id, "log")
+      offerCommitUndo(id)
     } catch (e: unknown) {
       reportFailure(id, tf("commitFailed", getErrorMessage(e)))
     }
@@ -348,6 +371,7 @@ export function useGitHandlers(deps: {
       commitOutputs.value[id] = output
       pruneRecordCache(commitOutputs.value)
       bumpCardRefresh(id, "log")
+      offerCommitUndo(id)
     } catch (e: unknown) {
       reportFailure(id, tf("quickCommitFailed", getErrorMessage(e)))
       generatingMsgs.value = {

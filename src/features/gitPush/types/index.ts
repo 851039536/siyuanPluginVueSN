@@ -131,6 +131,10 @@ export type {
   RunQueryOptions,
 } from "./queryScheduler"
 
+// ── 重导出撤销 / reset / reflog 类型（undo.ts / reflog.ts）──
+export type { ResetMode, UndoOutcome, UndoResult } from "./undo"
+export type { RefLogEntry } from "./reflog"
+
 // ── 重导出实时探测配置（probeConfig.ts）──
 export {
   clampProbeConfig,

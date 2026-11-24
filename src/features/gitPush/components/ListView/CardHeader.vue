@@ -229,6 +229,7 @@
     <CardHeaderActions
       :project="project"
       :open-workspace-files="openWorkspaceFiles"
+      @open-reflog="emit('openReflog')"
     />
 
     <!-- 分支管理弹窗（删除非当前分支；未合并分支二次确认后强制删除） -->
@@ -269,6 +270,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   toggleCollapse: []
+  /** 打开 Reflog 浏览器（继续上抛给卡片编排层） */
+  openReflog: []
 }>()
 
 const { services } = useCardServices(() => props.project)

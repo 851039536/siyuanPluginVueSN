@@ -6,6 +6,7 @@ import type {
   GitPushManager,
   LoadStatusOptions,
   ProjectQueryKind,
+  UndoOutcome,
 } from "../types"
 import type { CommitMsgResult } from "../managers/CommitMsgGenerator"
 import type { NumstatEntry } from "../utils"
@@ -174,6 +175,22 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     }
   }
 
+  /**
+   * 撤销上一次写操作（日志驱动）：commit 用 soft 退出提交，merge/reset 用 hard 回到操作前。
+   * 成功后与提交同口径刷新工作区/推送状态，并让卡片重载历史与分支。
+   */
+  async function undoLastOp(id: string): Promise<UndoOutcome> {
+    const project = requireProject(projects, id)
+    const outcome = await manager.undoLastOp(resolveValidPath(project))
+    const branch = workingTrees.value[id]?.branch
+    await Promise.all([
+      reloadWorkingTreeAfterWrite(id),
+      loadPushStatus(id, branch ? { branch, force: true } : { force: true }),
+    ])
+    bumpCardRefresh(id, "log", "branches", "stash", "reflog", "graph", "branchCompare")
+    return outcome
+  }
+
   async function generateCommitMsg(id: string): Promise<CommitMsgResult> {
     const project = findProject(projects, id)
     if (!project) { return { message: "chore: update files", source: "heuristic", fallback: "no-diff" } }
@@ -292,6 +309,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     discardFile,
     discardFiles,
     doCommit,
+    undoLastOp,
     generateCommitMsg,
     deepGenerateCommitMsg,
     // Stash

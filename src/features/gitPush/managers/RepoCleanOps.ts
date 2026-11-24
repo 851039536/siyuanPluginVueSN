@@ -2,14 +2,12 @@
 import type { RepoBlobItem, RepoScanResult, BfgCleanPlan, BfgCleanResult } from "../types/meta"
 import type { GitExecutor } from "./GitExecutor"
 import type { BfgOps } from "./BfgOps"
+import type { BackupOps } from "./BackupOps"
 import type { WorktreeOps } from "./WorktreeOps"
-import { getWorkspaceDir } from "@/api"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 
 /** 体检扫描超时（大仓库对象遍历耗时较长） */
 const SCAN_TIMEOUT_MS = 120000
-/** 备份 bundle 保留份数（每项目） */
-const BACKUP_KEEP = 3
 /** 清理各阶段超时（mirror clone/bundle/gc 视仓库大小，统一放宽） */
 const CLEAN_TIMEOUT_MS = 600000
 
@@ -30,14 +28,14 @@ export class RepoCleanOps {
   private executor: GitExecutor
   private bfgOps: BfgOps
   private worktreeOps: WorktreeOps
-  /** 插件名（备份目录定位用，构造时注入） */
-  private pluginName: string
+  /** 清理前的 bundle 备份（与 reset 共用，按用途分目录） */
+  private backupOps: BackupOps
 
-  constructor(executor: GitExecutor, bfgOps: BfgOps, worktreeOps: WorktreeOps, pluginName: string) {
+  constructor(executor: GitExecutor, bfgOps: BfgOps, worktreeOps: WorktreeOps, backupOps: BackupOps) {
     this.executor = executor
     this.bfgOps = bfgOps
     this.worktreeOps = worktreeOps
-    this.pluginName = pluginName
+    this.backupOps = backupOps
   }
 
   // ── 体检扫描（纯 git，零外部依赖）──
@@ -147,80 +145,6 @@ export class RepoCleanOps {
   }
 
   /**
-   * 创建 bundle 全量备份（单文件可用 git clone <备份文件> 恢复；每项目保留最近 3 份，超出按时间戳轮换删除）。
-   * BFG 清理与删除历史提交等破坏性操作前调用。
-   */
-  async createBackup(projectPath: string): Promise<string> {
-    const node = getNodeFsPathOs()
-    if (!node) throw new Error("Node 环境不可用")
-    const { fs, path } = node
-
-    const backupDir = await this.backupDirFor(projectPath)
-    fs.mkdirSync(backupDir, { recursive: true })
-    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)
-    const backupPath = path.join(backupDir, `${path.basename(projectPath)}-${ts}.bundle`)
-    await this.executor.execGit(projectPath, ["bundle", "create", backupPath, "--all"], undefined, CLEAN_TIMEOUT_MS)
-    this.pruneBackups(backupDir)
-    return backupPath
-  }
-
-  /** 清空项目备份目录下全部 bundle 备份（删除历史提交弹窗内用户主动清理；仅删 .bundle 文件防误删，目录保留） */
-  async deleteBackups(projectPath: string): Promise<number> {
-    const node = getNodeFsPathOs()
-    if (!node) throw new Error("Node 环境不可用")
-    const { fs, path } = node
-    const dir = await this.backupDirFor(projectPath)
-    let removed = 0
-    try {
-      for (const f of fs.readdirSync(dir)) {
-        if (!f.endsWith(".bundle")) continue
-        try { fs.rmSync(path.join(dir, f), { force: true }); removed++ } catch { /* 单文件失败不中断 */ }
-      }
-    } catch { /* 目录不存在视为无备份 */ }
-    return removed
-  }
-
-  /** 项目备份目录路径（删除历史提交弹窗常驻操作条展示与打开文件夹用） */
-  async backupDirOf(projectPath: string): Promise<string> {
-    return this.backupDirFor(projectPath)
-  }
-
-  /** 备份 bundle 目录（<workspace>/data/storage/petal/<plugin.name>/bfg-backups/<项目名>/） */
-  private async backupDirFor(projectPath: string): Promise<string> {
-    const node = getNodeFsPathOs()
-    if (!node) throw new Error("Node 环境不可用")
-    const { path } = node
-    const workspaceRoot = await this.getWorkspaceRoot()
-    const projectName = path.basename(projectPath)
-    return path.join(workspaceRoot, "data", "storage", "petal", this.pluginName, "bfg-backups", projectName)
-  }
-
-  /** 工作区根目录（懒加载缓存） */
-  private workspaceRootCache = ""
-  private async getWorkspaceRoot(): Promise<string> {
-    if (this.workspaceRootCache) return this.workspaceRootCache
-    this.workspaceRootCache = await getWorkspaceDir()
-    if (!this.workspaceRootCache) throw new Error("无法获取工作区路径，无法创建备份")
-    return this.workspaceRootCache
-  }
-
-  /** 清理旧备份：仅保留最近 KEEP 份（按文件名时间戳排序） */
-  private pruneBackups(dir: string, keep = BACKUP_KEEP): void {
-    const node = getNodeFsPathOs()
-    if (!node) return
-    const { fs, path } = node
-    try {
-      const files = fs.readdirSync(dir).filter((f: string) => f.endsWith(".bundle")).sort()
-      while (files.length > keep) {
-        const oldest = files.shift()
-        if (oldest) {
-          try { fs.rmSync(path.join(dir, oldest), { force: true }) } catch { /* 忽略 */ }
-        }
-      }
-    } catch { /* 目录不存在等，忽略 */ }
-  }
-
-  /**
    * BFG 清理六步工作流（全程只读原仓库工作区，回写阶段才动引用）：
    * backup(bundle 全量备份) → mirror(clone --mirror) → bfg(重写) → gc(镜像压缩) → sync(CAS 回写引用 + 本地 gc)
    */
@@ -260,7 +184,7 @@ export class RepoCleanOps {
 
       callbacks.onStep?.("backup", 1, stepTotal)
       stepStart("backup")
-      const backupPath = await this.createBackup(projectPath)
+      const backupPath = await this.backupOps.createBackup(projectPath, "bfg")
       stepEnd("backup")
 
       // ── 步骤 2：mirror 裸仓库克隆（本地克隆，对象 hardlink 共享）──

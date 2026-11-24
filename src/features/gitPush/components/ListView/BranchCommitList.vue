@@ -151,6 +151,16 @@
           :title="i18n.createTag"
           @click.stop="$emit('addTag', entry)"
         />
+        <!-- 重置到此提交（常显；点击弹出模式选择弹窗） -->
+        <Button
+          class="bcl-reset-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="history"
+          :title="i18n.resetOpen"
+          @click.stop="$emit('resetTo', entry)"
+        />
         <!-- 删除提交按钮（常显；点击弹出删除确认弹窗） -->
         <Button
           class="bcl-drop-btn"
@@ -249,6 +259,7 @@ const emit = defineEmits<{
   refreshCommitLog: []
   fixCommit: [entry: CommitLogEntry]
   addTag: [entry: CommitLogEntry]
+  resetTo: [entry: CommitLogEntry]
   dropCommit: [entry: CommitLogEntry]
   viewFiles: [entry: CommitLogEntry]
 }>()

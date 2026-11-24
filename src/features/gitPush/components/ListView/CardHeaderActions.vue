@@ -237,6 +237,15 @@
       :title="i18n.viewProjectGitConfig"
       @click="ops.openProjectGitConfig(project.id)"
     />
+    <!-- 悬停提示："Reflog 浏览器"（找回 reset / 变基后丢失的提交） -->
+    <Button
+      variant="ghost"
+      size="xsmall"
+      dense
+      icon="history"
+      :title="i18n.reflogOpen"
+      @click="emit('openReflog')"
+    />
     <!-- 危险操作分隔线：删除与常规操作分组 -->
     <span class="gp-actions-divider" />
     <!-- 悬停提示："删除"（移除项目；悬停变红由 .gp-btn-danger 提供） -->
@@ -269,6 +278,11 @@ const props = defineProps<{
   project: GitProject
   /** 打开工作区文件浏览器（编排层持有弹窗状态） */
   openWorkspaceFiles: () => void
+}>()
+
+const emit = defineEmits<{
+  /** 打开 Reflog 浏览器（弹窗由卡片编排层持有） */
+  openReflog: []
 }>()
 
 const { services } = useCardServices(() => props.project)

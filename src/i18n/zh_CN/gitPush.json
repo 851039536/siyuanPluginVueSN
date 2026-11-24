@@ -428,7 +428,6 @@
     "reportIndexStale": "数据时间：{0}",
     "reportExport": "导出HTML",
     "reportExportHint": "导出为单文件 HTML 报告（内联图表，可离线打开）",
-    "reportExporting": "导出中…",
     "reportExportSuccess": "报告已导出：{0}",
     "reportExportFailed": "导出报告失败：{0}",
     "reportExportNotReady": "请先生成报告，再导出 HTML",

@@ -428,7 +428,6 @@
     "reportIndexStale": "Data as of: {0}",
     "reportExport": "Export HTML",
     "reportExportHint": "Export a single-file HTML report (inline charts, works offline)",
-    "reportExporting": "Exporting…",
     "reportExportSuccess": "Report exported: {0}",
     "reportExportFailed": "Failed to export report: {0}",
     "reportExportNotReady": "Generate the report before exporting HTML",

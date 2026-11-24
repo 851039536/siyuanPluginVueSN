@@ -28,34 +28,30 @@
           :options="rangeOptions"
           @change="onRangeChange"
         />
-        <!-- 生成/重新生成按钮（生成中图标转圈） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gpr-run-btn"
+        <!-- 生成/重新生成报告（loading 由共享 Button 承担并保持宽度；已生成后文案提示可重新生成） -->
+        <Button
+          class="gpr-run-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="chartTimelineVariant"
+          :loading="running"
           :disabled="running"
           :title="i18n.reportRunHint"
           @click="emit('runReport')"
-        >
-          <Icon
-            :icon="running ? 'mdi:loading' : 'mdi:chart-box'"
-            height="12"
-            :class="{ 'gp-spin': running }"
-          />
-          {{ generated ? i18n.reportRerun : i18n.reportRun }}
-        </button>
-        <!-- 导出单文件 HTML 报告（未生成/生成中/失败时禁用，避免导出空报告） -->
-        <button
-          class="vp-btn vp-btn--ghost vp-btn--sm gpr-run-btn"
+        >{{ generated ? i18n.reportRerun : i18n.reportRun }}</Button>
+        <!-- 导出单文件 HTML 报告（未生成/生成中/失败时禁用，避免导出空报告；文案固定，加载态由 spinner 表达） -->
+        <Button
+          class="gpr-run-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          icon="downloadOutline"
+          :loading="exporting"
           :disabled="running || exporting || !generated || !report.ok"
           :title="i18n.reportExportHint"
           @click="emit('exportHtml')"
-        >
-          <Icon
-            :icon="exporting ? 'mdi:loading' : 'mdi:file-export-outline'"
-            height="12"
-            :class="{ 'gp-spin': exporting }"
-          />
-          {{ exporting ? i18n.reportExporting : i18n.reportExport }}
-        </button>
+        >{{ i18n.reportExport }}</Button>
       </div>
 
       <!-- 四态门：生成中占位 / 未生成提示 / 已就绪内容（失败与空数据由下方各自分支处理） -->
@@ -175,6 +171,7 @@ import type { SectionTabItem } from "../common/sectionTabs"
 import AnalysisGate from "../common/AnalysisGate.vue"
 import EmptyState from "../common/EmptyState.vue"
 import SectionTabs from "../common/SectionTabs.vue"
+import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
 import TeamOverviewSection from "./TeamOverviewSection.vue"
 import AuthorContributionSection from "./AuthorContributionSection.vue"

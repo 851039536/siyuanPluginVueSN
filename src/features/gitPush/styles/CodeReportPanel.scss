@@ -26,10 +26,9 @@
   flex: 0 0 72px;
 }
 
-// 生成/重新生成按钮（紧凑，与头部按钮一致）
+// 生成/导出按钮：几何由共享 Button（ghost + xsmall + dense）承担，此处只禁止收缩
 .gpr-run-btn {
   flex-shrink: 0;
-  padding: $s-1 $s-px6; // 水平 6px 与头部按钮统一，已收敛为全局 Token
 }
 
 // ── 生成信息行（生成时间 + 时间范围 + 数据源概况 + 后台刷新指示）──

@@ -15,11 +15,14 @@ import { getNodeModules } from "@/utils/nodeModules"
  * 两者语义直接冲突 —— 第二个项目一写入就覆盖掉第一个项目的段，
  * 且全量分析是并发抓取（Promise.allSettled），并发覆盖后各项目数据互相串号，
  * 表现为行数排行里几十个项目的增删净/总行数大量相同。故必须按项目隔离文件。
+ *
+ * `journal` 仅为与桌面端保持命名约定（桌面端写操作日志用）；插件侧暂无该功能、未使用。
  */
 export const INDEX_FILE = {
   commits: "commits.ndjson",
   files: "files.ndjson",
   fileLines: "filelines.ndjson",
+  journal: "journal.ndjson",
   meta: "meta.json",
 } as const
 
@@ -55,9 +58,9 @@ function safeProjectSlug(projectId: string): string {
 
 /**
  * 单项目索引文件的完整文件名（`<项目 slug>.<后缀>`）。
- * 三份 NDJSON 都走此命名，保证项目之间物理隔离、并发写互不覆盖。
+ * 三份提交索引 NDJSON 与写操作日志都走此命名，保证项目之间物理隔离、并发写互不覆盖。
  */
-export function projectIndexFile(kind: "commits" | "files" | "fileLines", projectId: string): string {
+export function projectIndexFile(kind: "commits" | "files" | "fileLines" | "journal", projectId: string): string {
   return `${safeProjectSlug(projectId)}.${INDEX_FILE[kind]}`
 }
 

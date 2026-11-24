@@ -42,14 +42,15 @@ describe("projectIndexFile 转义单射性", () => {
     }
   })
 
-  it("三份 NDJSON 与 meta 后缀互不相同", () => {
+  it("提交索引与写日志的 NDJSON 后缀互不相同", () => {
     const id = "p1"
     const files = [
       projectIndexFile("commits", id),
       projectIndexFile("files", id),
       projectIndexFile("fileLines", id),
+      projectIndexFile("journal", id),
     ]
-    expect(new Set(files).size).toBe(3)
+    expect(new Set(files).size).toBe(4)
   })
 })
 

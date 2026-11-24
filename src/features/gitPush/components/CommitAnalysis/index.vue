@@ -23,6 +23,7 @@
         :done="tabDone"
         :analyzed-at="tabAnalyzedAt"
         :not-run-key="toolbarNotRunKey"
+        :stale-hint="toolbarStaleHint"
         icon="chartTimelineVariant"
         :outlined="activeTab === 'linestats'"
         :run-text="i18n.auditRun"
@@ -73,6 +74,18 @@
               @click="showExtDialog = true"
             />
           </Badge>
+          <!-- 提交概览视角：排除 merge 提交（口径开关，四区块同源生效；规则检查不受影响） -->
+          <Button
+            v-if="activeTab === 'overview'"
+            icon="merge"
+            size="xsmall"
+            variant="ghost"
+            :outlined="true"
+            :severity="viewSettings.excludeMerges ? 'primary' : undefined"
+            :aria-pressed="!!viewSettings.excludeMerges"
+            :title="i18n.analysisExcludeMergesHint"
+            @click="toggleExcludeMerges"
+          />
           <!-- 提交概览视角：热力图显示设置 -->
           <CommitAnalysisSettings
             v-if="activeTab === 'overview'"
@@ -114,9 +127,14 @@
             :cards="overviewCards"
           />
 
-          <!-- 范围口径：排行、趋势图与 KPI 共用同一份范围内条目 -->
+          <!-- 范围口径：排行、趋势图与 KPI 共用同一份范围内条目；截断项目名放 tooltip -->
           <p class="gpa-scope-note">
             {{ rangeScopeText }}
+            <span
+              v-if="truncationHint"
+              class="gpa-scope-note-warn"
+              :title="truncationHint.title"
+            >{{ truncationHint.text }}</span>
           </p>
 
           <!-- 空状态：所选范围内无提交数据 -->
@@ -149,7 +167,7 @@
             <div ref="heatmapWrapRef">
               <HeatmapSection
                 :i18n="i18n"
-                :stats="stats"
+                :stats="displayStats"
                 :view-settings="viewSettings"
                 :focus-request="focusRequest"
                 @view-project="emit('viewProject', $event)"
@@ -312,10 +330,11 @@ import StatCardGrid from "../common/StatCardGrid.vue"
 import BatchFixDialog from "../common/BatchFixDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
-import { isAnalysisRangePreset } from "../../types/meta"
+import { COMMIT_LOG_ALL_LIMIT, isAnalysisRangePreset } from "../../types/meta"
 import { buildAnalysisRangeOptions } from "./analysisRangeOptions"
 import {
   buildYearOptions,
+  filterAnalysisEntries,
   filterEntriesByRange,
   formatLocalDate,
   inclusiveDays,
@@ -369,6 +388,10 @@ const props = defineProps<{
   lineDetailRefreshing: boolean
   getProjectFileLines: (projectId: string) => Map<string, number | null>
   refreshProject: (projectId: string) => void
+  /** 达到 git log 抓取上限的项目（概览截断提示；旧缓存恢复时同样生效） */
+  truncatedProjectIds: string[]
+  /** 缓存过期提示文案（空串 = 不显示；由父层按写操作脏信号置位） */
+  staleHint: string
 }>()
 
 const emit = defineEmits<{
@@ -451,12 +474,28 @@ function onRangeChange(v: string | number | boolean | null) {
   emit("updateViewSettings", { range: Number(v) })
 }
 
+/**
+ * 概览唯一的条目过滤点（本轮只接 merge 排除）。
+ * KPI/趋势/排行/热力图全部从这里派生，避免各区块各算各的口径导致数字互相矛盾；
+ * 规则检查 Tab 走自己的聚合（其 merge 豁免语义独立），不经过此处。
+ */
+const displayEntries = computed(() => filterAnalysisEntries(props.stats.entries, {
+  excludeMerges: props.viewSettings.excludeMerges === true,
+}))
+
+/** 传给热力图的聚合视图（entries 已过滤；totalCommits 同步为过滤后口径） */
+const displayStats = computed<CommitAnalysisStats>(() => ({
+  ...props.stats,
+  totalCommits: displayEntries.value.length,
+  entries: displayEntries.value,
+}))
+
 /** 显示范围起止（KPI / 排行 / 趋势图共用，与热力图同一份 viewSettings.range；"all" 需要条目推算最早一天） */
 const rangeBounds = computed(() => {
   const {
     start,
     end,
-  } = resolveAnalysisRange(props.viewSettings.range, props.stats.entries, props.viewSettings.weekStart)
+  } = resolveAnalysisRange(props.viewSettings.range, displayEntries.value, props.viewSettings.weekStart)
   return {
     start: formatLocalDate(start),
     end: formatLocalDate(end),
@@ -465,8 +504,16 @@ const rangeBounds = computed(() => {
 
 /** 范围内条目（排行与趋势图的唯一数据源；热力图内部按同一范围过滤） */
 const rangeEntries = computed(() =>
-  filterEntriesByRange(props.stats.entries, rangeBounds.value.start, rangeBounds.value.end),
+  filterEntriesByRange(displayEntries.value, rangeBounds.value.start, rangeBounds.value.end),
 )
+
+/** 切换「排除 merge」口径（持久化到视图设置；四区块同时生效） */
+function toggleExcludeMerges() {
+  emit("updateViewSettings", { excludeMerges: !props.viewSettings.excludeMerges })
+}
+
+/** 缓存过期提示（行数域与提交快照无关，仅提交域两个视角展示） */
+const toolbarStaleHint = computed(() => (activeTab.value === "linestats" ? "" : props.staleHint))
 
 /** 趋势图粒度：多年跨度向季度/年收敛，避免几十根柱挤成一排 */
 const rangeGranularity = computed(() => resolveTrendGranularity(rangeBounds.value.start, rangeBounds.value.end))
@@ -477,8 +524,10 @@ const rangeActiveDays = computed(() =>
   new Set(rangeEntries.value.map((e) => formatLocalDate(new Date(e.date)))).size,
 )
 
-/** 抓取口径说明（条数选择已移除，口径固定为每项目全部提交；与范围一起交代，避免 KPI/排行被误读） */
-const capHint = computed(() => String(props.i18n.analysisTrendCapAll || ""))
+/** 抓取口径说明（固定「最近至多 N 条」，与 git log 实际上限一致，不再宣称"全部提交"） */
+const capHint = computed(() =>
+  String(props.i18n.analysisTrendCapAll || "").replace("{0}", String(COMMIT_LOG_ALL_LIMIT)),
+)
 
 /** 范围口径说明（KPI 卡片下方一行：范围 + 抓取口径） */
 const rangeScopeText = computed(() => {
@@ -486,6 +535,17 @@ const rangeScopeText = computed(() => {
     .replace("{0}", rangeBounds.value.start)
     .replace("{1}", rangeBounds.value.end)
   return [scope, capHint.value].filter(Boolean).join(" · ")
+})
+
+/** 截断提示（正文只给项目数，项目名放 tooltip，保持紧凑；已删除项目自动忽略） */
+const truncationHint = computed(() => {
+  const ids = props.truncatedProjectIds.filter((id) => props.projects.some((p) => p.id === id))
+  if (ids.length === 0) return null
+  const names = ids.map((id) => props.projects.find((p) => p.id === id)?.name || id)
+  return {
+    text: String(props.i18n.analysisTruncatedNote || "").replace("{0}", String(ids.length)),
+    title: names.join("、"),
+  }
 })
 
 /** 总览卡片：范围内提交数 / 已分析项目 / 活跃天数 / 日均提交（失败计数由 AnalysisGate 统一承担） */

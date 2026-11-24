@@ -1,64 +1,82 @@
 <!-- gitPush 提交分析热力图区块（单击看当日、拖拽/Shift+点击框选区间看统计） -->
 <template>
   <div class="gpa-section">
-    <!-- 区块标题："提交热力图" + 指标切换 + 范围摘要（连续 / 最长连续 / 合计） -->
+    <!-- 区块标题："提交热力图" + 视图切换（热力/时段分布）+ 指标切换 + 范围摘要 -->
     <div class="gpa-section-title">
       {{ i18n.analysisHeatTitle }}
-      <!-- 热力指标（提交数 / 项目数 / 活跃作者） -->
-      <Select
-        class="gpa-heat-metric"
-        :model-value="viewSettings.heatMetric"
-        size="xsmall"
-        :options="metricOptions"
-        :aria-label="i18n.analysisHeatMetric"
-        @change="onMetricChange"
+      <!-- 呈现形态内联切换（同为时间分布，页面零增长；默认热力图） -->
+      <SectionTabs
+        v-model="viewMode"
+        class="gpa-heat-view"
+        :items="viewItems"
+        :aria-label="i18n.analysisHeatTitle"
       />
-      <span class="gpa-heat-stats">
-        <span
-          v-for="(item, i) in summaryItems"
-          :key="i"
-        >{{ item }}</span>
-      </span>
+      <template v-if="viewMode === 'calendar'">
+        <!-- 热力指标（提交数 / 项目数 / 活跃作者） -->
+        <Select
+          class="gpa-heat-metric"
+          :model-value="viewSettings.heatMetric"
+          size="xsmall"
+          :options="metricOptions"
+          :aria-label="i18n.analysisHeatMetric"
+          @change="onMetricChange"
+        />
+        <span class="gpa-heat-stats">
+          <span
+            v-for="(item, i) in summaryItems"
+            :key="i"
+          >{{ item }}</span>
+        </span>
+      </template>
     </div>
-    <CommitHeatmap
-      :i18n="i18n"
-      :bucket-counts="bucketCounts"
-      :start="range.start"
-      :end="range.end"
-      :granularity="granularity"
-      :week-start="viewSettings.weekStart"
-      :color="viewSettings.color"
-      :thresholds="thresholds"
-      :scale-mode="viewSettings.heatScale"
-      :metric="viewSettings.heatMetric"
-      :density="viewSettings.heatDensity"
-      :sel-start="selStart"
-      :sel-end="selEnd"
-      @pick="onPick"
-      @drag-start="onDragStart"
-      @drag-to="onDragTo"
-    />
+    <template v-if="viewMode === 'calendar'">
+      <CommitHeatmap
+        :i18n="i18n"
+        :bucket-counts="bucketCounts"
+        :start="range.start"
+        :end="range.end"
+        :granularity="granularity"
+        :week-start="viewSettings.weekStart"
+        :color="viewSettings.color"
+        :thresholds="thresholds"
+        :scale-mode="viewSettings.heatScale"
+        :metric="viewSettings.heatMetric"
+        :density="viewSettings.heatDensity"
+        :sel-start="selStart"
+        :sel-end="selEnd"
+        @pick="onPick"
+        @drag-start="onDragStart"
+        @drag-to="onDragTo"
+      />
 
-    <!-- 区间统计（跨多天时就地展开；端点重合时退回当日明细） -->
-    <RangeCommitDetail
-      v-if="isRange"
-      :i18n="i18n"
-      :sel-start="selStart"
-      :sel-end="selEnd"
-      :summary="rangeSummary"
-      :entries="rangeEntries"
-      @close="clearSelection"
-      @pick-day="selectSingleDay"
-    />
+      <!-- 区间统计（跨多天时就地展开；端点重合时退回当日明细） -->
+      <RangeCommitDetail
+        v-if="isRange"
+        :i18n="i18n"
+        :sel-start="selStart"
+        :sel-end="selEnd"
+        :summary="rangeSummary"
+        :entries="rangeEntries"
+        @close="clearSelection"
+        @pick-day="selectSingleDay"
+      />
 
-    <!-- 当日明细（未选中格子时不占版面） -->
-    <DayCommitDetail
-      v-else-if="selectedDate"
+      <!-- 当日明细（未选中格子时不占版面） -->
+      <DayCommitDetail
+        v-else-if="selectedDate"
+        :i18n="i18n"
+        :date="selectedDate"
+        :entries="selectedEntries"
+        @close="clearSelection"
+        @view-project="emit('viewProject', $event)"
+      />
+    </template>
+
+    <!-- 时段/星期分布（复用代码报告的节奏图；口径与热力图同一份过滤后条目） -->
+    <RhythmSection
+      v-else
       :i18n="i18n"
-      :date="selectedDate"
-      :entries="selectedEntries"
-      @close="clearSelection"
-      @view-project="emit('viewProject', $event)"
+      :rhythm="rhythmStats"
     />
   </div>
 </template>
@@ -68,12 +86,14 @@
 // 选中态、粒度、分档阈值与摘要都放在本层，切换范围时着色与选中不跳变。
 import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../types"
 import type { HeatBucketSpan } from "../../utils"
+import type { SectionTabItem } from "../common/sectionTabs"
 import { computed, ref, watch } from "vue"
 import Select from "@/components/Select.vue"
 import {
   buildHeatBuckets,
   buildHeatMetricMap,
   computeHeatThresholds,
+  filterEntriesByRange,
   fixedHeatThresholds,
   formatLocalDate,
   resolveAnalysisRange,
@@ -82,6 +102,10 @@ import {
   summarizeHeatStreak,
 } from "../../utils"
 import { COMMIT_HEAT_METRIC_META } from "../../types"
+// 节奏聚合直连子模块（reportMetrics barrel 未导出 rhythm，见其契约注释）
+import { buildRhythmStats } from "../../reportMetrics/rhythm"
+import SectionTabs from "../common/SectionTabs.vue"
+import RhythmSection from "../CodeReport/RhythmSection.vue"
 import CommitHeatmap from "./CommitHeatmap.vue"
 import DayCommitDetail from "./DayCommitDetail.vue"
 import RangeCommitDetail from "./RangeCommitDetail.vue"
@@ -104,6 +128,20 @@ const emit = defineEmits<{
   /** 指标切换（热力指标直接内联在区块标题行） */
   updateViewSettings: [patch: Partial<CommitAnalysisViewSettings>]
 }>()
+
+/** 区块呈现形态：热力日历 / 时段分布（组件内状态，不持久化；默认热力图） */
+type HeatViewMode = "calendar" | "rhythm"
+const viewMode = ref<HeatViewMode>("calendar")
+
+const viewItems = computed<SectionTabItem<HeatViewMode>[]>(() => [
+  { id: "calendar", label: props.i18n.analysisHeatViewCalendar, icon: "calendar" },
+  { id: "rhythm", label: props.i18n.analysisHeatViewRhythm, icon: "timerOutline" },
+])
+
+/** 时段分布聚合（与热力图同一份范围内条目：merge 排除等口径已在父层过滤） */
+const rhythmStats = computed(() =>
+  buildRhythmStats(filterEntriesByRange(props.stats.entries, range.value.start, range.value.end)),
+)
 
 /** 指标三档（顺序：提交数 → 项目数 → 活跃作者，由粗到细） */
 const metricOptions = computed(() =>
@@ -251,11 +289,12 @@ watch([range, granularity], ([r]) => {
   if (selStart.value && (selStart.value > r.end || selEnd.value < r.start)) clearSelection()
 })
 
-/** 趋势图点击柱子：把选区设为该时间桶（日粒度=当日明细，周/月=区间明细） */
+/** 趋势图点击柱子：先切回热力日历态，再把选区设为该时间桶（分布态下选区不可见，不先切回会像点击无响应） */
 watch(
   () => props.focusRequest,
   (req) => {
     if (!req) return
+    viewMode.value = "calendar"
     anchor.value = { ...req.span }
     cursor.value = { ...req.span }
   },

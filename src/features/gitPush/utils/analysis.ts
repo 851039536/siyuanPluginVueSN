@@ -284,6 +284,32 @@ export function rankProjectsWithColors(
   }
 }
 
+/**
+ * git log 抓取结果是否可能被上限截断：条目数达到上限即视为截断（恰好等于上限时无法区分是否全量，
+ * 按「可能截断」提示更诚实——大仓库的统计口径宁可保守交代，也不静默少算）。
+ */
+export function isCommitLogTruncated(entryCount: number, limit: number): boolean {
+  return limit > 0 && entryCount >= limit
+}
+
+/** 条目过滤选项（概览各区块共用的单一过滤口径；本轮仅接 merge 排除） */
+export interface AnalysisEntryFilterOptions {
+  /** 排除 merge 提交（统计口径修正：merge 会虚增提交数/活跃天数/热力值） */
+  excludeMerges?: boolean
+}
+
+/**
+ * 概览条目过滤（KPI/趋势/排行/热力图必须在同一过滤结果上聚合，否则区块间数字互相矛盾）。
+ * 旧缓存条目无 isMerge 字段时按非 merge 处理（只有明确标记为 merge 的才排除）。
+ */
+export function filterAnalysisEntries(
+  entries: CommitAnalysisEntry[],
+  opts: AnalysisEntryFilterOptions = {},
+): CommitAnalysisEntry[] {
+  if (!opts.excludeMerges) return entries
+  return entries.filter((e) => e.isMerge !== true)
+}
+
 /** 按本地日期把条目裁剪到闭区间 [start, end]（热力图/排行/趋势图统一口径） */
 export function filterEntriesByRange(
   entries: CommitAnalysisEntry[],

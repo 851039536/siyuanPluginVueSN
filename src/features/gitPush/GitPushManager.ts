@@ -1129,6 +1129,11 @@ export class GitPushManager {
     return this.worktreeOps.getCommitLog(projectPath, count)
   }
 
+  /** 当前 HEAD hash（提交分析缓存新鲜度判定；失败/空仓库返回空串表示未知） */
+  async getHeadOid(projectPath: string): Promise<string> {
+    return this.worktreeOps.getHeadOid(projectPath)
+  }
+
   /** 获取最近 N 条提交的变更规模（文件数/增删行数），供 LOG Tab 行悬停提示（批量单命令，失败返回空 Map） */
   async getCommitShortStats(projectPath: string, count: number | "all" = DEFAULT_LOG_LIMIT): Promise<Map<string, CommitStat>> {
     return this.worktreeOps.getCommitShortStats(projectPath, count)

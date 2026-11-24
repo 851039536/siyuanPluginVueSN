@@ -234,6 +234,12 @@ export interface CommitAnalysisEntry {
   isMerge?: boolean
 }
 
+/**
+ * git log 全量抓取的保护上限：「all」实际按 `-n 5000` 执行（大仓库全量输出可能超 10MB maxBuffer 直接 reject）。
+ * 概览 KPI 与截断提示共用此常量，避免文案与实际命令漂移。
+ */
+export const COMMIT_LOG_ALL_LIMIT = 5000
+
 /** Conventional Commits 类型（提交内容分析分类，other 兜底无前缀提交；与 storage.ts 的 CommitType 提交模板类型语义不同） */
 export type CommitAnalysisType =
   | "feat" | "fix" | "docs" | "refactor" | "perf" | "style"
@@ -452,6 +458,10 @@ export interface CommitAnalysisCache {
   entries: CommitAnalysisEntry[]
   /** 项目代码行数排行（随缓存持久化，切换视图复用） */
   projectLineRanking: ProjectLineRankItem[]
+  /** 达到抓取上限的项目 id（旧缓存无此字段按空数组兜底；仅供概览截断提示） */
+  truncatedProjectIds?: string[]
+  /** per-project 分析时的 HEAD hash（缓存新鲜度判定；旧缓存无此字段时不做判定，下次全量分析补齐） */
+  heads?: Record<string, string>
 }
 
 /**
@@ -610,6 +620,8 @@ export interface CommitAnalysisViewSettings {
   heatMetric: CommitHeatMetric
   /** 热力格子密度（旧数据缺该字段时按默认 compact 兜底） */
   heatDensity: CommitHeatDensity
+  /** 概览统计口径是否排除 merge 提交（缺省 false；仅影响概览各区块，规则检查不受影响） */
+  excludeMerges?: boolean
 }
 
 /** 热力等级阈值（固定档）：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */

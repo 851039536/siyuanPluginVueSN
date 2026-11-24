@@ -119,6 +119,7 @@ export {
   buildHeatMetricMap,
   buildProjectSeries,
   computeHeatThresholds,
+  filterAnalysisEntries,
   filterEntriesByRange,
   fixedHeatThresholds,
   formatIsoDate,
@@ -130,6 +131,7 @@ export {
   HEAT_GRANULARITY_DAY_MAX_DAYS,
   HEAT_GRANULARITY_WEEK_MAX_DAYS,
   inclusiveDays,
+  isCommitLogTruncated,
   OTHER_PROJECT_COLOR,
   PROJECT_COMMIT_COLORS,
   PROJECT_RANK_LIMIT,
@@ -146,7 +148,7 @@ export {
   summarizeHeatRange,
   summarizeHeatStreak,
 } from "./analysis"
-export type { CommitRangeSummary, DayCellOptions, HeatBucketCellView, HeatBucketSpan, HeatRangeSummary, ProjectCommitSeries, ProjectCommitSeriesItem, ProjectRankItem } from "./analysis"
+export type { AnalysisEntryFilterOptions, CommitRangeSummary, DayCellOptions, HeatBucketCellView, HeatBucketSpan, HeatRangeSummary, ProjectCommitSeries, ProjectCommitSeriesItem, ProjectRankItem } from "./analysis"
 
 export {
   activityLevel,

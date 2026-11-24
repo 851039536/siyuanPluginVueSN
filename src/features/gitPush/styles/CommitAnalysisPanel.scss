@@ -29,10 +29,10 @@
 // ── 限高区块（项目提交排行：内容超高时列表内部滚动，标题保持可见）──
 // 用 max-height 而非固定 height：项目少时容器随内容收缩，不再撑出大片空白。
 .gpa-section--scroll {
-  // 定值而非桌面端的 `clamp(360px, 50vh, 640px)`：思源里本面板挂在 Dock 中，
-  // 面板高度由 Dock 决定、与窗口高度无关，用 vh 会按整窗高算，撑出远超面板的滚动区。
-  // 420px ≈ 17 行（24px 行高），约为 Dock 面板一半高，超出内部滚动。
-  max-height: 420px; // 无对应 Token（区块限高）
+  // 上限随窗口高度浮动：矮窗口保底 360px（约 14 行），高窗口最多 640px（约 26 行）。
+  // 不用固定值时：桌面端窗口高度差异大，固定 320px 在 1080p/1440p 上只露出十行左右，需频繁内部滚动。
+  // 仍设上限是因为排行最多 50 项，全展开会把下方热力图挤到首屏之外。
+  max-height: clamp(360px, 50vh, 640px); // 无对应 Token（区块限高）
   display: flex;
   flex-direction: column;
 
@@ -69,6 +69,27 @@
   font-family: $ff-mono;
   font-size: $t-2xs;
   opacity: 0.45;
+}
+
+// 截断提示：与口径说明同行，略提亮以示「数据不完整」但不喧宾夺主（项目名在 tooltip）
+.gpa-scope-note-warn {
+  margin-left: $s-2;
+  color: var(--b3-theme-warning, var(--b3-theme-on-surface));
+  opacity: 1;
+}
+
+// 标题行允许换行：标题 + 内联切换 + 指标/摘要过多时整齐折行，而不是横向挤爆或溢出
+.gpa-section-title {
+  flex-wrap: wrap;
+  row-gap: $s-1;
+}
+
+// 标题行内联切换（排行维度 / 热力视图）：分段控件默认自带 $s-3 底外边距与顶部对齐，
+// 直接放进标题行会撑高行盒、让文字与控件错位——此处清零外边距并改行内垂直居中
+.gpa-section-title .gp-sectiontabs.gpa-rank-mode,
+.gpa-section-title .gp-sectiontabs.gpa-heat-view {
+  margin-bottom: 0;
+  align-self: center;
 }
 
 // 排行截断提示（次级信息：弱化色 + 常规字重，紧贴区块标题，不争夺视觉权重）
@@ -220,4 +241,23 @@ $_gpa-rank-row-h: 24px;
   font-size: $t-2xs;
   text-align: right;
   opacity: 0.5;
+}
+
+// 作者排行行（非交互）：与项目行同网格同高，仅去掉按钮语义与悬停反馈
+.gpa-panel .gpa-rank-list .gpa-rank-row.gpa-rank-row--static {
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px 6px minmax(0, 1fr) auto 44px;
+  align-items: center;
+  gap: $s-2;
+  width: 100%;
+  min-height: $_gpa-rank-row-h;
+  padding: $s-px1 $s-2;
+  overflow: hidden;
+  border-radius: $r-sm;
+
+  > span:not(.gpa-rank-bar) {
+    position: relative;
+    z-index: 1; // 压在底纹进度条之上（与按钮行的 .si-button__text 同层级语义）
+  }
 }

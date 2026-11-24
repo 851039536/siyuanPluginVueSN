@@ -12,6 +12,7 @@ import type { GitExecutor } from "./GitExecutor"
 import type { FileDiffResult } from "../types/diff"
 import type { RefSyncSnapshot } from "../types/gitRefs"
 import type { NumstatEntry } from "../utils/gitOutput"
+import { COMMIT_LOG_ALL_LIMIT } from "../types/meta"
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 WorktreeOps 无法在 Node 单测环境加载（branchDelete.git.spec.ts 需要真实实例）
@@ -465,13 +466,26 @@ export class WorktreeOps {
     // %H 完整 hash 作为单一真源：UI 需要短展示时自行截取前 7 位；修正/删除/打 Tag 等
     // 后续 git 定位直接拿完整 hash（短 hash 在大仓库有歧义风险，见 HistoryRewriter 注释）
     const format = "%H%n%s%n%an%n%ar%n%aI%n%P%x1f%D"
-    // "all" 加 -n 5000 保护上限：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
+    // "all" 加上限保护（COMMIT_LOG_ALL_LIMIT）：全量输出在大仓库可能超 10MB maxBuffer 直接 reject
     const args = count === "all"
-      ? ["log", "-n", "5000", `--format=${format}`]
+      ? ["log", "-n", String(COMMIT_LOG_ALL_LIMIT), `--format=${format}`]
       : ["log", `-${count}`, `--format=${format}`]
     const raw = await this.executor.execGit(projectPath, args)
     if (!raw) return []
     return parseCommitLog(raw)
+  }
+
+  /**
+   * 读取当前 HEAD 完整 hash（提交分析缓存的新鲜度判定用）。
+   * 失败/空仓库返回空串：探测结果未知时调用方不得据此判定缓存过期，也不应阻断缓存展示。
+   */
+  async getHeadOid(projectPath: string): Promise<string> {
+    try {
+      const raw = await this.executor.execGit(projectPath, ["rev-parse", "--verify", "HEAD"])
+      return raw.trim()
+    } catch {
+      return ""
+    }
   }
 
   /**

@@ -511,6 +511,7 @@ export const DEFAULT_ANALYSIS_VIEW_SETTINGS: CommitAnalysisViewSettings = {
   heatScale: "auto",
   heatMetric: "commits",
   heatDensity: "compact",
+  excludeMerges: false,
 }
 
 /** 提交规则检查偏好默认值（默认过滤全部项目 + 规则配置全默认：过短阈值 10 字 + 可选规则全开） */

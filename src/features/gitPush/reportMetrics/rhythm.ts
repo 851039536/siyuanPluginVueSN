@@ -1,6 +1,5 @@
 // gitPush 报告指标引擎 — 提交节奏层：星期分布 / 时段分布 / 最长连续提交（纯函数）
 import type { CommitRhythmStats, HourBucketStat, WeekdayStat } from "../types/report"
-import type { NumstatCommit } from "./types"
 import { formatLocalDate } from "../utils/analysis"
 import { parseIsoMs } from "./parseNumstat"
 
@@ -19,7 +18,7 @@ function hourOfDay(iso: string): number {
  * 按星期聚合提交分布（单次 O(n) 遍历，输出固定 7 项，下标 0=周日 ~ 6=周六，与 Date.getDay 对齐）。
  * 解析失败的日期条目忽略；无提交的星期 count 保持 0。
  */
-function aggregateWeekdayStats(commits: NumstatCommit[]): WeekdayStat[] {
+function aggregateWeekdayStats(commits: ReadonlyArray<{ date: string }>): WeekdayStat[] {
   const counts = new Array<number>(7).fill(0)
   for (const c of commits) {
     const t = parseIsoMs(c.date)
@@ -33,7 +32,7 @@ function aggregateWeekdayStats(commits: NumstatCommit[]): WeekdayStat[] {
  * 按 2 小时分桶聚合时段分布（单次 O(n) 遍历，输出固定 12 桶，每桶 [start, start+2)）。
  * 解析失败/越界时刻忽略；无提交的时段 count 保持 0。
  */
-function aggregateHourlyStats(commits: NumstatCommit[]): HourBucketStat[] {
+function aggregateHourlyStats(commits: ReadonlyArray<{ date: string }>): HourBucketStat[] {
   const counts = new Array<number>(24 / HOUR_BUCKET_STEP).fill(0)
   for (const c of commits) {
     const h = hourOfDay(c.date)
@@ -51,7 +50,7 @@ function aggregateHourlyStats(commits: NumstatCommit[]): HourBucketStat[] {
  * 最长连续提交天数（按本地日历日去重后识别最大连续天数，O(n log n)）。
  * 思路：日期集合排序后相邻两日相差 1 天则 streak 递增，否则重置；无提交返回 0。
  */
-function maxCommitStreak(commits: NumstatCommit[]): number {
+function maxCommitStreak(commits: ReadonlyArray<{ date: string }>): number {
   const days = new Set<string>()
   for (const c of commits) {
     const t = parseIsoMs(c.date)
@@ -101,7 +100,7 @@ export function emptyRhythmStats(): CommitRhythmStats {
  * 组装提交节奏聚合（星期分布 + 时段分布 + 最长连续提交 + 高峰时段 + 最活跃星期）。
  * 全部为 0 时：最活跃星期取周一（dow=1），高峰时段取首桶（0-2），避免 UI 索引越界。
  */
-export function buildRhythmStats(commits: NumstatCommit[]): CommitRhythmStats {
+export function buildRhythmStats(commits: ReadonlyArray<{ date: string }>): CommitRhythmStats {
   const weekday = aggregateWeekdayStats(commits)
   const hourly = aggregateHourlyStats(commits)
   const topWeekday = weekday.reduce((best, w) => (w.count > best.count ? w : best), weekday[1])

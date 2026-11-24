@@ -70,6 +70,8 @@
       :line-analyzed="lineAnalyzed"
       :line-failed-count="lineFailedCount"
       :fetch-failures="fetchFailures"
+      :truncated-project-ids="truncatedProjectIds"
+      :stale-hint="analysisStale ? i18n.analysisStaleHint : ''"
       :selected-extensions="selectedExtensions"
       :line-detail-project-id="lineDetailProjectId"
       :line-detail-refreshing="lineDetailRefreshing"
@@ -937,6 +939,7 @@ const {
   lineAnalyzedAt,
   lineFailedCount,
   fetchFailures,
+  truncatedProjectIds,
   runAnalysis,
   runLineStatsAnalysis,
   ensureAnalysis,
@@ -982,6 +985,12 @@ const {
 // 卡片脏标记是这些写操作的统一信号通道，报告数据与之同源（都来自 git 提交历史），
 // 故复用同一信号，避免用户提交后切回报告视图仍看到旧的提交数/行数。
 watch(scheduler.epoch, () => { markReportStale() })
+
+// 提交分析数据来自持久化缓存：写操作（scheduler.epoch 脏信号）后只提示「可能过期」，不自动跑 git
+// （新一轮分析落盘后时间戳变化即撤销提示）
+const analysisStale = ref(false)
+watch(scheduler.epoch, () => { if (analysisAnalyzed.value) analysisStale.value = true })
+watch(analysisAnalyzedAt, () => { analysisStale.value = false })
 
 // ── 报告导出（单文件 HTML，含内联 SVG 图表）──
 const { exporting: reportExporting, exportHtml: exportReportHtml } = useReportExport({

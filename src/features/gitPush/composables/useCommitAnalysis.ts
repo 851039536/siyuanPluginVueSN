@@ -28,14 +28,17 @@ import {
   DEFAULT_COMMIT_RULE_CONFIG,
   readCommitRuleConfig,
 } from "../types"
+import { COMMIT_LOG_ALL_LIMIT } from "../types/meta"
 import {
   classifyFetchFailure,
   compareProjectLineRank,
   fetchFailureReason,
+  isCommitLogTruncated,
   poolProcess,
   ProjectFetchError,
   resolveValidPath,
 } from "../utils"
+import { diffHeadProjects } from "../utils/analysisFreshness"
 
 /**
  * 提交抓取条数类型（数字 = 条数上限；"all" = 全部提交）。
@@ -43,8 +46,11 @@ import {
  */
 export type CommitCount = number | "all"
 
-/** 当前固定的抓取口径：每项目全部提交（省略 git log -n 限制） */
+/** 当前固定的抓取口径：每项目全部提交（实际受 COMMIT_LOG_ALL_LIMIT 保护上限约束，超限走截断提示） */
 const COMMIT_COUNT_FIXED: CommitCount = "all"
+
+/** HEAD 探测防抖：距上次探测不足 60s 的重复进入概览不再探测（Tab 切换/重开面板的高频路径） */
+const HEAD_PROBE_MIN_INTERVAL_MS = 60_000
 
 /** 行数统计可选的常见文件扩展名（配置弹窗多选排除列表，空数组 = 不过滤） */
 export const LINE_STATS_EXTENSIONS = [
@@ -107,6 +113,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const lineAnalyzedAt = ref("")
   /** 跨项目合并的原始提交条目缓存 */
   const entries = ref<CommitAnalysisEntry[]>([])
+  /** 达到抓取上限的项目 id（概览截断提示用；随缓存持久化） */
+  const truncatedProjectIds = ref<string[]>([])
+  /** per-project 分析时的 HEAD hash（新鲜度判定；非响应式，随缓存持久化） */
+  let cachedHeads: Record<string, string> = {}
+  /** 上次 HEAD 探测时间（毫秒；防抖用） */
+  let lastHeadProbeAt = 0
   /** 提交分析失败的项目数（路径无效 throw 计入；规则检查/提交分析共用） */
   const failedCount = ref(0)
   /** 行数统计失败的项目数（与提交分析计数分槽，避免两个视图互相覆盖失败数） */
@@ -276,7 +288,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
 
       /** 单项目抓取结果（含失败标记，供池外统一归类） */
       type ProjectResult =
-        | { ok: true, projectId: string, entries: CommitAnalysisEntry[], totalLines: number, fileCount: number, firstCommit: string, lastCommit: string, fileLines: Map<string, number | null> }
+        | { ok: true, projectId: string, entries: CommitAnalysisEntry[], truncated: boolean, headOid: string, totalLines: number, fileCount: number, firstCommit: string, lastCommit: string, fileLines: Map<string, number | null> }
         | { ok: false, reason: unknown }
 
       // 结果按 targets 下标写入（poolProcess 乱序完成，不能用 push）
@@ -305,6 +317,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           } = await fetchProjectLineStats(p, path)
           return {
             entries: [] as CommitAnalysisEntry[],
+            truncated: false,
+            headOid: "",
             totalLines,
             fileCount,
             firstCommit,
@@ -328,6 +342,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
             date: c.date,
             isMerge: c.isMerge,
           })) as CommitAnalysisEntry[],
+          // 达到上限即视为可能截断（恰好 5000 条时无法区分是否全量，按截断提示更诚实）
+          truncated: commitCount.value === "all" && isCommitLogTruncated(log.length, COMMIT_LOG_ALL_LIMIT),
+          // 首条即 HEAD：抓取时顺带记录快照，新鲜度判定零额外 git 调用
+          headOid: log[0]?.hash ?? "",
           totalLines: 0,
           fileCount: 0,
           firstCommit: "",
@@ -357,6 +375,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
 
       let fail = 0
       const flat: CommitAnalysisEntry[] = []
+      /** 本轮成功项目的 HEAD 快照（提交域；行数域不更新，保持旧值） */
+      const headUpdates: Record<string, string> = {}
+      /** 本轮达到抓取上限的项目 id */
+      const runTruncated: string[] = []
       // 本次运行的失败明细：与 targets 下标一一对应，失败项据此回填项目名与本次实际使用的路径
       const runFailures: ProjectFetchFailure[] = []
       // 用下标 for 循环而非 forEach：forEach 会**跳过稀疏数组的空洞**，
@@ -368,6 +390,10 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         const r = results[i]
         if (r?.ok) {
           flat.push(...r.entries)
+          if (!needNumstat) {
+            headUpdates[target.id] = r.headOid
+            if (r.truncated) runTruncated.push(target.id)
+          }
           continue
         }
         // 未写入结果与显式失败同样计入失败，绝不静默跳过
@@ -446,9 +472,19 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           const order = new Map(projects.value.map((p, i) => [p.id, i]))
           merged.sort((a, b) => (order.get(a.projectId) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.projectId) ?? Number.MAX_SAFE_INTEGER))
           entries.value = merged
+          // 截断标记与 HEAD 快照：只替换目标项目，其余项目沿用上次结果
+          const targetIds = new Set(targets.map((t) => t.id))
+          truncatedProjectIds.value = [
+            ...truncatedProjectIds.value.filter((id) => !targetIds.has(id)),
+            ...runTruncated,
+          ]
+          cachedHeads = { ...cachedHeads, ...headUpdates }
         } else {
           failedCount.value = fail
           entries.value = flat
+          truncatedProjectIds.value = runTruncated
+          // 全量覆盖：抓取失败的项目从快照中移除（HEAD 未知，下次探测按「未知」处理）
+          cachedHeads = headUpdates
         }
         analyzedAt.value = stamp
         analyzed.value = true
@@ -461,6 +497,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         failedCount: failedCount.value,
         entries: entries.value,
         projectLineRanking: needNumstat ? projectLineRanking.value : (oldCache.projectLineRanking ?? []),
+        // 行数域不动提交域字段：沿用旧缓存（提交域运行时以内存值覆盖）
+        truncatedProjectIds: needNumstat ? (oldCache.truncatedProjectIds ?? []) : truncatedProjectIds.value,
+        heads: needNumstat ? (oldCache.heads ?? {}) : cachedHeads,
       })
       // 行数统计请求时同步写入独立行数统计缓存（与提交分析缓存解耦，行数视图优先读此槽位）
       if (needNumstat) {
@@ -528,6 +567,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     cacheLoaded = true
     const cache = await manager.storage.commitAnalysisCache.loadOrDefault()
     commitCount.value = COMMIT_COUNT_FIXED
+    // 截断标记与 HEAD 快照随缓存恢复（旧缓存缺字段按空兜底；已删除项目剔除）
+    truncatedProjectIds.value = (cache.truncatedProjectIds ?? []).filter((id) => validProjectIds.value.has(id))
+    cachedHeads = cache.heads ?? {}
     if (cache.entries.length === 0) return
     // 过滤已删除项目的残留条目（项目删除后缓存不再展示其数据）
     const valid = cache.entries.filter((e) => validProjectIds.value.has(e.projectId))
@@ -552,6 +594,25 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     }
   }
 
+  /**
+   * 缓存新鲜度刷新：并发探测各项目 HEAD，与缓存快照比对，只对 HEAD 变化的项目走子集重抓。
+   * 探测失败/旧缓存无快照一律不判定（不阻断缓存展示）；60s 内重复进入视图直接跳过。
+   */
+  async function refreshStaleProjects() {
+    if (runBusy || !analyzed.value || entries.value.length === 0) return
+    if (Date.now() - lastHeadProbeAt < HEAD_PROBE_MIN_INTERVAL_MS) return
+    lastHeadProbeAt = Date.now()
+    const heads: Record<string, string> = {}
+    await poolProcess(projects.value, manager.getGitConcurrency(), async (p) => {
+      heads[p.id] = await manager.getHeadOid(resolveValidPath(p)).catch(() => "")
+    })
+    const stale = diffHeadProjects(cachedHeads, heads, projects.value.map((p) => p.id))
+    if (stale.length > 0) {
+      console.info(`[gitPush] 提交分析缓存过期，局部重抓 ${stale.length} 个项目`)
+      await runAnalysis(stale)
+    }
+  }
+
   /** 进入分析视图的统一入口：先尝试复用持久化缓存，无有效缓存时才重新分析；同时加载显示设置与规则检查项目偏好 */
   async function ensureAnalysis() {
     await loadViewSettings()
@@ -561,7 +622,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     if ((pendingReanalyze || !analyzed.value || entries.value.length === 0) && !runBusy) {
       pendingReanalyze = false
       await runAnalysis()
+      return
     }
+    await refreshStaleProjects()
   }
 
   /** 行数统计视图专用缓存加载：优先读取独立槽位 git-push-line-stats-cache，无数据时回退到提交分析旧缓存的行数数据（兼容老版本升级用户）；行数排行同样过滤已删除项目 */
@@ -759,6 +822,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     failedCount,
     lineFailedCount,
     fetchFailures,
+    truncatedProjectIds,
     runAnalysis,
     runLineStatsAnalysis,
     ensureAnalysis,

@@ -10,6 +10,15 @@
     <!-- 视图状态："分析中…/上次分析 xx/未分析" 或统计页的快照状态 -->
     <template #start>
       <span class="gp-analysistoolbar-status">{{ resolvedStatusText }}</span>
+      <!-- 缓存过期提示：不新增常驻文案，仅警告图标 + tooltip；点击等同「重新分析」 -->
+      <Button
+        v-if="staleHint"
+        icon="alertCircleOutline"
+        variant="ghost"
+        size="xsmall"
+        :title="staleHint"
+        @click="emit('run')"
+      />
     </template>
     <template #end>
       <!-- 视图特有控件（范围选择 / 项目过滤 / 扩展名过滤 / 刷新等） -->
@@ -66,6 +75,8 @@ const props = withDefaults(defineProps<{
   outlined?: boolean
   /** 工具条无障碍名称 */
   ariaLabel?: string
+  /** 缓存过期提示（非空时显示警告图标，文案走 tooltip；三视图共用，缺省不显示） */
+  staleHint?: string
 }>(), {
   running: false,
   done: false,
@@ -74,6 +85,7 @@ const props = withDefaults(defineProps<{
   notRunKey: "",
   showRun: true,
   outlined: false,
+  staleHint: "",
 })
 
 const emit = defineEmits<{

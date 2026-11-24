@@ -104,15 +104,38 @@
 }
 
 // 热力图标题行右侧摘要（连续 / 最长 / 合计）：推到行尾，等宽数字避免刷新时宽度抖动
-// 热力指标下拉（区块标题行内联：与连续/合计摘要同行）
-.gpa-heat-metric.si-select {
-  width: 104px;
+// 热力指标分段控件（区块标题行内联：与连续/合计摘要同行；形态与显示设置弹窗一致，
+// 指标仅 3 项，内联常驻比下拉更易扫视）
+.gpa-heat-metric-seg {
+  display: flex;
+  gap: $s-px2;
+  background: var(--b3-theme-surface);
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  padding: $s-px2;
   flex-shrink: 0;
 }
 
-.gpa-heat-metric.si-select .si-select__dropdown {
-  width: auto;
-  min-width: 140px;
+.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button {
+  padding: $s-px2 $s-1;
+  border: none;
+  border-radius: $r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  font-size: $t-2xs;
+  transition: background 0.12s, color 0.12s;
+}
+
+.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button:hover {
+  background: var(--b3-list-hover);
+  color: var(--b3-theme-on-surface);
+}
+
+// 选中态排在 hover 之后：同特异性时后者生效，避免悬停已选中项被 hover 底色覆盖
+.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button[aria-pressed="true"] {
+  background: var(--b3-theme-primary);
+  color: var(--b3-theme-on-primary);
+  font-weight: $fw-semibold;
 }
 
 .gpa-heat-stats {

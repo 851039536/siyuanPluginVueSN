@@ -12,15 +12,19 @@
         :aria-label="i18n.analysisHeatTitle"
       />
       <template v-if="viewMode === 'calendar'">
-        <!-- 热力指标（提交数 / 项目数 / 活跃作者） -->
-        <Select
-          class="gpa-heat-metric"
-          :model-value="viewSettings.heatMetric"
-          size="xsmall"
-          :options="metricOptions"
-          :aria-label="i18n.analysisHeatMetric"
-          @change="onMetricChange"
-        />
+        <!-- 热力指标（提交数 / 项目数 / 活跃作者）：内联分段按钮，形态与显示设置弹窗一致 -->
+        <div class="gpa-heat-metric-seg">
+          <Button
+            v-for="m in metricOptions"
+            :key="m.value"
+            class="gpa-heat-metric-seg-btn"
+            variant="ghost"
+            size="xsmall"
+            dense
+            :aria-pressed="viewSettings.heatMetric === m.value"
+            @click="onMetricChange(m.value)"
+          >{{ m.label }}</Button>
+        </div>
         <span class="gpa-heat-stats">
           <span
             v-for="(item, i) in summaryItems"
@@ -88,7 +92,7 @@ import type { CommitAnalysisStats, CommitAnalysisViewSettings } from "../../type
 import type { HeatBucketSpan } from "../../utils"
 import type { SectionTabItem } from "../common/sectionTabs"
 import { computed, ref, watch } from "vue"
-import Select from "@/components/Select.vue"
+import Button from "@/components/Button.vue"
 import {
   buildHeatBuckets,
   buildHeatMetricMap,
@@ -151,7 +155,7 @@ const metricOptions = computed(() =>
   })),
 )
 
-/** 指标切换：只接受已验证的三档值（Select 的 change 载荷为宽类型） */
+/** 指标切换：只接受已验证的三档值（分段按钮的 value 为宽联合类型） */
 function onMetricChange(v: string | number | boolean | null) {
   if (v === "commits" || v === "projects" || v === "authors") {
     emit("updateViewSettings", { heatMetric: v })

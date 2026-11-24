@@ -212,11 +212,20 @@
   &:hover { opacity: 1; }
 }
 
-// 分支管理按钮：与折叠按钮同款弱化，避免抢分支标签的视觉焦点
+// 分支管理按钮（低频）：分支行悬停或行内聚焦时浮现；默认占位隐藏避免抢分支标签的视觉焦点
 .gp-branch-row .gp-branch-manage-btn.si-button {
-  opacity: 0.6;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
 
-  &:hover { opacity: 1; }
+.gp-branch-row:hover .gp-branch-manage-btn.si-button,
+.gp-branch-row:focus-within .gp-branch-manage-btn.si-button {
+  opacity: 0.6;
+}
+
+.gp-branch-row .gp-branch-manage-btn.si-button:hover,
+.gp-branch-row .gp-branch-manage-btn.si-button:focus-visible {
+  opacity: 1;
 }
 
 // ========== 卡片增强（顶栏信息区专属） ==========

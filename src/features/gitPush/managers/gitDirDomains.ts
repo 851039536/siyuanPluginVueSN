@@ -17,12 +17,32 @@ const ALL_KINDS: ProjectQueryKind[] = [
   "stash",
   "tags",
   "conflicts",
+  "graph",
+  "reflog",
+  "branchCompare",
 ]
 
-/** 本地引用推进（提交 / reset / 分支增删）：日志、分支、stash 快照都可能变，ahead 也会变 */
-const LOCAL_REF_KINDS: ProjectQueryKind[] = ["pushStatus", "workingTree", "log", "branches", "stash"]
+/**
+ * 本地引用推进（提交 / reset / 分支增删）：日志、分支、stash 快照都可能变，ahead 也会变。
+ * 提交图 / 对比结果 / reflog 与 log 同源——都看引用指向与提交可达性，故一并失效。
+ */
+const LOCAL_REF_KINDS: ProjectQueryKind[] = [
+  "pushStatus",
+  "workingTree",
+  "log",
+  "branches",
+  "stash",
+  "graph",
+  "reflog",
+  "branchCompare",
+]
 
-/** 远程跟踪引用推进（fetch / push）：只影响 ahead/behind 快照 */
+/**
+ * 远程跟踪引用推进（fetch / push）：只影响 ahead/behind 快照。
+ * 提交图不跟着失效：fetch 只新增远程引用与对象，不改变本分支的提交可达性；
+ * 若 F7 选择展示远程引用装饰、或 F8 允许远端分支参与对比，再把 graph/branchCompare 加进来，
+ * 现在加等于每次 fetch 都让打开展示的图白重载一轮。
+ */
 const REMOTE_REF_KINDS: ProjectQueryKind[] = ["pushStatus"]
 
 /** 合并/rebase 中断状态：冲突列表 + 工作区（未合并文件）+ ahead 都可能变 */
@@ -32,6 +52,9 @@ const SEQ_STATE_KINDS: ProjectQueryKind[] = ["pushStatus", "workingTree", "confl
  * git 内部噪音路径（与任何展示域都无关），必须**显式忽略**：
  * 递归监听整棵 gitdir 后，一次 fetch 会写 `objects/pack/*`、`logs/refs/remotes/*`，
  * 若按「未识别即全标」处理，一次 fetch 就退化成「重载全部域」——正是 P1-1 要避免的进程风暴。
+ *
+ * `logs/` 例外：`logs/HEAD` 是 `git reflog show` 的落盘位置，已在下面单独挑出映射到 reflog，
+ * 其余 `logs/**`（各引用的私有 reflog）保持忽略——HEAD reflog 已覆盖同样的操作序列。
  */
 const IGNORED_PREFIXES = [
   "objects/",
@@ -73,6 +96,13 @@ export function classifyGitDirChanges(changedPaths: string[]): ProjectQueryKind[
     const path = raw.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+$/, "")
     if (path === "") {
       for (const kind of ALL_KINDS) kinds.add(kind)
+      continue
+    }
+    // HEAD reflog：必须在 `logs/` 噪音前缀之前判断（否则永远走不到）。
+    // 只认 `logs/HEAD`：`logs/refs/**` 是各引用的私有 reflog，同一次操作 HEAD reflog
+    // 必然同步写入，映射它们只会让每次 commit 多一条重复脏标记。
+    if (path === "logs/HEAD") {
+      kinds.add("reflog")
       continue
     }
     // 噪音路径：直接忽略（见 IGNORED_PREFIXES/IGNORED_FILES 说明）

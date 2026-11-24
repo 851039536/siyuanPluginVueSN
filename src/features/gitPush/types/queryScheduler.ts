@@ -27,6 +27,13 @@ export type ProjectQueryKind =
   | "tags"
   | "remoteTags"
   | "conflicts"
+  // ── 历史可视化 / 恢复数据域（F6/F7/F8 的查询入口）──
+  /** 提交图（DAG + 分支 lane + 引用装饰，随本地引用推进失效） */
+  | "graph"
+  /** reflog（`git reflog show`，随 `.git/logs/HEAD` 落盘失效） */
+  | "reflog"
+  /** 分支/提交对比（三点 diff，两侧引用任一推进即失效） */
+  | "branchCompare"
 
 /** `loadStatus` 的两档语义 */
 export type ProjectStatusMode =

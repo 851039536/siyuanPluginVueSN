@@ -294,7 +294,8 @@ export function useGitProbe(deps: GitProbeDeps) {
       void scheduler.loadWorkingTree(projectId, { force: true }).catch(() => {})
     }
 
-    // 其余域只标脏：卡片挂载时由 applyDirty 按需重载（收起/未展示的卡片不付这个成本）
+    // 其余域只标脏：卡片挂载时由 applyDirty 按需重载（收起/未展示的卡片不付这个成本）。
+    // graph / reflog / branchCompare 目前尚无消费者，落地 F6/F7/F8 后由对应视图消费。
     const lazyKinds = kinds.filter((kind) => kind !== "pushStatus" && kind !== "workingTree")
     if (lazyKinds.length > 0) scheduler.invalidate(projectId, ...lazyKinds)
     onProbeResult?.(true, Date.now())

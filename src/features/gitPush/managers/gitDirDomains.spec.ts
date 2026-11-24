@@ -38,7 +38,32 @@ describe("classifyGitDirChanges", () => {
       "COMMIT_EDITMSG",
       "objects/ab/cdef",
     ])
-    expect(new Set(kinds)).toEqual(new Set(["pushStatus", "workingTree", "log", "branches", "stash"]))
+    expect(new Set(kinds)).toEqual(new Set([
+      "pushStatus", "workingTree", "log", "branches", "stash", "reflog", "graph", "branchCompare",
+    ]))
+  })
+
+  it("logs/HEAD 单独映射 reflog，其余 logs/** 仍是噪音", () => {
+    expect(classifyGitDirChanges(["logs/HEAD"])).toEqual(["reflog"])
+    expect(classifyGitDirChanges(["logs/refs/heads/main"])).toEqual([])
+    expect(classifyGitDirChanges(["logs/refs/remotes/origin/main"])).toEqual([])
+  })
+
+  it("提交图与分支对比跟随本地引用推进，不跟随 fetch / 暂存", () => {
+    const commit = classifyGitDirChanges(["refs/heads/main"])
+    expect(commit).toEqual(expect.arrayContaining(["graph", "branchCompare", "reflog"]))
+    // fetch / push / git add 不改变本分支可达性，不能触发图与对比重载
+    for (const path of ["FETCH_HEAD", "refs/remotes/origin/main", "index"]) {
+      const kinds = classifyGitDirChanges([path])
+      expect(kinds).not.toContain("graph")
+      expect(kinds).not.toContain("branchCompare")
+    }
+    expect(classifyGitDirChanges(["FETCH_HEAD"])).toEqual(["pushStatus"])
+  })
+
+  it("packed-refs 同样让提交图与对比失效", () => {
+    const kinds = classifyGitDirChanges(["packed-refs"])
+    expect(kinds).toEqual(expect.arrayContaining(["graph", "branchCompare"]))
   })
 
   it("仅 index 变化（git add）只标 workingTree", () => {
@@ -73,13 +98,17 @@ describe("classifyGitDirChanges", () => {
   })
 
   it("噪音路径被忽略，未识别路径保守全标", () => {
-    // 纯噪音：不产生任何域
-    expect(classifyGitDirChanges(["objects/pack/pack-1.idx", "hooks/pre-commit.sample", "logs/HEAD"])).toEqual([])
-    // 未识别（如 git 新版本新增文件、config 改动）：全标，宁可多查不可漏报
-    expect(classifyGitDirChanges(["config"]).length).toBe(7)
+    // 纯噪音：不产生任何域（logs/HEAD 已改由 reflog 域消费，故这里用私有 reflog 作样本）
+    expect(classifyGitDirChanges([
+      "objects/pack/pack-1.idx",
+      "hooks/pre-commit.sample",
+      "logs/refs/heads/main",
+    ])).toEqual([])
+    // 未识别（如 git 新版本新增文件、config 改动）：全标（10 个域），宁可多查不可漏报
+    expect(classifyGitDirChanges(["config"]).length).toBe(10)
     // 平台未给 filename（null → 空串）：同样保守全标
-    expect(classifyGitDirChanges([""]).length).toBe(7)
-    expect(classifyGitDirChanges([]).length).toBe(7)
+    expect(classifyGitDirChanges([""]).length).toBe(10)
+    expect(classifyGitDirChanges([]).length).toBe(10)
   })
 
   it("反斜杠与 ./ 前缀被归一（Windows 事件路径）", () => {

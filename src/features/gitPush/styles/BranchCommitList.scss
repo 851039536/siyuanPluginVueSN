@@ -158,7 +158,7 @@
   }
 }
 
-// 删除提交按钮：与相邻的无害按钮（查看文件 / 打 Tag）在**扫视**时就区分开。
+// 删除提交按钮：与相邻的无害按钮（打 Tag）在**扫视**时就区分开。
 // 原先与 .bcl-tag-btn 共用同一条规则（同为中性色、hover 才变主色），导致「改写历史」这个
 // 危险入口和两个无害邻居长得完全一样，只能靠 title 分辨。现改为常驻错误色描边感。
 .bcl-drop-btn {
@@ -176,21 +176,6 @@
     opacity: 1;
     color: var(--b3-theme-error);
     background: var(--b3-theme-error-lightest, rgba(231, 76, 60, 0.08));
-  }
-}
-
-// 查看文件按钮（常显，点击进入提交文件清单；弱化色随 hover 增强）
-.bcl-files-btn {
-  flex-shrink: 0;
-  padding: 0 $s-px2;
-  opacity: 0.7;
-  transition:
-    opacity 0.12s ease,
-    color 0.12s ease;
-
-  &:hover {
-    opacity: 1;
-    color: var(--b3-theme-primary);
   }
 }
 

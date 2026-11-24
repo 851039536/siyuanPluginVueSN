@@ -131,16 +131,6 @@
           @keydown.enter.stop.prevent="$emit('fixCommit', entry)"
           @keydown.space.stop.prevent="$emit('fixCommit', entry)"
         >{{ entry.message }}</span>
-        <!-- 查看提交文件按钮（常显；点击弹出该提交修改的文件清单） -->
-        <Button
-          class="bcl-files-btn"
-          variant="ghost"
-          size="xsmall"
-          dense
-          icon="fileOutline"
-          :title="i18n.commitFilesOpen"
-          @click.stop="$emit('viewFiles', entry)"
-        />
         <!-- 打 Tag 按钮（常显） -->
         <Button
           class="bcl-tag-btn"
@@ -261,7 +251,6 @@ const emit = defineEmits<{
   addTag: [entry: CommitLogEntry]
   resetTo: [entry: CommitLogEntry]
   dropCommit: [entry: CommitLogEntry]
-  viewFiles: [entry: CommitLogEntry]
 }>()
 
 const countOptions = [200, 300, 500, 1000, 2000, "all"] as const

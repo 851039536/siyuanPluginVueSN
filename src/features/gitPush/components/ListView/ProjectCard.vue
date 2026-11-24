@@ -156,7 +156,6 @@
           @add-tag="openTagCreate"
           @reset-to="openReset"
           @drop-commit="openCommitDrop"
-          @view-files="openCommitFiles"
         />
       </template>
 
@@ -230,14 +229,6 @@
       @restore="onReflogRestore"
     />
 
-    <!-- 提交文件弹窗（LOG Tab 行内入口；列出该提交修改的文件清单） -->
-    <CommitFilesDialog
-      v-if="filesTarget"
-      :i18n="i18n"
-      :target="filesTarget"
-      @close="filesTarget = null"
-    />
-
     <!-- 在指定提交上打 Tag 弹窗（LOG Tab 行内入口） -->
     <TagCommitDialog
       v-if="taggingEntry"
@@ -294,7 +285,6 @@ import {
   resolveValidPath,
 } from "../../utils"
 import { fmtTemplate } from "../../utils/i18nFormat"
-import CommitFilesDialog from "../common/CommitFilesDialog.vue"
 import CommitFixDialog from "../common/CommitFixDialog.vue"
 import DropCommitDialog from "../common/DropCommitDialog.vue"
 import ReflogDialog from "../common/ReflogDialog.vue"
@@ -593,20 +583,6 @@ function openCommitDrop(entry: CommitLogEntry) {
 function handleDropSaved() {
   void reloadLog()
   reloadPushStatusAfterRewrite()
-}
-
-/** 当前正在查看文件的提交条目（null = 未打开提交文件弹窗） */
-const filesTarget = ref<CommitFixTarget | null>(null)
-
-/** LOG Tab 点击查看文件：把 CommitLogEntry 转为通用查看目标（复用 CommitFixTarget 形状） */
-function openCommitFiles(entry: CommitLogEntry) {
-  filesTarget.value = {
-    projectId: props.project.id,
-    projectName: props.project.name,
-    hash: entry.hash,
-    message: entry.message,
-    isMerge: entry.isMerge,
-  }
 }
 
 /** 当前正在打 Tag 的提交条目（null = 未打开打 Tag 弹窗） */

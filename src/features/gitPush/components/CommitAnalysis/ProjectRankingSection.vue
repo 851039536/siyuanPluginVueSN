@@ -10,6 +10,23 @@
         :items="modeItems"
         :aria-label="title"
       />
+      <!-- 显示条数：内联分段按钮（仅 3 项，常驻比下拉更易扫视；"全部"不截断） -->
+      <div
+        class="gpa-rank-limit-seg"
+        role="group"
+        :aria-label="i18n.analysisRankLimitLabel"
+      >
+        <Button
+          v-for="opt in limitOptions"
+          :key="String(opt.value)"
+          class="gpa-rank-limit-seg-btn"
+          variant="ghost"
+          size="xsmall"
+          dense
+          :aria-pressed="limit === opt.value"
+          @click="emit('updateLimit', opt.value)"
+        >{{ opt.label }}</Button>
+      </div>
       <!-- 截断提示：不加会让各行次数之和小于顶部「总提交次数」，看起来像统计出错 -->
       <span
         v-if="truncatedHint"
@@ -81,14 +98,14 @@
 // gitPush 提交排行（项目/作者双模式）：范围内条目 → 横向进度条行（条宽按榜首归一，颜色按名次分配）。
 // 作者模式复用 rankByCountWithTotal（同名作者跨项目合并计数），口径与 KPI/趋势/热力图同源。
 // 刻意不用饼图（20 项不可读）与竖向柱（占高度且项目名要旋转）；条宽写百分比变量，不做 calc 乘法。
-import type { CommitAnalysisEntry } from "../../types"
+import type { AnalysisRankLimit, CommitAnalysisEntry } from "../../types"
 import type { SectionTabItem } from "../common/sectionTabs"
 import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
 import SectionTabs from "../common/SectionTabs.vue"
+import { ANALYSIS_RANK_LIMITS } from "../../types"
 import {
   PROJECT_COMMIT_COLORS,
-  PROJECT_RANK_LIMIT,
   rankByCountWithTotal,
   rankProjectsWithColors,
 } from "../../utils"
@@ -100,10 +117,13 @@ const props = defineProps<{
   i18n: Record<string, any>
   /** 已按显示范围裁剪的提交条目（排行与趋势图同源） */
   entries: CommitAnalysisEntry[]
+  /** 排行显示条数（10 / 30 / all） */
+  limit: AnalysisRankLimit
 }>()
 
 const emit = defineEmits<{
   viewProject: [projectId: string]
+  updateLimit: [limit: AnalysisRankLimit]
 }>()
 
 /** 当前排行维度（组件内状态，不持久化：默认项目维度） */
@@ -113,6 +133,21 @@ const modeItems = computed<SectionTabItem<RankMode>[]>(() => [
   { id: "project", label: props.i18n.analysisRankModeProject, icon: "folderOutline" },
   { id: "author", label: props.i18n.analysisRankModeAuthor, icon: "accountGroup" },
 ])
+
+/** 条数选项（10 / 30 走「前 N」模板，全部用排行自己的「全部」文案，避免复用范围预设语义） */
+const limitOptions = computed(() =>
+  ANALYSIS_RANK_LIMITS.map((value) => ({
+    value,
+    label: value === "all"
+      ? props.i18n.analysisRankAll
+      : String(props.i18n.analysisRankTopN || "").replace("{0}", String(value)),
+  })),
+)
+
+/** 传给排行函数的实际条数（"all" 用 Infinity 让 slice 透传全部） */
+const rankingLimit = computed(() =>
+  props.limit === "all" ? Number.POSITIVE_INFINITY : props.limit,
+)
 
 const title = computed(() =>
   mode.value === "project" ? props.i18n.analysisProjectRanking : props.i18n.analysisAuthorRanking,
@@ -141,11 +176,11 @@ const ranking = computed<{ totalGroups: number, rows: RankRow[] }>(() => {
   let raw: { id: string, name: string, count: number, color: string }[]
   let totalGroups: number
   if (mode.value === "project") {
-    const ranked = rankProjectsWithColors(props.entries, PROJECT_RANK_LIMIT)
+    const ranked = rankProjectsWithColors(props.entries, rankingLimit.value)
     raw = ranked.rows
     totalGroups = ranked.totalGroups
   } else {
-    const ranked = rankByCountWithTotal(props.entries, (e) => e.author, PROJECT_RANK_LIMIT)
+    const ranked = rankByCountWithTotal(props.entries, (e) => e.author, rankingLimit.value)
     // 与项目模式一致：色板按名次分配，保证 Top 10 异色
     raw = ranked.rows.map((r, i) => ({
       id: r.key,
@@ -184,7 +219,7 @@ function rowStyle(row: RankRow): Record<string, string> {
 
 /**
  * 截断提示文案（未截断时为空串不渲染）。
- * 数据层按 PROJECT_RANK_LIMIT 截断，若此处不交代，用户会看到「各行次数之和 < 总提交次数」而误以为统计错误。
+ * 数据层按所选条数截断，若此处不交代，用户会看到「各行次数之和 < 总提交次数」而误以为统计错误。
  */
 const truncatedHint = computed(() => {
   const shown = ranking.value.rows.length

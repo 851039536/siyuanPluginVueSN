@@ -156,10 +156,12 @@
               @pick="onTrendPick"
             />
 
-            <!-- 项目提交排行：横向进度条（范围内口径，与趋势图同源） -->
+            <!-- 项目提交排行：横向进度条（范围内口径，与趋势图同源；条数可选 10/30/全部） -->
             <ProjectRankingSection
               :i18n="i18n"
               :entries="rangeEntries"
+              :limit="viewSettings.rankLimit ?? 'all'"
+              @update-limit="onRankLimitChange"
               @view-project="emit('viewProject', $event)"
             />
 
@@ -314,7 +316,7 @@
 // gitPush 提交分析视图入口容器：三视角 Tab（提交概览 / 规则检查 / 行数排行）。
 // 三者同属一次 runCore 抓取（entries 供概览与规则检查，numstat/totalLines 供行数排行），
 // 故合并为一个视图 + 内部 Tab：运行按钮只有一个，Tab 切换只切视角不重跑 git。
-import type { CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleConfig, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
+import type { AnalysisRankLimit, CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleConfig, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
 import type { HeatBucketSpan } from "../../utils"
 import type { StatCardItem } from "../common/StatCardGrid.vue"
 import type { SectionTabItem } from "../common/sectionTabs"
@@ -510,6 +512,11 @@ const rangeEntries = computed(() =>
 /** 切换「排除 merge」口径（持久化到视图设置；四区块同时生效） */
 function toggleExcludeMerges() {
   emit("updateViewSettings", { excludeMerges: !props.viewSettings.excludeMerges })
+}
+
+/** 切换排行显示条数（10 / 30 / 全部；持久化到视图设置，切视图后仍保留） */
+function onRankLimitChange(limit: AnalysisRankLimit) {
+  emit("updateViewSettings", { rankLimit: limit })
 }
 
 /** 缓存过期提示（行数域与提交快照无关，仅提交域两个视角展示） */

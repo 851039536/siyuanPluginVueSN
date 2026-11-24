@@ -222,9 +222,6 @@ export function buildHeatMetricMap(
 
 // ── 项目提交趋势（排行条形 / 每日堆叠柱共用）──
 
-/** 项目排行显示上限（超出时列表内部滚动，并在标题旁提示截断） */
-export const PROJECT_RANK_LIMIT = 50
-
 /** 项目配色（堆叠柱/排行条/当日分布共用；按名次分配，保证 Top 10 异色） */
 export const PROJECT_COMMIT_COLORS = [
   "#3b82f6",
@@ -668,7 +665,7 @@ export function buildHeatBucketCell(
  * 通用计数排行：按 keyFn 分组计数，降序取前 limit 条，并额外返回截断前的**完整分组数**（totalGroups）。
  *
  * 用途：排行区在截断时须向用户交代「仅显示前 N 名（共 M 名）」——否则各行次数之和会**小于**
- * 顶部 KPI 卡的总提交数，看起来像统计出错（项目数 > PROJECT_RANK_LIMIT 时必然发生）。
+ * 顶部 KPI 卡的总提交数，看起来像统计出错（项目分组数 > 排行显示条数时必然发生）。
  */
 export function rankByCountWithTotal<T>(
   items: T[],

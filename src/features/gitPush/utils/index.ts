@@ -134,7 +134,6 @@ export {
   isCommitLogTruncated,
   OTHER_PROJECT_COLOR,
   PROJECT_COMMIT_COLORS,
-  PROJECT_RANK_LIMIT,
   rankByCountWithTotal,
   rankProjectsWithColors,
   resolveAnalysisRange,

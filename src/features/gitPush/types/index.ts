@@ -102,6 +102,7 @@ export interface GroupedProject {
 // ── 重导出元数据（来自 meta.ts，独立模块切断循环引用）──
 export {
   ANALYSIS_MONTH_KEYS,
+  ANALYSIS_RANK_LIMITS,
   ANALYSIS_WEEKDAY_KEYS,
   DEFAULT_COMMIT_RULE_CONFIG,
   FETCH_FAILURE_KIND_KEYS,
@@ -119,7 +120,7 @@ export {
   HEAT_LEVEL_THRESHOLDS,
   readCommitRuleConfig,
 } from "./meta"
-export type { BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CardLayout, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, CommitFixTarget, CommitHeatDensity, CommitHeatGranularity, CommitHeatMetric, CommitHeatScaleMode, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, CommitTrendGranularity, FetchFailureKind, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PendingProjectRowView, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteAheadCount, RemoteBehindCount, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoScanResult, StatsTableRow, StatsView, UncommittedItem, ViewMode } from "./meta"
+export type { BfgCleanPlan, BfgCleanResult, BfgPrefs, BfgRuntimeState, CardLayout, CommitAnalysisCache, CommitAnalysisEntry, CommitAnalysisStats, CommitAnalysisType, CommitAnalysisViewSettings, AnalysisRankLimit, CommitFixTarget, CommitHeatDensity, CommitHeatGranularity, CommitHeatMetric, CommitHeatScaleMode, CommitRuleCheckStats, CommitRuleConfig, CommitRuleReasonKey, CommitRuleViolation, CommitTrendGranularity, FetchFailureKind, LineStatsCache, LineStatsSummary, NeedsPullItem, NeedsPushItem, PanelView, PendingProjectItem, PendingProjectRowView, PlatformKey, PlatformStatusItem, PlatformTableCellView, PlatformTableRowView, ProjectFetchFailure, ProjectLineRankItem, PushStatusStats, RemoteAheadCount, RemoteBehindCount, RemoteCoverage, RepoBlobItem, RepoCleanPrefs, RepoLinkAuditCell, RepoLinkAuditRow, RepoLinkAuditState, RepoScanResult, StatsTableRow, StatsView, UncommittedItem, ViewMode } from "./meta"
 
 // ── 重导出查询调度契约（useProjectQueryScheduler 实现，queryScheduler.ts）──
 export type {

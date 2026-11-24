@@ -31,7 +31,7 @@
 .gpa-section--scroll {
   // 上限随窗口高度浮动：矮窗口保底 360px（约 14 行），高窗口最多 640px（约 26 行）。
   // 不用固定值时：桌面端窗口高度差异大，固定 320px 在 1080p/1440p 上只露出十行左右，需频繁内部滚动。
-  // 仍设上限是因为排行最多 50 项，全展开会把下方热力图挤到首屏之外。
+  // 仍设上限是因为排行在「全部」档可能很长，全展开会把下方热力图挤到首屏之外。
   max-height: clamp(360px, 50vh, 640px); // 无对应 Token（区块限高）
   display: flex;
   flex-direction: column;
@@ -104,9 +104,10 @@
 }
 
 // 热力图标题行右侧摘要（连续 / 最长 / 合计）：推到行尾，等宽数字避免刷新时宽度抖动
-// 热力指标分段控件（区块标题行内联：与连续/合计摘要同行；形态与显示设置弹窗一致，
-// 指标仅 3 项，内联常驻比下拉更易扫视）
-.gpa-heat-metric-seg {
+// 标题行内联分段控件（热力指标 / 排行条数）：与连续/合计摘要同行；形态与显示设置弹窗一致，
+// 选项仅 3 项，内联常驻比下拉更易扫视
+.gpa-heat-metric-seg,
+.gpa-rank-limit-seg {
   display: flex;
   gap: $s-px2;
   background: var(--b3-theme-surface);
@@ -116,7 +117,8 @@
   flex-shrink: 0;
 }
 
-.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button {
+.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button,
+.gpa-section-title .gpa-rank-limit-seg .gpa-rank-limit-seg-btn.si-button {
   padding: $s-px2 $s-1;
   border: none;
   border-radius: $r-sm;
@@ -126,13 +128,15 @@
   transition: background 0.12s, color 0.12s;
 }
 
-.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button:hover {
+.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button:hover,
+.gpa-section-title .gpa-rank-limit-seg .gpa-rank-limit-seg-btn.si-button:hover {
   background: var(--b3-list-hover);
   color: var(--b3-theme-on-surface);
 }
 
 // 选中态排在 hover 之后：同特异性时后者生效，避免悬停已选中项被 hover 底色覆盖
-.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button[aria-pressed="true"] {
+.gpa-section-title .gpa-heat-metric-seg .gpa-heat-metric-seg-btn.si-button[aria-pressed="true"],
+.gpa-section-title .gpa-rank-limit-seg .gpa-rank-limit-seg-btn.si-button[aria-pressed="true"] {
   background: var(--b3-theme-primary);
   color: var(--b3-theme-on-primary);
   font-weight: $fw-semibold;

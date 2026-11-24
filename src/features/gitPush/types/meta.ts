@@ -599,6 +599,12 @@ export function isAnalysisRangePreset(v: string): v is AnalysisRangePreset {
 /** 显示范围取值：预设或指定年份 */
 export type AnalysisRange = AnalysisRangePreset | number
 
+/** 提交排行显示条数：前 10 / 前 30 / 全部（"all" 不截断） */
+export type AnalysisRankLimit = 10 | 30 | "all"
+
+/** 排行条数可选项（顺序即控件顺序：由少到全） */
+export const ANALYSIS_RANK_LIMITS = [10, 30, "all"] as const satisfies readonly AnalysisRankLimit[]
+
 /** 提交分析显示设置（热力图视图配置，持久化到 git-push-analysis-view） */
 export interface CommitAnalysisViewSettings {
   /**
@@ -622,6 +628,8 @@ export interface CommitAnalysisViewSettings {
   heatDensity: CommitHeatDensity
   /** 概览统计口径是否排除 merge 提交（缺省 false；仅影响概览各区块，规则检查不受影响） */
   excludeMerges?: boolean
+  /** 项目/作者排行显示条数（缺省 all：不截断；旧数据缺该字段时同样按 all 兜底） */
+  rankLimit?: AnalysisRankLimit
 }
 
 /** 热力等级阈值（固定档）：0 次 → level 0；≥1 / ≥3 / ≥6 / ≥12 次 → level 1~4（提交粒度，区别于 statistics 的文档操作阈值） */

@@ -9,7 +9,7 @@
  * 支持操作：HeadBucket(测试连接)、PutObject(上传Buffer)、GetObject(流式下载/读文本)、
  * ListObjects(自动翻页列举)、DeleteObject(删除)
  */
-import type { S3Config, S3FileInfo } from "./types"
+import type { S3Config, S3FileInfo, S3TestResult } from "./types"
 import { DEFAULT_UPLOAD_TIMEOUT_SEC, MSG_DESKTOP_ONLY } from "./types"
 import { getNodeModules, getNodeHttp } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -38,6 +38,48 @@ function requireFsPath() {
   }
 }
 
+/** 拼接失败细节（去空、去重）：连接测试需同时保留 HeadBucket 与 ListObjects 两条路径的诊断信息 */
+function joinDetail(...parts: Array<string | undefined>): string | undefined {
+  const list = [...new Set(parts.filter((p): p is string => Boolean(p)))]
+  return list.length > 0 ? list.join(" | ") : undefined
+}
+
+// ========== 连接测试文案组装（共享层零内置文案） ==========
+
+/**
+ * 连接测试文案模板：由调用方用自身 i18n 填充。
+ * `bucketMissing` 需含 `{bucket}` 占位符，`httpFailed` 需含 `{status}`，`exception` 需含 `{detail}`。
+ */
+export interface S3TestTexts {
+  connected: string
+  connectedViaList: string
+  authFailed: string
+  bucketMissing: string
+  httpFailed: string
+  exception: string
+}
+
+/** 按结果码组装连接测试展示文案（技术细节追加在后，不掩盖状态语义） */
+export function composeS3TestMessage(result: S3TestResult, texts: S3TestTexts): string {
+  switch (result.code) {
+    case "connected":
+      return texts.connected
+    case "connectedViaList":
+      return texts.connectedViaList
+    case "authFailed":
+      return result.detail ? `${texts.authFailed}: ${result.detail}` : texts.authFailed
+    case "bucketMissing":
+      return texts.bucketMissing.replace("{bucket}", result.detail ?? "")
+    case "httpFailed":
+      return texts.httpFailed.replace("{status}", String(result.status ?? "?"))
+    case "exception":
+      return texts.exception.replace("{detail}", result.detail ?? "")
+    default:
+      // 兜底：新增结果码但未补文案时，至少把原始码暴露出来便于定位
+      return result.code
+  }
+}
+
 // ========== S3Client 类 ==========
 
 export class S3Client {
@@ -54,53 +96,52 @@ export class S3Client {
   /**
    * 测试连接
    *
-   * 先尝试 HeadBucket，若失败则回退为 ListObjects（OpenList/Alist 等代理通常不支持 HEAD）
+   * 先尝试 HeadBucket，若失败则回退为 ListObjects（OpenList/Alist 等代理通常不支持 HEAD）。
+   * 返回结构化结果（零文案），展示文本由调用方按自身 i18n 经 `composeS3TestMessage` 组装。
    */
-  async testConnection(): Promise<{ success: boolean; message: string }> {
+  async testConnection(): Promise<S3TestResult> {
     try {
       // 第一步：尝试 HeadBucket
       const headResult = await this.tryHeadBucket()
-      if (headResult.success) return headResult
+      if (headResult.success) { return headResult }
 
       // 第二步：降级为 ListObjects（OpenList 等代理通常只支持 GET/PUT）
       const listResult = await this.tryListObjects()
-      if (listResult.success) {
-        return { success: true, message: "S3 连接成功（ListObjects 验证）" }
-      }
+      if (listResult.success) { return listResult }
 
-      // 两个都失败，返回 HeadBucket 的详细错误
+      // 两个都失败：以 HeadBucket 的失败原因为主，附带 ListObjects 细节便于诊断
       return {
-        success: false,
-        message: `${headResult.message}（ListObjects 也失败: ${listResult.message}）`,
+        ...headResult,
+        detail: joinDetail(headResult.detail, listResult.detail),
       }
     } catch (err: unknown) {
-      return { success: false, message: `连接失败: ${getErrorMessage(err)}` }
+      return { success: false, code: "exception", detail: getErrorMessage(err) }
     }
   }
 
   /** HeadBucket 测试 */
-  private async tryHeadBucket(): Promise<{ success: boolean; message: string }> {
+  private async tryHeadBucket(): Promise<S3TestResult> {
     try {
       const response = await this.request("HEAD", this.buildUri(""), "", this.buildUrl(""), null)
 
       if (response.ok) {
-        return { success: true, message: "S3 连接成功" }
+        return { success: true, code: "connected" }
       }
 
       if (response.status === 403) {
-        return { success: false, message: "认证失败 (403)，请检查 Access Key 和 Secret Key" }
+        return { success: false, code: "authFailed" }
       }
       if (response.status === 404) {
-        return { success: false, message: `存储桶 "${this.config.bucket}" 不存在 (404)` }
+        return { success: false, code: "bucketMissing", detail: this.config.bucket }
       }
-      return { success: false, message: `HeadBucket 失败 (HTTP ${response.status})` }
+      return { success: false, code: "httpFailed", status: response.status }
     } catch (err: unknown) {
-      return { success: false, message: `HeadBucket 异常: ${getErrorMessage(err)}` }
+      return { success: false, code: "exception", detail: getErrorMessage(err) }
     }
   }
 
   /** ListObjects 测试（HeadBucket 不可用时的降级方案） */
-  private async tryListObjects(): Promise<{ success: boolean; message: string }> {
+  private async tryListObjects(): Promise<S3TestResult> {
     try {
       const prefix = this.config.prefix || ""
       const query = `prefix=${encodeURIComponent(prefix)}&max-keys=1`
@@ -108,17 +149,17 @@ export class S3Client {
       const response = await this.request("GET", this.buildUri(""), query, this.buildUrl(""), null)
 
       if (response.ok) {
-        return { success: true, message: "S3 连接成功" }
+        return { success: true, code: "connectedViaList" }
       }
 
-      const body = await response.text()
       if (response.status === 403) {
-        const errMsg = parseS3Error(body, response.status)
-        return { success: false, message: `认证失败: ${errMsg}，请检查密钥是否正确` }
+        // 服务端错误码/描述语言无关，直接作为技术细节回传给调用方
+        const errMsg = parseS3Error(await response.text(), response.status)
+        return { success: false, code: "authFailed", detail: errMsg }
       }
-      return { success: false, message: `ListObjects 失败 (HTTP ${response.status})` }
+      return { success: false, code: "httpFailed", status: response.status }
     } catch (err: unknown) {
-      return { success: false, message: `ListObjects 异常: ${getErrorMessage(err)}` }
+      return { success: false, code: "exception", detail: getErrorMessage(err) }
     }
   }
 
@@ -132,7 +173,7 @@ export class S3Client {
 
     if (!response.ok) {
       const body = await response.text()
-      throw new S3HttpError(formatS3Error(response, body, "S3 上传失败"), response.status)
+      throw new S3HttpError(formatS3Error(response, body, "S3 upload"), response.status)
     }
   }
 
@@ -153,11 +194,11 @@ export class S3Client {
 
     if (!response.ok) {
       const body = await response.text()
-      throw new S3HttpError(formatS3Error(response, body, "S3 下载失败"), response.status)
+      throw new S3HttpError(formatS3Error(response, body, "S3 download"), response.status)
     }
   }
 
-  /** 读取对象文本内容（404 返回 null，供增量清单等小文件读取使用） */
+  /** 读取对象文本内容（404 返回 null，供 manifest / 小配置文件等读取使用） */
   async getObjectText(key: string): Promise<string | null> {
     const url = this.buildUrl(key)
     const response = await this.request("GET", this.buildUri(key), "", url, null)
@@ -165,7 +206,7 @@ export class S3Client {
     if (response.status === 404) { return null }
     if (!response.ok) {
       const body = await response.text()
-      throw new S3HttpError(formatS3Error(response, body, "S3 读取对象失败"), response.status)
+      throw new S3HttpError(formatS3Error(response, body, "S3 get object"), response.status)
     }
 
     return response.text()
@@ -185,7 +226,7 @@ export class S3Client {
       const response = await this.request("GET", this.buildUri(""), query, this.buildUrl(""), null)
       if (!response.ok) {
         const body = await response.text()
-        throw new S3HttpError(formatS3Error(response, body, "S3 列举文件失败"), response.status)
+        throw new S3HttpError(formatS3Error(response, body, "S3 list objects"), response.status)
       }
 
       const { files, isTruncated, nextMarker } = parseListObjectsXml(await response.text())
@@ -208,7 +249,7 @@ export class S3Client {
 
     if (!response.ok && response.status !== 204) {
       const body = await response.text()
-      throw new S3HttpError(formatS3Error(response, body, "S3 删除失败"), response.status)
+      throw new S3HttpError(formatS3Error(response, body, "S3 delete object"), response.status)
     }
   }
 
@@ -377,7 +418,7 @@ export class S3Client {
     return new Promise<NodeResponse>((resolve, reject) => {
       const doRequest = (reqTransport: any, reqOptions: any, currentUrl: string, redirectCount: number) => {
         if (redirectCount > 5) {
-          reject(new Error("S3 请求失败: 重定向次数过多（超过 5 次），请检查 endpoint 配置"))
+          reject(new Error("S3 request failed: too many redirects (>5), please check the endpoint configuration"))
           return
         }
         const req = reqTransport.request(reqOptions, (res: any) => {
@@ -425,7 +466,7 @@ export class S3Client {
               // 清理半成品文件，避免残留损坏文件被当作有效备份
               output.destroy()
               fs.unlink(saveToPath).catch(() => { /* 忽略清理失败 */ })
-              reject(new Error(`S3 下载写盘失败: ${err.message}`))
+              reject(new Error(`S3 download write failed: ${err.message}`))
             }
             res.on("error", fail)
             output.on("error", fail)
@@ -460,7 +501,7 @@ export class S3Client {
             chunks.push(chunk)
           })
           res.on("error", (err: Error) => {
-            reject(new Error(`S3 响应读取失败: ${err.message}`))
+            reject(new Error(`S3 response read failed: ${err.message}`))
           })
           res.on("end", () => {
             const responseBody = Buffer.concat(chunks)
@@ -485,11 +526,11 @@ export class S3Client {
         const uploadTimeoutSec = this.config.uploadTimeoutSec > 0 ? this.config.uploadTimeoutSec : DEFAULT_UPLOAD_TIMEOUT_SEC
         const timeoutMs = body ? uploadTimeoutSec * 1000 : 30000
         req.setTimeout(timeoutMs, () => {
-          req.destroy(new Error(`请求超时（${timeoutMs / 1000}s）`))
+          req.destroy(new Error(`Request timeout (${timeoutMs / 1000}s)`))
         })
 
         req.on("error", (err: any) => {
-          reject(new Error(`S3 请求失败: ${err.message}`))
+          reject(new Error(`S3 request failed: ${err.message}`))
         })
 
         if (body && onProgress) {

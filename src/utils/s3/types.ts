@@ -43,6 +43,30 @@ export interface S3FileInfo {
   timestamp?: number
 }
 
+// ========== 连接测试结果（共享层零文案） ==========
+
+/**
+ * 连接测试结果码。
+ * 共享层只产出结果码与技术细节，不内置任何展示文案：
+ * 文案由各功能模块按自身 i18n 组装（经 `composeS3TestMessage`），避免中文混入英文界面。
+ */
+export type S3TestCode =
+  | "connected"
+  | "connectedViaList"
+  | "authFailed"
+  | "bucketMissing"
+  | "httpFailed"
+  | "exception"
+
+export interface S3TestResult {
+  success: boolean
+  code: S3TestCode
+  /** HTTP 状态码（httpFailed 分支） */
+  status?: number
+  /** 技术细节：桶名（bucketMissing）/ 服务端错误或异常文本（其余失败分支），不含展示文案 */
+  detail?: string
+}
+
 // ========== 常量 ==========
 
 /** 非桌面端无法访问文件系统的统一错误消息（模块内部使用，不经 i18n） */

@@ -422,19 +422,19 @@ describe("formatS3Error", () => {
   it("405 且带 allow 头时附加服务器允许的方法", () => {
     const res = { ok: false, status: 405, text: async () => "", headers: { allow: "GET, HEAD" } }
     const out = formatS3Error(res, "<Error><Code>MethodNotAllowed</Code><Message>no</Message></Error>", "upload")
-    expect(out).toContain("（服务器允许的方法: GET, HEAD）")
+    expect(out).toContain("(allowed methods: GET, HEAD)")
   })
 
   it("405 但无 allow 头时不附加", () => {
     const res = { ok: false, status: 405, text: async () => "" }
     const out = formatS3Error(res, "<Error><Code>MethodNotAllowed</Code><Message>no</Message></Error>", "upload")
-    expect(out).not.toContain("服务器允许的方法")
+    expect(out).not.toContain("allowed methods")
   })
 
   it("非 405 即使带 allow 头也不附加", () => {
     const res = { ok: false, status: 403, text: async () => "", headers: { allow: "GET" } }
     const out = formatS3Error(res, "<Error><Code>C</Code><Message>m</Message></Error>", "upload")
-    expect(out).not.toContain("服务器允许的方法")
+    expect(out).not.toContain("allowed methods")
   })
 })
 

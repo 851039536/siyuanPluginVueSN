@@ -198,13 +198,14 @@ export function parseSingleTag(xml: string, tag: string): string {
 
 /**
  * 格式化 S3 错误信息，附带响应头诊断（405 时显示 Allow 头）
- * 用于 upload/download/list/delete 等非 ok 响应的统一错误构造
+ * 用于 upload/download/list/delete 等非 ok 响应的统一错误构造。
+ * 输出保持语言中立（operation 由调用方以英文技术标签传入），供各功能模块在自身 i18n 前缀后拼接展示。
  */
 export function formatS3Error(response: NodeResponse, body: string, operation: string): string {
   const errMsg = parseS3Error(body, response.status)
   let extra = ""
   if (response.status === 405 && response.headers?.["allow"]) {
-    extra = `（服务器允许的方法: ${response.headers["allow"]}）`
+    extra = ` (allowed methods: ${response.headers["allow"]})`
   }
   return `${operation}: ${errMsg}${extra}`
 }

@@ -57,7 +57,7 @@ export async function listDir(client: S3Client, prefix: string): Promise<S3DirLi
     const response = await client.sendRequest("GET", "", query)
     if (!response.ok) {
       const body = await response.text()
-      const message = formatS3Error(response, body, "S3 目录列举失败")
+      const message = formatS3Error(response, body, "S3 list directory")
       // 只有「明确不支持 delimiter」才升级为专用错误，供调用方降级；其余错误原样抛出
       throw isDelimiterUnsupported(response, body)
         ? new DelimiterUnsupportedError(message)
@@ -100,12 +100,12 @@ export async function copyObject(client: S3Client, srcKey: string, destKey: stri
 
   if (!response.ok) {
     const body = await response.text()
-    throw new Error(formatS3Error(response, body, "S3 复制对象失败"))
+    throw new Error(formatS3Error(response, body, "S3 copy object"))
   }
   // CopyObject 的错误可能藏在 200 响应体中（AWS 已知行为：连接保活时先回 200 再在 body 报错）
   const text = await response.text()
   if (text && /<Error>/.test(text) && !/<CopyObjectResult/.test(text)) {
-    throw new Error(`S3 复制对象失败: ${text.slice(0, 200)}`)
+    throw new Error(`S3 copy object failed: ${text.slice(0, 200)}`)
   }
 }
 
@@ -120,6 +120,6 @@ export async function createFolder(client: S3Client, folderPrefix: string): Prom
 
   if (!response.ok) {
     const body = await response.text()
-    throw new Error(formatS3Error(response, body, "S3 创建文件夹失败"))
+    throw new Error(formatS3Error(response, body, "S3 create folder"))
   }
 }

@@ -44,7 +44,7 @@ export async function initiateMultipartUpload(client: S3Client, key: string): Pr
   const response = await client.sendRequest("POST", key, "uploads=")
   const xml = await response.text()
   if (!response.ok) {
-    const message = formatS3Error(response, xml, "S3 初始化分片上传失败")
+    const message = formatS3Error(response, xml, "S3 multipart init")
     if (isMultipartUnsupported(response.status, xml)) {
       throw new MultipartUnsupportedError(message)
     }
@@ -52,7 +52,7 @@ export async function initiateMultipartUpload(client: S3Client, key: string): Pr
   }
   const uploadId = parseSingleTag(xml, "UploadId")
   if (!uploadId) {
-    throw new Error("S3 初始化分片上传失败: 响应缺少 UploadId")
+    throw new Error("S3 multipart init failed: missing UploadId in response")
   }
   return uploadId
 }
@@ -73,7 +73,7 @@ export async function uploadPart(
   const response = await client.sendRequest("PUT", key, query, { body, onProgress })
   if (!response.ok) {
     const xml = await response.text()
-    throw new Error(formatS3Error(response, xml, `S3 分片 ${partNumber} 上传失败`))
+    throw new Error(formatS3Error(response, xml, `S3 multipart part ${partNumber}`))
   }
   // ETag 优先取响应头（Node http 头 key 小写）；部分兼容实现将其放入响应体
   const headerEtag = (response.headers?.["etag"] ?? "").replace(/^"|"$/g, "")
@@ -81,7 +81,7 @@ export async function uploadPart(
   const xml = await response.text()
   const bodyEtag = parseSingleTag(xml, "ETag")
   if (bodyEtag) { return bodyEtag }
-  throw new Error(`S3 分片 ${partNumber} 上传失败: 响应缺少 ETag`)
+  throw new Error(`S3 multipart part ${partNumber} failed: missing ETag in response`)
 }
 
 /**
@@ -99,10 +99,10 @@ export async function completeMultipartUpload(
   const response = await client.sendRequest("POST", key, query, { body })
   const xml = await response.text()
   if (!response.ok) {
-    throw new Error(formatS3Error(response, xml, "S3 完成分片上传失败"))
+    throw new Error(formatS3Error(response, xml, "S3 multipart complete"))
   }
   if (xml && /<Error>/.test(xml) && !/<CompleteMultipartUploadResult/.test(xml)) {
-    throw new Error(`S3 完成分片上传失败: ${xml.slice(0, 200)}`)
+    throw new Error(`S3 multipart complete failed: ${xml.slice(0, 200)}`)
   }
 }
 
@@ -144,7 +144,7 @@ export async function uploadFileMultipart(
       const readLen = Math.min(MULTIPART_PART_SIZE, fileSize - position)
       const { bytesRead } = await fd.read(part, 0, readLen, position)
       if (bytesRead <= 0) {
-        throw new Error(`S3 分片 ${partNumber} 读取失败: 文件 ${filePath} 提前结束`)
+        throw new Error(`S3 multipart part ${partNumber} read failed: file ${filePath} ended early`)
       }
       const slice = bytesRead === MULTIPART_PART_SIZE ? part : Buffer.from(part.subarray(0, bytesRead))
       const partStart = position

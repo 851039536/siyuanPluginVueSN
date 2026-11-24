@@ -8,7 +8,8 @@
 import { computed, ref } from "vue"
 import type { S3Config, S3FileInfo } from "../types"
 import { DEFAULT_S3_CONFIG } from "../types"
-import { S3Client } from "@/utils/s3/s3Client"
+import { S3Client, composeS3TestMessage } from "@/utils/s3/s3Client"
+import type { S3TestTexts } from "@/utils/s3/s3Client"
 import { uploadFileSmart as uploadFileSmartShared } from "@/utils/s3/s3Multipart"
 import type { BackupProgress } from "../modules/BackupManager"
 import { buildS3Key } from "../utils"
@@ -50,6 +51,18 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
 
   // ========== 方法 ==========
 
+  /** 连接测试文案模板（用本功能 i18n 填充共享层的结果码） */
+  function testTexts(): S3TestTexts {
+    return {
+      connected: i18n.s3TestConnected,
+      connectedViaList: i18n.s3TestConnectedViaList,
+      authFailed: i18n.s3TestAuthFailed,
+      bucketMissing: i18n.s3TestBucketMissing,
+      httpFailed: i18n.s3TestHttpFailed,
+      exception: i18n.s3TestException,
+    }
+  }
+
   /** 初始化或更新 S3 客户端 */
   function initClient(config?: S3Config): S3Client {
     const cfg = config || s3Config.value
@@ -69,7 +82,9 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
 
     try {
       const client = new S3Client(cfg)
-      return await client.testConnection()
+      // 共享层只返回结果码，展示文案在此按本功能 i18n 组装（避免英文界面混入中文）
+      const result = await client.testConnection()
+      return { success: result.success, message: composeS3TestMessage(result, testTexts()) }
     } catch (err: unknown) {
       return { success: false, message: `${i18n.testException}: ${getErrorMessage(err)}` }
     }

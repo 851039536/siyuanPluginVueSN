@@ -130,7 +130,8 @@ import { onMounted, reactive, ref } from "vue"
 import { showMessage } from "siyuan"
 import type { S3Config } from "@/utils/s3/types"
 import { DEFAULT_S3_CONFIG } from "@/utils/s3/types"
-import { S3Client } from "@/utils/s3/s3Client"
+import { S3Client, composeS3TestMessage } from "@/utils/s3/s3Client"
+import type { S3TestTexts } from "@/utils/s3/s3Client"
 import { encryptSettingStrict, decryptSetting } from "@/utils/settingsCrypto"
 import { getErrorMessage } from "@/utils/stringUtils"
 import Button from "@/components/Button.vue"
@@ -192,7 +193,19 @@ async function handleTest(): Promise<void> {
   if (testing.value) { return }
   testing.value = true
   testResult.value = null
-  testResult.value = await new S3Client(snapshot()).testConnection()
+  // 共享层只返回结果码，展示文案按本模块 i18n 组装（避免英文界面混入中文）
+  const result = await new S3Client(snapshot()).testConnection()
+  testResult.value = {
+    success: result.success,
+    message: composeS3TestMessage(result, {
+      connected: i18n.testConnected,
+      connectedViaList: i18n.testConnectedViaList,
+      authFailed: i18n.testAuthFailed,
+      bucketMissing: i18n.testBucketMissing,
+      httpFailed: i18n.testHttpFailed,
+      exception: i18n.testException,
+    } satisfies S3TestTexts),
+  }
   testing.value = false
 }
 

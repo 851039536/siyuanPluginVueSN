@@ -33,6 +33,14 @@ export const DEFAULT_POSITION: ToastPosition = "top-right"
 /** 尺寸档位（与全库控件阶梯一致；定义在 `overlay/types.ts`） */
 export type ToastSize = OverlaySize
 
+/** 单条消息上的操作按钮（如「撤销」）：点击后执行回调并自动关闭该条 */
+export interface ToastAction {
+  /** 按钮文案 */
+  label: string
+  /** 点击回调；抛错只告警，消息仍会关闭 */
+  onAction: () => void
+}
+
 /**
  * 单条消息（对齐官方 `ToastMessageOptions`，去掉本项目不做的两项）：
  * - 不做 `styleClass` / `contentStyleClass`：本项目组件一律用库内类名契约，
@@ -53,6 +61,8 @@ export interface ToastMessageOptions {
   life?: number
   /** 所属分组：仅当与该组件 `group` 相等时才会被渲染 */
   group?: string
+  /** 可选操作按钮（如「撤销」）；未传时不渲染该按钮 */
+  action?: ToastAction
   /** 组件内部补齐的消息 id（调用方通常不传） */
   id?: number
 }

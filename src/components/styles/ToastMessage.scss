@@ -115,6 +115,20 @@
   opacity: m.$opacity-muted;
 }
 
+// ========== 操作按钮（如「撤销」，复用共享 Button 的纯文本形态） ==========
+.si-toast__action-wrap {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+// 与关闭按钮同理：Button 是子组件，档位 min-height 会反过来撑高消息卡，须经 :deep() 覆盖
+:deep(.si-toast__action) {
+  min-height: 0;
+  padding-inline: $s-1;
+  white-space: nowrap;
+}
+
 // ========== 关闭按钮（复用共享 Button 的纯图标形态） ==========
 // ⚠️ 类名重复一次抬到 (0,4,0)：Button 自身的 `.si-button--icon-only.si-button--{tier}` 为 (0,3,0)，
 //    只靠源顺序取胜太脆弱（同 Message / FileUpload 的既有做法）。

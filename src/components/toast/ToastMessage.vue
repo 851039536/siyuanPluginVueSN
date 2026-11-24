@@ -59,6 +59,21 @@
           </div>
         </template>
       </div>
+      <!-- 操作按钮（如「撤销」）：点击后执行回调并关闭本条；custom message 插槽下仍保留 -->
+      <div
+        v-if="message.action"
+        class="si-toast__action-wrap"
+      >
+        <Button
+          class="si-toast__action"
+          variant="primary"
+          text
+          :size="size"
+          @click="handleAction"
+        >
+          {{ message.action.label }}
+        </Button>
+      </div>
       <!-- 关闭按钮：closable !== false 才渲染（官方判据）；closeicon 插槽仅替换图标 -->
       <div
         v-if="isClosable"
@@ -219,6 +234,22 @@ const handleClose = () => {
   clearTimer()
   remaining = 0
   emit("close", props.message, "close")
+}
+
+/**
+ * 操作按钮：执行回调后关闭本条。
+ * 回调抛错只告警 —— 否则一次失败会让提示卡在屏幕上，且错误会冒泡成未处理的点击异常。
+ */
+const handleAction = () => {
+  const action = props.message.action
+  if (!action) return
+  try {
+    action.onAction()
+  } catch (e) {
+    console.warn("[Toast] 操作按钮回调执行失败", e)
+  } finally {
+    handleClose()
+  }
 }
 
 onBeforeUnmount(clearTimer)

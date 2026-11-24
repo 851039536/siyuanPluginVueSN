@@ -79,8 +79,9 @@
           class="gp-stash-msg"
           :title="e.message"
         >{{ e.message }}</span>
-        <!-- 悬停提示："恢复并删除 (pop)"，按钮文案："恢复" -->
+        <!-- 悬停提示："恢复并删除 (pop)"，按钮文案："恢复"（行悬停/聚焦时浮现） -->
         <Button
+          class="gp-stash-hover-btn"
           variant="ghost"
           size="xsmall"
           dense
@@ -88,8 +89,9 @@
           :disabled="loading"
           @click="$emit('stashPop', e.index)"
         >{{ i18n.stashRestore }}</Button>
-        <!-- 悬停提示："应用但不删除 (apply)"，按钮文案："应用" -->
+        <!-- 悬停提示："应用但不删除 (apply)"，按钮文案："应用"（行悬停/聚焦时浮现） -->
         <Button
+          class="gp-stash-hover-btn"
           variant="ghost"
           size="xsmall"
           dense
@@ -97,8 +99,9 @@
           :disabled="loading"
           @click="$emit('stashApply', e.index)"
         >{{ i18n.stashApply }}</Button>
-        <!-- 悬停提示："删除 (drop)"，按钮文案："删除" -->
+        <!-- 悬停提示："删除 (drop)"，按钮文案："删除"（行悬停/聚焦时浮现） -->
         <Button
+          class="gp-stash-hover-btn"
           variant="ghost"
           size="xsmall"
           dense
@@ -202,3 +205,7 @@ function confirm() {
 // 当父组件通过 genStashDesc 生成描述后，自动填入输入框
 useGeneratedMsgSync(toRef(props, "generatedMsg"), localMsg)
 </script>
+
+<style lang="scss">
+@use "../../styles/StashSection.scss";
+</style>

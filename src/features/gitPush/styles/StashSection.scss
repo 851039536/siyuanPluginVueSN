@@ -1,0 +1,19 @@
+@use "@/variables.scss" as *;
+
+// stash 行内操作（恢复 / 应用 / 删除）：默认隐藏，行悬停或行内聚焦时浮现。
+// 保留文字标签而非图标——pop 与 apply 图标难以区分，误点 pop 会删除 stash 记录。
+// 占位保留（不用 display:none），避免悬停时描述文字宽度抖动。
+.gp-stash-row .gp-stash-hover-btn {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.gp-stash-row:hover .gp-stash-hover-btn,
+.gp-stash-row:focus-within .gp-stash-hover-btn {
+  opacity: 0.7;
+}
+
+.gp-stash-row .gp-stash-hover-btn:hover,
+.gp-stash-row .gp-stash-hover-btn:focus-visible {
+  opacity: 1;
+}

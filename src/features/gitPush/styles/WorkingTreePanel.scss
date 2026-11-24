@@ -47,6 +47,23 @@
   flex-shrink: 0; // 摘要文字过长时不允许压缩操作按钮
 }
 
+// 摘要条低频动作（多选丢弃 / 全部丢弃 / 刷新）：默认隐藏，悬停摘要条或按钮聚焦时浮现。
+// 占位保留（不用 display:none），避免悬停时摘要文字与按钮位置抖动。
+.wt-summary-actions .wt-hover-btn {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.wt-summary:hover .wt-summary-actions .wt-hover-btn,
+.wt-summary:focus-within .wt-summary-actions .wt-hover-btn {
+  opacity: 0.7;
+}
+
+.wt-summary .wt-summary-actions .wt-hover-btn:hover,
+.wt-summary .wt-summary-actions .wt-hover-btn:focus-visible {
+  opacity: 1;
+}
+
 .wt-body {
   max-height: 420px;
   overflow-y: auto;

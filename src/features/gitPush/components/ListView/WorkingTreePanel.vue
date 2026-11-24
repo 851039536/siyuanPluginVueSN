@@ -97,8 +97,9 @@
             >
               {{ i18n.unstageAll }}
             </Button>
-            <!-- 选择性丢弃：进入多选模式后按勾选批量丢弃 -->
+            <!-- 选择性丢弃：进入多选模式后按勾选批量丢弃（低频动作，摘要条悬停/聚焦时浮现） -->
             <Button
+              class="wt-hover-btn"
               variant="ghost"
               size="xsmall"
               dense
@@ -110,6 +111,7 @@
             />
             <!-- 全部丢弃：图标与行内丢弃一致（危险色），未跟踪/新增文件会被从磁盘删除，确认弹窗会点明数量 -->
             <Button
+              class="wt-hover-btn"
               variant="ghost"
               size="xsmall"
               dense
@@ -122,6 +124,7 @@
             />
             <!-- 单独刷新工作区 -->
             <Button
+              class="wt-hover-btn"
               variant="ghost"
               size="xsmall"
               dense

@@ -343,6 +343,16 @@
   max-height: 170px; // 减去摘要行高度后与 .gp-output 的 200px 上限对齐
   overflow-y: auto;
   padding: $s-2;
+
+  // 流水线自带内边距，避免双层 padding 把阶段链挤窄
+  &--pipeline { padding: 0; }
+}
+
+// 流水线运行中的动作文案 + 累计耗时：两端对齐，与阶段链分隔
+.gp-pipeline-elapsed {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 $s-2 $s-1;
 }
 
 // 控制台单行：头行按状态着色，stdout/stderr 详情行缩进

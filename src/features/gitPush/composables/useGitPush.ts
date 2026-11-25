@@ -52,6 +52,9 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     pushOutputs: gitOps.pushOutputs,
     isPulling: gitOps.isPulling,
     pullOutputs: gitOps.pullOutputs,
+    // 操作流水线（远程真实进度 + 本地真实步骤）
+    opPipelines: gitOps.opPipelines,
+    runLocalPipeline: gitOps.runLocalPipeline,
     pushStatuses: gitOps.pushStatuses,
     workingTrees: gitOps.workingTrees,
     committing: gitOps.committing,

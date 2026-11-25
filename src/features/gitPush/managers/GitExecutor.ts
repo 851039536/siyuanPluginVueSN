@@ -337,7 +337,7 @@ export class GitExecutor {
    * 执行 git 命令（双池信号量限流：网络命令与本地命令独立并发池）
    * @param signal 可选 AbortSignal，触发后 kill 子进程并清等待队列
    * @param timeoutMs 显式超时（不传时自动路由：网络命令默认按设置项（240s），本地命令默认按设置项（60s）；clone 等长耗时操作可传更大值）
-   * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块（clone --progress 等长任务日志展示）
+   * @param onOutput 可选流式输出回调，实时回传 stdout/stderr 原始块及来源流（clone --progress 等长任务日志展示）
    * @param options 可选额外参数（如 rebase 编辑器所需环境变量、视为成功的退出码白名单）
    */
   async execGit(
@@ -345,7 +345,7 @@ export class GitExecutor {
     args: string[],
     signal?: AbortSignal,
     timeoutMs?: number,
-    onOutput?: (chunk: string) => void,
+    onOutput?: (chunk: string, stream: "stdout" | "stderr") => void,
     options?: {
       env?: Record<string, string>
       /** 视为成功的退出码白名单（如 git diff --no-index 有差异时退出码为 1）；仅匹配数字型 code，spawn/超时/缓冲区错误不受影响 */
@@ -476,8 +476,8 @@ export class GitExecutor {
 
         // 流式输出：execFile 的完成回调仍收全量缓冲，此处额外逐块回传（git progress 走 stderr）
         if (onOutput) {
-          spawned.stdout?.on("data", (d: Buffer | string) => onOutput(String(d)))
-          spawned.stderr?.on("data", (d: Buffer | string) => onOutput(String(d)))
+          spawned.stdout?.on("data", (d: Buffer | string) => onOutput(String(d), "stdout"))
+          spawned.stderr?.on("data", (d: Buffer | string) => onOutput(String(d), "stderr"))
         }
 
         const onAbort = () => {

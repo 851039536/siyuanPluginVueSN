@@ -177,6 +177,18 @@ export {
 } from "./report"
 export type { AuthorReportRow, CodeReportData, CodeReportPrefs, CommitRhythmStats, DailyCommitStat, DebtFileRow, DebtSeverity, FileStatRow, HotspotFileRow, HotspotLevel, HotspotLevelSummary, HourBucketStat, ReportRange, WeekdayStat } from "./report"
 
+// ── 操作流水线类型（来自 pipeline.ts）──
+export type {
+  GitProgressStage,
+  OpPipelineLane,
+  PipelineOp,
+  PipelineStageKey,
+  PipelineStageState,
+  PipelineStatus,
+  RemoteOpOptions,
+  RemoteProgressEvent,
+} from "./pipeline"
+
 // ── 重导出远程与本地一致性分析类型与常量（来自 consistency.ts）──
 export {
   EMPTY_CONSISTENCY_CACHE,

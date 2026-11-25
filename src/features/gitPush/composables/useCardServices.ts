@@ -8,6 +8,7 @@ import type {
   PushStatusInfo,
   WorkingTreeInfo,
 } from "../types"
+import type { OpPipelineLane } from "../types/pipeline"
 import { CARD_SERVICES_KEY } from "../types"
 
 /**
@@ -25,6 +26,10 @@ export function useCardServices(project: () => GitProject): {
   stashLoading: ComputedRef<boolean>
   pullOutputs: ComputedRef<PushOutputEntry[]>
   pushOutputs: ComputedRef<PushOutputEntry[]>
+  /** 运行中的推送 / 拉取 / 本地流水线（已按 200ms 可见阈值过滤） */
+  pushLanes: ComputedRef<OpPipelineLane[]>
+  pullLanes: ComputedRef<OpPipelineLane[]>
+  localLanes: ComputedRef<OpPipelineLane[]>
   commitOutput: ComputedRef<string>
   generatingMsg: ComputedRef<{ generating: boolean, deepGenerating: boolean, text: string }>
   gitOpLoading: ComputedRef<boolean>
@@ -56,6 +61,17 @@ export function useCardServices(project: () => GitProject): {
   const stashLoading = computed(() => (byId(records.stashLoading.value) ?? 0) > 0)
   const pullOutputs = computed(() => byId(records.pullOutputs.value) ?? [])
   const pushOutputs = computed(() => byId(records.pushOutputs.value) ?? [])
+  const opPipelines = computed(() => byId(records.opPipelines.value) ?? [])
+  // 只渲染达到可见阈值的 lane：瞬时操作在 200ms 内结束，不会闪烁
+  const pushLanes = computed(() => opPipelines.value.filter((lane) => lane.op === "push" && lane.visible))
+  const pullLanes = computed(() =>
+    opPipelines.value.filter(
+      (lane) => (lane.op === "pull" || lane.op === "smartPull") && lane.visible,
+    ),
+  )
+  const localLanes = computed(() =>
+    opPipelines.value.filter((lane) => lane.key === "local" && lane.visible),
+  )
   const commitOutput = computed(() => byId(records.commitOutputs.value) ?? "")
   const generatingMsg = computed(() => byId(records.generatingMsgs.value) ?? { generating: false, deepGenerating: false, text: "" })
   const gitOpLoading = computed(() => (byId(records.gitOpLoading.value) ?? 0) > 0)
@@ -76,6 +92,9 @@ export function useCardServices(project: () => GitProject): {
     stashLoading,
     pullOutputs,
     pushOutputs,
+    pushLanes,
+    pullLanes,
+    localLanes,
     commitOutput,
     generatingMsg,
     gitOpLoading,

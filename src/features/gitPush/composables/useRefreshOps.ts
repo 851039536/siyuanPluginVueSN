@@ -1,7 +1,10 @@
 // Git 刷新操作集群（单项/工作区/远程；去重与分支复用统一由 useProjectQueryScheduler 承担）
 import type { Ref } from "vue"
 import type { RunBatch } from "./useBatchProgress"
+import type { LocalPipelineStepper } from "./useOpPipeline"
 import type { GitProject, ProjectQueryKind, ProjectQueryScheduler } from "../types"
+import type { PipelineOp, PipelineStageKey } from "../types/pipeline"
+import { FETCH_STAGE_PLAN } from "../utils/opPipeline"
 import { ref } from "vue"
 import { showMessage } from "siyuan"
 import { getErrorMessage } from "@/utils/stringUtils"
@@ -69,6 +72,14 @@ export function useRefreshOps(deps: {
   scheduler: ProjectQueryScheduler
   /** 按域标记卡片自持数据为脏（log/branches/stash 已下沉 ProjectCard） */
   bumpCardRefresh: (id: string, ...domains: ProjectQueryKind[]) => void
+  /** 本地操作流水线（手动 FETCH 展示准备 → 更新引用 → 刷新状态） */
+  runLocalPipeline: <T>(
+    id: string,
+    op: PipelineOp,
+    label: string,
+    plan: readonly PipelineStageKey[],
+    fn: (stepper: LocalPipelineStepper) => Promise<T>,
+  ) => Promise<T>
 }) {
   const {
     projects,
@@ -76,6 +87,7 @@ export function useRefreshOps(deps: {
     tf,
     scheduler,
     bumpCardRefresh,
+    runLocalPipeline,
   } = deps
 
   const refreshing = ref<string | null>(null)
@@ -160,13 +172,17 @@ export function useRefreshOps(deps: {
 
   /** Fetch 所有远程 + 刷新状态（与 handleRefreshRemoteStatus 共用调度器单飞管线） */
   async function handleFetchAll(id: string) {
-    await withRecordLoading(fetching, id, async () => {
-      try {
-        await scheduler.refreshRemote(id, { force: true })
-      } catch (e: unknown) {
-        showMessage(getErrorMessage(e) || tf("fetchFailed"), 5000, "error")
-      }
-    })
+    try {
+      await runLocalPipeline(id, "fetch", tf("fetch"), FETCH_STAGE_PLAN, async (stepper) => {
+        stepper.step("fetchExec")
+        await withRecordLoading(fetching, id, async () => {
+          await scheduler.refreshRemote(id, { force: true })
+        })
+        stepper.step("refreshStatus")
+      })
+    } catch (e: unknown) {
+      showMessage(getErrorMessage(e) || tf("fetchFailed"), 5000, "error")
+    }
   }
 
   return {

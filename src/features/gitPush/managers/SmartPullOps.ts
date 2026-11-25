@@ -5,6 +5,8 @@ import type { GitExecutor } from "./GitExecutor"
 import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 import type { RemoteOpResult } from "./RemoteOps"
+import type { RemoteOpOptions, PipelineStageKey } from "../types/pipeline"
+import { createGitProgressParser } from "../utils/gitProgress"
 import { parseAheadBehind, parseWorktreeStatusV2, findBlockingUntracked } from "../utils/gitOutput"
 import { getProjectRemoteName } from "../utils/platform"
 import { resolveValidPathWithSource } from "../utils/project"
@@ -31,7 +33,11 @@ export class SmartPullOps {
    *   3. 未跟踪文件不会与远端新树冲突（reset --hard 只删除「挡路」的未跟踪文件）。
    * 满足时直接强制对齐远端（不建备份分支，旧提交仅能通过 reflog 找回）；任一不满足则不改动仓库。
    */
-  async smartPullSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
+  async smartPullSingle(
+    id: string,
+    target: PlatformKey,
+    opts?: RemoteOpOptions,
+  ): Promise<RemoteOpResult> {
     const project = await this.store.getProjectById(id)
     if (!project) return { ok: false, stdout: "", stderr: "项目未找到" }
 
@@ -60,6 +66,10 @@ export class SmartPullOps {
           durationMs: Date.now() - startedAt,
         })
         const canceled = () => fail("操作已取消", true)
+        const emitStage = (stage: PipelineStageKey) =>
+          opts?.onProgress?.({ target, kind: "stage", stage })
+        const emitDetail = (detail: string) =>
+          opts?.onProgress?.({ target, kind: "detail", detail })
 
         if (signal.aborted) return canceled()
         try {
@@ -68,6 +78,7 @@ export class SmartPullOps {
           //    顺带把「工作区必须干净」的判定提到 fetch **之前** —— 脏工作区连网络都不必发，
           //    也不必先动远程跟踪引用。v2 的 branch 已在解析层把 `(detached)` 归一化为空串。
           //    `-z` 让含换行/制表符的文件名不再错位（未跟踪清单会直接用于 reset --hard 的挡路判定）。
+          emitStage("status")
           const statusRaw = await this.executor.execGit(
             cwd, ["status", "--porcelain=v2", "--branch", "-z"], signal,
           )
@@ -87,8 +98,35 @@ export class SmartPullOps {
           }
 
           // 3. 只更新远程跟踪引用，不动工作区（失败时工作区与分支均保持原状）
-          await this.executor.execGit(cwd, ["fetch", "--prune", remoteName], signal)
+          emitStage("fetch")
+          // fetch 的真实进度统一映射到 fetch 阶段；stdout/stderr 各持一份解析器
+          const fetchParsers = {
+            stdout: createGitProgressParser(),
+            stderr: createGitProgressParser(),
+          }
+          await this.executor.execGit(
+            cwd,
+            ["fetch", "--progress", "--prune", remoteName],
+            signal,
+            undefined,
+            (chunk, stream) => {
+              for (const line of fetchParsers[stream].push(chunk)) {
+                // 只有数据接收/解包/解析增量的百分比有意义；枚举/计数/压缩的 100% 不能当传输进度
+                const percent = line.stage === "receiving" || line.stage === "unpacking" || line.stage === "resolving"
+                  ? line.percent
+                  : undefined
+                opts?.onProgress?.({
+                  target,
+                  kind: "stage",
+                  stage: "fetch",
+                  percent,
+                  detail: line.detail,
+                })
+              }
+            },
+          )
           // 4. 远程分支必须存在，且相对 HEAD 的领先/落后关系可判定
+          emitStage("inspect")
           const ref = `${remoteName}/${branch}`
           const refRaw = await this.executor.execGit(cwd, [
             "for-each-ref",
@@ -104,11 +142,13 @@ export class SmartPullOps {
           }
           if (stat.ahead === 0) {
             // 本地严格落后：快进即可（merge --ff-only 遇到挡路未跟踪文件会报错而非删除）
+            emitStage("align")
             await this.executor.execGit(cwd, ["merge", "--ff-only", ref], signal)
             return done(`判断拉取完成：本地无独有提交，已快进到 ${ref}。`)
           }
 
           // 5. 关键判据：patch-id 忽略提交信息与 SHA，只有真正独有的改动才计入
+          emitStage("compare")
           const uniqueRaw = await this.executor.execGit(cwd, [
             "rev-list", "--cherry-pick", "--right-only", "--count", `${ref}...HEAD`,
           ], signal)
@@ -146,6 +186,7 @@ export class SmartPullOps {
           }
 
           // 7. 强制对齐（调用方已二次确认，不建备份分支）
+          emitStage("align")
           await this.executor.execGit(cwd, ["reset", "--hard", ref], signal)
 
           return done(
@@ -154,7 +195,9 @@ export class SmartPullOps {
           )
         } catch (e: unknown) {
           if (signal.aborted) return canceled()
-          return fail(`判断拉取失败：${getErrorMessage(e) || String(e)}`)
+          const msg = getErrorMessage(e) || String(e)
+          emitDetail(msg)
+          return fail(`判断拉取失败：${msg}`)
         }
       }),
     )

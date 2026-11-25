@@ -4,7 +4,10 @@ import { ref } from "vue"
 import { showMessage } from "siyuan"
 import { showUndoMessage } from "../notify"
 import type { GitProject, ProjectQueryKind, UndoOutcome } from "../types"
+import type { PipelineOp, PipelineStageKey } from "../types/pipeline"
 import type { DiscardTarget } from "../types/storage"
+import type { LocalPipelineStepper } from "./useOpPipeline"
+import { DISCARD_STAGE_PLAN, QUICK_COMMIT_STAGE_PLAN } from "../utils/opPipeline"
 import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag, shouldUseDeepCommitMessage, summarizeCommitSize } from "../utils"
 import type { NumstatEntry } from "../utils"
 import { describeAiFallback } from "../utils/i18nFormat"
@@ -47,6 +50,14 @@ export function useGitHandlers(deps: {
   bumpCardRefresh: (id: string, ...domains: ProjectQueryKind[]) => void
   /** 重载工作区状态（调度器内部复用缓存分支名，无需调用方传 branch） */
   loadWorkingTree: (id: string) => Promise<void>
+  /** 本地操作流水线（由 useGitOps 注入，包装真实 await 步骤） */
+  runLocalPipeline: <T>(
+    id: string,
+    op: PipelineOp,
+    label: string,
+    plan: readonly PipelineStageKey[],
+    fn: (stepper: LocalPipelineStepper) => Promise<T>,
+  ) => Promise<T>
 }) {
   const {
     projects, showConfirm, safeGitOp, tf,
@@ -55,6 +66,7 @@ export function useGitHandlers(deps: {
     createTagOp, deleteTagOp, pushTagOp,
     abortMergeOp, resolveConflictOp,
     bumpCardRefresh, loadWorkingTree,
+    runLocalPipeline,
   } = deps
 
   /** 提交输出 id → text */
@@ -108,15 +120,21 @@ export function useGitHandlers(deps: {
   }
 
   async function doDiscard(id: string, file: string, staged: boolean, status: string, label: string) {
-    commitOutputs.value[id] = ""
-    acquireFlag(gitOpLoading.value, id)
     try {
-      await discardFile(id, file, staged, status)
-      await loadWorkingTree(id)
+      await runLocalPipeline(id, "discard", label, DISCARD_STAGE_PLAN, async (stepper) => {
+        commitOutputs.value[id] = ""
+        acquireFlag(gitOpLoading.value, id)
+        try {
+          stepper.step("discardExec", file)
+          await discardFile(id, file, staged, status)
+          stepper.step("refreshWorktree")
+          await loadWorkingTree(id)
+        } finally {
+          releaseFlag(gitOpLoading.value, id)
+        }
+      })
     } catch (e: unknown) {
       reportFailure(id, tf("discardOpFailed", label, getErrorMessage(e)))
-    } finally {
-      releaseFlag(gitOpLoading.value, id)
     }
   }
 
@@ -153,15 +171,21 @@ export function useGitHandlers(deps: {
   }
 
   async function doDiscardMany(id: string, files: DiscardTarget[]) {
-    commitOutputs.value[id] = ""
-    acquireFlag(gitOpLoading.value, id)
     try {
-      await discardFiles(id, files)
-      await loadWorkingTree(id)
+      await runLocalPipeline(id, "discard", tf("discardChanges"), DISCARD_STAGE_PLAN, async (stepper) => {
+        commitOutputs.value[id] = ""
+        acquireFlag(gitOpLoading.value, id)
+        try {
+          stepper.step("discardExec", `${files.length}`)
+          await discardFiles(id, files)
+          stepper.step("refreshWorktree")
+          await loadWorkingTree(id)
+        } finally {
+          releaseFlag(gitOpLoading.value, id)
+        }
+      })
     } catch (e: unknown) {
       reportFailure(id, tf("discardManyOpFailed", files.length, getErrorMessage(e)))
-    } finally {
-      releaseFlag(gitOpLoading.value, id)
     }
   }
 
@@ -344,34 +368,43 @@ export function useGitHandlers(deps: {
       [id]: { generating: true, deepGenerating: false, text: "" },
     }
     try {
-      // 先暂存全部变更（无变更时为空操作），再按暂存区规模选择生成方式
-      await stageAllItems(id)
-      // numstat 取规模：多文件 / 大改动走深度生成（标题 + 要点），小改动保持单行、少耗 token
-      const overview = await getStagedOverview(id)
-      const useDeep = shouldUseDeepCommitMessage(summarizeCommitSize(overview ?? {}))
-      const result = await (useDeep ? deepGenerateCommitMsg : generateCommitMsg)(id)
-      generatingMsgs.value = {
-        ...generatingMsgs.value,
-        [id]: { generating: false, deepGenerating: false, text: result.message },
-      }
-      if (!result.message.trim() || result.fallback === "no-diff") {
-        commitOutputs.value[id] = tf("quickCommitNoChanges")
-        return
-      }
-      if (checkCommitRule(result.message)) {
-        commitOutputs.value[id] = tf("quickCommitInvalid")
-        return
-      }
-      const commitResult = await doCommit(id, result.message)
-      let output = commitResult || tf("commitSuccess")
-      if (result.source === "heuristic") {
-        // 一键提交也要说明消息由启发式降级产出
-        output = `${describeAiFallback(result, tf)}\n${output}`
-      }
-      commitOutputs.value[id] = output
-      pruneRecordCache(commitOutputs.value)
-      bumpCardRefresh(id, "log")
-      offerCommitUndo(id)
+      await runLocalPipeline(
+        id, "commit", tf("quickCommit"), QUICK_COMMIT_STAGE_PLAN,
+        async (stepper) => {
+          // 先暂存全部变更（无变更时为空操作），再按暂存区规模选择生成方式
+          stepper.step("stageAll")
+          await stageAllItems(id)
+          stepper.step("generateMsg")
+          // numstat 取规模：多文件 / 大改动走深度生成（标题 + 要点），小改动保持单行、少耗 token
+          const overview = await getStagedOverview(id)
+          const useDeep = shouldUseDeepCommitMessage(summarizeCommitSize(overview ?? {}))
+          const result = await (useDeep ? deepGenerateCommitMsg : generateCommitMsg)(id)
+          generatingMsgs.value = {
+            ...generatingMsgs.value,
+            [id]: { generating: false, deepGenerating: false, text: result.message },
+          }
+          if (!result.message.trim() || result.fallback === "no-diff") {
+            commitOutputs.value[id] = tf("quickCommitNoChanges")
+            return
+          }
+          if (checkCommitRule(result.message)) {
+            commitOutputs.value[id] = tf("quickCommitInvalid")
+            return
+          }
+          stepper.step("commitWrite")
+          const commitResult = await doCommit(id, result.message)
+          stepper.step("refreshState")
+          let output = commitResult || tf("commitSuccess")
+          if (result.source === "heuristic") {
+            // 一键提交也要说明消息由启发式降级产出
+            output = `${describeAiFallback(result, tf)}\n${output}`
+          }
+          commitOutputs.value[id] = output
+          pruneRecordCache(commitOutputs.value)
+          bumpCardRefresh(id, "log")
+          offerCommitUndo(id)
+        },
+      )
     } catch (e: unknown) {
       reportFailure(id, tf("quickCommitFailed", getErrorMessage(e)))
       generatingMsgs.value = {

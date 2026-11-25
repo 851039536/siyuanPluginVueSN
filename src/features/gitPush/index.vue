@@ -368,6 +368,8 @@ const {
   pushOutputs,
   isPulling,
   pullOutputs,
+  opPipelines,
+  runLocalPipeline,
   pushStatuses,
   workingTrees,
   committing,
@@ -1073,6 +1075,7 @@ const {
   createTagOp, deleteTagOp, pushTagOp,
   abortMergeOp, resolveConflictOp,
   bumpCardRefresh, loadWorkingTree,
+  runLocalPipeline,
 })
 
 // ── 刷新操作集群 ──
@@ -1089,6 +1092,7 @@ const {
   projects, runBatchWithProgress, tf,
   scheduler,
   bumpCardRefresh,
+  runLocalPipeline,
 })
 
 // ── 实时探测（三层：.git 文件监听 → 工作区轮询 → 网络慢轮询）──
@@ -1922,6 +1926,7 @@ provide(CARD_SERVICES_KEY, {
     stashLoading,
     pushOutputs,
     pullOutputs,
+    opPipelines,
     commitOutputs,
     generatingMsgs,
     gitOpLoading,

@@ -1,0 +1,174 @@
+@use "@/variables.scss" as *;
+
+// 操作流水线：多远程 = 多行 lane；阶段节点横向串联，连接线在运行时流动
+.gp-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  padding: $s-1 $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-surface);
+}
+
+.gp-pipeline-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gp-pipeline-head {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  min-width: 0;
+  color: var(--b3-theme-primary);
+
+  .gp-pipeline-lane--done & { color: var(--b3-theme-success); }
+  .gp-pipeline-lane--fail & { color: var(--b3-theme-error); }
+  .gp-pipeline-lane--canceled & { color: var(--b3-theme-warning); }
+  .gp-pipeline-lane--skipped & { color: var(--b3-theme-on-surface-light); }
+}
+
+// 平台名 / 操作名：单行省略，避免多远程长名字挤压阶段链
+.gp-pipeline-label {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: $fw-medium;
+}
+
+// 当前阶段真实百分比：等宽数字右对齐，不随进度抖动
+.gp-pipeline-percent {
+  margin-left: auto;
+  padding-left: $s-1;
+  font-variant-numeric: tabular-nums;
+  color: var(--b3-theme-primary);
+}
+
+// 阶段链：允许横向滚动（窄卡片），不换行、不撑破面板
+.gp-pipeline-stages {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.gp-pipeline-stage {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--b3-theme-on-surface-light);
+}
+
+.gp-pipeline-dot {
+  width: 6px;
+  height: 6px;
+  margin-right: $s-px3;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.gp-pipeline-stage-label {
+  line-height: 1.3;
+}
+
+.gp-pipeline-connector {
+  width: 14px;
+  height: 1px;
+  margin: 0 $s-1;
+  background: var(--b3-border-color);
+
+  // 连接线流光：只连到当前运行阶段，表达「正在从这里往下走」
+  &.is-active {
+    background: linear-gradient(
+      90deg,
+      var(--b3-theme-primary) 0%,
+      transparent 50%,
+      var(--b3-theme-primary) 100%
+    );
+    background-size: 200% 100%;
+    animation: gp-pipeline-flow 1.1s linear infinite;
+  }
+}
+
+// 运行中：主题色 + 呼吸圆点
+.gp-pipeline-stage--running {
+  color: var(--b3-theme-primary);
+  font-weight: $fw-medium;
+
+  .gp-pipeline-dot {
+    background: currentColor;
+    animation: gp-pipeline-pulse 1.2s ease-out infinite;
+  }
+}
+
+// 已完成：成功色实心点
+.gp-pipeline-stage--done {
+  color: var(--b3-theme-success);
+
+  .gp-pipeline-dot { background: currentColor; }
+}
+
+.gp-pipeline-stage--fail {
+  color: var(--b3-theme-error);
+
+  .gp-pipeline-dot { background: currentColor; }
+}
+
+.gp-pipeline-stage--canceled {
+  color: var(--b3-theme-warning);
+
+  .gp-pipeline-dot { background: currentColor; }
+}
+
+// 跳过：虚线空心点 + 弱化（未观测 ≠ 已完成，不能画成实心）
+.gp-pipeline-stage--skipped {
+  opacity: 0.45;
+
+  .gp-pipeline-dot { border-style: dashed; }
+}
+
+// 长时间无输出：改琥珀色并闪烁，但阶段不推进
+.gp-pipeline-stage.is-stalled {
+  color: var(--b3-theme-warning);
+
+  .gp-pipeline-dot {
+    background: currentColor;
+    animation: gp-pipeline-blink 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes gp-pipeline-flow {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@keyframes gp-pipeline-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--b3-theme-primary) 45%, transparent); }
+  70% { box-shadow: 0 0 0 4px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes gp-pipeline-blink {
+  50% { opacity: 0.35; }
+}
+
+// 系统减少动态效果：保留阶段信息，只停掉动画
+@media (prefers-reduced-motion: reduce) {
+  .gp-pipeline-connector.is-active,
+  .gp-pipeline-stage--running .gp-pipeline-dot,
+  .gp-pipeline-stage.is-stalled .gp-pipeline-dot {
+    animation: none;
+  }
+}

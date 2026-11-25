@@ -10,6 +10,8 @@ import { PLATFORM_META } from "../types/meta"
 import type { GitExecutor } from "./GitExecutor"
 import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
+import type { RemoteOpOptions, RemoteProgressEvent } from "../types/pipeline"
+import { createGitProgressParser } from "../utils/gitProgress"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 RemoteOps 无法在 Node 单测环境加载（fetchBehind.git.spec.ts 需要真实实例）
 import { getProjectRemoteName, getProjectRemoteNames, hasUnpushedCommits, mayAttemptPush, orderRemotesForPullCheck } from "../utils/platform"
@@ -74,6 +76,40 @@ function parseRemoteRefShas(raw: string): Map<string, string> {
     if (refName && objectName) map.set(refName.trim(), objectName.trim())
   }
   return map
+}
+
+/**
+ * 为单个远程创建进度发送器（每次命令尝试新建，重试时百分比从头计算）。
+ * 未订阅进度时返回 null，调用方退化为普通 execGit，不产生解析开销。
+ */
+function createRemoteProgressSink(
+  onProgress: ((event: RemoteProgressEvent) => void) | undefined,
+  target: PlatformKey | undefined,
+) {
+  if (!onProgress || !target) return null
+  // stdout / stderr 各持一份 carry：两路分块交错时不会把半行拼成畸形阶段
+  const parsers = {
+    stdout: createGitProgressParser(),
+    stderr: createGitProgressParser(),
+  }
+  const emit = (event: Omit<RemoteProgressEvent, "target">) => onProgress({ target, ...event })
+  const consume = (events: ReturnType<typeof parsers.stderr.push>) => {
+    for (const line of events) {
+      if (line.stage) {
+        emit({ kind: "stage", stage: line.stage, percent: line.percent, detail: line.detail })
+      } else {
+        emit({ kind: "detail", detail: line.detail })
+      }
+    }
+  }
+  return {
+    prepare: () => emit({ kind: "prepare" }),
+    push: (chunk: string, stream: "stdout" | "stderr") => consume(parsers[stream].push(chunk)),
+    flush: () => {
+      consume(parsers.stdout.flush())
+      consume(parsers.stderr.flush())
+    },
+  }
 }
 
 export class RemoteOps {
@@ -147,7 +183,13 @@ export class RemoteOps {
     action: "push" | "pull",
     signal?: AbortSignal,
     pullBranch?: string,
-    opts?: { forceWithLease?: boolean, forceBranch?: string },
+    opts?: {
+      forceWithLease?: boolean
+      forceBranch?: string
+      /** 进度事件归属的远程平台（未传则不解析进度） */
+      target?: PlatformKey
+      onProgress?: (event: RemoteProgressEvent) => void
+    },
   ): Promise<RemoteOpResult> {
     if (!remoteName) return RemoteOps.skippedResult
 
@@ -155,22 +197,42 @@ export class RemoteOps {
     if (action === "push") {
       if (opts?.forceWithLease) {
         // 强制推送固定推当前分支，不受「全部分支/仅当前分支」设置影响
-        args = ["push", "--force-with-lease", remoteName, opts.forceBranch || "HEAD"]
+        args = ["push", "--progress", "--force-with-lease", remoteName, opts.forceBranch || "HEAD"]
       } else {
         args = this.pushBranchMode === "head"
-          ? ["push", remoteName, "HEAD"]
-          : ["push", remoteName, "--all"]
+          ? ["push", "--progress", remoteName, "HEAD"]
+          : ["push", "--progress", remoteName, "--all"]
       }
     } else {
       // 显式指定分支，避免非默认上游远程时 Git 报 "did not specify a branch" 错误
       args = pullBranch
-        ? ["pull", remoteName, pullBranch, "--ff-only"]
-        : ["pull", remoteName, "--ff-only"]
+        ? ["pull", "--progress", remoteName, pullBranch, "--ff-only"]
+        : ["pull", "--progress", remoteName, "--ff-only"]
+    }
+
+    /** 单次执行（重试时重新创建解析器，百分比从头计算） */
+    const runExec = async (): Promise<string> => {
+      const sink = createRemoteProgressSink(opts?.onProgress, opts?.target)
+      sink?.prepare()
+      try {
+        const stdout = await this.executor.execGit(
+          projectPath,
+          args,
+          signal,
+          undefined,
+          sink ? (chunk, stream) => sink.push(chunk, stream) : undefined,
+        )
+        sink?.flush()
+        return stdout
+      } catch (e) {
+        sink?.flush()
+        throw e
+      }
     }
 
     const tryExec = async (): Promise<RemoteOpResult> => {
       try {
-        const stdout = await this.executor.execGit(projectPath, args, signal)
+        const stdout = await runExec()
         return { ok: true, stdout: stdout || "", stderr: "" }
       } catch (e: unknown) {
         // 取消优先于错误归因：abort 会以子进程被杀的形式抛出，不能记成「推送失败」
@@ -188,6 +250,10 @@ export class RemoteOps {
         if (signal?.aborted) {
           return { ok: false, stdout: "", stderr: "操作已取消", canceled: true }
         }
+        // 重试意味着进度从头再来：通知 UI 清掉当前阶段的百分比
+        if (opts?.onProgress && opts.target) {
+          opts.onProgress({ target: opts.target, kind: "retry" })
+        }
         await new Promise<void>((resolve) => {
           const timer = setTimeout(() => {
             // timer 自然到期后移除 abort listener，避免残留
@@ -201,7 +267,7 @@ export class RemoteOps {
           return { ok: false, stdout: "", stderr: "操作已取消", canceled: true }
         }
         try {
-          const stdout = await this.executor.execGit(projectPath, args, signal)
+          const stdout = await runExec()
           return { ok: true, stdout: stdout || "", stderr: "" }
         } catch (e2: unknown) {
           if (signal?.aborted) {
@@ -241,19 +307,24 @@ export class RemoteOps {
   /**
    * 推送到全部已配置的远程
    */
-  async pushToAll(id: string): Promise<AllPlatformResult> {
-    return this.remoteOpAll(id, "push")
+  async pushToAll(id: string, opts?: RemoteOpOptions): Promise<AllPlatformResult> {
+    return this.remoteOpAll(id, "push", false, opts)
   }
 
   /**
    * 从全部已配置远程拉取
    */
-  async pullToAll(id: string): Promise<AllPlatformResult> {
-    return this.remoteOpAll(id, "pull")
+  async pullToAll(id: string, opts?: RemoteOpOptions): Promise<AllPlatformResult> {
+    return this.remoteOpAll(id, "pull", false, opts)
   }
 
   /** 全平台 push/pull 通用实现（并行 + 智能跳过；forceWithLease=true 时禁用智能跳过） */
-  private async remoteOpAll(id: string, action: "push" | "pull", forceWithLease = false): Promise<AllPlatformResult> {
+  private async remoteOpAll(
+    id: string,
+    action: "push" | "pull",
+    forceWithLease = false,
+    opts?: RemoteOpOptions,
+  ): Promise<AllPlatformResult> {
     const project = await this.store.getProjectById(id)
     if (!project) return this.notFoundResult
 
@@ -283,6 +354,27 @@ export class RemoteOps {
       return !rs.error && !mayAttemptPush(rs)
     }
 
+    // 智能跳过 / 未配置远程：不播动画，直接在等锁前通知 UI 标记 skipped
+    // （若放到锁内，排队期间被跳过的平台会先闪一段「准备」再消失）
+    const notifySkip = (key: PlatformKey) => opts?.onProgress?.({ target: key, kind: "skip" })
+    const skippedResults: Record<string, RemoteOpResult> = {}
+    const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
+    for (const { key, name } of getProjectRemoteNames(project)) {
+      if (shouldSkip(key) && !forceWithLease) {
+        skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
+        notifySkip(key)
+      } else {
+        entries.push({ key, remoteName: name })
+      }
+    }
+    // 处理未配置的远程：标记为 skipped
+    for (const pm of PLATFORM_META) {
+      if (skippedResults[pm.key] === undefined && !entries.some((e) => e.key === pm.key)) {
+        skippedResults[pm.key] = RemoteOps.skippedResult
+        notifySkip(pm.key)
+      }
+    }
+
     // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥。
     // ⚠️ AbortController 必须在**锁外**注册：ProjectWriteLock 是纯 Promise 链、没有中断能力，
     //    若在锁内注册，排队等锁期间 cancelOp 找不到控制器 —— 取消按钮点了没反应，锁一释放推送照跑。
@@ -296,29 +388,17 @@ export class RemoteOps {
         if (forceWithLease && !forceBranch) {
           throw new Error("无法确定当前分支，已取消强制推送")
         }
-        // 智能跳过的静态结果
-        const skippedResults: Record<string, RemoteOpResult> = {}
-        const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
-        for (const { key, name } of getProjectRemoteNames(project)) {
-          if (shouldSkip(key) && !forceWithLease) {
-            skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
-          } else {
-            entries.push({ key, remoteName: name })
-          }
-        }
-        // 处理未配置的远程：标记为 skipped
-        for (const pm of PLATFORM_META) {
-          if (skippedResults[pm.key] === undefined && !entries.some((e) => e.key === pm.key)) {
-            skippedResults[pm.key] = RemoteOps.skippedResult
-          }
-        }
-
         type SettledEntry = { key: PlatformKey } & RemoteOpResult
         const results = await Promise.allSettled(
           entries.map(async ({ key, remoteName }): Promise<SettledEntry> => {
             // 各远程并行执行，耗时必须各自计；共用总时长会让每个平台都显示同一个数字
             const startedAt = Date.now()
-            const r = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, { forceWithLease, forceBranch })
+            const r = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, {
+              forceWithLease,
+              forceBranch,
+              target: key,
+              onProgress: opts?.onProgress,
+            })
             return { key, ...r, durationMs: Date.now() - startedAt }
           }),
         )
@@ -368,8 +448,8 @@ export class RemoteOps {
   /**
    * 使用 --force-with-lease 强制推送当前分支到全部已配置远程
    */
-  async forcePushToAll(id: string): Promise<AllPlatformResult> {
-    return this.remoteOpAll(id, "push", true)
+  async forcePushToAll(id: string, opts?: RemoteOpOptions): Promise<AllPlatformResult> {
+    return this.remoteOpAll(id, "push", true, opts)
   }
 
   /**
@@ -378,8 +458,9 @@ export class RemoteOps {
   async pushSingle(
     id: string,
     target: PlatformKey,
+    opts?: RemoteOpOptions,
   ): Promise<RemoteOpResult> {
-    return this.remoteOpSingle(id, target, "push")
+    return this.remoteOpSingle(id, target, "push", opts)
   }
 
   /**
@@ -388,8 +469,9 @@ export class RemoteOps {
   async pullSingle(
     id: string,
     target: PlatformKey,
+    opts?: RemoteOpOptions,
   ): Promise<RemoteOpResult> {
-    return this.remoteOpSingle(id, target, "pull")
+    return this.remoteOpSingle(id, target, "pull", opts)
   }
 
   /** 单平台 push/pull 通用实现 */
@@ -397,6 +479,7 @@ export class RemoteOps {
     id: string,
     target: PlatformKey,
     action: "push" | "pull",
+    opts?: RemoteOpOptions,
   ): Promise<RemoteOpResult> {
     const project = await this.store.getProjectById(id)
     if (!project) {
@@ -426,7 +509,10 @@ export class RemoteOps {
         // pull 时预解析当前分支，显式指定拉取分支
         const pullBranch = action === "pull" ? await this.executor.getCurrentBranch(cwd) : undefined
         const startedAt = Date.now()
-        const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch)
+        const result = await this.tryRemoteOp(cwd, remoteName, action, signal, pullBranch, {
+          target,
+          onProgress: opts?.onProgress,
+        })
         const durationMs = Date.now() - startedAt
         // push 成功后失效智能跳过缓存
         if (action === "push") { this.invalidatePushStatusCache(id) }

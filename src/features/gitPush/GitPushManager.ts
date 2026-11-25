@@ -8,6 +8,7 @@ import type {
 import type { AllPlatformResult, PushPreflightResult, RemoteOpResult } from "./managers/RemoteOps"
 import type { RepoCleanStep } from "./managers/RepoCleanOps"
 import type { FileDiffResult } from "./types/diff"
+import type { RemoteOpOptions } from "./types/pipeline"
 import type { RefSyncSnapshot } from "./types/gitRefs"
 import type { RefLogEntry } from "./types/reflog"
 import type { ResetMode, UndoOutcome } from "./types/undo"
@@ -1041,28 +1042,38 @@ export class GitPushManager {
 
   async setPushBranchMode(mode: "all" | "head"): Promise<void> { return this.remoteOps.setPushBranchMode(mode) }
 
-  async pushToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.pushToAll(id) }
+  async pushToAll(id: string, opts?: RemoteOpOptions): Promise<AllPlatformResult> {
+    return this.remoteOps.pushToAll(id, opts)
+  }
 
   /** 推送前预检（只读 ls-remote，不占写锁；失败/超时由调用方降级直推） */
   async preflightPush(id: string, opts?: { timeoutMs?: number }): Promise<PushPreflightResult> {
     return this.remoteOps.preflightPush(id, opts)
   }
 
-  async forcePushToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.forcePushToAll(id) }
-
-  async pullToAll(id: string): Promise<AllPlatformResult> { return this.remoteOps.pullToAll(id) }
-
-  async pushSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
-    return this.remoteOps.pushSingle(id, target)
+  async forcePushToAll(id: string, opts?: RemoteOpOptions): Promise<AllPlatformResult> {
+    return this.remoteOps.forcePushToAll(id, opts)
   }
 
-  async pullSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
-    return this.remoteOps.pullSingle(id, target)
+  async pullToAll(id: string, opts?: RemoteOpOptions): Promise<AllPlatformResult> {
+    return this.remoteOps.pullToAll(id, opts)
+  }
+
+  async pushSingle(id: string, target: PlatformKey, opts?: RemoteOpOptions): Promise<RemoteOpResult> {
+    return this.remoteOps.pushSingle(id, target, opts)
+  }
+
+  async pullSingle(id: string, target: PlatformKey, opts?: RemoteOpOptions): Promise<RemoteOpResult> {
+    return this.remoteOps.pullSingle(id, target, opts)
   }
 
   /** 判断拉取：确认本地提交均为远端旧副本时，备份分支并强制对齐远程 */
-  async smartPullSingle(id: string, target: PlatformKey): Promise<RemoteOpResult> {
-    return this.smartPullOps.smartPullSingle(id, target)
+  async smartPullSingle(
+    id: string,
+    target: PlatformKey,
+    opts?: RemoteOpOptions,
+  ): Promise<RemoteOpResult> {
+    return this.smartPullOps.smartPullSingle(id, target, opts)
   }
 
   async fetchAllForProject(id: string, opts?: { timeoutMs?: number }): Promise<{ fetched: string[], errors: string[] }> {

@@ -1,8 +1,23 @@
 <!-- Git 推送/拉取操作输出面板：运行中单行汇总过程状态，完成后展示结构化结果，失败时提供 AI 错误分析入口 -->
 <template>
-  <!-- 过程视图：操作进行中，单行汇总正在推送/拉取的平台（旧结果此时暂不展示，避免误导） -->
+  <!-- 过程视图：有真实流水线时展示阶段链；否则退回旧单行汇总（旧结果此时暂不展示，避免误导） -->
   <div
-    v-if="runningStates?.length"
+    v-if="lanes?.length"
+    class="gp-output"
+  >
+    <div class="gp-output-scroll gp-output-scroll--pipeline">
+      <OpPipeline
+        :lanes="lanes"
+        :i18n="i18n"
+      />
+      <div class="gp-console-line gp-console-line--run gp-pipeline-elapsed">
+        <span class="gp-console-action">{{ runningText }}</span>
+        <span class="gp-console-elapsed">{{ elapsed }}s</span>
+      </div>
+    </div>
+  </div>
+  <div
+    v-else-if="runningStates?.length"
     class="gp-output"
   >
     <div class="gp-output-scroll">
@@ -89,11 +104,13 @@
 
 <script setup lang="ts">
 import type { PushOutputEntry } from "../../composables/useGitOps"
+import type { OpPipelineLane } from "../../types/pipeline"
 import { Icon } from "@iconify/vue"
 import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
 import AiErrorAnalysisDialog from "./AiErrorAnalysisDialog.vue"
+import OpPipeline from "./OpPipeline.vue"
 
 /** stdout 预览截断上限（字符数） */
 const MAX_STDOUT_PREVIEW = 500
@@ -116,6 +133,8 @@ const props = defineProps<{
   action: "push" | "pull"
   /** 运行中的平台实时状态（非空 = 操作进行中，渲染过程视图替代旧结果） */
   runningStates?: { key: string, label: string }[]
+  /** 运行中的真实阶段流水线（优先于单行过程视图展示） */
+  lanes?: OpPipelineLane[]
 }>()
 
 const emit = defineEmits<{
@@ -185,7 +204,9 @@ const elapsed = ref(0)
 let startTime = 0
 
 /** 是否正在进行中（多平台逐个完成时数组长度会 2→1→0，只看「有无运行」避免中途误复位计时） */
-const isRunning = computed(() => (props.runningStates?.length ?? 0) > 0)
+const isRunning = computed(() =>
+  (props.lanes?.length ?? 0) > 0 || (props.runningStates?.length ?? 0) > 0,
+)
 
 /** 随「有无运行」启停计时：空闲→运行开始累计，运行→空闲停止并复位。
  *  不能 watch 数组长度：多远程推送时逐平台完成会让长度 2→1，若据此重启计时，

@@ -9,6 +9,7 @@ import type {
   UndoOutcome,
 } from "../types"
 import type { CommitMsgResult } from "../managers/CommitMsgGenerator"
+import type { PipelineStageKey } from "../types/pipeline"
 import type { NumstatEntry } from "../utils"
 import { onUnmounted, ref } from "vue"
 import {
@@ -19,7 +20,9 @@ import {
   releaseFlag,
 } from "../utils"
 import { useRemoteProgress } from "./useRemoteProgress"
+import { useOpPipeline } from "./useOpPipeline"
 import { useProjectQueryScheduler } from "./useProjectQueryScheduler"
+import { COMMIT_STAGE_PLAN, STASH_DROP_STAGE_PLAN, STASH_STAGE_PLAN, SWITCH_STAGE_PLAN } from "../utils/opPipeline"
 export type { PushOutputEntry, ProgressStatus } from "./useRemoteProgress"
 
 export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, i18n: Record<string, any>) {
@@ -31,6 +34,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
   // ── 查询调度（单飞/新鲜度/脏标记唯一权威；pushStatuses / workingTrees 由调度器持有）──
   const scheduler = useProjectQueryScheduler(manager, projects)
   const { pushStatuses, workingTrees } = scheduler
+  /** 操作流水线（远程真实进度 + 本地真实步骤） */
+  const pipeline = useOpPipeline()
 
   /** 按域标记卡片自持数据为脏，触发卡片重载对应数据（原 cardRefreshSignals 的 push 型信号入口） */
   function bumpCardRefresh(id: string, ...domains: ProjectQueryKind[]) {
@@ -84,16 +89,24 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
   }
 
   async function switchBranch(id: string, branch: string) {
-    const project = requireProject(projects, id)
-    await manager.switchBranch(resolveValidPath(project), branch)
-    // 分支已切换：写入新分支名，避免后续查询再发一次 rev-parse
-    scheduler.setBranch(id, branch)
-    await Promise.all([
-      loadWorkingTree(id, { branch }),
-      loadPushStatus(id, { branch }),
-    ])
-    // 提交日志与分支列表已下沉卡片，切换分支后经脏标记通知重载
-    bumpCardRefresh(id, "log", "branches")
+    await pipeline.runLocalPipeline(
+      id, "switch", i18n.switchBranch ?? "切换分支", SWITCH_STAGE_PLAN,
+      async (stepper) => {
+        const project = requireProject(projects, id)
+        stepper.step("switchExec", branch)
+        await manager.switchBranch(resolveValidPath(project), branch)
+        // 分支已切换：写入新分支名，避免后续查询再发一次 rev-parse
+        scheduler.setBranch(id, branch)
+        stepper.step("refreshState")
+        await Promise.all([
+          loadWorkingTree(id, { branch }),
+          loadPushStatus(id, { branch }),
+        ])
+        // 提交日志与分支列表已下沉卡片，切换分支后经脏标记通知重载
+        stepper.step("reloadViews")
+        bumpCardRefresh(id, "log", "branches")
+      },
+    )
   }
 
   /** 删除本地分支（force=true 时强制删除未合并分支）；仅需重载卡片分支列表 */
@@ -155,24 +168,26 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
 
   async function doCommit(id: string, message: string): Promise<string> {
     const project = requireProject(projects, id)
-    committing.value[id] = true
-    try {
-      const result = await manager.commit(resolveValidPath(project), message)
-      // 立即失效推送状态缓存，防止 loadPushStatus 完成前的智能跳过用到陈旧的 ahead=0
-      manager.invalidatePushStatusCache(id)
-      // 强制重查推送状态：提交改变了 ahead 计数，ensure 语义会因已有缓存而跳过；
-      // 工作区与分支名未变，复用缓存分支名避免再次 rev-parse
-      const branch = workingTrees.value[id]?.branch
-      await Promise.all([
-        reloadWorkingTreeAfterWrite(id),
-        loadPushStatus(id, branch ? { branch, force: true } : { force: true }),
-      ])
-      return result
-    } catch (e: any) {
-      throw e // 原样 rethrow，保持 handleCommit 的现有错误处理不变
-    } finally {
-      delete committing.value[id]
-    }
+    return pipeline.runLocalPipeline(id, "commit", i18n.commit ?? "提交", COMMIT_STAGE_PLAN, async (stepper) => {
+      committing.value[id] = true
+      try {
+        stepper.step("commitWrite")
+        const result = await manager.commit(resolveValidPath(project), message)
+        // 立即失效推送状态缓存，防止 loadPushStatus 完成前的智能跳过用到陈旧的 ahead=0
+        manager.invalidatePushStatusCache(id)
+        // 强制重查推送状态：提交改变了 ahead 计数，ensure 语义会因已有缓存而跳过；
+        // 工作区与分支名未变，复用缓存分支名避免再次 rev-parse
+        const branch = workingTrees.value[id]?.branch
+        stepper.step("refreshState")
+        await Promise.all([
+          reloadWorkingTreeAfterWrite(id),
+          loadPushStatus(id, branch ? { branch, force: true } : { force: true }),
+        ])
+        return result
+      } finally {
+        delete committing.value[id]
+      }
+    })
   }
 
   /**
@@ -206,34 +221,55 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
 
   // ── Stash 操作 ──
 
-  async function withProjectPathStash(id: string, fn: (path: string) => Promise<void>) {
-    acquireFlag(stashLoading.value, id)
-    try {
-      // 变更类操作统一抛错（而非静默跳过），由调用方的 handleGitOp 展示错误
-      const project = requireProject(projects, id)
-      await fn(resolveValidPath(project))
-      // Stash 列表已下沉卡片，操作后经脏标记通知重载
-      bumpCardRefresh(id, "stash")
-      await reloadWorkingTreeAfterWrite(id)
-    } finally {
-      releaseFlag(stashLoading.value, id)
-    }
+  async function withProjectPathStash(
+    id: string,
+    fn: (path: string) => Promise<void>,
+    opts?: { plan?: readonly PipelineStageKey[], label?: string },
+  ) {
+    const plan = opts?.plan ?? STASH_STAGE_PLAN
+    await pipeline.runLocalPipeline(
+      id, "stash", opts?.label ?? i18n.stashSave ?? "暂存变更", plan,
+      async (stepper) => {
+        acquireFlag(stashLoading.value, id)
+        try {
+          // 变更类操作统一抛错（而非静默跳过），由调用方的 handleGitOp 展示错误
+          const project = requireProject(projects, id)
+          stepper.step(plan[0])
+          await fn(resolveValidPath(project))
+          // Stash 列表已下沉卡片，操作后经脏标记通知重载
+          stepper.step(plan[plan.length - 1])
+          bumpCardRefresh(id, "stash")
+          await reloadWorkingTreeAfterWrite(id)
+        } finally {
+          releaseFlag(stashLoading.value, id)
+        }
+      },
+    )
   }
 
   async function doStashSave(id: string, message?: string) {
-    await withProjectPathStash(id, (path) => manager.stashSave(path, message))
+    await withProjectPathStash(id, (path) => manager.stashSave(path, message), {
+      label: i18n.stashSave ?? "暂存变更",
+    })
   }
 
   async function doStashPop(id: string, index: number) {
-    await withProjectPathStash(id, (path) => manager.stashPop(path, index))
+    await withProjectPathStash(id, (path) => manager.stashPop(path, index), {
+      label: i18n.stashRestore ?? "恢复 Stash",
+    })
   }
 
   async function doStashApply(id: string, index: number) {
-    await withProjectPathStash(id, (path) => manager.stashApply(path, index))
+    await withProjectPathStash(id, (path) => manager.stashApply(path, index), {
+      label: i18n.stashApply ?? "应用 Stash",
+    })
   }
 
   async function doStashDrop(id: string, index: number) {
-    await withProjectPathStash(id, (path) => manager.stashDrop(path, index))
+    await withProjectPathStash(id, (path) => manager.stashDrop(path, index), {
+      plan: STASH_DROP_STAGE_PLAN,
+      label: i18n.stashDropTitle ?? "删除 Stash",
+    })
   }
 
   async function generateStashDesc(id: string): Promise<string> {
@@ -250,6 +286,7 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     delete committing.value[id]
     delete stashLoading.value[id]
     remote.clearProject(id)
+    pipeline.clearProject(id)
   }
 
   // ── 远程推送/拉取（委托 useRemoteProgress）──
@@ -258,11 +295,13 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     loadPushStatus: (id: string) => loadPushStatus(id, { force: true }),
     safeTimeout,
     i18n,
+    pipeline,
   })
 
   onUnmounted(() => {
     pendingTimers.forEach(clearTimeout)
     pendingTimers.clear()
+    pipeline.dispose()
   })
 
   return {
@@ -282,6 +321,9 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     smartPullSingle: remote.smartPullSingle,
     cancelPush: remote.cancelPush,
     clearRemoteOutput: remote.clearOutput,
+    // 操作流水线（卡片内阶段动画）
+    opPipelines: pipeline.opPipelines,
+    runLocalPipeline: pipeline.runLocalPipeline,
     // 本地状态
     pushStatuses,
     workingTrees,

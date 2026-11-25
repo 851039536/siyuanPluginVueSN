@@ -2,6 +2,7 @@
 import type { InjectionKey, Ref } from "vue"
 import type { GitPushManager } from "../GitPushManager"
 import type { PlatformKey } from "./meta"
+import type { OpPipelineLane } from "./pipeline"
 import type { ProjectQueryScheduler } from "./queryScheduler"
 import type {
   CommitTemplate,
@@ -37,6 +38,8 @@ export interface CardRecordData {
   stashLoading: Ref<Record<string, number>>
   pushOutputs: Ref<Record<string, PushOutputEntry[]>>
   pullOutputs: Ref<Record<string, PushOutputEntry[]>>
+  /** 操作流水线（运行中 lane；终态后由 composable 自动清理） */
+  opPipelines: Ref<Record<string, OpPipelineLane[]>>
   commitOutputs: Ref<Record<string, string>>
   /** 提交信息生成状态：generating = 常规生成中，deepGenerating = 深度生成中（两者互斥，仅一个为 true） */
   generatingMsgs: Ref<Record<string, { generating: boolean, deepGenerating: boolean, text: string }>>

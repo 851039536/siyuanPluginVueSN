@@ -1,0 +1,99 @@
+// 操作流水线类型：远程 git 真实进度事件 + 卡片内流水线展示模型
+import type { PlatformKey } from "./meta"
+
+/** git 进度输出解析出的真实阶段 */
+export type GitProgressStage =
+  | "enumerating"
+  | "counting"
+  | "compressing"
+  | "writing"
+  | "receiving"
+  | "unpacking"
+  | "resolving"
+  | "remote"
+  | "updating"
+
+/** 流水线阶段键：git 真实阶段 + 应用层真实执行步骤 */
+export type PipelineStageKey =
+  | GitProgressStage
+  | "prepare"
+  | "status"
+  | "fetch"
+  | "inspect"
+  | "compare"
+  | "align"
+  | "commitWrite"
+  | "switchExec"
+  | "refreshWorktree"
+  | "refreshSync"
+  | "refreshState"
+  | "reloadViews"
+  | "stashExec"
+  | "stashDrop"
+  | "discardExec"
+  | "stageAll"
+  | "generateMsg"
+  | "fetchExec"
+  | "refreshStatus"
+
+/** 流水线所属操作 */
+export type PipelineOp =
+  | "push"
+  | "pull"
+  | "smartPull"
+  | "fetch"
+  | "commit"
+  | "stash"
+  | "switch"
+  | "discard"
+
+/** 单个阶段 / 整条流水线的状态（pending 表示未开始） */
+export type PipelineStatus = "pending" | "running" | "done" | "skipped" | "fail" | "canceled"
+
+/** 流水线阶段状态 */
+export interface PipelineStageState {
+  key: PipelineStageKey
+  status: PipelineStatus
+  /** 真实百分比（仅 git 进度阶段会提供） */
+  percent?: number
+  /** 当前阶段最后一条真实输出（远程消息 / 错误行） */
+  detail?: string
+  startedAt?: number
+  endedAt?: number
+  /** 长时间无新输出：仅做视觉降级，不推进阶段 */
+  stalled?: boolean
+}
+
+/** 一条流水线（多远程 = 多条 lane） */
+export interface OpPipelineLane {
+  /** 项目内唯一 id（同项目同操作可能先后复用 key） */
+  id: string
+  /** 远程平台 key 或本地固定 "local" */
+  key: string
+  /** 同一批次 id（多远程一次操作共享；本地 lane 用于识别嵌套） */
+  batchId: string
+  op: PipelineOp
+  /** 展示名（平台名 / 操作名，已本地化） */
+  label: string
+  stages: PipelineStageState[]
+  status: PipelineStatus
+  startedAt: number
+  endedAt?: number
+  /** 200ms 可见阈值：避免瞬时操作闪烁 */
+  visible: boolean
+}
+
+/** 远程执行层上报的进度事件 */
+export interface RemoteProgressEvent {
+  target: PlatformKey
+  kind: "stage" | "skip" | "prepare" | "retry" | "detail"
+  /** 远程 git 阶段或应用层真实步骤（智能拉取等） */
+  stage?: PipelineStageKey
+  percent?: number
+  detail?: string
+}
+
+/** 远程方法可选的进度观察参数（尾参，向后兼容） */
+export interface RemoteOpOptions {
+  onProgress?: (event: RemoteProgressEvent) => void
+}

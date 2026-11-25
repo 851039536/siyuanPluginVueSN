@@ -1,9 +1,12 @@
 // 远程推送/拉取进度追踪与结构化输出（从 useGitOps 提取，降低单文件复杂度）
 import type { Ref } from "vue"
 import type { GitOpAction, GitProject, GitPushManager, PlatformKey, PushOutputEntry } from "../types"
+import type { PipelineOp, PipelineStageKey, RemoteOpOptions } from "../types/pipeline"
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
 import { findProject, platformLabel, pruneRecordCache, resolveValidPath, opSummary } from "../utils"
+import type { OpPipelineBridge, RemoteLaneStatus } from "./useOpPipeline"
+import { PULL_STAGE_PLAN, PUSH_STAGE_PLAN, SMART_PULL_STAGE_PLAN } from "../utils/opPipeline"
 
 /** 推送/拉取单平台结构化输出（类型定义迁移至 types/storage.ts，此处 re-export 保持向后兼容） */
 export type { PushOutputEntry } from "../types"
@@ -25,6 +28,8 @@ export function useRemoteProgress(
     safeTimeout: (fn: () => void, delay: number) => ReturnType<typeof setTimeout>
     /** i18n 文案表（操作摘要兜底文案经 opSummary 取用，避免裸中英文字面量） */
     i18n: Record<string, any>
+    /** 操作流水线桥接（远程真实阶段 → 卡片内 lane） */
+    pipeline: OpPipelineBridge
   },
 ) {
   const pushProgress = ref<Record<string, Record<string, ProgressStatus>>>({})
@@ -138,7 +143,8 @@ export function useRemoteProgress(
   /** 通用全平台 remote 操作（pushToAll / forcePushToAll 共用实现） */
   async function remoteOpAll(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
-    managerFn: (id: string) => Promise<Record<string, any>>, id: string,
+    managerFn: (id: string, opts?: RemoteOpOptions) => Promise<Record<string, any>>, id: string,
+    stagePlan: readonly PipelineStageKey[],
     oppositeProgressRef?: ProgressRef,
   ) {
     // 入口守卫：同一项目的同类操作进行中时拒绝重复触发（防双击竞态）；
@@ -159,6 +165,14 @@ export function useRemoteProgress(
     }
     progressRef.value[id] = initProg
 
+    // 每个已配置远程一条 lane；未配置/智能跳过的远程不会产生假动画
+    const laneTargets = project
+      ? PLATFORM_META
+        .filter((pm) => project[pm.remoteProp])
+        .map((pm) => ({ key: pm.key, label: platformLabel(pm.key) }))
+      : []
+    const batchId = opts.pipeline.beginRemote(id, action, laneTargets, stagePlan)
+
     try {
       const totalStart = Date.now()
       // 一次构造全量进度：逐 key 展开整表会触发 N 次响应式更新（3~4 个平台时纯属浪费）
@@ -169,7 +183,9 @@ export function useRemoteProgress(
         ),
       }
 
-      const result = await managerFn(id)
+      const result = await managerFn(id, {
+        onProgress: (event) => opts.pipeline.applyRemoteEvent(id, batchId, event),
+      })
 
       const totalDuration = Date.now() - totalStart
       const nextProg = { ...progressRef.value[id] }
@@ -182,6 +198,14 @@ export function useRemoteProgress(
       }
       progressRef.value = { ...progressRef.value, [id]: nextProg }
 
+      // 流水线收敛：跳过优先于成功（skipped 的 ok 也为 true，不能记成 done）
+      const laneStatuses: Record<string, RemoteLaneStatus> = {}
+      for (const key of Object.keys(initProg)) {
+        const r = result[key] as any
+        laneStatuses[key] = r?.skipped ? "skipped" : r?.canceled ? "canceled" : r?.ok ? "done" : "fail"
+      }
+      opts.pipeline.finishRemote(id, batchId, laneStatuses)
+
       // 执行层已回传各远程真实耗时；这里的总时长仅作兜底（避免旧调用方缺字段时显示 0）
       const sharedDurations: Record<string, number> = {}
       for (const key of Object.keys(initProg)) { sharedDurations[key] = totalDuration }
@@ -192,8 +216,13 @@ export function useRemoteProgress(
     } catch (e) {
       console.error(`[gitPush] ${action === "push" ? "推送" : "拉取"}失败:`, e)
       const failProg: Record<string, ProgressStatus> = {}
-      for (const key of Object.keys(initProg)) { failProg[key] = "fail" }
+      const failLanes: Record<string, RemoteLaneStatus> = {}
+      for (const key of Object.keys(initProg)) {
+        failProg[key] = "fail"
+        failLanes[key] = "fail"
+      }
       progressRef.value = { ...progressRef.value, [id]: failProg }
+      opts.pipeline.finishRemote(id, batchId, failLanes)
       return { success: false }
     } finally {
       scheduleProgressCleanup(progressRef, id, seq)
@@ -203,8 +232,11 @@ export function useRemoteProgress(
   /** 通用单平台 remote 操作（pushSingle / pullSingle 共用实现） */
   async function remoteOpSingle(
     action: "push" | "pull", progressRef: ProgressRef, outputsRef: OutputsRef,
-    managerFn: (id: string, target: PlatformKey) => Promise<{ ok: boolean, stdout: string, stderr: string, canceled?: boolean, durationMs?: number }>,
+    managerFn: (id: string, target: PlatformKey, opts?: RemoteOpOptions) =>
+      Promise<{ ok: boolean, stdout: string, stderr: string, canceled?: boolean, durationMs?: number }>,
     id: string, target: PlatformKey,
+    stagePlan: readonly PipelineStageKey[],
+    pipelineOp: PipelineOp,
     oppositeProgressRef?: ProgressRef,
   ) {
     // 入口守卫：该项目该平台的同类操作进行中时拒绝重复触发（防双击竞态）；
@@ -215,19 +247,30 @@ export function useRemoteProgress(
       return { ok: false, stdout: "", stderr: opts.i18n.opBlockedInProgress ?? "" }
     }
     const seq = nextOpSeq(id)
+    const batchId = opts.pipeline.beginRemote(
+      id,
+      pipelineOp,
+      [{ key: target, label: platformLabel(target) }],
+      stagePlan,
+    )
     progressRef.value = {
       ...progressRef.value,
       [id]: { ...progressRef.value[id], [target]: "pushing" },
     }
     const startedAt = Date.now()
     try {
-      const result = await managerFn(id, target)
+      const result = await managerFn(id, target, {
+        onProgress: (event) => opts.pipeline.applyRemoteEvent(id, batchId, event),
+      })
       // 执行层的单远程耗时更准（含内部重试）；缺失时才用本层墙钟
       const duration = result.durationMs ?? Date.now() - startedAt
       progressRef.value = {
         ...progressRef.value,
         [id]: { ...progressRef.value[id], [target]: result.canceled ? "canceled" : result.ok ? "ok" : "fail" },
       }
+      opts.pipeline.finishRemote(id, batchId, {
+        [target]: result.canceled ? "canceled" : result.ok ? "done" : "fail",
+      })
 
       const entries: PushOutputEntry[] = [{
         platform: target,
@@ -255,6 +298,7 @@ export function useRemoteProgress(
         ...progressRef.value,
         [id]: { ...progressRef.value[id], [target]: "fail" },
       }
+      opts.pipeline.finishRemote(id, batchId, { [target]: "fail" })
       const errMsg = String(e?.message || e)
       mergeOutputEntry(outputsRef, id, {
         platform: target,
@@ -303,7 +347,10 @@ export function useRemoteProgress(
   }
 
   function pushToAll(id: string) {
-    return remoteOpAll("push", pushProgress, pushOutputs, manager.pushToAll.bind(manager), id, pullProgress)
+    return remoteOpAll(
+      "push", pushProgress, pushOutputs, manager.pushToAll.bind(manager), id,
+      PUSH_STAGE_PLAN, pullProgress,
+    )
   }
 
   /** 推送前预检（只读网络探测，不写进度、不占写锁；调用方据结果决定是否先拉取） */
@@ -312,20 +359,32 @@ export function useRemoteProgress(
   }
 
   function forcePushToAll(id: string) {
-    return remoteOpAll("push", pushProgress, pushOutputs, manager.forcePushToAll.bind(manager), id, pullProgress)
+    return remoteOpAll(
+      "push", pushProgress, pushOutputs, manager.forcePushToAll.bind(manager), id,
+      PUSH_STAGE_PLAN, pullProgress,
+    )
   }
 
   function pushSingle(id: string, target: PlatformKey) {
-    return remoteOpSingle("push", pushProgress, pushOutputs, manager.pushSingle.bind(manager), id, target, pullProgress)
+    return remoteOpSingle(
+      "push", pushProgress, pushOutputs, manager.pushSingle.bind(manager), id, target,
+      PUSH_STAGE_PLAN, "push", pullProgress,
+    )
   }
 
   function pullSingle(id: string, target: PlatformKey) {
-    return remoteOpSingle("pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target, pushProgress)
+    return remoteOpSingle(
+      "pull", pullProgress, pullOutputs, manager.pullSingle.bind(manager), id, target,
+      PULL_STAGE_PLAN, "pull", pushProgress,
+    )
   }
 
   /** 判断拉取：与普通拉取共用 pull 进度/输出/取消通道（--ff-only 拉取本身保持不变） */
   function smartPullSingle(id: string, target: PlatformKey) {
-    return remoteOpSingle("pull", pullProgress, pullOutputs, manager.smartPullSingle.bind(manager), id, target, pushProgress)
+    return remoteOpSingle(
+      "pull", pullProgress, pullOutputs, manager.smartPullSingle.bind(manager), id, target,
+      SMART_PULL_STAGE_PLAN, "smartPull", pushProgress,
+    )
   }
 
   function cancelPush(id: string) { manager.cancelOp(id, "push") }

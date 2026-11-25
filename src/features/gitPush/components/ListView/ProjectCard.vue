@@ -49,11 +49,25 @@
       :project="project"
     />
 
-    <!-- 拉取/推送输出（运行中显示逐平台过程行；失败时内置 AI 分析入口；右上角可关闭结果） -->
+    <!-- 本地写操作流水线：仅运行中显示，完成后自动收起，不长期占用卡片高度 -->
+    <div
+      v-if="!collapsed && localLanes.length"
+      class="gp-output"
+    >
+      <div class="gp-output-scroll gp-output-scroll--pipeline">
+        <OpPipeline
+          :lanes="localLanes"
+          :i18n="i18n"
+        />
+      </div>
+    </div>
+
+    <!-- 拉取/推送输出（运行中显示真实阶段流水线；失败时内置 AI 分析入口；右上角可关闭结果） -->
     <OutputPanel
       v-if="!collapsed"
       :entries="pullOutputs"
       :running-states="pullRunningStates"
+      :lanes="pullLanes"
       :i18n="i18n"
       :project-name="project.name"
       action="pull"
@@ -63,6 +77,7 @@
       v-if="!collapsed"
       :entries="pushOutputs"
       :running-states="pushRunningStates"
+      :lanes="pushLanes"
       :i18n="i18n"
       :project-name="project.name"
       action="push"
@@ -297,6 +312,7 @@ import CardRemotes from "./CardRemotes.vue"
 import CardSummary from "./CardSummary.vue"
 import CardTabs from "./CardTabs.vue"
 import ConflictSection from "./ConflictSection.vue"
+import OpPipeline from "./OpPipeline.vue"
 import OutputPanel from "./OutputPanel.vue"
 import StashSection from "./StashSection.vue"
 import TagPanel from "./TagPanel.vue"
@@ -324,6 +340,9 @@ const {
   refreshingWorkingTree,
   pullOutputs,
   pushOutputs,
+  pullLanes,
+  pushLanes,
+  localLanes,
 } = useCardServices(() => props.project)
 const {
   shared,

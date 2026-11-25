@@ -97,6 +97,14 @@
         </template>
       </AnalysisToolbar>
 
+      <!-- 分析真实流水线：只显示当前视角对应的 lane，切换 Tab 不串台 -->
+      <OpPipeline
+        v-if="tabPipelineLanes.length"
+        :lanes="tabPipelineLanes"
+        :i18n="i18n"
+        show-detail
+      />
+
       <!-- 四态门：分析中占位 / 未分析提示 / 失败提示 / 已就绪内容（三视角共用） -->
       <AnalysisGate
         :running="tabRunning"
@@ -317,6 +325,7 @@
 // 三者同属一次 runCore 抓取（entries 供概览与规则检查，numstat/totalLines 供行数排行），
 // 故合并为一个视图 + 内部 Tab：运行按钮只有一个，Tab 切换只切视角不重跑 git。
 import type { AnalysisRankLimit, CommitAnalysisStats, CommitAnalysisViewSettings, CommitRuleCheckStats, CommitRuleConfig, CommitRuleViolation, GitProject, LineStatsSummary, ProjectFetchFailure, ProjectLineRankItem } from "../../types"
+import type { OpPipelineLane } from "../../types/pipeline"
 import type { HeatBucketSpan } from "../../utils"
 import type { StatCardItem } from "../common/StatCardGrid.vue"
 import type { SectionTabItem } from "../common/sectionTabs"
@@ -327,6 +336,7 @@ import Select from "@/components/Select.vue"
 import EmptyState from "../common/EmptyState.vue"
 import AnalysisGate from "../common/AnalysisGate.vue"
 import AnalysisToolbar from "../common/AnalysisToolbar.vue"
+import OpPipeline from "../ListView/OpPipeline.vue"
 import SectionTabs from "../common/SectionTabs.vue"
 import StatCardGrid from "../common/StatCardGrid.vue"
 import BatchFixDialog from "../common/BatchFixDialog.vue"
@@ -394,6 +404,8 @@ const props = defineProps<{
   truncatedProjectIds: string[]
   /** 缓存过期提示文案（空串 = 不显示；由父层按写操作脏信号置位） */
   staleHint: string
+  /** 提交分析 / 行数统计的全局流水线（本组件按当前 Tab 过滤） */
+  pipelineLanes: OpPipelineLane[]
 }>()
 
 const emit = defineEmits<{
@@ -412,6 +424,12 @@ const emit = defineEmits<{
 
 /** 当前视角（切换只切渲染分支，不触发 git） */
 const activeTab = ref<AnalysisTabId>("overview")
+
+/** 当前视角对应的全局 lane：行数排行只看 lineStats，其余两视角看 analysis */
+const tabPipelineLanes = computed(() => {
+  const op = activeTab.value === "linestats" ? "lineStats" : "analysis"
+  return props.pipelineLanes.filter((lane) => lane.op === op)
+})
 
 /** 项目总数 */
 const projectCount = computed(() => props.projects.length)

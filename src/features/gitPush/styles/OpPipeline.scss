@@ -41,12 +41,57 @@
   font-weight: $fw-medium;
 }
 
-// 当前阶段真实百分比：等宽数字右对齐，不随进度抖动
+// 当前阶段真实百分比：等宽数字，不随进度抖动
 .gp-pipeline-percent {
-  margin-left: auto;
   padding-left: $s-1;
   font-variant-numeric: tabular-nums;
   color: var(--b3-theme-primary);
+}
+
+// lane 累计耗时：推到行尾，与百分比分开；终态 lane 也保留真实耗时
+.gp-pipeline-lane-elapsed {
+  margin-left: auto;
+  padding-left: $s-1;
+  font-variant-numeric: tabular-nums;
+  color: var(--b3-theme-on-surface-light);
+}
+
+// 紧凑态当前阶段：单行省略，避免长阶段名挤压耗时
+.gp-pipeline-current {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--b3-theme-on-surface-light);
+}
+
+// 当前阶段真实输出：最多两行，保留排障信息但不撑高面板
+.gp-pipeline-detail {
+  margin: 0;
+  padding-left: calc(#{$s-1} + 10px);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--b3-theme-on-surface-light);
+  word-break: break-all;
+}
+
+// 紧凑态：真正的单行状态，当前阶段文案在 head 中展示，不再渲染第二行阶段链
+.gp-pipeline--compact {
+  gap: 0;
+  padding: 0;
+
+  .gp-pipeline-lane { gap: 0; }
+  .gp-pipeline-stages { display: none; }
+  .gp-pipeline-label { max-width: 140px; }
+
+  // 名称与当前阶段之间补一个分隔点，避免「提交分析 扫描提交记录」粘在一起
+  .gp-pipeline-current:not(:empty)::before {
+    content: "·";
+    margin-right: $s-1;
+    color: var(--b3-theme-on-surface-light);
+  }
 }
 
 // 阶段链：允许横向滚动（窄卡片），不换行、不撑破面板

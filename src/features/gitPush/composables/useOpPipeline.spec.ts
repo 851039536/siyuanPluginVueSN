@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useOpPipeline } from "./useOpPipeline"
-import { COMMIT_STAGE_PLAN, FETCH_STAGE_PLAN, PUSH_STAGE_PLAN } from "../utils/opPipeline"
+import { GLOBAL_PIPELINE_SCOPE } from "../types/pipeline"
+import { COMMIT_STAGE_PLAN, FETCH_STAGE_PLAN, PUSH_STAGE_PLAN, STATS_STAGE_PLAN } from "../utils/opPipeline"
 
 describe("useOpPipeline", () => {
   beforeEach(() => vi.useFakeTimers())
@@ -70,6 +71,34 @@ describe("useOpPipeline", () => {
 
     vi.advanceTimersByTime(1500)
     expect(pipeline.opPipelines.value.p1).toBeUndefined()
+  })
+
+  it("全局操作用保留槽，与卡片 lane 隔离且可见后才进入派生集合", async () => {
+    const pipeline = useOpPipeline()
+    const run = pipeline.runGlobalPipeline("stats", "刷新项目状态", STATS_STAGE_PLAN, async (stepper) => {
+      stepper.step("prepare")
+      stepper.step("statsQuery")
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+    })
+
+    expect(pipeline.globalPipelines.value).toHaveLength(0)
+    expect(pipeline.opPipelines.value[GLOBAL_PIPELINE_SCOPE]?.[0]?.visible).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(300)
+    await run
+
+    expect(pipeline.opPipelines.value.p1).toBeUndefined()
+    expect(pipeline.globalPipelines.value).toHaveLength(1)
+    expect(pipeline.globalPipelines.value[0]).toMatchObject({ op: "stats", status: "done" })
+    expect(pipeline.allPipelines.value).toHaveLength(1)
+
+    // 删除项目不能误清全局槽
+    pipeline.clearProject("p1")
+    expect(pipeline.globalPipelines.value).toHaveLength(1)
+
+    // 本地 lane 终态停留 1.5s 后清理
+    vi.advanceTimersByTime(1500)
+    expect(pipeline.globalPipelines.value).toHaveLength(0)
   })
 
   it("不同本地操作不合并到同一条 lane", async () => {

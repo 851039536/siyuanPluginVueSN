@@ -23,6 +23,13 @@
       @open-floating="openFloatingWindow"
     />
 
+    <!-- 操作聚合 Dock：全局任务与多卡片并发任务统一展示，避免用户逐卡查找 -->
+    <PipelineDock
+      v-if="dockLanes.length > 0"
+      :lanes="dockLanes"
+      :i18n="i18n"
+    />
+
     <!-- 统计中心内部分区（项目状态 / 提交分析 / 代码报告；各页内部二级 Tab 保留） -->
     <SectionTabs
       v-if="isStatisticsView"
@@ -44,6 +51,7 @@
       :loading-progress="statsLoadProgress"
       :loaded="statsLoaded"
       :refreshed-at="statsRefreshedAt"
+      :pipeline-lanes="statsPipelineLanes"
       @view-project="onViewProject"
       @refresh="refreshStatsData"
       @load="loadStatsData"
@@ -76,10 +84,11 @@
       :line-detail-project-id="lineDetailProjectId"
       :line-detail-refreshing="lineDetailRefreshing"
       :get-project-file-lines="getProjectFileLines"
-      :refresh-project="refreshLineStatsProject"
-      @run-analysis="runAnalysis"
+      :refresh-project="refreshLineStatsProjectWithPipeline"
+      :pipeline-lanes="analysisPipelineLanes"
+      @run-analysis="runAnalysisWithPipeline"
       @commits-rewritten="handleCommitsRewritten"
-      @run-line-stats="runLineStatsAnalysis"
+      @run-line-stats="runLineStatsWithPipeline"
       @update-view-settings="updateViewSettings"
       @update-selected-extensions="updateSelectedExtensions"
       @update-project="setRuleCheckProject"
@@ -102,9 +111,10 @@
       :current-project="reportCurrentProject"
       :get-file-patch="fetchFilePatch"
       :exporting="reportExporting"
-      @run-report="runReport"
-      @change-project="setProject"
-      @change-range="setRange"
+      :pipeline-lanes="reportPipelineLanes"
+      @run-report="runReportWithPipeline"
+      @change-project="setProjectWithPipeline"
+      @change-range="setRangeWithPipeline"
       @export-html="exportReportHtml"
     />
 
@@ -283,6 +293,7 @@ import {
 import { getErrorMessage } from "@/utils/stringUtils"
 import { buildYearOptions, findProject } from "./utils"
 import { fmtTemplate } from "./utils/i18nFormat"
+import { ANALYSIS_STAGE_PLAN, isLaneTerminal, REPORT_STAGE_PLAN, STATS_STAGE_PLAN } from "./utils/opPipeline"
 import type { SectionTabItem } from "./components/common/sectionTabs"
 import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
@@ -291,6 +302,7 @@ import EditProjectDialog from "./components/common/EditProjectDialog.vue"
 import ListView from "./components/ListView/index.vue"
 import MarkdownPreviewDialog from "./components/common/MarkdownPreviewDialog.vue"
 import PanelHeader from "./components/common/PanelHeader.vue"
+import PipelineDock from "./components/common/PipelineDock.vue"
 import ScanImportDialog from "./components/common/ScanImportDialog.vue"
 import SectionTabs from "./components/common/SectionTabs.vue"
 import SettingsDialog from "./components/common/SettingsDialog.vue"
@@ -321,7 +333,10 @@ import { useRepoLinkAudit } from "./composables/useRepoLinkAudit"
 import { useCommitAnalysis } from "./composables/useCommitAnalysis"
 import { useCodeReport } from "./composables/useCodeReport"
 import { useReportExport } from "./composables/useReportExport"
+import { PIPELINE_SCOPE_KEY } from "./composables/usePipelineScope"
 import { CARD_SERVICES_KEY, PLATFORM_META } from "./types"
+import { GLOBAL_PIPELINE_SCOPE } from "./types/pipeline"
+import type { OpPipelineLane } from "./types/pipeline"
 import type { ViewMode } from "./types"
 import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import { clampProbeConfig, DEFAULT_PROBE_CONFIG } from "./types/probeConfig"
@@ -369,7 +384,9 @@ const {
   isPulling,
   pullOutputs,
   opPipelines,
+  globalPipelines,
   runLocalPipeline,
+  runGlobalPipeline,
   pushStatuses,
   workingTrees,
   committing,
@@ -448,6 +465,68 @@ const {
   updateProjectMeta,
   toggleStar,
 } = useGitPush(props.manager, props.i18n)
+
+// 全局流水线作用域：卡片外的视图（仓库体检等）经 inject 使用同一套 lane 与运行入口
+provide(PIPELINE_SCOPE_KEY, {
+  lanes: globalPipelines,
+  run: runGlobalPipeline,
+})
+
+/** 项目 id → 名称（Dock 里给卡片 lane 加项目前缀，避免同名平台分不清） */
+const projectNameById = computed(() => new Map(projects.value.map((p) => [p.id, p.name])))
+
+/** 当前视图自己负责展示的全局任务：不再进 Dock，避免同一条 lane 渲染两遍 */
+function isGlobalLaneOwnedByView(op: OpPipelineLane["op"]): boolean {
+  switch (currentView.value) {
+    case "stats": return op === "stats"
+    case "analysis": return op === "analysis" || op === "lineStats"
+    case "report": return op === "report"
+    case "repoclean": return op === "repoScan"
+    default: return false
+  }
+}
+
+/**
+ * Dock 聚合 lane：全局任务原样展示，项目任务加「项目名 · 」前缀。
+ * 当前视图自己的全局任务由视图内联展示；Dock 只补充跨视图 / 多卡片并发信息。
+ */
+const dockLanes = computed<OpPipelineLane[]>(() => {
+  const entries: { global: boolean, lane: OpPipelineLane }[] = []
+  for (const [projectId, lanes] of Object.entries(opPipelines.value)) {
+    for (const lane of lanes) {
+      // Dock 只表达「正在跑」；终态 lane 由各视图自身短暂展示后清理
+      if (!lane.visible || isLaneTerminal(lane.status)) continue
+      if (projectId === GLOBAL_PIPELINE_SCOPE) {
+        if (isGlobalLaneOwnedByView(lane.op)) continue
+        entries.push({
+          global: true,
+          lane: {
+            ...lane,
+            id: `global:${lane.id}`,
+            label: `${props.i18n.pipelineGlobalScope ?? "全局"} · ${lane.label}`,
+          },
+        })
+      } else {
+        entries.push({
+          global: false,
+          lane: {
+            ...lane,
+            id: `${projectId}:${lane.id}`,
+            label: `${projectNameById.value.get(projectId) ?? projectId} · ${lane.label}`,
+          },
+        })
+      }
+    }
+  }
+  return entries
+    .sort((a, b) => Number(b.global) - Number(a.global) || a.lane.label.localeCompare(b.lane.label))
+    .map((entry) => entry.lane)
+})
+
+/** 统计中心手动刷新的全局 lane（首次加载不接 lane，避免预算早退造成假结束） */
+const statsPipelineLanes = computed(() =>
+  globalPipelines.value.filter((lane) => lane.op === "stats"),
+)
 
 /** 卡片加载提交日志后回传最近活动时间（原 useGitOps.loadCommitLog 的副作用） */
 async function recordCommitActivity(id: string, isoTime: string) {
@@ -959,6 +1038,53 @@ const {
 /** 行数统计视图：项目详情弹窗目标项目 id（非空即打开弹窗，关闭时清空） */
 const lineDetailProjectId = ref("")
 
+/** 提交分析 / 行数统计的全局 lane（同一时刻两域共用运行锁，通常只有一条） */
+const analysisPipelineLanes = computed(() =>
+  globalPipelines.value.filter((lane) => lane.op === "analysis" || lane.op === "lineStats"),
+)
+
+/**
+ * 提交分析（手动触发）：用全局 lane 包住真实抓取与聚合。
+ * 已在分析中时仍调用原函数（它会排队/拒绝），但不新建 lane，避免显示一条并未执行的分析。
+ */
+async function runAnalysisWithPipeline(projectId?: string | string[]) {
+  if (analysisAnalyzing.value || lineAnalyzing.value) {
+    await runAnalysis(projectId)
+    return
+  }
+  await runGlobalPipeline("analysis", tf("pipelineAnalysis"), ANALYSIS_STAGE_PLAN, async (stepper) => {
+    stepper.step("prepare")
+    stepper.step("analysisScan")
+    await runAnalysis(projectId, (stage) => stepper.step(stage))
+  })
+}
+
+/** 行数统计（手动触发）：与提交分析共用一份运行锁，在途时直接交回原函数排队 */
+async function runLineStatsWithPipeline() {
+  if (analysisAnalyzing.value || lineAnalyzing.value) {
+    await runLineStatsAnalysis()
+    return
+  }
+  await runGlobalPipeline("lineStats", tf("pipelineLineStats"), ANALYSIS_STAGE_PLAN, async (stepper) => {
+    stepper.step("prepare")
+    stepper.step("analysisScan")
+    await runLineStatsAnalysis((stage) => stepper.step(stage))
+  })
+}
+
+/** 行数详情单项目刷新：同样展示一条短 lane，步骤与全量分析一致（只是目标为单项目） */
+async function refreshLineStatsProjectWithPipeline(projectId: string) {
+  if (lineDetailRefreshing.value || analysisAnalyzing.value || lineAnalyzing.value) {
+    await refreshLineStatsProject(projectId)
+    return
+  }
+  await runGlobalPipeline("lineStats", tf("pipelineLineStats"), ANALYSIS_STAGE_PLAN, async (stepper) => {
+    stepper.step("prepare")
+    stepper.step("analysisScan")
+    await refreshLineStatsProject(projectId, () => stepper.step("analysisAggregate"))
+  })
+}
+
 // ── 代码统计报告（单项目 git numstat 统计：团队总览/贡献度/技术债务/热点；进入视图自动生成）──
 const {
   reportData,
@@ -975,6 +1101,62 @@ const {
   fetchFilePatch,
   markStale: markReportStale,
 } = useCodeReport(props.manager, projects, props.i18n)
+
+/** 代码报告全局 lane（手动生成 / 切项目 / 切范围；自动后台刷新不显示，避免首屏被动画遮挡） */
+const reportPipelineLanes = computed(() =>
+  globalPipelines.value.filter((lane) => lane.op === "report"),
+)
+
+/** 统一包装报告生成：已有一轮在跑时交回原函数排队，不新建重复 lane */
+async function runReportWithPipeline() {
+  if (reportRunning.value || reportRefreshing.value) {
+    await runReport()
+    return
+  }
+  try {
+    await runGlobalPipeline("report", tf("pipelineReport"), REPORT_STAGE_PLAN, async (stepper) => {
+      stepper.step("prepare")
+      stepper.step("reportScan")
+      await runReport({ onStage: (stage) => stepper.step(stage) })
+    })
+  } catch {
+    // 报告面板已展示失败态；lane 由 runLocalPipeline 收敛为 fail
+  }
+}
+
+/** 切换时间范围：内部会重算报告，同样用 lane 表达真实扫描与聚合 */
+async function setRangeWithPipeline(range: Parameters<typeof setRange>[0]) {
+  if (reportRunning.value || reportRefreshing.value) {
+    await setRange(range)
+    return
+  }
+  try {
+    await runGlobalPipeline("report", tf("pipelineReport"), REPORT_STAGE_PLAN, async (stepper) => {
+      stepper.step("prepare")
+      stepper.step("reportScan")
+      await setRange(range, (stage) => stepper.step(stage))
+    })
+  } catch {
+    // 同上：失败态由报告面板呈现
+  }
+}
+
+/** 切换项目：清空旧报告后重算，展示与新项目一致的 lane */
+async function setProjectWithPipeline(projectId: string) {
+  if (reportRunning.value || reportRefreshing.value) {
+    await setProject(projectId)
+    return
+  }
+  try {
+    await runGlobalPipeline("report", tf("pipelineReport"), REPORT_STAGE_PLAN, async (stepper) => {
+      stepper.step("prepare")
+      stepper.step("reportScan")
+      await setProject(projectId, (stage) => stepper.step(stage))
+    })
+  } catch {
+    // 同上：失败态由报告面板呈现
+  }
+}
 
 // 仓库写操作（提交/stash/tag/冲突/历史重写）后使报告缓存失效：
 // 卡片脏标记是这些写操作的统一信号通道，报告数据与之同源（都来自 git 提交历史），
@@ -1587,13 +1769,30 @@ async function refreshStatsData() {
   statsLoaded.value = true
   statsRefreshing.value = true
   try {
-    // 后台首次加载仍在跑时先等它：同一批项目被两套批次重复遍历没有收益
-    const inFlight = statsLoadFull
-    if (inFlight) await inFlight
-    markProjectsDisplayed(projects.value.map((p) => p.id))
-    await runBatchWithProgress(projects.value, tf("refreshingLabel"), async (p) => {
-      await scheduler.loadStatus(p.id, { mode: "refresh" })
-    })
+    await runGlobalPipeline(
+      "stats",
+      tf("pipelineStatsRefresh"),
+      STATS_STAGE_PLAN,
+      async (stepper) => {
+        stepper.step("prepare")
+        // 后台首次加载仍在跑时先等它：同一批项目被两套批次重复遍历没有收益
+        const inFlight = statsLoadFull
+        if (inFlight) await inFlight
+        markProjectsDisplayed(projects.value.map((p) => p.id))
+        stepper.step("statsQuery")
+        let done = 0
+        const total = projects.value.length
+        await runBatchWithProgress(projects.value, tf("refreshingLabel"), async (p) => {
+          try {
+            await scheduler.loadStatus(p.id, { mode: "refresh" })
+          } finally {
+            // 失败也计入已处理数：只报真实完成量，不推测剩余耗时
+            done++
+            stepper.detail(tf("statsLoadingProgress", done, total))
+          }
+        })
+      },
+    )
     statsRefreshedAt.value = new Date().toISOString()
     scheduleStatsAudit()
   } finally {

@@ -23,6 +23,14 @@
         @run-scan="runScan"
       />
 
+      <!-- 体检真实流水线：三条 git 命令依次推进；无大文件时锚定阶段标跳过 -->
+      <OpPipeline
+        v-if="pipelineLanes.length"
+        :lanes="pipelineLanes"
+        :i18n="i18n"
+        show-detail
+      />
+
       <!-- 扫描失败提示（非空时展示；替代原 alert） -->
       <div
         v-if="scanError"
@@ -110,6 +118,9 @@ import { computed, ref } from "vue"
 import Button from "@/components/Button.vue"
 import CleanWizardDialog from "./CleanWizardDialog.vue"
 import EmptyState from "../common/EmptyState.vue"
+import OpPipeline from "../ListView/OpPipeline.vue"
+import { usePipelineScope } from "../../composables/usePipelineScope"
+import { REPO_SCAN_STAGE_PLAN } from "../../utils/opPipeline"
 import LargeBlobSection from "./LargeBlobSection.vue"
 import Loader from "@/components/Loader.vue"
 import RepoCleanToolbar from "./RepoCleanToolbar.vue"
@@ -124,6 +135,13 @@ const props = defineProps<{
   /** 项目列表（供工具栏项目选择） */
   projects: GitProject[]
 }>()
+
+/** 根组件提供的全局流水线作用域（未提供时 run 退化为直接执行） */
+const pipelineScope = usePipelineScope()
+/** 只展示体检 lane，避免统计/分析等其他全局任务串到本视图 */
+const pipelineLanes = computed(() =>
+  pipelineScope.lanes.value.filter((lane) => lane.op === "repoScan"),
+)
 
 /** 扫描结果（视图本地持有，切换视图保留组件状态即保留结果） */
 const result = ref<RepoScanResult | null>(null)
@@ -222,7 +240,19 @@ async function runScan() {
   scanned.value = false
   scanError.value = ""
   try {
-    result.value = await props.manager.scanRepoObjects(project.path, thresholdMb.value)
+    await pipelineScope.run(
+      "repoScan",
+      props.i18n.pipelineRepoScan,
+      REPO_SCAN_STAGE_PLAN,
+      async (stepper) => {
+        stepper.step("prepare")
+        result.value = await props.manager.scanRepoObjects(
+          project.path,
+          thresholdMb.value,
+          (stage) => stepper.step(stage),
+        )
+      },
+    )
     scanned.value = true
   } catch (e: unknown) {
     // 与全站一致：错误经 getErrorMessage 归一后以错误条呈现（原为原生 alert，会阻塞渲染进程）

@@ -6,7 +6,7 @@ import type {
   ProjectStatsRecord,
 } from "./managers/LineStatsStore"
 import type { AllPlatformResult, PushPreflightResult, RemoteOpResult } from "./managers/RemoteOps"
-import type { RepoCleanStep } from "./managers/RepoCleanOps"
+import type { RepoCleanStep, RepoScanStage } from "./managers/RepoCleanOps"
 import type { FileDiffResult } from "./types/diff"
 import type { RemoteOpOptions } from "./types/pipeline"
 import type { RefSyncSnapshot } from "./types/gitRefs"
@@ -1774,9 +1774,13 @@ export class GitPushManager {
 
   // ── 仓库清理（RepoCleanOps：体检扫描 + BFG 六步工作流）──
 
-  /** 仓库体检：.git 体积汇总 + 可达大文件 Top N（纯 git，只读） */
-  async scanRepoObjects(projectPath: string, thresholdMb: number): Promise<RepoScanResult> {
-    return this.repoCleanOps.scan(projectPath, thresholdMb)
+  /** 仓库体检：.git 体积汇总 + 可达大文件 Top N（纯 git，只读；onStage 供操作流水线展示真实命令） */
+  async scanRepoObjects(
+    projectPath: string,
+    thresholdMb: number,
+    onStage?: (stage: RepoScanStage) => void,
+  ): Promise<RepoScanResult> {
+    return this.repoCleanOps.scan(projectPath, thresholdMb, onStage)
   }
 
   /** BFG 运行时探测（Java + jar 就绪状态，供清理向导检查清单） */

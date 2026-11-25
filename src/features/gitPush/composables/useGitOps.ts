@@ -323,7 +323,10 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     clearRemoteOutput: remote.clearOutput,
     // 操作流水线（卡片内阶段动画）
     opPipelines: pipeline.opPipelines,
+    globalPipelines: pipeline.globalPipelines,
+    allPipelines: pipeline.allPipelines,
     runLocalPipeline: pipeline.runLocalPipeline,
+    runGlobalPipeline: pipeline.runGlobalPipeline,
     // 本地状态
     pushStatuses,
     workingTrees,

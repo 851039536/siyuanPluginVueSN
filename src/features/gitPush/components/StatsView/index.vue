@@ -42,6 +42,14 @@
         </template>
       </AnalysisToolbar>
 
+      <!-- 手动刷新真实流水线：查询项目状态逐项推进；首次加载不接 lane -->
+      <OpPipeline
+        v-if="pipelineLanes.length"
+        :lanes="pipelineLanes"
+        :i18n="i18n"
+        show-detail
+      />
+
       <!-- 未加载空态：进入页面不自动刷新，由用户点击加载（同会话内已加载过则直接展示） -->
       <EmptyState
         v-if="!loaded"
@@ -98,6 +106,7 @@
 // 原先「KPI 卡 + chips + 覆盖率条 + 矩阵」的平铺堆叠把同一批计数重复渲染了三遍，
 // 且待处理项目同时以条形排行和表格出现两次；现按「概览 / 行动 / 明细」重新分层。
 import type { RepoLinkAuditRow, StatsView } from "../../types"
+import type { OpPipelineLane } from "../../types/pipeline"
 import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import { statsStatusText } from "../../utils"
@@ -107,6 +116,7 @@ import EmptyState from "../common/EmptyState.vue"
 import HealthOverview from "./HealthOverview.vue"
 import PendingProjectsSection from "./PendingProjectsSection.vue"
 import PlatformSection from "./PlatformSection.vue"
+import OpPipeline from "../ListView/OpPipeline.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
@@ -126,6 +136,8 @@ const props = defineProps<{
   loaded: boolean
   /** 上次状态快照刷新完成时间（ISO，空串 = 尚未手动刷新过） */
   refreshedAt: string
+  /** 手动刷新中的真实流水线（首次加载为空） */
+  pipelineLanes: OpPipelineLane[]
 }>()
 
 const emit = defineEmits<{

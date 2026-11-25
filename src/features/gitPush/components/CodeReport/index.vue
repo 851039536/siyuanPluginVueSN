@@ -54,6 +54,14 @@
         >{{ i18n.reportExport }}</Button>
       </div>
 
+      <!-- 手动生成真实流水线：读索引/补抓 → 聚合；自动后台刷新不显示 -->
+      <OpPipeline
+        v-if="pipelineLanes.length"
+        :lanes="pipelineLanes"
+        :i18n="i18n"
+        show-detail
+      />
+
       <!-- 四态门：生成中占位 / 未生成提示 / 已就绪内容（失败与空数据由下方各自分支处理） -->
       <AnalysisGate
         :running="running"
@@ -162,6 +170,7 @@
 <script setup lang="ts">
 // 代码统计报告面板：项目/时间范围选择 + 4 分区 Tab（团队总览[含代码贡献度]/技术债务/代码热点/提交趋势）
 import type { CodeReportData, GitProject, ReportRange } from "../../types"
+import type { OpPipelineLane } from "../../types/pipeline"
 import { Icon } from "@iconify/vue"
 import { computed, ref, watch } from "vue"
 import { REPORT_RANGE_LABEL_KEYS, REPORT_RANGES } from "../../types"
@@ -170,6 +179,7 @@ import { fmtTemplate } from "../../utils/i18nFormat"
 import type { SectionTabItem } from "../common/sectionTabs"
 import AnalysisGate from "../common/AnalysisGate.vue"
 import EmptyState from "../common/EmptyState.vue"
+import OpPipeline from "../ListView/OpPipeline.vue"
 import SectionTabs from "../common/SectionTabs.vue"
 import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
@@ -201,6 +211,8 @@ const props = defineProps<{
   getFilePatch: (path: string) => Promise<string>
   /** 是否正在导出 HTML 报告 */
   exporting: boolean
+  /** 手动生成/切项目/切范围的全局流水线 */
+  pipelineLanes: OpPipelineLane[]
 }>()
 
 const emit = defineEmits<{

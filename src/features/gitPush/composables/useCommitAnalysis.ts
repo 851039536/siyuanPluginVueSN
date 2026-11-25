@@ -270,7 +270,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
    *
    * @returns 是否实际执行（false = 分析进行中被拒绝，调用方据此决定是否需后续重试）
    */
-  async function runCore(needNumstat: boolean, projectIds?: string[]): Promise<boolean> {
+  async function runCore(
+    needNumstat: boolean,
+    projectIds?: string[],
+    onStage?: (stage: "analysisAggregate") => void,
+  ): Promise<boolean> {
     if (runBusy) return false
     runBusy = true
     // 只有目标域进入「分析中」：另一域的进度指示不受影响
@@ -372,6 +376,9 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           }
         }
       })
+
+      // 项目级抓取全部结束，进入聚合/落盘；这是真实阶段边界，不是等待返回值后才补的展示
+      onStage?.("analysisAggregate")
 
       let fail = 0
       const flat: CommitAnalysisEntry[] = []
@@ -526,11 +533,14 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
    * 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat）。
    * @param projectId 单项目 id 或 id 数组 = 仅局部重抓指定项目（修正保存/批量修复后的快速刷新）；不传 = 全量重跑。
    */
-  async function runAnalysis(projectId?: string | string[]) {
+  async function runAnalysis(
+    projectId?: string | string[],
+    onStage?: (stage: "analysisAggregate") => void,
+  ) {
     // 归一化：空数组回退 undefined，否则 runCore 的 `projectIds?.length` 判据会误走全量分支
     const ids = Array.isArray(projectId) ? projectId : projectId ? [projectId] : undefined
     const scoped = ids?.length ? ids : undefined
-    const ran = await runCore(false, scoped)
+    const ran = await runCore(false, scoped, onStage)
     // 分析进行中被拒绝：全量请求置 analyzed=false 并标记待重跑；子集请求仅排队（保持界面数据，避免白屏）
     if (!ran) {
       if (scoped) {
@@ -545,8 +555,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   }
 
   /** 行数统计（始终并行抓取 numstat 生成项目/作者行数排行并覆盖缓存行数数据） */
-  async function runLineStatsAnalysis() {
-    const ran = await runCore(true)
+  async function runLineStatsAnalysis(onStage?: (stage: "analysisAggregate") => void) {
+    const ran = await runCore(true, undefined, onStage)
     if (!ran) {
       lineAnalyzed.value = false
       pendingReanalyze = true
@@ -676,7 +686,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
    * 结果由 manager.scanProjectLineStats 直接落 JSON 槽，并同步写行数统计快照缓存供下次复用；
    * analyzedAt 语义为全量分析完成时间，不因单项目刷新改动。
    */
-  async function refreshLineStatsProject(projectId: string) {
+  async function refreshLineStatsProject(projectId: string, onStage?: () => void) {
     if (lineDetailRefreshing.value || runBusy) return
     const p = projects.value.find((x) => x.id === projectId)
     if (!p) return
@@ -698,6 +708,8 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         (f) => shouldIncludeFile(f, selectedExtensions.value),
         true,
       )
+      // 单项目扫描结束，开始更新排行/汇总/缓存
+      onStage?.()
       perProjectFileLines.value.set(projectId, fileLines)
       // 项目排行 upsert：剔除旧条目后重插并按总行数降序重排（与 buildLineRankings 同口径），
       // 弹窗「当前总行数」chip 随之更新

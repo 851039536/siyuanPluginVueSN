@@ -35,6 +35,16 @@ export type PipelineStageKey =
   | "generateMsg"
   | "fetchExec"
   | "refreshStatus"
+  | "statsQuery"
+  | "analysisScan"
+  | "analysisAggregate"
+  | "reportScan"
+  | "reportAggregate"
+  | "repoPackScan"
+  | "repoObjectScan"
+  | "repoPathScan"
+  | "repoAnchorScan"
+  | "tagPushExec"
 
 /** 流水线所属操作 */
 export type PipelineOp =
@@ -46,6 +56,18 @@ export type PipelineOp =
   | "stash"
   | "switch"
   | "discard"
+  | "stats"
+  | "analysis"
+  | "lineStats"
+  | "report"
+  | "repoScan"
+  | "tagPush"
+
+/**
+ * 非项目级操作（统计 / 分析 / 报告 / 体检）的保留 project key。
+ * 与真实项目 id 不会冲突；卡片按 id 取 lane，因此不会渲染到这里。
+ */
+export const GLOBAL_PIPELINE_SCOPE = "__global__"
 
 /** 单个阶段 / 整条流水线的状态（pending 表示未开始） */
 export type PipelineStatus = "pending" | "running" | "done" | "skipped" | "fail" | "canceled"

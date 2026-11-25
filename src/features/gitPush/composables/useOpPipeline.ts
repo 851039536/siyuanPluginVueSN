@@ -1,12 +1,13 @@
 // 操作流水线状态：远程真实阶段事件 + 本地真实步骤，统一按项目维护 lane
 import type { Ref } from "vue"
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import type {
   OpPipelineLane,
   PipelineOp,
   PipelineStageKey,
   RemoteProgressEvent,
 } from "../types/pipeline"
+import { GLOBAL_PIPELINE_SCOPE } from "../types/pipeline"
 import type { TimerHandle } from "@/utils/timerRegistry"
 import { TimerRegistry } from "@/utils/timerRegistry"
 import {
@@ -66,6 +67,14 @@ export interface OpPipelineBridge {
  */
 export function useOpPipeline() {
   const opPipelines: Ref<Record<string, OpPipelineLane[]>> = ref({})
+  /** 非项目级操作（统计/分析/报告/体检）的 lane；与卡片 lane 共用同一状态机与清理策略 */
+  const globalPipelines = computed<OpPipelineLane[]>(() =>
+    (opPipelines.value[GLOBAL_PIPELINE_SCOPE] ?? []).filter((lane) => lane.visible),
+  )
+  /** 全部可见 lane（项目 lane + 全局 lane），供根级 Dock 聚合展示 */
+  const allPipelines = computed<OpPipelineLane[]>(() =>
+    Object.values(opPipelines.value).flat().filter((lane) => lane.visible),
+  )
   const timers = new TimerRegistry()
   const revealTimers = new Map<string, TimerHandle>()
   const stallTimers = new Map<string, TimerHandle>()
@@ -334,6 +343,19 @@ export function useOpPipeline() {
     cleanupTimers.set(laneId, handle)
   }
 
+  /**
+   * 包装一次非项目级操作（统计刷新 / 提交分析 / 报告生成 / 仓库体检）。
+   * 使用保留 project key 写入同一份 opPipelines，渲染在根级 Dock / 各视图工具条下方。
+   */
+  function runGlobalPipeline<T>(
+    op: PipelineOp,
+    label: string,
+    plan: readonly PipelineStageKey[],
+    fn: (stepper: LocalPipelineStepper) => Promise<T>,
+  ): Promise<T> {
+    return runLocalPipeline(GLOBAL_PIPELINE_SCOPE, op, label, plan, fn)
+  }
+
   /** 删除项目时清理全部关联流水线 */
   function clearProject(projectId: string) {
     for (const lane of opPipelines.value[projectId] ?? []) {
@@ -358,10 +380,13 @@ export function useOpPipeline() {
 
   return {
     opPipelines,
+    globalPipelines,
+    allPipelines,
     beginRemote,
     applyRemoteEvent,
     finishRemote,
     runLocalPipeline,
+    runGlobalPipeline,
     clearProject,
     dispose,
   }

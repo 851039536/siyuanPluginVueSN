@@ -14,6 +14,9 @@ const CLEAN_TIMEOUT_MS = 600000
 /** 清理工作流阶段标识（onStep 回传给 UI 步骤条） */
 export type RepoCleanStep = "backup" | "mirror" | "bfg" | "gc" | "sync"
 
+/** 体检扫描的真实命令阶段（供操作流水线展示；无大文件时 anchor 不会触发） */
+export type RepoScanStage = "repoPackScan" | "repoObjectScan" | "repoPathScan" | "repoAnchorScan"
+
 /** "12.50 MiB" / "1.2 MB" 人类可读体积 → 字节（count-objects -vH 输出解析） */
 function parseHumanSizeToBytes(s: string): number {
   const m = s.match(/([\d.]+)\s*(B|KB?|MB?|GB?|TB?)/i)
@@ -44,10 +47,16 @@ export class RepoCleanOps {
    * 仓库体检：.git 体积汇总 + 可达 blob 大文件 Top N
    * 三命令 join：count-objects（体积）+ cat-file --batch-check（hash→size）+ rev-list --objects（hash→path）
    */
-  async scan(projectPath: string, thresholdMb: number, topN = 50): Promise<RepoScanResult> {
+  async scan(
+    projectPath: string,
+    thresholdMb: number,
+    onStage?: (stage: RepoScanStage) => void,
+    topN = 50,
+  ): Promise<RepoScanResult> {
     const thresholdBytes = thresholdMb * 1024 * 1024
 
     // 1. 体积汇总（size-pack / size 为人类可读串）
+    onStage?.("repoPackScan")
     const countRaw = await this.executor.execGit(projectPath, ["count-objects", "-vH"], undefined, SCAN_TIMEOUT_MS)
     let packSize = 0
     let looseSize = 0
@@ -60,6 +69,7 @@ export class RepoCleanOps {
     }
 
     // 2. 全部对象 hash→type+size（--batch-all-objects 无需 stdin；--unordered 提速，顺序无关）
+    onStage?.("repoObjectScan")
     const catRaw = await this.executor.execGit(
       projectPath,
       ["cat-file", "--batch-check", "--batch-all-objects", "--unordered"],
@@ -75,6 +85,7 @@ export class RepoCleanOps {
     }
 
     // 3. 可达对象 hash→路径（树对象行无路径；blob 行路径即文件路径；同 blob 多路径时保留最后出现）
+    onStage?.("repoPathScan")
     const revRaw = await this.executor.execGit(
       projectPath,
       ["rev-list", "--objects", "--all"],
@@ -100,6 +111,7 @@ export class RepoCleanOps {
     //    本地分支/标签可达集（--branches --tags）与远程跟踪引用可达集（--glob refs/remotes/*）各跑一遍，
     //    仅被远程跟踪引用锚定 → "remote"（远端仍是旧历史）；两者皆非 → "other"（stash 等其他引用）
     if (all.length > 0) {
+      onStage?.("repoAnchorScan")
       const hashSetOf = (raw: string): Set<string> => {
         const set = new Set<string>()
         for (const line of raw.split("\n")) {

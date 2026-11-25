@@ -1,0 +1,40 @@
+@use "@/variables.scss" as *;
+
+// 根级操作条：融入头部与内容之间，不再做成独立悬浮卡片
+.gp-dock {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  padding: 0 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  background: var(--b3-theme-surface);
+}
+
+// 左侧状态：spinner + 计数文案；固定宽度避免 lane 文案变化时左右跳动
+.gp-dock-head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-1 $s-2 $s-1 0;
+  border-right: 1px solid var(--b3-border-color);
+  color: var(--b3-theme-primary);
+  font-size: $t-2xs;
+  font-weight: $fw-medium;
+  white-space: nowrap;
+}
+
+.gp-dock-title {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 右侧 lane 区：单行展示；多任务时内部滚动，不把页面顶下去
+.gp-dock-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 25vh;
+  overflow-y: auto;
+  padding: $s-1 0 $s-1 $s-2;
+}

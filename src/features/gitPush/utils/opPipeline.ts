@@ -43,6 +43,16 @@ export const PIPELINE_STAGE_LABEL_KEY: Record<PipelineStageKey, string> = {
   generateMsg: "opStageGenerateMsg",
   fetchExec: "opStageFetchExec",
   refreshStatus: "opStageRefreshStatus",
+  statsQuery: "opStageStatsQuery",
+  analysisScan: "opStageAnalysisScan",
+  analysisAggregate: "opStageAnalysisAggregate",
+  reportScan: "opStageReportScan",
+  reportAggregate: "opStageReportAggregate",
+  repoPackScan: "opStageRepoPackScan",
+  repoObjectScan: "opStageRepoObjectScan",
+  repoPathScan: "opStageRepoPathScan",
+  repoAnchorScan: "opStageRepoAnchorScan",
+  tagPushExec: "opStageTagPushExec",
 }
 
 /** 推送：git 会按 枚举 → 计数 → 压缩 → 写入 → 远端 → 更新引用 输出 */
@@ -84,6 +94,27 @@ export const DISCARD_STAGE_PLAN: readonly PipelineStageKey[] = ["discardExec", "
 export const QUICK_COMMIT_STAGE_PLAN: readonly PipelineStageKey[] = [
   "stageAll", "generateMsg", "commitWrite", "refreshState",
 ]
+
+/** 统计中心手动刷新：逐项目查询状态（链接审计仍走后台，不并入本 lane） */
+export const STATS_STAGE_PLAN: readonly PipelineStageKey[] = ["prepare", "statsQuery"]
+
+/** 提交分析 / 行数统计：抓取 → 聚合落盘 */
+export const ANALYSIS_STAGE_PLAN: readonly PipelineStageKey[] = [
+  "prepare", "analysisScan", "analysisAggregate",
+]
+
+/** 代码报告：读索引/补抓 → 聚合缓存 */
+export const REPORT_STAGE_PLAN: readonly PipelineStageKey[] = [
+  "prepare", "reportScan", "reportAggregate",
+]
+
+/** 仓库体检：三条 git 命令 + 锚定引用（无大文件时锚定阶段由 reducer 标 skipped） */
+export const REPO_SCAN_STAGE_PLAN: readonly PipelineStageKey[] = [
+  "prepare", "repoPackScan", "repoObjectScan", "repoPathScan", "repoAnchorScan",
+]
+
+/** Tag 推送：网络写操作（完成后由调用方刷新/提示） */
+export const TAG_PUSH_STAGE_PLAN: readonly PipelineStageKey[] = ["prepare", "tagPushExec"]
 
 /** 终态判定：终态 lane 不再接受新事件 */
 export function isLaneTerminal(status: PipelineStatus): boolean {

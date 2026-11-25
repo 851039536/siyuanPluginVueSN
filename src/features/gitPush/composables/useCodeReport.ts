@@ -172,10 +172,15 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
    *
    * @param opts.silent 后台刷新：已有内容时不切到"生成中"态，避免闪烁
    */
-  async function runReport(opts?: { silent?: boolean }) {
+  async function runReport(opts?: {
+    silent?: boolean
+    /** 传入时视为流水线调用：在真实聚合边界回报，并把 git 失败抛给调用方以便 lane 标 fail */
+    onStage?: (stage: "reportAggregate") => void
+  }) {
     const project = currentProject.value
     if (!project) return
     const silent = opts?.silent ?? false
+    const onStage = opts?.onStage
     // 本轮请求的键在 await 之前捕获：期间用户可能切换项目/范围，落缓存必须用「算这份数据时」的键
     const reqProjectId = project.id
     const reqRange = range.value
@@ -212,9 +217,13 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
           reportData.value = buildEmptyReport(rangeLabelFor([]))
           generated.value = false
         }
+        // 流水线调用必须感知失败：静默刷新保留旧内容是对的，但不能把 lane 画成 done
+        if (onStage) throw new Error(i18n.reportFailed || "report failed")
         // 校验失败不记账：verifyKey 若在此加入，ensureReport 的早退分支会认为
         // 「本项目 + 范围 + 版本已校验」，此后永不重试，用户只能一直看着陈旧数据
       } else {
+        // 抓取结束，进入聚合/落盘
+        onStage?.("reportAggregate")
         reportData.value = buildReportData(project, commits, rangeLabelFor(commits))
         generated.value = true
         await saveReportCache(reportData.value, reqProjectId, reqRange)
@@ -236,20 +245,20 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
   }
 
   /** 切换时间范围：立即重算（索引命中时零 git），再跑一次 */
-  async function setRange(r: ReportRange) {
+  async function setRange(r: ReportRange, onStage?: (stage: "reportAggregate") => void) {
     if (range.value === r) return
     range.value = r
-    await runReport({ silent: generated.value })
+    await runReport({ silent: generated.value, onStage })
   }
 
   /** 切换项目：清空内容避免串台，再走统一生成 */
-  async function setProject(id: string) {
+  async function setProject(id: string, onStage?: (stage: "reportAggregate") => void) {
     if (projectId.value === id) return
     projectId.value = id
     generated.value = false
     reportData.value = buildEmptyReport("")
     await savePrefs()
-    await runReport()
+    await runReport({ onStage })
   }
 
   /**

@@ -7,7 +7,7 @@ import type { GitProject, ProjectQueryKind, UndoOutcome } from "../types"
 import type { PipelineOp, PipelineStageKey } from "../types/pipeline"
 import type { DiscardTarget } from "../types/storage"
 import type { LocalPipelineStepper } from "./useOpPipeline"
-import { DISCARD_STAGE_PLAN, QUICK_COMMIT_STAGE_PLAN } from "../utils/opPipeline"
+import { DISCARD_STAGE_PLAN, QUICK_COMMIT_STAGE_PLAN, TAG_PUSH_STAGE_PLAN } from "../utils/opPipeline"
 import { findProject, getProjectRemoteNames, pruneRecordCache, acquireFlag, releaseFlag, shouldUseDeepCommitMessage, summarizeCommitSize } from "../utils"
 import type { NumstatEntry } from "../utils"
 import { describeAiFallback } from "../utils/i18nFormat"
@@ -246,14 +246,22 @@ export function useGitHandlers(deps: {
       [id]: tag,
     }
     try {
-      // allSettled 汇总全部失败远程：Promise.all 会 fast-fail，多远程部分成功时只报第一个错
-      const results = await Promise.allSettled(remoteNames.map((name) => pushTagOp(id, name, tag)))
-      const failures = results
-        .filter((r): r is PromiseRejectedResult => r.status === "rejected")
-        .map((r) => getErrorMessage(r.reason) || String(r.reason))
-      if (failures.length > 0) {
-        showMessage(tf("pushTagFailed", failures.join("; ")), 5000, "error")
-      }
+      await runLocalPipeline(id, "tagPush", tf("pipelineTagPush"), TAG_PUSH_STAGE_PLAN, async (stepper) => {
+        stepper.step("prepare")
+        stepper.step("tagPushExec")
+        // allSettled 汇总全部失败远程：Promise.all 会 fast-fail，多远程部分成功时只报第一个错
+        const results = await Promise.allSettled(remoteNames.map((name) => pushTagOp(id, name, tag)))
+        const failures = results
+          .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+          .map((r) => getErrorMessage(r.reason) || String(r.reason))
+        if (failures.length > 0) {
+          showMessage(tf("pushTagFailed", failures.join("; ")), 5000, "error")
+          // 让 lane 收敛为 fail；错误已通过 toast 呈现，外层不再重复提示
+          throw new Error(failures.join("; "))
+        }
+      })
+    } catch {
+      // lane 已标 fail；失败详情由上方 toast 保留
     } finally {
       delete tagPushLoading.value[id]
       // ref<Record> 的 delete 不被 Vue 深层响应式追踪检测到，需手动触发浅拷贝

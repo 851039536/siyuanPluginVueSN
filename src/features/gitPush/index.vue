@@ -196,17 +196,6 @@
       @cancel="cancelGenericConfirm"
     />
     <Transition name="gp-dialog-fade">
-      <IdeManagementDialog
-        v-if="showIdeDialog"
-        :i18n="i18n"
-        :custom-ides="customIdes"
-        @close="showIdeDialog = false"
-        @add="addCustomIde"
-        @saveEdit="saveEditIde"
-        @delete="doRemoveCustomIde"
-      />
-    </Transition>
-    <Transition name="gp-dialog-fade">
       <ScanImportDialog
         v-if="showScanDialog"
         v-model:scan-dir="scanDir"
@@ -299,7 +288,6 @@ import AddProjectDialog from "./components/common/AddProjectDialog.vue"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import ConsistencyAuditDialog from "./components/common/ConsistencyAuditDialog.vue"
 import EditProjectDialog from "./components/common/EditProjectDialog.vue"
-import IdeManagementDialog from "./components/common/IdeManagementDialog.vue"
 import ListView from "./components/ListView/index.vue"
 import MarkdownPreviewDialog from "./components/common/MarkdownPreviewDialog.vue"
 import PanelHeader from "./components/common/PanelHeader.vue"
@@ -317,7 +305,7 @@ import { useGitProbe } from "./composables/useGitProbe"
 import { useBatchProgress } from "./composables/useBatchProgress"
 import { useBatchPush } from "./composables/useBatchPush"
 import { usePushStatusView } from "./composables/usePushStatusView"
-import { useIdeManagement } from "./composables/useIdeManagement"
+import { useTerminalLaunch } from "./composables/useTerminalLaunch"
 import {
   useProjectFilters,
 } from "./composables/useProjectFilters"
@@ -1007,22 +995,10 @@ const { exporting: reportExporting, exportHtml: exportReportHtml } = useReportEx
 })
 
 const {
-  detectedIdes,
-  customIdes,
   detectedTerminals,
-  showIdeDialog,
-  saveEditIde,
-  loadCustomIdes,
-  addCustomIde,
-  doRemoveCustomIde,
-  removeCustomIdeByName,
-  handleOpenCustomIde,
-  scanIdes,
   scanTerminals,
-  handleOpenIde,
   handleOpenTerminal,
-} = useIdeManagement({
-  plugin: props.plugin,
+} = useTerminalLaunch({
   openFolder: (path: string) => { void openLocalPath(path) },
 })
 
@@ -1306,8 +1282,6 @@ onMounted(async () => {
   document.addEventListener("visibilitychange", handleDocumentVisibilityChange)
   await loadProjects()
   loadCommitTemplates()
-  loadCustomIdes()
-  scanIdes() // 扫描已安装的 IDE
   scanTerminals() // 扫描当前平台可用的内置终端
   await loadGitOpsPaused() // 从持久化存储恢复暂停状态
   await loadShowArchived() // 从持久化存储恢复归档显示状态
@@ -1934,8 +1908,6 @@ provide(CARD_SERVICES_KEY, {
   shared: {
     i18n: props.i18n,
     categories,
-    detectedIdes,
-    customIdes,
     detectedTerminals,
     commitTemplates,
     commitDrafts,
@@ -1976,11 +1948,7 @@ provide(CARD_SERVICES_KEY, {
     openEditDialog,
     openMarkdownPreview,
     openProjectGitConfig: handleOpenProjectGitConfig,
-    handleOpenIde,
-    handleOpenCustomIde,
     handleOpenTerminal,
-    showIdeDialog: (show = true) => { showIdeDialog.value = show },
-    removeCustomIdeByName,
     handleRefresh,
     handleRefreshWorkingTree,
     handleRefreshRemoteStatus,

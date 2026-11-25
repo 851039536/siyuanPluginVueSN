@@ -5,10 +5,8 @@ import type { PlatformKey } from "./meta"
 import type { ProjectQueryScheduler } from "./queryScheduler"
 import type {
   CommitTemplate,
-  CustomIde,
   DiscardTarget,
   GitProject,
-  IdeEntry,
   ProjectCategory,
   PushOutputEntry,
   PushStatusInfo,
@@ -21,8 +19,6 @@ import type {
 export interface CardSharedData {
   i18n: Record<string, any>
   categories: Ref<ProjectCategory[]>
-  detectedIdes: Ref<IdeEntry[]>
-  customIdes: Ref<CustomIde[]>
   detectedTerminals: Ref<TerminalEntry[]>
   commitTemplates: Ref<CommitTemplate[]>
   /** 提交信息草稿（按项目 id；仅会话内存 —— 手风琴折叠/切分类卸载面板时不丢失） */
@@ -80,12 +76,8 @@ export interface CardOps {
   openEditDialog: (project: GitProject) => void
   openMarkdownPreview: (project: GitProject, fileName: string) => void
   openProjectGitConfig: (id: string) => void
-  handleOpenIde: (path: string, ide: IdeEntry) => void
-  handleOpenCustomIde: (path: string, name: string) => void
-  /** 在项目目录打开指定终端（useIdeManagement 提供） */
+  /** 在项目目录打开指定终端（useTerminalLaunch 提供） */
   handleOpenTerminal: (path: string, terminal: TerminalEntry) => void
-  showIdeDialog: (show?: boolean) => void
-  removeCustomIdeByName: (name: string) => void
   handleRefresh: (id: string) => void
   /** 刷新工作区；opts.force 缺省 true（手动/写后刷新），自动触发传 false 以复用调度器单飞 */
   handleRefreshWorkingTree: (id: string, opts?: { force?: boolean }) => Promise<void>

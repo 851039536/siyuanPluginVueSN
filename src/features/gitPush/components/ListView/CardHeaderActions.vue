@@ -1,6 +1,6 @@
-<!-- gitPush 项目卡片顶栏操作按钮区（平台链接/IDE/浏览文件/编辑/Git配置/删除，自包含 services/menu；分类调整已合并至编辑项目弹窗） -->
+<!-- gitPush 项目卡片顶栏操作按钮区（平台链接/打开项目/浏览文件/编辑/Git配置/删除，自包含 services/menu；分类调整已合并至编辑项目弹窗） -->
 <template>
-  <!-- 操作按钮区：平台链接/IDE/浏览文件/编辑/Git配置/删除（分类调整已合并至编辑项目弹窗） -->
+  <!-- 操作按钮区：平台链接/打开项目/浏览文件/编辑/Git配置/删除（分类调整已合并至编辑项目弹窗） -->
   <div class="gp-card-actions">
     <!-- 平台链接下拉菜单（本地开关，与 IDE/刷新菜单同模式） -->
     <div class="gp-link-wrap gp-menu-wrap">
@@ -60,7 +60,7 @@
         </button>
       </MenuPopover>
     </div>
-    <!-- IDE 打开菜单（本地开关，与拉取/推送菜单同模式） -->
+    <!-- 打开项目菜单（本地开关，与拉取/推送菜单同模式）：打开文件夹 / 终端 / 复制项目路径 -->
     <div class="gp-ide-wrap gp-menu-wrap">
       <!-- 悬停提示："打开项目"（图标 + 展开箭头，双图标走默认插槽以保留原有形态） -->
       <Button
@@ -118,95 +118,18 @@
           class="gp-ide-divider"
           role="separator"
         />
-        <!-- 空态项："未检测到 IDE" -->
+        <!-- 菜单项："复制项目路径"（复制当前设备解析出的有效路径，便于在外部终端/工具中贴用） -->
         <button
-          v-if="detectedIdes.length === 0 && customIdes.length === 0"
-          class="gp-ide-item gp-ide-item--none"
-          role="menuitem"
-          disabled
-        >
-          <Icon
-            icon="mdi:information-outline"
-            height="12"
-          />
-          <span>{{ i18n.noIdeDetected }}</span>
-        </button>
-        <button
-          v-for="ide in detectedIdes"
-          :key="`detected-${ide.name}`"
           class="gp-ide-item"
           role="menuitem"
-          @click="ops.handleOpenIde(projectPath(), ide); openMenu = null"
+          :title="i18n.copyProjectPathHint"
+          @click="handleCopyProjectPath(projectPath()); openMenu = null"
         >
           <Icon
-            :icon="ide.icon"
+            icon="mdi:content-copy"
             height="12"
           />
-          <span>{{ ide.name }}</span>
-        </button>
-        <!-- 自定义 IDE：外层为 div[role=menuitem]（原 button 内嵌删除按钮属非法嵌套，且会吞掉键盘激活） -->
-        <div
-          v-for="custom in uniqueCustomIdes"
-          :key="`custom-${custom.name}`"
-          class="gp-ide-item gp-ide-item--custom"
-          role="menuitem"
-          tabindex="0"
-          :title="custom.paths.join('\n')"
-          @click="ops.handleOpenCustomIde(projectPath(), custom.name); openMenu = null"
-          @keydown.enter.prevent="ops.handleOpenCustomIde(projectPath(), custom.name); openMenu = null"
-          @keydown.space.prevent="ops.handleOpenCustomIde(projectPath(), custom.name); openMenu = null"
-        >
-          <Icon
-            icon="mdi:application-brackets"
-            height="12"
-          />
-          <span>{{ custom.name }}</span>
-          <template v-if="confirmingDelName === custom.name">
-            <!-- 二次确认：该名称下有多条候选路径时明确告知删除范围（按名称删除 = 删整组，不止当前这一行） -->
-            <span class="gp-ide-del-confirm">{{ deleteConfirmText(custom.paths.length) }}</span>
-            <button
-              class="gp-ide-del-yes"
-              @click.stop="ops.removeCustomIdeByName(custom.name); confirmingDelName = ''"
-              @keydown.stop
-            >
-              {{ i18n.yes }}
-            </button>
-            <button
-              class="gp-ide-del-no"
-              @click.stop="confirmingDelName = ''"
-              @keydown.stop
-            >
-              {{ i18n.no }}
-            </button>
-          </template>
-          <button
-            v-else
-            class="gp-ide-item-del"
-            :title="i18n.deleteCustomIde"
-            @click.stop="confirmingDelName = custom.name"
-            @keydown.stop
-          >
-            <Icon
-              icon="mdi:delete-outline"
-              height="12"
-            />
-          </button>
-        </div>
-        <div
-          class="gp-ide-divider"
-          role="separator"
-        />
-        <!-- 菜单项："管理 IDE..." -->
-        <button
-          class="gp-ide-item gp-ide-item--add"
-          role="menuitem"
-          @click.stop="ops.showIdeDialog(); openMenu = null"
-        >
-          <Icon
-            icon="mdi:cog-outline"
-            height="12"
-          />
-          <span>{{ i18n.manageIde }}</span>
+          <span>{{ i18n.copyProjectPath }}</span>
         </button>
       </MenuPopover>
     </div>
@@ -288,17 +211,15 @@ const emit = defineEmits<{
 const { services } = useCardServices(() => props.project)
 const { shared, ops } = services
 const i18n = shared.i18n
-const detectedIdes = shared.detectedIdes
-const customIdes = shared.customIdes
 const detectedTerminals = shared.detectedTerminals
 
 // 菜单开关（顶栏 platform/ide/refresh 与操作栏 pull/push 共用同一互斥状态）
 const { openMenu, toggleMenu } = useCardMenu()
 
-// 卡片本地动作（IDE 删除确认 / 复制链接）
+// 卡片本地动作（复制项目路径 / 复制链接）
 const {
-  confirmingDelName,
   handleCopyUrl,
+  handleCopyProjectPath,
 } = useCardActions({ i18n })
 
 /** 当前项目有效路径（多设备路径解析，点击时实时检测磁盘存在性，不用 computed 缓存） */
@@ -312,27 +233,6 @@ const platformLinks = computed(() =>
     .filter((pm) => props.project[pm.urlProp])
     .map((pm) => ({ key: pm.key, icon: pm.icon, label: pm.label, url: props.project[pm.urlProp]! })),
 )
-
-/** 自定义 IDE 按名称去重（同名多条 = 多台电脑的候选路径，菜单只展示一项，tooltip 列出全部路径） */
-const uniqueCustomIdes = computed(() => {
-  const map = new Map<string, string[]>()
-  for (const c of customIdes.value) {
-    const paths = map.get(c.name)
-    if (paths) paths.push(c.path)
-    else map.set(c.name, [c.path])
-  }
-  return [...map.entries()].map(([name, paths]) => ({ name, paths }))
-})
-
-/**
- * 删除确认文案：按名称删除会移除该 IDE 的全部候选路径，而菜单只显示一行。
- * 多路径时必须显式说明条数，否则用户以为只删当前这一条（实际是整组）。
- */
-function deleteConfirmText(pathCount: number): string {
-  return pathCount > 1
-    ? i18n.deleteCustomIdeMultiConfirm.replace("{0}", String(pathCount))
-    : i18n.confirmDeleteShort
-}
 </script>
 
 <style lang="scss">

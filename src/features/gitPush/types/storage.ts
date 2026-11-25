@@ -149,18 +149,7 @@ export function clampDiffContextBudget(n: number): number {
   return Math.max(DIFF_CONTEXT_BUDGET_MIN, Math.min(DIFF_CONTEXT_BUDGET_MAX, num))
 }
 
-/** 预设 IDE 条目（扫描结果与预设列表共用，useIdeManagement 持有） */
-export interface IdeEntry {
-  name: string
-  icon: string
-  cmds: string[]
-  knownPaths: string[]
-}
-
-/** 自定义 IDE 条目（仅 name + 可执行路径，多路径按同名聚合） */
-export interface CustomIde { name: string, path: string }
-
-/** 内置终端条目（Windows 平台探测，useIdeManagement 持有；启动模式仿 IdeEntry：cmds → knownPaths 依次尝试） */
+/** 内置终端条目（Windows 平台探测，useTerminalLaunch 持有；cmds → knownPaths 依次尝试） */
 export interface TerminalEntry {
   name: string
   icon: string

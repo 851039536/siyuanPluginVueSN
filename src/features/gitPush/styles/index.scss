@@ -187,53 +187,7 @@
   }
 }
 
-// 顶栏/操作区/菜单样式 → CardHeader.scss（IDE 管理弹窗与通用弹窗样式保留在 index.scss 与 Dialog.scss）
-
-// IDE 管理弹窗
-.gp-ide-mgmt-list {
-  display: flex;
-  flex-direction: column;
-  gap: $s-1;
-  margin-bottom: $s-1;
-}
-
-.gp-ide-mgmt-row {
-  display: flex;
-  align-items: center;
-  gap: $s-1;
-  padding: $s-1 0;
-}
-
-.gp-ide-mgmt-name {
-  font-weight: $fw-semibold;
-  font-size: $t-xs;
-  min-width: 100px; // 预设名称列最小宽度，保证各行路径列左对齐
-}
-
-.gp-ide-mgmt-path {
-  flex: 1;
-  font-size: $t-xs;
-  opacity: 0.5;
-  @include text-ellipsis;
-}
-
-.gp-ide-mgmt-empty {
-  font-size: $t-xs;
-  opacity: 0.4;
-  font-style: italic;
-  text-align: center;
-  padding: $s-3 0 $s-1;
-}
-
-.gp-ide-mgmt-add {
-  display: flex;
-  gap: $s-1;
-}
-
-// 预设 IDE 下拉（固定窄宽，容纳最长预设名，路径输入占满剩余）
-.gp-ide-preset-select {
-  width: 150px;
-}
+// 顶栏/操作区/菜单样式 → CardHeader.scss（通用弹窗样式保留在 index.scss 与 Dialog.scss）
 
 // .gp-btn-danger 已移入 styles/Buttons.scss
 // 远程状态区/状态徽章/冲突警告 → CardRemotes.scss
@@ -654,11 +608,6 @@
 // 项目编辑弹窗：加宽以容纳多设备路径行与远程列表
 .gp-dialog--edit {
   width: 754px;
-}
-
-// IDE 管理弹窗：容纳预设下拉 + 路径输入 + 操作按钮单行布局
-.gp-dialog--ide {
-  width: 460px;
 }
 
 // 扫描按钮行：居中放置"开始扫描"按钮

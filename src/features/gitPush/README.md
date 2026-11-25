@@ -123,7 +123,6 @@ src/features/gitPush/
 │   │   ├── SettingsDialog.vue       # 设置汇总弹窗外壳（左侧分区导航：常规 / 分类 / 显示 / 推送账号 / Git 配置）
 │   │   ├── settings/                # 设置弹窗分区子组件（常规五分组的推送与链接/性能与超时/本地索引/实时探测/提交规则 + 分类）
 │   │   ├── GitConfigSection.vue     # Git 配置管理面板（查看/编辑/新增/删除，全局/项目级）
-│   │   ├── IdeManagementDialog.vue  # IDE 管理弹窗
 │   │   ├── ScanImportDialog.vue     # 扫描导入弹窗
 │   │   ├── EditProjectDialog.vue    # 编辑项目弹窗
 │   │   ├── MarkdownPreviewDialog.vue# Markdown 预览弹窗

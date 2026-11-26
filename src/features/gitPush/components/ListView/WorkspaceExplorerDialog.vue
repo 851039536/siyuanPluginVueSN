@@ -186,7 +186,7 @@ import Dialog from "@/components/Dialog.vue"
 import Input from "@/components/Input.vue"
 import Splitter from "@/components/Splitter.vue"
 import SplitterPanel from "@/components/SplitterPanel.vue"
-import { safeSessionGet, safeSessionSet } from "@/utils/sessionStore"
+import { safeLocalGet, safeLocalSet, safeSessionGet, safeSessionSet } from "@/utils/webStore"
 import ScriptRunnerPanel from "./ScriptRunnerPanel.vue"
 import WorkspaceExplorerMain from "./WorkspaceExplorerMain.vue"
 
@@ -219,18 +219,40 @@ const { files, loading, error, refresh: refreshFiles } = useWorkspaceFiles(
 
 /** 路径筛选词（大小写不敏感子串；筛选时自动展开命中路径的目录） */
 const query = ref("")
-/** 已展开目录集合（默认空 = 全部收起，只展示根层） */
-const expandedDirs = ref<ReadonlySet<string>>(new Set())
+
+// ── 目录展开态持久化（按项目记忆到 localStorage：下次打开保持上次的展开结构）──
+const EXPANDED_KEY = `gitpush-workspace-explorer-expanded:${props.project.id}`
+
+/** 读取持久化的展开集（缺失 / 格式非法 / 无存储能力时回退空集 = 全部收起） */
+function readExpandedDirs(): Set<string> {
+  const raw = safeLocalGet(EXPANDED_KEY)
+  if (!raw) return new Set()
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    return Array.isArray(parsed)
+      ? new Set(parsed.filter((item): item is string => typeof item === "string"))
+      : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+/** 已展开目录集合（初始值来自上次会话的记忆） */
+const expandedDirs = ref<ReadonlySet<string>>(readExpandedDirs())
+watch(expandedDirs, (dirs) => {
+  safeLocalSet(EXPANDED_KEY, JSON.stringify([...dirs]))
+})
+
 /** 当前预览文件（相对仓库根；空串 = 未选中） */
 const selectedPath = ref("")
 /** 预览重读序号（刷新列表后递增：选中路径没变，磁盘内容也可能已变） */
 const reloadKey = ref(0)
 
-// ── 底部项目脚本面板展开态（默认收起：打开本弹窗的主意图是看文件；展开后本次会话记住）──
+// ── 底部项目脚本面板展开态（默认收起：打开本弹窗的主意图是看文件；展开后跨启动记住）──
 const SCRIPTS_OPEN_KEY = "gitpush-workspace-explorer-scripts-open"
-const scriptsOpen = ref(safeSessionGet(SCRIPTS_OPEN_KEY) === "1")
+const scriptsOpen = ref(safeLocalGet(SCRIPTS_OPEN_KEY) === "1")
 watch(scriptsOpen, (open) => {
-  safeSessionSet(SCRIPTS_OPEN_KEY, open ? "1" : "0")
+  safeLocalSet(SCRIPTS_OPEN_KEY, open ? "1" : "0")
 })
 
 /** 刷新文件列表 + 让预览重读磁盘（用户点「刷新」时两者的语义应当一致） */
@@ -315,9 +337,10 @@ watch(files, (list) => {
   const pick = pickInitialWorkspaceFile(list, safeSessionGet(LAST_FILE_KEY) ?? "")
   if (!pick) return
   selectedPath.value = pick
-  // 目标在深层目录时展开父链，否则树上根本看不到选中项
+  // 目标在深层目录时展开父链，否则树上根本看不到选中项；
+  // 合并进持久化的展开集（不要覆盖用户上次的展开结构）
   const dirs = collectDirectoryPaths([pick])
-  if (dirs.length > 0) expandedDirs.value = new Set(dirs)
+  if (dirs.length > 0) expandedDirs.value = new Set([...expandedDirs.value, ...dirs])
 }, { immediate: true })
 
 watch(selectedPath, (path) => {

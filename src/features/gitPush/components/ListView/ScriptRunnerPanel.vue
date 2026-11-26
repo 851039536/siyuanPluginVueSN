@@ -55,13 +55,13 @@
       v-if="expanded"
       class="we-scripts-body"
     >
-      <!-- 左右分栏：脚本列表 + 运行输出（分隔条可拖动，方向键亦可微调） -->
+      <!-- 左右分栏：脚本列表 + 运行输出（分隔条可拖动，方向键亦可微调；宽度跨启动记住） -->
       <Splitter
         class="we-scripts-split"
         layout="horizontal"
         :gutter-size="8"
         state-key="gitpush-workspace-scripts-split"
-        state-storage="session"
+        state-storage="local"
       >
         <SplitterPanel
           :size="34"

@@ -972,6 +972,51 @@ export class GitPushManager {
       this.invalidateGitDirCache(p)
       clearMarkdownScanCacheFor(p)
     }
+    // 派生数据（提交索引段 / 行数统计行 / 报告缓存）不会因为项目列表变化自动消失，必须显式清理：
+    // 索引段只有攒满 INDEX_MAX_PROJECT_SEGMENTS 才被动淘汰，行数行要等下一次完整分析才 prune，
+    // 否则删掉的项目会在磁盘上长期留一份完整历史（大仓库可达数十 MB）。
+    await this.purgeProjectDerivedData(id)
+  }
+
+  /**
+   * 清理「按项目 id 建立」的派生数据（删除项目后调用）。
+   *
+   * 每一步失败只告警、不向上抛：项目本身已经删掉了，清理失败不该让删除操作报错；
+   * 下次分析 / 重建索引仍有兜底路径。
+   *
+   * 不在此处改写提交分析缓存（`commitAnalysisCache`）：它的 entries / projectLineRanking /
+   * truncatedProjectIds 由使用侧按「现存项目 id」过滤（useCommitAnalysis 载入时已做），
+   * 在这里重写会与视图的整份快照写入互覆盖。
+   */
+  private async purgeProjectDerivedData(id: string): Promise<void> {
+    // 提交索引：段文件（commits/files/fileLines）+ meta 条目 + 内存段，由 invalidate 一次清干净
+    try {
+      const index = await this.getIndex()
+      if (index) {
+        await index.invalidate(id)
+        // CommitIndex 自己落的 meta.json 已更新，storage 槽位里的副本还需同步，
+        // 否则下次启动会按旧 meta 认为「该项目仍有索引」，把空段当有效缓存。
+        await this.persistIndexMeta()
+      }
+    } catch (e) {
+      console.warn("[gitPush] 清理已删项目的提交索引失败", e)
+    }
+    // 行数统计：SQLite 行按「现存项目 id」反选删除，与完整分析后的 prune 同一入口
+    try {
+      const keepIds = (await this.store.getProjects()).map((p) => p.id)
+      await this.pruneLineStats(keepIds)
+    } catch (e) {
+      console.warn("[gitPush] 清理已删项目的行数统计失败", e)
+    }
+    // 报告缓存是「单槽单项目」结构：命中的正是被删项目时整条清空（完整报告体量最大，留着纯占空间）
+    try {
+      const cache = await this.storage.reportCache.loadOrDefault()
+      if (cache.projectId === id) {
+        await this.storage.reportCache.save({ projectId: "", range: cache.range, generatedAt: "", report: null })
+      }
+    } catch (e) {
+      console.warn("[gitPush] 清理已删项目的报告缓存失败", e)
+    }
   }
 
   async updateProjectMeta(id: string, patch: Partial<Pick<GitProject, "path" | "tags" | "starred" | "archived" | "note" | "name" | "githubUrl" | "giteeUrl" | "giteaUrl" | "cnbUrl" | "localPaths" | "pathDevices" | "pushProfileId">>): Promise<GitProject | null> {

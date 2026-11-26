@@ -302,11 +302,19 @@ export class WorktreeOps {
   }
 
   async unstageFile(projectPath: string, file: string): Promise<void> {
+    // 必须带 `-- <path>`：路径形态的 `reset HEAD` 在「HEAD 尚未诞生」的空仓库里也成立
+    // （git 把带 pathspec 的 HEAD 解析成空树语义），而不带路径的 `reset HEAD` 会报
+    // `fatal: ambiguous argument 'HEAD'`（见 unstageAll 的说明）。不要为了「统一写法」把 `--` 去掉。
     await this.executor.execGit(projectPath, ["reset", "HEAD", "--", file])
   }
 
   async unstageAll(projectPath: string): Promise<void> {
-    await this.executor.execGit(projectPath, ["reset", "HEAD"])
+    // ⚠️ 刻意**不写** `HEAD`：`git reset` 缺省等价于 `git reset --mixed HEAD`，但在
+    // `git init` 之后、首个提交之前（unborn HEAD）两种写法命运不同 —— 实测 git 2.55：
+    //   · `git reset HEAD`   → exit 128 `fatal: ambiguous argument 'HEAD'`
+    //   · `git reset`        → exit 0，索引退回空树，文件变回未跟踪
+    // 空仓库里「取消全部暂存」是新项目最先遇到的操作，写成 `reset HEAD` 会直接失败。
+    await this.executor.execGit(projectPath, ["reset"])
   }
 
   async discardFile(projectPath: string, file: string, staged: boolean, status: string): Promise<void> {

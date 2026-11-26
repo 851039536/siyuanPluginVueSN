@@ -418,26 +418,39 @@ export class ProjectStore {
   }
 
   async addCategory(name: string, color = "#4a9eff"): Promise<ProjectCategory> {
-    const cats = await this.getCategories()
-    idCounter++
-    const cat: ProjectCategory = {
-      id: `${Date.now().toString(36)}-${idCounter}`,
-      name,
-      color,
-      order: cats.length,
-    }
-    cats.push(cat)
-    await this.storage.categories.save(cats)
-    return cat
+    // 读-改-写必须整段串行：`getCategories()` 每次都真读盘、拿到的是**独立副本**，
+    // 两次并发新增会各自基于同一份旧数组 push 再各存一份，后写覆盖先写 ⇒ 其中一个分类凭空消失。
+    // 与 deleteCategory / moveProject / addProject 共用同一把锁（同一个 "projects" 键），
+    // 否则「新增的同时删除」还会把已删分类写回来。
+    return this.serializeWrite(async () => {
+      const cats = await this.getCategories()
+      idCounter++
+      const cat: ProjectCategory = {
+        id: `${Date.now().toString(36)}-${idCounter}`,
+        name,
+        color,
+        order: cats.length,
+      }
+      cats.push(cat)
+      await this.storage.categories.save(cats)
+      return cat
+    })
   }
 
   async updateCategory(id: string, data: Partial<Pick<ProjectCategory, "name" | "color">>): Promise<void> {
-    const cats = await this.getCategories()
-    const cat = cats.find((c) => c.id === id)
-    if (!cat || id === UNGROUPED_ID) return
-    if (data.name !== undefined) cat.name = data.name
-    if (data.color !== undefined) cat.color = data.color
-    await this.storage.categories.save(cats)
+    // 未分组恒存在且不可改名：无写操作，不必进锁排队
+    if (id === UNGROUPED_ID) return
+    await this.serializeWrite(async () => {
+      const cats = await this.getCategories()
+      const idx = cats.findIndex((c) => c.id === id)
+      if (idx === -1) return
+      // 构造新对象而非原地改字段：数组虽是新读的副本，但元素引用可能与他处视图共享
+      const next = { ...cats[idx] }
+      if (data.name !== undefined) next.name = data.name
+      if (data.color !== undefined) next.color = data.color
+      cats[idx] = next
+      await this.storage.categories.save(cats)
+    })
   }
 
   async deleteCategory(id: string): Promise<void> {

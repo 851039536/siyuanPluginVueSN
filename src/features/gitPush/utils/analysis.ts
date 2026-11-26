@@ -289,6 +289,38 @@ export function isCommitLogTruncated(entryCount: number, limit: number): boolean
   return limit > 0 && entryCount >= limit
 }
 
+/**
+ * 提交分析的「已分析 / 失败」项目数（KPI 与失败提示的唯一口径）。
+ *
+ * 为什么按 id 集合推导、而不是维护一个计数：原实现是
+ * `analyzedCount = projects.length - failedCount`，`failedCount` 又靠增量加减
+ * （局部刷新时 `- 旧贡献 + 新失败`）。两处一旦与当前项目集合不同源就会失真，且方向相反：
+ *   · 新增一个项目（尚未分析）→ projects 变大而 failedCount 不变 ⇒ 已分析数虚增；
+ *   · 删掉一个失败项目 → projects 变小而 failedCount 不变 ⇒ 已分析数被压小，最坏为负。
+ * 这里改成「已分析与失败都按项目 id 记账，再与当前项目集合取交集」：
+ * 结果恒满足 0 ≤ analyzed ≤ projectCount，且 failed 与 analyzed 互斥（同一项目只算一次）。
+ *
+ * @param analyzedProjectIds 已分析过的项目 id（**空提交仓库也算已分析**，故不能从 entries 反推）
+ * @param failedProjectIds 上一轮分析失败的项目 id
+ * @param validProjectIds 当前仍存在的项目 id（已删除项目的残留记账在此被过滤掉）
+ */
+export function resolveAnalysisProjectCounts(
+  analyzedProjectIds: Iterable<string>,
+  failedProjectIds: Iterable<string>,
+  validProjectIds: ReadonlySet<string>,
+): { analyzedCount: number, failedCount: number } {
+  const analyzed = new Set<string>()
+  for (const id of analyzedProjectIds) {
+    if (validProjectIds.has(id)) analyzed.add(id)
+  }
+  let failedCount = 0
+  // 失败项目在 analyzed 里出现过就以 analyzed 为准（同一项目可能先失败后被局部刷新修好）
+  for (const id of new Set(failedProjectIds)) {
+    if (validProjectIds.has(id) && !analyzed.has(id)) failedCount++
+  }
+  return { analyzedCount: analyzed.size, failedCount }
+}
+
 /** 条目过滤选项（概览各区块共用的单一过滤口径；本轮仅接 merge 排除） */
 export interface AnalysisEntryFilterOptions {
   /** 排除 merge 提交（统计口径修正：merge 会虚增提交数/活跃天数/热力值） */

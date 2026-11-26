@@ -1277,7 +1277,7 @@ const {
 
 // ── 刷新操作集群 ──
 const {
-  refreshing,
+  refreshingIds,
   fetching,
   remoteStatusLoading,
   refreshingWorkingTree,
@@ -2150,7 +2150,7 @@ provide(CARD_SERVICES_KEY, {
     fetching,
     remoteStatusLoading,
     refreshingWorkingTree,
-    refreshing,
+    refreshingIds,
   },
   derived: {
     getPushStatus,

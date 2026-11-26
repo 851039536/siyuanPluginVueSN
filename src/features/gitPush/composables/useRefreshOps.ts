@@ -90,7 +90,27 @@ export function useRefreshOps(deps: {
     runLocalPipeline,
   } = deps
 
-  const refreshing = ref<string | null>(null)
+  /**
+   * 正在「整体刷新」的项目 id 集合。
+   *
+   * 原实现是单个 `ref<string | null>` 做全局重入守卫：项目 A 在刷时点项目 B 的刷新按钮
+   * 会**静默什么都不发生**（无排队、无提示），而 A 结束又把状态置空，B 的旋转指示也无从显示。
+   * 改为按项目 id 记账后，同一项目连点仍只跑一次（防重复拉取），不同项目互不阻塞。
+   * 每次都用新 Set 赋值，保证 ref 的响应式替换可被追踪。
+   */
+  const refreshingIds = ref<Set<string>>(new Set())
+
+  function markRefreshing(id: string): void {
+    const next = new Set(refreshingIds.value)
+    next.add(id)
+    refreshingIds.value = next
+  }
+
+  function unmarkRefreshing(id: string): void {
+    const next = new Set(refreshingIds.value)
+    next.delete(id)
+    refreshingIds.value = next
+  }
   /** FETCH 操作加载中 id → 计数 */
   const fetching = ref<Record<string, number>>({})
   /** 远程状态刷新加载中 id → 计数 */
@@ -118,9 +138,10 @@ export function useRefreshOps(deps: {
   async function handleRefresh(id: string) {
     const project = findProject(projects, id)
     if (!project) return
-    // 重入守卫：连点"全部刷新"会并发执行且先结束者 finally 置 null 使旋转指示提前消失
-    if (refreshing.value) return
-    refreshing.value = id
+    // 按项目去重：同一项目连点只跑一次（否则先结束者 finally 会让后者的指示提前消失）；
+    // 不同项目可以并行刷新，不再互相吞请求
+    if (refreshingIds.value.has(id)) return
+    markRefreshing(id)
     try {
       await runBatchWithProgress([project], tf("refreshingLabel"), async (p) => {
         // 统一远程管线（调度器单飞）：refreshRemotes → fetch → 状态重查。
@@ -140,7 +161,7 @@ export function useRefreshOps(deps: {
         }
       })
     } finally {
-      refreshing.value = null
+      unmarkRefreshing(id)
     }
   }
 
@@ -186,7 +207,7 @@ export function useRefreshOps(deps: {
   }
 
   return {
-    refreshing,
+    refreshingIds,
     fetching,
     remoteStatusLoading,
     refreshingWorkingTree,

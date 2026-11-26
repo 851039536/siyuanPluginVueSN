@@ -22,6 +22,7 @@ import {
   rankByCountWithTotal,
   rankProjectsWithColors,
   resolveAnalysisRange,
+  resolveAnalysisProjectCounts,
   resolveHeatGranularity,
   resolveTrendGranularity,
   summarizeCommitRange,
@@ -723,5 +724,53 @@ describe("inclusiveDays", () => {
   it("闭区间天数（同一天 = 1 天）", () => {
     expect(inclusiveDays("2026-08-03", "2026-08-03")).toBe(1)
     expect(inclusiveDays("2026-08-01", "2026-08-31")).toBe(31)
+  })
+})
+
+// P1-3：分析计数原本是 `projects.length - failedCount` + 增量加减（- 旧贡献 + 新失败），
+// 两个来源不同源就会失真且方向相反：新增项目让已分析数虚增，删掉失败项目让已分析数被压小（可为负）。
+// 改为一律按项目 id 记账后，这些场景都必须稳定落在 0 ≤ analyzed ≤ projectCount。
+describe("resolveAnalysisProjectCounts（已分析 / 失败计数口径）", () => {
+  it("新增但尚未分析的项目不计入已分析", () => {
+    const counts = resolveAnalysisProjectCounts(
+      ["p1"],
+      [],
+      new Set(["p1", "p2"]),
+    )
+    // 旧实现：projects.length(2) - failedCount(0) = 2 —— 把没分析过的 p2 也算成了已分析
+    expect(counts).toEqual({ analyzedCount: 1, failedCount: 0 })
+  })
+
+  it("删掉失败项目后失败数不残留，已分析数不被压小", () => {
+    const counts = resolveAnalysisProjectCounts(
+      ["p1"],
+      ["p2"],
+      new Set(["p1"]),
+    )
+    // 旧实现：projects.length(1) - failedCount(1) = 0 —— 明明分析过 p1 却显示 0
+    expect(counts).toEqual({ analyzedCount: 1, failedCount: 0 })
+  })
+
+  it("残留失败记账多于现存项目时不会出现负数", () => {
+    const counts = resolveAnalysisProjectCounts([], ["p1", "p2", "p3"], new Set(["p1"]))
+    expect(counts).toEqual({ analyzedCount: 0, failedCount: 1 })
+    expect(resolveAnalysisProjectCounts([], ["p1"], new Set())).toEqual({
+      analyzedCount: 0,
+      failedCount: 0,
+    })
+  })
+
+  it("同一项目同时出现在两个集合时只算已分析（互斥）", () => {
+    const counts = resolveAnalysisProjectCounts(["p1"], ["p1"], new Set(["p1"]))
+    expect(counts).toEqual({ analyzedCount: 1, failedCount: 0 })
+  })
+
+  it("重复的失败 id 与已删除项目的记账都被归一", () => {
+    const counts = resolveAnalysisProjectCounts(
+      ["p1", "p1"],
+      ["p2", "p2", "gone"],
+      new Set(["p1", "p2"]),
+    )
+    expect(counts).toEqual({ analyzedCount: 1, failedCount: 1 })
   })
 })

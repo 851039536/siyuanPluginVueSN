@@ -137,6 +137,7 @@ export {
   rankByCountWithTotal,
   rankProjectsWithColors,
   resolveAnalysisRange,
+  resolveAnalysisProjectCounts,
   resolveHeatGranularity,
   resolveTrendGranularity,
   TREND_GRANULARITY_MONTH_MAX_DAYS,

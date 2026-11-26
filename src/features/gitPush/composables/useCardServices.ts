@@ -81,7 +81,7 @@ export function useCardServices(project: () => GitProject): {
   const fetching = computed(() => (byId(records.fetching.value) ?? 0) > 0)
   const remoteStatusLoading = computed(() => (byId(records.remoteStatusLoading.value) ?? 0) > 0)
   const refreshingWorkingTree = computed(() => (byId(records.refreshingWorkingTree.value) ?? 0) > 0)
-  const isRefreshing = computed(() => records.refreshing.value === id())
+  const isRefreshing = computed(() => records.refreshingIds.value.has(id()))
 
   return {
     services,

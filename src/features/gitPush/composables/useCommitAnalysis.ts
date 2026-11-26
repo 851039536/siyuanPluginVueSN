@@ -36,6 +36,7 @@ import {
   isCommitLogTruncated,
   poolProcess,
   ProjectFetchError,
+  resolveAnalysisProjectCounts,
   resolveValidPath,
 } from "../utils"
 import { diffHeadProjects } from "../utils/analysisFreshness"
@@ -119,8 +120,13 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   let cachedHeads: Record<string, string> = {}
   /** 上次 HEAD 探测时间（毫秒；防抖用） */
   let lastHeadProbeAt = 0
-  /** 提交分析失败的项目数（路径无效 throw 计入；规则检查/提交分析共用） */
-  const failedCount = ref(0)
+  /**
+   * 已分析过的项目 id（提交域）。**刻意与 entries 分开记账**：空提交仓库（0 条提交）
+   * 分析成功但产不出任何 entry，若从 entries 反推会被误判成「失败」。
+   */
+  const analyzedProjectIds = ref<Set<string>>(new Set())
+  /** 提交分析失败的项目 id（与 analyzedProjectIds 互斥；两个集合的交集由 resolveAnalysisProjectCounts 收敛） */
+  const failedProjectIds = ref<Set<string>>(new Set())
   /** 行数统计失败的项目数（与提交分析计数分槽，避免两个视图互相覆盖失败数） */
   const lineFailedCount = ref(0)
   /** 失败项目明细（项目名 + 路径 + 原因分类 + 原始报错；与 lineFailedCount 同源写入，供行数统计失败弹窗展示） */
@@ -285,7 +291,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       const targets = projectIds?.length && !needNumstat
         ? projects.value.filter((p) => projectIds.includes(p.id))
         : projects.value
-      // 子集目标全部不存在（项目已被删除）：无操作返回，避免 oldContribution 误判导致 failedCount 错误递减
+      // 子集目标全部不存在（项目已被删除）：无操作返回，避免把已删项目写进「已分析 / 失败」记账
       if (projectIds?.length && !needNumstat && targets.length === 0) {
         return true
       }
@@ -471,9 +477,20 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         const idSet = projectIds?.length ? new Set(projectIds) : new Set<string>()
         if (idSet.size > 0) {
           const prevEntries = entries.value
-          // 目标项目旧失败贡献（缺席旧 entries 计 1）+ 本次新失败数（单项目 0/1），增量校正 failedCount
-          const oldContribution = [...idSet].filter((id) => !prevEntries.some((e) => e.projectId === id)).length
-          failedCount.value = failedCount.value - oldContribution + fail
+          // 分析与失败按项目 id 记账：先把目标项目从两个集合里摘掉，再按本轮结果回填。
+          // 不复用「旧贡献加减」的增量算式 —— 它与当前项目集合无关，删项目/加项目都会漂。
+          const nextAnalyzed = new Set(analyzedProjectIds.value)
+          const nextFailed = new Set(failedProjectIds.value)
+          for (const id of idSet) {
+            nextAnalyzed.delete(id)
+            nextFailed.delete(id)
+          }
+          for (let i = 0; i < targets.length; i++) {
+            if (results[i]?.ok) nextAnalyzed.add(targets[i].id)
+          }
+          for (const f of runFailures) nextFailed.add(f.projectId)
+          analyzedProjectIds.value = nextAnalyzed
+          failedProjectIds.value = nextFailed
           const merged = [...prevEntries.filter((e) => !idSet.has(e.projectId)), ...flat]
           // 按项目配置顺序重排，保持显示稳定
           const order = new Map(projects.value.map((p, i) => [p.id, i]))
@@ -487,7 +504,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
           ]
           cachedHeads = { ...cachedHeads, ...headUpdates }
         } else {
-          failedCount.value = fail
+          // 全量：分析与失败都以本轮 targets 为准（既覆盖「上次分析过的项目被删」也覆盖「新加项目未分析」）
+          analyzedProjectIds.value = new Set(
+            targets.filter((_, i) => results[i]?.ok).map((t) => t.id),
+          )
+          failedProjectIds.value = new Set(runFailures.map((f) => f.projectId))
           entries.value = flat
           truncatedProjectIds.value = runTruncated
           // 全量覆盖：抓取失败的项目从快照中移除（HEAD 未知，下次探测按「未知」处理）
@@ -501,7 +522,7 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
       await manager.storage.commitAnalysisCache.save({
         commitCount: commitCount.value,
         analyzedAt: analyzedAt.value || stamp,
-        failedCount: failedCount.value,
+        failedCount: failedProjectIds.value.size,
         entries: entries.value,
         projectLineRanking: needNumstat ? projectLineRanking.value : (oldCache.projectLineRanking ?? []),
         // 行数域不动提交域字段：沿用旧缓存（提交域运行时以内存值覆盖）
@@ -587,7 +608,21 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     /** 旧缓存是否产生于「按条数截断」的分析（口径不全，不可直接展示） */
     const cappedLegacy = cache.commitCount !== COMMIT_COUNT_FIXED
     if (!cappedLegacy) {
-      failedCount.value = cache.failedCount
+      // 缓存只存了「失败数」这个数字，没存失败的是谁；用成功侧的痕迹反推：
+      //   已分析 = entries 覆盖的项目 ∪ heads 覆盖的项目（空提交仓库没有 entries，但有 HEAD 键）
+      // 旧缓存无 heads 字段时退化为「entries 覆盖的项目」，不会把有数据的项目误报成失败。
+      // 局部变量刻意不叫 analyzed：外层同名 ref 表示「本轮是否已分析」，会被遮蔽
+      const analyzedIds = new Set<string>()
+      for (const e of valid) {
+        if (validProjectIds.value.has(e.projectId)) analyzedIds.add(e.projectId)
+      }
+      for (const id of Object.keys(cache.heads ?? {})) {
+        if (validProjectIds.value.has(id)) analyzedIds.add(id)
+      }
+      analyzedProjectIds.value = analyzedIds
+      failedProjectIds.value = new Set(
+        [...validProjectIds.value].filter((id) => !analyzedIds.has(id)),
+      )
       analyzedAt.value = cache.analyzedAt
       entries.value = valid
       analyzed.value = true
@@ -799,11 +834,16 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   const analysisStats = computed<CommitAnalysisStats>(() => {
     // 实时过滤已删除项目的条目（项目删除后缓存/内存中的残留数据不参与统计与展示）
     const list = entries.value.filter((e) => validProjectIds.value.has(e.projectId))
+    const counts = resolveAnalysisProjectCounts(
+      analyzedProjectIds.value,
+      failedProjectIds.value,
+      validProjectIds.value,
+    )
     return {
       totalCommits: list.length,
       projectCount: projects.value.length,
-      analyzedCount: projects.value.length - failedCount.value,
-      failedCount: failedCount.value,
+      analyzedCount: counts.analyzedCount,
+      failedCount: counts.failedCount,
       entries: list,
     }
   })
@@ -831,7 +871,6 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
     lineAnalyzing,
     lineAnalyzed,
     lineAnalyzedAt,
-    failedCount,
     lineFailedCount,
     fetchFailures,
     truncatedProjectIds,

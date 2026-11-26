@@ -55,8 +55,8 @@ export interface CardRecordData {
   remoteStatusLoading: Ref<Record<string, number>>
   /** 引用计数（>0 视为 loading） */
   refreshingWorkingTree: Ref<Record<string, number>>
-  /** 当前"全部刷新"的项目 id（仅该卡片旋转图标） */
-  refreshing: Ref<string | null>
+  /** 正在「整体刷新」的项目 id 集合（按项目展示旋转图标；不同项目可并行） */
+  refreshingIds: Ref<Set<string>>
 }
 
 /** 派生函数（原函数 props，来自 usePushStatusView / useGitPush） */

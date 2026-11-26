@@ -4,6 +4,7 @@
 // - 文本只读前 256 KB，超出标记 truncated；
 // - 图片只预览 2 MB 以内，超出只显示元信息；
 // - 前 8 KB 出现 NUL 字节即判定为二进制，不渲染内容。
+// 读取一律走异步 API（fs.promises）：同步 IO 会阻塞渲染线程，大图/多图场景明显卡顿。
 // 路径来自 git 输出，仍做一次越界校验（解析后必须落在项目根内），属外部数据边界。
 import { getNodeFsPathOs } from "@/utils/nodeModules"
 import { pathBasename } from "@/utils/pathUtils"
@@ -216,27 +217,30 @@ export function resolveWorkspaceRelative(
 }
 
 /**
- * 读取工作区图片为 data URL（Markdown 内联图片用）。
+ * 异步读取工作区图片为 data URL（Markdown 内联图片用）。
  *
+ * 为什么异步：同步读盘会阻塞渲染线程，含多张大图的文档（单张可达 2 MB）
+ * 会出现整段卡顿；调用方还需自行加数量/总量预算，避免一次内联过多图片。
  * 必须走 data URL：打包后 CSP 是 `img-src 'self' data: blob:`，`file://` 会被拦；
  * 而 `sanitizeHtml` 会剥掉 HTML 字符串里的 `data:` src，所以只能在渲染后从 DOM 侧注入。
  *
- * @returns data URL；非图片扩展名 / 超过上限 / 读失败返回 null
+ * @returns data URL 与原始字节数；非图片扩展名 / 超过上限 / 读失败返回 null
  */
-export function readWorkspaceImageDataUrl(
+export async function readWorkspaceImageDataUrlAsync(
   projectRoot: string,
   relPath: string,
   limit = IMAGE_PREVIEW_LIMIT,
-): string | null {
+): Promise<{ dataUrl: string, bytes: number } | null> {
   const node = getNodeFsPathOs()
   const absPath = resolveWorkspacePath(projectRoot, relPath)
   if (!node || !absPath) return null
   const mime = IMAGE_MIME[extname(relPath)]
   if (!mime) return null
   try {
-    if (node.fs.statSync(absPath).size > limit) return null
-    const buf = node.fs.readFileSync(absPath)
-    return toDataUrl(mime, buf)
+    const stat = await node.fs.promises.stat(absPath)
+    if (stat.size > limit) return null
+    const buf = await node.fs.promises.readFile(absPath)
+    return { dataUrl: toDataUrl(mime, buf), bytes: buf.length }
   } catch {
     return null
   }
@@ -269,26 +273,34 @@ export function pickInitialWorkspaceFile(files: readonly string[], lastPath = ""
 }
 
 /**
- * 只读预览工作区文件。
+ * 只读预览工作区文件（异步读盘：同步 IO 会阻塞渲染线程）。
  * @param projectRoot 项目根绝对路径
  * @param relPath 相对仓库根的文件路径（/ 分隔，来自 git 输出）
  */
-export function readWorkspaceFilePreview(projectRoot: string, relPath: string): WorkspaceFilePreview {
+export async function readWorkspaceFilePreviewAsync(
+  projectRoot: string,
+  relPath: string,
+): Promise<WorkspaceFilePreview> {
   const node = getNodeFsPathOs()
   const absPath = resolveWorkspacePath(projectRoot, relPath)
   if (!node || !absPath) {
     return { kind: "error", size: 0, error: "路径不可用或超出项目根目录" }
   }
-  const { fs } = node
+  const fsp = node.fs.promises
 
   try {
-    if (!fs.existsSync(absPath)) return { kind: "missing", size: 0 }
-    const size = fs.statSync(absPath).size
+    let size = 0
+    try {
+      size = (await fsp.stat(absPath)).size
+    } catch (e) {
+      if ((e as { code?: string } | null)?.code === "ENOENT") return { kind: "missing", size: 0 }
+      throw e
+    }
     const kind = classifyWorkspaceFile(relPath)
 
     if (kind === "image") {
       if (size > IMAGE_PREVIEW_LIMIT) return { kind: "oversized", size }
-      const buf = fs.readFileSync(absPath)
+      const buf = await fsp.readFile(absPath)
       const mime = IMAGE_MIME[extname(relPath)] ?? "application/octet-stream"
       return {
         kind: "image",
@@ -297,18 +309,17 @@ export function readWorkspaceFilePreview(projectRoot: string, relPath: string): 
       }
     }
 
-    // 文本只读前缀：不能先整份 readFileSync 再截断（几 GB 的日志会把渲染进程读爆）
+    // 文本只读前缀：不能先整份读入（几 GB 的日志会把渲染进程读爆）
     const truncated = size > TEXT_PREVIEW_LIMIT
     const limit = Math.min(size, TEXT_PREVIEW_LIMIT)
     const buf = Buffer.alloc(limit)
-    const readBytes = (() => {
-      const fd = fs.openSync(absPath, "r")
-      try {
-        return fs.readSync(fd, buf, 0, limit, 0)
-      } finally {
-        fs.closeSync(fd)
-      }
-    })()
+    let readBytes = 0
+    const handle = await fsp.open(absPath, "r")
+    try {
+      readBytes = (await handle.read(buf, 0, limit, 0)).bytesRead
+    } finally {
+      await handle.close()
+    }
     const slice = buf.subarray(0, readBytes)
     if (isBinaryBuffer(slice)) return { kind: "binary", size }
     return {

@@ -18,8 +18,8 @@ import {
   classifyWorkspaceFile,
   IMAGE_PREVIEW_LIMIT,
   pickInitialWorkspaceFile,
-  readWorkspaceFilePreview,
-  readWorkspaceImageDataUrl,
+  readWorkspaceFilePreviewAsync,
+  readWorkspaceImageDataUrlAsync,
   resolveWorkspacePath,
   resolveWorkspaceRelative,
   TEXT_PREVIEW_LIMIT,
@@ -87,7 +87,7 @@ describe("pickInitialWorkspaceFile（打开时的默认预览）", () => {
   })
 })
 
-describe("readWorkspaceFilePreview（真实临时目录）", () => {
+describe("readWorkspaceFilePreviewAsync（真实临时目录）", () => {
   let root = ""
 
   beforeAll(() => {
@@ -106,34 +106,34 @@ describe("readWorkspaceFilePreview（真实临时目录）", () => {
     if (root) rmSync(root, { recursive: true, force: true })
   })
 
-  it("文本与 Markdown：返回内容、体积且不标记截断", () => {
-    const text = readWorkspaceFilePreview(root, "script.ts")
+  it("文本与 Markdown：返回内容、体积且不标记截断", async () => {
+    const text = await readWorkspaceFilePreviewAsync(root, "script.ts")
     expect(text.kind).toBe("text")
     expect(text.content).toBe("const a = 1")
     expect(text.truncated).toBe(false)
     expect(text.size).toBe("const a = 1".length)
 
-    const md = readWorkspaceFilePreview(root, "note.md")
+    const md = await readWorkspaceFilePreviewAsync(root, "note.md")
     expect(md.kind).toBe("markdown")
     expect(md.content).toBe("# hi")
   })
 
-  it("嵌套路径按平台分隔符解析（git 的 / 转为本地 sep）", () => {
+  it("嵌套路径按平台分隔符解析（git 的 / 转为本地 sep）", async () => {
     const resolved = resolveWorkspacePath(root, "src/deep/file.txt")
     expect(resolved).not.toBeNull()
     expect(resolved!.endsWith(join("src", "deep", "file.txt"))).toBe(true)
-    expect(readWorkspaceFilePreview(root, "src/deep/file.txt").content).toBe("x")
+    expect((await readWorkspaceFilePreviewAsync(root, "src/deep/file.txt")).content).toBe("x")
   })
 
-  it("含 NUL 字节的文件判定为二进制，不返回内容", () => {
-    const preview = readWorkspaceFilePreview(root, "binary.bin")
+  it("含 NUL 字节的文件判定为二进制，不返回内容", async () => {
+    const preview = await readWorkspaceFilePreviewAsync(root, "binary.bin")
     expect(preview.kind).toBe("binary")
     expect(preview.content).toBeUndefined()
     expect(preview.size).toBe(3)
   })
 
-  it("超过 256 KB 的文本只读前缀并标记 truncated", () => {
-    const preview = readWorkspaceFilePreview(root, "big.txt")
+  it("超过 256 KB 的文本只读前缀并标记 truncated", async () => {
+    const preview = await readWorkspaceFilePreviewAsync(root, "big.txt")
     expect(preview.kind).toBe("text")
     expect(preview.truncated).toBe(true)
     // ASCII 1 字节/字符：内容长度恰为前缀上限
@@ -141,32 +141,32 @@ describe("readWorkspaceFilePreview（真实临时目录）", () => {
     expect(preview.size).toBe(TEXT_PREVIEW_LIMIT + 10)
   })
 
-  it("图片返回 data URL", () => {
-    const preview = readWorkspaceFilePreview(root, "image.png")
+  it("图片返回 data URL", async () => {
+    const preview = await readWorkspaceFilePreviewAsync(root, "image.png")
     expect(preview.kind).toBe("image")
     expect(preview.dataUrl?.startsWith("data:image/png;base64,")).toBe(true)
     expect(preview.size).toBe(4)
   })
 
-  it("超过 2 MB 的图片只返回 oversized 与体积，不生成 data URL", () => {
-    const preview = readWorkspaceFilePreview(root, "big.png")
+  it("超过 2 MB 的图片只返回 oversized 与体积，不生成 data URL", async () => {
+    const preview = await readWorkspaceFilePreviewAsync(root, "big.png")
     expect(preview.kind).toBe("oversized")
     expect(preview.size).toBe(IMAGE_PREVIEW_LIMIT + 1)
     expect(preview.dataUrl).toBeUndefined()
   })
 
-  it("文件不存在返回 missing", () => {
-    expect(readWorkspaceFilePreview(root, "missing.txt").kind).toBe("missing")
+  it("文件不存在返回 missing", async () => {
+    expect((await readWorkspaceFilePreviewAsync(root, "missing.txt")).kind).toBe("missing")
   })
 
-  it("父目录越界（../）被拒绝", () => {
+  it("父目录越界（../）被拒绝", async () => {
     expect(resolveWorkspacePath(root, "../escape.txt")).toBeNull()
-    expect(readWorkspaceFilePreview(root, "../escape.txt").kind).toBe("error")
+    expect((await readWorkspaceFilePreviewAsync(root, "../escape.txt")).kind).toBe("error")
   })
 
-  it("绝对路径被拒绝（不得用仓库外路径预览）", () => {
+  it("绝对路径被拒绝（不得用仓库外路径预览）", async () => {
     expect(resolveWorkspacePath(root, "/etc/passwd")).toBeNull()
-    expect(readWorkspaceFilePreview(root, "/etc/passwd").kind).toBe("error")
+    expect((await readWorkspaceFilePreviewAsync(root, "/etc/passwd")).kind).toBe("error")
   })
 })
 
@@ -197,7 +197,7 @@ describe("resolveWorkspaceRelative（Markdown 站内相对引用）", () => {
   })
 })
 
-describe("readWorkspaceImageDataUrl（Markdown 内联图片）", () => {
+describe("readWorkspaceImageDataUrlAsync（Markdown 内联图片）", () => {
   let root = ""
 
   beforeAll(() => {
@@ -211,13 +211,15 @@ describe("readWorkspaceImageDataUrl（Markdown 内联图片）", () => {
     if (root) rmSync(root, { recursive: true, force: true })
   })
 
-  it("图片读成 data URL", () => {
-    expect(readWorkspaceImageDataUrl(root, "image.png")?.startsWith("data:image/png;base64,")).toBe(true)
+  it("图片读成 data URL 并返回原始字节数（供内联预算累计）", async () => {
+    const asset = await readWorkspaceImageDataUrlAsync(root, "image.png")
+    expect(asset?.dataUrl.startsWith("data:image/png;base64,")).toBe(true)
+    expect(asset?.bytes).toBe(4)
   })
 
-  it("非图片 / 不存在 / 超限一律返回 null（调用方降级为占位）", () => {
-    expect(readWorkspaceImageDataUrl(root, "note.md")).toBeNull()
-    expect(readWorkspaceImageDataUrl(root, "missing.png")).toBeNull()
-    expect(readWorkspaceImageDataUrl(root, "big.png")).toBeNull()
+  it("非图片 / 不存在 / 超限一律返回 null（调用方降级为占位）", async () => {
+    expect(await readWorkspaceImageDataUrlAsync(root, "note.md")).toBeNull()
+    expect(await readWorkspaceImageDataUrlAsync(root, "missing.png")).toBeNull()
+    expect(await readWorkspaceImageDataUrlAsync(root, "big.png")).toBeNull()
   })
 })

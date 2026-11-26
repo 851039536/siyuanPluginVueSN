@@ -268,8 +268,12 @@ const changeMap = computed(() => new Map(props.changes.map((f) => [f.path, f])))
 /**
  * 可见文件的全部目录集合：只随文件列表 / 筛选词变化（展开、收起目录不会变）。
  * 传给 buildPathTreeRows 复用，避免每次展开/收起都重扫全部路径（2 万文件约 14ms）。
+ * 筛选态（平铺列表）不构建目录树，直接返回空集：collectDirectoryPaths 在 2 万文件下
+ * 实测约 30ms，若放在每个筛选键击上会明显掉帧，而平铺模式完全用不到它。
  */
-const allDirs = computed(() => collectDirectoryPaths(shownFiles.value))
+const allDirs = computed(() => (
+  query.value.trim() ? [] : collectDirectoryPaths(shownFiles.value)
+))
 
 /**
  * 拉平树行：

@@ -125,8 +125,8 @@ import { parseMarkdown } from "@/utils/mdRenderer"
 import {
   classifyWorkspaceFile,
   openLocalPath,
-  readWorkspaceFilePreview,
-  readWorkspaceImageDataUrl,
+  readWorkspaceFilePreviewAsync,
+  readWorkspaceImageDataUrlAsync,
   resolveWorkspacePath,
   resolveWorkspaceRelative,
   revealLocalPath,
@@ -151,17 +151,25 @@ const emit = defineEmits<{
   navigate: [path: string]
 }>()
 
-/** 当前文件的预览结果（同步读盘，256 KB 以内） */
+/** 当前文件的预览结果（异步读盘；seq 保证快速切换文件时只应用最后一次结果） */
 const preview = ref<WorkspaceFilePreview | null>(null)
+let previewSeq = 0
 
-function loadPreview() {
-  preview.value = props.filePath && props.projectPath
-    ? readWorkspaceFilePreview(props.projectPath, props.filePath)
-    : null
+async function loadPreview() {
+  const seq = ++previewSeq
+  const filePath = props.filePath
+  const projectPath = props.projectPath
+  if (!filePath || !projectPath) {
+    preview.value = null
+    return
+  }
+  const result = await readWorkspaceFilePreviewAsync(projectPath, filePath)
+  if (seq !== previewSeq) return
+  preview.value = result
 }
 
 // reloadKey：树刷新后磁盘内容可能已变（编辑器保存、分支切换），选中路径不变也要重读
-watch(() => [props.projectPath, props.filePath, props.reloadKey ?? 0], loadPreview, { immediate: true })
+watch(() => [props.projectPath, props.filePath, props.reloadKey ?? 0], () => { void loadPreview() }, { immediate: true })
 
 /**
  * 文本预览是否软换行：仅在「存在超长行」时开启。
@@ -204,34 +212,57 @@ const markdownEl = ref<HTMLElement | null>(null)
 let enrichedEl: HTMLElement | null = null
 let enrichedHtml = ""
 
+/** 内联图片预算：单文档最多内联张数与总字节（防大图文档一次读盘把主线程拖住；软上限，最后一张可能小幅超出） */
+const MD_INLINE_MAX_IMAGES = 20
+const MD_INLINE_MAX_TOTAL_BYTES = 8 * 1024 * 1024
+
 watch([markdownHtml, markdownEl], ([html, el]) => {
   if (!html || !el) return
   if (el === enrichedEl && html === enrichedHtml) return
   enrichedEl = el
   enrichedHtml = html
-  enrichMarkdownAssets(el)
+  void enrichMarkdownAssets(el, html)
 }, { immediate: true, flush: "post" })
 
-/** 把相对 `<img src>` 换成 data URL；读不到的换成占位文本（不留破图图标） */
-function enrichMarkdownAssets(root: HTMLElement) {
+/**
+ * 把相对 `<img src>` 换成 data URL；读不到或超出内联预算的换成占位文本（不留破图图标）。
+ * 逐张 await（顺序内联，避免一次性并发读盘）；每次 await 后检查内容是否已被切换，切换即中止。
+ */
+async function enrichMarkdownAssets(root: HTMLElement, html: string) {
   if (!props.projectPath || !props.filePath) return
+  let count = 0
+  let totalBytes = 0
   for (const img of Array.from(root.querySelectorAll("img"))) {
+    // 已切走（v-html 重渲染/换文件）：旧 DOM 的后续处理没有意义
+    if (root !== enrichedEl || html !== enrichedHtml) return
     const src = img.getAttribute("src") ?? ""
     if (!src) continue
     // 绝对 URL / data: / 锚点：不是站内文件，原样保留（远程图片仍受 CSP 限制）
     const rel = resolveWorkspaceRelative(props.projectPath, props.filePath, src)
     if (!rel) continue
-    const dataUrl = readWorkspaceImageDataUrl(props.projectPath, rel)
-    if (dataUrl) {
-      img.setAttribute("src", dataUrl)
+    if (count >= MD_INLINE_MAX_IMAGES || totalBytes >= MD_INLINE_MAX_TOTAL_BYTES) {
+      replaceWithPlaceholder(img, src)
       continue
     }
-    const placeholder = document.createElement("span")
-    placeholder.className = "we-md-asset-missing"
-    placeholder.textContent = src
-    placeholder.title = src
-    img.replaceWith(placeholder)
+    const asset = await readWorkspaceImageDataUrlAsync(props.projectPath, rel)
+    if (root !== enrichedEl || html !== enrichedHtml) return
+    if (asset) {
+      img.setAttribute("src", asset.dataUrl)
+      count++
+      totalBytes += asset.bytes
+      continue
+    }
+    replaceWithPlaceholder(img, src)
   }
+}
+
+/** 读不到 / 超预算的图片降级为文本占位 */
+function replaceWithPlaceholder(img: HTMLImageElement, src: string) {
+  const placeholder = document.createElement("span")
+  placeholder.className = "we-md-asset-missing"
+  placeholder.textContent = src
+  placeholder.title = src
+  img.replaceWith(placeholder)
 }
 
 /**

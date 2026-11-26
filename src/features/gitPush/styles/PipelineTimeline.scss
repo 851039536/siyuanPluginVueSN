@@ -1,0 +1,273 @@
+@use "@/variables.scss" as *;
+
+// 最近运行时间线：甘特条 + 回放 + 与更早一次对比
+.gpt-panel {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  padding: $s-2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+}
+
+.gpt-head {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px3;
+}
+
+.gpt-title {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+.gpt-select {
+  margin-left: auto;
+  max-width: 220px;
+  padding: 0 $s-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-surface);
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 1px solid var(--b3-theme-primary);
+  }
+}
+
+.gpt-hint {
+  margin: 0;
+  color: var(--b3-theme-secondary);
+  line-height: $lh-normal;
+}
+
+.gpt-empty {
+  margin: 0;
+  color: var(--b3-theme-secondary);
+}
+
+.gpt-runs {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+}
+
+.gpt-run {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px5;
+  padding-top: $s-1;
+  border-top: 1px dashed var(--b3-border-color);
+
+  &:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+
+  &.is-playing .gpt-run-total {
+    color: var(--b3-theme-primary);
+  }
+}
+
+.gpt-run-meta {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  color: var(--b3-theme-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.gpt-run-index {
+  color: var(--b3-theme-outline);
+}
+
+.gpt-run-total {
+  color: var(--b3-theme-on-surface);
+}
+
+.gpt-run-delta {
+  font-weight: $fw-medium;
+
+  &.is-faster {
+    color: var(--b3-theme-success);
+  }
+
+  &.is-slower {
+    color: var(--b3-theme-warning);
+  }
+}
+
+.gpt-play {
+  margin-left: auto;
+  padding: 0 $s-1;
+  border: none;
+  border-radius: $r-px3;
+  background: none;
+  color: var(--b3-theme-primary);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--b3-theme-hover);
+    outline: none;
+  }
+}
+
+// 甘特条：所有行共用「最慢一次」为 100% 宽度，空出的轨道即相对差距
+.gpt-bar {
+  display: flex;
+  align-items: stretch;
+  height: 18px;
+  overflow: hidden;
+  border-radius: $r-sm;
+  background: var(--b3-theme-hover);
+}
+
+.gpt-seg {
+  flex: none;
+  box-sizing: border-box;
+  min-width: 2px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), var(--gpt-seg-alpha, 1));
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: filter 0.15s ease;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  &:hover,
+  &:focus-visible {
+    filter: brightness(1.18);
+    outline: none;
+  }
+
+  &.is-playing {
+    outline: 2px solid var(--b3-theme-on-background);
+    outline-offset: -2px;
+    filter: brightness(1.25);
+  }
+}
+
+.gpt-seg-label {
+  font-size: 8px;
+  font-weight: $fw-medium;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+// 阶段级变化：最新 vs 上一次，变慢的排在最前
+.gpt-delta {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px5;
+  padding-top: $s-1;
+  border-top: 1px dashed var(--b3-border-color);
+}
+
+.gpt-delta-head {
+  display: flex;
+  align-items: baseline;
+  gap: $s-2;
+}
+
+.gpt-delta-title {
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+.gpt-delta-summary {
+  margin-left: auto;
+  color: var(--b3-theme-secondary);
+  font-variant-numeric: tabular-nums;
+
+  &.is-faster {
+    color: var(--b3-theme-success);
+  }
+
+  &.is-slower {
+    color: var(--b3-theme-warning);
+  }
+}
+
+.gpt-delta-row {
+  display: grid;
+  grid-template-columns: minmax(64px, 1fr) 56px 56px 64px;
+  align-items: center;
+  gap: $s-1;
+  width: 100%;
+  padding: $s-px3 0;
+  border: none;
+  background: none;
+  color: var(--b3-theme-on-surface);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--b3-theme-hover);
+    outline: none;
+  }
+
+  &--head {
+    padding: 0;
+    color: var(--b3-theme-secondary);
+    cursor: default;
+
+    &:hover {
+      background: none;
+    }
+  }
+}
+
+.gpt-delta-value {
+  color: var(--b3-theme-secondary);
+}
+
+.gpt-delta-badge {
+  justify-self: end;
+  padding: 0 $s-px5;
+  border-radius: $r-full;
+  font-weight: $fw-medium;
+
+  &.is-faster {
+    color: var(--b3-theme-success);
+  }
+
+  &.is-slower {
+    color: var(--b3-theme-warning);
+  }
+
+  &.is-same,
+  &.is-muted {
+    color: var(--b3-theme-secondary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gpt-seg {
+    transition: none;
+  }
+}

@@ -24,6 +24,7 @@
         :title="row.path"
         @focus="activeKey = row.key"
         @click="emit('toggleDir', row.path)"
+        @contextmenu.prevent="openRowMenu($event, row)"
         @keydown.enter.prevent="emit('toggleDir', row.path)"
         @keydown.space.prevent="emit('toggleDir', row.path)"
       >
@@ -68,6 +69,7 @@
         :title="row.path"
         @focus="activeKey = row.key"
         @click="emit('select', row.path)"
+        @contextmenu.prevent="openRowMenu($event, row)"
         @keydown.enter.prevent="emit('select', row.path)"
         @keydown.space.prevent="emit('select', row.path)"
       >
@@ -77,9 +79,9 @@
           height="12"
           class="we-file-icon"
         />
-        <!-- 文件名（筛选时高亮命中片段） -->
+        <!-- 文件名（筛选时高亮命中片段；平铺态显示完整相对路径，避免同名文件难辨） -->
         <span class="we-name"><template
-          v-for="(seg, i) in highlightSegments(row.name, query)"
+          v-for="(seg, i) in highlightSegments(flat ? row.path : row.name, query)"
           :key="i"
         ><span
           v-if="seg.hit"
@@ -120,6 +122,14 @@
       :total="rows.length"
       @load-more="loadMore"
     />
+
+    <!-- 行右键菜单（popup：在触发坐标处浮出，外点 / Esc 自动关闭） -->
+    <TieredMenu
+      ref="rowMenu"
+      popup
+      size="xsmall"
+      :model="menuItems"
+    />
   </div>
 </template>
 
@@ -127,25 +137,34 @@
 // gitPush 工作区文件树（纯渲染：折叠态/选中态/变更映射全部由父层注入，行数据由 utils/fileTree 构建）
 import type { FileChange } from "../../types"
 import type { PathTreeRow } from "../../utils"
-import type { TimerHandle } from "@/utils/timerRegistry"
+import type { TieredMenuItem } from "@/components/TieredMenu.vue"
 import { Icon } from "@iconify/vue"
-import { computed, nextTick, onUnmounted, ref, watch } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import { copyToClipboard } from "@/utils/domUtils"
-import { TimerRegistry } from "@/utils/timerRegistry"
 import Button from "@/components/Button.vue"
+import TieredMenu from "@/components/TieredMenu.vue"
 import {
   fileStatusLetter,
   fileStatusTitle,
   highlightSegments,
+  openLocalPath,
+  resolveWorkspacePath,
+  revealLocalPath,
   workspaceFileIcon,
 } from "../../utils"
+import { useKeyedCopyFeedback } from "../../composables/useCopyFeedback"
 import { usePagedList } from "../../composables/usePagedList"
+import { buildWorkspaceRowMenu } from "../../utils/workspaceMenu"
 import LoadMoreButton from "../common/LoadMoreButton.vue"
 
 const props = defineProps<{
   i18n: Record<string, any>
-  /** 拉平后的树行（`buildPathTreeRows` 产物） */
+  /** 项目根绝对路径（右键菜单解析绝对路径 / 在文件夹中显示用） */
+  projectPath: string
+  /** 拉平后的树行（`buildPathTreeRows` / `buildFlatPathRows` 产物） */
   rows: PathTreeRow[]
+  /** 平铺态（有筛选词）：文件行显示完整相对路径而非 basename */
+  flat?: boolean
   /** 已展开目录集合（空集 = 全部收起） */
   expandedDirs: ReadonlySet<string>
   /** 当前预览的文件相对路径 */
@@ -280,21 +299,49 @@ function onTreeKeydown(e: KeyboardEvent) {
 }
 
 // ── 行内「复制名称」（文件名 / 文件夹名）──
-/** 最近一次复制成功的行键（按钮临时换对勾） */
-const copiedKey = ref("")
-const copyTimers = new TimerRegistry()
-let copiedTimer: TimerHandle | null = null
+const { copiedKey, notifyCopied } = useKeyedCopyFeedback()
 
-/** 复制行名称（basename；复制反馈 2s 后复位，连续复制以最后一次为准） */
+/** 复制行名称（basename；反馈态按行键托管，2s 后复位，连续复制以最后一次为准） */
 async function copyName(key: string, name: string) {
-  const ok = await copyToClipboard(name)
-  if (!ok) return
-  copyTimers.clear(copiedTimer)
-  copiedKey.value = key
-  copiedTimer = copyTimers.setTimeout(() => { copiedKey.value = "" }, 2000)
+  if (await copyToClipboard(name)) notifyCopied(key)
 }
 
-onUnmounted(() => copyTimers.clearAll())
+// ── 行右键菜单（文件 / 目录）──
+const rowMenu = ref<InstanceType<typeof TieredMenu> | null>(null)
+const menuItems = ref<TieredMenuItem[]>([])
+
+/** 绝对路径（项目路径不可用或解析越界时返回 null，菜单相应条目禁用） */
+function absoluteOf(row: PathTreeRow): string | null {
+  return props.projectPath ? resolveWorkspacePath(props.projectPath, row.path) : null
+}
+
+/** 在触发坐标处打开该行的右键菜单 */
+function openRowMenu(event: MouseEvent, row: PathTreeRow) {
+  const abs = absoluteOf(row)
+  menuItems.value = buildWorkspaceRowMenu(row, props.i18n, {
+    copy: async (text) => {
+      if (await copyToClipboard(text)) notifyCopied(row.key)
+    },
+    reveal: () => {
+      if (abs) revealRow(row, abs)
+    },
+    open: () => {
+      if (abs) void openLocalPath(abs)
+    },
+    absolutePathAvailable: abs !== null,
+  })
+  rowMenu.value?.show(event)
+}
+
+/** 在文件管理器中定位；无 shell 能力时降级：文件打开所在目录、目录打开自身 */
+function revealRow(row: PathTreeRow, abs: string) {
+  if (revealLocalPath(abs)) return
+  const dirRel = row.type === "dir"
+    ? row.path
+    : row.path.includes("/") ? row.path.slice(0, row.path.lastIndexOf("/")) : "."
+  const absDir = props.projectPath ? resolveWorkspacePath(props.projectPath, dirRel) : null
+  if (absDir) void openLocalPath(absDir)
+}
 
 /** 目录是否展开 */
 function isExpanded(path: string): boolean {

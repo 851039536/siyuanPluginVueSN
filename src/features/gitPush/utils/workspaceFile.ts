@@ -6,6 +6,7 @@
 // - 前 8 KB 出现 NUL 字节即判定为二进制，不渲染内容。
 // 路径来自 git 输出，仍做一次越界校验（解析后必须落在项目根内），属外部数据边界。
 import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { pathBasename } from "@/utils/pathUtils"
 
 /** 可预览的文件大类（决定走文本渲染还是图片渲染） */
 export type WorkspaceFileKind = "text" | "markdown" | "image"
@@ -125,22 +126,16 @@ const NAME_ICONS: Record<string, string> = {
   "yarn.lock": "mdi:lock-outline",
 }
 
-/** 取路径的 basename（git 路径统一 / 分隔） */
-function basename(path: string): string {
-  const idx = path.lastIndexOf("/")
-  return idx === -1 ? path : path.slice(idx + 1)
-}
-
 /** 取小写扩展名（无扩展名返回空串） */
 function extname(path: string): string {
-  const name = basename(path)
+  const name = pathBasename(path)
   const idx = name.lastIndexOf(".")
   return idx <= 0 ? "" : name.slice(idx + 1).toLowerCase()
 }
 
 /** 文件图标（未知类型回落通用文件图标；目录图标由树组件按展开态提供） */
 export function workspaceFileIcon(path: string): string {
-  const name = basename(path).toLowerCase()
+  const name = pathBasename(path).toLowerCase()
   const byName = NAME_ICONS[name]
   if (byName) return byName
   return EXT_ICONS[extname(name)] ?? "mdi:file-outline"
@@ -161,6 +156,11 @@ function isBinaryBuffer(buf: Uint8Array): boolean {
     if (buf[i] === 0) return true
   }
   return false
+}
+
+/** 字节内容 → data URL（图片预览与 Markdown 内联图片共用） */
+function toDataUrl(mime: string, buf: Uint8Array): string {
+  return `data:${mime};base64,${Buffer.from(buf).toString("base64")}`
 }
 
 /**
@@ -236,7 +236,7 @@ export function readWorkspaceImageDataUrl(
   try {
     if (node.fs.statSync(absPath).size > limit) return null
     const buf = node.fs.readFileSync(absPath)
-    return `data:${mime};base64,${Buffer.from(buf).toString("base64")}`
+    return toDataUrl(mime, buf)
   } catch {
     return null
   }
@@ -293,7 +293,7 @@ export function readWorkspaceFilePreview(projectRoot: string, relPath: string): 
       return {
         kind: "image",
         size,
-        dataUrl: `data:${mime};base64,${Buffer.from(buf).toString("base64")}`,
+        dataUrl: toDataUrl(mime, buf),
       }
     }
 

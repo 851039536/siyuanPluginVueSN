@@ -56,6 +56,8 @@ export function useGitPush(manager: GitPushManager, i18n: Record<string, any>) {
     opPipelines: gitOps.opPipelines,
     globalPipelines: gitOps.globalPipelines,
     allPipelines: gitOps.allPipelines,
+    stageHistory: gitOps.stageHistory,
+    lastFailures: gitOps.lastFailures,
     runLocalPipeline: gitOps.runLocalPipeline,
     runGlobalPipeline: gitOps.runGlobalPipeline,
     pushStatuses: gitOps.pushStatuses,

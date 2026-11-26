@@ -2,6 +2,8 @@
 import type {
   OpPipelineLane,
   PipelineOp,
+  PipelineRunTimings,
+  PipelineStageHistory,
   PipelineStageKey,
   PipelineStageState,
   PipelineStatus,
@@ -115,6 +117,28 @@ export const REPO_SCAN_STAGE_PLAN: readonly PipelineStageKey[] = [
 
 /** Tag 推送：网络写操作（完成后由调用方刷新/提示） */
 export const TAG_PUSH_STAGE_PLAN: readonly PipelineStageKey[] = ["prepare", "tagPushExec"]
+
+/**
+ * 全部阶段计划登记表（关系图的唯一数据来源）。
+ * 新增计划必须登记到这里，否则关系图与对应单测不会收录该操作。
+ */
+export const PIPELINE_STAGE_PLANS: readonly (readonly PipelineStageKey[])[] = [
+  PUSH_STAGE_PLAN,
+  PULL_STAGE_PLAN,
+  SMART_PULL_STAGE_PLAN,
+  FETCH_STAGE_PLAN,
+  COMMIT_STAGE_PLAN,
+  STASH_STAGE_PLAN,
+  STASH_DROP_STAGE_PLAN,
+  SWITCH_STAGE_PLAN,
+  DISCARD_STAGE_PLAN,
+  QUICK_COMMIT_STAGE_PLAN,
+  STATS_STAGE_PLAN,
+  ANALYSIS_STAGE_PLAN,
+  REPORT_STAGE_PLAN,
+  REPO_SCAN_STAGE_PLAN,
+  TAG_PUSH_STAGE_PLAN,
+]
 
 /** 终态判定：终态 lane 不再接受新事件 */
 export function isLaneTerminal(status: PipelineStatus): boolean {
@@ -261,4 +285,45 @@ export function finalizeLane(
     return s
   })
   return { ...lane, status, endedAt: now, stages }
+}
+
+/**
+ * 提取一次成功流水线的阶段耗时快照。
+ * 只接受 done 且有结束时间：失败 / 取消的耗时会把异常值混进「上次」参考，
+ * 被跳过的阶段没有 startedAt，一并排除。
+ */
+export function laneRunTimings(lane: OpPipelineLane): PipelineRunTimings | null {
+  if (lane.status !== "done" || lane.endedAt === undefined) return null
+  const stages: Partial<Record<PipelineStageKey, number>> = {}
+  for (const stage of lane.stages) {
+    if (stage.startedAt === undefined || stage.endedAt === undefined) continue
+    stages[stage.key] = Math.max(0, stage.endedAt - stage.startedAt)
+  }
+  return {
+    at: lane.endedAt,
+    totalMs: Math.max(0, lane.endedAt - lane.startedAt),
+    stages,
+  }
+}
+
+/** 按记录时间裁剪「签名 → { at }」映射，保留最新 limit 条，异常签名不会无限堆积 */
+export function capTimedRecord<T extends { at: number }>(
+  record: Record<string, T>,
+  limit: number,
+): Record<string, T> {
+  const items = Object.entries(record)
+  if (items.length <= limit) return record
+  items.sort((a, b) => b[1].at - a[1].at)
+  return Object.fromEntries(items.slice(0, Math.max(1, limit)))
+}
+
+/** 历史裁剪：按各自最新一次运行时间保留最新 limit 个计划签名 */
+export function capStageHistory(
+  history: PipelineStageHistory,
+  limit: number,
+): PipelineStageHistory {
+  const items = Object.entries(history)
+  if (items.length <= limit) return history
+  items.sort((a, b) => (b[1][0]?.at ?? 0) - (a[1][0]?.at ?? 0))
+  return Object.fromEntries(items.slice(0, Math.max(1, limit)))
 }

@@ -2,8 +2,10 @@
 import type { Ref } from "vue"
 import { computed, ref } from "vue"
 import type {
+  OpFailureMap,
   OpPipelineLane,
   PipelineOp,
+  PipelineStageHistory,
   PipelineStageKey,
   RemoteProgressEvent,
 } from "../types/pipeline"
@@ -13,15 +15,19 @@ import { TimerRegistry } from "@/utils/timerRegistry"
 import {
   applyDetail,
   applyStage,
+  capStageHistory,
+  capTimedRecord,
   createLane,
   finalizeLane,
   isLaneTerminal,
+  laneRunTimings,
   markRetry,
   markSkip,
   markStalled,
   PIPELINE_REVEAL_DELAY_MS,
   PIPELINE_STALLED_MS,
 } from "../utils/opPipeline"
+import { laneSignature } from "../utils/pipelineGraph"
 
 /** 本地流水线步进器：只允许推进真实 await 步骤 */
 export interface LocalPipelineStepper {
@@ -41,6 +47,12 @@ export type RemoteLaneStatus = "done" | "fail" | "canceled" | "skipped"
 /** 本地 lane 终态显示时长（随后自动收起） */
 const LOCAL_LANE_LINGER_MS = 1500
 
+/** 阶段耗时历史最多保留的计划签名数（长会话防泄漏；正常只有 15 条左右） */
+const HISTORY_SIGNATURE_LIMIT = 32
+
+/** 每个计划签名保留最近几次成功运行（用于时间线对比） */
+const RUN_HISTORY_LIMIT = 6
+
 /** 远程进度桥接：useRemoteProgress 只依赖这三个方法，避免耦合整份状态 */
 export interface OpPipelineBridge {
   beginRemote: (
@@ -54,6 +66,8 @@ export interface OpPipelineBridge {
     projectId: string,
     batchId: string,
     statuses: Record<string, RemoteLaneStatus>,
+    /** 每个远程的真实错误文本（仅失败项需要），用于失败诊断 */
+    messages?: Record<string, string>,
   ) => void
 }
 
@@ -67,6 +81,10 @@ export interface OpPipelineBridge {
  */
 export function useOpPipeline() {
   const opPipelines: Ref<Record<string, OpPipelineLane[]>> = ref({})
+  /** 计划签名 → 最近一次成功耗时；lane 清理后仍保留，供关系图显示「上次」徽标 */
+  const stageHistory: Ref<PipelineStageHistory> = ref({})
+  /** 计划签名 → 最近一次失败；用于关系图的持久失败标记与诊断（成功一次即清除） */
+  const lastFailures: Ref<OpFailureMap> = ref({})
   /** 非项目级操作（统计/分析/报告/体检）的 lane；与卡片 lane 共用同一状态机与清理策略 */
   const globalPipelines = computed<OpPipelineLane[]>(() =>
     (opPipelines.value[GLOBAL_PIPELINE_SCOPE] ?? []).filter((lane) => lane.visible),
@@ -101,6 +119,50 @@ export function useOpPipeline() {
     if (next.length > 0) copy[projectId] = next
     else delete copy[projectId]
     opPipelines.value = copy
+  }
+
+  /** 只记录成功结束的 lane；每条计划签名保留最近 N 次（最新在前），并清除更早的失败标记 */
+  function recordHistory(lane: OpPipelineLane) {
+    const timings = laneRunTimings(lane)
+    if (!timings) return
+    const signature = laneSignature(lane)
+    const runs = stageHistory.value[signature] ?? []
+    stageHistory.value = capStageHistory(
+      { ...stageHistory.value, [signature]: [timings, ...runs].slice(0, RUN_HISTORY_LIMIT) },
+      HISTORY_SIGNATURE_LIMIT,
+    )
+    if (signature in lastFailures.value) {
+      const next = { ...lastFailures.value }
+      delete next[signature]
+      lastFailures.value = next
+    }
+  }
+
+  /** 失败文本：本地异常消息优先，其次回落到最后一条真实输出 */
+  function errorText(error: unknown): string {
+    if (error instanceof Error) return error.message
+    return typeof error === "string" ? error : ""
+  }
+
+  /** 记录失败 lane（取消不算失败）；同一签名只保留最近一次 */
+  function recordFailure(lane: OpPipelineLane, detail?: string) {
+    if (lane.status !== "fail") return
+    const failedStage = [...lane.stages].reverse().find((stage) => stage.status === "fail")
+    const fallbackDetail = [...lane.stages].reverse().find((stage) => stage.detail)?.detail
+    const text = (detail ?? "").trim() || fallbackDetail?.trim() || ""
+    if (!text) return
+    const signature = laneSignature(lane)
+    lastFailures.value = capTimedRecord(
+      {
+        ...lastFailures.value,
+        [signature]: {
+          at: lane.endedAt ?? Date.now(),
+          stage: failedStage?.key,
+          detail: text,
+        },
+      },
+      HISTORY_SIGNATURE_LIMIT,
+    )
   }
 
   function clearTimer(map: Map<string, TimerHandle>, laneId: string) {
@@ -242,15 +304,35 @@ export function useOpPipeline() {
     projectId: string,
     batchId: string,
     statuses: Record<string, RemoteLaneStatus>,
+    messages?: Record<string, string>,
   ) {
     const batchLanes = (opPipelines.value[projectId] ?? []).filter((lane) => lane.batchId === batchId)
+    // 先收集再统一记账：同一批次「一台成功、一台失败」时，成功不得盖掉失败标记
+    const finalizedLanes: OpPipelineLane[] = []
     for (const lane of batchLanes) {
       clearLaneTimers(lane.id)
       const status = statuses[lane.key] ?? "skipped"
-      if (status !== "skipped") {
-        mutateLane(projectId, lane.id, (item) => finalizeLane(item, status, Date.now()))
+      const current = findLane(projectId, lane.id)
+      if (current && status !== "skipped") {
+        const finalized = finalizeLane(current, status, Date.now())
+        mutateLane(projectId, lane.id, () => finalized)
+        finalizedLanes.push(finalized)
       }
       removeLane(projectId, lane.id)
+    }
+    // 同一批次多远程共用签名：只记最慢的一条作为「这一次运行」，避免时间线出现重复行
+    const doneBySignature = new Map<string, OpPipelineLane>()
+    for (const lane of finalizedLanes) {
+      if (lane.status !== "done") continue
+      const signature = laneSignature(lane)
+      const previous = doneBySignature.get(signature)
+      const currentMs = (lane.endedAt ?? 0) - lane.startedAt
+      const previousMs = previous ? (previous.endedAt ?? 0) - previous.startedAt : -1
+      if (!previous || currentMs > previousMs) doneBySignature.set(signature, lane)
+    }
+    for (const lane of doneBySignature.values()) recordHistory(lane)
+    for (const lane of finalizedLanes) {
+      if (lane.status === "fail") recordFailure(lane, messages?.[lane.key])
     }
   }
 
@@ -317,13 +399,18 @@ export function useOpPipeline() {
       settleLocal(projectId, laneId, "done")
       return result
     } catch (e) {
-      settleLocal(projectId, laneId, "fail")
+      settleLocal(projectId, laneId, "fail", errorText(e))
       throw e
     }
   }
 
   /** 本地 lane 收敛：嵌套未结束时不处理；可见 lane 停留 1.5s，未可见直接移除 */
-  function settleLocal(projectId: string, laneId: string, status: "done" | "fail") {
+  function settleLocal(
+    projectId: string,
+    laneId: string,
+    status: "done" | "fail",
+    failureDetail?: string,
+  ) {
     const depth = (localDepth.get(laneId) ?? 1) - 1
     if (depth > 0) {
       localDepth.set(laneId, depth)
@@ -331,8 +418,13 @@ export function useOpPipeline() {
     }
     localDepth.delete(laneId)
     clearLaneTimers(laneId)
-    mutateLane(projectId, laneId, (lane) => finalizeLane(lane, status, Date.now()))
-    if (!findLane(projectId, laneId)?.visible) {
+    const lane = findLane(projectId, laneId)
+    if (!lane) return
+    const finalized = finalizeLane(lane, status, Date.now())
+    recordHistory(finalized)
+    if (status === "fail") recordFailure(finalized, failureDetail)
+    mutateLane(projectId, laneId, () => finalized)
+    if (!finalized.visible) {
       removeLane(projectId, laneId)
       return
     }
@@ -376,12 +468,16 @@ export function useOpPipeline() {
     cleanupTimers.clear()
     localDepth.clear()
     opPipelines.value = {}
+    stageHistory.value = {}
+    lastFailures.value = {}
   }
 
   return {
     opPipelines,
     globalPipelines,
     allPipelines,
+    stageHistory,
+    lastFailures,
     beginRemote,
     applyRemoteEvent,
     finishRemote,

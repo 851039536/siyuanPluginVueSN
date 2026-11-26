@@ -325,6 +325,8 @@ export function useGitOps(manager: GitPushManager, projects: Ref<GitProject[]>, 
     opPipelines: pipeline.opPipelines,
     globalPipelines: pipeline.globalPipelines,
     allPipelines: pipeline.allPipelines,
+    stageHistory: pipeline.stageHistory,
+    lastFailures: pipeline.lastFailures,
     runLocalPipeline: pipeline.runLocalPipeline,
     runGlobalPipeline: pipeline.runGlobalPipeline,
     // 本地状态

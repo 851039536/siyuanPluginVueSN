@@ -200,11 +200,15 @@ export function useRemoteProgress(
 
       // 流水线收敛：跳过优先于成功（skipped 的 ok 也为 true，不能记成 done）
       const laneStatuses: Record<string, RemoteLaneStatus> = {}
+      const laneMessages: Record<string, string> = {}
       for (const key of Object.keys(initProg)) {
         const r = result[key] as any
         laneStatuses[key] = r?.skipped ? "skipped" : r?.canceled ? "canceled" : r?.ok ? "done" : "fail"
+        if (laneStatuses[key] === "fail") {
+          laneMessages[key] = String(r?.stderr || r?.stdout || "").trim()
+        }
       }
-      opts.pipeline.finishRemote(id, batchId, laneStatuses)
+      opts.pipeline.finishRemote(id, batchId, laneStatuses, laneMessages)
 
       // 执行层已回传各远程真实耗时；这里的总时长仅作兜底（避免旧调用方缺字段时显示 0）
       const sharedDurations: Record<string, number> = {}
@@ -217,12 +221,15 @@ export function useRemoteProgress(
       console.error(`[gitPush] ${action === "push" ? "推送" : "拉取"}失败:`, e)
       const failProg: Record<string, ProgressStatus> = {}
       const failLanes: Record<string, RemoteLaneStatus> = {}
+      const failMessages: Record<string, string> = {}
+      const errText = String((e as any)?.message || e)
       for (const key of Object.keys(initProg)) {
         failProg[key] = "fail"
         failLanes[key] = "fail"
+        failMessages[key] = errText
       }
       progressRef.value = { ...progressRef.value, [id]: failProg }
-      opts.pipeline.finishRemote(id, batchId, failLanes)
+      opts.pipeline.finishRemote(id, batchId, failLanes, failMessages)
       return { success: false }
     } finally {
       scheduleProgressCleanup(progressRef, id, seq)
@@ -268,9 +275,15 @@ export function useRemoteProgress(
         ...progressRef.value,
         [id]: { ...progressRef.value[id], [target]: result.canceled ? "canceled" : result.ok ? "ok" : "fail" },
       }
-      opts.pipeline.finishRemote(id, batchId, {
-        [target]: result.canceled ? "canceled" : result.ok ? "done" : "fail",
-      })
+      const singleStatus: RemoteLaneStatus = result.canceled ? "canceled" : result.ok ? "done" : "fail"
+      opts.pipeline.finishRemote(
+        id,
+        batchId,
+        { [target]: singleStatus },
+        singleStatus === "fail"
+          ? { [target]: String(result.stderr || result.stdout || "").trim() }
+          : undefined,
+      )
 
       const entries: PushOutputEntry[] = [{
         platform: target,
@@ -298,8 +311,8 @@ export function useRemoteProgress(
         ...progressRef.value,
         [id]: { ...progressRef.value[id], [target]: "fail" },
       }
-      opts.pipeline.finishRemote(id, batchId, { [target]: "fail" })
       const errMsg = String(e?.message || e)
+      opts.pipeline.finishRemote(id, batchId, { [target]: "fail" }, { [target]: errMsg })
       mergeOutputEntry(outputsRef, id, {
         platform: target,
         label: platformLabel(target),

@@ -187,6 +187,7 @@ export {
 
 export {
   buildFileTreeRows,
+  buildFlatPathRows,
   buildPathTreeRows,
   buildSectionedTreeRows,
   collectDirectoryPaths,

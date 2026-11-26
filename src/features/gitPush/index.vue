@@ -126,6 +126,15 @@
       :projects="projects"
     />
 
+    <!-- ========== 流水线关系图（静态阶段网络 + 运行中高亮） ========== -->
+    <PipelineGraphPanel
+      v-if="currentView === 'pipeline'"
+      :i18n="i18n"
+      :lanes="allPipelines"
+      :history="stageHistory"
+      :failures="lastFailures"
+    />
+
     <!-- ========== 列表视图 ========== -->
     <ListView
       v-if="currentView === 'list'"
@@ -310,6 +319,7 @@ import StatsPanel from "./components/StatsView/index.vue"
 import CommitAnalysisPanel from "./components/CommitAnalysis/index.vue"
 import CodeReportPanel from "./components/CodeReport/index.vue"
 import RepoCleanPanel from "./components/RepoCleanPanel/index.vue"
+import PipelineGraphPanel from "./components/PipelineGraph/index.vue"
 import GitConfigDialog from "./components/common/GitConfigDialog.vue"
 import GitPushToaster from "./components/GitPushToaster.vue"
 import { useGitPush } from "./composables/useGitPush"
@@ -385,6 +395,9 @@ const {
   pullOutputs,
   opPipelines,
   globalPipelines,
+  allPipelines,
+  stageHistory,
+  lastFailures,
   runLocalPipeline,
   runGlobalPipeline,
   pushStatuses,
@@ -491,6 +504,8 @@ function isGlobalLaneOwnedByView(op: OpPipelineLane["op"]): boolean {
  * 当前视图自己的全局任务由视图内联展示；Dock 只补充跨视图 / 多卡片并发信息。
  */
 const dockLanes = computed<OpPipelineLane[]>(() => {
+  // 关系图页已在画布与图例中展示全部 lane，Dock 再列一遍是重复信息
+  if (currentView.value === "pipeline") return []
   const entries: { global: boolean, lane: OpPipelineLane }[] = []
   for (const [projectId, lanes] of Object.entries(opPipelines.value)) {
     for (const lane of lanes) {

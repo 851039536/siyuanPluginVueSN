@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import type { FileChange } from "../types"
 import {
   buildFileTreeRows,
+  buildFlatPathRows,
   buildPathTreeRows,
   buildSectionedTreeRows,
   collectDirectoryPaths,
@@ -238,6 +239,66 @@ describe("buildPathTreeRows", () => {
     expect(rows.map((r) => `${r.type}:${r.path}`)).toEqual(["dir:foo", "file:foo"])
     const keys = rows.map((r) => r.key)
     expect(new Set(keys).size).toBe(keys.length)
+  })
+})
+
+describe("buildPathTreeRows compact（单子目录链压缩，默认开启）", () => {
+  it("单子目录链条合并成一行，行键 = 最深路径", () => {
+    const rows = buildPathTreeRows(["src/features/gitPush/utils/x.ts"], new Set())
+    expect(rows.map((r) => `${r.type}:${r.path}@${r.depth}`)).toEqual([
+      "dir:src/features/gitPush/utils@0",
+    ])
+    expect(rows[0]).toMatchObject({ name: "src/features/gitPush/utils", count: 1 })
+  })
+
+  it("展开合并行（最深键）后输出完整路径的直属文件", () => {
+    const rows = buildPathTreeRows(
+      ["src/features/gitPush/utils/x.ts"],
+      new Set(["src/features/gitPush/utils"]),
+    )
+    expect(rows.map((r) => `${r.type}:${r.path}@${r.depth}`)).toEqual([
+      "dir:src/features/gitPush/utils@0",
+      "file:src/features/gitPush/utils/x.ts@1",
+    ])
+  })
+
+  it("只展开链条中间层不生效（折叠判定只认合并行的最深键）", () => {
+    const rows = buildPathTreeRows(["src/features/x.ts"], new Set(["src"]))
+    expect(rows.map((r) => `${r.type}:${r.path}`)).toEqual(["dir:src/features"])
+  })
+
+  it("分支处停止合并，但分支以下仍可继续压缩", () => {
+    const rows = buildPathTreeRows(
+      ["src/a/deep/x.ts", "src/b/y.ts"],
+      new Set(["src"]),
+    )
+    expect(rows.map((r) => `${r.type}:${r.path}@${r.depth}`)).toEqual([
+      "dir:src@0",
+      "dir:src/a/deep@1",
+      "dir:src/b@1",
+    ])
+  })
+
+  it("压缩行与 depthOffset 组合：行取最外层深度，文件再深一层", () => {
+    const rows = buildPathTreeRows(["a/b/c.ts"], new Set(["a/b"]), 1)
+    expect(rows.map((r) => `${r.type}:${r.path}@${r.depth}`)).toEqual([
+      "dir:a/b@1",
+      "file:a/b/c.ts@2",
+    ])
+  })
+})
+
+describe("buildFlatPathRows（筛选态平铺）", () => {
+  it("逐条输出 depth 0 的文件行，键带 f: 前缀，name 取 basename", () => {
+    const rows = buildFlatPathRows(["src/a.ts", "docs/README.md"])
+    expect(rows).toEqual([
+      { type: "file", key: "f:src/a.ts", name: "a.ts", path: "src/a.ts", depth: 0, count: 1 },
+      { type: "file", key: "f:docs/README.md", name: "README.md", path: "docs/README.md", depth: 0, count: 1 },
+    ])
+  })
+
+  it("空输入返回空数组", () => {
+    expect(buildFlatPathRows([])).toEqual([])
   })
 })
 

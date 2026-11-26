@@ -172,6 +172,7 @@ import type { FileChange, GitProject } from "../../types"
 import { Icon } from "@iconify/vue"
 import { computed, onMounted, ref, watch } from "vue"
 import {
+  buildFlatPathRows,
   buildPathTreeRows,
   collectDirectoryPaths,
   filterPathsByQuery,
@@ -185,6 +186,7 @@ import Dialog from "@/components/Dialog.vue"
 import Input from "@/components/Input.vue"
 import Splitter from "@/components/Splitter.vue"
 import SplitterPanel from "@/components/SplitterPanel.vue"
+import { safeSessionGet, safeSessionSet } from "@/utils/sessionStore"
 import ScriptRunnerPanel from "./ScriptRunnerPanel.vue"
 import WorkspaceExplorerMain from "./WorkspaceExplorerMain.vue"
 
@@ -226,20 +228,9 @@ const reloadKey = ref(0)
 
 // ── 底部项目脚本面板展开态（默认收起：打开本弹窗的主意图是看文件；展开后本次会话记住）──
 const SCRIPTS_OPEN_KEY = "gitpush-workspace-explorer-scripts-open"
-function readScriptsOpen(): boolean {
-  try {
-    return sessionStorage.getItem(SCRIPTS_OPEN_KEY) === "1"
-  } catch {
-    return false
-  }
-}
-const scriptsOpen = ref(readScriptsOpen())
+const scriptsOpen = ref(safeSessionGet(SCRIPTS_OPEN_KEY) === "1")
 watch(scriptsOpen, (open) => {
-  try {
-    sessionStorage.setItem(SCRIPTS_OPEN_KEY, open ? "1" : "0")
-  } catch {
-    // 无存储能力（隐私模式）：仅本次打开生效，不影响功能
-  }
+  safeSessionSet(SCRIPTS_OPEN_KEY, open ? "1" : "0")
 })
 
 /** 刷新文件列表 + 让预览重读磁盘（用户点「刷新」时两者的语义应当一致） */
@@ -282,12 +273,13 @@ const allDirs = computed(() => collectDirectoryPaths(shownFiles.value))
 
 /**
  * 拉平树行：
- * - 有筛选词 → 自动展开命中路径的全部父目录（否则命中深层文件仍不可见）；
- * - 无筛选词 → 按用户展开集，默认全部收起只渲染根层。
+ * - 有筛选词 → 直接平铺命中文件（VS Code 搜索态行为：省掉满屏无关目录行，深层命中一眼可见）；
+ * - 无筛选词 → 按用户展开集构建目录树，默认全部收起只渲染根层。
+ * 筛选期间不触碰 expandedDirs，清空筛选后树态原样恢复。
  */
 const rows = computed(() => {
-  const expanded = query.value.trim() ? new Set(allDirs.value) : expandedDirs.value
-  return buildPathTreeRows(shownFiles.value, expanded, 0, allDirs.value)
+  if (query.value.trim()) return buildFlatPathRows(shownFiles.value)
+  return buildPathTreeRows(shownFiles.value, expandedDirs.value, 0, allDirs.value)
 })
 
 /**
@@ -301,6 +293,8 @@ const mainProps = computed(() => ({
   loading: loading.value,
   error: error.value,
   rows: rows.value,
+  /** 平铺态（有筛选词）：树组件按完整路径渲染行名 */
+  flat: query.value.trim().length > 0,
   expandedDirs: expandedDirs.value,
   selectedPath: selectedPath.value,
   reloadKey: reloadKey.value,
@@ -311,19 +305,10 @@ const mainProps = computed(() => ({
 // ── 打开时的默认预览目标（右侧不留空白）──
 const LAST_FILE_KEY = "gitpush-workspace-explorer-last-file"
 
-/** 上次看过的文件（会话内记忆；不存在于本仓库时由 pickInitialWorkspaceFile 自动回落） */
-function readLastFile(): string {
-  try {
-    return sessionStorage.getItem(LAST_FILE_KEY) ?? ""
-  } catch {
-    return ""
-  }
-}
-
 /** 有文件后落一个预览目标：上次看过 > 根级 README > 保持空态；已有选中则完全不打扰 */
 watch(files, (list) => {
   if (selectedPath.value || list.length === 0) return
-  const pick = pickInitialWorkspaceFile(list, readLastFile())
+  const pick = pickInitialWorkspaceFile(list, safeSessionGet(LAST_FILE_KEY) ?? "")
   if (!pick) return
   selectedPath.value = pick
   // 目标在深层目录时展开父链，否则树上根本看不到选中项
@@ -332,12 +317,7 @@ watch(files, (list) => {
 }, { immediate: true })
 
 watch(selectedPath, (path) => {
-  if (!path) return
-  try {
-    sessionStorage.setItem(LAST_FILE_KEY, path)
-  } catch {
-    // 无存储能力（隐私模式）：仅本次打开生效
-  }
+  if (path) safeSessionSet(LAST_FILE_KEY, path)
 })
 
 /** 展开/收起目录（替换式更新保证 Set 变更可被响应式追踪） */

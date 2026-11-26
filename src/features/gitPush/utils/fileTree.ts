@@ -4,6 +4,7 @@
 // 输出为「目录行 + 文件行」交替的拉平行列表，模板单循环渲染，无需递归组件。
 // 目录行可折叠：折叠时整棵子树不输出（子目录行也隐藏）。
 import type { FileChange } from "../types"
+import { pathBasename } from "@/utils/pathUtils"
 
 /** 拉平后的目录行（type 判别联合的 dir 分支，模板 v-if 自动收窄） */
 export interface FileTreeDirRow {
@@ -108,12 +109,6 @@ function computeCounts<T>(dir: DirNode<T>): number {
   return n
 }
 
-/** 取路径的 basename（最后一段；以最后一个 / 为准） */
-function basename(path: string): string {
-  const idx = path.lastIndexOf(SEP)
-  return idx === -1 ? path : path.slice(idx + 1)
-}
-
 /**
  * 前序遍历输出拉平行列表：
  * - 每个目录先输出自身行（含子树计数），折叠命中则整棵子树跳过；
@@ -214,7 +209,7 @@ export function buildFileTreeRows(
     (file, depth, key, path) => ({
       type: "file",
       key,
-      name: basename(path),
+      name: pathBasename(path),
       path,
       depth,
       count: 1,
@@ -315,7 +310,10 @@ export function filterPathsByQuery(paths: readonly string[], query: string): rea
  * 复用变更树的构建算法（`buildFileTreeRows`），差别只在：
  * - 入参是纯路径（无暂存/变更元数据），输出行不带 `file` 字段；
  * - 折叠集由「已展开目录集」反推（`全部目录 - expandedDirs`），默认空集 = 全部收起，
- *   只渲染根层目录与根级文件（`collectDirectoryPaths` 由调用方一次算好传入更省）。
+ *   只渲染根层目录与根级文件（`collectDirectoryPaths` 由调用方一次算好传入更省）；
+ * - 开启单子目录链压缩（`src/features/gitPush` 合并成一行，键 = 最深路径）：
+ *   折叠判定只查压缩后的节点路径，与 `toggleDir` 存入的展开键（行键）天然同源；
+ *   刷新后链条形状变化（如单链长出分支）会使旧展开键失配、该行收起 —— 可接受（再点一次即恢复）。
  * @param paths 可见文件路径（`/` 分隔，相对仓库根）
  * @param expandedDirs 已展开目录的完整路径集合（空集 = 全部收起）
  * @param depthOffset 整体缩进偏移（与变更树同义）
@@ -336,16 +334,33 @@ export function buildPathTreeRows(
     new Set(collapsed),
     depthOffset,
     "",
-    false,
+    true,
     (_path, depth, key, path) => ({
       type: "file",
       // 文件键加类型前缀：已跟踪文件被目录替换时（git 仍列旧文件 `foo`，磁盘上 `foo/bar` 是未跟踪），
       // 目录行与文件行会同时出现在根层且路径同为 `foo`，不加前缀会导致 v-for 重复 key
       key: `f:${key}`,
-      name: basename(path),
+      name: pathBasename(path),
       path,
       depth,
       count: 1,
     }),
   )
+}
+
+/**
+ * 工作区可见文件路径 → 平铺文件行（筛选态：目录树换成 VS Code 搜索式的平铺列表）。
+ *
+ * 行形状与树文件行一致（name = basename、depth 恒 0），完整路径由视图层用 `row.path` 展示，
+ * 复制按钮仍取 `row.name`，语义不因平铺/树态切换而变化。
+ */
+export function buildFlatPathRows(paths: readonly string[]): PathTreeFileRow[] {
+  return paths.map((path) => ({
+    type: "file",
+    key: `f:${path}`,
+    name: pathBasename(path),
+    path,
+    depth: 0,
+    count: 1,
+  }))
 }

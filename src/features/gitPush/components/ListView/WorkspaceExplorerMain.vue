@@ -60,7 +60,9 @@
           <WorkspaceFileTree
             v-else
             :i18n="i18n"
+            :project-path="projectPath"
             :rows="rows"
+            :flat="flat"
             :expanded-dirs="expandedDirs"
             :selected-path="selectedPath"
             :query="query"
@@ -104,8 +106,10 @@ defineProps<{
   loading: boolean
   /** 读取失败原因（空串 = 无错误） */
   error: string
-  /** 拉平后的树行（`buildPathTreeRows` 产物） */
+  /** 拉平后的树行（`buildPathTreeRows` / `buildFlatPathRows` 产物） */
   rows: PathTreeRow[]
+  /** 平铺态（有筛选词）：文件行显示完整相对路径而非 basename */
+  flat: boolean
   /** 已展开目录集合 */
   expandedDirs: ReadonlySet<string>
   /** 当前预览的文件相对路径 */

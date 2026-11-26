@@ -3,9 +3,11 @@ import type { OpPipelineLane } from "../types/pipeline"
 import {
   applyDetail,
   applyStage,
+  capStageHistory,
   createLane,
   finalizeLane,
   isLaneTerminal,
+  laneRunTimings,
   markRetry,
   markSkip,
   markStalled,
@@ -117,6 +119,34 @@ describe("opPipeline", () => {
   it("终态判定", () => {
     expect(isLaneTerminal("done")).toBe(true)
     expect(isLaneTerminal("running")).toBe(false)
+  })
+
+  it("成功 lane 提取阶段耗时与总耗时；跳过阶段无起止时间被排除", () => {
+    let lane = applyStage(makeLane(), "prepare", undefined, undefined, 1000)
+    lane = applyStage(lane, "enumerating", 40, "Enumerating objects: 40%", 1500)
+    lane = finalizeLane(lane, "done", 2500)
+
+    expect(laneRunTimings(lane)).toEqual({
+      at: 2500,
+      totalMs: 1500,
+      stages: { prepare: 500, enumerating: 1000 },
+    })
+  })
+
+  it("非 done lane 不产生历史（失败 / 运行中都不算参考值）", () => {
+    const failed = finalizeLane(applyStage(makeLane(), "writing", 20, "", 2000), "fail", 3000)
+    expect(laneRunTimings(failed)).toBeNull()
+    expect(laneRunTimings(makeLane())).toBeNull()
+  })
+
+  it("历史裁剪按各自最新一次运行时间保留最新若干条签名", () => {
+    const history = {
+      a: [{ at: 100, totalMs: 1, stages: {} }],
+      b: [{ at: 300, totalMs: 2, stages: {} }, { at: 250, totalMs: 2, stages: {} }],
+      c: [{ at: 200, totalMs: 3, stages: {} }],
+    }
+    expect(Object.keys(capStageHistory(history, 2)).sort()).toEqual(["b", "c"])
+    expect(capStageHistory(history, 5)).toBe(history)
   })
 
   it("所有计划中的阶段都有文案键", () => {

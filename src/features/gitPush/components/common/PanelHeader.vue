@@ -239,6 +239,7 @@ const VIEW_GROUPS: ViewGroup[] = [
   // 规则检查与行数排行为「提交分析」的内部 Tab，不再各占一个入口
   { key: "stats", icon: "mdi:chart-bar", labelKey: "statsGroup", views: ["stats", "analysis", "report"] },
   { key: "repoclean", icon: "mdi:broom", labelKey: "repoCleanView", views: ["repoclean"] },
+  { key: "pipeline", icon: "mdi:graph-outline", labelKey: "pipelineGraphView", views: ["pipeline"] },
 ]
 
 /** 当前视图是否落在该入口覆盖的视图集合内 */

@@ -5,15 +5,16 @@
 // 外壳（遮罩 / 定位 / 层级 / Esc / 焦点归还 / 过渡）由共享 Dialog 承担；
 // 文件行复用 WorkingTreePanel.scss 的全局 .wt-* 类（状态色 / 勾选框 / 部分暂存标记）。
 
-// 宽屏优先：并排视图需要两列各自可读（扣除 250px 侧栏后仍有 ~900px 可用）
+// 宽屏优先：并排视图需要两列各自可读（扣除侧栏后仍有 ~950px 可用，与工作区文件窗同档）
 .git-push-panel .si-dialog.wt-stream-dialog {
-  --si-dialog-width: min(96vw, 1180px);
+  --si-dialog-width: min(96vw, 1280px);
 }
 
-// 内容区改为横向 flex 并去掉内边距：侧栏固定宽，右侧流自行滚动
+// 内容区横向 flex + 面板制式留白（与工作区文件窗一致：8px 外边距 + 8px 面板间隙）
 .git-push-panel .wt-stream-dialog .si-dialog__content {
   display: flex;
-  padding: 0;
+  gap: $s-2;
+  padding: $s-2;
   overflow: hidden;
   min-height: 0;
 }
@@ -34,15 +35,34 @@
   @include gp-section-count-base;
 }
 
-// 暂存 / 未暂存分布点（文案走 tooltip，标题行只留色点 + 数字）
-.wt-stream-count {
-  flex-shrink: 0;
+// 项目名副标题（弱化，超长省略；与工作区文件窗的 .we-subtitle 同口径）
+.wt-stream-project {
+  @include text-ellipsis;
+
+  max-width: 220px;
   font-size: $t-2xs;
-  font-family: $ff-mono;
+  opacity: 0.6;
+}
+
+// 暂存 / 未暂存分布：色点 + 文字（避免只靠颜色传达状态；数字与工作区窗保持等宽观感）
+.wt-stream-count {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: $s-px6;
+  font-size: $t-2xs;
   opacity: 0.75;
 
-  &--staged { color: var(--gp-diff-add-color); }
-  &--unstaged { color: var(--gp-diff-hunk-color); }
+  &::before {
+    content: "";
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  &--staged::before { background: var(--gp-diff-add-color); }
+  &--unstaged::before { background: var(--gp-diff-hunk-color); }
 }
 
 // ── 左侧目录树索引 ──
@@ -50,12 +70,15 @@
 // WorkspaceExplorer.scss 的 .we-row 系列 —— 同一插件里文件树只保留一种长相。
 // 本文件只补三样东西：侧栏容器、分区标题行、「增删统计 ⇄ 暂存开关」的右侧槽位。
 .wt-sb {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: 272px;
   min-height: 0;
-  border-right: 1px solid var(--b3-border-color);
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
   background: var(--b3-theme-surface);
   // 显式钉住界面字体：树里有等宽元素（计数 / 角标），避免祖先串味
   font-family: $ff-zh;
@@ -168,12 +191,18 @@
 }
 
 // ── 右侧连续流 ──
+// 与左侧目录树同制式：描边圆角面板（工具条 / 提示条 / 滚动正文都在面板内）
 .wt-stream-main {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
 }
 
 // 变更集不可用的降级提示：贴在视图栏下方，不与 diff 正文抢视觉重量
@@ -205,7 +234,8 @@
   &:last-child { border-bottom: none; }
 }
 
-// sticky 文件头：滚动到任何位置都能看到"当前在看哪个文件"
+// sticky 文件头：滚动到任何位置都能看到"当前在看哪个文件"；
+// 轻投影在滚动时把文件头与正文分层，避免长 diff 里层次糊在一起
 .wt-stream-head {
   position: sticky;
   top: 0;
@@ -216,6 +246,7 @@
   padding: $s-px3 $s-2 $s-px3 $s-px6;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
   cursor: pointer;
   user-select: none;
 

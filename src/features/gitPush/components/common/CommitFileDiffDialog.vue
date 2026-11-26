@@ -85,61 +85,64 @@
           </div>
         </div>
 
-        <!-- 加载中（异步 git show 期间，图例暂不展示） -->
-        <div
-          v-if="loading"
-          class="wt-diff-content cdf-loading"
-        >
-          <Icon
-            icon="mdi:loading"
-            height="12"
-            class="gp-spin"
-          />
-          <span>{{ i18n.loading }}</span>
-        </div>
-
-        <!-- 二进制 / 超限 / 失败：给可解释状态，不再只是空白内容区 -->
-        <div
-          v-else-if="effectiveStatus === 'binary' || effectiveStatus === 'tooLarge' || effectiveStatus === 'error'"
-          class="wt-diff-content wt-diff-notice"
-          role="status"
-        >
-          <Icon
-            icon="mdi:alert-circle-outline"
-            height="12"
-          />
-          <span>{{ noticeText }}</span>
-          <Button
-            v-if="effectiveStatus !== 'binary'"
-            variant="ghost"
-            size="xsmall"
-            dense
-            @click="load"
+        <!-- 正文面板（与工作区文件窗同制式：描边圆角 + 8px 外边距） -->
+        <div class="cdf-body">
+          <!-- 加载中（异步 git show 期间，图例暂不展示） -->
+          <div
+            v-if="loading"
+            class="wt-diff-content cdf-loading"
           >
-            {{ i18n.diffRetry }}
-          </Button>
-        </div>
+            <Icon
+              icon="mdi:loading"
+              height="12"
+              class="gp-spin"
+            />
+            <span>{{ i18n.loading }}</span>
+          </div>
 
-        <!-- 图例 + 着色行（复用共享 DiffLines 片段；本地分页 1500 行，大补丁经「加载更多」增量渲染，
-             与 WorkingTreeDiffDialog / FileDetailModal 同口径——全量建 DOM 会让大 diff 打开即卡死） -->
-        <template v-else>
-          <DiffLines
-            v-model:layout="layout"
-            v-model:show-line-numbers="showLineNumbers"
-            v-model:only-changes="onlyChanges"
-            v-model:wrap="wrap"
-            :i18n="i18n"
-            :lines="visibleLines"
-          />
-          <!-- 剩余行增量渲染（仅 diff 正文分页；标题 +N/−N 统计仍按全量计算） -->
-          <LoadMoreButton
-            v-if="hasMoreLines"
-            :i18n="i18n"
-            :visible="visibleLines.length"
-            :total="lines.length"
-            @load-more="loadMoreLines"
-          />
-        </template>
+          <!-- 二进制 / 超限 / 失败：给可解释状态，不再只是空白内容区 -->
+          <div
+            v-else-if="effectiveStatus === 'binary' || effectiveStatus === 'tooLarge' || effectiveStatus === 'error'"
+            class="wt-diff-content wt-diff-notice"
+            role="status"
+          >
+            <Icon
+              icon="mdi:alert-circle-outline"
+              height="12"
+            />
+            <span>{{ noticeText }}</span>
+            <Button
+              v-if="effectiveStatus !== 'binary'"
+              variant="ghost"
+              size="xsmall"
+              dense
+              @click="load"
+            >
+              {{ i18n.diffRetry }}
+            </Button>
+          </div>
+
+          <!-- 图例 + 着色行（复用共享 DiffLines 片段；本地分页 1500 行，大补丁经「加载更多」增量渲染，
+               与 WorkingTreeDiffDialog / FileDetailModal 同口径——全量建 DOM 会让大 diff 打开即卡死） -->
+          <template v-else>
+            <DiffLines
+              v-model:layout="layout"
+              v-model:show-line-numbers="showLineNumbers"
+              v-model:only-changes="onlyChanges"
+              v-model:wrap="wrap"
+              :i18n="i18n"
+              :lines="visibleLines"
+            />
+            <!-- 剩余行增量渲染（仅 diff 正文分页；标题 +N/−N 统计仍按全量计算） -->
+            <LoadMoreButton
+              v-if="hasMoreLines"
+              :i18n="i18n"
+              :visible="visibleLines.length"
+              :total="lines.length"
+              @load-more="loadMoreLines"
+            />
+          </template>
+        </div>
       </div>
     </div>
   </Teleport>

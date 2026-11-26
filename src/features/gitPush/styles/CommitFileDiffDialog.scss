@@ -8,18 +8,32 @@
   @include gp-diff-color-vars;
 }
 
-// 内容容器（宽高与工作区差异弹窗保持一致）
+// 内容容器（宽高与工作区文件窗同一档位：宽屏优先，单文件 diff 不需要审阅流那么宽）
 .cdf-dialog {
-  width: 90vw;
-  max-width: 800px;
-  height: 760px;
-  max-height: 80vh;
   display: flex;
   flex-direction: column;
+  width: min(92vw, 1080px);
+  max-width: 1080px;
+  height: min(82vh, 820px);
+  max-height: 82vh;
   background: var(--b3-theme-background);
   border: 1px solid var(--b3-border-color);
   border-radius: $r-md;
   overflow: hidden;
+}
+
+// 正文面板：描边圆角容器，工具条 / 状态条 / diff 滚动区都在面板内
+.cdf-body {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin: $s-2;
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
 }
 
 // 头部修复：基座 .wt-diff-header 为共享 Dialog 的 header 插槽设计（flex: 1 撑满

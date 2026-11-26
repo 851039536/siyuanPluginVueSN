@@ -27,7 +27,12 @@
             :id="headerId"
             class="wt-diff-title"
           >{{ i18n.diffStreamTitle }}</span>
-          <!-- 变更文件总数 + 暂存/未暂存分布 -->
+          <!-- 项目名副标题（与工作区文件窗的标题层级一致，便于区分同开多个项目） -->
+          <span
+            class="wt-stream-project"
+            :title="projectPath"
+          >{{ projectName }}</span>
+          <!-- 变更文件总数 + 暂存/未暂存分布（色点 + 文字，避免只用颜色传达状态） -->
           <span
             class="wt-stream-total"
             :title="i18n.commitFilesCount.replace('{0}', String(files.length))"
@@ -35,11 +40,13 @@
           <span
             v-if="stagedCount"
             class="wt-stream-count wt-stream-count--staged"
-          >●{{ stagedCount }}</span>
+            :title="i18n.staged"
+          >{{ i18n.staged }} {{ stagedCount }}</span>
           <span
             v-if="unstagedCount"
             class="wt-stream-count wt-stream-count--unstaged"
-          >●{{ unstagedCount }}</span>
+            :title="i18n.unstaged"
+          >{{ i18n.unstaged }} {{ unstagedCount }}</span>
         </div>
         <div class="wt-diff-header-actions">
           <!-- 上一个 / 下一个文件（与 ← → 同义） -->
@@ -357,6 +364,9 @@ const scrollEl = ref<HTMLElement | null>(null)
 /** 变更文件总数分布（标题栏展示） */
 const stagedCount = computed(() => props.files.filter((f) => f.staged).length)
 const unstagedCount = computed(() => props.files.filter((f) => !f.staged).length)
+
+/** 项目名副标题（取项目路径最后一段；与工作区文件窗的头部层级一致） */
+const projectName = computed(() => props.projectPath.split(/[\\/]/).filter(Boolean).pop() ?? "")
 
 /**
  * 流的文件顺序 = 侧栏树的行顺序（已暂存区在前、目录分组与收纳顺序一致）。

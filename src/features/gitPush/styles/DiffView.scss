@@ -125,7 +125,8 @@
   align-items: center;
   justify-content: space-between;
   gap: $s-2;
-  padding: 2px $s-2 2px $s-px10;
+  // 与工作区文件窗的工具栏同节奏（8px 侧边距、4px 上下留白）
+  padding: $s-1 $s-2;
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;
   flex-wrap: wrap;
@@ -234,10 +235,10 @@
   .wt-dl-text::before { color: var(--gp-diff-hunk-color); }
 }
 
-.wt-dl-ctx { opacity: 0.6; }
+.wt-dl-ctx { opacity: 0.72; }
 
 // 文件头行（diff --git / index / --- / +++）：弱化为背景信息
-.wt-dl-meta { opacity: 0.35; }
+.wt-dl-meta { opacity: 0.42; }
 
 // 折叠条：两个 hunk 之间被 git 省略的未变行（虚线夹起，提示"这里跳过了 N 行"）
 .wt-diff-line.wt-dl-gap {
@@ -314,13 +315,14 @@
   opacity: 0.4;
 }
 
-// 旧/新文件行号双列（右对齐，不参与文本选中复制）
+// 旧/新文件行号双列（右对齐，不参与文本选中复制；等宽数字保证多位行号不跳动）
 .wt-dl-no {
   flex-shrink: 0;
   width: 34px;
   padding-right: $s-px6;
   text-align: right;
-  opacity: 0.35;
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
   user-select: none;
 }
 

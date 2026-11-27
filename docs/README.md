@@ -12,7 +12,11 @@
 > `AGENTS_BUILD.md` / `AGENTS_I18N.md` 是**长期规则**，不适用本索引的归档规则，原地维护。
 > 功能模块的 `src/features/*/README.md` 同样原地维护，不迁入 docs。
 
-**当前 `docs/` 根下的活跃文档**：无。
+**当前 `docs/` 根下的活跃文档**：
+
+| 文件 | 主题 | 状态 |
+|---|---|---|
+| [elevation-assistant-code-review.md](elevation-assistant-code-review.md) | 提权助手代码审查（P0/P1/P2、内存、重复类型、死代码）与“自动扫描程序”设计 | 审查完成；修复与扫描**未执行**（2026-11-27） |
 
 ## 一、参考文档（`docs/参考/`，9 份）
 

@@ -1070,7 +1070,9 @@ async function runAnalysisWithPipeline(projectId?: string | string[]) {
   await runGlobalPipeline("analysis", tf("pipelineAnalysis"), ANALYSIS_STAGE_PLAN, async (stepper) => {
     stepper.step("prepare")
     stepper.step("analysisScan")
-    await runAnalysis(projectId, (stage) => stepper.step(stage))
+    const ran = await runAnalysis(projectId, (stage) => stepper.step(stage))
+    // 被在途分析拒绝：本次没有真正执行，收 lane 而不是画成完成
+    if (!ran) stepper.skip()
   })
 }
 
@@ -1083,7 +1085,8 @@ async function runLineStatsWithPipeline() {
   await runGlobalPipeline("lineStats", tf("pipelineLineStats"), ANALYSIS_STAGE_PLAN, async (stepper) => {
     stepper.step("prepare")
     stepper.step("analysisScan")
-    await runLineStatsAnalysis((stage) => stepper.step(stage))
+    const ran = await runLineStatsAnalysis((stage) => stepper.step(stage))
+    if (!ran) stepper.skip()
   })
 }
 
@@ -1096,7 +1099,8 @@ async function refreshLineStatsProjectWithPipeline(projectId: string) {
   await runGlobalPipeline("lineStats", tf("pipelineLineStats"), ANALYSIS_STAGE_PLAN, async (stepper) => {
     stepper.step("prepare")
     stepper.step("analysisScan")
-    await refreshLineStatsProject(projectId, () => stepper.step("analysisAggregate"))
+    const ran = await refreshLineStatsProject(projectId, () => stepper.step("analysisAggregate"))
+    if (!ran) stepper.skip()
   })
 }
 
@@ -1132,7 +1136,9 @@ async function runReportWithPipeline() {
     await runGlobalPipeline("report", tf("pipelineReport"), REPORT_STAGE_PLAN, async (stepper) => {
       stepper.step("prepare")
       stepper.step("reportScan")
-      await runReport({ onStage: (stage) => stepper.step(stage) })
+      const outcome = await runReport({ onStage: (stage) => stepper.step(stage) })
+      // 被在途请求挡下 / 项目范围已变：真正产出由补跑完成，本次 lane 不再画成完成
+      if (outcome !== "ran") stepper.skip()
     })
   } catch {
     // 报告面板已展示失败态；lane 由 runLocalPipeline 收敛为 fail
@@ -1149,7 +1155,8 @@ async function setRangeWithPipeline(range: Parameters<typeof setRange>[0]) {
     await runGlobalPipeline("report", tf("pipelineReport"), REPORT_STAGE_PLAN, async (stepper) => {
       stepper.step("prepare")
       stepper.step("reportScan")
-      await setRange(range, (stage) => stepper.step(stage))
+      const outcome = await setRange(range, (stage) => stepper.step(stage))
+      if (outcome !== "ran") stepper.skip()
     })
   } catch {
     // 同上：失败态由报告面板呈现
@@ -1166,7 +1173,8 @@ async function setProjectWithPipeline(projectId: string) {
     await runGlobalPipeline("report", tf("pipelineReport"), REPORT_STAGE_PLAN, async (stepper) => {
       stepper.step("prepare")
       stepper.step("reportScan")
-      await setProject(projectId, (stage) => stepper.step(stage))
+      const outcome = await setProject(projectId, (stage) => stepper.step(stage))
+      if (outcome !== "ran") stepper.skip()
     })
   } catch {
     // 同上：失败态由报告面板呈现

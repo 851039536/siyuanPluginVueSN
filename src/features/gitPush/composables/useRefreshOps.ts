@@ -182,25 +182,32 @@ export function useRefreshOps(deps: {
     })
   }
 
-  async function handleRefreshRemoteStatus(id: string) {
-    const project = findProject(projects, id)
-    if (!project) return
-    await withRecordLoading(remoteStatusLoading, id, async () => {
-      // 手动刷新走 force：与 Fetch 共用单飞管线，但分支名必须重新解析
-      await scheduler.refreshRemote(id, { force: true })
+  /**
+   * 手动 Fetch 的共用实现（两个入口同一网络操作、同一流水线）：
+   * 真实 fetch + 状态重查；loading 标志由调用方按语义选择。
+   */
+  async function runFetchWithPipeline(id: string, loadingRef: Ref<Record<string, number>>) {
+    await runLocalPipeline(id, "fetch", tf("fetch"), FETCH_STAGE_PLAN, async (stepper) => {
+      stepper.step("fetchExec")
+      await withRecordLoading(loadingRef, id, async () => {
+        // 手动刷新走 force：与 Fetch 共用单飞管线，但分支名必须重新解析
+        await scheduler.refreshRemote(id, { force: true })
+      })
+      stepper.step("refreshStatus")
     })
   }
 
-  /** Fetch 所有远程 + 刷新状态（与 handleRefreshRemoteStatus 共用调度器单飞管线） */
+  async function handleRefreshRemoteStatus(id: string) {
+    const project = findProject(projects, id)
+    if (!project) return
+    // 与 handleFetchAll 同一套阶段；错误仍交给调用方（该入口原本就没有 toast）
+    await runFetchWithPipeline(id, remoteStatusLoading)
+  }
+
+  /** Fetch 所有远程 + 刷新状态（与 handleRefreshRemoteStatus 共用同一流水线实现） */
   async function handleFetchAll(id: string) {
     try {
-      await runLocalPipeline(id, "fetch", tf("fetch"), FETCH_STAGE_PLAN, async (stepper) => {
-        stepper.step("fetchExec")
-        await withRecordLoading(fetching, id, async () => {
-          await scheduler.refreshRemote(id, { force: true })
-        })
-        stepper.step("refreshStatus")
-      })
+      await runFetchWithPipeline(id, fetching)
     } catch (e: unknown) {
       showMessage(getErrorMessage(e) || tf("fetchFailed"), 5000, "error")
     }

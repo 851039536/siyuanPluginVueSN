@@ -105,6 +105,40 @@ export interface OpPipelineLane {
   visible: boolean
 }
 
+/**
+ * 一次成功流水线的耗时快照（关系图历史徽标用）。
+ * 只保存在内存：会话结束即失效，不落盘，避免把近似值当成长期统计。
+ */
+export interface PipelineRunTimings {
+  /** 记录时间（裁剪旧计划签名用） */
+  at: number
+  /** 整条流水线耗时（毫秒） */
+  totalMs: number
+  /** 阶段 → 耗时（毫秒）；只含有明确起止时间的阶段 */
+  stages: Partial<Record<PipelineStageKey, number>>
+}
+
+/** 入口键（如 "push" / "analysis"）→ 最近若干次成功耗时（最新在前；会话内内存，不落盘） */
+export type PipelineStageHistory = Record<string, PipelineRunTimings[]>
+
+/**
+ * 最近一次失败（诊断用）：lane 清理后仍保留，同一计划签名成功一次即清除。
+ * 只记 fail，取消是用户主动行为，不算失败。
+ */
+export interface OpFailureInfo {
+  /** 失败时间（用于裁剪与「失败晚于成功」判定） */
+  at: number
+  /** 失败时正处于 running 的阶段 */
+  stage?: PipelineStageKey
+  /** 真实错误文本（远端 stderr / 本地异常消息） */
+  detail: string
+  /** 失败所属项目（全局槽为保留值）；同项目成功只清除自己的失败记录 */
+  scope?: string
+}
+
+/** 「入口键::项目」→ 最近一次失败 */
+export type OpFailureMap = Record<string, OpFailureInfo>
+
 /** 远程执行层上报的进度事件 */
 export interface RemoteProgressEvent {
   target: PlatformKey
@@ -119,35 +153,3 @@ export interface RemoteProgressEvent {
 export interface RemoteOpOptions {
   onProgress?: (event: RemoteProgressEvent) => void
 }
-
-/**
- * 一次成功流水线的耗时快照（关系图历史徽标用）。
- * 只保存在内存：会话结束即失效，不落盘，避免把近似值当成长期统计。
- */
-export interface PipelineRunTimings {
-  /** 记录时间（裁剪旧计划签名用） */
-  at: number
-  /** 整条流水线耗时（毫秒） */
-  totalMs: number
-  /** 阶段 → 耗时（毫秒）；只含有明确起止时间的阶段 */
-  stages: Partial<Record<PipelineStageKey, number>>
-}
-
-/** 计划签名 → 最近若干次成功耗时（最新在前；会话内内存，不落盘） */
-export type PipelineStageHistory = Record<string, PipelineRunTimings[]>
-
-/**
- * 最近一次失败（诊断用）：lane 清理后仍保留，同一计划签名成功一次即清除。
- * 只记 fail，取消是用户主动行为，不算失败。
- */
-export interface OpFailureInfo {
-  /** 失败时间（用于裁剪与「失败晚于成功」判定） */
-  at: number
-  /** 失败时正处于 running 的阶段 */
-  stage?: PipelineStageKey
-  /** 真实错误文本（远端 stderr / 本地异常消息） */
-  detail: string
-}
-
-/** 计划签名 → 最近一次失败 */
-export type OpFailureMap = Record<string, OpFailureInfo>

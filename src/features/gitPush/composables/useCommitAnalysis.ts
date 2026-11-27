@@ -553,11 +553,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
   /**
    * 提交分析（仅抓取 commit log 聚合提交维度；行数排行沿用缓存旧值，不重新抓 numstat）。
    * @param projectId 单项目 id 或 id 数组 = 仅局部重抓指定项目（修正保存/批量修复后的快速刷新）；不传 = 全量重跑。
+   * @returns 是否实际执行（false = 分析进行中被拒绝，请求已排队）
    */
   async function runAnalysis(
     projectId?: string | string[],
     onStage?: (stage: "analysisAggregate") => void,
-  ) {
+  ): Promise<boolean> {
     // 归一化：空数组回退 undefined，否则 runCore 的 `projectIds?.length` 判据会误走全量分支
     const ids = Array.isArray(projectId) ? projectId : projectId ? [projectId] : undefined
     const scoped = ids?.length ? ids : undefined
@@ -573,16 +574,18 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         console.warn("[gitPush] 分析进行中，重新分析请求已排队待下次执行")
       }
     }
+    return ran
   }
 
-  /** 行数统计（始终并行抓取 numstat 生成项目/作者行数排行并覆盖缓存行数数据） */
-  async function runLineStatsAnalysis(onStage?: (stage: "analysisAggregate") => void) {
+  /** 行数统计（始终并行抓取 numstat 生成项目/作者行数排行并覆盖缓存行数数据）；返回是否实际执行 */
+  async function runLineStatsAnalysis(onStage?: (stage: "analysisAggregate") => void): Promise<boolean> {
     const ran = await runCore(true, undefined, onStage)
     if (!ran) {
       lineAnalyzed.value = false
       pendingReanalyze = true
       console.warn("[gitPush] 分析进行中，行数统计重跑请求已排队待下次执行")
     }
+    return ran
   }
 
   /**
@@ -720,11 +723,12 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
    * 项目排行对应条目（upsert 重排）与汇总合计。
    * 结果由 manager.scanProjectLineStats 直接落 JSON 槽，并同步写行数统计快照缓存供下次复用；
    * analyzedAt 语义为全量分析完成时间，不因单项目刷新改动。
+   * @returns 是否实际执行（false = 已在刷新/分析中或项目不存在，未发起扫描）
    */
-  async function refreshLineStatsProject(projectId: string, onStage?: () => void) {
-    if (lineDetailRefreshing.value || runBusy) return
+  async function refreshLineStatsProject(projectId: string, onStage?: () => void): Promise<boolean> {
+    if (lineDetailRefreshing.value || runBusy) return false
     const p = projects.value.find((x) => x.id === projectId)
-    if (!p) return
+    if (!p) return false
     lineDetailRefreshing.value = true
     try {
       const path = resolveValidPath(p)
@@ -772,9 +776,11 @@ export function useCommitAnalysis(manager: GitPushManager, projects: Ref<GitProj
         projectLineRanking: projectLineRanking.value,
         summary: lineStatsSummary.value,
       })
+      return true
     } catch (e) {
       // 刷新失败仅控制台告警：不改全局 failedCount 口径（详情弹窗局部操作，重试成本低）
       console.warn("[gitPush] 单项目行数刷新失败", e)
+      return true
     } finally {
       lineDetailRefreshing.value = false
     }

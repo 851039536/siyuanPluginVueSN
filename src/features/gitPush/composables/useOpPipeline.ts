@@ -27,12 +27,17 @@ import {
   PIPELINE_REVEAL_DELAY_MS,
   PIPELINE_STALLED_MS,
 } from "../utils/opPipeline"
-import { laneSignature } from "../utils/pipelineGraph"
+import { failureKey, historyKeyForLane } from "../utils/pipelineGraph"
 
 /** 本地流水线步进器：只允许推进真实 await 步骤 */
 export interface LocalPipelineStepper {
   step: (stage: PipelineStageKey, detail?: string) => void
   detail: (text: string) => void
+  /**
+   * 本次调用没有实际执行（被在途请求排队、项目/范围已被替换等）。
+   * 不记历史、不标失败，直接收起 lane，避免把"没跑"画成"跑完"。
+   */
+  skip: () => void
 }
 
 /** 远程 lane 的目标平台 */
@@ -52,6 +57,9 @@ const HISTORY_SIGNATURE_LIMIT = 32
 
 /** 每个计划签名保留最近几次成功运行（用于时间线对比） */
 const RUN_HISTORY_LIMIT = 6
+
+/** 失败记录保留上限（入口 × 项目；长会话防泄漏） */
+const FAILURE_RECORD_LIMIT = 64
 
 /** 远程进度桥接：useRemoteProgress 只依赖这三个方法，避免耦合整份状态 */
 export interface OpPipelineBridge {
@@ -121,19 +129,23 @@ export function useOpPipeline() {
     opPipelines.value = copy
   }
 
-  /** 只记录成功结束的 lane；每条计划签名保留最近 N 次（最新在前），并清除更早的失败标记 */
-  function recordHistory(lane: OpPipelineLane) {
+  /**
+   * 只记录成功结束的 lane；按唯一入口归档（analysis / lineStats 共用计划也不串台），
+   * 并清除同一项目同一入口的失败标记——别的项目失败不因本次成功消失。
+   */
+  function recordHistory(lane: OpPipelineLane, scope: string) {
     const timings = laneRunTimings(lane)
     if (!timings) return
-    const signature = laneSignature(lane)
-    const runs = stageHistory.value[signature] ?? []
+    const key = historyKeyForLane(lane)
+    const runs = stageHistory.value[key] ?? []
     stageHistory.value = capStageHistory(
-      { ...stageHistory.value, [signature]: [timings, ...runs].slice(0, RUN_HISTORY_LIMIT) },
+      { ...stageHistory.value, [key]: [timings, ...runs].slice(0, RUN_HISTORY_LIMIT) },
       HISTORY_SIGNATURE_LIMIT,
     )
-    if (signature in lastFailures.value) {
+    const failedKey = failureKey(key, scope)
+    if (failedKey in lastFailures.value) {
       const next = { ...lastFailures.value }
-      delete next[signature]
+      delete next[failedKey]
       lastFailures.value = next
     }
   }
@@ -144,24 +156,25 @@ export function useOpPipeline() {
     return typeof error === "string" ? error : ""
   }
 
-  /** 记录失败 lane（取消不算失败）；同一签名只保留最近一次 */
-  function recordFailure(lane: OpPipelineLane, detail?: string) {
+  /** 记录失败 lane（取消不算失败）；同一入口同一项目只保留最近一次 */
+  function recordFailure(lane: OpPipelineLane, scope: string, detail?: string) {
     if (lane.status !== "fail") return
     const failedStage = [...lane.stages].reverse().find((stage) => stage.status === "fail")
     const fallbackDetail = [...lane.stages].reverse().find((stage) => stage.detail)?.detail
     const text = (detail ?? "").trim() || fallbackDetail?.trim() || ""
     if (!text) return
-    const signature = laneSignature(lane)
+    const key = failureKey(historyKeyForLane(lane), scope)
     lastFailures.value = capTimedRecord(
       {
         ...lastFailures.value,
-        [signature]: {
+        [key]: {
           at: lane.endedAt ?? Date.now(),
           stage: failedStage?.key,
           detail: text,
+          scope,
         },
       },
-      HISTORY_SIGNATURE_LIMIT,
+      FAILURE_RECORD_LIMIT,
     )
   }
 
@@ -320,19 +333,19 @@ export function useOpPipeline() {
       }
       removeLane(projectId, lane.id)
     }
-    // 同一批次多远程共用签名：只记最慢的一条作为「这一次运行」，避免时间线出现重复行
-    const doneBySignature = new Map<string, OpPipelineLane>()
+    // 同一批次多远程共用入口键：只记最慢的一条作为「这一次运行」，避免时间线出现重复行
+    const doneByEntry = new Map<string, OpPipelineLane>()
     for (const lane of finalizedLanes) {
       if (lane.status !== "done") continue
-      const signature = laneSignature(lane)
-      const previous = doneBySignature.get(signature)
+      const entryKey = historyKeyForLane(lane)
+      const previous = doneByEntry.get(entryKey)
       const currentMs = (lane.endedAt ?? 0) - lane.startedAt
       const previousMs = previous ? (previous.endedAt ?? 0) - previous.startedAt : -1
-      if (!previous || currentMs > previousMs) doneBySignature.set(signature, lane)
+      if (!previous || currentMs > previousMs) doneByEntry.set(entryKey, lane)
     }
-    for (const lane of doneBySignature.values()) recordHistory(lane)
+    for (const lane of doneByEntry.values()) recordHistory(lane, projectId)
     for (const lane of finalizedLanes) {
-      if (lane.status === "fail") recordFailure(lane, messages?.[lane.key])
+      if (lane.status === "fail") recordFailure(lane, projectId, messages?.[lane.key])
     }
   }
 
@@ -382,26 +395,45 @@ export function useOpPipeline() {
 
     localDepth.set(laneId, (localDepth.get(laneId) ?? 0) + 1)
 
+    let skipped = false
     const stepper: LocalPipelineStepper = {
       step(stage, detail) {
+        if (skipped) return
         mutateLane(projectId, laneId, (lane) =>
           applyStage(lane, stage, undefined, detail, Date.now()),
         )
         armStall(projectId, laneId)
       },
       detail(text) {
+        if (skipped) return
         mutateLane(projectId, laneId, (lane) => applyDetail(lane, text))
+      },
+      skip() {
+        skipped = true
       },
     }
 
     try {
       const result = await fn(stepper)
-      settleLocal(projectId, laneId, "done")
+      if (skipped) discardLocal(projectId, laneId)
+      else settleLocal(projectId, laneId, "done")
       return result
     } catch (e) {
       settleLocal(projectId, laneId, "fail", errorText(e))
       throw e
     }
+  }
+
+  /** 未实际执行：不记历史/失败，直接收起 lane（嵌套时只减深度，交给最外层） */
+  function discardLocal(projectId: string, laneId: string) {
+    const depth = (localDepth.get(laneId) ?? 1) - 1
+    if (depth > 0) {
+      localDepth.set(laneId, depth)
+      return
+    }
+    localDepth.delete(laneId)
+    clearLaneTimers(laneId)
+    removeLane(projectId, laneId)
   }
 
   /** 本地 lane 收敛：嵌套未结束时不处理；可见 lane 停留 1.5s，未可见直接移除 */
@@ -421,8 +453,8 @@ export function useOpPipeline() {
     const lane = findLane(projectId, laneId)
     if (!lane) return
     const finalized = finalizeLane(lane, status, Date.now())
-    recordHistory(finalized)
-    if (status === "fail") recordFailure(finalized, failureDetail)
+    recordHistory(finalized, projectId)
+    if (status === "fail") recordFailure(finalized, projectId, failureDetail)
     mutateLane(projectId, laneId, () => finalized)
     if (!finalized.visible) {
       removeLane(projectId, laneId)

@@ -109,4 +109,31 @@ describe("排队期取消（真实 git + 真实写锁）", () => {
     expect(result.success).toBe(true)
     expect(git(remote, ["branch", "--list", "main"])).toContain("main")
   }, 60000)
+
+  it("排队期间本地写失效缓存：不得用锁外快照把待推送误判为已同步", async () => {
+    // 1) 缓存记录 ahead=0（远端与本地同为 c1）
+    await ops.checkPushStatus(projectId)
+
+    // 2) 外部提交（不经过应用的缓存失效通道）→ 缓存已陈旧
+    writeFileSync(join(local, "f2.txt"), "2")
+    git(local, ["add", "-A"])
+    git(local, ["commit", "-qm", "c2"])
+
+    // 3) 占住写锁，模拟「push 排队等本地写」
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    const occupying = lock.runExclusive(local, async () => { await gate })
+    const pushing = ops.pushToAll(projectId)
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    // 4) 排队期间本地写完成并失效缓存；锁释放后 push 必须重新判定而不是沿用旧快照
+    ops.invalidatePushStatusCache(projectId)
+    release()
+    await occupying
+
+    const result = await pushing
+    expect(result.github.skipped).not.toBe(true)
+    expect(result.github.ok).toBe(true)
+    expect(git(remote, ["log", "--format=%s", "-1", "main"])).toBe("c2")
+  }, 60000)
 })

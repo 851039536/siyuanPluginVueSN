@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useOpPipeline } from "./useOpPipeline"
 import { GLOBAL_PIPELINE_SCOPE } from "../types/pipeline"
-import { COMMIT_STAGE_PLAN, FETCH_STAGE_PLAN, PUSH_STAGE_PLAN, STATS_STAGE_PLAN } from "../utils/opPipeline"
+import { ANALYSIS_STAGE_PLAN, COMMIT_STAGE_PLAN, FETCH_STAGE_PLAN, PUSH_STAGE_PLAN, REPORT_STAGE_PLAN, STATS_STAGE_PLAN } from "../utils/opPipeline"
+import { failureKey } from "../utils/pipelineGraph"
 
 describe("useOpPipeline", () => {
   beforeEach(() => vi.useFakeTimers())
@@ -103,24 +104,24 @@ describe("useOpPipeline", () => {
 
   it("远程成功 lane 结束时写入耗时历史，失败不覆盖已有记录", () => {
     const pipeline = useOpPipeline()
-    const signature = PUSH_STAGE_PLAN.join(">")
+    const key = "push"
 
     const doneBatch = pipeline.beginRemote("p1", "push", [{ key: "github", label: "GitHub" }], PUSH_STAGE_PLAN)
     vi.advanceTimersByTime(500)
     pipeline.finishRemote("p1", doneBatch, { github: "done" })
-    const runs = pipeline.stageHistory.value[signature]
+    const runs = pipeline.stageHistory.value[key]
     expect(runs?.[0]?.totalMs).toBe(500)
     expect(runs?.[0]?.stages.prepare).toBe(500)
 
     const failBatch = pipeline.beginRemote("p1", "push", [{ key: "github", label: "GitHub" }], PUSH_STAGE_PLAN)
     vi.advanceTimersByTime(800)
     pipeline.finishRemote("p1", failBatch, { github: "fail" })
-    expect(pipeline.stageHistory.value[signature]).toBe(runs)
+    expect(pipeline.stageHistory.value[key]).toBe(runs)
   })
 
   it("同一操作保留最近多次运行，最新在前", () => {
     const pipeline = useOpPipeline()
-    const signature = PUSH_STAGE_PLAN.join(">")
+    const key = "push"
 
     const firstBatch = pipeline.beginRemote("p1", "push", [{ key: "github", label: "GitHub" }], PUSH_STAGE_PLAN)
     vi.advanceTimersByTime(300)
@@ -130,7 +131,7 @@ describe("useOpPipeline", () => {
     vi.advanceTimersByTime(700)
     pipeline.finishRemote("p1", secondBatch, { github: "done" })
 
-    const runs = pipeline.stageHistory.value[signature] ?? []
+    const runs = pipeline.stageHistory.value[key] ?? []
     expect(runs).toHaveLength(2)
     expect(runs[0]?.totalMs).toBe(700)
     expect(runs[1]?.totalMs).toBe(300)
@@ -146,7 +147,7 @@ describe("useOpPipeline", () => {
     await vi.advanceTimersByTimeAsync(300)
     await run
 
-    const record = pipeline.stageHistory.value[COMMIT_STAGE_PLAN.join(">")]?.[0]
+    const record = pipeline.stageHistory.value.commit?.[0]
     expect(record?.totalMs).toBe(300)
     expect(record?.stages.commitWrite).toBe(300)
     expect(record?.stages.refreshState).toBe(0)
@@ -157,7 +158,7 @@ describe("useOpPipeline", () => {
 
   it("本地失败记录诊断文本，下一次成功清除", async () => {
     const pipeline = useOpPipeline()
-    const signature = COMMIT_STAGE_PLAN.join(">")
+    const key = failureKey("commit", "p1")
 
     // 先接住拒绝，避免推进假定时器时触发 unhandled rejection
     const failed = pipeline.runLocalPipeline("p1", "commit", "提交", COMMIT_STAGE_PLAN, async (step) => {
@@ -167,9 +168,10 @@ describe("useOpPipeline", () => {
     }).catch((e: unknown) => e)
     await vi.advanceTimersByTimeAsync(300)
     expect((await failed) as Error).toHaveProperty("message", "fatal: not a git repository")
-    expect(pipeline.lastFailures.value[signature]).toMatchObject({
+    expect(pipeline.lastFailures.value[key]).toMatchObject({
       stage: "commitWrite",
       detail: "fatal: not a git repository",
+      scope: "p1",
     })
 
     const ok = pipeline.runLocalPipeline("p1", "commit", "提交", COMMIT_STAGE_PLAN, async (step) => {
@@ -178,12 +180,12 @@ describe("useOpPipeline", () => {
     })
     await vi.advanceTimersByTimeAsync(300)
     await ok
-    expect(pipeline.lastFailures.value[signature]).toBeUndefined()
+    expect(pipeline.lastFailures.value[key]).toBeUndefined()
   })
 
   it("远程失败按 stderr 记录；同批成功不覆盖失败", () => {
     const pipeline = useOpPipeline()
-    const signature = PUSH_STAGE_PLAN.join(">")
+    const key = failureKey("push", "p1")
     const batch = pipeline.beginRemote(
       "p1",
       "push",
@@ -198,19 +200,88 @@ describe("useOpPipeline", () => {
       { github: "! [rejected] main -> main (non-fast-forward)" },
     )
 
-    expect(pipeline.lastFailures.value[signature]?.detail).toContain("non-fast-forward")
+    expect(pipeline.lastFailures.value[key]?.detail).toContain("non-fast-forward")
     // 同批多远程只记最慢的一条，时间线不会出现重复行
-    expect(pipeline.stageHistory.value[signature]).toHaveLength(1)
-    expect(pipeline.stageHistory.value[signature]?.[0]?.totalMs).toBe(400)
+    expect(pipeline.stageHistory.value.push).toHaveLength(1)
+    expect(pipeline.stageHistory.value.push?.[0]?.totalMs).toBe(400)
   })
 
   it("取消不进入失败记录", () => {
     const pipeline = useOpPipeline()
-    const signature = PUSH_STAGE_PLAN.join(">")
+    const key = failureKey("push", "p1")
     const batch = pipeline.beginRemote("p1", "push", [{ key: "github", label: "GitHub" }], PUSH_STAGE_PLAN)
     vi.advanceTimersByTime(300)
     pipeline.finishRemote("p1", batch, { github: "canceled" }, { github: "操作已取消" })
-    expect(pipeline.lastFailures.value[signature]).toBeUndefined()
+    expect(pipeline.lastFailures.value[key]).toBeUndefined()
+  })
+
+  it("同入口不同项目的失败互不清除，只有同项目成功才清除自己的记录", async () => {
+    const pipeline = useOpPipeline()
+    const failP1 = pipeline.runLocalPipeline("p1", "commit", "提交", COMMIT_STAGE_PLAN, async (step) => {
+      step.step("commitWrite")
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+      throw new Error("p1 failed")
+    }).catch(() => undefined)
+    await vi.advanceTimersByTimeAsync(300)
+    await failP1
+
+    const okP2 = pipeline.runLocalPipeline("p2", "commit", "提交", COMMIT_STAGE_PLAN, async (step) => {
+      step.step("commitWrite")
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+    })
+    await vi.advanceTimersByTimeAsync(300)
+    await okP2
+
+    // p2 成功不影响 p1 的失败
+    expect(pipeline.lastFailures.value[failureKey("commit", "p1")]?.detail).toBe("p1 failed")
+    expect(pipeline.lastFailures.value[failureKey("commit", "p2")]).toBeUndefined()
+    // 历史按入口归档，p2 的成功仍计入 commit
+    expect(pipeline.stageHistory.value.commit?.[0]?.totalMs).toBe(300)
+
+    const okP1 = pipeline.runLocalPipeline("p1", "commit", "提交", COMMIT_STAGE_PLAN, async (step) => {
+      step.step("commitWrite")
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+    })
+    await vi.advanceTimersByTimeAsync(300)
+    await okP1
+    expect(pipeline.lastFailures.value[failureKey("commit", "p1")]).toBeUndefined()
+  })
+
+  it("共用计划的入口各自归档：analysis 与 lineStats 历史不串台", () => {
+    const pipeline = useOpPipeline()
+    const analysisBatch = pipeline.beginRemote(
+      GLOBAL_PIPELINE_SCOPE, "analysis", [{ key: "local", label: "分析" }], ANALYSIS_STAGE_PLAN,
+    )
+    vi.advanceTimersByTime(300)
+    pipeline.finishRemote(GLOBAL_PIPELINE_SCOPE, analysisBatch, { local: "done" })
+
+    expect(pipeline.stageHistory.value.analysis?.[0]?.totalMs).toBe(300)
+    expect(pipeline.stageHistory.value.lineStats).toBeUndefined()
+
+    const lineBatch = pipeline.beginRemote(
+      GLOBAL_PIPELINE_SCOPE, "lineStats", [{ key: "local", label: "行数" }], ANALYSIS_STAGE_PLAN,
+    )
+    vi.advanceTimersByTime(700)
+    pipeline.finishRemote(GLOBAL_PIPELINE_SCOPE, lineBatch, { local: "done" })
+
+    expect(pipeline.stageHistory.value.analysis).toHaveLength(1)
+    expect(pipeline.stageHistory.value.lineStats?.[0]?.totalMs).toBe(700)
+  })
+
+  it("stepper.skip 收起 lane 且不写历史/失败", async () => {
+    const pipeline = useOpPipeline()
+    const run = pipeline.runGlobalPipeline("report", "报告", REPORT_STAGE_PLAN, async (stepper) => {
+      stepper.step("prepare")
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+      // 被在途请求挡下：本次没有实际产出
+      stepper.skip()
+    })
+    await vi.advanceTimersByTimeAsync(300)
+    await run
+
+    expect(pipeline.opPipelines.value[GLOBAL_PIPELINE_SCOPE]).toBeUndefined()
+    expect(pipeline.stageHistory.value.report).toBeUndefined()
+    expect(pipeline.lastFailures.value).toEqual({})
   })
 
   it("不同本地操作不合并到同一条 lane", async () => {

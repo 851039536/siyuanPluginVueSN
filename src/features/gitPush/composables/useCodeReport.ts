@@ -32,6 +32,15 @@ import {
   relativeTime,
   resolveValidPath,
 } from "../utils"
+import { getErrorMessage } from "@/utils/stringUtils"
+
+/**
+ * 一次生成调用的真实结果：
+ * - ran：本轮完成了扫描与聚合（或无可展示内容但已尝试）；
+ * - queued：已有在途请求 / 期间切了项目或范围，真正产出会由补跑完成；
+ * - skipped：没有可生成的项目。
+ */
+export type ReportRunOutcome = "ran" | "queued" | "skipped"
 
 /** 从提交块推导"全部历史"范围标签所需的最早提交时间（无有效时间返回空串） */
 function earliestCommitIso(commits: NumstatCommit[]): string {
@@ -176,9 +185,9 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
     silent?: boolean
     /** 传入时视为流水线调用：在真实聚合边界回报，并把 git 失败抛给调用方以便 lane 标 fail */
     onStage?: (stage: "reportAggregate") => void
-  }) {
+  }): Promise<ReportRunOutcome> {
     const project = currentProject.value
-    if (!project) return
+    if (!project) return "skipped"
     const silent = opts?.silent ?? false
     const onStage = opts?.onStage
     // 本轮请求的键在 await 之前捕获：期间用户可能切换项目/范围，落缓存必须用「算这份数据时」的键
@@ -191,7 +200,7 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
       // 否则用户触发的 setRange 会被静默吞掉，既不显示生成中态也不暴露错误。
       pendingRerun = true
       pendingRerunSilent = pendingRerunSilent && silent
-      return
+      return "queued"
     }
     if (silent) refreshing.value = true
     else running.value = true
@@ -199,16 +208,18 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
       const sinceDays = REPORT_RANGE_DAYS[reqRange]
       let commits: NumstatCommit[] = []
       let gitFailed = false
+      let gitError: unknown
       try {
         const result = await manager.getIndexedCommitLog(project, { sinceDays })
         commits = result.commits
-      } catch {
+      } catch (e) {
         gitFailed = true
+        gitError = e
       }
       // 请求期间用户已切换项目/范围 → 这份结果已过期，丢弃；待重跑逻辑会补算新键
       if (project.id !== reqProjectId || range.value !== reqRange) {
         pendingRerun = true
-        return
+        return "queued"
       }
       if (gitFailed) {
         // 静默后台刷新失败时保留屏上已有内容：用户本来看着一份有效报告，
@@ -217,8 +228,9 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
           reportData.value = buildEmptyReport(rangeLabelFor([]))
           generated.value = false
         }
-        // 流水线调用必须感知失败：静默刷新保留旧内容是对的，但不能把 lane 画成 done
-        if (onStage) throw new Error(i18n.reportFailed || "report failed")
+        // 流水线调用必须感知失败：静默刷新保留旧内容是对的，但不能把 lane 画成 done。
+        // 保留真实错误文本，关系图的失败诊断才能命中具体原因。
+        if (onStage) throw new Error(getErrorMessage(gitError) || i18n.reportFailed || "report failed")
         // 校验失败不记账：verifyKey 若在此加入，ensureReport 的早退分支会认为
         // 「本项目 + 范围 + 版本已校验」，此后永不重试，用户只能一直看着陈旧数据
       } else {
@@ -230,6 +242,7 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
         verifiedKeys.add(verifyKey())
       }
       await savePrefs()
+      return "ran"
     } finally {
       running.value = false
       refreshing.value = false
@@ -245,20 +258,26 @@ export function useCodeReport(manager: GitPushManager, projects: Ref<GitProject[
   }
 
   /** 切换时间范围：立即重算（索引命中时零 git），再跑一次 */
-  async function setRange(r: ReportRange, onStage?: (stage: "reportAggregate") => void) {
-    if (range.value === r) return
+  async function setRange(
+    r: ReportRange,
+    onStage?: (stage: "reportAggregate") => void,
+  ): Promise<ReportRunOutcome> {
+    if (range.value === r) return "skipped"
     range.value = r
-    await runReport({ silent: generated.value, onStage })
+    return runReport({ silent: generated.value, onStage })
   }
 
   /** 切换项目：清空内容避免串台，再走统一生成 */
-  async function setProject(id: string, onStage?: (stage: "reportAggregate") => void) {
-    if (projectId.value === id) return
+  async function setProject(
+    id: string,
+    onStage?: (stage: "reportAggregate") => void,
+  ): Promise<ReportRunOutcome> {
+    if (projectId.value === id) return "skipped"
     projectId.value = id
     generated.value = false
     reportData.value = buildEmptyReport("")
     await savePrefs()
-    await runReport({ onStage })
+    return runReport({ onStage })
   }
 
   /**

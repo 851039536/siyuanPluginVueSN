@@ -114,6 +114,33 @@ export function entryForLane(
   return candidates.find((entry) => entry.op === lane.op) ?? candidates[0]
 }
 
+/**
+ * lane 的归档键：优先用唯一入口 id。
+ * analysis / lineStats 共用同一份计划，只按计划签名归档会让两者的历史与失败互相串台。
+ */
+export function historyKeyForLane(lane: OpPipelineLane): string {
+  return entryForLane(lane)?.id ?? `op:${lane.op}|${laneSignature(lane)}`
+}
+
+/** 失败记录键：入口 + 项目作用域，项目 A 成功不会清除项目 B 的失败 */
+export function failureKey(entryKey: string, scope: string): string {
+  return `${entryKey}::${scope}`
+}
+
+/** 某入口最近一次失败（跨项目取最新；每个项目自己的成功只清除自己的记录） */
+export function latestEntryFailure(
+  entryId: string,
+  failures: OpFailureMap,
+): OpFailureInfo | undefined {
+  let latest: OpFailureInfo | undefined
+  const prefix = `${entryId}::`
+  for (const [key, failure] of Object.entries(failures)) {
+    if (!key.startsWith(prefix)) continue
+    if (!latest || failure.at > latest.at) latest = failure
+  }
+  return latest
+}
+
 /** 关系图节点 */
 export interface GraphNode {
   key: PipelineStageKey
@@ -484,52 +511,57 @@ export function nodeLastDuration(
     node,
     focused,
     entries,
-    (entry) => history[entry.signature]?.[0]?.stages[node.key],
+    (entry) => history[entry.id]?.[0]?.stages[node.key],
   )
 }
 
 /**
- * 节点「最近一次」失败记录：归属规则与耗时一致，且只落在真正失败的那个阶段，
- * 避免整条路径上的每个节点都被染红。失败时未记录阶段则不返回（图例仍会提示）。
+ * 节点「最近一次」失败记录：只落在真正失败的那个阶段。
+ * 每个入口取自己最近的失败（跨项目最新的一条），避免项目 A 的成功把项目 B 的失败清掉。
  */
 export function nodeLastFailure(
   node: GraphNode,
   focused: readonly string[],
   failures: OpFailureMap,
-  entries: readonly GraphEntryDef[] = PIPELINE_GRAPH_ENTRIES,
 ): OpFailureInfo | undefined {
-  const failure = resolveNodeValue(node, focused, entries, (entry) => failures[entry.signature])
-  return failure?.stage === node.key ? failure : undefined
+  const owners = focused.length > 0
+    ? node.entries.filter((id) => focused.includes(id))
+    : node.entries
+  if (owners.length === 0) return undefined
+  // 共享节点在未聚焦时不猜归属（与耗时徽标同一规则）
+  if (focused.length === 0 && owners.length > 1) return undefined
+
+  let latest: OpFailureInfo | undefined
+  for (const id of owners) {
+    const failure = latestEntryFailure(id, failures)
+    if (failure?.stage !== node.key) continue
+    if (!latest || failure.at > latest.at) latest = failure
+  }
+  return latest
 }
 
-/** 入口最近一次失败记录；成功一次后由状态层清除 */
+/** 入口最近一次失败记录；成功一次后由状态层清除对应项目的记录 */
 export function entryLastFailure(
   entryId: string,
   failures: OpFailureMap,
-  entries: readonly GraphEntryDef[] = PIPELINE_GRAPH_ENTRIES,
 ): OpFailureInfo | undefined {
-  const entry = entries.find((item) => item.id === entryId)
-  return entry ? failures[entry.signature] : undefined
+  return latestEntryFailure(entryId, failures)
 }
 
 /** 入口最近一次整条流水线耗时（毫秒）；无记录返回 undefined */
 export function entryLastTotal(
   entryId: string,
   history: PipelineStageHistory,
-  entries: readonly GraphEntryDef[] = PIPELINE_GRAPH_ENTRIES,
 ): number | undefined {
-  const entry = entries.find((item) => item.id === entryId)
-  return entry ? history[entry.signature]?.[0]?.totalMs : undefined
+  return history[entryId]?.[0]?.totalMs
 }
 
 /** 入口最近若干次成功运行（最新在前）；供时间线对比 */
 export function entryRecentRuns(
   entryId: string,
   history: PipelineStageHistory,
-  entries: readonly GraphEntryDef[] = PIPELINE_GRAPH_ENTRIES,
 ): readonly PipelineRunTimings[] {
-  const entry = entries.find((item) => item.id === entryId)
-  return entry ? history[entry.signature] ?? [] : []
+  return history[entryId] ?? []
 }
 
 /** 耗时文案：120ms / 1.2s / 10s / 1m05s */

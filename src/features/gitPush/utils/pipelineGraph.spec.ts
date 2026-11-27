@@ -20,8 +20,10 @@ import {
   entryLastFailure,
   entryLastTotal,
   entryRecentRuns,
+  failureKey,
   formatDuration,
   laneSignature,
+  latestEntryFailure,
   nodeLastDuration,
   nodeLastFailure,
   PIPELINE_GRAPH_ENTRIES,
@@ -181,7 +183,7 @@ describe("pipelineGraph", () => {
   it("历史耗时：唯一归属节点直接显示，共享节点需聚焦且记录一致", () => {
     const push = entryById("push")
     const history: PipelineStageHistory = {
-      [push.signature]: [{
+      [push.id]: [{
         at: 5000,
         totalMs: 2400,
         stages: { prepare: 300, writing: 800, updating: 1200 },
@@ -197,21 +199,29 @@ describe("pipelineGraph", () => {
     expect(nodeLastDuration(updating, ["push"], history)).toBe(1200)
     expect(nodeLastDuration(updating, ["pull"], history)).toBeUndefined()
 
-    // analysis / lineStats 共用同一计划签名，两个入口聚焦时取值天然一致
-    const analysisSignature = entryById("analysis").signature
-    expect(entryById("lineStats").signature).toBe(analysisSignature)
-    const shared: PipelineStageHistory = {
-      [analysisSignature]: [{ at: 1, totalMs: 900, stages: { analysisScan: 600 } }],
-    }
+    // analysis / lineStats 共用同一份计划，但各自归档：记录不同则无法唯一归属
     const scan = PIPELINE_GRAPH_LAYOUT.nodeByKey.get("analysisScan")!
-    expect(nodeLastDuration(scan, ["analysis", "lineStats"], shared)).toBe(600)
+    const separated: PipelineStageHistory = {
+      analysis: [{ at: 1, totalMs: 900, stages: { analysisScan: 600 } }],
+      lineStats: [{ at: 2, totalMs: 1100, stages: { analysisScan: 700 } }],
+    }
+    expect(nodeLastDuration(scan, ["analysis", "lineStats"], separated)).toBeUndefined()
+    expect(nodeLastDuration(scan, ["analysis"], separated)).toBe(600)
+    expect(nodeLastDuration(scan, ["lineStats"], separated)).toBe(700)
+
+    // 两条记录一致时才允许在共享节点上显示
+    const aligned: PipelineStageHistory = {
+      analysis: [{ at: 1, totalMs: 900, stages: { analysisScan: 600 } }],
+      lineStats: [{ at: 2, totalMs: 900, stages: { analysisScan: 600 } }],
+    }
+    expect(nodeLastDuration(scan, ["analysis", "lineStats"], aligned)).toBe(600)
 
     expect(entryLastTotal("push", history)).toBe(2400)
     expect(entryLastTotal("pull", history)).toBeUndefined()
 
     // 多次运行时，徽标只取最新一次；时间线取完整列表
     const multi: PipelineStageHistory = {
-      [push.signature]: [
+      [push.id]: [
         { at: 9000, totalMs: 1800, stages: { writing: 500 } },
         { at: 5000, totalMs: 2400, stages: { writing: 800 } },
       ],
@@ -225,10 +235,11 @@ describe("pipelineGraph", () => {
   it("失败记录只落在真正失败的阶段，共享节点聚焦后才可判定", () => {
     const push = entryById("push")
     const failures: OpFailureMap = {
-      [push.signature]: {
+      [failureKey(push.id, "p1")]: {
         at: 6000,
         stage: "remote",
         detail: "! [rejected] main -> main (non-fast-forward)",
+        scope: "p1",
       },
     }
 
@@ -243,11 +254,28 @@ describe("pipelineGraph", () => {
     const updating = PIPELINE_GRAPH_LAYOUT.nodeByKey.get("updating")!
     expect(nodeLastFailure(updating, [], failures)).toBeUndefined()
     const atUpdating: OpFailureMap = {
-      [push.signature]: { at: 7000, stage: "updating", detail: "remote: error: hook declined" },
+      [failureKey(push.id, "p1")]: {
+        at: 7000,
+        stage: "updating",
+        detail: "remote: error: hook declined",
+        scope: "p1",
+      },
     }
     expect(nodeLastFailure(updating, ["push"], atUpdating)?.at).toBe(7000)
 
     expect(entryLastFailure("push", failures)?.detail).toContain("non-fast-forward")
+    expect(entryLastFailure("pull", failures)).toBeUndefined()
+  })
+
+  it("同入口不同项目的失败互不覆盖，入口取最新一条", () => {
+    const push = entryById("push")
+    const failures: OpFailureMap = {
+      [failureKey(push.id, "p1")]: { at: 6000, stage: "writing", detail: "p1 failed", scope: "p1" },
+      [failureKey(push.id, "p2")]: { at: 7000, stage: "remote", detail: "p2 failed", scope: "p2" },
+    }
+
+    expect(latestEntryFailure(push.id, failures)?.detail).toBe("p2 failed")
+    expect(entryLastFailure("push", failures)?.scope).toBe("p2")
     expect(entryLastFailure("pull", failures)).toBeUndefined()
   })
 

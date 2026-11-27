@@ -21,6 +21,7 @@ export const PIPELINE_SCOPE_KEY: InjectionKey<PipelineScope> = Symbol("gitPushPi
 const NOOP_STEPPER: LocalPipelineStepper = {
   step: () => undefined,
   detail: () => undefined,
+  skip: () => undefined,
 }
 
 /** 注入流水线作用域；未提供时退化为无动画直跑，调用方无需分支判断 */

@@ -341,40 +341,6 @@ export class RemoteOps {
         ? { ...r, stderr: pathWarning + (r.stderr ? `\n${r.stderr}` : "") }
         : r
 
-    // 智能跳过：推送前检查缓存，跳过 ahead===0 的远程。
-    // 缓存带 TTL：外部终端提交不会走本应用的失效通道，过期缓存一律不复用（见字段注释）。
-    const cached = action === "push" ? this.pushStatusCache[id] : undefined
-    const cacheFresh = !!cached && Date.now() - cached.at <= RemoteOps.PUSH_STATUS_CACHE_TTL_MS
-    function shouldSkip(key: PlatformKey): boolean {
-      if (action !== "push") return false
-      if (!cacheFresh || !cached) return false
-      const rs = cached.status.remotes[key]
-      if (!rs) return false
-      // 状态检查失败（error 字段存在）时不能判定为已同步，否则会静默跳过应推送的远程
-      return !rs.error && !mayAttemptPush(rs)
-    }
-
-    // 智能跳过 / 未配置远程：不播动画，直接在等锁前通知 UI 标记 skipped
-    // （若放到锁内，排队期间被跳过的平台会先闪一段「准备」再消失）
-    const notifySkip = (key: PlatformKey) => opts?.onProgress?.({ target: key, kind: "skip" })
-    const skippedResults: Record<string, RemoteOpResult> = {}
-    const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
-    for (const { key, name } of getProjectRemoteNames(project)) {
-      if (shouldSkip(key) && !forceWithLease) {
-        skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
-        notifySkip(key)
-      } else {
-        entries.push({ key, remoteName: name })
-      }
-    }
-    // 处理未配置的远程：标记为 skipped
-    for (const pm of PLATFORM_META) {
-      if (skippedResults[pm.key] === undefined && !entries.some((e) => e.key === pm.key)) {
-        skippedResults[pm.key] = RemoteOps.skippedResult
-        notifySkip(pm.key)
-      }
-    }
-
     // 写锁：push/pull 主体与本地写操作（commit/stash/discard 等）按项目路径互斥。
     // ⚠️ AbortController 必须在**锁外**注册：ProjectWriteLock 是纯 Promise 链、没有中断能力，
     //    若在锁内注册，排队等锁期间 cancelOp 找不到控制器 —— 取消按钮点了没反应，锁一释放推送照跑。
@@ -382,6 +348,38 @@ export class RemoteOps {
       this.writeLock.runExclusive(cwd, async () => {
         // 排队期间已被取消：不执行任何 git 命令，按取消结果返回
         if (signal.aborted) return this.canceledAllResult(project)
+        // 智能跳过必须在锁内判定：等锁期间排队中的本地写（commit 等）会失效推送状态缓存，
+        // 用锁外快照判定会把「提交后待推送」误判为已同步而静默跳过。
+        // 缓存带 TTL：外部终端提交不会走本应用的失效通道，过期缓存一律不复用（见字段注释）。
+        const cached = action === "push" ? this.pushStatusCache[id] : undefined
+        const cacheFresh = !!cached && Date.now() - cached.at <= RemoteOps.PUSH_STATUS_CACHE_TTL_MS
+        const shouldSkip = (key: PlatformKey): boolean => {
+          if (action !== "push" || !cacheFresh || !cached) return false
+          const rs = cached.status.remotes[key]
+          if (!rs) return false
+          // 状态检查失败（error 字段存在）时不能判定为已同步，否则会静默跳过应推送的远程
+          return !rs.error && !mayAttemptPush(rs)
+        }
+        // 智能跳过 / 未配置远程：不产生动画，直接通知 UI 移除对应 lane
+        const notifySkip = (key: PlatformKey) => opts?.onProgress?.({ target: key, kind: "skip" })
+        const skippedResults: Record<string, RemoteOpResult> = {}
+        const entries: { key: PlatformKey, remoteName: string | undefined }[] = []
+        for (const { key, name } of getProjectRemoteNames(project)) {
+          if (shouldSkip(key) && !forceWithLease) {
+            skippedResults[key] = { ok: true, stdout: "已同步（跳过）", stderr: "", skipped: true }
+            notifySkip(key)
+          } else {
+            entries.push({ key, remoteName: name })
+          }
+        }
+        // 处理未配置的远程：标记为 skipped
+        for (const pm of PLATFORM_META) {
+          if (skippedResults[pm.key] === undefined && !entries.some((e) => e.key === pm.key)) {
+            skippedResults[pm.key] = RemoteOps.skippedResult
+            notifySkip(pm.key)
+          }
+        }
+
         // pull 时预解析当前分支，供 tryRemoteOp 显式指定拉取分支；强制推送时同样需要分支名
         const pullBranch = action === "pull" ? await this.executor.getCurrentBranch(cwd) : undefined
         const forceBranch = action === "push" && forceWithLease ? await this.executor.getCurrentBranch(cwd) : undefined

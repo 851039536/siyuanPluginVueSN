@@ -10,6 +10,7 @@ export { registerDataSnapshot } from "./dataSnapshot"
 export { registerDiskBrowser } from "./diskBrowser"
 export { registerDocAnalysis } from "./docAnalysis"
 export { registerDocNavigation } from "./docNavigation"
+export { registerElevationAssistant } from "./elevationAssistant"
 export { registerEncryption } from "./encryption"
 export {
   everythingSearchVisible,
@@ -122,6 +123,7 @@ type _Registered =
   | "quickNote"
   | "ideaGenerator"
   | "storageManager"
+  | "elevationAssistant"
 
 // --- 编译时断言辅助 ---
 // 利用泛型接口约束 T extends true 产生 TypeScript 编译错误，无运行时开销

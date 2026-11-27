@@ -25,6 +25,7 @@ interface ElectronRemote {
     showOpenDialog: (options: {
       properties: string[]
       title: string
+      filters?: SaveDialogFilter[]
     }) => Promise<OpenDialogResult>
     showSaveDialog?: (options: {
       title: string
@@ -121,7 +122,10 @@ export async function pickDirectory(title: string): Promise<string | null> {
  * 使用 Electron 原生对话框多选文件，返回绝对路径列表（取消或不可用返回 null）
  * 降级方案依赖 File.path（Electron 私有扩展，Electron 32+ 已移除），无路径时视为失败
  */
-export async function pickFiles(title: string): Promise<string[] | null> {
+export async function pickFiles(
+  title: string,
+  filters?: SaveDialogFilter[],
+): Promise<string[] | null> {
   // 优先 Electron 原生文件选择对话框
   try {
     const remote = getRemote()
@@ -129,6 +133,7 @@ export async function pickFiles(title: string): Promise<string[] | null> {
       const result = await remote.dialog.showOpenDialog({
         properties: ["openFile", "multiSelections"],
         title,
+        ...(filters && filters.length > 0 ? { filters } : {}),
       })
       if (!result.canceled && result.filePaths.length > 0) {
         return result.filePaths
@@ -144,6 +149,11 @@ export async function pickFiles(title: string): Promise<string[] | null> {
       const input = document.createElement("input")
       input.type = "file"
       input.multiple = true
+      if (filters && filters.length > 0) {
+        input.accept = filters
+          .flatMap((filter) => filter.extensions.map((ext) => `.${ext}`))
+          .join(",")
+      }
 
       let settled = false
       const done = (val: string[] | null) => {

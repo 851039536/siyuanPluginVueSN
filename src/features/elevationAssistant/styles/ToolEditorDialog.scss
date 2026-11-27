@@ -1,0 +1,74 @@
+@use "@/variables.scss" as *;
+
+.elevation-editor {
+  display: flex;
+  flex-direction: column;
+  gap: $s-3;
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+
+    .si-input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__diagnosis {
+    display: flex;
+    align-items: flex-start;
+    gap: $s-2;
+    padding: $s-2;
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-sm;
+    background: var(--b3-theme-surface-lighter, rgba(0, 0, 0, 0.03));
+  }
+
+  &__diagnosis-text {
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+    line-height: 1.5;
+  }
+
+  &__admin {
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+    padding: $s-2;
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-sm;
+  }
+
+  &__hint {
+    margin: 0;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+    line-height: 1.5;
+  }
+
+  &__warning {
+    margin: 0;
+    color: $c-warning;
+    font-size: $t-2xs;
+    line-height: 1.5;
+  }
+
+  &__error {
+    margin: 0;
+    padding: $s-2;
+    border: 1px solid rgba($c-danger, 0.3);
+    border-radius: $r-sm;
+    background: rgba($c-danger, 0.08);
+    color: $c-danger;
+    font-size: $t-2xs;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $s-2;
+  }
+}

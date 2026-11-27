@@ -294,6 +294,12 @@ export const JSON_SLOTS = [
     notes: "会话级记录，重启后可恢复查看",
   }),
 
+  // ==================== elevationAssistant ====================
+  jsonSlot("elevationAssistant.tools", ["elevationAssistant"], "elevation-assistant-tools", "提权工具清单", {
+    growth: true,
+    notes: "最多 50 条；仅保存工具元数据与快捷方式记录，诊断结果不落盘",
+  }),
+
   // ==================== resourceManager ====================
   jsonSlot("resourceManager.customCategories", ["resourceManager"], "resourceManager-customCategories", "自定义分类", {
     legacyName: true,

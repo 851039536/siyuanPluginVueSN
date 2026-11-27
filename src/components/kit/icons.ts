@@ -210,6 +210,12 @@ export const FEATURE_ICONS = {
     color: "#f59e0b",
   },
 
+  // 提权助手
+  elevationAssistant: {
+    icon: "mdi:shield-check",
+    color: "#dc2626",
+  },
+
   // 热力图标记
   heatmapMarker: {
     icon: "mdi:map-marker-radius",
@@ -657,6 +663,18 @@ export const COMMON_ICONS = {
   },
   accountGroup: {
     icon: "mdi:account-group-outline",
+  },
+  account: {
+    icon: "mdi:account",
+  },
+  shield: {
+    icon: "mdi:shield-outline",
+  },
+  shieldCheck: {
+    icon: "mdi:shield-check",
+  },
+  shieldAlert: {
+    icon: "mdi:shield-alert-outline",
   },
 
   // 灵感生成器 — 预设分类图标

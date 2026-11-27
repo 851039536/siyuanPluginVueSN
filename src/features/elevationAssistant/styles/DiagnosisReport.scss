@@ -1,0 +1,63 @@
+@use "@/variables.scss" as *;
+
+.elevation-report {
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    width: 100%;
+  }
+
+  &__level {
+    margin-left: auto;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $s-2 $s-3;
+    padding-top: $s-3;
+  }
+
+  &__item {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__label {
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+  }
+
+  &__value {
+    overflow: hidden;
+    color: var(--b3-theme-on-background, $c-fg);
+    font-size: $t-2xs;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__reason,
+  &__warning,
+  &__error {
+    margin: $s-2 0 0;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+    line-height: 1.5;
+  }
+
+  &__warning {
+    color: $c-warning;
+  }
+
+  &__error {
+    color: $c-danger;
+    font-family: $ff-mono;
+    word-break: break-all;
+  }
+}

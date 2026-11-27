@@ -1,0 +1,103 @@
+@use "@/variables.scss" as *;
+
+.elevation-diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+
+  &__target {
+    display: flex;
+    flex-direction: column;
+    gap: $s-2;
+  }
+
+  &__free {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+
+    .si-input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__path {
+    overflow: hidden;
+    padding: $s-1 $s-2;
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-sm;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__empty {
+    padding: $s-6 $s-4;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+    text-align: center;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $s-2;
+  }
+
+  &__shortcuts {
+    flex-shrink: 0;
+  }
+
+  &__shortcuts-title {
+    color: var(--b3-theme-on-background, $c-fg);
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
+  }
+
+  &__shortcut-list {
+    display: flex;
+    flex-direction: column;
+    gap: $s-2;
+  }
+
+  &__shortcut {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    padding: $s-2;
+    border: 1px solid var(--b3-border-color, $c-border);
+    border-radius: $r-sm;
+  }
+
+  &__shortcut-main {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: $s-1;
+  }
+
+  &__shortcut-path {
+    overflow: hidden;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__shortcut-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $s-1;
+  }
+
+  &__shortcut-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: $s-1;
+  }
+}

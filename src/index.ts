@@ -28,6 +28,7 @@ import {
   registerDiskBrowser,
   registerDocAnalysis,
   registerDocNavigation,
+  registerElevationAssistant,
   registerEncryption,
   registerEverythingSearch,
   registerFlashcardReading,
@@ -136,6 +137,7 @@ export default class PluginSample extends Plugin {
     "__statusBar", // 状态栏（Vue app + 状态栏 DOM）
     "__gitPush", // Git 推送（Dock/Tab Vue app + 探测链 + fs.watch + 行数统计内存缓存）
     "__storageManager", // 数据管理（Dock Vue app + 用量缓存）
+    "__elevationAssistant", // 提权助手（Dock Vue app + PowerShell 子进程）
   ] as const
 
   onload() {
@@ -298,6 +300,7 @@ export default class PluginSample extends Plugin {
     if (s.enableMinimalBrowser) registerMinimalBrowser(this)
     if (s.enableComponentPreview) registerComponentPreview(this)
     if (canRegister("scriptLauncher", s.enableScriptLauncher)) registerScriptLauncher(this)
+    if (canRegister("elevationAssistant", s.enableElevationAssistant)) registerElevationAssistant(this)
     if (s.enableDataSnapshot) registerDataSnapshot(this)
     if (canRegister("gitPush", s.enableGitPush)) registerGitPush(this)
     if (s.enableSkillLearning) registerSkillLearning(this)

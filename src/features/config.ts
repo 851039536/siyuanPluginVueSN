@@ -366,6 +366,13 @@ export const FEATURE_CONFIG = [
     titleI18nKey: "storageManager.title",
     descI18nKey: "storageManager.description",
   },
+  {
+    id: "elevationAssistant",
+    defaultTitle: "提权助手",
+    defaultDesc: "为常用工具创建管理员快捷方式，并诊断目标程序的权限需求",
+    titleI18nKey: "elevationAssistant.title",
+    descI18nKey: "elevationAssistant.description",
+  },
 ] as const
 
 /**
@@ -386,6 +393,7 @@ export const DESKTOP_ONLY_FEATURE_IDS: ReadonlySet<FeatureId> = new Set<FeatureI
   "resourceManager",
   "apiDebugger",
   "scriptLauncher",
+  "elevationAssistant",
   "gitPush",
   // 数据管理的清单/备份/还原/导入导出全部经 Node fs 读写数据目录，
   // 无 Node 能力时所有操作都只能失败，故整体不注册（而非半残展示）

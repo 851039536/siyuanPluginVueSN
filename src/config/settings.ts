@@ -53,6 +53,7 @@ export interface PluginSettings {
   enableWebsiteNavigation: boolean // 是否启用网站导航功能
   enableMinimalBrowser: boolean // 是否启用极简浏览器功能
   enableScriptLauncher: boolean // 是否启用脚本启动器功能
+  enableElevationAssistant: boolean // 是否启用提权助手功能
   enableDataSnapshot: boolean // 是否启用数据快照功能
   enableGitPush: boolean // 是否启用Git推送功能
   enableSkillLearning: boolean // 是否启用技能学习功能
@@ -122,6 +123,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   enableWebsiteNavigation: true,
   enableMinimalBrowser: true,
   enableScriptLauncher: true,
+  enableElevationAssistant: true,
   enableDataSnapshot: true,
   enableGitPush: true,
   enableSkillLearning: true,

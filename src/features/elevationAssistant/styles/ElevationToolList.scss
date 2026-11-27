@@ -1,0 +1,110 @@
+@use "@/variables.scss" as *;
+
+.elevation-tools {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+  }
+
+  &__count {
+    margin-left: auto;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $s-2;
+  }
+
+  &__card {
+    &:hover {
+      border-color: var(--b3-theme-primary, $c-primary);
+    }
+  }
+
+  &__card-head {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    width: 100%;
+  }
+
+  &__card-icon {
+    flex-shrink: 0;
+    color: var(--b3-theme-primary, $c-primary);
+  }
+
+  &__card-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--b3-theme-on-background, $c-fg);
+    font-size: $t-sm;
+    font-weight: $fw-semibold;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: $s-1;
+  }
+
+  &__path {
+    margin: 0;
+    overflow: hidden;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    opacity: 0.65;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $s-2;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+  }
+
+  &__warning {
+    margin: 0;
+    color: $c-warning;
+    font-size: $t-2xs;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $s-1;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: $s-3;
+    padding: $s-8 $s-4;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+    text-align: center;
+
+    p {
+      margin: 0;
+    }
+  }
+}

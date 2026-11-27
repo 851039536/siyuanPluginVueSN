@@ -1,0 +1,63 @@
+@use "@/variables.scss" as *;
+
+.elevation-assistant {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: $s-2 $s-2 $s-2 0;
+  font-family: $ff-zh;
+  background: var(--b3-theme-background, $c-bg);
+
+  &__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+
+    .si-tabs {
+      flex: 1;
+      min-height: 0;
+    }
+
+    // TabPanels 仅做结构承载（宽度 100%），需补上纵向伸缩才能让面板撑满剩余高度
+    .si-tabpanels {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .si-tabpanel {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-top: $s-2;
+    }
+  }
+
+  &__unsupported {
+    flex-shrink: 0;
+    margin: 0;
+    padding: $s-2;
+    border: 1px solid rgba($c-warning, 0.35);
+    border-radius: $r-sm;
+    background: rgba($c-warning, 0.08);
+    color: $c-warning;
+    font-size: $t-2xs;
+    line-height: 1.5;
+  }
+
+  &__save-error {
+    margin: 0;
+    padding: $s-2;
+    border: 1px solid rgba($c-danger, 0.3);
+    border-radius: $r-sm;
+    background: rgba($c-danger, 0.08);
+    color: $c-danger;
+    font-size: $t-2xs;
+  }
+}

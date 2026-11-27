@@ -95,7 +95,7 @@
 
   &:hover,
   &:focus-visible {
-    background: var(--b3-theme-hover);
+    background: var(--b3-list-hover);
     color: var(--b3-theme-on-surface);
     outline: none;
   }
@@ -129,7 +129,7 @@
 }
 
 .gpg-minimap-node {
-  fill: var(--b3-theme-outline);
+  fill: var(--b3-border-color);
 
   &--running { fill: var(--b3-theme-primary); }
   &--done { fill: var(--b3-theme-success); }
@@ -146,7 +146,7 @@
 
 .gpg-edge {
   fill: none;
-  stroke: var(--b3-theme-outline);
+  stroke: var(--b3-border-color);
   stroke-width: 1.2;
   transition: opacity 0.15s ease, stroke 0.15s ease;
 
@@ -233,7 +233,7 @@
 // 状态图标：形状 + 颜色双编码，色弱与暗色主题下仍可辨
 .gpg-state {
   fill: none;
-  stroke: var(--b3-theme-outline);
+  stroke: var(--b3-border-color);
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -267,7 +267,7 @@
 
 // 运行中真实进度条（仅在上报 percent 时出现）
 .gpg-progress-track {
-  fill: var(--b3-theme-outline);
+  fill: var(--b3-border-color);
   opacity: 0.45;
 }
 
@@ -555,7 +555,7 @@
   width: 6px;
   height: 6px;
   border-radius: $r-full;
-  background: var(--b3-theme-outline);
+  background: var(--b3-border-color);
 }
 
 .gpg-chip--running .gpg-chip-dot {
@@ -618,7 +618,7 @@
   width: 6px;
   height: 6px;
   border-radius: $r-full;
-  background: var(--b3-theme-outline);
+  background: var(--b3-border-color);
 
   &--running { background: var(--b3-theme-primary); }
   &--done { background: var(--b3-theme-success); }

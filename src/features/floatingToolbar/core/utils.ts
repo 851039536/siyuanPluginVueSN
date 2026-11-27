@@ -97,15 +97,7 @@ export function getSelectedBlockId(): string | null {
     return selectedBlock.getAttribute("data-node-id")
   }
 
-  // 策略2: 获取聚焦块
-  const focusedBlock = document.querySelector(
-    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
-  )
-  if (focusedBlock) {
-    return focusedBlock.getAttribute("data-node-id")
-  }
-
-  // 策略3: 通过选择范围精确查找
+  // 策略2: 通过选择范围精确查找
   const selection = window.getSelection()
   if (!selection?.rangeCount) {
     return null

@@ -30,7 +30,7 @@
     margin-top: $s-3;
     padding: $s-3;
     background: var(--b3-theme-surface, $c-surface);
-    border: 1px solid var(--b3-theme-outline, $c-border);
+    border: 1px solid var(--b3-border-color, $c-border);
     border-radius: $r-base;
   }
 

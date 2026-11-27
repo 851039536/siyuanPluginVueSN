@@ -88,7 +88,7 @@
 }
 
 .gpt-run-index {
-  color: var(--b3-theme-outline);
+  color: var(--b3-theme-on-surface-variant, $c-muted);
 }
 
 .gpt-run-total {
@@ -119,7 +119,7 @@
 
   &:hover,
   &:focus-visible {
-    background: var(--b3-theme-hover);
+    background: var(--b3-list-hover);
     outline: none;
   }
 }
@@ -131,7 +131,7 @@
   height: 18px;
   overflow: hidden;
   border-radius: $r-sm;
-  background: var(--b3-theme-hover);
+  background: var(--b3-list-hover);
 }
 
 .gpt-seg {
@@ -227,7 +227,7 @@
 
   &:hover,
   &:focus-visible {
-    background: var(--b3-theme-hover);
+    background: var(--b3-list-hover);
     outline: none;
   }
 

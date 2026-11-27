@@ -106,7 +106,7 @@
 
 .gp-fix-warning--error {
   color: var(--b3-theme-error, $c-danger);
-  background: var(--b3-theme-error-background, transparent);
+  background: var(--b3-card-error-background, transparent);
   border-color: var(--b3-theme-error, $c-danger);
 }
 

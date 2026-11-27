@@ -13,7 +13,7 @@
   flex: none;
   width: 40px;
   height: 28px;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   cursor: pointer;
   padding: 0;
@@ -28,7 +28,7 @@
   min-width: 0;
   padding: $s-1 $s-2;
   font-size: $t-xs;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -47,7 +47,7 @@
   z-index: 10; // 覆盖面板内相邻表单控件
   padding: $s-2;
   background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-md;
 }
 
@@ -62,7 +62,7 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;
   cursor: pointer;
 

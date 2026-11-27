@@ -34,7 +34,7 @@
   justify-content: space-between;
   gap: $s-2;
   padding: $s-2 $s-3;
-  border-bottom: 1px solid var(--b3-theme-outline, $c-border);
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
   flex-shrink: 0;
 }
 
@@ -50,7 +50,7 @@
   align-items: center;
   gap: $s-1;
   padding: $s-1 $s-3;
-  border-bottom: 1px solid var(--b3-theme-outline, $c-border);
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
   flex-shrink: 0;
 }
 
@@ -60,7 +60,7 @@
   align-items: center;
   gap: $s-2;
   padding: $s-3;
-  border-bottom: 1px solid var(--b3-theme-outline, $c-border);
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
   flex-shrink: 0;
 }
 
@@ -93,7 +93,7 @@
 /* 快照条目：面板底色 + 卡片 surface 分层 */
 .ds-item {
   padding: $s-2 $s-3;
-  border: 1px solid var(--b3-theme-outline, $c-border);
+  border: 1px solid var(--b3-border-color, $c-border);
   border-radius: $r-sm;
   background: var(--b3-theme-surface, $c-surface);
   transition: border-color 0.12s ease;
@@ -159,7 +159,7 @@
 .ds-detail .ds-detail__back {
   justify-content: flex-start;
   padding: $s-2 $s-3;
-  border-bottom: 1px solid var(--b3-theme-outline, $c-border);
+  border-bottom: 1px solid var(--b3-border-color, $c-border);
   border-radius: 0;
   color: var(--b3-theme-primary, $c-danger);
 }
@@ -217,7 +217,7 @@
 
 .ds-confirm-info {
   padding: $s-2;
-  border: 1px solid var(--b3-theme-outline, $c-border);
+  border: 1px solid var(--b3-border-color, $c-border);
   border-radius: $r-sm;
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface, $c-fg);

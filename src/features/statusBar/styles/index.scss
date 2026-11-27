@@ -81,7 +81,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
   .uptime-item {
     color: var(--b3-theme-on-surface);
     opacity: 0.6;
-    border-left: 1px solid var(--b3-theme-border);
+    border-left: 1px solid var(--b3-border-color);
 
     .monitor-value {
       font-weight: $fw-normal;
@@ -95,7 +95,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     width: 1px;
     height: 18px;
     margin: 0 $s-px2;
-    background: var(--b3-theme-border);
+    background: var(--b3-border-color);
     align-self: center;
   }
 
@@ -125,7 +125,7 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 
   // 密码箱：与前一入口之间的分隔线（唯一带结构性装饰的快捷项，保留为独立类）
   .password-vault-item {
-    border-left: 1px solid var(--b3-theme-border);
+    border-left: 1px solid var(--b3-border-color);
     padding-left: $s-px6;
   }
 

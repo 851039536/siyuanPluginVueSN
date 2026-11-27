@@ -161,7 +161,7 @@
 @mixin input-base {
   width: 100%;
   padding: g.$s-2 g.$s-3;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: g.$r-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);
@@ -188,7 +188,7 @@
 
 @mixin btn-base {
   padding: g.$s-2 g.$s-4;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: g.$r-base;
   background: var(--b3-theme-background);
   color: var(--b3-theme-on-background);

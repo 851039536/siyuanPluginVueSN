@@ -130,7 +130,6 @@ html.siyuan-compact-mode {
         padding: (0.375rem * $s) ($s-3 * $s);
       }
       .b3-text-field,
-      .b3-input,
       .b3-select {
         padding: (0.375rem * $s) ($s-2 * $s);
       }
@@ -165,7 +164,6 @@ html.siyuan-compact-mode {
     &.compact-area-controls {
       .b3-button,
       .b3-text-field,
-      .b3-input,
       .b3-select,
       .b3-menu__item {
         font-size: $t-xs * $f;

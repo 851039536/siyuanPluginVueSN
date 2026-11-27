@@ -25,7 +25,7 @@ export function registerFloatingBox(plugin: Plugin): void {
   const selectors = [
     ".layout__center.fn__flex.fn__flex-1",
     ".layout__center",
-    "#workspace",
+    "#layouts",
     "body",
   ]
 

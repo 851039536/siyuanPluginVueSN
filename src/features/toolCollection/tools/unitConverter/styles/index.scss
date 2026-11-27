@@ -150,14 +150,14 @@
 // 错误提示
 .converter-error {
   padding: $s-3 $s-4;
-  border: 1px solid var(--b3-error);
+  border: 1px solid var(--b3-theme-error);
   border-radius: $r-base;
-  background: var(--b3-theme-error-container);
+  background: var(--b3-card-error-background);
 
   .error-message {
     font-size: $t-xs;
     font-family: $ff-mono;
-    color: var(--b3-error);
+    color: var(--b3-theme-error);
     text-align: center;
   }
 }

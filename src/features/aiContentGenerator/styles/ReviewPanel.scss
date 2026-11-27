@@ -227,7 +227,7 @@
 
   &.severity-高 {
     border-left-color: var(--b3-theme-error);
-    background: var(--b3-theme-error-background);
+    background: var(--b3-card-error-background);
   }
 
   &.severity-中 {
@@ -255,12 +255,12 @@
 
   &.severity-高 {
     color: var(--b3-theme-error);
-    background: var(--b3-theme-error-background);
+    background: var(--b3-card-error-background);
   }
 
   &.severity-中 {
     color: var(--b3-theme-warning);
-    background: var(--b3-theme-warning-background);
+    background: var(--b3-card-warning-background);
   }
 
   &.severity-低 {

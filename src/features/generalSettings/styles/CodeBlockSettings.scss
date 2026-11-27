@@ -40,7 +40,7 @@
 .style-card {
   position: relative;
   padding: $s-2;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-md;
   background: var(--b3-theme-surface);
   cursor: pointer;
@@ -96,7 +96,7 @@
 .advanced-settings {
   padding: $s-3;
   background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-md;
   display: flex;
   flex-direction: column;
@@ -111,7 +111,7 @@
   font-weight: $fw-semibold;
   color: var(--b3-theme-on-surface);
   padding-bottom: $s-1;
-  border-bottom: 1px solid var(--b3-theme-outline);
+  border-bottom: 1px solid var(--b3-border-color);
 }
 
 /* 折叠高度区间刻度标签 */
@@ -139,7 +139,7 @@
   padding: $s-px2 $s-1;
   background: var(--b3-theme-surface-variant);
   border-radius: $r-base;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
 }
 
 /* 边框设置样式 */
@@ -150,7 +150,7 @@
   padding: $s-2;
   background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
   border-radius: $r-base;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
 }
 
 .border-row {
@@ -177,7 +177,7 @@
   padding: $s-1 $s-3;
   font-size: $t-2xs;
   font-weight: $fw-medium;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -203,7 +203,7 @@
   padding: $s-2;
   background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
   border-radius: $r-base;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
 }
 
 .font-row {
@@ -230,7 +230,7 @@
   flex: 1;
   padding: $s-1 $s-2;
   font-size: $t-xs;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -258,7 +258,7 @@
   padding: $s-2;
   background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.02);
   border-radius: $r-base;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
 }
 
 .color-row {

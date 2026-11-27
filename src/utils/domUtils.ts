@@ -181,18 +181,10 @@ export function getCurrentBlockId(): string | null {
     }
   }
 
-  // 降级1: 当前选中的块
+  // 降级: 当前选中的块
   const selectedBlock = document.querySelector(".protyle-wysiwyg--select")
   if (selectedBlock) {
     return selectedBlock.getAttribute("data-node-id")
-  }
-
-  // 降级2: 聚焦的块
-  const focusedBlock = document.querySelector(
-    ".protyle-wysiwyg [data-node-id].protyle-wysiwyg--focus",
-  )
-  if (focusedBlock) {
-    return focusedBlock.getAttribute("data-node-id")
   }
 
   return null

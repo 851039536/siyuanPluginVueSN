@@ -66,7 +66,7 @@
   flex: 1;
   min-width: 0;
   padding: $s-1 $s-2;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -135,7 +135,7 @@
   padding: $s-px2 $s-1;
   background: var(--b3-theme-surface-variant);
   border-radius: $r-base;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
 }
 
 /* 文档标题颜色行 */
@@ -147,7 +147,7 @@
 
 .reset-color-btn {
   padding: $s-1 $s-2;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);

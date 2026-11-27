@@ -73,7 +73,7 @@
   flex: 1;
   min-width: 180px;
   padding: $s-1 $s-2;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -109,7 +109,7 @@
 
 .preset-btn {
   padding: $s-1 $s-3;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-sm;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -137,7 +137,7 @@
 
 .weight-btn {
   padding: $s-1 $s-3;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);
@@ -159,7 +159,7 @@
 /* 预览区域 */
 .preview-section {
   margin-top: $s-2;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-md;
   overflow: hidden;
   background: var(--b3-theme-surface);
@@ -191,7 +191,7 @@
 .preview-content {
   padding: $s-4;
   background: var(--b3-theme-background);
-  border-top: 1px solid var(--b3-theme-outline);
+  border-top: 1px solid var(--b3-border-color);
   max-height: 300px;
   overflow-y: auto;
 
@@ -228,7 +228,7 @@
   gap: $s-1;
   padding: $s-2 $s-4;
   width: 100%;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);

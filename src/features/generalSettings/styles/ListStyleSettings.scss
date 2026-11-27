@@ -50,7 +50,7 @@
 .setting-section {
   margin-top: $s-2;
   padding: $s-3;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-md;
   background: var(--b3-theme-surface);
 }
@@ -61,7 +61,7 @@
   gap: $s-2;
   margin-bottom: $s-3;
   padding-bottom: $s-2;
-  border-bottom: 1px solid var(--b3-theme-outline);
+  border-bottom: 1px solid var(--b3-border-color);
 }
 
 .section-title {
@@ -93,7 +93,7 @@
 /* 预览区域 */
 .preview-section {
   margin-top: $s-2;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-md;
   overflow: hidden;
   background: var(--b3-theme-surface);
@@ -126,7 +126,7 @@
 .preview-content {
   padding: $s-4;
   background: var(--b3-theme-background);
-  border-top: 1px solid var(--b3-theme-outline);
+  border-top: 1px solid var(--b3-border-color);
 }
 
 .preview-section-title {
@@ -213,7 +213,7 @@
   gap: $s-px6; // 图标与文案的紧凑间距（已收敛为全局 Token）
   padding: $s-2 $s-4;
   width: 100%;
-  border: 1px solid var(--b3-theme-outline);
+  border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-surface);
   color: var(--b3-theme-on-surface);

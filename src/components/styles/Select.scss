@@ -181,7 +181,7 @@
 
     &:hover,
     &--hovered {
-      background: var(--b3-theme-hover, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08));
+      background: var(--b3-list-hover, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08));
     }
 
     &--selected {

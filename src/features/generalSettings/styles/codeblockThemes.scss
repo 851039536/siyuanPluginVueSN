@@ -72,7 +72,7 @@ body[class*="codeblock-style-"] {
 /* GitHub 风格代码块 - 主题适配 */
 body.codeblock-style-github {
   #{$codeblock-roots} {
-    border: 1px solid var(--b3-theme-outline);
+    border: 1px solid var(--b3-border-color);
     border-radius: $codeblock-border-radius;
     background: var(--b3-theme-surface);
 
@@ -82,7 +82,7 @@ body.codeblock-style-github {
 
     .protyle-action {
       background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.03);
-      border-bottom: 1px solid var(--b3-theme-outline);
+      border-bottom: 1px solid var(--b3-border-color);
       // 0.875rem(14px) 无对应间距 Token，保留精确值
       padding: $s-px2 0.875rem;
 
@@ -120,7 +120,7 @@ body.codeblock-style-github {
 /* Mac 风格代码块 - 主题适配 */
 body.codeblock-style-mac {
   #{$codeblock-roots} {
-    border: 1px solid var(--b3-theme-outline);
+    border: 1px solid var(--b3-border-color);
     border-radius: $r-lg;
 
     &:hover {
@@ -184,7 +184,7 @@ body.codeblock-style-default {
     border: 1px solid transparent;
 
     &:hover {
-      border-color: var(--b3-theme-outline);
+      border-color: var(--b3-border-color);
     }
   }
 }

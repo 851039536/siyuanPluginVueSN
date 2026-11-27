@@ -103,7 +103,7 @@
     @include m.btn-color-family("--b3-theme-on-background", $c-fg, var(--b3-theme-on-primary, $c-bg));
     background: var(--b3-theme-background, $c-bg);
     color: var(--b3-theme-on-background, $c-fg);
-    border: 1px solid var(--b3-theme-border, $c-border);
+    border: 1px solid var(--b3-border-color, $c-border);
     @include m.interactive-raised;
   }
 

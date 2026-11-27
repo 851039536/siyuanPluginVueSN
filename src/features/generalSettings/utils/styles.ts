@@ -141,11 +141,13 @@ export function applyCodeBlockEnhancedStyles(codeSettings: CodeBlockSettings): v
         color: ${codeSettings.textColor} !important;
       }
 
-      /* 行号样式（关闭显示时追加 display:none 隐藏） */
-      .protyle-wysiwyg .code-block .hljs .ln {
-        color: ${codeSettings.lineNumberColor} !important;
+      /* 行号样式（3.8.12 起行号在 .protyle-linenumber__rows 容器内，行号为子 span 的 ::before；关闭显示时隐藏容器） */
+      .protyle-wysiwyg .code-block .protyle-linenumber__rows {
         background-color: ${codeSettings.lineNumberBackground} !important;
         ${codeSettings.showLineNumber ? "" : "display: none !important;"}
+      }
+      .protyle-wysiwyg .code-block .protyle-linenumber__rows > span {
+        color: ${codeSettings.lineNumberColor} !important;
       }
 
       /* 代码高亮颜色 */
@@ -773,7 +775,8 @@ export function generateTabPinCSS(settings: TabPinSettings): string {
 
   if (settings.displayMode === "textOnly") {
     css += `
-      .layout-tab-bar .item.item--pin .item__icon {
+      .layout-tab-bar .item.item--pin .item__icon,
+      .layout-tab-bar .item.item--pin .item__graphic {
         display: none !important;
       }
     `

@@ -180,7 +180,7 @@ $tc-dur-slide: 0.25s;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-scrollbar-color);
+    background: var(--b3-scroll-color);
     border-radius: $r-px2;
   }
 }
@@ -269,7 +269,7 @@ $tc-dur-slide: 0.25s;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-scrollbar-color);
+    background: var(--b3-scroll-color);
     border-radius: $r-px3;
   }
 }

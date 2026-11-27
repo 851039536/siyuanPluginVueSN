@@ -302,7 +302,7 @@
   }
 
   &:active {
-    background: var(--b3-theme-primary-dark);
+    background: var(--b3-theme-primary-dark, var(--b3-theme-primary));
   }
 }
 

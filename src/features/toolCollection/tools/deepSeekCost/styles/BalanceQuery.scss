@@ -46,9 +46,9 @@
     padding: $s-2 $s-3;
     font-family: $ff-mono;
     font-size: $t-2xs;
-    color: var(--b3-error);
-    background: var(--b3-theme-error-container);
-    border: 1px solid var(--b3-error);
+    color: var(--b3-theme-error);
+    background: var(--b3-card-error-background);
+    border: 1px solid var(--b3-theme-error);
     border-radius: $r-base;
     word-break: break-all;
   }
@@ -72,7 +72,7 @@
         }
 
         &.no {
-          color: var(--b3-error);
+          color: var(--b3-theme-error);
         }
       }
     }

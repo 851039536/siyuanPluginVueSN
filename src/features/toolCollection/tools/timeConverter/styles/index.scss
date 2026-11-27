@@ -28,8 +28,8 @@
     color: var(--b3-theme-primary);
 
     &.invalid {
-      border-color: var(--b3-error);
-      color: var(--b3-error);
+      border-color: var(--b3-theme-error);
+      color: var(--b3-theme-error);
     }
   }
 
@@ -127,12 +127,12 @@
   // ========== 错误提示 ==========
   .tc-error {
     padding: $s-px10 $s-3;
-    border: 1px solid var(--b3-error);
+    border: 1px solid var(--b3-theme-error);
     border-radius: $r-sm;
-    background: var(--b3-theme-error-container);
+    background: var(--b3-card-error-background);
     font-family: $ff-mono;
     font-size: $t-xs;
-    color: var(--b3-error);
+    color: var(--b3-theme-error);
     text-align: center;
   }
 

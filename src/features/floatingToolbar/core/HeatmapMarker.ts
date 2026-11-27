@@ -173,7 +173,9 @@ export class HeatmapMarker {
           continue
         }
         // 正在编辑（光标所在块）的文档跳过，避免改写 DOM 打断输入
-        if (doc.querySelector(".protyle-wysiwyg--focus")) continue
+        // 3.8.12 起不再有 .protyle-wysiwyg--focus，改用焦点是否落在该 protyle 内判定
+        const activeEl = document.activeElement
+        if (activeEl && doc.contains(activeEl)) continue
         visibleDocs.push(doc)
       }
 

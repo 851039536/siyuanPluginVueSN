@@ -6,6 +6,7 @@ import type { Ref } from "vue"
 import type {
   AppData,
   ProjectItem,
+  ProjectProgress,
   TodoItem,
 } from "../types"
 import type { QuickNoteStorage } from "../types/storage"
@@ -14,24 +15,28 @@ import {
   ref,
 } from "vue"
 import {
-  createPersistLock,
+  createPersistGuard,
   generateId,
 } from "../utils"
 
-export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]>) {
+/** useProjects 返回结构（供子组件 props 类型引用） */
+export type ProjectsApi = ReturnType<typeof useProjects>
+
+export function useProjects(
+  storage: QuickNoteStorage,
+  todosRef: Ref<TodoItem[]>,
+  i18n: Record<string, string>,
+) {
   const projects: Ref<ProjectItem[]> = ref([])
 
-  /** 从存储加载全部项目 */
-  const load = async () => {
-    const data = await storage.data.loadOrDefault()
-    projects.value = data.projects
-  }
+  /** 写盘失败统一提示（视图层无需 await，写盘顺序由存储层串行锁保证） */
+  const runPersist = createPersistGuard(i18n)
 
   /**
-   * 持久化当前项目列表（串行锁防止快速连续操作时 read-modify-write 读到旧数据）
+   * 持久化当前项目列表（QuickNoteStorage 串行锁与待办/灵感共享，避免并发覆盖丢更新）
    * todos 参数用于跨槽写入：删除项目时需同时落盘待办的 projectId 置空，缺省仅写 projects
    */
-  const persist = createPersistLock(storage.data, (data, todos?: TodoItem[]) => {
+  const persist = (todos?: TodoItem[]) => storage.mutate((data) => {
     const payload: AppData = {
       ...data,
       projects: projects.value,
@@ -42,11 +47,20 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
     return payload
   })
 
+  /**
+   * 加载项目列表
+   * @param snapshot 面板挂载时统一读取的数据快照；缺省时自行读取（兼容独立调用）
+   */
+  const load = async (snapshot?: AppData) => {
+    const data = snapshot ?? await storage.loadAll()
+    projects.value = data.projects
+  }
+
   /** 新增项目 */
-  const add = async (partial: Omit<ProjectItem, "id" | "createdAt" | "updatedAt">) => {
+  const add = (partial: Omit<ProjectItem, "id" | "createdAt" | "updatedAt">): void => {
     const name = partial.name.trim()
     if (!name) return
-    const now = Date.now()
+    const ts = Date.now()
     const item: ProjectItem = {
       ...partial,
       name,
@@ -54,15 +68,15 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
       nextStep: partial.nextStep.trim(),
       blockers: partial.blockers.trim(),
       id: generateId(),
-      createdAt: now,
-      updatedAt: now,
+      createdAt: ts,
+      updatedAt: ts,
     }
     projects.value = [item, ...projects.value]
-    await persist()
+    runPersist(() => persist())
   }
 
   /** 更新项目（文本字段与新增模式一致做 trim） */
-  const update = async (id: string, patch: Partial<Omit<ProjectItem, "id" | "createdAt">>) => {
+  const update = (id: string, patch: Partial<Omit<ProjectItem, "id" | "createdAt">>): void => {
     const project = projects.value.find((p) => p.id === id)
     if (!project) return
     const {
@@ -80,26 +94,24 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
       ...(blockers !== undefined ? { blockers: blockers.trim() } : {}),
     }
     Object.assign(project, normalized, { updatedAt: Date.now() })
-    await persist()
+    runPersist(() => persist())
   }
 
   /** 删除项目（同时解除该项目下待办的 projectId 关联，避免悬空引用） */
-  const remove = async (id: string) => {
+  const remove = (id: string): void => {
     projects.value = projects.value.filter((p) => p.id !== id)
     // 解除关联：待办仍保留但 projectId 置空（同步更新内存 ref 与存储）
-    if (todosRef) {
-      todosRef.value = todosRef.value.map((t) =>
-        t.projectId === id
-          ? {
-              ...t,
-              projectId: null,
-              updatedAt: Date.now(),
-            }
-          : t,
-      )
-    }
+    todosRef.value = todosRef.value.map((t) =>
+      t.projectId === id
+        ? {
+            ...t,
+            projectId: null,
+            updatedAt: Date.now(),
+          }
+        : t,
+    )
     // 跨槽持久化：projects 与待办两个槽位同时落盘，与 add/update 共用同一把串行锁
-    await persist(todosRef?.value)
+    runPersist(() => persist(todosRef.value))
   }
 
   /**
@@ -109,7 +121,7 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
    */
   const todosByProject = computed(() => {
     const map = new Map<string, TodoItem[]>()
-    for (const t of todosRef?.value ?? []) {
+    for (const t of todosRef.value) {
       if (!t.projectId) continue
       const bucket = map.get(t.projectId)
       if (bucket) {
@@ -125,7 +137,7 @@ export function useProjects(storage: QuickNoteStorage, todosRef?: Ref<TodoItem[]
   const todosOf = (projectId: string): TodoItem[] => todosByProject.value.get(projectId) ?? []
 
   /** 某项目关联待办的完成进度（已完成数 / 总数），复用同一份分组结果 */
-  const progressOf = (projectId: string): { done: number, total: number } => {
+  const progressOf = (projectId: string): ProjectProgress => {
     const list = todosOf(projectId)
     let done = 0
     for (const t of list) {

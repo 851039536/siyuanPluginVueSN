@@ -40,11 +40,9 @@
  */
 import type { PolishFn } from "../../composables/useAiPolish"
 import type { ConfirmDialogApi } from "../../composables/useConfirmDialog"
-import { useInspirations } from "../../composables/useInspirations"
+import type { InspirationsApi } from "../../composables/useInspirations"
 import InspirationForm from "./InspirationForm.vue"
 import InspirationItem from "./InspirationItem.vue"
-
-type InspirationsApi = ReturnType<typeof useInspirations>
 
 const props = defineProps<{
   i18n: Record<string, string>

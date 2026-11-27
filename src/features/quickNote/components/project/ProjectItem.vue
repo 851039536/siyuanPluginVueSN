@@ -128,6 +128,7 @@
  */
 import type {
   ProjectItem,
+  ProjectProgress,
   TodoItem,
 } from "../../types"
 import {
@@ -142,7 +143,7 @@ const props = defineProps<{
   /** 关联待办列表 */
   linkedTodos: TodoItem[]
   /** 完成进度（已完成数/总数） */
-  progress: { done: number, total: number }
+  progress: ProjectProgress
   i18n: Record<string, string>
 }>()
 

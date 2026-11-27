@@ -1,10 +1,8 @@
 /**
  * 速记功能 — 共享工具函数
- * 提供条目 ID 生成、串行持久化锁与 AI 润色流式回填辅助，供多个 composable / 组件复用，避免复制粘贴
+ * 提供条目 ID 生成、持久化失败提示守卫与 AI 润色流式回填辅助，供多个 composable / 组件复用，避免复制粘贴
  */
 import type { PolishFn } from "./composables/useAiPolish"
-import type { AppData } from "./types"
-import type { TypedStorage } from "@/utils/typedStorage"
 import { pushMsg } from "@/api"
 import { PolishError } from "./composables/useAiPolish"
 
@@ -14,26 +12,17 @@ export function generateId(): string {
 }
 
 /**
- * 创建串行持久化锁
- * 防止快速连续操作时 read-modify-write 读到旧数据：多个 persist 调用共享同一把锁，
- * buildPayload 接收最新存储数据并返回待写入的完整 payload（支持携带额外参数，如项目删除时跨槽写入待办）
- * @param data 统一数据存储槽（TypedStorage<AppData>）
- * @param buildPayload 构造待写入 payload 的函数
- * @returns 串行化后的持久化函数
+ * 持久化失败统一提示守卫
+ * 包裹一次「会写盘」的变更：失败时 console.error + 顶部消息提示。
+ * 视图层的 CRUD 调用无需 await —— 写盘顺序由 QuickNoteStorage 的串行锁保证
+ * @param i18n 功能文案（saveFailed 提示键）
  */
-export function createPersistLock<TArgs extends unknown[]>(
-  data: TypedStorage<AppData>,
-  buildPayload: (current: AppData, ...args: TArgs) => AppData,
-): (...args: TArgs) => Promise<void> {
-  let lock: Promise<void> = Promise.resolve()
-  return async (...args: TArgs) => {
-    lock = lock
-      .catch(() => undefined)
-      .then(async () => {
-        const current = await data.loadOrDefault()
-        await data.save(buildPayload(current, ...args))
-      })
-    await lock
+export function createPersistGuard(i18n: Record<string, string>): (task: () => Promise<void>) => void {
+  return (task) => {
+    task().catch((err) => {
+      console.error("[quickNote] 保存失败:", err)
+      pushMsg(i18n.saveFailed, 5000, "error")
+    })
   }
 }
 

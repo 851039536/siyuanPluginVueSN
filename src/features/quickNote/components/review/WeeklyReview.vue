@@ -129,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import type { useWeeklyReview } from "../../composables/useWeeklyReview"
+import type { ReviewApi } from "../../composables/useWeeklyReview"
 /**
  * 速记功能 — 每周复盘面板（完整重构版）
  * 顶部周切换头（本周/上周/…最近 7 周，纯派生回溯）；统计卡片行（本期完成/环比上周/日均完成）；
@@ -144,8 +144,6 @@ import { computed } from "vue"
 import Chart from "@/components/Chart.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import { PRIORITY_META } from "../../types"
-
-type ReviewApi = ReturnType<typeof useWeeklyReview>
 
 const props = defineProps<{
   /** 复盘数据 API（weekOffset 周切换 + 派生统计） */
@@ -213,7 +211,7 @@ const priorityChartData = computed<ChartData[]>(() =>
   priorityDistribution.value.map((d) => {
     const meta = PRIORITY_META[d.label as keyof typeof PRIORITY_META]
     return {
-      label: meta ? props.i18n[meta.labelKey] || d.label : d.label,
+      label: meta ? props.i18n[meta.labelKey] : d.label,
       value: d.value,
       color: d.color,
     }

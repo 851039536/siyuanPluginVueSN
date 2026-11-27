@@ -3,7 +3,10 @@
  * 承载灵感条目的响应式列表与 CRUD、标签提取/筛选，支持按标签过滤灵感列表
  */
 import type { Ref } from "vue"
-import type { InspirationItem } from "../types"
+import type {
+  AppData,
+  InspirationItem,
+} from "../types"
 import type { QuickNoteStorage } from "../types/storage"
 import {
   computed,
@@ -11,57 +14,66 @@ import {
 } from "vue"
 import { splitTags } from "../pureUtils"
 import {
-  createPersistLock,
+  createPersistGuard,
   generateId,
 } from "../utils"
 
-export function useInspirations(storage: QuickNoteStorage) {
+/** useInspirations 返回结构（供子组件 props 类型引用） */
+export type InspirationsApi = ReturnType<typeof useInspirations>
+
+export function useInspirations(storage: QuickNoteStorage, i18n: Record<string, string>) {
   const inspirations: Ref<InspirationItem[]> = ref([])
   /** 当前选中的筛选标签（null = 全部） */
   const activeTag = ref<string | null>(null)
 
-  /** 从存储加载全部灵感 */
-  const load = async () => {
-    const data = await storage.data.loadOrDefault()
-    inspirations.value = data.inspirations
-  }
+  /** 写盘失败统一提示（视图层无需 await，写盘顺序由存储层串行锁保证） */
+  const runPersist = createPersistGuard(i18n)
 
-  /** 持久化当前灵感列表（串行锁防止快速连续操作时 read-modify-write 读到旧数据） */
-  const persist = createPersistLock(storage.data, (data) => ({
+  /** 持久化当前灵感列表（QuickNoteStorage 串行锁与待办/项目共享，避免并发覆盖丢更新） */
+  const persist = () => storage.mutate((data) => ({
     ...data,
     inspirations: inspirations.value,
   }))
 
+  /**
+   * 加载灵感列表
+   * @param snapshot 面板挂载时统一读取的数据快照；缺省时自行读取（兼容独立调用）
+   */
+  const load = async (snapshot?: AppData) => {
+    const data = snapshot ?? await storage.loadAll()
+    inspirations.value = data.inspirations
+  }
+
   /** 新增灵感（空内容忽略），tags 为原始字符串（自动拆分） */
-  const add = async (content: string, tagsInput: string = "") => {
+  const add = (content: string, tagsInput: string = ""): void => {
     const trimmed = content.trim()
     if (!trimmed) return
-    const now = Date.now()
+    const ts = Date.now()
     const item: InspirationItem = {
       id: generateId(),
       content: trimmed,
       tags: splitTags(tagsInput),
-      createdAt: now,
-      updatedAt: now,
+      createdAt: ts,
+      updatedAt: ts,
     }
     inspirations.value = [item, ...inspirations.value]
-    await persist()
+    runPersist(persist)
   }
 
   /** 更新灵感内容与标签（tags 为原始字符串，自动拆分） */
-  const update = async (id: string, content: string, tagsInput: string) => {
+  const update = (id: string, content: string, tagsInput: string): void => {
     const item = inspirations.value.find((i) => i.id === id)
     if (!item) return
     item.content = content.trim()
     item.tags = splitTags(tagsInput)
     item.updatedAt = Date.now()
-    await persist()
+    runPersist(persist)
   }
 
   /** 删除灵感 */
-  const remove = async (id: string) => {
+  const remove = (id: string): void => {
     inspirations.value = inspirations.value.filter((i) => i.id !== id)
-    await persist()
+    runPersist(persist)
   }
 
   /** 全量标签（去重 + 按出现频次降序） */

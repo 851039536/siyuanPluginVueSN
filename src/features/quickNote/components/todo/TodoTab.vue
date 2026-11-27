@@ -77,17 +77,14 @@ import type {
   TodoItem as TodoItemType,
   TodoSubmitPayload,
 } from "../../types"
+import type { ProjectsApi } from "../../composables/useProjects"
+import type { TodoListApi } from "../../composables/useTodoList"
 import {
   computed,
   ref,
 } from "vue"
-import { useProjects } from "../../composables/useProjects"
-import { useTodoList } from "../../composables/useTodoList"
 import TodoForm from "./TodoForm.vue"
 import TodoItem from "./TodoItem.vue"
-
-type TodoListApi = ReturnType<typeof useTodoList>
-type ProjectsApi = ReturnType<typeof useProjects>
 
 const props = defineProps<{
   i18n: Record<string, string>

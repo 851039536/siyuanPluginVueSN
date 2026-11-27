@@ -1,6 +1,10 @@
 // src/features/quickNote/pureUtils.spec.ts — 速记无依赖纯函数行为断言
-// 覆盖日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日自动顺延 / 面板几何约束
-import type { TodoItem } from "./types"
+// 覆盖日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日自动顺延 / 数据裁剪 / 面板几何约束
+import type {
+  AppData,
+  ProjectItem,
+  TodoItem,
+} from "./types"
 import {
   describe,
   expect,
@@ -10,6 +14,7 @@ import {
   getWeekStart,
   isOverdueAgainst,
   parseDateStr,
+  pruneAppData,
   resolvePanelPoint,
   resolvePanelSize,
   rolloverOverdue,
@@ -583,5 +588,104 @@ describe("resolvePanelPoint", () => {
       x: 0,
       y: 100,
     })
+  })
+})
+
+/** 构造项目条目（仅覆盖被测字段，其余给安全默认值） */
+function makeProject(partial: Partial<ProjectItem> & { id: string }): ProjectItem {
+  return {
+    name: "项目",
+    currentStep: "",
+    nextStep: "",
+    blockers: "",
+    status: "active",
+    createdAt: 0,
+    updatedAt: 0,
+    ...partial,
+  }
+}
+
+/** 构造统一数据对象（仅覆盖被测数组） */
+function makeData(partial: Partial<AppData> = {}): AppData {
+  return {
+    todos: [],
+    inspirations: [],
+    projects: [],
+    lastRolloverDate: null,
+    ...partial,
+  }
+}
+
+describe("pruneAppData", () => {
+  const now = localMs(2026, 6, 1)
+  const dayMs = 86_400_000
+
+  it("无裁剪时返回原对象引用（调用方据此跳过写盘）", () => {
+    const data = makeData({
+      todos: [makeTodo({
+        id: "t1",
+        done: true,
+        doneAt: now - 10 * dayMs,
+      })],
+    })
+    expect(pruneAppData(data, now)).toBe(data)
+  })
+
+  it("已完成待办超 63 天裁剪，边界内与未完成保留", () => {
+    const data = makeData({
+      todos: [
+        makeTodo({
+          id: "old-done",
+          done: true,
+          doneAt: now - 64 * dayMs,
+        }),
+        makeTodo({
+          id: "edge-done",
+          done: true,
+          doneAt: now - 63 * dayMs,
+        }),
+        makeTodo({
+          id: "pending",
+          done: false,
+        }),
+      ],
+    })
+    const result = pruneAppData(data, now)
+    expect(result.todos.map((t) => t.id)).toEqual(["edge-done", "pending"])
+  })
+
+  it("灵感超上限时保留数组前 500 条（新条目在头部）", () => {
+    const inspirations = Array.from({ length: 502 }, (_, i) => ({
+      id: `i${i}`,
+      content: `灵感${i}`,
+      tags: [],
+      createdAt: now - i,
+      updatedAt: now - i,
+    }))
+    const result = pruneAppData(makeData({ inspirations }), now)
+    expect(result.inspirations).toHaveLength(500)
+    expect(result.inspirations[0]?.id).toBe("i0")
+    expect(result.inspirations[result.inspirations.length - 1]?.id).toBe("i499")
+  })
+
+  it("项目超上限优先保留进行中，并解除被裁项目的待办关联", () => {
+    const projects = [
+      ...Array.from({ length: 150 }, (_, i) => makeProject({ id: `a${i}` })),
+      ...Array.from({ length: 60 }, (_, i) => makeProject({
+        id: `c${i}`,
+        status: "completed",
+      })),
+    ]
+    const result = pruneAppData(makeData({
+      projects,
+      todos: [makeTodo({
+        id: "t1",
+        projectId: "c59",
+      })],
+    }), now)
+    // 150 个进行中全保留 + 已完成取前 50（c0..c49），c59 被裁
+    expect(result.projects).toHaveLength(200)
+    expect(result.projects.filter((p) => p.status === "completed")).toHaveLength(50)
+    expect(result.todos[0]?.projectId).toBeNull()
   })
 })

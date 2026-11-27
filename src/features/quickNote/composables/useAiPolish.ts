@@ -11,7 +11,7 @@ import {
 } from "@/utils/aiApi"
 
 /** 润色错误码：未配置 API Key / 调用失败 */
-export type PolishErrorCode = "NO_API_KEY" | "CALL_FAILED"
+type PolishErrorCode = "NO_API_KEY" | "CALL_FAILED"
 
 /** 携带错误码的润色异常（调用方据此选择 i18n 文案与提示方式） */
 export class PolishError extends Error {
@@ -27,7 +27,7 @@ export class PolishError extends Error {
 export type PolishFn = (text: string, onChunk?: (chunk: string) => void) => Promise<string>
 
 /** useAiPolish 返回结构 */
-export interface AiPolishApi {
+interface AiPolishApi {
   /** 润色进行中（并发锁，供按钮 loading/disabled） */
   polishing: Ref<boolean>
   /** 润色文本；未配置 API Key 抛 NO_API_KEY；onChunk 提供流式增量 */

@@ -94,8 +94,9 @@
         </div>
       </div>
 
-      <!-- 「今天要处理的」聚焦区（今日到期/逾期任务 + 卡住项目标红） -->
+      <!-- 「今天要处理的」聚焦区（今日到期/逾期任务 + 卡住项目标红）；数据就绪前不渲染，避免闪现空态 -->
       <TodayFocus
+        v-if="loaded"
         :focus-todos="todayFocus"
         :blocked-projects="blockedProjects"
         :i18n="i18n"
@@ -114,43 +115,45 @@
         </button>
       </nav>
 
-      <!-- Tab 内容区（可滚动，右侧留滚动条呼吸空间） -->
+      <!-- Tab 内容区（可滚动，右侧留滚动条呼吸空间）；数据就绪前不渲染，杜绝加载期交互被旧快照覆盖 -->
       <div class="panel-body">
-        <!-- 今天待办 Tab -->
-        <TodoTab
-          v-if="activeTab === 'todo'"
-          :i18n="i18n"
-          :todo-list="todoList"
-          :projects-api="projectsApi"
-          :polishing="polishing"
-          :polish="polish"
-          :confirm="confirmDialog"
-        />
+        <template v-if="loaded">
+          <!-- 今天待办 Tab -->
+          <TodoTab
+            v-if="activeTab === 'todo'"
+            :i18n="i18n"
+            :todo-list="todoList"
+            :projects-api="projectsApi"
+            :polishing="polishing"
+            :polish="polish"
+            :confirm="confirmDialog"
+          />
 
-        <!-- 灵感速记 Tab -->
-        <InspirationTab
-          v-else-if="activeTab === 'inspiration'"
-          :i18n="i18n"
-          :inspirations="inspirations"
-          :polishing="polishing"
-          :polish="polish"
-          :confirm="confirmDialog"
-        />
+          <!-- 灵感速记 Tab -->
+          <InspirationTab
+            v-else-if="activeTab === 'inspiration'"
+            :i18n="i18n"
+            :inspirations="inspirations"
+            :polishing="polishing"
+            :polish="polish"
+            :confirm="confirmDialog"
+          />
 
-        <!-- 项目跟进 Tab -->
-        <ProjectTab
-          v-else-if="activeTab === 'project'"
-          :i18n="i18n"
-          :projects-api="projectsApi"
-          :confirm="confirmDialog"
-        />
+          <!-- 项目跟进 Tab -->
+          <ProjectTab
+            v-else-if="activeTab === 'project'"
+            :i18n="i18n"
+            :projects-api="projectsApi"
+            :confirm="confirmDialog"
+          />
 
-        <!-- 每周复盘 Tab -->
-        <ReviewTab
-          v-else
-          :i18n="i18n"
-          :review="review"
-        />
+          <!-- 每周复盘 Tab -->
+          <WeeklyReview
+            v-else
+            :i18n="i18n"
+            :review="review"
+          />
+        </template>
       </div>
 
       <!-- 删除二次确认弹窗（三个 Tab 共用，状态由 index.vue 单实例持有） -->
@@ -195,11 +198,12 @@ import {
   ref,
   watch,
 } from "vue"
+import { pushMsg } from "@/api"
 import ConfirmDialog from "@/components/ConfirmDialog.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import InspirationTab from "./components/inspiration/InspirationTab.vue"
 import ProjectTab from "./components/project/ProjectTab.vue"
-import ReviewTab from "./components/review/ReviewTab.vue"
+import WeeklyReview from "./components/review/WeeklyReview.vue"
 import TodayFocus from "./components/today/TodayFocus.vue"
 import TodoTab from "./components/todo/TodoTab.vue"
 import { useAiPolish } from "./composables/useAiPolish"
@@ -226,10 +230,10 @@ const props = defineProps<{
 const i18n = props.i18n
 
 // ==================== 四大 composable ====================
-const todoList = useTodoList(props.manager.storage)
-const inspirations = useInspirations(props.manager.storage)
+const todoList = useTodoList(props.manager.storage, i18n)
+const inspirations = useInspirations(props.manager.storage, i18n)
 // 关联待办列表经构造参数注入，供项目进度计算与删除时跨槽落盘
-const projectsApi = useProjects(props.manager.storage, todoList.todos)
+const projectsApi = useProjects(props.manager.storage, todoList.todos, i18n)
 // 复盘为纯计算派生
 const review = useWeeklyReview(todoList.todos, projectsApi.projects)
 // AI 润色：此处唯一实例，经 props 下传三个使用点（待办表单/灵感表单/灵感编辑态），
@@ -275,6 +279,8 @@ const menuOpen = ref(false)
 const menuWrapRef = ref<HTMLElement | null>(null)
 
 // ==================== 壳层数据访问 ====================
+/** 数据是否已从存储加载完成（未就绪时聚焦区与 Tab 内容不渲染，避免空态闪现与加载期误操作） */
+const loaded = ref(false)
 /** 未完成待办计数（最小化图标徽标用） */
 const pendingCount = todoList.pendingCount
 /** 今日到期 + 逾期未完成任务（聚焦区用） */
@@ -296,6 +302,9 @@ const syncFromManager = () => {
   minimized.value = props.manager.isMinimized()
   // 状态切换后预设菜单的锚点/可用性已变化，直接收起
   menuOpen.value = false
+  // 面板重开 / 状态回放时校准日期基准：常驻面板跨天后分组与复盘周界不滞留（跨天时顺带触发自动顺延）
+  todoList.refreshNow()
+  review.refreshNow()
 }
 const handleToggleMenu = () => {
   syncPosition()
@@ -304,7 +313,10 @@ const handleToggleMenu = () => {
 const handleSelectPreset = (pos: QuickNotePosition) => {
   position.value = pos
   menuOpen.value = false
-  props.manager.setPosition(pos)
+  props.manager.setPosition(pos).catch((err) => {
+    console.error("[quickNote] 位置保存失败:", err)
+    pushMsg(i18n.saveFailed, 5000, "error")
+  })
 }
 const handleWindowClick = (e: MouseEvent) => {
   if (!menuOpen.value) return
@@ -332,9 +344,16 @@ onMounted(async () => {
   window.addEventListener("click", handleWindowClick)
   window.addEventListener(QUICK_NOTE_MASK_MINIMIZE_EVENT, handleMaskMinimize)
   window.addEventListener(QUICK_NOTE_STATE_EVENT, syncFromManager)
-  await todoList.load()
-  await inspirations.load()
-  await projectsApi.load()
+  try {
+    // 单次读取统一数据槽后分发给三个 composable，避免三次重复 IO 与加载期竞态
+    const snapshot = await props.manager.storage.loadAll()
+    await todoList.load(snapshot)
+    await inspirations.load(snapshot)
+    await projectsApi.load(snapshot)
+  } catch (err) {
+    console.error("[quickNote] 数据加载失败:", err)
+  }
+  loaded.value = true
   // load 期间 Manager 状态可能已变化（例如 init 完成后的回放），统一再同步一次
   syncFromManager()
 })

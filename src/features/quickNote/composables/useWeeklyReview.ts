@@ -33,6 +33,9 @@ export interface BlockSummary {
 /** 历史回溯周数上限（weekOffset 最大值：本周 + 最多回溯 7 周） */
 const MAX_HISTORY_WEEKS = 7
 
+/** useWeeklyReview 返回结构（供子组件 props 类型引用） */
+export type ReviewApi = ReturnType<typeof useWeeklyReview>
+
 export function useWeeklyReview(
   todosRef: Ref<TodoItem[]>,
   projectsRef: Ref<ProjectItem[]>,
@@ -113,7 +116,6 @@ export function useWeeklyReview(
     weekStart,
     weekEnd,
     weekTotal,
-    prevWeekTotal,
     trend,
     weekAvg,
     priorityDistribution,

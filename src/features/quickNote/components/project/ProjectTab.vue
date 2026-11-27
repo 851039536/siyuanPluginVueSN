@@ -38,12 +38,12 @@ import type {
   ProjectItem as ProjectItemType,
   ProjectSubmitPayload,
 } from "../../types"
-import { ref } from "vue"
-import { useProjects } from "../../composables/useProjects"
+import type { ProjectsApi } from "../../composables/useProjects"
+import {
+  ref,
+} from "vue"
 import ProjectForm from "./ProjectForm.vue"
 import ProjectItem from "./ProjectItem.vue"
-
-type ProjectsApi = ReturnType<typeof useProjects>
 
 const props = defineProps<{
   i18n: Record<string, string>

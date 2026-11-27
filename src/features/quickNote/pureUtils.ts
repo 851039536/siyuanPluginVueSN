@@ -1,7 +1,11 @@
 // 速记功能 — 无依赖纯函数（日期、标签、顺延规则、面板几何约束）
 // 这些函数不依赖 Vue 响应式与思源 API，也不 import 本 feature 的其它模块，
 // 因此可被 *.spec.ts 直接导入（composable / utils.ts 会间接引入 siyuan，无法在 node 环境加载）
-import type { TodoItem } from "./types"
+import type {
+  AppData,
+  ProjectItem,
+  TodoItem,
+} from "./types"
 
 /** 毫秒时间戳 → 本地日期 YYYY-MM-DD（自动顺延与分组比较用） */
 export function toDateStr(date: Date): string {
@@ -156,5 +160,68 @@ export function resolvePanelPoint(
   return {
     x: clampBetween(desired.x, gutter, viewport.width - size.width - gutter),
     y: clampBetween(desired.y, gutter, viewport.height - size.height - gutter),
+  }
+}
+
+// ==================== 增长型数据裁剪（存储上限） ====================
+
+/** 已完成待办保留天数：覆盖复盘 7 周回溯 + 环比前一周统计窗口（56 天） */
+const COMPLETED_TODO_RETENTION_DAYS = 63
+/** 灵感条数上限（新条目在数组头部，超出裁掉最旧） */
+const INSPIRATION_LIMIT = 500
+/** 项目条数上限（裁剪时进行中优先，已完成仅填充剩余名额） */
+const PROJECT_LIMIT = 200
+const DAY_MS = 86_400_000
+
+/** 裁剪超期已完成待办；无裁剪时返回原数组引用（供变更判定） */
+function trimCompletedTodos(todos: TodoItem[], cutoff: number): TodoItem[] {
+  const kept = todos.filter((t) => !t.done || (t.doneAt ?? 0) >= cutoff)
+  return kept.length === todos.length ? todos : kept
+}
+
+/** 裁剪超额项目；无裁剪时返回原数组引用（供变更判定） */
+function trimProjects(projects: ProjectItem[]): ProjectItem[] {
+  if (projects.length <= PROJECT_LIMIT) return projects
+  const active = projects.filter((p) => p.status !== "completed")
+  const completed = projects.filter((p) => p.status === "completed")
+  return [...active, ...completed].slice(0, PROJECT_LIMIT)
+}
+
+/**
+ * 增长型数据裁剪：已完成待办保留 63 天、灵感上限 500、项目上限 200；
+ * 项目被裁后解除待办的悬空 projectId。
+ * 无任何变更时返回原对象引用，调用方据此跳过写盘
+ */
+export function pruneAppData(data: AppData, nowMs: number): AppData {
+  const cutoff = nowMs - COMPLETED_TODO_RETENTION_DAYS * DAY_MS
+  let todos = trimCompletedTodos(data.todos, cutoff)
+  const inspirations = data.inspirations.length > INSPIRATION_LIMIT
+    ? data.inspirations.slice(0, INSPIRATION_LIMIT)
+    : data.inspirations
+  const projects = trimProjects(data.projects)
+
+  if (projects !== data.projects) {
+    const keptIds = new Set(projects.map((p) => p.id))
+    const before = todos
+    todos = todos.map((t) => (
+      t.projectId && !keptIds.has(t.projectId)
+        ? {
+            ...t,
+            projectId: null,
+            updatedAt: nowMs,
+          }
+        : t
+    ))
+    if (todos.every((t, i) => t === before[i])) todos = before
+  }
+
+  if (todos === data.todos && inspirations === data.inspirations && projects === data.projects) {
+    return data
+  }
+  return {
+    ...data,
+    todos,
+    inspirations,
+    projects,
   }
 }

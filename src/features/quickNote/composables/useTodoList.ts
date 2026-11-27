@@ -1,11 +1,14 @@
 /**
  * 速记功能 — 待办列表 composable
  * 承载待办条目的响应式列表与 CRUD、逾期检测、一键顺延、按日期分组，
- * 并在 load 时执行每日自动顺延（昨日未完成逾期任务自动挪到今天）。
+ * 并在加载与跨天时执行自动顺延（昨日未完成逾期任务自动挪到今天）。
  * 日期基准经 now ref 统一持有（refreshNow 校准），面板常驻跨天后自动重算分组与逾期状态
  */
 import type { Ref } from "vue"
-import type { TodoItem } from "../types"
+import type {
+  AppData,
+  TodoItem,
+} from "../types"
 import type { QuickNoteStorage } from "../types/storage"
 import {
   computed,
@@ -19,7 +22,7 @@ import {
 } from "../pureUtils"
 import { PRIORITY_META } from "../types"
 import {
-  createPersistLock,
+  createPersistGuard,
   generateId,
 } from "../utils"
 
@@ -29,7 +32,10 @@ export type DateGroup = "today" | "tomorrow" | "week" | "future"
 /** 聚焦区条目（今日到期 + 逾期，overdue 标记供红色警示样式） */
 export type TodoFocusItem = TodoItem & { overdue: boolean }
 
-export function useTodoList(storage: QuickNoteStorage) {
+/** useTodoList 返回结构（供子组件 props 类型引用） */
+export type TodoListApi = ReturnType<typeof useTodoList>
+
+export function useTodoList(storage: QuickNoteStorage, i18n: Record<string, string>) {
   const todos: Ref<TodoItem[]> = ref([])
 
   /**
@@ -39,9 +45,46 @@ export function useTodoList(storage: QuickNoteStorage) {
    */
   const now = ref(Date.now())
 
-  /** 校准当前时刻基准（进入面板/切回待办 Tab 时调用，防止常驻跨天后日期基准过期） */
+  /** 已完成自动顺延的日期（YYYY-MM-DD），跨天检测基准 */
+  const rolledForDate = ref<string | null>(null)
+
+  /** 写盘失败统一提示（视图层无需 await，写盘顺序由存储层串行锁保证） */
+  const runPersist = createPersistGuard(i18n)
+
+  /** 持久化当前待办列表（QuickNoteStorage 串行锁与灵感/项目共享，避免并发覆盖丢更新） */
+  const persist = () => storage.mutate((data) => ({
+    ...data,
+    todos: todos.value,
+  }))
+
+  /**
+   * 执行当日自动顺延并落盘：锁内读最新数据，回填内存 ref。
+   * 同日重复触发为空操作（仅日期未变时跳过写盘）
+   */
+  const rolloverForToday = (): void => {
+    runPersist(() => storage.mutate((data) => {
+      const rolled = rolloverOverdue(data.todos, data.lastRolloverDate, Date.now())
+      rolledForDate.value = rolled.lastRolloverDate
+      todos.value = rolled.list
+      const dateChanged = data.lastRolloverDate !== rolled.lastRolloverDate
+      return rolled.changed || dateChanged
+        ? {
+            ...data,
+            todos: rolled.list,
+            lastRolloverDate: rolled.lastRolloverDate,
+          }
+        : null
+    }))
+  }
+
+  /** 校准当前时刻基准（进入面板/切回待办 Tab 时调用），日期变化时补执行自动顺延 */
   const refreshNow = (): void => {
     now.value = Date.now()
+    const today = toDateStr(new Date(now.value))
+    // 面板常驻跨天：load 只在挂载时执行一次，日期变化必须在此补顺延
+    if (rolledForDate.value !== null && rolledForDate.value !== today) {
+      rolloverForToday()
+    }
   }
 
   /** 今天零点（所有日期比较共用的单次解析结果） */
@@ -50,37 +93,35 @@ export function useTodoList(storage: QuickNoteStorage) {
   /** 今天日期串（YYYY-MM-DD） */
   const todayStr = computed(() => toDateStr(new Date(now.value)))
 
-  /** 从存储加载全部待办，并执行每日自动顺延 */
-  const load = async () => {
+  /**
+   * 加载待办并执行每日自动顺延
+   * @param snapshot 面板挂载时统一读取的数据快照；缺省时自行读取（兼容独立调用）
+   */
+  const load = async (snapshot?: AppData) => {
     refreshNow()
-    const data = await storage.data.loadOrDefault()
+    const data = snapshot ?? await storage.loadAll()
     const rolled = rolloverOverdue(data.todos, data.lastRolloverDate, now.value)
+    rolledForDate.value = rolled.lastRolloverDate
     todos.value = rolled.list
-    if (rolled.changed) {
-      await storage.data.save({
-        ...data,
-        todos: rolled.list,
-        lastRolloverDate: rolled.lastRolloverDate,
-      })
-    }
+    if (!rolled.changed) return
+    // 锁内合并最新数据，只回写 todos 与顺延记录
+    runPersist(() => storage.mutate((current) => ({
+      ...current,
+      todos: todos.value,
+      lastRolloverDate: rolled.lastRolloverDate,
+    })))
   }
 
-  /** 持久化当前待办列表（串行锁防止快速连续操作时 read-modify-write 读到旧数据） */
-  const persist = createPersistLock(storage.data, (data) => ({
-    ...data,
-    todos: todos.value,
-  }))
-
   /** 新增待办（空内容忽略） */
-  const add = async (partial: {
+  const add = (partial: {
     content: string
     priority?: TodoItem["priority"]
     dueDate?: string | null
     projectId?: string | null
-  }) => {
+  }): void => {
     const content = partial.content.trim()
     if (!content) return
-    const now = Date.now()
+    const ts = Date.now()
     const item: TodoItem = {
       id: generateId(),
       content,
@@ -90,15 +131,15 @@ export function useTodoList(storage: QuickNoteStorage) {
       doneAt: null,
       projectId: partial.projectId ?? null,
       rolloverCount: 0,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: ts,
+      updatedAt: ts,
     }
     todos.value = [item, ...todos.value]
-    await persist()
+    runPersist(persist)
   }
 
   /** 更新待办内容/优先级/截止日期/关联项目（content 与新增模式一致做 trim） */
-  const update = async (id: string, patch: Partial<Pick<TodoItem, "content" | "priority" | "dueDate" | "projectId">>) => {
+  const update = (id: string, patch: Partial<Pick<TodoItem, "content" | "priority" | "dueDate" | "projectId">>): void => {
     const todo = todos.value.find((t) => t.id === id)
     if (!todo) return
     const normalized = patch.content !== undefined
@@ -108,21 +149,21 @@ export function useTodoList(storage: QuickNoteStorage) {
         }
       : patch
     Object.assign(todo, normalized, { updatedAt: Date.now() })
-    await persist()
+    runPersist(persist)
   }
 
   /** 勾选/取消勾选完成状态（首次完成记录 doneAt 供复盘统计） */
-  const toggleDone = async (id: string) => {
+  const toggleDone = (id: string): void => {
     const todo = todos.value.find((t) => t.id === id)
     if (!todo) return
     todo.done = !todo.done
     todo.doneAt = todo.done ? Date.now() : null
     todo.updatedAt = Date.now()
-    await persist()
+    runPersist(persist)
   }
 
   /** 一键顺延到明天（累计顺延次数） */
-  const rolloverToTomorrow = async (id: string) => {
+  const rolloverToTomorrow = (id: string): void => {
     const todo = todos.value.find((t) => t.id === id)
     if (!todo) return
     const tomorrow = new Date()
@@ -130,13 +171,13 @@ export function useTodoList(storage: QuickNoteStorage) {
     todo.dueDate = toDateStr(tomorrow)
     todo.rolloverCount += 1
     todo.updatedAt = Date.now()
-    await persist()
+    runPersist(persist)
   }
 
   /** 删除待办 */
-  const remove = async (id: string) => {
+  const remove = (id: string): void => {
     todos.value = todos.value.filter((t) => t.id !== id)
-    await persist()
+    runPersist(persist)
   }
 
   /** 是否已逾期：未完成且截止日期严格早于今天 */

@@ -16,7 +16,7 @@
 - 完成任务打勾标记，已完成任务灰显删除线
 - 过期未做任务整行标红，提供「一键顺延到明天」按钮（累计顺延次数）
 - 未来任务按日期分组（今天/明天/本周/更远）
-- 昨天未完成任务启动时自动顺延到今天（每日一次，`lastRolloverDate` 防重复）
+- 昨天未完成任务启动时自动顺延到今天（面板常驻跨天时同样触发，`lastRolloverDate` 防重复）
 
 > **注意**：每日自动顺延会把逾期项的截止日期改写为今天，因此**次日打开时该任务通常已不再标红**（仅保留「已顺延 N」计数）。
 > 逾期红字与「顺延到明天」按钮只在守卫窗口内可见：即当天已过期、但尚未被自动顺延的任务（同一会话内跨天亦可触发，见下）。
@@ -57,9 +57,9 @@ quickNote/
 ├── index.vue                   # 弹窗主面板壳层（TodayFocus 聚焦区 + 四大 Tab 导航 + 缩放把手 + 状态同步 + composable 编排）
 ├── pointerSession.ts           # 指针会话底座（pointerId 过滤 / pointercancel / 失焦 / buttons===0 兜底与幂等清理）
 ├── layout.ts                   # 布局应用层（状态 → 遮罩 flex / 容器绝对定位 / 尺寸与视口钳制）
-├── pureUtils.ts                # 无依赖纯函数（日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日顺延 / 面板几何约束），可直接单测
-├── pureUtils.spec.ts           # 上述纯函数的单元测试（45 例）
-├── utils.ts                    # generateId / createPersistLock 串行锁 / polishText 润色回填辅助
+├── pureUtils.ts                # 无依赖纯函数（日期换算 / 周界计算 / 标签拆分 / 逾期判定 / 每日顺延 / 数据裁剪 / 面板几何约束），可直接单测
+├── pureUtils.spec.ts           # 上述纯函数的单元测试（含 pruneAppData 裁剪用例）
+├── utils.ts                    # generateId / createPersistGuard 写盘失败提示 / polishText 润色回填辅助
 ├── components/
 │   ├── today/TodayFocus.vue    # 「今天要处理的」今日到期/逾期任务 + 卡住项目标红列表
 │   ├── todo/TodoTab.vue        # 待办 Tab（表单 + 分组列表 + 已完成列表，持有编辑中状态）
@@ -71,20 +71,20 @@ quickNote/
 │   ├── project/ProjectTab.vue  # 项目 Tab（表单 + 卡片列表，持有编辑中状态）
 │   ├── project/ProjectItem.vue # 项目卡片（状态徽章/进度条/关联待办折叠）
 │   ├── project/ProjectForm.vue # 项目新增/编辑表单
-│   ├── review/ReviewTab.vue    # 复盘 Tab（透传 useWeeklyReview 周切换派生数据）
-│   └── review/WeeklyReview.vue # 每周复盘（周切换头 + 统计卡片行 + 环形图 + 条形图 + 卡点清单）
+│   └── review/WeeklyReview.vue # 每周复盘（周切换头 + 统计卡片行 + 环形图 + 条形图 + 卡点清单，index.vue 直接渲染）
 ├── composables/
 │   ├── useAiPolish.ts          # AI 润色：并发锁 + API Key 校验 + callAISmart 流式 + 错误码（**仅在 index.vue 实例化一次**）
-│   ├── useTodoList.ts          # 待办 CRUD + 每日自动顺延 + 逾期检测 + 日期分组 + 日期基准校准
-│   ├── useInspirations.ts      # 灵感 CRUD + 标签筛选
-│   ├── useProjects.ts          # 项目 CRUD + 关联待办进度计算 + 卡住筛选（todosRef 构造参数注入）
-│   └── useWeeklyReview.ts      # 复盘周切换纯派生（weekOffset 回溯任意周统计 + 卡点汇总）
+│   ├── useTodoList.ts          # 待办 CRUD + 每日自动顺延 + 逾期检测 + 日期分组 + 日期基准校准（导出 TodoListApi 类型）
+│   ├── useInspirations.ts      # 灵感 CRUD + 标签筛选（导出 InspirationsApi 类型）
+│   ├── useProjects.ts          # 项目 CRUD + 关联待办进度计算 + 卡住筛选（todosRef 构造参数注入，导出 ProjectsApi 类型）
+│   ├── useWeeklyReview.ts      # 复盘周切换纯派生（weekOffset 回溯任意周统计 + 卡点汇总，导出 ReviewApi 类型）
+│   └── useConfirmDialog.ts     # 删除二次确认弹窗受控状态（index.vue 单实例持有，经 props 下传各 Tab）
 ├── types/
 │   ├── index.ts                # 类型入口（re-export position + data + events，外部导入路径不变）
 │   ├── position.ts             # 弹窗位置/尺寸设置类型 + 位置 → 对齐 / 收起图标映射表
 │   ├── events.ts               # 面板交互事件名常量（遮罩收起 / 状态回放）
-│   ├── data.ts                 # 待办/灵感/项目数据模型 + 优先级/状态元数据映射表
-│   └── storage.ts              # QuickNoteStorage（data + settings 两个槽位）
+│   ├── data.ts                 # 待办/灵感/项目数据模型 + 进度类型 + 优先级/状态元数据映射表
+│   └── storage.ts              # QuickNoteStorage（data + settings 两槽 + 统一数据槽串行写锁 mutate / 单次加载 loadAll）
 └── styles/
     ├── index.scss              # 仅共享 %占位类（icon-btn/primary-btn/cancel-btn/helper-text/empty-state），零 CSS
     ├── panel.scss              # 面板壳 + Tab 导航（仅 index.vue 引用）
@@ -116,13 +116,25 @@ index.vue  useAiPolish(plugin)  →  { polishing, polish }
 `new Date()`），并导出 `refreshNow()` 校准。这是因为弹窗为 persistent Modal 常驻不销毁，
 而 `computed` 只在依赖的响应式数据变化时重算——若不加校准，面板跨过午夜后分组与逾期状态会停留在前一天。
 
-当前校准时机：`load()` 与切入「待办」Tab 时。`useWeeklyReview` 用同样的 `refreshNow()` 模式处理周界。
+当前校准时机：`load()`、切入「待办」Tab 时，以及日期变化时（`refreshNow()` 检测到跨天会补执行一次自动顺延）。`useWeeklyReview` 用同样的 `refreshNow()` 模式处理周界。
 
 ## 数据模型与自动顺延
 
 统一存储槽 `quick-note-data`（`AppData`）包含 `todos` / `inspirations` / `projects` 三个数组与 `lastRolloverDate`。
 
-自动顺延在 `useTodoList.load()` 中执行：读取 `lastRolloverDate` 与今天对比，非今天则将已逾期未完成任务顺延到今天并累计 `rolloverCount`，更新 `lastRolloverDate` 后持久化，保证每天首次打开弹窗时自动顺延一次。
+**并发写（串行锁）**：三个 composable 共享 `QuickNoteStorage` 的实例级写队列，所有变更都经
+`mutate(current => payload)` 在锁内「读最新 → 合并 → 写回」，避免跨模块交错写用旧快照覆盖彼此的数组；
+`save` 返回失败会抛出异常，由 `createPersistGuard` 统一 console.error + 顶部提示。
+
+**单次加载**：面板挂载时 `storage.loadAll()` 只读一次统一数据槽（并顺带执行增长裁剪），快照分发给三个
+composable；`loaded` 未就绪前聚焦区与 Tab 内容不渲染，杜绝加载期交互被旧快照覆盖。
+
+**自动顺延**：`useTodoList.load()` 读取 `lastRolloverDate` 与今天对比，非今天则将已逾期未完成任务顺延到今天并累计
+`rolloverCount`，更新 `lastRolloverDate` 后持久化。面板是 persistent Modal 常驻不销毁，因此 `refreshNow()`
+在日期变化时（切 Tab / 面板重开）也会补执行一次顺延，保证「每日一次」在跨天后仍然生效。
+
+**增长裁剪**（`pruneAppData`，`loadAll` 时执行）：已完成待办保留 63 天（覆盖复盘 7 周回溯 + 环比前一周窗口）、
+灵感上限 500 条、项目上限 200 条（裁剪时进行中优先，被裁项目的待办 `projectId` 自动置空）。无变更时不写盘。
 
 ## 位置、尺寸与拖拽机制
 
@@ -191,7 +203,7 @@ statusBar「速记恢复」抽屉条目 → emitCustomEvent("resetQuickNote")
 
 | 键 | 内容 |
 |------|------|
-| `quick-note-data` | 统一数据（`AppData`：待办/灵感/项目/顺延记录） |
+| `quick-note-data` | 统一数据（`AppData`：待办/灵感/项目/顺延记录）；增长型槽：已完成待办保留 63 天、灵感上限 500、项目上限 200（`loadAll` 时裁剪） |
 | `quick-note-settings` | 功能设置（`{ position, customX, customY, minimized, panelWidth, panelHeight }`，对象浅合并兜底未来字段；`panelHeight: 0` 表示按视口 70% 派生） |
 
 > 注：重构后数据从 `quick-note-items` 升级为 `quick-note-data`（结构完全不同），旧数据不做迁移。

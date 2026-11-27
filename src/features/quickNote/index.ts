@@ -64,6 +64,8 @@ export class QuickNoteManager {
   private interactionResetTimer: TimerHandle | null = null
   /** 最小化/展开尺寸过渡的收尾定时器句柄 */
   private toggleAnimationTimer: TimerHandle | null = null
+  /** 是否已销毁（防止异步初始化/外部调度在 destroy 后再操作 Modal） */
+  private destroyed = false
 
   constructor(plugin: Plugin) {
     this.storage = new QuickNoteStorage(plugin)
@@ -109,6 +111,7 @@ export class QuickNoteManager {
 
   /** 切换弹窗显隐（状态栏按钮/功能抽屉入口） */
   toggle(): void {
+    if (this.destroyed) return
     if (this.modal.visible) {
       this.close()
     } else {
@@ -117,6 +120,7 @@ export class QuickNoteManager {
   }
 
   open(): void {
+    if (this.destroyed) return
     // persistent 模式首次 open 才创建遮罩 DOM，布局必须在 open 之后应用
     this.modal.open()
     this.applyLayout()
@@ -406,8 +410,15 @@ export class QuickNoteManager {
     })
   }
 
+  /** 是否已销毁（供注册链异步初始化回调做迟到守卫） */
+  isDestroyed(): boolean {
+    return this.destroyed
+  }
+
   /** 彻底销毁（persistent Modal 必须 destroy 而非 close，否则残留 DOM） */
   destroy(): void {
+    if (this.destroyed) return
+    this.destroyed = true
     // 兜底清理拖拽/缩放会话（含 resize cursor）、尺寸过渡、复位定时器、视口监听与注入样式
     this.endSessions()
     this.stopToggleAnimation()
@@ -435,6 +446,8 @@ function toFiniteNumber(value: unknown, fallback: number): number {
 export function registerQuickNote(plugin: Plugin): void {
   const manager = new QuickNoteManager(plugin)
   manager.init().then(async () => {
+    // 快速禁用/重载插件时 destroy 可能已执行，避免再打开已销毁的 Modal
+    if (manager.isDestroyed()) return
     // 速记子开关「启动时自动打开」：init 完成后再 open，保证持久化位置缓存已加载。
     // 开关值必须经 loadEnableFlag 读权威持久化配置（plugin-settings 文件），不能读启动期
     // plugin.settings 快照 —— 该快照来自 loadFeatureFlagsSync() 的 localStorage 降级缓存，
@@ -442,6 +455,7 @@ export function registerQuickNote(plugin: Plugin): void {
     // 表现为「程序初次启动不出最小化小图标、刷新后才出现」（刷新同源后缓存已写入）
     const snapshot = Boolean((plugin as any).settings?.enableQuickNoteAutoOpen)
     if (await loadEnableFlag(plugin, "enableQuickNoteAutoOpen", snapshot)) {
+      if (manager.isDestroyed()) return
       manager.open()
     }
   }).catch((err) => {

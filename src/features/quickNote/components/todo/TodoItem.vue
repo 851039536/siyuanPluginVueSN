@@ -6,10 +6,10 @@
       'qn-todo-item--overdue': overdue,
     }"
   >
-    <!-- 优先级色条（逾期变红，完成置灰） -->
+    <!-- 优先级色条（逾期统一用「紧急」红，完成置灰） -->
     <span
       class="qn-todo-item__bar"
-      :style="{ background: overdue ? '#ef4444' : priorityMeta.color }"
+      :style="{ background: overdue ? PRIORITY_META.urgent.color : priorityMeta.color }"
     />
 
     <!-- 完成勾选框（悬浮提示："标记完成"/"标记待完成"） -->

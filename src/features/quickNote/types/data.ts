@@ -67,6 +67,12 @@ export interface ProjectItem {
   updatedAt: number
 }
 
+/** 项目关联待办完成进度（已完成数 / 总数），useProjects 计算与 ProjectItem 展示共用 */
+export interface ProjectProgress {
+  done: number
+  total: number
+}
+
 /** 统一存储对象（key: "quick-note-data"），四大模块共享一个 TypedStorage 槽 */
 export interface AppData {
   /** 待办列表 */
@@ -106,7 +112,10 @@ export const TODO_PRIORITIES: TodoPriority[] = ["urgent", "high", "medium", "low
 /** 项目状态选项列表（表单 Select 与元数据映射共用的单一数据源） */
 export const PROJECT_STATUSES: ProjectStatus[] = ["active", "completed", "blocked"]
 
-/** 优先级元数据（排序权重 + 标签文案 i18n 键 + 语义色 CSS 变量） */
+/**
+ * 优先级元数据（排序权重 + 标签文案 i18n 键 + 语义色）
+ * 色值为十六进制常量：同时供 Chart.js canvas（不解析 CSS 变量）与行内样式使用
+ */
 export const PRIORITY_META: Record<
   TodoPriority,
   { rank: number, labelKey: string, color: string }
@@ -133,7 +142,7 @@ export const PRIORITY_META: Record<
   },
 }
 
-/** 项目状态元数据（标签文案 i18n 键 + 语义色 CSS 变量） */
+/** 项目状态元数据（标签文案 i18n 键 + 语义色，色值约束同 PRIORITY_META） */
 export const STATUS_META: Record<
   ProjectStatus,
   { labelKey: string, color: string }

@@ -353,6 +353,25 @@
   gap: $s-px2;
 }
 
+// 思源 3.8.x 起标题区无右侧图标容器：按钮挂在 .protyle-title 上并绝对定位到右上侧，
+// 常态半透明、标题悬停提亮、按钮自身悬停完全不透明（与左侧文档图标同一种交互口径）
+.page-lock-button--floating {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  margin: 0;
+  transform: translateY(-50%);
+  opacity: 0.35;
+}
+
+.protyle-title:hover > .page-lock-button--floating {
+  opacity: 0.85;
+}
+
+.protyle-title:hover > .page-lock-button--floating:hover {
+  opacity: 1;
+}
+
 @media (max-width: 480px) {
   .page-lock-mask__content {
     gap: $s-5;

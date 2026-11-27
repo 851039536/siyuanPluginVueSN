@@ -100,10 +100,11 @@ export async function updatePageLockButton(plugin: Plugin, protyle: ProtyleLike)
   if (titleIconsRight) {
     titleIconsRight.insertBefore(lockButton, titleIconsRight.firstChild)
   } else if (protyleTitle) {
-    const iconsRight = document.createElement("div")
-    iconsRight.className = "protyle-title__icons protyle-title__icons--right"
-    iconsRight.appendChild(lockButton)
-    protyleTitle.appendChild(iconsRight)
+    // 思源 3.8.x 起标题区已无 .protyle-title__icons--right（只剩左侧 .protyle-title__icon
+    // 与标题输入框），直接挂到标题容器并加浮动修饰类，由样式绝对定位到右上侧，
+    // 避免在正常流中把标题撑开、把下方属性区推走
+    lockButton.classList.add("page-lock-button--floating")
+    protyleTitle.appendChild(lockButton)
   }
 }
 

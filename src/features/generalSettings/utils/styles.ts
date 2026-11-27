@@ -15,7 +15,7 @@ import {
   removeStyle,
 } from "@/utils/domUtils"
 import { emitCustomEvent } from "@/utils/eventBus"
-import { DEFAULT_TABPIN_SETTINGS } from "../types/storage"
+import { LEGACY_TABPIN_DEFAULT_BACKGROUND } from "../types/storage"
 
 export const CODEBLOCK_STYLES = [
   "default",
@@ -764,6 +764,12 @@ export const TAB_PIN_MODE_META: TabPinModeMeta[] = [
   { mode: "textOnly", iconKey: "format", labelKey: "textOnly" },
 ]
 
+/** 归一钉住页签背景：空值与旧版无效默认表达式都视为「无自定义背景」 */
+export function normalizeTabPinBackground(value?: string): string {
+  const trimmed = value?.trim() || ""
+  return trimmed === LEGACY_TABPIN_DEFAULT_BACKGROUND ? "" : trimmed
+}
+
 export function generateTabPinCSS(settings: TabPinSettings): string {
   let css = `
     .layout-tab-bar .item.item--pin .item__text {
@@ -782,9 +788,10 @@ export function generateTabPinCSS(settings: TabPinSettings): string {
     `
   }
 
+  const background = normalizeTabPinBackground(settings.backgroundColor)
   css += `
     .layout-tab-bar .item.item--pin {
-      ${settings.backgroundColor !== DEFAULT_TABPIN_SETTINGS.backgroundColor ? `background: ${settings.backgroundColor} !important;` : ""}
+      ${background ? `background: ${background} !important;` : ""}
     }
   `
 

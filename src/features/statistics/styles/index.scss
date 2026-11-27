@@ -132,13 +132,6 @@ $color-rank-bronze: #cd7f32;
   @include card-hover-border;
 }
 
-// Note: backdrop-filter triggers compositing layer; use sparingly on static elements only
-@mixin stats-glass-effect {
-  background: rgba(var(--b3-theme-surface-rgb), 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
 @mixin summary-cards-base {
   .summary-cards {
     display: grid;

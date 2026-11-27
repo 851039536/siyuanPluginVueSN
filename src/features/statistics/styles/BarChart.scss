@@ -64,8 +64,6 @@
         &.today {
           background: var(--b3-theme-secondary);
           border: 1.5px solid var(--b3-theme-primary);
-          outline: 2px solid rgba(var(--b3-theme-secondary-rgb), 0.2);
-          outline-offset: 1px;
         }
       }
 

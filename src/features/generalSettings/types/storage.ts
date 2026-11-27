@@ -266,11 +266,17 @@ export const DEFAULT_HIGHLIGHT_SETTINGS: HighlightSettings = {
   pronunciationSource: "webSpeech",
 }
 
-/** 默认钉住页签设置 */
+/**
+ * 旧版钉住页签默认背景：--b3-theme-primary-rgb 并非思源提供的变量，该表达式恒无效。
+ * 仅用于识别历史存量值，读取时归一为空串（跟随思源默认页签背景）。
+ */
+export const LEGACY_TABPIN_DEFAULT_BACKGROUND = "rgba(var(--b3-theme-primary-rgb), 0.1)"
+
+/** 默认钉住页签设置（backgroundColor 为空串表示不注入自定义背景） */
 export const DEFAULT_TABPIN_SETTINGS: TabPinSettings = {
   enabled: true,
   displayMode: "iconAndText",
-  backgroundColor: "rgba(var(--b3-theme-primary-rgb), 0.1)",
+  backgroundColor: "",
 }
 
 /** 默认表格样式设置 */

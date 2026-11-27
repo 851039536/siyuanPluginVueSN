@@ -86,11 +86,11 @@
           </div>
           <div class="color-input-group">
             <!-- 颜色字段：共享 ColorField（原生 input[type=color] 在 Electron 下不弹窗）。
-                 draft 承接逐字输入（仅改内存），change 才提交到 backgroundColor ⇒ 避免逐字保存与样式注入 -->
+                 draft 承接逐字输入（仅改内存），change 才提交到 backgroundColor ⇒ 避免逐字保存与样式注入；
+                 空值表示不注入自定义背景（跟随思源默认页签背景） -->
             <ColorField
               class="tab-pin-color-field"
               :model-value="colorDraft"
-              :placeholder="defaultBackgroundColor"
               @update:model-value="colorDraft = $event"
               @change="commitColor"
             />
@@ -183,7 +183,10 @@ import {
   GeneralSettingsStorage,
 
 } from "@/features/generalSettings/types/storage"
-import { TAB_PIN_MODE_META } from "@/features/generalSettings/utils/styles"
+import {
+  normalizeTabPinBackground,
+  TAB_PIN_MODE_META,
+} from "@/features/generalSettings/utils/styles"
 
 interface Props {
   i18n?: any
@@ -204,9 +207,8 @@ const emit = defineEmits<Emits>()
 // 默认背景色统一引用存储层默认值，避免多处重复定义
 const defaultBackgroundColor = DEFAULT_TABPIN_SETTINGS.backgroundColor
 
-// 预设色板（首项为默认主题色；其余为低透明度柔和色，适配明暗主题）
+// 预设色板：低透明度柔和色，适配明暗主题（默认值为空 = 不注入背景，故不占色板项）
 const PRESET_COLORS: string[] = [
-  defaultBackgroundColor,
   "rgba(250, 200, 60, 0.18)",
   "rgba(80, 200, 120, 0.18)",
   "rgba(240, 100, 130, 0.18)",
@@ -214,9 +216,10 @@ const PRESET_COLORS: string[] = [
   "rgba(60, 160, 240, 0.18)",
 ]
 
-// 将颜色值归一化为 ColorField 可展示的 6 位 hex；非 hex 值（默认值形如 rgba(var(--b3-theme-primary-rgb), 0.1)）
-// 回退黑色仅作展示，真实值仍以 backgroundColor 为准
+// 将颜色值归一化为 ColorField 可展示的 6 位 hex；空值保持为空（无自定义背景），
+// 其余非 hex 表达式回退黑色仅作展示，真实值仍以 backgroundColor 为准
 function toPickerHex(value: string): string {
+  if (!value) return ""
   if (/^#[0-9a-f]{6}$/i.test(value)) return value
   if (/^#[0-9a-f]{3}$/i.test(value)) {
     return `#${value.slice(1).split("").map((c) => c + c).join("")}`
@@ -227,7 +230,7 @@ function toPickerHex(value: string): string {
 /** 颜色草稿：ColorField 的 update:modelValue 逐字触发（仅改本地草稿），change 才提交，避免逐字写盘 */
 const colorDraft = ref(toPickerHex(defaultBackgroundColor))
 
-/** 提交草稿：空值不覆盖，合法值与默认表达式均落库 */
+/** 提交草稿：空值不覆盖（还原为当前颜色），其余按用户输入落库 */
 function commitColor() {
   const next = colorDraft.value.trim()
   if (!next) {
@@ -295,7 +298,7 @@ async function loadSettings() {
 
     enabled.value = settings.enabled ?? DEFAULT_TABPIN_SETTINGS.enabled
     displayMode.value = settings.displayMode || DEFAULT_TABPIN_SETTINGS.displayMode
-    backgroundColor.value = settings.backgroundColor || defaultBackgroundColor
+    backgroundColor.value = normalizeTabPinBackground(settings.backgroundColor)
   } catch (error) {
     console.error("加载钉住页签设置失败:", error)
   }

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useOpPipeline } from "./useOpPipeline"
 import { GLOBAL_PIPELINE_SCOPE } from "../types/pipeline"
-import { ANALYSIS_STAGE_PLAN, COMMIT_STAGE_PLAN, FETCH_STAGE_PLAN, PUSH_STAGE_PLAN, REPORT_STAGE_PLAN, STATS_STAGE_PLAN } from "../utils/opPipeline"
+import { ANALYSIS_STAGE_PLAN, COMMIT_STAGE_PLAN, FETCH_STAGE_PLAN, PUSH_STAGE_PLAN, QUICK_COMMIT_STAGE_PLAN, REPORT_STAGE_PLAN, STASH_DROP_STAGE_PLAN, STASH_STAGE_PLAN, STATS_STAGE_PLAN } from "../utils/opPipeline"
 import { failureKey } from "../utils/pipelineGraph"
 
 describe("useOpPipeline", () => {
@@ -301,5 +301,71 @@ describe("useOpPipeline", () => {
       "commit",
       "fetch",
     ])
+  })
+
+  it("同 op 不同计划各建一条 lane，不把两条流程拼在一起", async () => {
+    const pipeline = useOpPipeline()
+    const save = pipeline.runLocalPipeline("p1", "stash", "保存", STASH_STAGE_PLAN, async (step) => {
+      step.step("stashExec")
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+    })
+    const drop = pipeline.runLocalPipeline("p1", "stash", "删除", STASH_DROP_STAGE_PLAN, async (step) => {
+      step.step("stashDrop")
+      await new Promise<void>((resolve) => setTimeout(resolve, 300))
+    })
+
+    const lanes = pipeline.opPipelines.value.p1 ?? []
+    expect(lanes).toHaveLength(2)
+    expect(lanes.map((lane) => lane.stages[0]?.key).sort()).toEqual(["stashDrop", "stashExec"])
+
+    await vi.advanceTimersByTimeAsync(300)
+    await Promise.all([save, drop])
+  })
+
+  it("嵌套的短计划复用同一条 lane（quickCommit → commit）", async () => {
+    const pipeline = useOpPipeline()
+    const run = pipeline.runLocalPipeline("p1", "commit", "一键提交", QUICK_COMMIT_STAGE_PLAN, async (step) => {
+      step.step("stageAll")
+      step.step("generateMsg")
+      step.step("commitWrite")
+      await pipeline.runLocalPipeline("p1", "commit", "提交", COMMIT_STAGE_PLAN, async (inner) => {
+        inner.step("commitWrite")
+      })
+      const lanes = pipeline.opPipelines.value.p1 ?? []
+      expect(lanes).toHaveLength(1)
+      expect(lanes[0]?.stages.map((stage) => stage.key)).toEqual([
+        "stageAll", "generateMsg", "commitWrite", "refreshState",
+      ])
+      step.step("refreshState")
+    })
+    await run
+  })
+
+  it("删除项目清理该作用域的失败记录，不影响其他项目", () => {
+    const pipeline = useOpPipeline()
+    const p1Batch = pipeline.beginRemote("p1", "push", [{ key: "github", label: "GitHub" }], PUSH_STAGE_PLAN)
+    vi.advanceTimersByTime(100)
+    pipeline.finishRemote("p1", p1Batch, { github: "fail" }, { github: "p1 boom" })
+    const p2Batch = pipeline.beginRemote("p2", "push", [{ key: "github", label: "GitHub" }], PUSH_STAGE_PLAN)
+    vi.advanceTimersByTime(100)
+    pipeline.finishRemote("p2", p2Batch, { github: "fail" }, { github: "p2 boom" })
+
+    expect(pipeline.lastFailures.value[failureKey("push", "p1")]?.detail).toBe("p1 boom")
+    pipeline.clearProject("p1")
+    expect(pipeline.lastFailures.value[failureKey("push", "p1")]).toBeUndefined()
+    expect(pipeline.lastFailures.value[failureKey("push", "p2")]?.detail).toBe("p2 boom")
+  })
+
+  it("失败文本中的 URL 凭据在入库前脱敏", () => {
+    const pipeline = useOpPipeline()
+    const batch = pipeline.beginRemote("p1", "push", [{ key: "github", label: "GitHub" }], PUSH_STAGE_PLAN)
+    pipeline.finishRemote(
+      "p1",
+      batch,
+      { github: "fail" },
+      { github: "fatal: unable to access 'https://user:token@github.com/a.git/'" },
+    )
+    expect(pipeline.lastFailures.value[failureKey("push", "p1")]?.detail)
+      .toBe("fatal: unable to access 'https://***@github.com/a.git/'")
   })
 })

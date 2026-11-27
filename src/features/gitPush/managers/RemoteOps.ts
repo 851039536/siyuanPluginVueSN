@@ -12,6 +12,7 @@ import type { ProjectStore } from "./ProjectStore"
 import type { ProjectWriteLock } from "./ProjectWriteLock"
 import type { RemoteOpOptions, RemoteProgressEvent } from "../types/pipeline"
 import { createGitProgressParser } from "../utils/gitProgress"
+import { redactUrlCredentials } from "../utils/redact"
 // 直连纯模块而非 "../utils" 桶：桶会转出依赖运行时 "siyuan" 的模块，
 // 使 RemoteOps 无法在 Node 单测环境加载（fetchBehind.git.spec.ts 需要真实实例）
 import { getProjectRemoteName, getProjectRemoteNames, hasUnpushedCommits, mayAttemptPush, orderRemotesForPullCheck } from "../utils/platform"
@@ -95,10 +96,12 @@ function createRemoteProgressSink(
   const emit = (event: Omit<RemoteProgressEvent, "target">) => onProgress({ target, ...event })
   const consume = (events: ReturnType<typeof parsers.stderr.push>) => {
     for (const line of events) {
+      // 远端 URL 可能带凭据（https://user:token@host），进入任何 UI 文本前先脱敏
+      const detail = redactUrlCredentials(line.detail)
       if (line.stage) {
-        emit({ kind: "stage", stage: line.stage, percent: line.percent, detail: line.detail })
+        emit({ kind: "stage", stage: line.stage, percent: line.percent, detail })
       } else {
-        emit({ kind: "detail", detail: line.detail })
+        emit({ kind: "detail", detail })
       }
     }
   }

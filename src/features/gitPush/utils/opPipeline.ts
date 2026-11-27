@@ -115,8 +115,8 @@ export const REPO_SCAN_STAGE_PLAN: readonly PipelineStageKey[] = [
   "prepare", "repoPackScan", "repoObjectScan", "repoPathScan", "repoAnchorScan",
 ]
 
-/** Tag 推送：网络写操作（完成后由调用方刷新/提示） */
-export const TAG_PUSH_STAGE_PLAN: readonly PipelineStageKey[] = ["prepare", "tagPushExec"]
+/** Tag 推送：网络写操作（无本地准备步骤，不造合成阶段；完成后由调用方刷新/提示） */
+export const TAG_PUSH_STAGE_PLAN: readonly PipelineStageKey[] = ["tagPushExec"]
 
 /**
  * 全部阶段计划登记表（关系图的唯一数据来源）。

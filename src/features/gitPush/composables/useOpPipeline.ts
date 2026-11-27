@@ -28,6 +28,7 @@ import {
   PIPELINE_STALLED_MS,
 } from "../utils/opPipeline"
 import { failureKey, historyKeyForLane } from "../utils/pipelineGraph"
+import { redactUrlCredentials } from "../utils/redact"
 
 /** 本地流水线步进器：只允许推进真实 await 步骤 */
 export interface LocalPipelineStepper {
@@ -161,7 +162,7 @@ export function useOpPipeline() {
     if (lane.status !== "fail") return
     const failedStage = [...lane.stages].reverse().find((stage) => stage.status === "fail")
     const fallbackDetail = [...lane.stages].reverse().find((stage) => stage.detail)?.detail
-    const text = (detail ?? "").trim() || fallbackDetail?.trim() || ""
+    const text = redactUrlCredentials((detail ?? "").trim() || fallbackDetail?.trim() || "")
     if (!text) return
     const key = failureKey(historyKeyForLane(lane), scope)
     lastFailures.value = capTimedRecord(
@@ -215,10 +216,31 @@ export function useOpPipeline() {
     return opPipelines.value[projectId]?.find((lane) => lane.id === laneId)
   }
 
-  /** 当前活跃的同 op 本地 lane（终态 / 不同 op 都不复用） */
-  function findActiveLocalLane(projectId: string, op: PipelineOp): OpPipelineLane | undefined {
+  /**
+   * 新计划能否并入已有 lane：阶段必须按序全部出现（子序列）。
+   * 嵌套调用（quickCommit → commit）满足；同 op 的独立操作（stash 保存 → 删除）不满足，
+   * 否则会把不同计划的阶段拼成一条并不存在的流程。
+   */
+  function planFitsLane(lane: OpPipelineLane, plan: readonly PipelineStageKey[]): boolean {
+    let cursor = 0
+    for (const stage of lane.stages) {
+      if (stage.key === plan[cursor]) cursor++
+      if (cursor === plan.length) return true
+    }
+    return plan.length === 0
+  }
+
+  /** 当前活跃且计划兼容的本地 lane（终态 / 不同 op / 不同计划都不复用） */
+  function findActiveLocalLane(
+    projectId: string,
+    op: PipelineOp,
+    plan: readonly PipelineStageKey[],
+  ): OpPipelineLane | undefined {
     return opPipelines.value[projectId]?.find(
-      (lane) => lane.key === "local" && lane.op === op && !isLaneTerminal(lane.status),
+      (lane) => lane.key === "local"
+        && lane.op === op
+        && !isLaneTerminal(lane.status)
+        && planFitsLane(lane, plan),
     )
   }
 
@@ -353,7 +375,7 @@ export function useOpPipeline() {
 
   /**
    * 包装一次本地写操作，按真实 await 步骤推进。
-   * 嵌套调用复用同一条 lane，只有最外层结束时才收敛。
+   * 嵌套调用复用同一条 lane（新计划须是已有阶段的子序列），只有最外层结束时才收敛。
    */
   async function runLocalPipeline<T>(
     projectId: string,
@@ -370,7 +392,7 @@ export function useOpPipeline() {
       }
     }
 
-    const active = findActiveLocalLane(projectId, op)
+    const active = findActiveLocalLane(projectId, op, plan)
     let laneId: string
     if (active) {
       laneId = active.id
@@ -480,11 +502,17 @@ export function useOpPipeline() {
     return runLocalPipeline(GLOBAL_PIPELINE_SCOPE, op, label, plan, fn)
   }
 
-  /** 删除项目时清理全部关联流水线 */
+  /** 删除项目时清理全部关联流水线（含该项目的失败记录） */
   function clearProject(projectId: string) {
     for (const lane of opPipelines.value[projectId] ?? []) {
       clearLaneTimers(lane.id)
       localDepth.delete(lane.id)
+    }
+    const suffix = `::${projectId}`
+    const remainingFailures = Object.entries(lastFailures.value)
+      .filter(([key]) => !key.endsWith(suffix))
+    if (remainingFailures.length !== Object.keys(lastFailures.value).length) {
+      lastFailures.value = Object.fromEntries(remainingFailures)
     }
     if (!(projectId in opPipelines.value)) return
     const next = { ...opPipelines.value }

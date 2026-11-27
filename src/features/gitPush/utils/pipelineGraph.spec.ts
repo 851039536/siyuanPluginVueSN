@@ -82,9 +82,9 @@ describe("pipelineGraph", () => {
   it("共享阶段合并为同一节点，并保留全部经过入口", () => {
     const prepare = PIPELINE_GRAPH_LAYOUT.nodeByKey.get("prepare")
     expect(prepare).toBeTruthy()
-    // 9 个入口共用 prepare，但分析/行数统计共用同一计划，签名去重后为 8 条计划
-    expect(prepare!.entries).toHaveLength(9)
-    expect(new Set(prepare!.entries.map((id) => entryById(id).signature)).size).toBe(8)
+    // 8 个入口共用 prepare；分析/行数统计共用同一计划，签名去重后为 7 条计划
+    expect(prepare!.entries).toHaveLength(8)
+    expect(new Set(prepare!.entries.map((id) => entryById(id).signature)).size).toBe(7)
 
     expect(PIPELINE_GRAPH_LAYOUT.nodeByKey.get("refreshState")?.entries)
       .toEqual(["commit", "quickCommit", "stash", "stashDrop", "switch"])

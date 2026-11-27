@@ -247,7 +247,6 @@ export function useGitHandlers(deps: {
     }
     try {
       await runLocalPipeline(id, "tagPush", tf("pipelineTagPush"), TAG_PUSH_STAGE_PLAN, async (stepper) => {
-        stepper.step("prepare")
         stepper.step("tagPushExec")
         // allSettled 汇总全部失败远程：Promise.all 会 fast-fail，多远程部分成功时只报第一个错
         const results = await Promise.allSettled(remoteNames.map((name) => pushTagOp(id, name, tag)))

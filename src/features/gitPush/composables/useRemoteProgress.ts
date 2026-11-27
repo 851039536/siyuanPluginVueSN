@@ -5,6 +5,7 @@ import type { PipelineOp, PipelineStageKey, RemoteOpOptions } from "../types/pip
 import { ref } from "vue"
 import { PLATFORM_META } from "../types"
 import { findProject, platformLabel, pruneRecordCache, resolveValidPath, opSummary } from "../utils"
+import { redactUrlCredentials } from "../utils/redact"
 import type { OpPipelineBridge, RemoteLaneStatus } from "./useOpPipeline"
 import { PULL_STAGE_PLAN, PUSH_STAGE_PLAN, SMART_PULL_STAGE_PLAN } from "../utils/opPipeline"
 
@@ -62,10 +63,10 @@ export function useRemoteProgress(
           action,
           ok: r.ok ?? false,
           i18n: opts.i18n,
-          raw: r.ok ? r.stdout : r.stderr,
+          raw: redactUrlCredentials(r.ok ? r.stdout : r.stderr),
         }),
-        fullStdout: r.stdout ?? "",
-        fullStderr: r.stderr ?? "",
+        fullStdout: redactUrlCredentials(r.stdout ?? ""),
+        fullStderr: redactUrlCredentials(r.stderr ?? ""),
       })
     }
     if (usedPath) {
@@ -106,6 +107,34 @@ export function useRemoteProgress(
   function nextOpSeq(id: string): number {
     opSeq[id] = (opSeq[id] ?? 0) + 1
     return opSeq[id]
+  }
+
+  /** 进行中的远程批次：取消时立即收敛 lane 与进度，不必等写锁释放或子进程 settle */
+  const activeBatches = new Map<string, { batchId: string, keys: string[] }>()
+  const batchKey = (action: "push" | "pull", id: string) => `${action}:${id}`
+
+  /**
+   * 立即把该项目该操作的 lane / 进度标为 canceled。
+   * 排队等锁期间 cancelOp 只能 abort，真正的结果要等锁释放后才返回；
+   * 这里先收敛 UI，稍后执行层返回的 canceled 结果再走一次 finishRemote 是 no-op。
+   */
+  function settleCanceled(action: "push" | "pull", id: string) {
+    const key = batchKey(action, id)
+    const active = activeBatches.get(key)
+    if (!active) return
+    activeBatches.delete(key)
+    const progressRef = action === "push" ? pushProgress : pullProgress
+    const current = progressRef.value[id]
+    if (current) {
+      const next = { ...current }
+      for (const target of active.keys) {
+        if (next[target] === "pushing" || next[target] === "pending") next[target] = "canceled"
+      }
+      progressRef.value = { ...progressRef.value, [id]: next }
+    }
+    const statuses: Record<string, RemoteLaneStatus> = {}
+    for (const target of active.keys) statuses[target] = "canceled"
+    opts.pipeline.finishRemote(id, active.batchId, statuses)
   }
 
   /** 3s 后清理进度显示（仅当期间无新操作时执行） */
@@ -172,6 +201,8 @@ export function useRemoteProgress(
         .map((pm) => ({ key: pm.key, label: platformLabel(pm.key) }))
       : []
     const batchId = opts.pipeline.beginRemote(id, action, laneTargets, stagePlan)
+    const activeKey = batchKey(action, id)
+    activeBatches.set(activeKey, { batchId, keys: Object.keys(initProg) })
 
     try {
       const totalStart = Date.now()
@@ -205,10 +236,11 @@ export function useRemoteProgress(
         const r = result[key] as any
         laneStatuses[key] = r?.skipped ? "skipped" : r?.canceled ? "canceled" : r?.ok ? "done" : "fail"
         if (laneStatuses[key] === "fail") {
-          laneMessages[key] = String(r?.stderr || r?.stdout || "").trim()
+          laneMessages[key] = redactUrlCredentials(String(r?.stderr || r?.stdout || "").trim())
         }
       }
       opts.pipeline.finishRemote(id, batchId, laneStatuses, laneMessages)
+      activeBatches.delete(activeKey)
 
       // 执行层已回传各远程真实耗时；这里的总时长仅作兜底（避免旧调用方缺字段时显示 0）
       const sharedDurations: Record<string, number> = {}
@@ -222,7 +254,7 @@ export function useRemoteProgress(
       const failProg: Record<string, ProgressStatus> = {}
       const failLanes: Record<string, RemoteLaneStatus> = {}
       const failMessages: Record<string, string> = {}
-      const errText = String((e as any)?.message || e)
+      const errText = redactUrlCredentials(String((e as any)?.message || e))
       for (const key of Object.keys(initProg)) {
         failProg[key] = "fail"
         failLanes[key] = "fail"
@@ -230,8 +262,10 @@ export function useRemoteProgress(
       }
       progressRef.value = { ...progressRef.value, [id]: failProg }
       opts.pipeline.finishRemote(id, batchId, failLanes, failMessages)
+      activeBatches.delete(activeKey)
       return { success: false }
     } finally {
+      activeBatches.delete(activeKey)
       scheduleProgressCleanup(progressRef, id, seq)
     }
   }
@@ -260,6 +294,8 @@ export function useRemoteProgress(
       [{ key: target, label: platformLabel(target) }],
       stagePlan,
     )
+    const activeKey = batchKey(action, id)
+    activeBatches.set(activeKey, { batchId, keys: [target] })
     progressRef.value = {
       ...progressRef.value,
       [id]: { ...progressRef.value[id], [target]: "pushing" },
@@ -281,9 +317,10 @@ export function useRemoteProgress(
         batchId,
         { [target]: singleStatus },
         singleStatus === "fail"
-          ? { [target]: String(result.stderr || result.stdout || "").trim() }
+          ? { [target]: redactUrlCredentials(String(result.stderr || result.stdout || "").trim()) }
           : undefined,
       )
+      activeBatches.delete(activeKey)
 
       const entries: PushOutputEntry[] = [{
         platform: target,
@@ -296,10 +333,10 @@ export function useRemoteProgress(
           action: action as GitOpAction,
           ok: result.ok,
           i18n: opts.i18n,
-          raw: result.ok ? result.stdout : result.stderr,
+          raw: redactUrlCredentials(result.ok ? result.stdout : result.stderr),
         }),
-        fullStdout: result.stdout,
-        fullStderr: result.stderr,
+        fullStdout: redactUrlCredentials(result.stdout),
+        fullStderr: redactUrlCredentials(result.stderr),
       }]
       mergeOutputEntry(outputsRef, id, entries[0])
       pruneRecordCache(outputsRef.value)
@@ -311,8 +348,9 @@ export function useRemoteProgress(
         ...progressRef.value,
         [id]: { ...progressRef.value[id], [target]: "fail" },
       }
-      const errMsg = String(e?.message || e)
+      const errMsg = redactUrlCredentials(String(e?.message || e))
       opts.pipeline.finishRemote(id, batchId, { [target]: "fail" }, { [target]: errMsg })
+      activeBatches.delete(activeKey)
       mergeOutputEntry(outputsRef, id, {
         platform: target,
         label: platformLabel(target),
@@ -328,6 +366,7 @@ export function useRemoteProgress(
       // 与 remoteOpAll 策略统一：不重抛（调用方为模板事件处理器，无 catch），返回结构化错误
       return { ok: false, stdout: "", stderr: errMsg }
     } finally {
+      activeBatches.delete(activeKey)
       scheduleProgressCleanup(progressRef, id, seq)
     }
   }
@@ -351,7 +390,7 @@ export function useRemoteProgress(
     return isOpInProgress(pushProgress, projectId, target)
   }
 
-  function getPushStatus(projectId: string, target: PlatformKey): ProgressStatus {
+  function getPushStatus(projectId: string, target: string): ProgressStatus {
     return pushProgress.value[projectId]?.[target] ?? "pending"
   }
 
@@ -400,8 +439,15 @@ export function useRemoteProgress(
     )
   }
 
-  function cancelPush(id: string) { manager.cancelOp(id, "push") }
-  function cancelPull(id: string) { manager.cancelOp(id, "pull") }
+  function cancelPush(id: string) {
+    manager.cancelOp(id, "push")
+    settleCanceled("push", id)
+  }
+
+  function cancelPull(id: string) {
+    manager.cancelOp(id, "pull")
+    settleCanceled("pull", id)
+  }
 
   /**
    * 清除指定项目某一操作的结果输出（推送/拉取面板的关闭按钮）。
@@ -433,6 +479,8 @@ export function useRemoteProgress(
       }
     }
     delete opSeq[id]
+    activeBatches.delete(batchKey("push", id))
+    activeBatches.delete(batchKey("pull", id))
   }
 
   return {

@@ -9,6 +9,7 @@ import type { SizeUnit } from "./utils"
 import {
   buildSearchQuery,
   parseEverythingDate,
+  sortEverythingItems,
 } from "./utils"
 
 /** 排序字段（单一定义，SearchOptions 经派生复用，避免联合类型重复声明） */
@@ -57,6 +58,14 @@ export interface EverythingConfig {
 /** 请求超时：探活短、搜索长（Everything 对大结果集做全量排序时耗时明显） */
 const SERVICE_PROBE_TIMEOUT_MS = 3000
 const SEARCH_TIMEOUT_MS = 10000
+
+/**
+ * 会话级标记：探测到当前 Everything 的 HTTP 服务对非 name 排序返回空结果时置位。
+ * 置位后后续搜索直接跳过 sort/ascending 参数（单次请求完成），不再逐次探测；
+ * sort=name 服务端始终可用，不受影响。页面刷新 / 插件重载即重置。
+ * 实测 Everything 1.4.1.1032 存在此缺陷（官方文档宣称支持 sort=path/size/date_modified，实际仅 name 可用）。
+ */
+let sortServerUnsupported = false
 
 /**
  * 检查Everything HTTP服务是否可用
@@ -175,9 +184,12 @@ export async function searchFiles(
     date_modified_column: "1",
   })
 
-  // 排序参数（TypeScript 确保 sort 仅可能为有效值）
-  params.append("sort", sort)
-  params.append("ascending", ascending ? "1" : "0")
+  // 排序参数（TypeScript 确保 sort 仅可能为有效值）；探测到服务端排序缺陷后跳过非 name 排序
+  const skipServerSort = sortServerUnsupported && sort !== "name"
+  if (!skipServerSort) {
+    params.append("sort", sort)
+    params.append("ascending", ascending ? "1" : "0")
+  }
 
   // 搜索选项
   if (matchCase) params.append("case", "1")
@@ -198,7 +210,55 @@ export async function searchFiles(
       throw new Error(`HTTP错误: ${response.status}`)
     }
 
-    return parseSearchResponse(await response.json())
+    type RawResponse = { results?: RawEverythingItem[], totalResults?: number } | null
+    const data: RawResponse = await response.json()
+    let rawItems = data?.results ?? []
+
+    /**
+     * 返回的是完整结果集（totalResults ≤ 本次请求的 count）时，客户端按用户选择的
+     * 排序重排，弥补服务端排序缺失；分页截断的局部切片无法还原全局顺序，保持原顺序。
+     */
+    const applyClientSort = (source: RawResponse, items: RawEverythingItem[]) => {
+      const total = source?.totalResults
+      if (typeof total !== "number" || !Number.isFinite(total) || total > maxResults) return items
+      return sortEverythingItems(items, sort, ascending)
+    }
+
+    if (!skipServerSort && sort !== "name" && rawItems.length === 0) {
+      // 首次探测：部分 Everything 版本（实测 1.4.1.1032）的 HTTP 服务对 sort=path/size/date_modified
+      // 异常返回空结果（官方文档宣称支持，仅 sort=name 可用），导致搜索永远"无结果"。
+      // 去掉排序参数按服务端默认排序重试一次；重试有结果则记录缺陷，后续搜索不再下发排序。
+      console.warn(
+        `[everythingSearch] sort=${sort} 返回空结果，疑似当前 Everything 版本 HTTP 服务不支持该排序，已降级为默认排序重试`,
+      )
+      params.delete("sort")
+      params.delete("ascending")
+      try {
+        const fallback = await fetch(
+          `http://${config.host}:${config.port}/?${params.toString()}`,
+          {
+            method: "GET",
+            signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
+          },
+        )
+        if (fallback.ok) {
+          const fallbackData: RawResponse = await fallback.json()
+          const fallbackItems = fallbackData?.results ?? []
+          if (fallbackItems.length > 0) {
+            sortServerUnsupported = true
+            rawItems = applyClientSort(fallbackData, fallbackItems)
+          }
+        }
+      } catch (fallbackError) {
+        // 降级重试失败不影响首次请求的结果（保持空结果原样返回）
+        console.warn("[everythingSearch] 降级重试失败:", fallbackError)
+      }
+    } else if (skipServerSort) {
+      // 已探测到缺陷：本次请求未下发排序，完整结果集时客户端按用户选择重排
+      rawItems = applyClientSort(data, rawItems)
+    }
+
+    return parseSearchResponse({ results: rawItems })
   } catch (error) {
     console.error("Everything搜索失败:", error)
     throw error

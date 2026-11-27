@@ -8,6 +8,7 @@ import {
   normalizeWinPath,
   parseEverythingDate,
   sizeSeverity,
+  sortEverythingItems,
   summarizeSize,
 } from "./utils"
 import {
@@ -208,5 +209,47 @@ describe("sizeSeverity（用量配色分档）", () => {
     expect(sizeSeverity(0.79)).toBe("warning")
     expect(sizeSeverity(0.8)).toBe("danger")
     expect(sizeSeverity(Number.NaN)).toBe("primary")
+  })
+})
+
+describe("sortEverythingItems（服务端排序缺陷时的客户端重排）", () => {
+  const items = [
+    { name: "b.md", path: "E:\\a\\b.md", size: 20, date_modified: 1704067200000 },
+    { name: "A.md", path: "E:\\z\\a.md", size: 10, date_modified: 133485408000000000 },
+    { name: "c.md", path: "E:\\a\\c.md", size: undefined, date_modified: "not-a-date" },
+  ]
+
+  it("按名称排序：大小写不敏感 + 数字感知逻辑序", () => {
+    expect(sortEverythingItems(items, "name", true).map(i => i.name)).toEqual(["A.md", "b.md", "c.md"])
+    expect(sortEverythingItems(items, "name", false).map(i => i.name)).toEqual(["c.md", "b.md", "A.md"])
+  })
+
+  it("按路径排序", () => {
+    expect(sortEverythingItems(items, "path", true).map(i => i.name)).toEqual(["b.md", "c.md", "A.md"])
+  })
+
+  it("按大小排序：缺失尺寸按 0 计，升序时排最前", () => {
+    expect(sortEverythingItems(items, "size", true).map(i => i.name)).toEqual(["c.md", "A.md", "b.md"])
+    expect(sortEverythingItems(items, "size", false).map(i => i.name)).toEqual(["b.md", "A.md", "c.md"])
+  })
+
+  it("按修改时间排序：FILETIME 与毫秒混用统一换算，不可解析按最旧", () => {
+    // A.md=2024-01-01（FILETIME）、b.md=2024-01-01（毫秒，同一时刻）、c.md=不可解析（按最旧计）
+    const desc = sortEverythingItems(items, "date_modified", false).map(i => i.name)
+    expect(desc.at(-1)).toBe("c.md")
+    const asc = sortEverythingItems(items, "date_modified", true).map(i => i.name)
+    expect(asc[0]).toBe("c.md")
+  })
+
+  it("不修改入参数组，返回新数组", () => {
+    const original = [{ name: "b" }, { name: "a" }]
+    const sorted = sortEverythingItems(original, "name", true)
+    expect(original.map(i => i.name)).toEqual(["b", "a"])
+    expect(sorted).not.toBe(original)
+  })
+
+  it("空数组与空字段安全", () => {
+    expect(sortEverythingItems([], "size", false)).toEqual([])
+    expect(sortEverythingItems([{}, {}], "path", true)).toEqual([{}, {}])
   })
 })

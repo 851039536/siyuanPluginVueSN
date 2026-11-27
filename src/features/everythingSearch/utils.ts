@@ -276,3 +276,47 @@ export function flattenCacheEntries(result: CacheScanResult | null): CacheEntry[
   for (const root of result.roots) entries.push(...root.entries)
   return entries.sort((a, b) => b.size - a.size)
 }
+
+/** 客户端排序可处理的原始结果条目（与 api.ts 的 RawEverythingItem 结构兼容） */
+export interface SortableEverythingItem {
+  name?: string
+  path?: string
+  size?: number
+  date_modified?: number | string
+}
+
+/** 排序字段取值（与 api.ts 的 EverythingSortField 同值，独立声明避免 utils ↔ api 反向依赖） */
+export type EverythingSortFieldValue = "name" | "path" | "size" | "date_modified"
+
+/**
+ * 客户端排序原始结果条目。
+ *
+ * 仅应在「返回的是完整结果集」（totalResults ≤ 本次请求的 count）时调用——
+ * 分页截断的局部切片无法通过重排还原全局顺序。name/path 用数字感知的
+ * localeCompare 贴近 Everything 的大小写不敏感逻辑序；size 非法按 0；
+ * date_modified 不可解析按最旧处理。不修改入参，返回新数组。
+ */
+export function sortEverythingItems<T extends SortableEverythingItem>(
+  items: readonly T[],
+  sort: EverythingSortFieldValue,
+  ascending: boolean,
+): T[] {
+  const direction = ascending ? 1 : -1
+  return [...items].sort((a, b) => {
+    let cmp: number
+    if (sort === "size") {
+      const sa = typeof a.size === "number" && Number.isFinite(a.size) ? a.size : 0
+      const sb = typeof b.size === "number" && Number.isFinite(b.size) ? b.size : 0
+      cmp = sa - sb
+    } else if (sort === "date_modified") {
+      const da = parseEverythingDate(a.date_modified) ?? 0
+      const db = parseEverythingDate(b.date_modified) ?? 0
+      cmp = da - db
+    } else {
+      const va = (sort === "path" ? a.path : a.name) ?? ""
+      const vb = (sort === "path" ? b.path : b.name) ?? ""
+      cmp = va.localeCompare(vb, undefined, { numeric: true, sensitivity: "base" })
+    }
+    return cmp * direction
+  })
+}

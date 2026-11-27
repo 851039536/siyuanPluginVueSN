@@ -25,6 +25,20 @@ import {
 /** 书签查询行数上限（防御性上限，避免异常数据导致内存膨胀） */
 const BOOKMARK_QUERY_LIMIT = 999999
 
+/**
+ * 文件树内文档行选择器。
+ * 思源 3.8.x 起文档树为虚拟滚动扁平结构，文档行带 data-tree-key 与 data-node-id；
+ * 旧版按笔记本分 ul[data-url] 的结构保留为回退分支。
+ */
+const FILE_TREE_DOC_ROW_SELECTOR = [
+  '.sy__file li[data-type="navigation-file"][data-node-id]',
+  '[data-type="sidebar-file"] li[data-type="navigation-file"][data-node-id]',
+  'ul[data-url] li[data-node-id]:not([data-type="navigation-root"])',
+].join(", ")
+
+/** 文件树行挂载判定（新结构行带 data-tree-key，旧结构行带 data-node-id） */
+const FILE_TREE_ROW_SELECTOR = "li[data-tree-key], li[data-node-id]"
+
 export class BookmarkMarker {
   private readonly timers = new TimerRegistry()
   private updateTimer: TimerHandle | null = null
@@ -33,12 +47,10 @@ export class BookmarkMarker {
   private styleAdded = false
   private fileTreeObserver: MutationObserver | null = null
   private protyleObserver: MutationObserver | null = null
-  private debounceTimer: TimerHandle | null = null
   private protyleDebounceTimer: TimerHandle | null = null
   private protyleRetryCount = 0
   private protyleRetryTimer: TimerHandle | null = null
-  private fileTreeRetryCount = 0
-  private fileTreeRetryTimer: TimerHandle | null = null
+  private applyFrame = 0
   private bookmarkCache = new Map<string, string>()
   private cacheLoaded = false
 
@@ -145,7 +157,7 @@ export class BookmarkMarker {
 
   private applyMarkersToDOM(): void {
     this.applyMarkersFor(
-      'ul[data-url] li[data-node-id]:not([data-type="navigation-root"])',
+      FILE_TREE_DOC_ROW_SELECTOR,
       (el, name, rule) => this.applyMarkerToItem(el, name, rule),
       (el) => this.removeMarkerFromItem(el),
     )
@@ -268,68 +280,46 @@ export class BookmarkMarker {
   // MutationObserver — 文件树
   // ============================================================
 
+  /**
+   * 监听 body 而非单个容器：虚拟滚动列表会随滚动持续挂载/卸载行，
+   * 思源也可能重建文件树容器；按行选择器过滤后只对命中变更做一次 rAF 应用
+   */
   private startObserving(): void {
     if (this.fileTreeObserver) return
-
-    const target = this.findFileTreeContainer()
-    if (!target) {
-      // 文件树尚未渲染：有界轮询（每 2 秒一次，上限 15 次）
-      this.startFileTreeRetry()
-      return
-    }
-    this.attachObserver(target)
-  }
-
-  private startFileTreeRetry(): void {
-    if (this.fileTreeRetryTimer) return
-    this.fileTreeRetryCount = 0
-    this.fileTreeRetryTimer = this.timers.setInterval(() => {
-      if (!this.active) {
-        this.stopFileTreeRetry()
-        return
-      }
-      this.fileTreeRetryCount++
-      const el = this.findFileTreeContainer()
-      if (el) {
-        this.stopFileTreeRetry()
-        this.attachObserver(el)
-        this.applyMarkersToDOM()
-        return
-      }
-      if (this.fileTreeRetryCount >= 15) this.stopFileTreeRetry()
-    }, 2000)
-  }
-
-  private stopFileTreeRetry(): void {
-    this.timers.clear(this.fileTreeRetryTimer)
-    this.fileTreeRetryTimer = null
-    this.fileTreeRetryCount = 0
-  }
-
-  private attachObserver(target: Element): void {
-    if (this.fileTreeObserver) return
     this.fileTreeObserver = new MutationObserver((mutations) => {
-      const relevant = mutations.some((m) => {
-        if (m.type !== "childList" || !m.addedNodes.length) return false
-        return Array.from(m.addedNodes).some(
-          (n) => n instanceof HTMLElement && (n.matches("li[data-node-id]") || n.querySelector("li[data-node-id]") || n.matches("ul[data-url]")),
-        )
-      })
-      if (relevant) this.debounce(() => this.applyMarkersToDOM(), "debounceTimer")
+      if (!this.active) return
+      const relevant = mutations.some(
+        (m) =>
+          m.type === "childList"
+          && [...m.addedNodes, ...m.removedNodes].some((n) => this.isFileTreeRowNode(n)),
+      )
+      if (relevant) this.scheduleFileTreeApply()
     })
-
-    this.fileTreeObserver.observe(target, {
+    this.fileTreeObserver.observe(document.body, {
       childList: true,
       subtree: true,
     })
   }
 
-  private findFileTreeContainer(): Element | null {
-    return document.querySelector(".file-tree")
-      ?? document.querySelector("ul[data-url]")?.parentElement?.parentElement
-      ?? document.querySelector("#fileTree")
-      ?? document.querySelector(".layout__file")
-      ?? null
+  /**
+   * 命中文件树行变更：行挂载（虚拟滚动）或行内注入内容被重渲染冲掉
+   */
+  private isFileTreeRowNode(node: Node): boolean {
+    if (!(node instanceof Element)) return false
+    return (
+      node.classList.contains(BOOKMARK_MARKER_CLASS)
+      || node.matches(FILE_TREE_ROW_SELECTOR)
+      || node.querySelector(FILE_TREE_ROW_SELECTOR) !== null
+    )
+  }
+
+  private scheduleFileTreeApply(): void {
+    if (this.applyFrame) return
+    this.applyFrame = requestAnimationFrame(() => {
+      this.applyFrame = 0
+      if (!this.active) return
+      this.applyMarkersToDOM()
+    })
   }
 
   // ============================================================
@@ -350,7 +340,7 @@ export class BookmarkMarker {
           && m.attributeName === "data-node-id"
           && (m.target as HTMLElement).matches(".protyle-title")
       })
-      if (hasNew) this.debounce(() => this.applyMarkersToProtyle(), "protyleDebounceTimer")
+      if (hasNew) this.debounceProtyle(() => this.applyMarkersToProtyle())
     })
 
     this.protyleObserver.observe(document.body, {
@@ -368,31 +358,33 @@ export class BookmarkMarker {
   private stopObserving(): void {
     this.fileTreeObserver?.disconnect()
     this.fileTreeObserver = null
-    this.stopFileTreeRetry()
-    this.clearDebounce("debounceTimer")
+    if (this.applyFrame) {
+      cancelAnimationFrame(this.applyFrame)
+      this.applyFrame = 0
+    }
   }
 
   private stopObservingProtyle(): void {
     this.protyleObserver?.disconnect()
     this.protyleObserver = null
-    this.clearDebounce("protyleDebounceTimer")
+    this.clearProtyleDebounce()
   }
 
   // ============================================================
   // 防抖 & 轮询
   // ============================================================
 
-  private debounce(fn: () => void, timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
-    this.timers.clear(this[timerKey])
-    this[timerKey] = this.timers.setTimeout(() => {
+  private debounceProtyle(fn: () => void): void {
+    this.timers.clear(this.protyleDebounceTimer)
+    this.protyleDebounceTimer = this.timers.setTimeout(() => {
       if (!this.active) return
       fn()
     }, 300)
   }
 
-  private clearDebounce(timerKey: "debounceTimer" | "protyleDebounceTimer"): void {
-    this.timers.clear(this[timerKey])
-    this[timerKey] = null
+  private clearProtyleDebounce(): void {
+    this.timers.clear(this.protyleDebounceTimer)
+    this.protyleDebounceTimer = null
   }
 
   private startProtyleRetry(): void {

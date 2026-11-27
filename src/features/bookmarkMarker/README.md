@@ -9,6 +9,7 @@
 - 书签名支持多标签输入（回车或逗号快捷添加、空输入退格删末项），内置预设 emoji 字形
 - 文字色/背景色用自绘调色板取色（思源 Electron 下原生 `input[type=color]` 不弹窗）
 - 周期性自动刷新书签数据，MutationObserver 监听文件树与 protyle 变更
+- 兼容思源 3.8.x 虚拟滚动文档树：行随滚动挂载/卸载、重渲染会冲掉注入内容，监听 body 后按行选择器过滤并以 rAF 合并补标（旧版 `ul[data-url]` 结构保留为回退）
 
 ## 容错与健壮性
 
@@ -84,7 +85,7 @@ bookmarkMarker/
 pnpm lint            # ESLint 代码规范
 pnpm i18n:verify     # 中英文键对齐
 pnpm validate:icons  # 图标注册有效性
-npx tsc --noEmit     # TypeScript 类型检查
+pnpm typecheck       # TypeScript 类型检查（vue-tsc --noEmit，勿用 npx tsc）
 ```
 
 人工回归要点见 `docs/completed/bookmark-marker-component-audit.md` 的「验收清单」。

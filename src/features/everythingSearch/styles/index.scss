@@ -32,7 +32,7 @@
 }
 
 // ========== 进出场过渡（fade + 轻微 scale，0.12s 对齐 Codex 规范） ==========
-// 由 index.vue 的 <Transition name="vp-dialog-fade"> 接线（Lead 负责模板侧）
+// 由 index.vue 的 <Transition name="vp-dialog-fade"> 接线
 .vp-dialog-fade-enter-active,
 .vp-dialog-fade-leave-active {
   transition: opacity 0.12s ease;

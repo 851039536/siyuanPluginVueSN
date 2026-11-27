@@ -87,9 +87,9 @@
         @click.stop="handleCopyPath"
       />
       <!-- 操作按钮提示："删除"（危险操作：`variant="danger"` 按既有语义即描边红；
-           不叠 severity + ghost —— severity 颜色族块在源码中先于外观修饰，叠加时需再补 outlined 才不至于变实底，类名越少越稳） -->
+           不再叠 severity + ghost —— severity 颜色族块在源码中先于外观修饰，叠加时需再补 outlined 才不至于变实底） -->
       <Button
-        class="vp-result-item__action vp-result-item__action--delete"
+        class="vp-result-item__action"
         variant="danger"
         size="xsmall"
         dense

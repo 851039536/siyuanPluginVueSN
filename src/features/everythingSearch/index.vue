@@ -104,6 +104,7 @@
 import type { PanelTab, PanelTabItem } from "./components/PanelTabs.vue"
 import type {
   EverythingConfig,
+  EverythingSearchResult,
   SearchOptions as SearchOptionsType,
 } from "./types"
 import { getFrontend } from "siyuan"
@@ -246,7 +247,7 @@ const handleClear = () => {
 }
 
 /** 删除结果条目（守卫与提示都在 useResultActions 内） */
-const handleItemDelete = (item: Parameters<typeof deleteResultItem>[0]) => {
+const handleItemDelete = (item: EverythingSearchResult) => {
   void deleteResultItem(item)
 }
 

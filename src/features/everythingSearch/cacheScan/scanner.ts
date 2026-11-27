@@ -76,47 +76,7 @@ export async function scanCacheRoots(options: ScanCacheOptions = {}): Promise<Ca
     options.onProgress?.({ done, total, current: def.id })
 
     const paths = resolvedRoots.filter(root => root.def.id === def.id).map(root => root.path)
-    if (paths.length === 0) {
-      logWarn(`根目录不存在，跳过：${def.id}`)
-      results.push(emptyRootResult(def.id, "", "missing"))
-      done++
-      options.onProgress?.({ done, total, current: def.id })
-      continue
-    }
-
-    // 同一 def 可能解析出多个目录（如浏览器多厂商）：逐个扫，再合并裁剪
-    const merged: CacheRootScanResult = emptyRootResult(def.id, paths[0], "")
-
-    for (const rootPath of paths) {
-      if (isAborted(signal)) break
-      const part = scanSingleRoot(rootPath, def.id, maxEntries, minAgeMs, signal)
-      // 合计不在此累加：多候选合并后要按「裁剪后实际保留的条目」重算，见下方统一重算
-      merged.entries.push(...part.entries)
-      if (part.truncated) merged.truncated = true
-      if (part.message) merged.message = part.message
-      logInfo(`根目录扫描完成：${def.id}`, {
-        path: rootPath,
-        entries: part.entries.length,
-        bytes: part.size,
-        truncated: part.truncated,
-        message: part.message || undefined,
-      })
-      // 让出事件循环：单根扫描可能包含上万次同步 IO
-      await yieldToEventLoop()
-      if (isAborted(signal)) break
-    }
-
-    merged.entries.sort((a, b) => b.size - a.size)
-    if (merged.entries.length > maxEntries) {
-      merged.entries.length = maxEntries
-      merged.truncated = true
-    }
-    // 条目被截断后，合计按实际保留的条目重算，避免「面板合计」与「可清理项」不一致
-    const mergedSummary = summarizeSize(merged.entries)
-    merged.size = mergedSummary.size
-    merged.files = mergedSummary.files
-
-    results.push(merged)
+    results.push(await scanRootDefinition(def, paths, maxEntries, minAgeMs, signal))
     done++
     options.onProgress?.({ done, total, current: def.id })
   }
@@ -141,6 +101,59 @@ export async function scanCacheRoots(options: ScanCacheOptions = {}): Promise<Ca
     elapsed,
     cancelled,
   }
+}
+
+/**
+ * 扫描单个根定义：同一分类可能解析出多个候选目录（如浏览器多厂商），逐个扫描后合并。
+ *
+ * 合并后按体积排序并裁到 `maxEntries`，再以**实际保留的条目**重算合计 ——
+ * 否则「面板合计」与「可清理项」会不一致。
+ *
+ * @returns 根部结果；无已解析路径时返回 `missing` 空结果（不抛错）
+ */
+async function scanRootDefinition(
+  def: CacheRootDef,
+  paths: string[],
+  maxEntries: number,
+  minAgeMs: number,
+  signal: AbortSignal | undefined,
+): Promise<CacheRootScanResult> {
+  if (paths.length === 0) {
+    logWarn(`根目录不存在，跳过：${def.id}`)
+    return emptyRootResult(def.id, "", "missing")
+  }
+
+  const merged = emptyRootResult(def.id, paths[0], "")
+
+  for (const rootPath of paths) {
+    if (isAborted(signal)) break
+    const part = scanSingleRoot(rootPath, def.id, maxEntries, minAgeMs, signal)
+    // 合计不在此累加：多候选合并后要按「裁剪后实际保留的条目」重算，见下方统一重算
+    merged.entries.push(...part.entries)
+    if (part.truncated) merged.truncated = true
+    if (part.message) merged.message = part.message
+    logInfo(`根目录扫描完成：${def.id}`, {
+      path: rootPath,
+      entries: part.entries.length,
+      bytes: part.size,
+      truncated: part.truncated,
+      message: part.message || undefined,
+    })
+    // 让出事件循环：单根扫描可能包含上万次同步 IO
+    await yieldToEventLoop()
+    if (isAborted(signal)) break
+  }
+
+  merged.entries.sort((a, b) => b.size - a.size)
+  if (merged.entries.length > maxEntries) {
+    merged.entries.length = maxEntries
+    merged.truncated = true
+  }
+  const mergedSummary = summarizeSize(merged.entries)
+  merged.size = mergedSummary.size
+  merged.files = mergedSummary.files
+
+  return merged
 }
 
 /** 空的单根结果（`missing` / `pending` / `denied` 等场景共用，避免四处重复字面量） */

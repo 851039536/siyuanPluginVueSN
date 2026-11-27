@@ -109,7 +109,7 @@
     opacity: 1;
   }
 
-  // 共享 Button 的 hover 用交互底色；此处统一提示为中性色，删除按钮保留 danger 色（由 severity 提供）
+  // 共享 Button 的 hover 用交互底色；此处统一提示为中性色，删除按钮的红色由 variant="danger" 提供
   &__action {
     flex-shrink: 0;
   }

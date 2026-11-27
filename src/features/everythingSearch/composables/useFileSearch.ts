@@ -27,6 +27,7 @@ import {
   getFullPath,
   hasPathFilter,
   isProtectedPath,
+  readErrorMessage,
 } from "../utils"
 
 /** 空文件夹搜索结果里需要隐藏的系统路径（防止用户误删系统目录） */
@@ -94,6 +95,9 @@ export function useFileSearch(deps: UseFileSearchDeps) {
 
     try {
       const results = await searchFiles({
+        // 选项字段与 API 参数同构（SearchOptions 派生自 EverythingSearchOptions），
+        // 仅 query 需由纯函数组装；展开避免了逐字段搬运
+        ...options,
         query: buildSearchQuery({
           query: keyword,
           emptyFolders: forceEmpty,
@@ -106,13 +110,7 @@ export function useFileSearch(deps: UseFileSearchDeps) {
           excludePathsEnabled: options.excludePathsEnabled,
           excludePaths: options.excludePaths,
         }),
-        matchCase: options.matchCase,
-        matchWholeWord: options.matchWholeWord,
-        matchPath: options.matchPath,
-        regex: options.regex,
-        maxResults: options.maxResults,
-        sort: options.sort,
-        ascending: options.ascending,
+        emptyFolders: forceEmpty,
       }, config)
 
       if (seq !== searchSeq) return
@@ -121,7 +119,12 @@ export function useFileSearch(deps: UseFileSearchDeps) {
       state.status = state.results.length === 0 ? "empty" : "success"
     } catch (error) {
       if (seq !== searchSeq) return
-      state.errorMessage = (error as Error).message || i18n.value.searchFailed
+      // 错误文案统一「翻译前缀 + 具体原因」：原因可能来自网络层（如 Failed to fetch），
+      // 不能整句硬编码，否则英文界面会显示中文
+      const detail = readErrorMessage(error)
+      state.errorMessage = detail
+        ? `${i18n.value.searchFailed}: ${detail}`
+        : i18n.value.searchFailed
       state.status = "error"
       state.results = []
     }
@@ -177,11 +180,9 @@ export function useFileSearch(deps: UseFileSearchDeps) {
     pathFilterActive,
     checkService,
     search: run,
-    scheduleSearch,
     clear,
     refreshIfActive,
     removeResult,
-    resetState,
     dispose,
   }
 }

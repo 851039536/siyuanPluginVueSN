@@ -26,9 +26,10 @@
 
 **默认保守取向**：回收站模式 + 跳过 5 分钟内改动过的文件 + 条目上限 3000 + 浏览器缓存/安装包缓存默认不勾 + 仅手动触发扫描。
 
-**诊断日志**：扫描/清理全链路的日志统一带 `[cacheClean]` 前缀，在 DevTools 控制台按该前缀过滤即可定位问题。
-`info` 只打生命周期里程碑（开始 / 每根完成 / 汇总 / 首次成功的回收站通道），`warn` 打单条目失败（守卫拒绝、删除失败、根目录缺失），
-逐条目成功不打日志（单次可达 3000 条）。实现见 `cacheScan/log.ts`。
+**诊断日志**：由 `log.ts` 的 `createLogger()` 统一构造（省略 `detail` 时不会在控制台留下孤立的 `undefined`），按前缀过滤即可定位问题：
+
+- `[everythingSearch]`（`log.ts`，`log` 单例）：搜索请求 / 页签与浮动窗口 / 配置与清理历史的存取。
+- `[cacheClean]`（`cacheScan/log.ts`）：缓存扫描与清理全链路。分级约定：`info` 只打生命周期里程碑（开始 / 每根完成 / 汇总 / 首次成功的回收站通道），`warn` 打单条目失败（守卫拒绝、删除失败、根目录缺失），逐条目成功不打日志（单次可达 3000 条）。
 
 ## 目录结构
 
@@ -36,8 +37,10 @@
 src/features/everythingSearch/
 ├── index.ts          # 注册函数 + 全局可见性 + Manager 挂载
 ├── index.vue         # 主面板（overlay 弹窗 / tab 独立页签双形态 + 双 Tab）
-├── api.ts            # Everything HTTP 服务封装（仅 IO）
-├── utils.ts          # 纯函数层（表达式组装 / 路径防护 / 时间解析 / 体积聚合）
+├── api.ts            # Everything HTTP 服务封装（仅 IO：参数组装 → 请求 → 排序降级）
+├── utils.ts          # 纯函数层（表达式组装 / 路径防护 / 时间解析 / 体积聚合 / 占位符填充）
+├── shellChannels.ts  # Electron 回收站通道（单条删除与批量清理共用，绝不降级为脚本删除）
+├── log.ts            # 分级日志器 createLogger() + 功能级 [everythingSearch] 日志
 ├── utils.spec.ts     # 上述纯函数的单测
 ├── icons.ts          # 扩展名 → IconKey 映射
 ├── types/

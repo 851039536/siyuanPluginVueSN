@@ -2,6 +2,8 @@
 import type {
   CacheEntry,
   CacheRootDef,
+  CacheRootScanResult,
+  CacheScanResult,
   ResolvedCacheRoot,
 } from "../types"
 import {
@@ -24,10 +26,6 @@ import {
   expect,
   it,
 } from "vitest"
-import type {
-  CacheRootScanResult,
-  CacheScanResult,
-} from "../types"
 import { flattenCacheEntries } from "../utils"
 import { cleanCacheEntries, isAllowedCachePath } from "./cleaner"
 import { DEFAULT_MAX_ENTRIES, scanCacheRoots } from "./scanner"

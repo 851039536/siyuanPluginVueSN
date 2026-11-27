@@ -34,20 +34,20 @@
       class="cc-entries__list"
     >
       <li
-        v-for="entry in entries"
-        :key="entry.path"
+        v-for="row in rows"
+        :key="row.path"
         class="cc-entries__row"
-        :class="{ 'cc-entries__row--picked': isSelected(entry.path) }"
+        :class="{ 'cc-entries__row--picked': isSelected(row.path) }"
       >
         <Checkbox
           size="small"
-          :model-value="isSelected(entry.path)"
-          :aria-label="entry.name"
-          @update:model-value="emit('toggle-entry', entry.path, $event === true)"
+          :model-value="isSelected(row.path)"
+          :aria-label="row.name"
+          @update:model-value="emit('toggle-entry', row.path, $event === true)"
         />
 
         <IconWrapper
-          :name="entry.isDirectory ? 'folder' : 'fileOutline'"
+          :name="row.isDirectory ? 'folder' : 'fileOutline'"
           :size="12"
           class="cc-entries__icon"
         />
@@ -55,20 +55,20 @@
         <div class="cc-entries__main">
           <div
             class="cc-entries__name"
-            :title="entry.name"
-          >{{ entry.name }}</div>
+            :title="row.name"
+          >{{ row.name }}</div>
           <div
             class="cc-entries__path"
-            :title="entry.path"
-          >{{ entry.path }}</div>
+            :title="row.path"
+          >{{ row.path }}</div>
         </div>
 
         <div class="cc-entries__meta">
-          <div class="cc-entries__size">{{ formatSize(entry.size) }}</div>
+          <div class="cc-entries__size">{{ row.sizeText }}</div>
           <div
-            v-if="formatModifiedTime(entry.modifiedTime)"
+            v-if="row.timeText"
             class="cc-entries__time"
-          >{{ formatModifiedTime(entry.modifiedTime) }}</div>
+          >{{ row.timeText }}</div>
         </div>
 
         <Button
@@ -77,7 +77,7 @@
           dense
           icon="folderOpen"
           :title="i18n.cacheOpenFolder"
-          @click="emit('open', entry.path)"
+          @click="emit('open', row.path)"
         />
       </li>
     </ul>
@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import type { CacheEntry } from "../../types"
+import { computed } from "vue"
 import Button from "@/components/Button.vue"
 import Checkbox from "@/components/Checkbox.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
@@ -114,6 +115,18 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+/** 渲染行：体积/时间格式化随条目变化一次完成（模板逐行调用会在每次点选时重复格式化全量条目） */
+interface EntryRow extends CacheEntry {
+  sizeText: string
+  timeText: string
+}
+
+const rows = computed<EntryRow[]>(() => props.entries.map(entry => ({
+  ...entry,
+  sizeText: formatSize(entry.size),
+  timeText: formatModifiedTime(entry.modifiedTime),
+})))
 
 /** 路径是否已选中（`selected` 为 Set 传入，模板内联判断会把 Set.has 反复求值） */
 const isSelected = (path: string): boolean => props.selected.has(path)

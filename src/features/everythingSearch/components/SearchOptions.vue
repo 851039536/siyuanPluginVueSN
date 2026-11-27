@@ -117,7 +117,7 @@
           :options="sortOptions"
           size="xsmall"
           :aria-label="i18n.sortLabel"
-          @update:model-value="updateOption('sort', ($event as unknown) as SearchOptions['sort'])"
+          @update:model-value="updateOption('sort', $event as SearchOptions['sort'])"
         />
         <Switch
           :model-value="options.ascending"

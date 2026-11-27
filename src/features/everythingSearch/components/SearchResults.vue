@@ -94,6 +94,7 @@ import type {
 import { computed } from "vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Loader from "@/components/Loader.vue"
+import { fillTemplate } from "../utils"
 import ResultItem from "./ResultItem.vue"
 
 /** 空态图标边长（由 IconWrapper 的 size 承担，禁止在 SCSS 里写 font-size） */
@@ -118,7 +119,7 @@ const emit = defineEmits<Emits>()
 
 /** 结果计数文案（替换 {count} 占位符） */
 const resultsCountText = computed(() =>
-  props.i18n.resultsCount.replace("{count}", String(props.state.results.length)),
+  fillTemplate(props.i18n.resultsCount, { count: props.state.results.length }),
 )
 </script>
 

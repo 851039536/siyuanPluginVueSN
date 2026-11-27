@@ -22,19 +22,19 @@
         class="cc-history__list"
       >
         <li
-          v-for="record in records"
-          :key="record.cleanedAt"
+          v-for="row in rows"
+          :key="row.key"
           class="cc-history__row"
         >
-          <span class="cc-history__time">{{ formatModifiedTime(record.cleanedAt) }}</span>
+          <span class="cc-history__time">{{ row.time }}</span>
           <!-- 清理方式："移入回收站" / "永久删除" -->
-          <span class="cc-history__mode">{{ modeLabel(record.mode) }}</span>
-          <span class="cc-history__count">{{ record.entries }}</span>
-          <span class="cc-history__size">{{ formatSize(record.freed) }}</span>
+          <span class="cc-history__mode">{{ row.mode }}</span>
+          <span class="cc-history__count">{{ row.entries }}</span>
+          <span class="cc-history__size">{{ row.size }}</span>
           <span
-            v-if="record.failed > 0"
+            v-if="row.failed"
             class="cc-history__failed"
-          >{{ failedText(record.failed) }}</span>
+          >{{ row.failed }}</span>
         </li>
       </ul>
     </Panel>
@@ -48,8 +48,8 @@ import type {
 } from "../../types"
 import Panel from "@/components/Panel.vue"
 import { computed, ref } from "vue"
+import { fillTemplate } from "../../utils"
 import {
-  fillTemplate,
   formatModifiedTime,
   formatSize,
 } from "./format"
@@ -85,6 +85,25 @@ const modeLabel = (mode: CleanHistoryRecord["mode"]): string =>
 /** 失败条目后缀："N 项失败" */
 const failedText = (failed: number): string =>
   fillTemplate(props.i18n.cacheHistoryItemFailed, { failed })
+
+/** 渲染行：格式化在数据变化时一次完成，模板不再逐行重复调用格式化函数 */
+interface HistoryRow {
+  key: string
+  time: string
+  mode: string
+  entries: number
+  size: string
+  failed: string
+}
+
+const rows = computed<HistoryRow[]>(() => props.records.map((record, index) => ({
+  key: `${record.cleanedAt}-${index}`,
+  time: formatModifiedTime(record.cleanedAt),
+  mode: modeLabel(record.mode),
+  entries: record.entries,
+  size: formatSize(record.freed),
+  failed: record.failed > 0 ? failedText(record.failed) : "",
+})))
 </script>
 
 <style scoped lang="scss">

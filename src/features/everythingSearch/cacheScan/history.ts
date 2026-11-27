@@ -12,9 +12,7 @@ import type {
 } from "../types"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
-
-/** 日志前缀（与功能模块一致，便于过滤检索） */
-const LOG_TAG = "[everythingSearch]"
+import { log } from "../log"
 
 /** 存储键（与 src/config/storage/jsonSlots.ts 注册表一致） */
 const STORAGE_KEY = "everything-search-clean-history"
@@ -72,7 +70,7 @@ export class CacheCleanHistoryStorage {
         return true
       })
     } catch (error) {
-      console.error(`${LOG_TAG} 写入清理历史失败:`, error)
+      log.error("写入清理历史失败", error)
       return false
     }
   }
@@ -93,7 +91,7 @@ export class CacheCleanHistoryStorage {
         freed: 0,
       })
     } catch (error) {
-      console.error(`${LOG_TAG} 读取清理统计失败:`, error)
+      log.error("读取清理统计失败", error)
       return null
     }
   }
@@ -110,7 +108,7 @@ export class CacheCleanHistoryStorage {
         freed: Number(item.freed) || 0,
       }))
     } catch (error) {
-      console.error(`${LOG_TAG} 读取清理历史失败:`, error)
+      log.error("读取清理历史失败", error)
       return []
     }
   }

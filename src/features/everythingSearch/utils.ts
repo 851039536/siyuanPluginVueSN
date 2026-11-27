@@ -48,12 +48,10 @@ function quotePathSegment(prefix: string, path: string): string {
 }
 
 /**
- * 组装 Everything 搜索表达式。
+ * 组装 Everything 搜索表达式（唯一入口：调用方不得自行拼接片段）。
  *
- * 整改前该职责被拆成两处（`index.vue` 拼 `size:`、`api.ts` 拼 `path:`），
- * 顺序与空格都靠调用方保证；现收敛为单一纯函数，便于断言与复用。
- *
- * 表达式顺序固定为：关键词 → 大小过滤 → 仅搜索路径 → 排除路径，保证输出可预测。
+ * 表达式顺序固定为：关键词 → 大小过滤 → 仅搜索路径 → 排除路径，保证输出可预测，
+ * 也让「顺序与空格」不再依赖调用方约定。
  */
 export function buildSearchQuery(input: SearchQueryInput): string {
   const parts: string[] = []
@@ -256,17 +254,25 @@ export function summarizeSize(entries: readonly SizedEntry[]): { size: number, f
   return { size, files }
 }
 
-/** 按字节区间选择 `ProgressBar` 的颜色语义（用量越高越警示） */
-export function sizeSeverity(ratio: number): "primary" | "warning" | "danger" {
-  if (!Number.isFinite(ratio) || ratio < 0.5) return "primary"
-  if (ratio < 0.8) return "warning"
-  return "danger"
-}
-
 /** 从异常对象取可读文案（非 Error 原样转字符串，避免误吞未知抛错） */
 export function readErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message
   return typeof error === "string" ? error : String(error ?? "")
+}
+
+/**
+ * 用 `{key}` 占位符填充 i18n 文案。
+ * 缺失的占位符原样保留（便于暴露漏传变量的问题，而不是静默吞掉）。
+ */
+export function fillTemplate(
+  template: string,
+  vars: Record<string, string | number>,
+): string {
+  let text = template
+  for (const [key, value] of Object.entries(vars)) {
+    text = text.split(`{${key}}`).join(String(value))
+  }
+  return text
 }
 
 /** 把扫描结果各根下的条目平铺为一维列表（体积降序；UI 勾选与统计共用同一顺序） */

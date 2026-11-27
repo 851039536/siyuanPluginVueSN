@@ -15,11 +15,8 @@ import type {
   CacheRootDef,
   ResolvedCacheRoot,
 } from "../types"
-import {
-  getElectronModules,
-  getElectronRemoteShell,
-  getNodeFsPathOs,
-} from "@/utils/nodeModules"
+import { getNodeFsPathOs } from "@/utils/nodeModules"
+import { trashToRecycleBin } from "../shellChannels"
 import { isPathInside, isProtectedPath, normalizeWinPath, readErrorMessage } from "../utils"
 import { CACHE_ROOTS, resolveCacheRoots } from "./roots"
 import { isAborted, yieldToEventLoop } from "./fsUtils"
@@ -152,55 +149,6 @@ export async function cleanCacheEntries(options: CleanCacheOptions): Promise<Cac
   })
 
   return result
-}
-
-/** 可用的回收站通道（按优先级排列；两者都取自 `@/utils/nodeModules` 的统一入口） */
-interface RecycleChannel {
-  name: string
-  shell: {
-    trashItem?: (path: string) => Promise<void>
-    moveItemToTrash?: (path: string) => boolean
-  }
-}
-
-/** 探测可用通道：remote（主进程桥接）优先，local（渲染进程 shell）兜底 */
-function listRecycleChannels(): RecycleChannel[] {
-  const channels: RecycleChannel[] = []
-  const remote = getElectronRemoteShell()
-  if (remote) channels.push({ name: "remote", shell: remote })
-  const local = getElectronModules()?.shell
-  if (local) channels.push({ name: "local", shell: local })
-  return channels
-}
-
-/**
- * 移入系统回收站（Electron 主进程 API），返回实际使用的通道名。
- *
- * 刻意**不用** PowerShell/cmd 脚本 —— 那套行为特征会被企业安全软件判定为可疑删除并上报。
- * 通道存在但操作失败（返回 false / 抛错）时直接向上抛，**不**静默换下一条：
- * 那会把「权限被策略禁用」伪装成「已删除」。
- */
-async function trashToRecycleBin(targetPath: string): Promise<string> {
-  // 纯 Node 环境（单测）没有 window，shell 必然不可用 —— 直接抛错，由调用方记 failed
-  if (typeof window === "undefined") {
-    throw new Error("recycle-bin unavailable (non-Electron environment)")
-  }
-
-  for (const channel of listRecycleChannels()) {
-    const { shell } = channel
-    if (typeof shell.trashItem === "function") {
-      await shell.trashItem(targetPath)
-      return `${channel.name}.trashItem`
-    }
-    if (typeof shell.moveItemToTrash === "function") {
-      if (!shell.moveItemToTrash(targetPath)) {
-        throw new Error(`${channel.name}.moveItemToTrash returned false`)
-      }
-      return `${channel.name}.moveItemToTrash`
-    }
-  }
-
-  throw new Error("recycle-bin unavailable")
 }
 
 /** 永久删除（仅在用户显式选择 permanent 模式时调用） */

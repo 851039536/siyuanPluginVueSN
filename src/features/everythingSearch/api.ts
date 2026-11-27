@@ -6,6 +6,7 @@
  * 已收敛到 ../utils.ts（可单测，见 ../utils.spec.ts）。
  */
 import type { SizeUnit } from "./utils"
+import { log } from "./log"
 import {
   buildSearchQuery,
   parseEverythingDate,
@@ -83,7 +84,8 @@ export async function checkEverythingService(
     )
     return response.ok
   } catch (error) {
-    console.error("Everything服务不可用:", error)
+    // 服务未启动是常态（用户没装 / 没开 HTTP 服务），只记 warn 不打扰
+    log.warn("服务探活失败", error)
     return false
   }
 }
@@ -96,6 +98,9 @@ export interface RawEverythingItem {
   date_modified?: number | string
   type?: string
 }
+
+/** 原始响应体（`results` 缺失时按空列表处理） */
+type RawResponse = { results?: RawEverythingItem[], totalResults?: number } | null
 
 /** 毫秒时间戳 → 本地化展示字符串（年-月-日 时:分） */
 function formatDateValue(timestamp: number): string {
@@ -113,8 +118,8 @@ function formatDateValue(timestamp: number): string {
 
 /**
  * 解析 Everything 响应体为结果列表。
- * 整改前的映射内联在 `searchFiles` 里、时间格式化另有一份递归推测逻辑，
- * 现拆成纯函数以便对「字段缺失 / 时间格式差异 / 尺寸非法」逐条断言。
+ * 独立成纯函数，便于对「字段缺失 / 时间格式差异 / 尺寸非法」逐条断言；
+ * 调用方（`searchFiles`）只负责 IO 与降级重试。
  */
 export function parseSearchResponse(
   data: { results?: RawEverythingItem[] } | null | undefined,
@@ -133,13 +138,21 @@ export function parseSearchResponse(
   })
 }
 
+/** 一次搜索的请求计划：URL 参数 + 后续排序判定所需的上下文 */
+interface SearchPlan {
+  params: URLSearchParams
+  maxResults: number
+  sort: EverythingSortField
+  ascending: boolean
+  /** 服务端排序已确认不可用：本次未下发 sort/ascending，完整结果集时需客户端重排 */
+  skipServerSort: boolean
+}
+
 /**
- * 搜索文件
+ * 组装搜索参数（表达式 → 列 → 排序 → 匹配选项）。
+ * 表达式组装走纯函数；排序参数在探测到服务端缺陷后不再下发。
  */
-export async function searchFiles(
-  options: EverythingSearchOptions,
-  config: EverythingConfig,
-): Promise<EverythingSearchResult[]> {
+function buildSearchPlan(options: EverythingSearchOptions): SearchPlan {
   const {
     query,
     maxResults = 100,
@@ -174,7 +187,6 @@ export async function searchFiles(
     excludePaths,
   })
 
-  // 构建URL参数
   const params = new URLSearchParams({
     search: searchQuery,
     json: "1",
@@ -191,76 +203,112 @@ export async function searchFiles(
     params.append("ascending", ascending ? "1" : "0")
   }
 
-  // 搜索选项
   if (matchCase) params.append("case", "1")
   if (matchWholeWord) params.append("wholeword", "1")
   if (matchPath) params.append("path", "1")
   if (regex) params.append("regex", "1")
 
-  try {
-    const response = await fetch(
-      `http://${config.host}:${config.port}/?${params.toString()}`,
-      {
-        method: "GET",
-        signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
-      },
-    )
+  return {
+    params,
+    maxResults,
+    sort,
+    ascending,
+    skipServerSort,
+  }
+}
 
+/** 单次 Everything HTTP 请求（URL 组装与超时集中在此，避免多处重复 fetch 参数） */
+async function requestEverything(
+  config: EverythingConfig,
+  params: URLSearchParams,
+  timeoutMs: number,
+): Promise<Response> {
+  return fetch(
+    `http://${config.host}:${config.port}/?${params.toString()}`,
+    {
+      method: "GET",
+      signal: AbortSignal.timeout(timeoutMs),
+    },
+  )
+}
+
+/**
+ * 完整结果集（`totalResults` ≤ 本次请求的 count）时按用户选择的排序重排，弥补服务端排序缺失；
+ * 分页截断的局部切片无法还原全局顺序，保持原顺序。
+ */
+function sortIfComplete(
+  data: RawResponse,
+  items: RawEverythingItem[],
+  plan: SearchPlan,
+): RawEverythingItem[] {
+  const total = data?.totalResults
+  if (typeof total !== "number" || !Number.isFinite(total) || total > plan.maxResults) return items
+  return sortEverythingItems(items, plan.sort, plan.ascending)
+}
+
+/**
+ * 降级重试：部分 Everything 版本（实测 1.4.1.1032）的 HTTP 服务对 sort=path/size/date_modified
+ * 异常返回空结果（官方文档宣称支持，仅 sort=name 可用），导致搜索永远「无结果」。
+ * 去掉排序参数按服务端默认排序重试一次；重试有结果则记录缺陷，后续搜索不再下发排序。
+ *
+ * @returns 重排后的条目；重试失败 / 仍为空时返回空数组（保持首次请求的空结果）
+ */
+async function retryWithoutServerSort(
+  config: EverythingConfig,
+  plan: SearchPlan,
+): Promise<RawEverythingItem[]> {
+  const params = new URLSearchParams(plan.params)
+  params.delete("sort")
+  params.delete("ascending")
+
+  log.warn(
+    `sort=${plan.sort} 返回空结果，疑似当前 Everything 版本 HTTP 服务不支持该排序，已降级为默认排序重试`,
+  )
+
+  try {
+    const response = await requestEverything(config, params, SEARCH_TIMEOUT_MS)
+    if (!response.ok) return []
+    const data: RawResponse = await response.json()
+    const items = data?.results ?? []
+    if (items.length === 0) return []
+    sortServerUnsupported = true
+    return sortIfComplete(data, items, plan)
+  } catch (error) {
+    // 降级重试失败不影响首次请求的结果（保持空结果原样返回）
+    log.warn("降级重试失败", error)
+    return []
+  }
+}
+
+/**
+ * 搜索文件
+ */
+export async function searchFiles(
+  options: EverythingSearchOptions,
+  config: EverythingConfig,
+): Promise<EverythingSearchResult[]> {
+  const plan = buildSearchPlan(options)
+
+  try {
+    const response = await requestEverything(config, plan.params, SEARCH_TIMEOUT_MS)
     if (!response.ok) {
-      throw new Error(`HTTP错误: ${response.status}`)
+      // 只抛中性的状态码描述：用户可见文案由 UI 层统一加「搜索失败」前缀并 i18n
+      throw new Error(`HTTP ${response.status}`)
     }
 
-    type RawResponse = { results?: RawEverythingItem[], totalResults?: number } | null
     const data: RawResponse = await response.json()
     let rawItems = data?.results ?? []
 
-    /**
-     * 返回的是完整结果集（totalResults ≤ 本次请求的 count）时，客户端按用户选择的
-     * 排序重排，弥补服务端排序缺失；分页截断的局部切片无法还原全局顺序，保持原顺序。
-     */
-    const applyClientSort = (source: RawResponse, items: RawEverythingItem[]) => {
-      const total = source?.totalResults
-      if (typeof total !== "number" || !Number.isFinite(total) || total > maxResults) return items
-      return sortEverythingItems(items, sort, ascending)
-    }
-
-    if (!skipServerSort && sort !== "name" && rawItems.length === 0) {
-      // 首次探测：部分 Everything 版本（实测 1.4.1.1032）的 HTTP 服务对 sort=path/size/date_modified
-      // 异常返回空结果（官方文档宣称支持，仅 sort=name 可用），导致搜索永远"无结果"。
-      // 去掉排序参数按服务端默认排序重试一次；重试有结果则记录缺陷，后续搜索不再下发排序。
-      console.warn(
-        `[everythingSearch] sort=${sort} 返回空结果，疑似当前 Everything 版本 HTTP 服务不支持该排序，已降级为默认排序重试`,
-      )
-      params.delete("sort")
-      params.delete("ascending")
-      try {
-        const fallback = await fetch(
-          `http://${config.host}:${config.port}/?${params.toString()}`,
-          {
-            method: "GET",
-            signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
-          },
-        )
-        if (fallback.ok) {
-          const fallbackData: RawResponse = await fallback.json()
-          const fallbackItems = fallbackData?.results ?? []
-          if (fallbackItems.length > 0) {
-            sortServerUnsupported = true
-            rawItems = applyClientSort(fallbackData, fallbackItems)
-          }
-        }
-      } catch (fallbackError) {
-        // 降级重试失败不影响首次请求的结果（保持空结果原样返回）
-        console.warn("[everythingSearch] 降级重试失败:", fallbackError)
-      }
-    } else if (skipServerSort) {
+    if (!plan.skipServerSort && plan.sort !== "name" && rawItems.length === 0) {
+      rawItems = await retryWithoutServerSort(config, plan)
+    } else if (plan.skipServerSort) {
       // 已探测到缺陷：本次请求未下发排序，完整结果集时客户端按用户选择重排
-      rawItems = applyClientSort(data, rawItems)
+      rawItems = sortIfComplete(data, rawItems, plan)
     }
 
     return parseSearchResponse({ results: rawItems })
   } catch (error) {
-    console.error("Everything搜索失败:", error)
+    log.error("搜索失败", error)
     throw error
   }
 }

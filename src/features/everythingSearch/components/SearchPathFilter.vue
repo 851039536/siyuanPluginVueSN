@@ -72,7 +72,7 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-/** 路径输入框可见行数（与整改前的 rows="2" 一致） */
+/** 路径输入框可见行数（每行一个路径，2 行足够露出首行提示） */
 const PATH_ROWS = 2
 
 /** 仅搜索路径文本（数组 ↔ 换行文本，每行一个路径） */

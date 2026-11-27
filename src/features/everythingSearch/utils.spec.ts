@@ -1,13 +1,13 @@
 // everythingSearch 纯函数单测：查询表达式组装、Windows 路径防护判定、日期解析、体积聚合
 import {
   buildSearchQuery,
+  fillTemplate,
   getFullPath,
   hasPathFilter,
   isPathInside,
   isProtectedPath,
   normalizeWinPath,
   parseEverythingDate,
-  sizeSeverity,
   sortEverythingItems,
   summarizeSize,
 } from "./utils"
@@ -66,12 +66,27 @@ describe("buildSearchQuery（Everything 表达式组装）", () => {
   })
 })
 
-describe("hasPathFilter（路径过滤是否生效）", () => {
-  it("开关开启且存在非空路径才算生效", () => {
+describe("hasPathFilter（路径过滤是否生效）", () => {  it("开关开启且存在非空路径才算生效", () => {
     expect(hasPathFilter({ includePathsEnabled: true, includePaths: ["D:\\a"] })).toBe(true)
     expect(hasPathFilter({ includePathsEnabled: true, includePaths: ["  "] })).toBe(false)
     expect(hasPathFilter({ includePathsEnabled: false, includePaths: ["D:\\a"] })).toBe(false)
     expect(hasPathFilter({ excludePathsEnabled: true, excludePaths: ["D:\\b"] })).toBe(true)
+  })
+})
+
+describe("fillTemplate（i18n 占位符填充）", () => {
+  it("替换全部同名占位符", () => {
+    expect(fillTemplate("{count} / {count}", { count: 3 })).toBe("3 / 3")
+  })
+
+  it("数字与字符串混用", () => {
+    expect(fillTemplate("freed {size} of {count}", { size: "1.2 MB", count: 2 }))
+      .toBe("freed 1.2 MB of 2")
+  })
+
+  it("缺失占位符原样保留，空模板返回空串", () => {
+    expect(fillTemplate("{count} items, {size}", { count: 1 })).toBe("1 items, {size}")
+    expect(fillTemplate("", { count: 1 })).toBe("")
   })
 })
 
@@ -202,16 +217,6 @@ describe("summarizeSize（体积与条目数聚合）", () => {
   })
 })
 
-describe("sizeSeverity（用量配色分档）", () => {
-  it("按 50% / 80% 分三档，非法比例按最低档", () => {
-    expect(sizeSeverity(0.1)).toBe("primary")
-    expect(sizeSeverity(0.5)).toBe("warning")
-    expect(sizeSeverity(0.79)).toBe("warning")
-    expect(sizeSeverity(0.8)).toBe("danger")
-    expect(sizeSeverity(Number.NaN)).toBe("primary")
-  })
-})
-
 describe("sortEverythingItems（服务端排序缺陷时的客户端重排）", () => {
   const items = [
     { name: "b.md", path: "E:\\a\\b.md", size: 20, date_modified: 1704067200000 },
@@ -236,7 +241,7 @@ describe("sortEverythingItems（服务端排序缺陷时的客户端重排）", 
   it("按修改时间排序：FILETIME 与毫秒混用统一换算，不可解析按最旧", () => {
     // A.md=2024-01-01（FILETIME）、b.md=2024-01-01（毫秒，同一时刻）、c.md=不可解析（按最旧计）
     const desc = sortEverythingItems(items, "date_modified", false).map(i => i.name)
-    expect(desc.at(-1)).toBe("c.md")
+    expect(desc[desc.length - 1]).toBe("c.md")
     const asc = sortEverythingItems(items, "date_modified", true).map(i => i.name)
     expect(asc[0]).toBe("c.md")
   })

@@ -35,7 +35,7 @@ export const CACHE_ROOTS: readonly CacheRootDef[] = [
   {
     id: "windowsTemp",
     labelKey: "cacheRootWindowsTemp",
-    // 系统级临时目录：个被系统进程占用的文件会删除失败（已容错跳过），但残留文件全是垃圾
+    // 系统级临时目录：个别被系统进程占用的文件会删除失败（已容错跳过），但残留文件全是垃圾
     resolve: { kind: "absolute", path: "C:\\Windows\\Temp" },
     risk: "caution",
     icon: "folder",

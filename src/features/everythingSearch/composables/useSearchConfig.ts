@@ -19,10 +19,11 @@ import {
   TimerRegistry,
   type TimerHandle,
 } from "@/utils/timerRegistry"
+import { log } from "../log"
 import {
-  DEFAULT_CACHE_CLEAN_SETTINGS,
+  createDefaultCacheCleanSettings,
+  createDefaultOptions,
   DEFAULT_CONFIG,
-  DEFAULT_OPTIONS,
   EverythingSearchStorage,
 } from "../types/storage"
 
@@ -36,12 +37,8 @@ export function useSearchConfig(plugin: Plugin) {
   const storage = new EverythingSearchStorage(plugin)
   const timerRegistry = new TimerRegistry()
   const config = reactive<EverythingConfig>({ ...DEFAULT_CONFIG })
-  const options = reactive<SearchOptions>({ ...DEFAULT_OPTIONS })
-  const cacheSettings = reactive<CacheCleanSettings>({
-    ...DEFAULT_CACHE_CLEAN_SETTINGS,
-    // 两个容器字段必须是独立副本：默认值里是 {}，直接展开会让多实例共享同一引用
-    enabledRoots: { ...DEFAULT_CACHE_CLEAN_SETTINGS.enabledRoots },
-  })
+  const options = reactive<SearchOptions>(createDefaultOptions())
+  const cacheSettings = reactive<CacheCleanSettings>(createDefaultCacheCleanSettings())
   let saveTimer: TimerHandle | null = null
   // 正在从存储加载配置（避免加载触发 watch 回写）
   let isLoadingConfig = false
@@ -49,15 +46,26 @@ export function useSearchConfig(plugin: Plugin) {
   /** 立即落盘当前 config/options/cacheSettings */
   const persist = async () => {
     try {
-      await storage.config.save(config)
-      await storage.options.save(options)
-      await storage.cacheClean.save(cacheSettings)
+      // 三个槽位互相独立：并行写入缩短落盘窗口
+      const [configSaved, optionsSaved, cacheCleanSaved] = await Promise.all([
+        storage.config.save(config),
+        storage.options.save(options),
+        storage.cacheClean.save(cacheSettings),
+      ])
+      // `TypedStorage.save` 以返回值表达失败（不抛错），必须显式检查
+      if (!configSaved || !optionsSaved || !cacheCleanSaved) {
+        log.warn("配置未能完整落盘", {
+          config: configSaved,
+          options: optionsSaved,
+          cacheClean: cacheCleanSaved,
+        })
+      }
     } catch (error) {
-      console.error("保存配置到插件存储失败:", error)
+      log.error("保存配置到插件存储失败", error)
     }
   }
 
-  /** 从插件存储加载配置（覆盖式回填） */
+  /** 从插件存储加载配置（覆盖式回填；`storage.init()` 已保证嵌套字段为独立副本） */
   const loadConfig = async () => {
     // 先冲刷未落盘的防抖保存再加载，避免"旧存储值覆盖内存修改 + 回滚值被写回"竞态
     if (saveTimer !== null) {
@@ -70,12 +78,9 @@ export function useSearchConfig(plugin: Plugin) {
       const savedData = await storage.init()
       Object.assign(config, savedData.config)
       Object.assign(options, savedData.options)
-      // enabledRoots 用整体替换：Object.assign 会把缺省项残留成旧值，
-      // 而缓存分类的「显式勾选记录」语义要求缺失即回到 CACHE_ROOTS 默认值
       Object.assign(cacheSettings, savedData.cacheClean)
-      cacheSettings.enabledRoots = { ...savedData.cacheClean.enabledRoots }
     } catch (error) {
-      console.error("从插件存储加载配置失败:", error)
+      log.error("从插件存储加载配置失败", error)
     } finally {
       // 延迟一个 tick 重置，确保 watch 已跳过本次加载触发的回调
       await nextTick()

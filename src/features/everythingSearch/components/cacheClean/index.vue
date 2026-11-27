@@ -75,7 +75,7 @@
       class="cc-panel__feedback"
       size="xsmall"
       :severity="feedback.severity"
-      :icon="feedback.severity === 'error' ? 'error' : feedback.severity === 'warn' ? 'warning' : 'success'"
+      :icon="feedbackIcon"
     >{{ feedback.text }}</Message>
 
     <!-- 未扫描空态 -->
@@ -266,6 +266,14 @@ const scanning = computed(() => scanStatus.value === "scanning")
 const feedback = computed<CachePanelFeedback | null>(
   () => cleanFeedback.value ?? scanFeedback.value,
 )
+
+/** 反馈 severity → Message 图标（三档一一对应，避免模板里嵌套三元） */
+const feedbackIcon = computed<"error" | "success" | "warning">(() => {
+  const severity = feedback.value?.severity
+  if (severity === "error") return "error"
+  if (severity === "warn") return "warning"
+  return "success"
+})
 
 const handleToggleRoot = (id: CacheRootId, checked: boolean) => {
   toggleRoot(id, checked)

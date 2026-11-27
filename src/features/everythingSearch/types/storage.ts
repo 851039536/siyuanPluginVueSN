@@ -63,6 +63,29 @@ export const DEFAULT_CACHE_CLEAN_SETTINGS: CacheCleanSettings = {
 }
 
 /**
+ * 构造一份独立的默认搜索选项。
+ *
+ * 数组字段必须逐次新建：直接展开 `DEFAULT_OPTIONS` 会让多个面板实例
+ * （overlay 弹窗 + 浮动窗口）共享同一数组引用，`addKeyword` 等原地修改会互相污染。
+ */
+export function createDefaultOptions(): SearchOptions {
+  return {
+    ...DEFAULT_OPTIONS,
+    frequentKeywords: [],
+    includePaths: [],
+    excludePaths: [],
+  }
+}
+
+/** 构造一份独立的默认清理偏好（`enabledRoots` 同理，不能共用默认对象） */
+export function createDefaultCacheCleanSettings(): CacheCleanSettings {
+  return {
+    ...DEFAULT_CACHE_CLEAN_SETTINGS,
+    enabledRoots: {},
+  }
+}
+
+/**
  * Everything搜索存储管理类
  */
 export class EverythingSearchStorage {
@@ -82,7 +105,10 @@ export class EverythingSearchStorage {
   }
 
   /**
-   * 初始化存储（加载或使用默认值）
+   * 初始化存储（加载或使用默认值）。
+   *
+   * 返回的 `options` / `cacheClean` 均为独立副本：`TypedStorage` 的默认值只做浅拷贝，
+   * 若不在此处复制嵌套数组/对象，多个面板实例会共享同一份默认引用。
    */
   async init(): Promise<{
     config: EverythingConfig,
@@ -96,8 +122,16 @@ export class EverythingSearchStorage {
     ])
     return {
       config,
-      options,
-      cacheClean,
+      options: {
+        ...options,
+        frequentKeywords: [...(options.frequentKeywords ?? [])],
+        includePaths: [...(options.includePaths ?? [])],
+        excludePaths: [...(options.excludePaths ?? [])],
+      },
+      cacheClean: {
+        ...cacheClean,
+        enabledRoots: { ...(cacheClean.enabledRoots ?? {}) },
+      },
     }
   }
 }

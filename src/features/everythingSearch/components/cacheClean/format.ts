@@ -3,6 +3,7 @@
 import type { CacheCleanResult } from "../../types"
 import type { CachePanelFeedback } from "./types"
 import { formatFileSize } from "@/utils/format"
+import { fillTemplate } from "../../utils"
 
 /** i18n 取值函数（缺失返回空串：i18n 是唯一数据源，禁止硬编码兜底） */
 export type Translate = (key: string) => string
@@ -28,21 +29,6 @@ export function formatModifiedTime(time: number): string {
   const date = new Date(time)
   if (Number.isNaN(date.getTime())) return ""
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
-
-/**
- * 用 `{key}` 占位符填充 i18n 文案。
- * 缺失的占位符原样保留（便于暴露漏传变量的问题，而不是静默吞掉）。
- */
-export function fillTemplate(
-  template: string,
-  vars: Record<string, string | number>,
-): string {
-  let text = template
-  for (const [key, value] of Object.entries(vars)) {
-    text = text.split(`{${key}}`).join(String(value))
-  }
-  return text
 }
 
 /** 扫描按钮文案：扫描中 / 已扫描后重新扫描 / 首次扫描 */

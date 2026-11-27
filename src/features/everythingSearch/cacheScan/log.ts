@@ -8,34 +8,18 @@
 // ⚠️ 禁止在逐条目成功路径上打 info —— 单次清理可达 3000 条，会刷爆控制台。
 // 本文件**不 import 任何会触达 siyuan / DOM 的模块**（才能在纯 Node 单测中加载）。
 
+import { createLogger } from "../log"
+
 /** 控制台检索前缀（日志过滤的唯一锚点，勿在别处另起前缀） */
 export const CACHE_LOG_TAG = "[cacheClean]"
 
-const withTag = (message: string): string => `${CACHE_LOG_TAG} ${message}`
+const logger = createLogger(CACHE_LOG_TAG)
 
 /** 生命周期日志 */
-export function logInfo(message: string, detail?: unknown): void {
-  if (detail === undefined) {
-    console.info(withTag(message))
-    return
-  }
-  console.info(withTag(message), detail)
-}
+export const logInfo = logger.info
 
 /** 单条目可恢复失败（不中断整体任务） */
-export function logWarn(message: string, detail?: unknown): void {
-  if (detail === undefined) {
-    console.warn(withTag(message))
-    return
-  }
-  console.warn(withTag(message), detail)
-}
+export const logWarn = logger.warn
 
 /** 整体任务失败 */
-export function logError(message: string, detail?: unknown): void {
-  if (detail === undefined) {
-    console.error(withTag(message))
-    return
-  }
-  console.error(withTag(message), detail)
-}
+export const logError = logger.error

@@ -15,12 +15,11 @@ import {
   h,
 } from "vue"
 import EverythingSearchPanel from "../index.vue"
+import { log } from "../log"
 
 export type {
   /** Everything 服务连接配置 */
   EverythingConfig,
-  /** Everything 排序字段 */
-  EverythingSortField,
   /** Everything 搜索结果项 */
   EverythingSearchResult,
 } from "../api"
@@ -120,16 +119,10 @@ export class EverythingSearchManager {
     this.container = container
     element.appendChild(container)
     this.app = createApp({
-      setup: () => () => h(EverythingSearchPanel as any, this.buildProps()),
+      // 页签模式恒可见；props 形状与 index.vue 的 Props 对齐
+      setup: () => () => h(EverythingSearchPanel as any, { visible: true, mode: "tab" }),
     })
     this.app.mount(container)
-  }
-
-  private buildProps(): Record<string, any> {
-    return {
-      visible: true,
-      mode: "tab",
-    }
   }
 
   private unmountPanel() {
@@ -154,14 +147,15 @@ export class EverythingSearchManager {
         tab,
       })
     } catch (error) {
-      console.error("[EverythingSearch] openWindow failed, tab stays in main window:", error)
+      log.error("打开浮动窗口失败，页签保留在主窗口", error)
     }
   }
 
   /** 在主窗口创建/聚焦 Everything 搜索页签，返回 Tab（供移入浮动窗口）；失败返回 null */
   private async openTabInMainWindow() {
     try {
-      const title = (this.plugin.i18n as any)?.everythingSearch?.title || "Everything搜索"
+      // 标题取 i18n；缺失时回落品牌名（专有名词，不翻译）
+      const title = (this.plugin.i18n as any)?.everythingSearch?.title || "Everything"
       return await openTab({
         app: this.plugin.app,
         custom: {
@@ -172,7 +166,7 @@ export class EverythingSearchManager {
         position: "right",
       })
     } catch (error) {
-      console.error("[EverythingSearch] openTab failed:", error)
+      log.error("创建 Everything 搜索页签失败", error)
       return null
     }
   }

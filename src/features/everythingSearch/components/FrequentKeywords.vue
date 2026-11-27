@@ -118,7 +118,7 @@ interface Emits {
   (e: "delete", keyword: string): void
 }
 
-/** 关键字最大长度（与整改前原生 maxlength 保持一致） */
+/** 关键字最大长度（与原生 maxlength 行为一致） */
 const KEYWORD_MAX_LENGTH = 60
 
 const props = defineProps<Props>()

@@ -54,6 +54,7 @@ export const JSON_SLOTS = [
   jsonSlot("gitPush.cardLayout", ["gitPush"], "git-push-card-layout", "项目卡片布局"),
   jsonSlot("gitPush.cardCompact", ["gitPush"], "git-push-card-compact", "项目卡片紧凑密度"),
   jsonSlot("gitPush.compareBase", ["gitPush"], "git-push-compare-base", "对比基准分支"),
+  jsonSlot("gitPush.diffPrefs", ["gitPush"], "git-push-diff-prefs", "差异视图偏好"),
   jsonSlot("gitPush.analysisCache", ["gitPush"], "git-push-analysis-cache", "提交分析缓存", {
     growth: true,
     notes: "实测 1.49MB / 6786 条；仅分析结束时整份重写（低频操作）",

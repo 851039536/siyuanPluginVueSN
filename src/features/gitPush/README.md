@@ -357,6 +357,7 @@ GitPushManager (facade)
 - `git-push-card-layout`：卡片布局（`detailed` 全部展开 / `accordion` 手风琴，默认 `detailed`）
 - `git-push-card-compact`：紧凑密度（隐藏 Markdown / 标签 / 备注 / 活动时间等次要信息行，默认关闭）
 - `git-push-compare-base`：Compare / 创建 PR 深链的基线分支（默认 `main`）
+- `git-push-diff-prefs`：差异查看偏好（布局 / 行号 / 仅改动 / 换行）
 - `git-push-report-cache`：代码统计报告结果缓存（秒开上次结果；数据新鲜度由提交索引的后台增量刷新保证）
 - `git-push-index-meta`：本地提交索引元数据（每项目的仓库身份/HEAD 判据、截断游标、覆盖范围）
 - `git-push-index-enabled`：提交索引总开关（默认开启；关闭后统计路径全部回退直接跑 git）

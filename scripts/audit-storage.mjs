@@ -259,16 +259,18 @@ function scanSource(files) {
 
 function loadIgnoreConfig() {
   const file = path.join(ROOT, "scripts", "audit-storage.config.json")
-  if (!fs.existsSync(file)) return { ignoreKeys: [], ignoreZombie: [] }
+  if (!fs.existsSync(file)) return { ignoreKeys: [], ignoreZombie: [], reasons: {} }
   try {
     const data = JSON.parse(read(file))
+    const reasons = data.reasons && typeof data.reasons === "object" ? data.reasons : {}
     return {
       ignoreKeys: Array.isArray(data.ignoreKeys) ? data.ignoreKeys : [],
       ignoreZombie: Array.isArray(data.ignoreZombie) ? data.ignoreZombie : [],
+      reasons,
     }
   } catch (error) {
     console.warn(`[audit:storage] 忽略配置解析失败，按空配置处理：${error.message}`)
-    return { ignoreKeys: [], ignoreZombie: [] }
+    return { ignoreKeys: [], ignoreZombie: [], reasons: {} }
   }
 }
 
@@ -307,30 +309,68 @@ function main() {
     const srcKeys = new Set(found.filter((item) => item.kind === kind).map((item) => item.key))
 
     // 文件槽是目录/衍生文件，不做源码 key 比对
-    const unregistered = kind === "file"
+    const unregisteredAll = kind === "file"
       ? []
-      : [...srcKeys]
-        .filter((key) => !regKeys.has(key))
-        .filter((key) => !ignore.ignoreKeys.includes(key))
-        .map((key) => ({ key, at: found.find((item) => item.kind === kind && item.key === key)?.at }))
+      : [...srcKeys].filter((key) => !regKeys.has(key))
+    const zombieAll = kind === "file"
+      ? []
+      : [...regKeys].filter((key) => !srcKeys.has(key))
 
-    const zombie = kind === "file"
-      ? []
-      : [...regKeys]
-        .filter((key) => !srcKeys.has(key))
-        .filter((key) => !ignore.ignoreZombie.includes(key))
-        .map((key) => ({ key, at: reg.find((entry) => entry.key === key)?.at }))
+    const withReason = (key) => ({ reason: ignore.reasons[key] })
+    const unregistered = unregisteredAll
+      .filter((key) => !ignore.ignoreKeys.includes(key))
+      .map((key) => ({
+        key,
+        at: found.find((item) => item.kind === kind && item.key === key)?.at,
+      }))
+    const zombie = zombieAll
+      .filter((key) => !ignore.ignoreZombie.includes(key))
+      .map((key) => ({
+        key,
+        at: reg.find((entry) => entry.key === key)?.at,
+      }))
+
+    // 例外清单命中的条目：不算错误，但要在报告里可见（含原因），避免「静默跳过」
+    const ignoredKeys = unregisteredAll
+      .filter((key) => ignore.ignoreKeys.includes(key))
+      .map((key) => {
+        const entry = found.find((item) => item.kind === kind && item.key === key)
+        return {
+          kind,
+          source: "key",
+          key,
+          at: entry?.at,
+          ...withReason(key),
+        }
+      })
+    const ignoredZombie = zombieAll
+      .filter((key) => ignore.ignoreZombie.includes(key))
+      .map((key) => {
+        const entry = reg.find((item) => item.key === key)
+        return {
+          kind,
+          source: "zombie",
+          key,
+          at: entry?.at,
+          ...withReason(key),
+        }
+      })
 
     report[kind] = {
       registry: reg.length,
       discovered: srcKeys.size,
       unregistered,
       zombie,
+      ignored: [...ignoredKeys, ...ignoredZombie],
     }
 
     if (unregistered.length) errors.push(`${kind}：${unregistered.length} 个源码 key 未登记`)
     if (zombie.length) errors.push(`${kind}：${zombie.length} 个注册表条目在源码中不存在`)
   }
+
+  // 例外清单自身：每条都必须写原因（缺原因只告警，不影响退出码，避免阻塞但暴露问题）
+  const declaredIgnored = new Set([...ignore.ignoreKeys, ...ignore.ignoreZombie])
+  const missingReasons = [...declaredIgnored].filter((key) => !ignore.reasons[key])
 
   // 注册表自身命名与 legacy 标记
   const registryNaming = registry.filter((entry) => {
@@ -346,6 +386,7 @@ function main() {
       registryNaming,
       namingIssues: effectiveNamingIssues,
       unresolved: effectiveUnresolved,
+      missingReasons,
       errors,
     }, null, 2))
   } else {
@@ -355,10 +396,15 @@ function main() {
       console.log(`  ${kind.padEnd(12)} 注册表 ${String(item.registry).padStart(3)} / 源码发现 ${String(item.discovered).padStart(3)}`)
       for (const entry of item.unregistered) console.log(`    ✗ 未登记 ${entry.key}  (${entry.at || "?"})`)
       for (const entry of item.zombie) console.log(`    ✗ 僵尸条目 ${entry.key}  (${entry.at || "?"})`)
+      for (const entry of item.ignored) {
+        const label = entry.source === "zombie" ? "忽略僵尸条目" : "忽略未登记"
+        console.log(`    ↷ ${label} ${entry.key}  (${entry.at || "?"}) — ${entry.reason || "未写原因"}`)
+      }
     }
     for (const entry of registryNaming) console.log(`    ✗ 命名不合规 ${entry.id} → ${entry.key}  (${entry.at})`)
     for (const entry of effectiveNamingIssues) console.log(`    ! 源码命名告警 ${entry.key}  (${entry.at})`)
     for (const entry of effectiveUnresolved) console.log(`    ! 动态 key 未解析 ${entry.ident}  (${entry.at})`)
+    for (const key of missingReasons) console.log(`    ! 例外清单缺少原因：${key}（请在 scripts/audit-storage.config.json 的 reasons 补充）`)
 
     if (errors.length) {
       console.log("")

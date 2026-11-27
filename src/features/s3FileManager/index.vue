@@ -308,7 +308,7 @@ const { transferring, transferProgress, uploadFiles, uploadDropped, downloadEntr
   currentPrefix,
   getEntries: () => entries.value,
   addLog, afterMutation,
-  confirmAction: requestConfirm,
+  requestConfirm,
   isDisposed: () => disposed,
 })
 
@@ -443,21 +443,28 @@ function handleMoveCopyConfirm(destPrefix: string): void {
 }
 
 function openRename(): void {
-  // 重命名按钮仅单选可用（FmToolbar 以 selectedCount !== 1 禁用）
-  renameTarget.value = selectedEntries.value[0]!
+  // 重命名按钮仅单选可用（FmToolbar 以 selectedCount !== 1 禁用）；
+  // 仍显式判空：选中态与点击之间存在竞态窗口，非空断言会把空值带进弹窗
+  const entry = selectedEntries.value[0]
+  if (!entry) { return }
+  renameTarget.value = entry
 }
 
 function handleRenameConfirm(newName: string): void {
   const target = renameTarget.value
-  renameTarget.value = null
   const trimmed = newName.trim()
   // 名称未变更时直接关闭：同名复制+删源会误删文件
-  if (!target || trimmed === target.name) { return }
-  // 撞名预检：S3 的 CopyObject 对已存在目标静默覆盖，重命名必须先拦
+  if (!target || trimmed === target.name) {
+    renameTarget.value = null
+    return
+  }
+  // 撞名预检：S3 的 CopyObject 对已存在目标静默覆盖，重命名必须先拦。
+  // 与「新建文件夹」一致：拦下时保留弹窗，用户可直接改名，不必重开
   if (sortedEntries.value.some((e) => e.name === trimmed && e.key !== target.key)) {
     showMessage(`${i18n.nameExists}: ${trimmed}`, 4000, "error")
     return
   }
+  renameTarget.value = null
   void renameEntry(target, trimmed)
 }
 

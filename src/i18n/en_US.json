@@ -3849,7 +3849,6 @@
     "importFromBackup": "Import from S3 Backup",
     "importFromBackupHint": "Reuse the connection configuration saved by the S3 Backup feature",
     "importSuccess": "S3 Backup configuration imported",
-    "importFailed": "Import failed",
     "importNoBackupConfig": "No S3 Backup configuration found",
     "namePlaceholder": "Enter a name",
     "invalidName": "Name cannot be empty or contain slashes or other illegal characters",

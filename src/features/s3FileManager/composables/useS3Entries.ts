@@ -9,7 +9,6 @@ import { computed, onUnmounted, ref, shallowRef } from "vue"
 import type { S3Client } from "@/utils/s3/s3Client"
 import { DelimiterUnsupportedError, listDir } from "@/utils/s3/s3ObjectOps"
 import type { S3DirListing } from "@/utils/s3/s3ObjectOps"
-import type { S3FileInfo } from "@/utils/s3/types"
 import { getErrorMessage } from "@/utils/stringUtils"
 import type { S3Entry, SortField } from "../types"
 import { MAX_CACHE_DIRS, RENDER_BATCH_SIZE } from "../types"
@@ -33,6 +32,12 @@ export function useS3Entries(deps: {
   const sortAsc = ref(true)
   /** 增量渲染上限（大目录先渲染一批，"加载更多"递增） */
   const renderLimit = ref(RENDER_BATCH_SIZE)
+  /**
+   * 搜索过滤词（工具栏输入框绑定；仅作用于当前目录展示，不影响加载）。
+   * 置于 filteredEntries 之前：该计算属性直接引用它，先声明后使用可避免
+   * 「先用后声明」的阅读顺序陷阱（computed 惰性求值，顺序错了运行时仍不报错，更难发现）。
+   */
+  const searchQuery = ref("")
 
   /**
    * 目录缓存：prefix → 条目列表。
@@ -68,9 +73,6 @@ export function useS3Entries(deps: {
   const visibleEntries = computed(() => filteredEntries.value.slice(0, renderLimit.value))
 
   const hasMore = computed(() => filteredEntries.value.length > renderLimit.value)
-
-  /** 搜索过滤词（工具栏输入框绑定；仅作用于当前目录展示，不影响加载） */
-  const searchQuery = ref("")
 
   /** 面包屑段（相对浏览根前缀） */
   const pathSegments = computed(() => relativeSegments(currentPrefix.value, deps.getRootPrefix()))
@@ -138,13 +140,12 @@ export function useS3Entries(deps: {
         }
       }
 
-      let files: S3FileInfo[]
-      let folders: string[]
       // delimiter 被静默忽略时（OpenList 等代理返回扁平递归结果）listDir 本身就能成功返回，
       // normalizeListing 会把嵌套对象折回当前层 —— 无需切换到更重的 client.list 全量路径
-      const normalized = normalizeListing(listing ?? { files: await client.list(prefix), folders: [] }, prefix)
-      files = normalized.files
-      folders = normalized.folders
+      const { files, folders } = normalizeListing(
+        listing ?? { files: await client.list(prefix), folders: [] },
+        prefix,
+      )
 
       const built = buildEntries(files, folders)
       // 过期响应：已发起更新的请求，本次结果一律丢弃（不写缓存、不改状态，避免覆盖新目录）
@@ -218,7 +219,6 @@ export function useS3Entries(deps: {
     sortField,
     sortAsc,
     sortedEntries,
-    filteredEntries,
     visibleEntries,
     hasMore,
     searchQuery,

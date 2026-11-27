@@ -4,7 +4,7 @@
     :visible="true"
     size="medium"
     :header="i18n.configTitle"
-    @update:visible="$emit('close')"
+    @update:visible="emit('close')"
   >
     <div class="fm-config-grid">
       <!-- Endpoint -->
@@ -193,20 +193,24 @@ async function handleTest(): Promise<void> {
   if (testing.value) { return }
   testing.value = true
   testResult.value = null
-  // 共享层只返回结果码，展示文案按本模块 i18n 组装（避免英文界面混入中文）
-  const result = await new S3Client(snapshot()).testConnection()
-  testResult.value = {
-    success: result.success,
-    message: composeS3TestMessage(result, {
-      connected: i18n.testConnected,
-      connectedViaList: i18n.testConnectedViaList,
-      authFailed: i18n.testAuthFailed,
-      bucketMissing: i18n.testBucketMissing,
-      httpFailed: i18n.testHttpFailed,
-      exception: i18n.testException,
-    } satisfies S3TestTexts),
+  try {
+    // 共享层只返回结果码，展示文案按本模块 i18n 组装（避免英文界面混入中文）
+    const result = await new S3Client(snapshot()).testConnection()
+    testResult.value = {
+      success: result.success,
+      message: composeS3TestMessage(result, {
+        connected: i18n.testConnected,
+        connectedViaList: i18n.testConnectedViaList,
+        authFailed: i18n.testAuthFailed,
+        bucketMissing: i18n.testBucketMissing,
+        httpFailed: i18n.testHttpFailed,
+        exception: i18n.testException,
+      } satisfies S3TestTexts),
+    }
+  } finally {
+    // 放 finally：构造客户端/组装文案若有意外异常，按钮不会永久停在 loading
+    testing.value = false
   }
-  testing.value = false
 }
 
 /** 从 s3Backup 配置键导入（只读，解密后回填表单，不自动保存） */

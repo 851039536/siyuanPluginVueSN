@@ -4,7 +4,7 @@
     :visible="true"
     size="small"
     :header="title"
-    @update:visible="$emit('close')"
+    @update:visible="emit('close')"
   >
     <div class="fm-mc-body">
       <!-- 当前目标路径面包屑 -->
@@ -89,7 +89,7 @@
         <Button
           variant="ghost"
           size="small"
-          @click="$emit('close')"
+          @click="emit('close')"
         >
           {{ i18n.cancel }}
         </Button>
@@ -98,7 +98,7 @@
           variant="primary"
           size="small"
           :disabled="loading || !!loadError"
-          @click="$emit('confirm', currentPrefix)"
+          @click="emit('confirm', currentPrefix)"
         >
           {{ i18n.confirm }}
         </Button>
@@ -127,7 +127,7 @@ const props = defineProps<{
   i18n: S3FileManagerI18n
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   confirm: [destPrefix: string]
   close: []
 }>()

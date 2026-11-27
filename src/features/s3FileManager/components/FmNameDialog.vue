@@ -4,7 +4,7 @@
     :visible="true"
     size="small"
     :header="title"
-    @update:visible="$emit('close')"
+    @update:visible="emit('close')"
   >
     <div class="fm-name-body">
       <Input
@@ -22,7 +22,7 @@
       <Button
         variant="ghost"
         size="small"
-        @click="$emit('close')"
+        @click="emit('close')"
       >
         {{ i18n.cancel }}
       </Button>

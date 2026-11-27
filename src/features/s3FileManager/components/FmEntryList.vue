@@ -131,7 +131,7 @@
       <Button
         variant="ghost"
         size="xsmall"
-        @click="$emit('loadMore')"
+        @click="emit('loadMore')"
       >
         {{ i18n.loadMore }}
       </Button>

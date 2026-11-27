@@ -11,6 +11,7 @@ import { createModalVueApp } from "@/utils/vueAppHelper"
 import { emitCustomEvent } from "@/utils/eventBus"
 import S3FileManagerPanel from "./index.vue"
 import { S3_FM_FIRST_OPEN_EVENT } from "./types"
+import { getS3FileManagerI18n } from "./types/i18n"
 import { S3FileManagerStorage } from "./types/storage"
 
 let instance: S3FileManager | null = null
@@ -36,7 +37,8 @@ export class S3FileManager {
       buildProps: () => ({
         onClose: this.close,
         storage: this.storage,
-        i18n: this.plugin.i18n.s3FileManager,
+        // 经白名单取值：缺键补空串，避免把 undefined 拼进提示文案
+        i18n: getS3FileManagerI18n(this.plugin),
       }),
     })
   }

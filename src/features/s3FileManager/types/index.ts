@@ -108,8 +108,8 @@ export const S3_FM_FIRST_OPEN_EVENT = "s3FileManagerFirstOpen"
 
 // ========== 共享工具类型 ==========
 
-/** i18n 文案对象（键定义见 src/i18n/zh_CN/s3FileManager.json，值均为字符串） */
-export type S3FileManagerI18n = Record<string, string>
+/** i18n 键清单与类型化取值（清单在 ./i18n，此处转发以保持既有 import 路径不变） */
+export type { S3FileManagerI18n, S3FileManagerI18nKey } from "./i18n"
 
 /** 确认框可选参数（危险操作取 danger 配色） */
 export interface ConfirmOptions {

@@ -10,7 +10,7 @@ import type { S3Client } from "@/utils/s3/s3Client"
 import { copyObject, createFolder } from "@/utils/s3/s3ObjectOps"
 import { runWithConcurrency } from "@/utils/s3/concurrency"
 import { getErrorMessage } from "@/utils/stringUtils"
-import type { FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
+import type { FileOpLog, FileOpType, S3Entry, S3FileManagerI18n } from "../types"
 import { FILE_OP_CONCURRENCY } from "../types"
 import { buildFailDetail, joinPrefix, parentPrefix } from "../utils"
 
@@ -68,6 +68,15 @@ export function useS3FileOps(deps: {
     return keys.map((src) => ({ src, dest: destBase + src.slice(entry.key.length) }))
   }
 
+  /** 合并构建多个条目到目标目录的复制任务对（文件夹保持相对结构；守卫错误直接抛出） */
+  async function buildPairs(entries: S3Entry[], destPrefix: string): Promise<CopyPair[]> {
+    const pairs: CopyPair[] = []
+    for (const entry of entries) {
+      pairs.push(...await buildCopyPairs(entry, destPrefix))
+    }
+    return pairs
+  }
+
   /**
    * 操作骨架：busy 状态、统一错误提示、日志与刷新。
    * fn 内已自行写日志的失败经 LoggedError 标记，避免 catch 中重复记录。
@@ -102,7 +111,8 @@ export function useS3FileOps(deps: {
     await runWithConcurrency(items, FILE_OP_CONCURRENCY, async (item) => {
       try {
         await run(item)
-      } catch (err) {
+      } catch {
+        // 单项失败不影响其余项，错误由调用方按失败清单汇总（不在此重复记日志）
         failed.push(typeof item === "string" ? item : item.src)
       }
       done++
@@ -140,6 +150,18 @@ export function useS3FileOps(deps: {
   /** 批量条目名摘要（单条用名称，多条用数量） */
   function summarizeNames(entries: S3Entry[]): string {
     return entries.length === 1 ? entries[0].name : `${entries.length} ${i18n.itemsUnit}`
+  }
+
+  /** 写一条失败日志（失败清单统一走 detail，供日志面板展开） */
+  function logFailure(
+    type: FileOpType,
+    action: string,
+    fileName: string,
+    message: string,
+    failed: string[],
+    itemCount?: number,
+  ): void {
+    deps.addLog({ type, action, fileName, itemCount, success: false, message, detail: buildFailDetail(failed) })
   }
 
   /** 过滤掉已位于目标目录的条目；全部被过滤时提示并返回 null（不产生日志与刷新） */
@@ -180,7 +202,7 @@ export function useS3FileOps(deps: {
         const pairs = await buildCopyPairs({ ...entry, name: trimmed }, parent)
         const copyFailed = await runCopies(pairs, i18n.statusCopying)
         if (copyFailed.length > 0) {
-          deps.addLog({ type: "rename", action: i18n.actionRename, fileName: entry.name, success: false, message: i18n.renameFailed, detail: buildFailDetail(copyFailed) })
+          logFailure("rename", i18n.actionRename, entry.name, i18n.renameFailed, copyFailed)
           throw new LoggedError(i18n.renameFailed)
         }
         const deleteFailed = await runDeletes(pairs.map((p) => p.src), i18n.statusDeleting)
@@ -195,7 +217,7 @@ export function useS3FileOps(deps: {
       } catch (err) {
         // 其余异常（buildCopyPairs 守卫 / 列举失败）在此补记失败日志；已记账的经 LoggedError 跳过
         if (!(err instanceof LoggedError)) {
-          deps.addLog({ type: "rename", action: i18n.actionRename, fileName: entry.name, success: false, message: getErrorMessage(err) })
+          logFailure("rename", i18n.actionRename, entry.name, getErrorMessage(err), [])
         }
         throw err
       }
@@ -207,10 +229,7 @@ export function useS3FileOps(deps: {
     const movable = filterMovableEntries(entries, destPrefix)
     if (!movable) { return }
     await runOp(async () => {
-      const pairs: CopyPair[] = []
-      for (const entry of movable) {
-        pairs.push(...await buildCopyPairs(entry, destPrefix))
-      }
+      const pairs = await buildPairs(movable, destPrefix)
       const failed = await runCopies(pairs, i18n.statusCopying)
       deps.addLog({
         type: "copy", action: i18n.actionCopy,
@@ -229,17 +248,10 @@ export function useS3FileOps(deps: {
     const movable = filterMovableEntries(entries, destPrefix)
     if (!movable) { return }
     await runOp(async () => {
-      const pairs: CopyPair[] = []
-      for (const entry of movable) {
-        pairs.push(...await buildCopyPairs(entry, destPrefix))
-      }
+      const pairs = await buildPairs(movable, destPrefix)
       const copyFailed = await runCopies(pairs, i18n.statusCopying)
       if (copyFailed.length > 0) {
-        deps.addLog({
-          type: "move", action: i18n.actionMove,
-          fileName: summarizeNames(movable), itemCount: pairs.length,
-          success: false, message: i18n.moveFailed, detail: buildFailDetail(copyFailed),
-        })
+        logFailure("move", i18n.actionMove, summarizeNames(movable), i18n.moveFailed, copyFailed, pairs.length)
         throw new LoggedError(i18n.moveFailed)
       }
       const deleteFailed = await runDeletes(pairs.map((p) => p.src), i18n.statusDeleting)

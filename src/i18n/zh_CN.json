@@ -3849,7 +3849,6 @@
     "importFromBackup": "从 S3 备份导入",
     "importFromBackupHint": "复用 S3 备份功能已保存的连接配置",
     "importSuccess": "已导入 S3 备份配置",
-    "importFailed": "导入失败",
     "importNoBackupConfig": "未找到 S3 备份配置",
     "namePlaceholder": "请输入名称",
     "invalidName": "名称不能为空或包含斜杠等非法字符",

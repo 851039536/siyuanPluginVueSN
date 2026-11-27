@@ -5,6 +5,9 @@
  * 内存峰值恒定；存储端不支持分片时由共享层降级整包并告警）→ 带字节进度上报。
  * 下载：选择目标目录 → 流式写盘（文件夹递归保持相对结构）。
  * 进度经面板内进度条 + 状态栏任务双通道上报，整数百分比变化才更新响应式。
+ *
+ * 上传与下载共用同一套批处理骨架（`runTransferBatch`）：软取消、字节分数聚合、
+ * 失败清单收集只写一份，两条链路仅在「单个任务怎么执行」上不同。
  */
 import { ref } from "vue"
 import type { Ref } from "vue"
@@ -20,6 +23,7 @@ import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarT
 import type { ConfirmRequest, FileOpLog, S3Entry, S3FileManagerI18n } from "../types"
 import { TRANSFER_CONCURRENCY } from "../types"
 import { buildFailDetail, nameFromKey } from "../utils"
+import { runTransferBatch } from "./transferBatch"
 
 /** 传输进度状态 */
 export interface TransferProgress {
@@ -32,6 +36,106 @@ export interface TransferProgress {
   indeterminate: boolean
 }
 
+/** 单个上传任务：本地绝对路径 → 目标 key（含展示名） */
+interface UploadTask {
+  path: string
+  key: string
+  name: string
+}
+
+/** 递归收集目录下全部文件的绝对路径 */
+async function collectDirFiles(
+  fs: typeof import("node:fs"),
+  pathMod: typeof import("node:path"),
+  dir: string,
+): Promise<string[]> {
+  const result: string[] = []
+  const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+  for (const ent of entries) {
+    const full = pathMod.join(dir, ent.name)
+    if (ent.isDirectory()) {
+      result.push(...await collectDirFiles(fs, pathMod, full))
+    } else if (ent.isFile()) {
+      result.push(full)
+    }
+  }
+  return result
+}
+
+/**
+ * 递归收集「没有任何子项」的目录，按远端 key 前缀写入 out。
+ * 空目录在 S3 里没有对应对象，必须补 0 字节占位对象才能在远端保真。
+ */
+async function collectEmptyDirs(
+  fs: typeof import("node:fs"),
+  pathMod: typeof import("node:path"),
+  dir: string,
+  relKey: string,
+  out: string[],
+): Promise<void> {
+  const entries = await fs.promises.readdir(dir, { withFileTypes: true })
+  if (entries.length === 0) {
+    out.push(relKey)
+    return
+  }
+  for (const ent of entries) {
+    if (!ent.isDirectory()) { continue }
+    await collectEmptyDirs(fs, pathMod, pathMod.join(dir, ent.name), `${relKey}${ent.name}/`, out)
+  }
+}
+
+/** 拖入项展开结果 */
+interface DroppedTaskPlan {
+  /** 待上传文件任务 */
+  tasks: UploadTask[]
+  /** 空目录占位 key（目录结构保真用，runUpload 内统一 PUT） */
+  placeholders: string[]
+  /** 顶层项名（仅用于日志摘要计数） */
+  topLevelNames: string[]
+  /**
+   * 顶层"文件"项名，供撞名确认使用。
+   * 不含文件夹名：S3 里同名文件夹是合并、不是覆盖，对文件夹报"将被覆盖"是假警报。
+   */
+  fileNames: string[]
+  /** stat 失败被跳过的项名 */
+  skipped: string[]
+}
+
+/** 把拖入的本地路径展开为上传任务（目录递归并保持相对结构，空目录补占位对象） */
+async function collectDropTasks(
+  fs: typeof import("node:fs"),
+  pathMod: typeof import("node:path"),
+  paths: string[],
+  destPrefix: string,
+): Promise<DroppedTaskPlan> {
+  const plan: DroppedTaskPlan = { tasks: [], placeholders: [], topLevelNames: [], fileNames: [], skipped: [] }
+  for (const p of paths) {
+    let stat
+    try {
+      stat = await fs.promises.stat(p)
+    } catch (err) {
+      // stat 失败（文件在拖入后被删/无权限）不再静默丢弃：计入失败清单并在结束时提示
+      console.warn("[S3文件管理] 读取拖入项失败:", p, getErrorMessage(err))
+      plan.skipped.push(pathMod.basename(p))
+      continue
+    }
+    const baseName = pathMod.basename(p)
+    plan.topLevelNames.push(baseName)
+    if (stat.isDirectory()) {
+      const files = await collectDirFiles(fs, pathMod, p)
+      await collectEmptyDirs(fs, pathMod, p, `${destPrefix}${baseName}/`, plan.placeholders)
+      for (const filePath of files) {
+        const rel = filePath.slice(p.length + 1).split(pathMod.sep).join("/")
+        plan.tasks.push({ path: filePath, name: pathMod.basename(filePath), key: `${destPrefix}${baseName}/${rel}` })
+      }
+    } else {
+      plan.tasks.push({ path: p, name: baseName, key: `${destPrefix}${baseName}` })
+      plan.fileNames.push(baseName)
+    }
+  }
+  return plan
+}
+
 export function useS3Transfer(deps: {
   requireClient: () => S3Client
   i18n: S3FileManagerI18n
@@ -41,7 +145,7 @@ export function useS3Transfer(deps: {
   /** 传输完成后回调：失效缓存 + 刷新当前目录（下载不改远端可不刷新，由实现决定） */
   afterMutation: () => Promise<void>
   /** 确认回调（由宿主的共享确认框承载，返回 Promise<boolean>） */
-  confirmAction: ConfirmRequest
+  requestConfirm: ConfirmRequest
   /** 面板是否已卸载：卸载后不再触发刷新等副作用 */
   isDisposed: () => boolean
 }) {
@@ -88,34 +192,27 @@ export function useS3Transfer(deps: {
     }
   }
 
-  // ========== 上传 ==========
-
-  /** 单个上传任务：本地绝对路径 → 目标 key（含展示名） */
-  interface UploadTask {
-    path: string
-    key: string
-    name: string
+  /**
+   * 重名覆盖确认：有冲突才弹确认框，返回是否继续。
+   * `lines` 为逐行展示的冲突条目（上传侧传文件名列表，下载侧可传单条汇总串）。
+   */
+  async function confirmOverwrite(lines: string[], actionText: string): Promise<boolean> {
+    if (lines.length === 0) { return true }
+    return deps.requestConfirm(actionText, `${i18n.overwriteConfirm}\n${lines.join("\n")}`, { confirmText: actionText })
   }
+
+  // ========== 上传 ==========
 
   /** 核心并发上传：逐文件走共享层大文件感知上传 → 汇总日志与状态栏上报 */
   async function runUpload(tasks: UploadTask[], summaryName: string, folderPlaceholders: string[] = []): Promise<void> {
-    if (transferring.value || tasks.length === 0) { return }
+    // 空目录占位也是有效工作：仅"既无文件又无占位"才是空转
+    if (transferring.value || (tasks.length === 0 && folderPlaceholders.length === 0)) { return }
     const client = deps.requireClient()
 
     transferring.value = true
     cancelRequested = false
     const failed: string[] = []
-    let done = 0
     let successCount = 0
-    /** 进行中任务的字节分数（key → 0~1）：求和后参与百分比，避免并发交替上报导致进度回退 */
-    const fractions = new Map<string, number>()
-
-    /** 上报当前聚合进度（done + 全部进行中任务分数之和） */
-    const reportUpload = (currentFile: string): void => {
-      let fractionSum = 0
-      for (const f of fractions.values()) { fractionSum += f }
-      reportProgress(i18n.statusUploading, currentFile, done, tasks.length, fractionSum)
-    }
 
     try {
       // 空文件夹没有文件任务，但需要占位对象才能在远端保真（拖入"只有空子文件夹的目录"）
@@ -130,27 +227,28 @@ export function useS3Transfer(deps: {
           }
         })
       }
-      await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
-        // 软取消：取消后不再开始新任务（在途文件不做硬中断）
-        if (cancelRequested) { return }
-        try {
-          fractions.set(task.key, 0)
-          reportUpload(task.name)
+
+      const batch = await runTransferBatch(
+        tasks.map((task) => ({
+          key: task.key,
+          label: task.name,
+          context: task.path,
           // 共享层入口：>100MB 自动分片（16MB 峰值），≤100MB 整包单 PUT 但强制分块写
-          await withRetries(() => uploadFileSmart(client, task.path, task.key, (sent, total) => {
-            fractions.set(task.key, sent / total)
-            reportUpload(task.name)
-          }))
-          successCount++
-        } catch (err) {
-          console.warn("[S3文件管理] 上传失败:", deps.isDisposed() ? "" : task.path, getErrorMessage(err))
-          failed.push(task.name)
-        } finally {
-          fractions.delete(task.key)
-        }
-        done++
-        reportUpload(task.name)
-      })
+          run: (onProgress: (fraction: number) => void) =>
+            withRetries(() => uploadFileSmart(client, task.path, task.key, (sent, total) => onProgress(sent / total))),
+        })),
+        {
+          label: i18n.statusUploading,
+          isCancelled: () => cancelRequested,
+          report: reportProgress,
+          onTaskError: (task, err) => {
+            // 卸载后不再暴露本地路径（可能含用户目录名），退回远端 key 仍具可定位性
+            console.warn("[S3文件管理] 上传失败:", deps.isDisposed() ? task.key : task.context, getErrorMessage(err))
+          },
+        },
+      )
+      failed.push(...batch.failed)
+      successCount += batch.successCount
 
       // 软取消的批次不算"上传失败"：未开始的任务不计入 failed，成功照常记录
       if (cancelRequested) {
@@ -161,7 +259,8 @@ export function useS3Transfer(deps: {
         deps.addLog({
           type: "upload", action: i18n.actionUpload,
           fileName: tasks.length === 1 ? tasks[0].name : summaryName,
-          itemCount: tasks.length,
+          // 只建空目录时没有文件任务，此时按"新建的占位目录数"计
+          itemCount: tasks.length || folderPlaceholders.length,
           success,
           message: success ? undefined : `${failed.length} ${i18n.logFailed}: ${failed.join(", ")}`,
           detail: buildFailDetail(failed),
@@ -177,25 +276,6 @@ export function useS3Transfer(deps: {
     } finally {
       await finishTransfer(successCount)
     }
-  }
-
-  /** 递归收集目录下全部文件的绝对路径 */
-  async function collectDirFiles(
-    fs: typeof import("node:fs"),
-    pathMod: typeof import("node:path"),
-    dir: string,
-  ): Promise<string[]> {
-    const result: string[] = []
-    const entries = await fs.promises.readdir(dir, { withFileTypes: true })
-    for (const ent of entries) {
-      const full = pathMod.join(dir, ent.name)
-      if (ent.isDirectory()) {
-        result.push(...await collectDirFiles(fs, pathMod, full))
-      } else if (ent.isFile()) {
-        result.push(full)
-      }
-    }
-    return result
   }
 
   /** 选择本地文件并上传到当前目录（重名确认覆盖；大文件由共享层自动分片） */
@@ -218,10 +298,7 @@ export function useS3Transfer(deps: {
     const existingNames = new Set(deps.getEntries().filter((e) => !e.isFolder).map((e) => e.name))
     // Set 去重：从不同目录选择同名文件时，确认清单不应重复
     const conflicts = [...new Set(paths.map((p) => path.basename(p)))].filter((name) => existingNames.has(name))
-    if (conflicts.length > 0) {
-      // 覆盖确认："以下文件已存在，继续上传将覆盖："
-      if (!await deps.confirmAction(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), { confirmText: i18n.upload })) { return }
-    }
+    if (!await confirmOverwrite(conflicts, i18n.upload)) { return }
 
     const tasks: UploadTask[] = paths.map((p) => {
       const name = path.basename(p)
@@ -241,7 +318,6 @@ export function useS3Transfer(deps: {
       showMessage(i18n.desktopOnly, 3000, "error")
       return
     }
-    const { fs, path } = node
     const paths = getPathsFromFiles(files)
     if (paths.length === 0) {
       // 取不到磁盘路径（Electron 32+ webUtils 不可用时也会走到这里）
@@ -249,64 +325,23 @@ export function useS3Transfer(deps: {
       return
     }
 
-    // 展开：文件直接上传；目录递归收集并保持相对结构（顶层目录名作为前缀段）
-    const tasks: UploadTask[] = []
-    const topLevelNames: string[] = []
-    const skipped: string[] = []
-    /** 空文件夹的占位 key（目录结构保真用，runUpload 内统一 PUT） */
-    const placeholders: string[] = []
-    for (const p of paths) {
-      let stat
-      try {
-        stat = await fs.promises.stat(p)
-      } catch (err) {
-        // stat 失败（文件在拖入后被删/无权限）不再静默丢弃：计入失败清单并在结束时提示
-        console.warn("[S3文件管理] 读取拖入项失败:", p, getErrorMessage(err))
-        skipped.push(path.basename(p))
-        continue
-      }
-      const baseName = path.basename(p)
-      topLevelNames.push(baseName)
-      if (stat.isDirectory()) {
-        // 空文件夹没有可收集的文件，但目录结构要保真（含空子文件夹）→ 补占位对象
-        const folderPlaceholders: string[] = []
-        const collectEmptyDirs = async (dir: string, relKey: string): Promise<void> => {
-          const dirEntries = await fs.promises.readdir(dir, { withFileTypes: true })
-          if (dirEntries.length === 0) {
-            folderPlaceholders.push(relKey)
-            return
-          }
-          for (const ent of dirEntries) {
-            if (!ent.isDirectory()) { continue }
-            await collectEmptyDirs(path.join(dir, ent.name), `${relKey}${ent.name}/`)
-          }
-        }
-        const collected = await collectDirFiles(fs, path, p)
-        await collectEmptyDirs(p, `${destPrefix}${baseName}/`)
-        for (const filePath of collected) {
-          const rel = filePath.slice(p.length + 1).split(path.sep).join("/")
-          tasks.push({ path: filePath, name: path.basename(filePath), key: `${destPrefix}${baseName}/${rel}` })
-        }
-        placeholders.push(...folderPlaceholders)
-      } else {
-        tasks.push({ path: p, name: baseName, key: `${destPrefix}${baseName}` })
-      }
-    }
-    if (tasks.length === 0 && placeholders.length === 0) {
+    const plan = await collectDropTasks(node.fs, node.path, paths, destPrefix)
+    if (plan.tasks.length === 0 && plan.placeholders.length === 0) {
       // 全部条目都读取失败时必须有可见反馈，否则用户拖入后毫无反应
-      showMessage(`${i18n.uploadFailed}: ${skipped.join(", ")}`, 5000, "error")
+      showMessage(`${i18n.uploadFailed}: ${plan.skipped.join(", ")}`, 5000, "error")
       return
     }
 
-    // 重名覆盖确认（基于顶层名比对现有条目）
-    const existingNames = new Set(deps.getEntries().map((e) => e.name))
-    const conflicts = [...new Set(topLevelNames)].filter((name) => existingNames.has(name))
-    if (conflicts.length > 0) {
-      // 覆盖确认："以下文件已存在，继续上传将覆盖："
-      if (!await deps.confirmAction(i18n.upload, i18n.overwriteConfirm + "\n" + conflicts.join("\n"), { confirmText: i18n.upload })) { return }
-    }
+    // 重名覆盖确认：只比对顶层"文件"与远端同名文件。
+    // 同名文件夹是合并而非覆盖（不提示）；文件夹内部同名文件的覆盖需逐个 HEAD，
+    // 代价与收益不成比例，属已知缺口（见 README「已知约束」）
+    const existingFileNames = new Set(deps.getEntries().filter((e) => !e.isFolder).map((e) => e.name))
+    const conflicts = [...new Set(plan.fileNames)].filter((name) => existingFileNames.has(name))
+    if (!await confirmOverwrite(conflicts, i18n.upload)) { return }
 
-    await runUpload(tasks, `${tasks.length} ${i18n.itemsUnit}`, placeholders)
+    // 只拖入空文件夹时文件任务为 0，摘要退回顶层项数，避免日志出现"0 项"
+    const summaryCount = plan.tasks.length || plan.topLevelNames.length
+    await runUpload(plan.tasks, `${summaryCount} ${i18n.itemsUnit}`, plan.placeholders)
   }
 
   // ========== 下载 ==========
@@ -358,20 +393,10 @@ export function useS3Transfer(deps: {
     transferring.value = true
     cancelRequested = false
     const failed: string[] = []
-    let done = 0
     let successCount = 0
     let taskCount = 0
     /** 单文件下载且字节数未知时，进度条切不定态（多任务仍可按完成数推进） */
     let byteTotalUnknown = false
-    /** 进行中任务的字节分数（key → 0~1）：求和参与百分比，与上传同款聚合口径 */
-    const fractions = new Map<string, number>()
-
-    /** 上报当前聚合进度（done + 全部进行中任务分数之和） */
-    const reportDownload = (currentFile: string, total: number): void => {
-      let fractionSum = 0
-      for (const f of fractions.values()) { fractionSum += f }
-      reportProgress(i18n.statusDownloading, currentFile, done, total, fractionSum, byteTotalUnknown && total === 1)
-    }
 
     try {
       const collected = await collectDownloadTasks(entries, destDir, node.path)
@@ -404,40 +429,37 @@ export function useS3Transfer(deps: {
       if (existingDests.length > 0) {
         const display = existingDests.map((p) => node.path.basename(p))
         const summary = display.length > 3 ? `${display.length} ${i18n.itemsUnit}` : display.join(", ")
-        // 覆盖确认："以下文件已存在，继续下载将覆盖："
-        if (!await deps.confirmAction(i18n.download, i18n.overwriteConfirm + "\n" + summary, { confirmText: i18n.download })) { return }
+        if (!await confirmOverwrite([summary], i18n.download)) { return }
       }
 
       // 单文件下载的字节总量未知与否，取决于首个任务回调里的 total
       if (tasks.length === 1) { byteTotalUnknown = true }
-      await runWithConcurrency(tasks, TRANSFER_CONCURRENCY, async (task) => {
-        // 软取消：取消后不再开始新任务（在途文件不做硬中断）
-        if (cancelRequested) { return }
-        const displayName = nameFromKey(task.key)
-        try {
-          fractions.set(task.key, 0)
-          reportDownload(displayName, tasks.length)
+      const batch = await runTransferBatch(
+        tasks.map((task) => ({
+          key: task.key,
+          label: nameFromKey(task.key),
           // download 内部自建目标目录（mkdir recursive），无需在此预建
-          await withRetries(() => client.download(task.key, task.dest, (received, total) => {
-            // total 取 Content-Length：代理分块传输未给该头时为 0 → 单文件切不定态
-            if (total > 0) {
-              byteTotalUnknown = false
-              fractions.set(task.key, received / total)
-            } else {
-              fractions.set(task.key, 0)
-            }
-            reportDownload(displayName, tasks.length)
-          }))
-          successCount++
-        } catch (err) {
-          console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err))
-          failed.push(task.key)
-        } finally {
-          fractions.delete(task.key)
-        }
-        done++
-        reportDownload(displayName, tasks.length)
-      })
+          run: (onProgress: (fraction: number) => void) =>
+            withRetries(() => client.download(task.key, task.dest, (received, total) => {
+              // total 取 Content-Length：代理分块传输未给该头时为 0 → 单文件切不定态
+              if (total > 0) {
+                byteTotalUnknown = false
+                onProgress(received / total)
+              } else {
+                onProgress(0)
+              }
+            })),
+        })),
+        {
+          label: i18n.statusDownloading,
+          isCancelled: () => cancelRequested,
+          report: reportProgress,
+          isIndeterminate: (count) => byteTotalUnknown && count === 1,
+          onTaskError: (task, err) => console.warn("[S3文件管理] 下载失败:", task.key, getErrorMessage(err)),
+        },
+      )
+      failed.push(...batch.failed)
+      successCount += batch.successCount
 
       // 软取消的批次不算"下载失败"
       if (cancelRequested) {

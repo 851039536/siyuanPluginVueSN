@@ -9,7 +9,7 @@
  */
 import type { Plugin } from "siyuan"
 import type { S3Config } from "@/utils/s3/types"
-import { DEFAULT_S3_CONFIG } from "@/utils/s3/types"
+import { DEFAULT_S3_CONFIG, S3_BACKUP_CONFIG_KEY } from "@/utils/s3/types"
 import { PluginStorage } from "@/utils/pluginStorage"
 import { TypedStorage } from "@/utils/typedStorage"
 import type { FileOpLog, FmPrefs } from "./index"
@@ -23,9 +23,6 @@ const STORAGE_KEYS = {
   PREFS: "s3-file-manager-prefs",
 } as const
 
-/** s3Backup 的 S3 配置存储键（跨模块只读共享，禁止写入） */
-const S3_BACKUP_CONFIG_KEY = "s3-backup-config"
-
 // ========== 存储类 ==========
 
 export class S3FileManagerStorage {
@@ -35,7 +32,10 @@ export class S3FileManagerStorage {
   readonly logs: TypedStorage<{ logs: FileOpLog[] }>
   /** 视图偏好（视图模式/排序） */
   readonly prefs: TypedStorage<FmPrefs>
-  /** s3Backup 配置的只读槽（一键导入用，永不调用 save） */
+  /**
+   * s3Backup 配置的只读槽（一键导入用，永不调用 save）。
+   * 键取自共享层 `S3_BACKUP_CONFIG_KEY`，与 s3Backup 写入侧同源，避免字面量各写一份。
+   */
   readonly backupConfigReadonly: TypedStorage<S3Config>
 
   constructor(plugin: Plugin) {

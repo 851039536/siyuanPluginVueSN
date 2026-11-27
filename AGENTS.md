@@ -423,10 +423,10 @@ async addItem(item: MyItem): Promise<void> {
 带持久化设置的运行时功能，设置**必须在插件启动链路中加载并立即应用**。加载起点是功能的注册/初始化入口（如 `GeneralSettings.init()` 中的 `applyXxxStyle()`），而不是设置面板：
 
 1. **启动即加载**：初始化入口用 `TypedStorage.loadOrDefault()` 读取设置（默认值在 `types/storage.ts` 的 `DEFAULT_XXX_SETTINGS` 常量中注册），从未保存过设置时按默认值生效，与设置面板显示的默认状态保持一致。禁止用 `load()` 返回 null 就跳过——那会导致"必须打开设置面板动一次开关才生效"
-2. **DOM 就绪轮询**：启动阶段目标 DOM（如文件树 `ul[data-url]`）可能尚未渲染，Manager 首渲必须做有界轮询等待（如每 2 秒一次、上限 15 次），出现后立即渲染；禁止首渲扑空后依赖下一个定时器周期补渲，轮询定时器须在 `stop()` 中清理
+2. **目标 DOM 晚就绪**：启动阶段目标 DOM 可能尚未渲染，Manager 首渲必须保证元素出现后立即生效；禁止首渲扑空后依赖下一个定时器周期补渲。两种实现均合规：① 有界轮询（如每 2 秒一次、上限 15 次，定时器须在 `stop()` 中清理）；② `MutationObserver` 监听挂载（须在 `stop()` 中断开）。**思源 3.8.x 起文档树为虚拟滚动列表（行带 `data-tree-key`，只挂载可见行，重渲染会冲掉注入内容），此类列表必须用 ②** —— 轮询只在首现时生效一次，无法覆盖滚动挂载
 3. **设置面板只负责修改**：面板保存后通过 Manager 宿主的公开方法（如 `updateDocCount(settings)`）应用变更，不承担启动加载职责，也不得直接触碰 Manager 实例的私有字段
 
-参考实现：`GeneralSettings.applyDocCountStyle()` + `DocCountManager.renderWhenTreeReady()`。
+参考实现：`GeneralSettings.applyDocCountStyle()` + `DocCountManager.observeTreeRows()`（虚拟滚动列表，计数缓存 + 行挂载监听）。
 
 ---
 

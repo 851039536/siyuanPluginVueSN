@@ -1,23 +1,23 @@
-import { sql } from "@/api"
-import type { DocCountFormat } from "../types/storage"
-import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
-import {
-  DOC_COUNT_FORMATTERS,
-} from "../types/storage"
-
 /**
  * 笔记本文档数统计管理器
- * 用于在笔记本列表中显示文档数量
+ * 在文件树笔记本名称后追加文档数。思源 3.8.x 起文档树改为虚拟滚动扁平结构
+ * （行带 data-tree-key="notebook:<id>"，不再有 ul[data-url]），DOM 中只保留可见行，
+ * 因此以「全量计数缓存 + 行挂载监听」替代原先的一次性遍历。
  */
-export class DocCountManager {
-  /** 启动时文件树未渲染的重试间隔（毫秒） */
-  private static readonly INIT_RETRY_DELAY = 2000
-  /** 启动重试次数上限（约 30 秒等待窗口） */
-  private static readonly INIT_RETRY_MAX = 15
+import { sql } from "@/api"
+import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
+import { DOC_COUNT_FORMATTERS, type DocCountFormat } from "../types/storage"
 
+/** 笔记本行选择器（新旧文档树结构通用） */
+const NOTEBOOK_ROW_SELECTOR = 'li[data-type="navigation-root"]'
+/** 注入的计数标记类名（同时用于清空与样式更新） */
+const COUNT_CLASS = "doc-count-number"
+/** 新版虚拟滚动文档树的行标识前缀 */
+const TREE_KEY_PREFIX = "notebook:"
+
+export class DocCountManager {
   private readonly timers = new TimerRegistry()
   private updateTimer: TimerHandle | null = null
-  private initRetryTimer: TimerHandle | null = null
   private updateInterval = 3600000 // 默认1小时
   private displayFormat: DocCountFormat = "bracket"
   private fontStyle: {
@@ -31,38 +31,39 @@ export class DocCountManager {
     fontWeight: "normal",
     opacity: 0.8,
   }
+  /** 笔记本 ID → 文档数缓存（一次全量查询填充，虚拟滚动复用行时直接取用） */
+  private countCache = new Map<string, number>()
+  /** 行挂载/重建监听（虚拟滚动只挂载可见行，且重渲染会冲掉注入的计数） */
+  private treeObserver: MutationObserver | null = null
+  private applyFrame = 0
+  private refreshing = false
+  private refreshPending = false
+  private active = false
 
   /**
    * 启动文档数统计功能
    */
   public start(): void {
-    this.renderWhenTreeReady()
+    this.active = true
+    this.observeTreeRows()
+    void this.refreshCounts()
     this.startAutoUpdate()
-  }
-
-  /**
-   * 插件 onload 阶段文件树 ul[data-url] 往往尚未渲染，
-   * 轮询等待其出现后立即首渲，避免要等一个更新周期才显示数量
-   */
-  private renderWhenTreeReady(attempt = 0): void {
-    if (document.querySelector("ul[data-url]")) {
-      this.setBoxCount()
-      return
-    }
-    if (attempt >= DocCountManager.INIT_RETRY_MAX) return
-    this.initRetryTimer = this.timers.setTimeout(() => {
-      this.renderWhenTreeReady(attempt + 1)
-    }, DocCountManager.INIT_RETRY_DELAY)
   }
 
   /**
    * 停止文档数统计功能
    */
   public stop(): void {
-    this.timers.clear(this.initRetryTimer)
-    this.initRetryTimer = null
+    this.active = false
+    this.treeObserver?.disconnect()
+    this.treeObserver = null
+    if (this.applyFrame) {
+      cancelAnimationFrame(this.applyFrame)
+      this.applyFrame = 0
+    }
     this.stopAutoUpdate()
     this.timers.clearAll()
+    this.countCache.clear()
     this.clearAllCounts()
   }
 
@@ -82,10 +83,7 @@ export class DocCountManager {
    */
   public setDisplayFormat(format: DocCountFormat): void {
     this.displayFormat = format
-    // 重新渲染所有笔记本的文档数
-    if (this.updateTimer) {
-      this.setBoxCount()
-    }
+    this.applyCounts()
   }
 
   /**
@@ -102,62 +100,118 @@ export class DocCountManager {
   }
 
   /**
-   * 给笔记本添加文档数（批量查询优化）
+   * 监听文档树行的挂载与重建：虚拟滚动滚动时新行进入视口、
+   * 重渲染会冲掉注入的计数，都需要按缓存即时补齐
    */
-  private async setBoxCount(): Promise<void> {
-    const boxes = document.querySelectorAll("ul[data-url]")
-    if (boxes.length === 0) return
-
-    // 收集所有 box URL，构建批量查询
-    const urls: string[] = []
-    const boxMap = new Map<string, Element>()
-    boxes.forEach((box) => {
-      const url = (box as HTMLElement).dataset.url
-      if (url) {
-        urls.push(url)
-        boxMap.set(url, box)
-      }
+  private observeTreeRows(): void {
+    if (this.treeObserver) return
+    this.treeObserver = new MutationObserver((mutations) => {
+      if (this.hasNotebookRowMutation(mutations)) this.scheduleApply()
     })
-    if (urls.length === 0) return
+    this.treeObserver.observe(document.body, { childList: true, subtree: true })
+  }
 
-    // 一次批量查询所有笔记本的文档数
-    const inClause = urls.map((u) => `'${u}'`).join(",")
-    const response = await this.query(
-      `SELECT box, count(*) as count FROM blocks WHERE box IN (${inClause}) AND type = 'd' GROUP BY box`,
-    )
+  private hasNotebookRowMutation(mutations: MutationRecord[]): boolean {
+    for (const mutation of mutations) {
+      for (const node of [...mutation.addedNodes, ...mutation.removedNodes]) {
+        if (!(node instanceof Element)) continue
+        if (
+          node.classList.contains(COUNT_CLASS) ||
+          node.matches(NOTEBOOK_ROW_SELECTOR) ||
+          node.querySelector(NOTEBOOK_ROW_SELECTOR) ||
+          node.closest(NOTEBOOK_ROW_SELECTOR)
+        ) {
+          return true
+        }
+      }
+    }
+    return false
+  }
 
-    // 构建 box → count 索引
-    const countMap = new Map<string, number>()
-    for (const row of response) {
-      if (row.box && row.count) countMap.set(row.box, row.count)
+  private scheduleApply(): void {
+    if (this.applyFrame) return
+    this.applyFrame = requestAnimationFrame(() => {
+      this.applyFrame = 0
+      this.applyCounts()
+    })
+  }
+
+  /**
+   * 全量刷新文档数缓存：一次 GROUP BY 覆盖所有笔记本，
+   * 未出现在结果中的笔记本按 0 篇处理（空笔记本不写 blocks）
+   */
+  private async refreshCounts(): Promise<void> {
+    if (!this.active) return
+    if (this.refreshing) {
+      this.refreshPending = true
+      return
+    }
+    this.refreshing = true
+    try {
+      const rows = await this.query<{ box: string; count: number }>(
+        "SELECT box, count(*) as count FROM blocks WHERE type = 'd' GROUP BY box",
+      )
+      if (!this.active) return
+      const next = new Map<string, number>()
+      for (const row of rows) {
+        if (row.box) next.set(row.box, Number(row.count) || 0)
+      }
+      this.countCache = next
+      this.applyCounts()
+    } finally {
+      this.refreshing = false
+      if (this.refreshPending) {
+        this.refreshPending = false
+        void this.refreshCounts()
+      }
+    }
+  }
+
+  /**
+   * 将缓存中的文档数应用到当前已挂载的笔记本行
+   */
+  private applyCounts(): void {
+    if (!this.active) return
+    const rows = document.querySelectorAll<HTMLElement>(NOTEBOOK_ROW_SELECTOR)
+    rows.forEach((row) => {
+      const notebookId = this.resolveNotebookId(row)
+      if (!notebookId) return
+      this.applyCountToRow(row, this.countCache.get(notebookId) ?? 0)
+    })
+  }
+
+  /**
+   * 解析笔记本 ID：新结构取行上的 data-tree-key，旧结构回退到父级 ul[data-url]
+   */
+  private resolveNotebookId(row: HTMLElement): string | null {
+    const treeKey = row.dataset.treeKey
+    if (treeKey?.startsWith(TREE_KEY_PREFIX)) {
+      return treeKey.slice(TREE_KEY_PREFIX.length) || null
+    }
+    return row.closest<HTMLElement>("ul[data-url]")?.dataset.url || null
+  }
+
+  /**
+   * 为单个笔记本行应用计数：0 时不显示（与旧行为一致），标题原文保持不变
+   */
+  private applyCountToRow(row: HTMLElement, count: number): void {
+    const textEl = row.querySelector<HTMLElement>("span.b3-list-item__text")
+    if (!textEl) return
+
+    const existing = textEl.querySelector<HTMLElement>(`.${COUNT_CLASS}`)
+    if (!count) {
+      existing?.remove()
+      return
     }
 
-    // 遍历 DOM，应用计数
-    for (const [url, box] of boxMap) {
-      const count = countMap.get(url)
-      if (!count) continue
-
-      const li = box.querySelector('li[data-type="navigation-root"]')
-      if (!li) continue
-
-      const boxText = li.querySelector("span.b3-list-item__text")
-      if (!boxText) continue
-
-      // 移除旧的文档数显示
-      const oldCountSpan = boxText.querySelector(".doc-count-number")
-      if (oldCountSpan) oldCountSpan.remove()
-
-      // 移除文本中的文档数（兼容所有格式）
-      const text = boxText.textContent?.replace(/\s*[([·]?\d+[)\]]?$/, "") || ""
-      boxText.textContent = text
-
-      // 创建带样式的文档数显示
-      const countSpan = document.createElement("span")
-      countSpan.className = "doc-count-number"
-      countSpan.textContent = DOC_COUNT_FORMATTERS[this.displayFormat](count)
-      this.applyStyleToSpan(countSpan)
-      boxText.appendChild(countSpan)
+    const countSpan = existing ?? document.createElement("span")
+    if (!existing) {
+      countSpan.className = COUNT_CLASS
+      textEl.appendChild(countSpan)
     }
+    const text = DOC_COUNT_FORMATTERS[this.displayFormat](count)
+    if (countSpan.textContent !== text) countSpan.textContent = text
+    this.applyStyleToSpan(countSpan)
   }
 
   /**
@@ -175,7 +229,7 @@ export class DocCountManager {
    */
   private startAutoUpdate(): void {
     this.updateTimer = this.timers.setInterval(() => {
-      this.setBoxCount()
+      void this.refreshCounts()
     }, this.updateInterval)
   }
 
@@ -191,7 +245,7 @@ export class DocCountManager {
    * 更新所有文档数的样式
    */
   private updateCountStyles(): void {
-    const countSpans = document.querySelectorAll<HTMLElement>(".doc-count-number")
+    const countSpans = document.querySelectorAll<HTMLElement>(`.${COUNT_CLASS}`)
     countSpans.forEach((span) => this.applyStyleToSpan(span))
   }
 
@@ -199,7 +253,7 @@ export class DocCountManager {
    * 清除所有文档数显示
    */
   private clearAllCounts(): void {
-    const countSpans = document.querySelectorAll(".doc-count-number")
+    const countSpans = document.querySelectorAll(`.${COUNT_CLASS}`)
     countSpans.forEach((span) => {
       span.remove()
     })

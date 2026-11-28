@@ -302,7 +302,8 @@ function classifyDeclaration(ctx, prop, value, line) {
     const m = value.match(/^(\d+(?:\.\d+)?)px$/)
     if (m) {
       const token = suggestionFor(FONT_SIZE_TOKEN, m[1])
-      emit("R3-hardcoded-font-size", token ? `改用 ${token}` : "改用 $t-* Token")
+      // 无对应档位（如图表数据 8px / 40px）降为 P2：属于「需新增 Token 或注释说明」而非强制违规
+      emit("R3-hardcoded-font-size", token ? `改用 ${token}` : "无对应档位：取最近档位或新增 Token 并注释", token ? undefined : "P2")
       if (Number.parseFloat(m[1]) > 16) emit("R3-font-size-over-base", "标题字号上限为 $t-base（16px）")
     }
   }
@@ -321,18 +322,19 @@ function classifyDeclaration(ctx, prop, value, line) {
     const m = value.match(/^(\d+(?:\.\d+)?)px$/)
     if (m && m[1] !== "0") {
       const token = suggestionFor(RADIUS_TOKEN, m[1])
-      emit("R3-hardcoded-radius", token ? `改用 ${token}` : "改用 $r-* Token")
+      emit("R3-hardcoded-radius", token ? `改用 ${token}` : "无对应档位：取最近档位或新增 Token 并注释", token ? undefined : "P2")
     }
   }
 
   if (SPACING_PROPS.has(prop) && /(^|\s)-?\d+(\.\d+)?px/.test(value)) {
-    const skip = value.includes("$") || value.includes("var(") || value.includes("calc(") || value.includes("%") || /^(0|auto|inherit|initial|unset)$/.test(value.trim())
+    const skip = value.includes("$") || value.includes("var(") || value.includes("calc(") || value.includes("env(") || value.includes("%") || /^(0|auto|inherit|initial|unset)$/.test(value.trim())
     if (!skip) {
       const suggested = value.replace(/(-?\d+(?:\.\d+)?)px/g, (raw, num) => {
         const sign = raw.startsWith("-") ? "-" : ""
         return sign + (SPACING_TOKEN[Number(num)] ?? raw.replace("-", ""))
       })
-      emit("R3-hardcoded-spacing", `改用 Token：${suggested}`)
+      // 值本身已无法映射（建议里仍是原始 px）时降为 P2
+      emit("R3-hardcoded-spacing", `改用 Token：${suggested}`, suggested === value ? "P2" : undefined)
     }
   }
 
@@ -355,8 +357,9 @@ function classifyDeclaration(ctx, prop, value, line) {
 
   if (prop === "z-index") {
     const num = Number(value)
-    if (!Number.isNaN(num) && (num > 10000 || num < 0)) {
-      emit("R3-z-index", "全屏遮罩基准 10000，子级不超过该基准")
+    // 允许区间：0–11000（遮罩 10000 + 子弹窗/浮层 10001–11000），以及 -1（伪元素背景层）
+    if (!Number.isNaN(num) && (num > 11000 || (num < 0 && num !== -1))) {
+      emit("R3-z-index", "全屏遮罩基准 10000，子级叠加上限 11000；禁止 99999/100000 这类历史值")
     }
   }
 
@@ -518,8 +521,8 @@ function scanScss(text, file, scanCtx) {
     }
     if (!rest) continue
 
-    if (rest.startsWith("@media") && rest.includes("$bp-mobile") && !rest.includes("pointer: coarse")) {
-      collector.push(collector.makeIssue("R3-mobile-breakpoint", lineNo, rest.slice(0, 80), "补 (pointer: coarse) and (hover: none) 兜底，或直接用 @include mobile"))
+    if (rest.startsWith("@media") && rest.includes("max-width: $bp-mobile") && !rest.includes("pointer: coarse")) {
+      collector.push(collector.makeIssue("R3-mobile-breakpoint", lineNo, rest.slice(0, 80), "改用 @include mobile（自带 (pointer: coarse) and (hover: none) 兜底）"))
     }
 
     // mixin 参数里的变量名字符串会被拼进 var()，静态声明扫描看不到，需单独校验

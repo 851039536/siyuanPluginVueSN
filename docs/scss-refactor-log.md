@@ -13,7 +13,8 @@
 | 冗余移除（第一轮补充）后 | **0** | 514 | 486 | 999 |
 | 第二轮（遮罩收敛 + 拆分样板）后 | **0** | 492 | 467 | 959 |
 | 第二轮（全部超大文件拆分）后 | **0** | 492 | 464 | 956 |
-| 第二轮（深嵌套校准 + 扁平化）后 | **0** | 492 | 308 | **800** |
+| 第二轮（深嵌套校准 + 扁平化）后 | **0** | 492 | 308 | 800 |
+| 第三轮（断点 / z-index / Token 化）后 | **0** | 418 | 319 | **737** |
 
 `scripts/audit-scss.baseline.json` 已按 1024 条重建，后续门禁只对新增生效。
 
@@ -239,6 +240,59 @@
 
 - 遮罩收敛：`git checkout -- <13 个文件>` 并删除 `kit/mixins.scss` 的 `si-overlay`（无其他引用则不影响编译）
 - PreviewCard 拆分：删除 3 个分片，`git checkout -- src/features/componentPreview/styles/PreviewCard.scss`
+
+---
+
+## 第三轮（续）：断点 / z-index / Token 化
+
+### 1. 改了什么
+
+| 项 | 数量 | 改动 |
+| --- | --- | --- |
+| 移动端断点 | 18 个文件 | `@media (max-width: $bp-mobile)` → `@include mobile`（自带 `(pointer: coarse) and (hover: none)` 兜底） |
+| z-index 收敛 | 4 处 | `passwordVault` 99999→10000 / 100000→10001、`htmlViewer` `.modal-overlay` 100000→10001、`encryption/DecryptDialog` 99999→10000 |
+| Token 化 | 28 处 | 行高 `1.5`→`$lh-normal`(9)、间距 `2px`→`$s-px2`(7)、`1px`→`$s-px1`(4)、`0 3px`→`0 $s-px3`、`16px`→`$s-4`、`4px`→`$s-1`、`-1px`→`-$s-px1`(4)、字重 `600`→`$fw-semibold`、圆角 `1px`→`$r-px1`(5)、`2px`→`$r-px2`、字号 `10px`→`$t-2xs`、`0 0px`→`0` |
+
+**同步校准的三条规则口径**：
+
+| 规则 | 校准前 | 校准后 | 理由 |
+| --- | --- | --- | --- |
+| `R3-mobile-breakpoint` | 匹配含 `$bp-mobile` 的任何 media | 只匹配 `max-width: $bp-mobile` | `min-width` 是桌面端断点，加粗指针兜底反而错误 |
+| `R3-z-index` | `> 10000` 或 `< 0` | `> 11000` 或 `< 0 且 ≠ -1` | 遮罩 10000 + 子弹窗/浮层 10001–11000 是规范允许的；`-1` 是伪元素背景层的常规写法 |
+| `R3-hardcoded-spacing/-radius/-font-size` | 一律 P1 | 值无对应 Token 档位时降 P2 | `8px / 20px / 40px` 字号、`10px / 14px` 圆角、`22px / 28px / 34px / 36px` 内边距没有档位，属「需新增 Token 或注释说明」而非强制违规 |
+| `R3-hardcoded-spacing` | 未跳过 `env()` | 跳过 | `env(safe-area-inset-bottom, 0px)` 里的 `0px` 是 CSS 环境变量默认值，不是设计间距 |
+
+### 2. 为什么改
+
+- 断点是 `AGENTS_STYLE.md` 规则 8 的强制项：只按宽度判断会漏掉手机横屏（视口 ≥769px），此时触摸目标会退回桌面尺寸；用 `@include mobile` 把「窄窗」与「粗指针」两类条件固化成一个入口。
+- z-index 分散在 1000 / 1001 / 10000 / 10001 / 10100 / 11000 / 99999 / 100000 八种值，其中 99999/100000 是早期「抢最高层」的历史写法，会盖住思源原生弹窗；收敛到 10000 基准后层级可预测。
+- 28 处 Token 化全部是**值等价替换**（`$lh-normal`=1.5、`$s-px2`=2px、`$r-px1`=1px…），无视觉变化，只是让后续改档位能一处生效。
+
+### 3. 可能带来的风险
+
+| 风险 | 处理 |
+| --- | --- |
+| `@include mobile` 让粗指针设备（平板/触屏笔记本）也走移动端布局 | 这是 AGENTS 规则 8 的**预期行为**；`hover: none` 条件已排除带鼠标的触屏笔记本 |
+| z-index 降低后被其他浮层遮挡 | 4 处均为插件内全屏弹窗，基准 10000 与 gitPush/websiteNavigation 等一致；需在「同时打开多个插件弹窗」时验证 |
+| `-$s-px1` 负变量语法 | SCSS 合法，编译结果仍是 `-1px`；已通过 typecheck 与审计解析 |
+
+### 4. 验证结果
+
+| 检查 | 结果 |
+| --- | --- |
+| `pnpm audit:scss --json` | 总 800 → **737**（P0 0 / P1 418 / P2 319）；`R3-mobile-breakpoint` 19 → **0**；`R3-z-index` 15 → **0** |
+| `R3-hardcoded-line-height` / `-font-weight` | 9 → 0、1 → 0 |
+| `R3-hardcoded-spacing` / `-radius` / `-font-size` | 26 → 7、10 → 4、12 → 10（剩下的均为无 Token 档位，已降 P2） |
+| `pnpm typecheck` | 通过 |
+| `pnpm test` | 1624 passed |
+| `pnpm audit:scss --fail-on=p0,p1` | ✅ 通过（基线 737 条） |
+| 待用户 | `pnpm build`、4 个弹窗层级、18 个模块的窄屏/平板布局 |
+
+### 5. 如何回滚
+
+- 断点：`git checkout -- <18 个文件>`
+- z-index：改回原值（上表已列前后对照）
+- Token 化：值等价，回滚与否不影响视觉
 
 ---
 

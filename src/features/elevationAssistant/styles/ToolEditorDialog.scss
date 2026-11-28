@@ -29,7 +29,7 @@
   &__diagnosis-text {
     color: var(--b3-theme-secondary, $c-muted);
     font-size: $t-2xs;
-    line-height: 1.5;
+    line-height: $lh-normal;
   }
 
   &__admin {
@@ -45,14 +45,14 @@
     margin: 0;
     color: var(--b3-theme-secondary, $c-muted);
     font-size: $t-2xs;
-    line-height: 1.5;
+    line-height: $lh-normal;
   }
 
   &__warning {
     margin: 0;
     color: $c-warning;
     font-size: $t-2xs;
-    line-height: 1.5;
+    line-height: $lh-normal;
   }
 
   &__error {

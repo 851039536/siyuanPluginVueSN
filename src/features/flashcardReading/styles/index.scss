@@ -412,7 +412,7 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
 }
 
 // 版面类规则只按视口宽度判断：粗指针平板（≥769px）仍有空间放两列与一行操作
-@media (max-width: $bp-mobile) {
+@include mobile {
   .flashcard-reading-panel {
     .card-list {
       grid-template-columns: 1fr;

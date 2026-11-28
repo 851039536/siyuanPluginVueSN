@@ -212,7 +212,7 @@
 }
 
 // 移动端：平台状态两列在窄屏会把平台名/状态/按钮挤成一行窄条，改为单列
-@media (max-width: $bp-mobile) {
+@include mobile {
   .publish-status-section {
     .platform-status-list {
       grid-template-columns: 1fr;

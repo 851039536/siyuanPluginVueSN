@@ -173,7 +173,7 @@ $floating-transition: 0.12s ease;
   transform: translateX($s-2);
 }
 
-@media (max-width: $bp-mobile) {
+@include mobile {
   .floating-box-wrapper {
     right: $s-3;
   }

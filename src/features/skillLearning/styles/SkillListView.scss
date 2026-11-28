@@ -120,7 +120,7 @@
 
 // 移动端：双列卡片在窄屏文字被压成两行截断，改单列；
 // 触摸设备无 hover，删除按钮常驻并放大到可点尺寸
-@media (max-width: $bp-mobile) {
+@include mobile {
   .skill-list-view {
     &__grid {
       grid-template-columns: 1fr;

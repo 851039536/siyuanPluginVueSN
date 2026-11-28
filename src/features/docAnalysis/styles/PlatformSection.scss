@@ -161,7 +161,7 @@
 }
 
 // ============ 响应式：窄面板下平台行允许横向滚动 ============
-@media (max-width: $bp-mobile) {
+@include mobile {
   .platform-row {
     min-width: 420px;
   }

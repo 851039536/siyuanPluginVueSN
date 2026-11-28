@@ -330,7 +330,7 @@
 // 用绝对定位 + 文本容器左内边距：换行后的续行与正文左缘对齐，不会缩到符号下方。
 .wt-dl-text {
   position: relative;
-  padding-left: 16px;
+  padding-left: $s-4;
   white-space: pre-wrap;
   word-break: break-all;
   flex: 1;

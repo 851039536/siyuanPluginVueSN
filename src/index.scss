@@ -49,7 +49,7 @@
 
 // 移动端安全区：刘海屏/全面屏底部指示条会遮住面板底部内容，由挂载容器统一预留。
 // feature 自身的内边距仍保留在内层，两者互不覆盖。
-@media (max-width: $bp-mobile) {
+@include mobile {
   .vp-dock-panel {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }

@@ -151,7 +151,7 @@
 .gpr-net-bar {
   width: 48px;
   height: 3px;
-  border-radius: 1px;
+  border-radius: $r-px1;
   background: var(--b3-border-color);
   // 裁剪 scaleX 填充的溢出部分（填充条满宽做 transform，由容器裁到实际比例）
   overflow: hidden;
@@ -163,7 +163,7 @@
     display: block;
     height: 100%;
     width: 100%;
-    border-radius: 1px;
+    border-radius: $r-px1;
     transform: scaleX(var(--gpr-net-fill, 0));
     transform-origin: left;
     transition: transform 0.12s ease;
@@ -235,7 +235,7 @@
     flex-shrink: 0;
     width: 3px;
     height: 10px;
-    border-radius: 1px;
+    border-radius: $r-px1;
     background: var(--b3-theme-primary);
     opacity: 0.75;
   }

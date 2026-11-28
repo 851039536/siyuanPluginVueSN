@@ -45,7 +45,7 @@
       width: 14px;
       height: 2px;
       background: #f59e0b; // chartConfig MA_COLOR
-      border-radius: 1px;
+      border-radius: $r-px1;
     }
 
     // 近似数据提示（存在无日内采样的历史日时展示）

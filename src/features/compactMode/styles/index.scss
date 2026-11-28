@@ -28,7 +28,7 @@ $font-scales: (
 
 // ========== 响应式适配（仅受密度影响） ==========
 @mixin compact-responsive($s) {
-  @media (max-width: $bp-mobile) {
+  @include mobile {
     .toolbar {
       gap: 0.125rem * $s;
       padding: (0.125rem * $s) ($s-1 * $s);

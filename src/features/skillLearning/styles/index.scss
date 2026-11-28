@@ -89,7 +89,7 @@
 }
 
 // 移动端：顶部 Tab 允许横向滚动，操作按钮放大到触摸可用尺寸
-@media (max-width: $bp-mobile) {
+@include mobile {
   .skill-learning-panel {
     &__header {
       gap: $s-1;

@@ -95,7 +95,7 @@
 }
 
 // ============ 响应式：窄面板下弹窗内容可横向滚动 ============
-@media (max-width: $bp-mobile) {
+@include mobile {
   .settings-body {
     overflow-x: auto;
   }

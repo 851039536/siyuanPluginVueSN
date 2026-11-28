@@ -30,7 +30,7 @@
 
   &__required {
     color: var(--b3-theme-primary, $c-danger);
-    margin-left: 2px; // 2px 无对应 Token，保留
+    margin-left: $s-px2; // 2px 无对应 Token，保留
   }
 
   &__hint {

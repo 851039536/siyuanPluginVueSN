@@ -48,7 +48,7 @@
     background: rgba($c-warning, 0.08);
     color: $c-warning;
     font-size: $t-2xs;
-    line-height: 1.5;
+    line-height: $lh-normal;
   }
 
   &__save-error {

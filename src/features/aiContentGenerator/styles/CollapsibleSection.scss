@@ -3,7 +3,7 @@
 
 // ============ 折叠卡片基础样式（原共享 mixin 内联，仅本组件消费） ============
 .collapsible-section {
-  margin: 0 0px;
+  margin: 0;
   border-radius: $r-base;
   border: 1px solid var(--b3-theme-surface-lighter);
   background: var(--b3-theme-surface);

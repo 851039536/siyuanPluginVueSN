@@ -26,7 +26,7 @@
     display: flex;
     min-width: 0;
     flex-direction: column;
-    gap: 2px;
+    gap: $s-px2;
   }
 
   &__label {
@@ -48,7 +48,7 @@
     margin: $s-2 0 0;
     color: var(--b3-theme-secondary, $c-muted);
     font-size: $t-2xs;
-    line-height: 1.5;
+    line-height: $lh-normal;
   }
 
   &__warning {

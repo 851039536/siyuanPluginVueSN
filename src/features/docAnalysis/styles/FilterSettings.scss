@@ -119,7 +119,7 @@
 }
 
 // 移动端：搜索行与辅助过滤行允许换行，输入框保底可读宽度（避免被按钮挤压成窄条）
-@media (max-width: $bp-mobile) {
+@include mobile {
   .doc-analysis-filter {
     .filter-row {
       flex-wrap: wrap;

@@ -21,7 +21,7 @@
     // 尺寸变体（字号阶梯：XS 10px / S·M·L 12px，最小可读字号受 $t-2xs 约束）
     &--xsmall {
       height: $s-3; // 12px
-      padding: 0 3px; // 无对应 Token
+      padding: 0 $s-px3; // 无对应 Token
       font-size: $t-2xs; // XS 档字号阶梯：10px
       line-height: $lh-tight;
       min-width: $s-3;

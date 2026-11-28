@@ -224,7 +224,7 @@
 }
 
 /* ==================== 移动端 ==================== */
-@media (max-width: $bp-mobile) {
+@include mobile {
   // 创建行：备忘输入保底宽度，放不下时按钮换行而不是挤压输入框
   .ds-create {
     flex-wrap: wrap;

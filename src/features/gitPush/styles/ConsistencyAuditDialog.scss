@@ -307,7 +307,7 @@
 }
 
 // 窄屏适配
-@media (max-width: $bp-mobile) {
+@include mobile {
   .gca-dialog {
     width: 96vw;
     max-height: 80vh;

@@ -7,7 +7,7 @@
   @include si-overlay(99999);
 
   &.modal-overlay {
-    z-index: 100000;
+    z-index: 10001;
   }
 }
 

@@ -224,7 +224,7 @@
 
 .gpg-node-fail {
   fill: var(--b3-theme-error);
-  font-size: 10px;
+  font-size: $t-2xs;
   font-weight: $fw-semibold;
   pointer-events: none;
   user-select: none;

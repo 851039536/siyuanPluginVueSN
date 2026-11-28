@@ -37,7 +37,7 @@
   &__meters {
     display: flex;
     flex: 1;
-    gap: 2px; // 段间 2px 缝隙，让相邻同色段仍可区分；无对应 Token
+    gap: $s-px2; // 段间 2px 缝隙，让相邻同色段仍可区分；无对应 Token
     min-width: 0;
     overflow: hidden;
     background: var(--b3-theme-surface-lighter, $c-surface);

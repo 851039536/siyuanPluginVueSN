@@ -15,7 +15,7 @@
 .gp-pipeline-lane {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: $s-px2;
   min-width: 0;
 }
 

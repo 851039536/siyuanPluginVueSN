@@ -11,10 +11,10 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
   @include flex-center;
-  z-index: 99999;
+  z-index: 10000;
 
   &.modal-overlay {
-    z-index: 100000;
+    z-index: 10001;
   }
 }
 

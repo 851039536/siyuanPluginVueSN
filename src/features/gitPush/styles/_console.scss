@@ -178,7 +178,7 @@
   border-top: 1px solid var(--b3-border-color);
   color: var(--b3-theme-on-surface);
   font-size: $t-xs;
-  font-weight: 600;
+  font-weight: $fw-semibold;
 }
 
 .gp-set-label {
@@ -222,7 +222,7 @@
 
 // 索引目录路径（设置弹窗内展示，超长省略并以 title 提供完整路径）
 .gp-set-index-dir {
-  margin-top: 2px;
+  margin-top: $s-px2;
   font-family: monospace;
   @include text-ellipsis;
 }

@@ -35,7 +35,7 @@
       .unread-badge {
         @include badge(16px, 16px, 5px);
         background: $rr-accent;
-        color: #fff;
+        color: $c-bg;
       }
     }
 
@@ -106,7 +106,7 @@
       &:hover { background: var(--b3-theme-surface-lighter); }
       &.active {
         background: $rr-accent;
-        color: #fff;
+        color: $c-bg;
         border-color: $rr-accent;
       }
     }

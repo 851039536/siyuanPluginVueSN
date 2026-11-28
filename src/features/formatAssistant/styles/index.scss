@@ -8,7 +8,7 @@ $fa-space-10: 10px; // 无对应 Token（全局间距档为 8px → 12px，无 1
 $fa-font-11: 11px; // 无对应 Token（介于 $t-2xs 与 $t-xs）
 $fa-font-13: 13px; // 无对应 Token（介于 $t-xs 与 $t-sm）
 $fa-lh-16: 1.6; // 无对应 Token（$lh-normal 为 1.5）
-$fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微信公众号阅读态
+$fa-preview-bg: $c-bg; // 无对应 Token：预览区须固定白底，对齐微信公众号阅读态
 
 .format-assistant-container {
   height: 100%;

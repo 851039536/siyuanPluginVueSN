@@ -181,7 +181,7 @@
 .tooltip-pred-badge {
   display: inline-block;
   background: stats.$c-warning;
-  color: #fff;
+  color: $c-bg;
   font-size: $t-2xs;
   padding: $s-px1 $s-1;
   border-radius: stats.$r-sm;

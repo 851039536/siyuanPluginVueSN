@@ -63,7 +63,7 @@
     text-transform: uppercase;
     padding: $s-px1 $s-px6;
     border-radius: $r-sm;
-    color: #fff;
+    color: $c-bg;
     @include lang-tag-colors;
   }
 
@@ -95,12 +95,12 @@
 
     &--correct-reveal {
       border-color: var(--b3-theme-success);
-      background: rgba(34, 197, 94, 0.08);
+      background: rgba($c-success, 0.08);
       color: var(--b3-theme-success);
     }
     &--wrong-reveal {
       border-color: var(--b3-theme-error);
-      background: rgba(239, 68, 68, 0.08);
+      background: rgba($c-danger, 0.08);
       color: var(--b3-theme-error);
     }
   }
@@ -147,14 +147,14 @@
     border: 1px solid;
 
     &--ok {
-      background: rgba(34, 197, 94, 0.08);
+      background: rgba($c-success, 0.08);
       color: var(--b3-theme-success);
-      border-color: rgba(34, 197, 94, 0.3);
+      border-color: rgba($c-success, 0.3);
     }
     &--fail {
-      background: rgba(239, 68, 68, 0.08);
+      background: rgba($c-danger, 0.08);
       color: var(--b3-theme-error);
-      border-color: rgba(239, 68, 68, 0.3);
+      border-color: rgba($c-danger, 0.3);
     }
   }
 
@@ -183,7 +183,7 @@
 
     &--primary {
       background: var(--b3-theme-primary);
-      color: #fff;
+      color: $c-bg;
       &:hover { opacity: 0.9; }
     }
 

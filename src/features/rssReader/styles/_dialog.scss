@@ -78,7 +78,7 @@
         background: transparent; color: var(--b3-theme-on-surface);
 
         &.primary {
-          background: $rr-accent; color: #fff; border-color: $rr-accent;
+          background: $rr-accent; color: $c-bg; border-color: $rr-accent;
           &:hover { opacity: 0.9; }
           &:disabled { opacity: 0.35; cursor: not-allowed; }
         }

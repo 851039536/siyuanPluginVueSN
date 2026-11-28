@@ -69,7 +69,7 @@
     &:hover {
       background: var(--b3-theme-primary);
       border-color: var(--b3-theme-primary);
-      color: #fff;
+      color: $c-bg;
     }
 
     &:last-child {

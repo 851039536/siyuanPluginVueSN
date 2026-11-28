@@ -254,7 +254,7 @@
 }
 
 .empty-state--done {
-  background: rgba(34, 197, 94, 0.08);
+  background: rgba($c-success, 0.08);
   border: 1px solid var(--b3-theme-success, #{$c-success});
   border-radius: $r-base;
   margin: $s-3 $s-px14;

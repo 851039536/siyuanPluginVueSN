@@ -92,7 +92,7 @@
     text-transform: uppercase;
     padding: $s-px1 $s-px6;
     border-radius: $r-sm;
-    color: #fff;
+    color: $c-bg;
     @include lang-tag-colors;
   }
   &__category-tag {
@@ -161,17 +161,17 @@
 
     &--forgot:hover {
       border-color: var(--b3-theme-error);
-      background: rgba(239, 68, 68, 0.06);
+      background: rgba($c-danger, 0.06);
       color: var(--b3-theme-error);
     }
     &--fuzzy:hover {
       border-color: $c-warning;
-      background: rgba(245, 158, 11, 0.06);
+      background: rgba($c-warning, 0.06);
       color: $c-warning;
     }
     &--remembered:hover {
       border-color: var(--b3-theme-success);
-      background: rgba(34, 197, 94, 0.06);
+      background: rgba($c-success, 0.06);
       color: var(--b3-theme-success);
     }
   }

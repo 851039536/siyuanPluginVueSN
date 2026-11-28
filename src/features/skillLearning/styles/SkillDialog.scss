@@ -146,7 +146,7 @@
     }
     &--save {
       background: var(--b3-theme-primary);
-      color: #fff;
+      color: $c-bg;
       &:hover { opacity: 0.9; }
     }
   }
@@ -154,8 +154,8 @@
     margin-top: $s-1;
     padding: $s-2 $s-px10;
     border-radius: $r-base;
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba($c-danger, 0.08);
+    border: 1px solid rgba($c-danger, 0.2);
     color: var(--b3-theme-error);
     font-size: $t-xs;
     line-height: 1.4;

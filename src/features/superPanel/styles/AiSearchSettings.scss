@@ -23,7 +23,7 @@
   transition: all 0.12s;
   border: 1px solid var(--b3-theme-primary);
   background: var(--b3-theme-primary);
-  color: #fff;
+  color: $c-bg;
 
   &:hover { opacity: 0.9; }
 

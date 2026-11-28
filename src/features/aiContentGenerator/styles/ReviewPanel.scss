@@ -55,7 +55,7 @@
 
 // 审核失败徽标（解析失败/接口异常）
 .review-error-badge {
-  color: #fff;
+  color: $c-bg;
   background: var(--b3-theme-error);
 }
 
@@ -66,17 +66,17 @@
   border-radius: $r-sm;
 
   &.rating-good {
-    color: #fff;
+    color: $c-bg;
     background: var(--b3-theme-success);
   }
 
   &.rating-ok {
-    color: #fff;
+    color: $c-bg;
     background: var(--b3-theme-primary);
   }
 
   &.rating-needs-fix {
-    color: #fff;
+    color: $c-bg;
     background: var(--b3-theme-error);
   }
 }

@@ -92,17 +92,17 @@
 
     &.time-green {
       color: var(--b3-theme-success, #{$c-success});
-      background: rgba(34, 197, 94, 0.1);
+      background: rgba($c-success, 0.1);
     }
 
     &.time-yellow {
       color: $c-warning;
-      background: rgba(245, 158, 11, 0.1);
+      background: rgba($c-warning, 0.1);
     }
 
     &.time-red {
       color: var(--b3-theme-error, #{$c-danger});
-      background: rgba(239, 68, 68, 0.1);
+      background: rgba($c-danger, 0.1);
     }
 
     &.depth-badge {

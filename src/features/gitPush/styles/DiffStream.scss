@@ -235,7 +235,7 @@
 }
 
 // sticky 文件头：滚动到任何位置都能看到"当前在看哪个文件"；
-// 轻投影在滚动时把文件头与正文分层，避免长 diff 里层次糊在一起
+// 粘性表头靠「表面底 + 下边框」与滚动内容分层（Codex 规范：边框优先，不用投影）
 .wt-stream-head {
   position: sticky;
   top: 0;
@@ -246,7 +246,6 @@
   padding: $s-px3 $s-2 $s-px3 $s-px6;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
   cursor: pointer;
   user-select: none;
 

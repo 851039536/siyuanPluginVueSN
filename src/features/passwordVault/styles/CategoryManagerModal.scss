@@ -89,7 +89,7 @@
 .default-badge {
   padding: $s-px2 $s-2;
   background: var(--b3-theme-primary);
-  color: #fff;
+  color: $c-bg;
   border-radius: $r-sm;
   font-size: $t-2xs;
   font-weight: $fw-semibold;

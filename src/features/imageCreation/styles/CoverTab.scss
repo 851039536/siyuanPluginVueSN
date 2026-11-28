@@ -175,7 +175,7 @@
   display: block;
   border: 1px solid var(--b3-border-color);
   // 尺寸由内联 style 控制（与封面实际尺寸一致）
-  background: #fff;
+  background: $c-bg;
 }
 
 .preview-meta {

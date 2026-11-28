@@ -97,7 +97,7 @@
   &.publish-external-btn {
     border-color: var(--b3-theme-success, #{$c-success});
     background: var(--b3-theme-success, #{$c-success});
-    color: #fff;
+    color: $c-bg;
     font-weight: $fw-medium;
 
     &:hover:not(:disabled) {

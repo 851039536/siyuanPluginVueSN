@@ -40,6 +40,25 @@
       "files": ["src/features/aiContentGenerator/styles/DiffPreview.scss"],
       "patterns": ["^\\.vue-diff-cell-(removed|added)$"],
       "reason": "vue-diff 库内部渲染的单元格类名，由依赖注入而非模板书写"
+    },
+    {
+      "rule": "R3-box-shadow",
+      "files": ["src/features/imageCreation/styles/CodeImageStyles.scss"],
+      "reason": "代码图片生成风格的投影：作用于被截图生成的图片本体（产品输出），不参与插件 UI 的边框优先规范"
+    },
+    {
+      "rule": "R3-box-shadow",
+      "files": ["src/features/gitPush/styles/OpPipeline.scss"],
+      "reason": "位于 @keyframes 内的脉冲光环（0 0 0 Npx transparent），是动画关键帧而非元素装饰阴影"
+    },
+    {
+      "rule": "R3-box-shadow",
+      "files": [
+        "src/components/styles/Slider.scss",
+        "src/components/styles/Switch.scss",
+        "src/features/generalSettings/styles/SettingSlider.scss"
+      ],
+      "reason": "滑块拇指/开关圆钮的立体投影，属控件本体观感；规范禁止的是「卡片/弹窗用阴影表达层级」，不涉及控件内部"
     }
   ],
   "ignore": []

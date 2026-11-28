@@ -63,7 +63,7 @@
 
   .close-btn:hover {
     background: var(--b3-theme-error);
-    color: #fff;
+    color: $c-bg;
   }
 }
 
@@ -124,11 +124,11 @@
 
   &.active {
     background: var(--cat-color);
-    color: #fff;
+    color: $c-bg;
     border-color: var(--cat-color);
 
     .chip-dot {
-      background: #fff;
+      background: $c-bg;
     }
   }
 
@@ -152,7 +152,7 @@
   &:hover {
     background: var(--b3-theme-primary);
     border-color: var(--b3-theme-primary);
-    color: #fff;
+    color: $c-bg;
   }
 }
 

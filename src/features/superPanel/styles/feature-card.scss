@@ -106,7 +106,7 @@
 
   &.active {
     background: var(--chip-color, var(--b3-theme-primary));
-    color: #fff;
+    color: $c-bg;
     border-color: var(--chip-color, var(--b3-theme-primary));
   }
 }

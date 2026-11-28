@@ -1,9 +1,11 @@
 # 全项目 SCSS 审查报告（三轮优化基线）
 
-> **状态（2026-11-28）**：审查完成；**P0 已清零**（297 → 0），第一轮冗余清理、第三轮 P0 专项均已落地，当前 999 条（P1 513 / P2 486）。本文保留审查基线口径，改动明细与未执行清单见 [`docs/scss-refactor-log.md`](./scss-refactor-log.md)。
+> **归档说明（2026-11-28）**：三轮（清理冗余 / 结构优化 / 规范对齐）已执行完毕 —— P0 297 → 0，总问题 1562 → 261（剩余均为已评估的保留项）。现行规则已沉淀到 `AGENTS_STYLE.md` § 自动审计映射与 `scripts/audit-scss.mjs`，本文仅作审查过程记录。
+>
+> 本文保留报告口径（起始数字），改动明细与遗留清单见 [`scss-refactor-log.md`](./scss-refactor-log.md)。
 > 审查范围：`src/**/*.scss`（478）+ `src/**/*.vue` 的 style 块（515），覆盖 40+ 功能模块与 52 个共享组件。
 > 审查方式：`scripts/audit-scss.mjs` 全量静态扫描 + 思源 3.8.12 主题变量快照比对；未执行 `pnpm lint` / `pnpm build`（按仓库约定由用户执行）。
-> 基准数据：`scripts/data/siyuan-theme-vars.json`（valid 253 个变量），采集说明见 [`docs/参考/siyuan-theme-vars.md`](./参考/siyuan-theme-vars.md)。
+> 基准数据：`scripts/data/siyuan-theme-vars.json`（valid 253 个变量），采集说明见 [`docs/参考/siyuan-theme-vars.md`](../参考/siyuan-theme-vars.md)。
 
 ---
 
@@ -41,7 +43,7 @@
 - **P1**：变量不存在但有 fallback（暗色下 fallback 与主题脱节）；或违反 `AGENTS_STYLE.md` 强制项（硬编码 Token、移动端断点、`:deep()` 等）。
 - **P2**：冗余、结构、建议级（重复选择器、未引用类名、装饰性阴影、过渡时长等）。
 
-规则 ID 与检查点的完整映射见 [`AGENTS_STYLE.md § 自动审计映射`](../AGENTS_STYLE.md#自动审计映射2026-11-28)。
+规则 ID 与检查点的完整映射见 [`AGENTS_STYLE.md § 自动审计映射`](../../AGENTS_STYLE.md#自动审计映射2026-11-28)。
 
 ---
 

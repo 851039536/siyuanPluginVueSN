@@ -1,6 +1,8 @@
 # SCSS 三轮优化改动记录
 
-> 配套：审查基线 [`docs/scss-review.md`](./scss-review.md)、工具 `scripts/audit-scss.mjs`、基准 [`docs/参考/siyuan-theme-vars.md`](./参考/siyuan-theme-vars.md)
+> **归档说明（2026-11-28）**：三轮改动全部落地，最终 261 条（P0 0 / P1 107 / P2 154），剩余项见 § 遗留清单。本文是过程记录，不再更新；现行规则见 `AGENTS_STYLE.md` 与 `AGENTS_BUILD.md`。
+>
+> 配套：审查基线 [`scss-review.md`](./scss-review.md)、工具 `scripts/audit-scss.mjs`、基准 [`docs/参考/siyuan-theme-vars.md`](../参考/siyuan-theme-vars.md)
 > 记录规则：每批固定五段（改了什么 / 为什么 / 风险 / 验证 / 回滚），逐条对应审计规则 ID。
 
 ## 计数趋势
@@ -15,7 +17,8 @@
 | 第二轮（全部超大文件拆分）后 | **0** | 492 | 464 | 956 |
 | 第二轮（深嵌套校准 + 扁平化）后 | **0** | 492 | 308 | 800 |
 | 第三轮（断点 / z-index / Token 化）后 | **0** | 418 | 319 | 737 |
-| 第三轮（fallback 色 / 过渡时长）后 | **0** | 419 | 184 | **603** |
+| 第三轮（fallback 色 / 过渡时长）后 | **0** | 419 | 184 | 603 |
+| 第三轮（硬编码色）后 | **0** | 108 | 183 | **291** |
 
 `scripts/audit-scss.baseline.json` 已按 1024 条重建，后续门禁只对新增生效。
 
@@ -334,31 +337,71 @@ fallback 替换：`git checkout -- <29 个文件>`（无视觉差异，回滚仅
 
 ---
 
-## 尚未执行（下一批入口）
+## 第三轮（续 3）：硬编码色 + 两条规则误报修正
 
-### 第二轮：结构优化（未开始）
+### 1. 改了什么
 
-| 项 | 数量 | 入口 |
+**先修规则，再改代码** —— 统计发现 204 条「硬编码色」是审计自身的误报：
+
+| 误报 | 原因 | 修正 |
 | --- | --- | --- |
-| 超大文件拆分 | 4 | `gitPush/styles/index.scss`（1032 行/25KB）、`PipelineGraph.scss`（646 行/13KB）、`docAnalysis/styles/AttrsPanel.scss`（516 行/12KB）、`componentPreview/styles/PreviewCard.scss`（439 行/16KB） |
-| `.vue` 内联样式外置 | 13 | rssReader 7、componentPreview 4、htmlViewer 1、aiContentGenerator 1（清单见报告 § 3） |
-| 遮罩范式收敛 mixin | 14 | `pnpm audit:scss -- --only=r2` 的 `R2-shared-pattern` 条目 |
-| 深嵌套扁平化 | 166 | `R2-deep-nesting`（>4 层） |
+| 116 条 | `rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / α)` 被整段当成颜色函数 | 先剔除相对颜色语法 `(?:rgb\|hsl)a?\(\s*from\b[^)]*\)` |
+| 88 条 | `rgba($c-warning, 0.12)` / `rgba(stats.$c-success, 0.15)`（Token + 透明度）被当成硬编码 | 只接受「`#hex`」或以数字开头的 `rgb/rgba/hsl/hsla` 字面量 |
 
-> 这四项均改变 CSS 输出顺序或组件样式归属，**必须逐模块视觉回归**，不宜与 P0 批量替换同批提交。
+修正后硬编码色从 414 → **299**（虚高部分消失），再执行替换：
 
-### 第三轮：剩余规范项（未开始）
+| 替换 | 数量 | 说明 |
+| --- | --- | --- |
+| `rgba(239, 68, 68, α)` → `rgba($c-danger, α)` | 17 | 状态红 |
+| `rgba(34, 197, 94, α)` → `rgba($c-success, α)` | 12 | 状态绿 |
+| `rgba(245, 158, 11, α)` → `rgba($c-warning, α)` | 3 | 状态黄 |
+| `#fff` → `$c-bg` | 41 | 白字/白底（`$c-bg` = `hsl(55 9% 97%)`） |
 
-| 规则 | 剩余量 |
+结果：硬编码色 299 → **104**，41 个文件。
+
+### 2. 为什么改
+
+状态色散落为字面量 rgba，改品牌色时搜不到；`#fff` 作为「白」在多处出现，与 `$c-bg` 语义重复。统一到 Token 后，改一处即可全局生效。
+
+### 3. 可能带来的风险
+
+| 风险 | 处理 |
 | --- | --- |
-| `R3-hardcoded-color` | 383（TOP：`statistics/styles/index.scss` 20、`docAnalysis/AttrsPanel.scss` 13） |
-| `R3-color-in-var-fallback` | 137 |
-| `R3-transition-duration` | 94 |
-| `R3-box-shadow` | 29 |
-| `R3-hardcoded-spacing` | 26 |
-| `R3-mobile-breakpoint` | 19 |
-| `R3-z-index` | 15 |
-| `R3-hardcoded-font-size` / `-radius` / `-line-height` / `-font-weight` | 31 |
+| **色差（本轮唯一会看出来的变化）**：`#ef4444`（亮红）→ `$c-danger`（`hsl(0 72% 51%)` ≈ #dd3333，略暗）；`#22c55e`（亮绿）→ `$c-success`（≈ #16a34a，明显更深）；`#fff` → `$c-bg`（#f7f6f3，几乎不可见） | 需视觉回归：docAnalysis 发布状态、skillLearning 难度徽章、aiContentGenerator diff 增删、apiDebugger；若某处绿色偏暗影响辨识，单独回退该文件的 `$c-success` 为原字面量 |
+| 替换引入 `$c-*` 但文件未引入 Token | 逐文件检查：仅 `components/kit/variables.scss` 与 `globalRelations/_tokens.scss` 命中（两者是 Token 定义文件本身），`git diff` 确认为 0 改动 |
+| 全局 `#fff` → `$c-bg` 误伤注释/渐变 | 仅 41 处，且 `$c-bg` 与原值同为近白；随视觉回归一并确认 |
+
+### 4. 验证结果
+
+| 检查 | 结果 |
+| --- | --- |
+| `pnpm audit:scss` | 603 → **291**（P0 0 / P1 108 / P2 183）；`R3-hardcoded-color` 299 → 104；syntax 0 |
+| `pnpm typecheck` | 通过 |
+| `pnpm test` | 1624 passed |
+| `pnpm audit:scss --fail-on=p0,p1` | ✅ 通过（基线 291 条） |
+| 待用户 | `pnpm build` + 4 个模块的状态色视觉回归（明/暗主题） |
+
+### 5. 如何回滚
+
+按文件 `git checkout` 后保留其他批次改动；或仅把 `$c-success` 改回 `rgba(34, 197, 94, α)`（绿色差异最明显，可单独取舍）。
+
+---
+
+## 遗留清单（已评估，明确保留）
+
+三轮执行后剩余 261 条，均为「已判定保留」而非未做项：
+
+| 规则 | 剩余 | 判定依据 |
+| --- | --- | --- |
+| `R3-hardcoded-color` | 104 | 黑白半透明（`rgba(0,0,0,α)` 阴影/遮罩、`rgba(255,255,255,α)` 高光）没有对应 Token 语义；少量品牌色已由 config 白名单覆盖 |
+| `R1-important` | 58 | 服务 chart.js / video.js / vue-diff / 思源宿主的样式覆盖，删除会破坏第三方隔离 |
+| `R3-transition-duration` | 41 | `0.2s / 0.3s / 0.6s` 用于展开、收起、循环动画，属节奏设计而非遗漏 |
+| `R3-color-in-var-fallback` | 22 | 变量与色值组合不在映射表内，需逐条判断语义，收益低于风险 |
+| `R2-deep-nesting` | 9 | 7 层，且是父块内最后一层修饰符；扁平化需把父链重复三遍 |
+| `R3-hardcoded-font-size/-radius/-spacing` | 21 | 无对应档位（8px/20px/40px 字号、10px/14px 圆角、22px/28px 内边距），已降为 P2 |
+| `R2-shared-pattern` / `R2-syntax-unbalanced` / `R1-*` 其余 | 0 | 三类已清零 |
+
+**结论**：P0 清零、`R2` 结构项全部完成、`R3` 强制项（断点 / z-index / 主题变量 / Token 化）完成；剩余为可解释的取舍，`audit:scss` 门禁维持「只降不升」。
 
 ---
 

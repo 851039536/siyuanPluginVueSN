@@ -1,7 +1,7 @@
 // SCSS 规范审计脚本
 // 用途：以思源主题变量快照为基准，扫描 src/**/*.scss 与 *.vue 内的 style 块，
 //      按三轮优化（R1 冗余 / R2 结构 / R3 规范）输出可定位、可对比、可分级的清单。
-// 依据：AGENTS_STYLE.md、docs/参考/siyuan-theme-vars.md、docs/scss-review.md
+// 依据：AGENTS_STYLE.md、docs/参考/siyuan-theme-vars.md、docs/completed/scss-review.md
 //
 // 用法：
 //   node scripts/audit-scss.mjs                       全量扫描（默认仅 P0 阻塞退出码）
@@ -285,9 +285,15 @@ function classifyDeclaration(ctx, prop, value, line) {
     if (ctx.push(issue)) emitted.add(ruleId)
   }
 
-  // 颜色：var() 内的 fallback 单独降级处理，先剔除
-  const colorFree = value.replace(/var\([^)]*\)/g, "VAR")
+  // 颜色：var() 内的 fallback 单独降级处理，先剔除；
+  // CSS 相对颜色语法 rgb(from …) / hsl(from …) 是「由主题色派生」，不是硬编码，整段剔除
+  const colorFree = value
+    .replace(/\b(?:rgb|hsl)a?\(\s*from\b[^)]*\)/g, "RELPAL")
+    .replace(/var\([^)]*\)/g, "VAR")
   for (const color of colorFree.match(COLOR_MATCH_RE) ?? []) {
+    // rgba($token, α) / rgba(stats.$token, α) 是「Token + 透明度」，不是硬编码
+    const isLiteral = color.startsWith("#") || /^rgba?\(\s*\d/i.test(color) || /^hsla?\(\s*\d/i.test(color)
+    if (!isLiteral) continue
     const compact = color.replace(/\s+/g, "")
     const isMask = prop === "background" && /^rgba?\(0,0,0,0?\.5\)$/i.test(compact)
     if (isMask) continue

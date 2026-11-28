@@ -61,7 +61,7 @@
   // 前三名行背景微着色（金/银/铜，半透明不压正文）
   // 色值与下方 .gpr-medal--* 一一对应；排行榜配色无对应语义 Token，属刻意保留的具名色
   &--top1 {
-    background: rgba(245, 158, 11, 0.06); // 金
+    background: rgba($c-warning, 0.06); // 金
   }
 
   &--top2 {
@@ -109,7 +109,7 @@
   border-radius: 50%;
   font-size: $t-2xs;
   font-weight: $fw-bold;
-  color: #fff;
+  color: $c-bg;
 
   // 奖牌实色背景 + 白字，色值与上方 .gpr-author-row--top1/2/3 的底色一一对应
   &--gold {

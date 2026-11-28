@@ -325,7 +325,7 @@
     // 危险操作（$c-danger 为固定红，文字用纯白保证对比度）
     &.danger {
       background: $c-danger;
-      color: #fff;
+      color: $c-bg;
       border-color: $c-danger;
 
       &:hover:not(:disabled) {

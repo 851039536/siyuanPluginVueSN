@@ -17,8 +17,6 @@
 | 文件 | 主题 | 状态 |
 |---|---|---|
 | [elevation-assistant-code-review.md](elevation-assistant-code-review.md) | 提权助手代码审查（P0/P1/P2、内存、重复类型、死代码）与“自动扫描程序”设计 | 审查完成；修复与扫描**未执行**（2026-11-27） |
-| [scss-review.md](scss-review.md) | 全项目 SCSS 审查（以思源 3.8.12 主题变量为基准，P0/P1/P2、热点排行、四批计划） | P0 已清零（297→0）、未引用类名已清零，当前 999 条；R2 结构项与 R3 剩余项待执行（2026-11-28） |
-| [scss-refactor-log.md](scss-refactor-log.md) | SCSS 三轮改动记录（逐批五段式：改了什么/为什么/风险/验证/回滚）+ 视觉回归清单 | 第一轮与第三轮 P0 专项已落地；后续批次按其中「未执行」清单推进（2026-11-28） |
 
 ## 一、参考文档（`docs/参考/`，10 份）
 
@@ -35,7 +33,7 @@
 | [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 存储规范（强制） |
 | [siyuan-theme-vars.md](参考/siyuan-theme-vars.md) | 思源主题 CSS 变量基准：三层来源（本地安装 / 运行时 / raw 上游）、快照结构、fallback 口径、重新采集命令 | `scripts/audit-scss.mjs` 的 `R3-theme-var-*` 规则；`AGENTS_STYLE.md` § 自动审计映射 |
 
-## 二、归档文档（`docs/completed/`，18 份）
+## 二、归档文档（`docs/completed/`，20 份）
 
 前 11 份为 2026-10-28 提交 `caec10a5`「chore(docs): 清理过期审查报告并归档参考文档至参考目录」删除的审查报告，
 2026-11-01 从 git 历史恢复——**原因是代码/README 仍在引用它们**（引用点已改为指向本目录）；
@@ -61,6 +59,8 @@
 | [gitPush-accordion-review.md](completed/gitPush-accordion-review.md) | gitPush 手风琴模式审查与实施记录（整行列表/键盘可达/变更徽章/草稿保留 + E1/E3/E4/E5/B6/B7） | 无源码引用；行为约定落在 `src/features/gitPush/README.md` 卡片布局条目 |
 | [gitPush-detailed-mode-review.md](completed/gitPush-detailed-mode-review.md) | gitPush 详细模式审查与实施记录（网格几何/操作栏位置/分支折叠/刷新节流/页签高度/紧凑密度；E2/E3 等未做） | 无源码引用；行为约定落在 `src/features/gitPush/README.md` 卡片布局条目 |
 | [gitPush-settings-ui-review.md](completed/gitPush-settings-ui-review.md) | gitPush 设置弹窗 UI 审查与实施记录（数字输入钳位缺陷、保存模型统一、常规五分区分组、控件与密度统一、888→231 行拆分） | 无源码引用；结构约定落在 `src/features/gitPush/README.md` 组件树 |
+| [scss-review.md](completed/scss-review.md) | 全项目 SCSS 审查（思源 3.8.12 主题变量基准、P0/P1/P2、热点排行、分批计划） | 无源码引用；现行规则在 `AGENTS_STYLE.md` § 自动审计映射与 `scripts/audit-scss.mjs`（2026-11-28 归档） |
+| [scss-refactor-log.md](completed/scss-refactor-log.md) | SCSS 三轮改动记录（逐批五段式：改了什么/为什么/风险/验证/回滚）+ 遗留清单 + 视觉回归清单 | 无源码引用；工具用法见 `AGENTS_BUILD.md` § 样式审计（2026-11-28 归档） |
 
 **源码注释里的旧路径**：`src/features/gitPush/*.ts|vue`（6 处）、`src/features/superPanel/*.vue`（4 处）等
 仍写着 `docs/xxx-review.md`。这些是纯文本引用（不是可点链接），**本轮未改源码**；

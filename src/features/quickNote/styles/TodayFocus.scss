@@ -37,7 +37,7 @@
   padding: 0 $s-1;
   border-radius: $r-full;
   background: var(--b3-card-error-color);
-  color: #fff;
+  color: $c-bg;
 }
 
 // 无紧急事项提示（绿色柔和）

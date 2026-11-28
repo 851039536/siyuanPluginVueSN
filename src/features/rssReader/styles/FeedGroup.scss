@@ -58,7 +58,7 @@
       .group-unread {
         @include badge(14px, 14px, 5px);
         background: $rr-accent;
-        color: #fff;
+        color: $c-bg;
 
         &:empty { display: none; }
       }
@@ -144,7 +144,7 @@
       .feed-unread {
         @include badge(16px, 16px, 6px);
         background: $rr-accent;
-        color: #fff;
+        color: $c-bg;
       }
 
       .feed-actions {

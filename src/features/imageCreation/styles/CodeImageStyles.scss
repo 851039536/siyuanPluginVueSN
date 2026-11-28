@@ -301,7 +301,7 @@
   box-shadow: 0 8px 24px rgba(106, 27, 154, 0.5);
 }
 .text-style-gradient .text-body {
-  background: linear-gradient(45deg, #fff, rgba(255, 255, 255, 0.8));
+  background: linear-gradient(45deg, $c-bg, rgba(255, 255, 255, 0.8));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

@@ -30,7 +30,7 @@
 
     &.active {
       background: var(--b3-theme-primary);
-      color: #fff;
+      color: $c-bg;
     }
 
     &:not(.active):hover {

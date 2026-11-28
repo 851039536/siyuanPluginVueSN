@@ -53,11 +53,11 @@
     &.active {
       border-color: var(--b3-theme-error, #{$c-danger});
       color: var(--b3-theme-error, #{$c-danger});
-      background: rgba(239, 68, 68, 0.08);
+      background: rgba($c-danger, 0.08);
 
       .platform-chip-badge {
         background: var(--b3-theme-error, #{$c-danger});
-        color: #fff;
+        color: $c-bg;
       }
     }
 

@@ -79,7 +79,7 @@
     }
 
     &--error {
-      background: rgba(239, 68, 68, 0.15);
+      background: rgba($c-danger, 0.15);
       color: var(--b3-theme-error);
     }
   }
@@ -110,7 +110,7 @@
     color: var(--b3-theme-error);
     font-size: $t-xs;
     padding: $s-2;
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba($c-danger, 0.1);
     border-radius: $r-sm;
   }
 
@@ -182,12 +182,12 @@
     }
 
     &--put {
-      background: rgba(245, 158, 11, 0.15);
+      background: rgba($c-warning, 0.15);
       color: $c-warning;
     }
 
     &--delete {
-      background: rgba(239, 68, 68, 0.15);
+      background: rgba($c-danger, 0.15);
       color: var(--b3-theme-error);
     }
   }

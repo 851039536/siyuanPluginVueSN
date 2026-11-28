@@ -143,4 +143,4 @@ curl -s https://raw.githubusercontent.com/siyuan-note/siyuan/master/app/appearan
 
 首轮采集后对 61 个引用做差集，**32 个变量在 3.8.12 中不存在**，且插件内也没有自定义定义（既不是思源变量，也不是自建变量）。典型如 `--b3-theme-info`、`--b3-theme-warning`、`--b3-theme-primary-container`、`--b3-theme-on-surface-variant` —— 命名风格接近 Material 3，属于跨设计体系误用。
 
-逐条定位、分级与修复建议见 [`docs/scss-review.md`](../scss-review.md) § P0/P1。
+逐条定位、分级与修复建议见 [`docs/completed/scss-review.md`](../completed/scss-review.md) § P0/P1（该问题的修复记录见 `completed/scss-refactor-log.md`）。

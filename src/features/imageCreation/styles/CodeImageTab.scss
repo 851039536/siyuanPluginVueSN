@@ -26,7 +26,7 @@
     color: var(--b3-theme-on-surface);
     font-size: $t-xs;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.12s;
 
     &.active {
       background: var(--b3-theme-primary);
@@ -202,7 +202,7 @@
   object-fit: contain;
   border: 1px solid var(--b3-theme-background-light);
   border-radius: $r-base;
-  background: var(--b3-theme-surface, #ffffff);
+  background: var(--b3-theme-surface, #{$c-surface});
   padding: $s-1;
 }
 

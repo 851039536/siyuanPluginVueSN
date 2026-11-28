@@ -47,7 +47,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-lg;
     padding: $s-5;
-    background: var(--b3-theme-background, #fff);
+    background: var(--b3-theme-background, #{$c-bg});
     cursor: pointer;
     transition: border-color 0.12s;
     overflow-y: auto;
@@ -76,7 +76,7 @@
     font-size: $t-sm;
     font-weight: $fw-semibold;
     line-height: 1.6;
-    color: var(--b3-theme-on-background, #1e293b);
+    color: var(--b3-theme-on-background, #{$c-fg});
     font-family: $ff-mono;
   }
   &__q-meta {
@@ -127,7 +127,7 @@
   &__a-text {
     font-size: $t-sm;
     line-height: 1.7;
-    color: var(--b3-theme-on-background, #333);
+    color: var(--b3-theme-on-background, #{$c-fg});
     margin-bottom: $s-4;
   }
   @include shared-code-block;
@@ -182,7 +182,7 @@
   &__rating-label {
     font-size: $t-xs;
     font-weight: $fw-semibold;
-    color: var(--b3-theme-on-background, #333);
+    color: var(--b3-theme-on-background, #{$c-fg});
   }
   &__rating-hint {
     font-size: $t-2xs;

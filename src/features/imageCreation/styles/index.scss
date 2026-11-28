@@ -12,7 +12,7 @@
 }
 
 .image-creation-dialog {
-  background: var(--b3-theme-surface, #ffffff);
+  background: var(--b3-theme-surface, #{$c-surface});
   border-radius: $r-lg;
   width: 92vw;
   max-width: 1200px;
@@ -135,7 +135,7 @@
   padding: $s-2;
   border: 1px solid var(--b3-theme-background-light);
   border-radius: $r-base;
-  background: var(--b3-theme-surface, #ffffff);
+  background: var(--b3-theme-surface, #{$c-surface});
   color: var(--b3-theme-on-surface);
   font-size: $t-xs;
   font-family: inherit;
@@ -190,7 +190,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--b3-theme-background, #f5f5f5);
+  background: var(--b3-theme-background, #{$c-bg});
   position: relative;
 }
 

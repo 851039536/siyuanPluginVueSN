@@ -36,7 +36,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   cursor: pointer;
-  transition: color 0.15s;
+  transition: color 0.12s;
 
   &:hover {
     color: var(--b3-theme-on-surface);
@@ -87,7 +87,7 @@
   font-weight: $fw-normal;
   line-height: $lh-normal;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s;
 
   &::placeholder {
     color: $c-muted;

@@ -92,7 +92,7 @@
 
   .error-icon {
     font-size: $t-4xl;
-    color: var(--b3-theme-error, #ef4444);
+    color: var(--b3-theme-error, #{$c-danger});
   }
 }
 

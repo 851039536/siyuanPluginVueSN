@@ -30,7 +30,7 @@
 
 .pie-arc {
   cursor: pointer;
-  transition: stroke-width 0.15s ease;
+  transition: stroke-width 0.12s ease;
   stroke: transparent;
   stroke-width: 0;
 }
@@ -78,7 +78,7 @@
   border-radius: stats.$r-sm;
   font-size: $t-2xs;
   color: var(--b3-theme-on-surface);
-  transition: background 0.15s;
+  transition: background 0.12s;
 
   &:hover,
   &.active {

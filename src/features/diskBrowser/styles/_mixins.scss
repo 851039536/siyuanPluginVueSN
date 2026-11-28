@@ -62,7 +62,7 @@ $db-columns: minmax(0, 1fr) 68px 78px auto;
 @mixin border-card {
   border: 1px solid $border;
   border-radius: $r-base;
-  transition: border-color 0.15s;
+  transition: border-color 0.12s;
 
   &:hover {
     border-color: var(--b3-theme-primary);

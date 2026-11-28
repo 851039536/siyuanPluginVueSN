@@ -19,7 +19,7 @@
   line-height: $lh-tight;
   white-space: nowrap;
   opacity: 0.85;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.12s ease;
 
   &.is-published {
     color: $c-success;
@@ -91,7 +91,7 @@
 // 过渡动画
 .doc-nav-publish-fade-enter-active,
 .doc-nav-publish-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.12s ease, transform 0.12s ease;
 }
 
 .doc-nav-publish-fade-enter-from,

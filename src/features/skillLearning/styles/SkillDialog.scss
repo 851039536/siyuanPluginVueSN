@@ -46,7 +46,7 @@
     justify-content: center;
     border: 1px solid var(--b3-border-color);
     border-radius: $r-base;
-    background: var(--b3-theme-background, #fff);
+    background: var(--b3-theme-background, #{$c-bg});
     cursor: pointer;
     font-size: $t-base;
     transition: all 0.12s;

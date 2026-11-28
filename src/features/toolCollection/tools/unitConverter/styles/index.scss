@@ -46,7 +46,7 @@
     opacity: 0.45;
     cursor: pointer;
     border-bottom: 2px solid transparent;
-    transition: opacity 0.15s, border-color 0.15s;
+    transition: opacity 0.12s, border-color 0.12s;
     user-select: none;
 
     &:hover {
@@ -240,7 +240,7 @@
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
   cursor: pointer;
-  transition: opacity 0.15s, border-color 0.15s;
+  transition: opacity 0.12s, border-color 0.12s;
   flex-shrink: 0;
 
   &:hover {

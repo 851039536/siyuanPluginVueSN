@@ -39,7 +39,7 @@
   font-family: stats.$font-mono;
   font-size: $t-2xs;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.12s;
 
   &:hover {
     border-color: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.3);

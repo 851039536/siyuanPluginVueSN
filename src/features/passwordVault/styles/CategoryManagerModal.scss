@@ -113,7 +113,7 @@
 
   .confirm-warning {
     font-size: $t-xs;
-    color: var(--b3-theme-on-background, #333);
+    color: var(--b3-theme-on-background, #{$c-fg});
     margin: 0;
     text-align: center;
   }

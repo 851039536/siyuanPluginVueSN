@@ -20,7 +20,7 @@
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   opacity: 0.5;
-  transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: opacity 0.12s ease, background 0.12s ease, border-color 0.12s ease;
 
   &:hover {
     opacity: 0.9;
@@ -122,7 +122,7 @@
   font-weight: $fw-medium;
   line-height: $lh-tight;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.12s ease;
 
   &:active {
     transform: scale(0.97);
@@ -153,7 +153,7 @@
 // 过渡动画
 .doc-nav-filter-editor-fade-enter-active,
 .doc-nav-filter-editor-fade-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.12s ease, transform 0.12s ease;
 }
 
 .doc-nav-filter-editor-fade-enter-from,

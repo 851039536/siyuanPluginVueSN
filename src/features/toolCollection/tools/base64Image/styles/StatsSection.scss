@@ -44,7 +44,7 @@
       }
 
       &.negative {
-        color: var(--b3-card-error-color, #ef4444);
+        color: var(--b3-card-error-color, #{$c-danger});
       }
 
       &.neutral {

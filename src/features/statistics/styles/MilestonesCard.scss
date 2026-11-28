@@ -28,7 +28,7 @@
   font-family: stats.$font-mono;
   font-size: $t-2xs;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.12s, border-color 0.12s;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -299,7 +299,7 @@
   position: relative;
   background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.03);
   border: 1px solid transparent;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.12s, border-color 0.12s;
 
   &.achieved {
     @include stats.tier-chip-achieved;

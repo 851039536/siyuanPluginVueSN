@@ -32,7 +32,7 @@
   object-fit: contain;
   border: 1px solid var(--b3-theme-background-light);
   border-radius: $r-base;
-  background: var(--b3-theme-surface, #ffffff);
+  background: var(--b3-theme-surface, #{$c-surface});
   padding: $s-1;
 }
 

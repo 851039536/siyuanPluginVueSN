@@ -148,7 +148,7 @@
   fill: none;
   stroke: var(--b3-border-color);
   stroke-width: 1.2;
-  transition: opacity 0.15s ease, stroke 0.15s ease;
+  transition: opacity 0.12s ease, stroke 0.12s ease;
 
   &.is-active {
     stroke: var(--b3-theme-primary);
@@ -169,7 +169,7 @@
 .gpg-node {
   cursor: default;
   outline: none;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.12s ease;
 
   &.is-dimmed {
     opacity: 0.22;

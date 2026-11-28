@@ -14,7 +14,8 @@
 | 第二轮（遮罩收敛 + 拆分样板）后 | **0** | 492 | 467 | 959 |
 | 第二轮（全部超大文件拆分）后 | **0** | 492 | 464 | 956 |
 | 第二轮（深嵌套校准 + 扁平化）后 | **0** | 492 | 308 | 800 |
-| 第三轮（断点 / z-index / Token 化）后 | **0** | 418 | 319 | **737** |
+| 第三轮（断点 / z-index / Token 化）后 | **0** | 418 | 319 | 737 |
+| 第三轮（fallback 色 / 过渡时长）后 | **0** | 419 | 184 | **603** |
 
 `scripts/audit-scss.baseline.json` 已按 1024 条重建，后续门禁只对新增生效。
 
@@ -293,6 +294,43 @@
 - 断点：`git checkout -- <18 个文件>`
 - z-index：改回原值（上表已列前后对照）
 - Token 化：值等价，回滚与否不影响视觉
+
+---
+
+## 第三轮（续 2）：fallback 色与过渡时长
+
+### 1. 改了什么
+
+| 项 | 前 → 后 | 改动方式 |
+| --- | --- | --- |
+| `var(--b3-x, #hex)` 的 fallback 色 | 104 → **22** | 按「变量名 + 色值」双条件映射到 `#{$c-*}`：success→`$c-success`、error→`$c-danger`、on-background→`$c-fg`、background→`$c-bg`、surface→`$c-surface`、on-surface-light→`$c-muted`；29 个文件 |
+| 过渡时长 | 94 → **41** | `0.15s` → `0.12s`（39 个文件，仅改 `transition` 行）；`0.2s / 0.3s / 0.6s` 保留 |
+
+### 2. 为什么改
+
+- fallback 只在主题变量缺失时生效，替换为 Token 后**无视觉影响**，但消除了「颜色值散落在 var() 第二参数里、改品牌色搜不到」的问题。
+- `0.15s` 与规范值 0.12s 只差 0.03s，肉眼几乎不可辨；`0.2s+` 多用于展开/收起动画，节奏是有意设计，强改会让动效显得生硬，故保留并在报告中可见。
+
+### 3. 可能带来的风险
+
+| 风险 | 处理 |
+| --- | --- |
+| 替换引入 `$c-*` 但文件未引入 Token → `Undefined variable` | 全量扫描「含 `#{$c-` 且无 `@use … variables`」：命中 1 个（`statistics/panel.scss`，它只 `@use './index.scss'`），已改为 `var(--b3-theme-primary)` 无 fallback，复检 0 |
+| 暗色主题下 fallback 语义变化（如 `--b3-theme-surface` 的 fallback 从 `#1e1e1e` 变为 `$c-surface` 浅色） | fallback 仅在变量缺失时生效；思源两套主题均提供该变量，实际不触发 |
+
+### 4. 验证结果
+
+| 检查 | 结果 |
+| --- | --- |
+| `pnpm audit:scss` | 737 → **603**（P0 0 / P1 419 / P2 184）；syntax 0；Undefined 风险 0 |
+| `pnpm typecheck` | 通过 |
+| `pnpm test` | 1624 passed |
+| `pnpm audit:scss --fail-on=p0,p1` | ✅ 通过（基线 603 条） |
+| 待用户 | `pnpm build` + 抽检任意弹窗/面板过渡（0.15s→0.12s） |
+
+### 5. 如何回滚
+
+fallback 替换：`git checkout -- <29 个文件>`（无视觉差异，回滚仅恢复硬编码写法）；过渡：`0.12s` 改回 `0.15s`。
 
 ---
 

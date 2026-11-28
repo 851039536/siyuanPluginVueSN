@@ -106,7 +106,7 @@
     }
 
     &--error {
-      background: var(--b3-theme-error, #dc2626);
+      background: var(--b3-theme-error, #{$c-danger});
     }
   }
 
@@ -160,7 +160,7 @@
     overflow-y: auto;
 
     &--err {
-      color: var(--b3-theme-error, #dc2626);
+      color: var(--b3-theme-error, #{$c-danger});
     }
   }
 

@@ -28,7 +28,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-lg;
     padding: $s-5;
-    background: var(--b3-theme-background, #fff);
+    background: var(--b3-theme-background, #{$c-bg});
     overflow-y: auto;
     transition: border-color 0.12s;
 
@@ -45,7 +45,7 @@
     font-size: $t-sm;
     font-weight: $fw-semibold;
     line-height: 1.6;
-    color: var(--b3-theme-on-background, #1e293b);
+    color: var(--b3-theme-on-background, #{$c-fg});
     display: block;
     font-family: $ff-mono;
   }
@@ -86,7 +86,7 @@
     cursor: pointer;
     text-align: left;
     font-size: $t-sm;
-    color: var(--b3-theme-on-background, #333);
+    color: var(--b3-theme-on-background, #{$c-fg});
     transition: border-color 0.12s;
     &:hover:not(:disabled) {
       border-color: var(--b3-theme-primary);

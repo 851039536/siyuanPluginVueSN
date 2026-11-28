@@ -84,7 +84,7 @@
       .match-count {
         font-size: $codeblock-font-size;
         font-weight: $fw-medium;
-        color: var(--b3-theme-success, #22c55e);
+        color: var(--b3-theme-success, #{$c-success});
       }
 
       .matches-list {
@@ -100,7 +100,7 @@
         border-radius: $r-sm;
         font-family: $ff-mono;
         font-size: $t-xs;
-        color: var(--b3-theme-success, #16a34a);
+        color: var(--b3-theme-success, #{$c-success});
       }
     }
 

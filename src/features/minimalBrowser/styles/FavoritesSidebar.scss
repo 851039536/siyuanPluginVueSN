@@ -22,7 +22,7 @@
   cursor: col-resize;
   z-index: 5;
   background: transparent;
-  transition: background-color 0.15s;
+  transition: background-color 0.12s;
 
   &:hover,
   &:active {
@@ -82,7 +82,7 @@
   cursor: pointer;
   font-size: $t-xs;
   font-weight: $fw-semibold;
-  transition: transform 0.15s, border-color 0.15s;
+  transition: transform 0.12s, border-color 0.12s;
 
   &:hover {
     transform: scale(1.1);
@@ -134,7 +134,7 @@
   gap: $s-px3;
   padding: $s-1;
   border-radius: $r-base;
-  transition: background-color 0.15s;
+  transition: background-color 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface);

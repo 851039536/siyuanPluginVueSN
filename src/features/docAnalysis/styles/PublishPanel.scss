@@ -95,8 +95,8 @@
   }
 
   &.publish-external-btn {
-    border-color: var(--b3-theme-success, #22c55e);
-    background: var(--b3-theme-success, #22c55e);
+    border-color: var(--b3-theme-success, #{$c-success});
+    background: var(--b3-theme-success, #{$c-success});
     color: #fff;
     font-weight: $fw-medium;
 
@@ -106,7 +106,7 @@
 
     &:disabled {
       opacity: 0.35;
-      background: var(--b3-theme-success, #22c55e);
+      background: var(--b3-theme-success, #{$c-success});
     }
   }
 }

@@ -105,9 +105,9 @@
 // 错误信息
 .error-message {
   font-size: $t-xs;
-  color: var(--b3-theme-error, #e74c3c);
+  color: var(--b3-theme-error, #{$c-danger});
   padding: $s-px3 $s-2;
-  background: color-mix(in srgb, var(--b3-theme-error, #e74c3c) 8%, transparent);
+  background: color-mix(in srgb, var(--b3-theme-error, #{$c-danger}) 8%, transparent);
   border-radius: $r-sm;
 }
 

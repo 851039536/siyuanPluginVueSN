@@ -42,7 +42,7 @@
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   font-size: $t-xs;
-  transition: background 0.15s;
+  transition: background 0.12s;
 
   &:hover {
     background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.03);

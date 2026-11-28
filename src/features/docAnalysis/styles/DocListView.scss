@@ -42,7 +42,7 @@
     cursor: pointer;
     white-space: nowrap;
     flex-shrink: 0;
-    transition: all 0.15s;
+    transition: all 0.12s;
 
     &:hover {
       border-color: var(--b3-theme-primary);
@@ -51,12 +51,12 @@
     }
 
     &.active {
-      border-color: var(--b3-theme-error, #ef4444);
-      color: var(--b3-theme-error, #ef4444);
+      border-color: var(--b3-theme-error, #{$c-danger});
+      color: var(--b3-theme-error, #{$c-danger});
       background: rgba(239, 68, 68, 0.08);
 
       .platform-chip-badge {
-        background: var(--b3-theme-error, #ef4444);
+        background: var(--b3-theme-error, #{$c-danger});
         color: #fff;
       }
     }
@@ -69,8 +69,8 @@
       height: 15px;
       padding: 0 $s-1;
       border-radius: $r-sm;
-      background: var(--b3-theme-on-surface-light, #6b7280);
-      color: var(--b3-theme-on-primary, #fff);
+      background: var(--b3-theme-on-surface-light, #{$c-muted});
+      color: var(--b3-theme-on-primary, #{$c-bg});
       font-size: $t-2xs;
       font-weight: $fw-bold;
       font-family: $ff-mono;
@@ -94,7 +94,7 @@
     flex-shrink: 0;
 
     &:hover {
-      background: var(--b3-theme-error, #ef4444);
+      background: var(--b3-theme-error, #{$c-danger});
       color: var(--b3-theme-on-primary);
     }
   }

@@ -86,7 +86,7 @@
       vertical-align: middle;
       margin-left: $s-2;
       opacity: 0.4;
-      transition: opacity 0.15s;
+      transition: opacity 0.12s;
 
       &:hover {
         opacity: 1;
@@ -201,12 +201,12 @@
 
   .doocs-btn {
     color: #fff;
-    background: var(--b3-theme-success, #22c55e);
-    border-color: var(--b3-theme-success, #22c55e);
+    background: var(--b3-theme-success, #{$c-success});
+    border-color: var(--b3-theme-success, #{$c-success});
 
     &:hover:not(:disabled) {
       opacity: 0.85;
-      background: var(--b3-theme-success, #16a34a);
+      background: var(--b3-theme-success, #{$c-success});
     }
   }
 }

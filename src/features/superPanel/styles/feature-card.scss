@@ -11,7 +11,7 @@
   cursor: pointer;
   break-inside: avoid;
   margin-bottom: $spacing-sm;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.12s, background 0.12s;
 
   &:hover {
     background: var(--b3-theme-surface);

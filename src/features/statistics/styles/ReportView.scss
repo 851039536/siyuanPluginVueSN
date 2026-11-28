@@ -27,7 +27,7 @@
   font-size: $t-2xs;
   font-weight: $fw-semibold;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.12s;
 
   &:hover {
     color: var(--b3-theme-on-surface);
@@ -101,7 +101,7 @@
   justify-content: center;
   padding: $s-px2 $s-px6;
   border-radius: stats.$r-sm;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity 0.12s, background 0.12s;
 
   &:hover {
     opacity: 0.8;

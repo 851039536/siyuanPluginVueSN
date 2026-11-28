@@ -11,8 +11,8 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-md;
     font-size: $t-sm;
-    background: var(--b3-theme-background, #fff);
-    color: var(--b3-theme-on-background, #333);
+    background: var(--b3-theme-background, #{$c-bg});
+    color: var(--b3-theme-on-background, #{$c-fg});
     outline: none;
     box-sizing: border-box;
     transition: border-color 0.12s;
@@ -36,7 +36,7 @@
     border-radius: $r-md;
     cursor: pointer;
     transition: border-color 0.12s;
-    background: var(--b3-theme-background, #fff);
+    background: var(--b3-theme-background, #{$c-bg});
     &:hover {
       border-color: var(--b3-theme-primary);
       .skill-list-view__card-delete {
@@ -89,7 +89,7 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    color: var(--b3-theme-on-background, #333);
+    color: var(--b3-theme-on-background, #{$c-fg});
   }
   &__card-bottom {
     display: flex;

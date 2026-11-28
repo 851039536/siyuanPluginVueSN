@@ -108,19 +108,19 @@
 
 // ============ 数量列语义色（原卡片 colorClass 迁移） ============
 .st-td-count {
-  &.zero { color: var(--b3-theme-error, #ef4444); }
+  &.zero { color: var(--b3-theme-error, #{$c-danger}); }
   &.small, &.time-yellow { color: $c-warning; }
   &.medium, &.large, &.xlarge, &.time-cyan { color: $c-info; }
   &.dup, &.time-orange { color: $c-warning; }
-  &.time-green { color: var(--b3-theme-success, #22c55e); }
-  &.time-red { color: var(--b3-theme-error, #ef4444); }
-  &.time-purple { color: var(--b3-theme-on-surface-light, #8b5cf6); }
-  &.depth-color { color: var(--b3-theme-primary, #6366f1); }
+  &.time-green { color: var(--b3-theme-success, #{$c-success}); }
+  &.time-red { color: var(--b3-theme-error, #{$c-danger}); }
+  &.time-purple { color: var(--b3-theme-on-surface-light, #{$c-muted}); }
+  &.depth-color { color: var(--b3-theme-primary, #{$c-accent}); }
   &.ref-color { color: $c-info; }
   &.img-color { color: var(--b3-theme-success, $c-success); }
   &.bookmark-color { color: $c-warning; }
   &.no-bookmark-color { color: var(--b3-theme-on-surface-light); }
-  &.full-publish-color { color: var(--b3-theme-success, #22c55e); }
+  &.full-publish-color { color: var(--b3-theme-success, #{$c-success}); }
   &.partial-publish-color { color: $c-warning; }
   &.no-publish-color { color: var(--b3-theme-on-surface-light); }
 }

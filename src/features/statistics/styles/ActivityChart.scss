@@ -37,7 +37,7 @@
   cursor: pointer;
   padding: $s-px3 $s-px6;
   border-radius: stats.$r-sm;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity 0.12s, background 0.12s;
 
   &:hover {
     background: var(--b3-list-hover);
@@ -93,7 +93,7 @@
 .trend-line {
   stroke-width: 2;
   opacity: 0.75;
-  transition: opacity 0.15s;
+  transition: opacity 0.12s;
 
   &.dimmed {
     opacity: 0.12;

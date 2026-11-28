@@ -5,7 +5,7 @@
   flex-direction: column;
   height: 100%;
   font-family: $ff-zh;
-  background: var(--b3-theme-background, #fff);
+  background: var(--b3-theme-background, #{$c-bg});
 
   &__header {
     display: flex;
@@ -57,7 +57,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-base;
     background: transparent;
-    color: var(--b3-theme-on-background, #333);
+    color: var(--b3-theme-on-background, #{$c-fg});
     font-size: $t-base;
     cursor: pointer;
     transition: all 0.12s;

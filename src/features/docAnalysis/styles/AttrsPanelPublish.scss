@@ -79,7 +79,7 @@
       &.is-published {
         background: rgba(34, 197, 94, 0.12);
         border-color: rgba(34, 197, 94, 0.3);
-        color: var(--b3-theme-success, #16a34a);
+        color: var(--b3-theme-success, #{$c-success});
       }
     }
 
@@ -116,11 +116,11 @@
     }
 
     .publish-format-btn {
-      background: var(--b3-theme-success, #22c55e);
+      background: var(--b3-theme-success, #{$c-success});
       color: #fff;
 
       &:hover:not(:disabled) {
-        background: var(--b3-theme-success, #16a34a);
+        background: var(--b3-theme-success, #{$c-success});
       }
     }
 
@@ -130,16 +130,16 @@
 
       &:hover {
         background: rgba(34, 197, 94, 0.12);
-        border-color: var(--b3-theme-success, #22c55e);
+        border-color: var(--b3-theme-success, #{$c-success});
 
         .status-icon {
-          color: var(--b3-theme-success, #22c55e);
+          color: var(--b3-theme-success, #{$c-success});
         }
 
         .status-badge.is-unpublished {
           background: rgba(34, 197, 94, 0.12);
           border-color: rgba(34, 197, 94, 0.3);
-          color: var(--b3-theme-success, #16a34a);
+          color: var(--b3-theme-success, #{$c-success});
         }
       }
     }
@@ -148,26 +148,26 @@
     &.published {
       background: rgba(34, 197, 94, 0.08);
       border-color: rgba(34, 197, 94, 0.25);
-      color: var(--b3-theme-success, #16a34a);
+      color: var(--b3-theme-success, #{$c-success});
 
       .status-icon {
-        color: var(--b3-theme-success, #22c55e);
+        color: var(--b3-theme-success, #{$c-success});
       }
 
       // 已发布行 hover：泛浅红提示可取消
       &.clickable:hover {
         background: rgba(239, 68, 68, 0.1);
-        border-color: var(--b3-theme-error, #dc2626);
-        color: var(--b3-theme-error, #dc2626);
+        border-color: var(--b3-theme-error, #{$c-danger});
+        color: var(--b3-theme-error, #{$c-danger});
 
         .status-icon {
-          color: var(--b3-theme-error, #ef4444);
+          color: var(--b3-theme-error, #{$c-danger});
         }
 
         .status-badge.is-published {
           background: rgba(239, 68, 68, 0.12);
           border-color: rgba(239, 68, 68, 0.3);
-          color: var(--b3-theme-error, #dc2626);
+          color: var(--b3-theme-error, #{$c-danger});
         }
       }
     }

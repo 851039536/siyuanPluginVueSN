@@ -146,7 +146,7 @@
   font-family: stats.$font-mono;
   font-size: $t-2xs;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition: border-color 0.12s, color 0.12s;
 
   &:hover {
     border-color: var(--b3-theme-primary);

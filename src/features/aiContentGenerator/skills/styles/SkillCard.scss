@@ -29,7 +29,7 @@
   }
 
   &:hover {
-    border-color: var(--b3-theme-surface-variant, $c-border);
+    border-color: var(--b3-theme-surface-lighter, $c-border);
   }
 
   &--editing {
@@ -90,7 +90,7 @@
   .sv-skill-size {
     font-size: $t-2xs;
     font-family: $ff-mono;
-    color: var(--b3-theme-on-surface-variant, $c-muted);
+    color: var(--b3-theme-on-surface-light, $c-muted);
     opacity: 0.45;
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
@@ -98,7 +98,7 @@
 
   .sv-skill-desc {
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant, $c-muted);
+    color: var(--b3-theme-on-surface-light, $c-muted);
     line-height: $lh-normal;
     margin-bottom: $s-1;
     opacity: 0.8;
@@ -112,7 +112,7 @@
     margin-bottom: $s-1;
     font-size: $t-2xs;
     line-height: $lh-tight;
-    color: var(--b3-theme-warning, $c-warning);
+    color: $c-warning;
 
     svg {
       flex-shrink: 0;
@@ -121,7 +121,7 @@
 
   .sv-skill-path {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant, $c-muted);
+    color: var(--b3-theme-on-surface-light, $c-muted);
     opacity: 0.45;
     font-family: $ff-mono;
     overflow: hidden;
@@ -166,7 +166,7 @@
 
       .sv-skill-editor-hint {
         font-size: $t-2xs;
-        color: var(--b3-theme-on-surface-variant, $c-muted);
+        color: var(--b3-theme-on-surface-light, $c-muted);
         opacity: 0.5;
       }
     }

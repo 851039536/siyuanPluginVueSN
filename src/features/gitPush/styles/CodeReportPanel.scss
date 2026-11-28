@@ -65,8 +65,8 @@
   gap: $s-1;
   padding: $s-2;
   font-size: $t-xs;
-  color: var(--b3-theme-warning);
-  background: var(--b3-theme-warning-lightest);
-  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  color: $c-warning;
+  background: rgba($c-warning, 0.12);
+  border: 1px solid rgba($c-warning, 0.24);
   border-radius: $r-sm;
 }

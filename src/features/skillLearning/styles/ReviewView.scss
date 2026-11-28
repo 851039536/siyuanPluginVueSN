@@ -33,7 +33,7 @@
   }
   &__complete-sub {
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 
   // ---- header & progress ----
@@ -97,11 +97,11 @@
   }
   &__category-tag {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
   &__flip-hint {
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     margin-top: $s-2;
     opacity: 0.6;
   }
@@ -165,9 +165,9 @@
       color: var(--b3-theme-error);
     }
     &--fuzzy:hover {
-      border-color: var(--b3-theme-warning);
+      border-color: $c-warning;
       background: rgba(245, 158, 11, 0.06);
-      color: var(--b3-theme-warning);
+      color: $c-warning;
     }
     &--remembered:hover {
       border-color: var(--b3-theme-success);
@@ -186,6 +186,6 @@
   }
   &__rating-hint {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 }

@@ -28,7 +28,7 @@
 }
 
 .wt-unstaged {
-  color: var(--b3-theme-warning);
+  color: $c-warning;
 }
 
 .wt-untracked {
@@ -137,7 +137,7 @@
   font-family: $ff-mono;
   overflow: hidden;
 
-  &.wt-s-modified { color: var(--b3-theme-warning); }
+  &.wt-s-modified { color: $c-warning; }
   &.wt-s-added    { color: var(--b3-theme-success); }
   &.wt-s-deleted  { color: var(--b3-theme-error); }
   &.wt-s-renamed  { color: var(--gp-file-renamed-color); }
@@ -164,7 +164,7 @@
   height: $s-px6;
   flex-shrink: 0;
   border-radius: $r-full;
-  background: var(--b3-theme-warning);
+  background: $c-warning;
   box-shadow: 0 0 0 $s-px1 var(--b3-theme-primary);
 }
 

@@ -2,11 +2,6 @@
 @use '@/variables.scss' as *;
 
 // 旋转动画（loading spinner 共享）
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 // 旋转图标
 @mixin da-spin-icon {
   animation: spin 1s linear infinite;
@@ -86,7 +81,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
   font-size: $t-lg;
 

@@ -133,17 +133,17 @@
 
   // 新增颜色变体：提示 / 警告
   &--info {
-    @include m.btn-color-family("--b3-theme-info", $c-info, var(--b3-theme-on-primary, $c-bg));
-    background: var(--b3-theme-info, $c-info);
+    @include m.btn-color-family(null, $c-info, var(--b3-theme-on-primary, $c-bg));
+    background: $c-info;
     color: var(--b3-theme-on-primary, $c-bg);
-    @include m.interactive-raised(var(--b3-theme-info, $c-info));
+    @include m.interactive-raised($c-info);
   }
 
   &--warning {
-    @include m.btn-color-family("--b3-theme-warning", $c-warning, var(--b3-theme-on-primary, $c-bg));
-    background: var(--b3-theme-warning, $c-warning);
+    @include m.btn-color-family(null, $c-warning, var(--b3-theme-on-primary, $c-bg));
+    background: $c-warning;
     color: var(--b3-theme-on-primary, $c-bg);
-    @include m.interactive-raised(var(--b3-theme-warning, $c-warning));
+    @include m.interactive-raised($c-warning);
   }
 
   // ========== severity（颜色轴） ==========
@@ -157,11 +157,11 @@
   }
 
   &--severity-info {
-    @include m.btn-color-family("--b3-theme-info", $c-info, var(--b3-theme-on-primary, $c-bg));
+    @include m.btn-color-family(null, $c-info, var(--b3-theme-on-primary, $c-bg));
   }
 
   &--severity-warning {
-    @include m.btn-color-family("--b3-theme-warning", $c-warning, var(--b3-theme-on-primary, $c-bg));
+    @include m.btn-color-family(null, $c-warning, var(--b3-theme-on-primary, $c-bg));
   }
 
   &--severity-danger {

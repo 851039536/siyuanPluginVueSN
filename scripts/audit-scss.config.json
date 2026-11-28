@@ -1,0 +1,46 @@
+{
+  "thresholds": {
+    "maxFileLines": 500,
+    "maxFileBytes": 12288,
+    "maxNestingDepth": 4,
+    "maxSelectorItems": 6,
+    "minUnusedClassLength": 5
+  },
+  "rules": {
+    "R3-theme-var-no-fallback": {
+      "enabled": false,
+      "reason": "fallback 属建议级，全量 5000+ 条会淹没 P0/P1；用 --strict 或 --only=r3 单独评估"
+    }
+  },
+  "whitelist": [
+    {
+      "rule": "R3-hardcoded-color",
+      "files": ["src/features/imageCreation/styles/CodeImageStyles.scss"],
+      "reason": "代码图片生成风格色板：作用于被截图生成的图片本体（产品输出），不参与插件 UI 主题适配"
+    },
+    {
+      "rule": "R3-hardcoded-color",
+      "files": ["src/features/gitPush/styles/chartColors.scss"],
+      "reason": "K 线图配色单一源，值必须与 types/report.ts 的 REPORT_CHART_COLORS 一致，由 reportChartColors.spec.ts 逐色锁定"
+    },
+    {
+      "rule": "R3-hardcoded-color",
+      "files": ["src/features/statistics/styles/panel.scss"],
+      "patterns": ["#5d87ff"],
+      "reason": "rgb() 相对颜色首参的防御性兜底色：该文件经 './index.scss' 引入变量，拿不到全局 $c-primary，取值与同模块 $gradient-primary 的 fallback 保持一致"
+    },
+    {
+      "rule": "R1-unused-class",
+      "files": ["src/features/gitPush/styles/MarkdownContent.scss"],
+      "patterns": ["^\\.footnotes$"],
+      "reason": "marked 渲染 GFM 脚注时动态生成 .footnotes，源码中无字面引用；删除会导致脚注样式丢失"
+    },
+    {
+      "rule": "R1-unused-class",
+      "files": ["src/features/aiContentGenerator/styles/DiffPreview.scss"],
+      "patterns": ["^\\.vue-diff-cell-(removed|added)$"],
+      "reason": "vue-diff 库内部渲染的单元格类名，由依赖注入而非模板书写"
+    }
+  ],
+  "ignore": []
+}

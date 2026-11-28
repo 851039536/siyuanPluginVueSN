@@ -4,12 +4,12 @@
 
 .sv-modal-icon {
   flex-shrink: 0;
-  color: var(--b3-theme-on-surface-variant, $c-muted);
+  color: var(--b3-theme-on-surface-light, $c-muted);
 }
 
 .sv-modal-body {
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant, $c-muted);
+  color: var(--b3-theme-on-surface-light, $c-muted);
   line-height: $lh-normal;
 
   .sv-modal-skill-name {
@@ -21,7 +21,7 @@
 
   .sv-modal-skill-path {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant, $c-muted);
+    color: var(--b3-theme-on-surface-light, $c-muted);
     opacity: 0.6;
     font-family: $ff-mono;
     margin-top: $s-1;

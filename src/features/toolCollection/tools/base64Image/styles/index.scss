@@ -28,7 +28,7 @@
     padding: $s-2 $s-3;
     border: 1px solid var(--b3-theme-surface-lighter);
     background: var(--b3-theme-surface);
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     cursor: pointer;
     border-radius: $r-base;
     font-size: $t-xs;
@@ -39,8 +39,8 @@
     }
 
     &.active {
-      background: var(--b3-theme-primary-container);
-      color: var(--b3-theme-on-primary-container);
+      background: var(--b3-theme-primary-lightest);
+      color: var(--b3-theme-primary);
       border-color: var(--b3-theme-primary);
     }
   }

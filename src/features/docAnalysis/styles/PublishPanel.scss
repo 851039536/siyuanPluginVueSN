@@ -40,7 +40,7 @@
   font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.45;
   white-space: nowrap;
 }
@@ -53,7 +53,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-size: $t-xs;
   cursor: pointer;
   white-space: nowrap;
@@ -120,14 +120,14 @@
   gap: $s-px6;
   padding: $s-1 $s-px10;
   background: var(--b3-theme-surface, rgba(255, 255, 255, 0.04));
-  border-bottom: 1px solid var(--b3-border-color-transient, rgba(255, 255, 255, 0.06));
+  border-bottom: 1px solid var(--b3-border-color, rgba(255, 255, 255, 0.06));
   flex-shrink: 0;
 }
 
 .tip-icon {
   flex-shrink: 0;
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.55;
 }
 
@@ -135,12 +135,12 @@
   flex: 1;
   font-size: $t-2xs;
   line-height: $lh-normal;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.65;
 
   strong {
     font-weight: $fw-semibold;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     opacity: 0.9;
   }
 }
@@ -154,7 +154,7 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
   flex-shrink: 0;
   font-size: $t-2xs;
@@ -198,7 +198,7 @@
   align-items: center;
   gap: $s-1;
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
 }
 
@@ -213,7 +213,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: var(--b3-theme-background);
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-size: $t-xs;
   line-height: $lh-normal;
   resize: vertical;
@@ -227,7 +227,7 @@
 
 .promote-settings-hint {
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.55;
 }
 
@@ -275,14 +275,14 @@
 
 .statusbar-left {
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
   font-family: $ff-mono;
 }
 
 .statusbar-right {
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.45;
 }
 

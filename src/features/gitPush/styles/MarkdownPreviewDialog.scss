@@ -86,7 +86,7 @@
 }
 
 .gp-md-tab-warn {
-  color: var(--b3-theme-warning);
+  color: $c-warning;
   display: flex;
 }
 
@@ -132,5 +132,5 @@
   align-items: center;
   gap: $s-px3;
   font-size: $t-2xs;
-  color: var(--b3-theme-warning);
+  color: $c-warning;
 }

@@ -26,7 +26,7 @@
     border: none;
     border-radius: $r-base;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-size: $t-xs;
     font-weight: $fw-medium;
     cursor: pointer;
@@ -81,7 +81,7 @@
     padding: $s-2 $s-3;
     border-top: 1px solid var(--b3-border-color);
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     flex-shrink: 0;
     font-feature-settings: "tnum";
     font-family: $ff-mono;

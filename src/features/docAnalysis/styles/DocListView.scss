@@ -37,7 +37,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-sm;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-size: $t-xs;
     cursor: pointer;
     white-space: nowrap;
@@ -69,7 +69,7 @@
       height: 15px;
       padding: 0 $s-1;
       border-radius: $r-sm;
-      background: var(--b3-theme-on-surface-variant, #6b7280);
+      background: var(--b3-theme-on-surface-light, #6b7280);
       color: var(--b3-theme-on-primary, #fff);
       font-size: $t-2xs;
       font-weight: $fw-bold;
@@ -88,7 +88,7 @@
     border: none;
     border-radius: $r-sm;
     background: var(--b3-theme-surface-light);
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     cursor: pointer;
     font-size: $t-sm;
     flex-shrink: 0;
@@ -106,7 +106,7 @@
   gap: $s-px6;
   padding: $s-1 $s-px10;
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.05));
   border-bottom: 1px solid var(--b3-border-color);
   flex-shrink: 0;

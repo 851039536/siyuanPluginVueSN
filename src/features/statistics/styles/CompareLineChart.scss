@@ -29,7 +29,7 @@
 
   // A 期用中性灰、B 期用主色，与差异表/条形图颜色语言一致
   &.cmp-line-a {
-    stroke: rgba(var(--b3-theme-on-surface-rgb), 0.4);
+    stroke: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.4);
   }
 
   &.cmp-line-b {
@@ -39,7 +39,7 @@
 
 .cmp-dot {
   &.cmp-dot-a {
-    fill: rgba(var(--b3-theme-on-surface-rgb), 0.55);
+    fill: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.55);
   }
 
   &.cmp-dot-b {
@@ -76,7 +76,7 @@
   border-radius: stats.$r-sm;
 
   &.cmp-dot-a-bg {
-    background: rgba(var(--b3-theme-on-surface-rgb), 0.4);
+    background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.4);
   }
 
   &.cmp-dot-b-bg {

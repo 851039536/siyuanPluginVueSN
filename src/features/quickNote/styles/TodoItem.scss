@@ -27,7 +27,7 @@
   &--done {
     .qn-todo-item__content {
       text-decoration: line-through;
-      color: var(--b3-theme-on-surface-variant);
+      color: var(--b3-theme-on-surface-light);
     }
 
     .qn-todo-item__check {
@@ -53,7 +53,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
   flex-shrink: 0;
   transition: color 0.12s;

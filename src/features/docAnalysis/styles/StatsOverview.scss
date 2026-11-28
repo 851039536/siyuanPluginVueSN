@@ -12,7 +12,7 @@
   letter-spacing: 0;
   text-transform: none;
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 // ============ 占位状态 ============
@@ -21,7 +21,7 @@
   flex-direction: column;
   align-items: center;
   padding: $s-8;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-size: $t-xs;
   gap: $s-2;
 

@@ -37,11 +37,11 @@
   gap: $s-1;
   margin-top: $s-1;
   padding: $s-1 $s-2;
-  background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
   border-left: 2px solid var(--b3-theme-primary);
   border-radius: $r-base;
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 .hint-text {
@@ -78,7 +78,7 @@
   }
 
   &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     opacity: 0.5;
   }
 }
@@ -130,10 +130,10 @@
 
 .toggle-description {
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-weight: $fw-medium;
   padding: $s-px2 $s-1;
-  background: var(--b3-theme-surface-variant);
+  background: var(--b3-theme-surface-lighter);
   border-radius: $r-base;
   border: 1px solid var(--b3-border-color);
 }

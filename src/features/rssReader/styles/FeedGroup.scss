@@ -27,7 +27,7 @@
 
       .group-collapse-icon {
         font-size: $t-base;
-        color: var(--b3-theme-on-surface-muted);
+        color: var(--b3-theme-on-surface-light);
         flex-shrink: 0;
       }
 
@@ -47,7 +47,7 @@
       .group-count {
         font-size: $t-2xs;
         font-family: $ff-mono;
-        color: var(--b3-theme-on-surface-muted);
+        color: var(--b3-theme-on-surface-light);
         background: var(--b3-theme-background);
         padding: 0 $s-px5;
         line-height: 14px;
@@ -79,7 +79,7 @@
 
       .group-action-btn {
         @include btn-icon-base(20px);
-        color: var(--b3-theme-on-surface-muted);
+        color: var(--b3-theme-on-surface-light);
         opacity: 0;
 
         &:hover {
@@ -134,7 +134,7 @@
         .feed-url {
           font-size: $t-xs;
           font-family: $ff-mono;
-          color: var(--b3-theme-on-surface-muted);
+          color: var(--b3-theme-on-surface-light);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
           line-height: 1.3; margin-top: $s-px1;
           opacity: 0.6;
@@ -151,7 +151,7 @@
         display: flex; gap: $s-px2; opacity: 0; transition: opacity 0.12s;
         button {
           @include btn-icon-base(22px);
-          color: var(--b3-theme-on-surface-muted);
+          color: var(--b3-theme-on-surface-light);
           @include btn-hover;
         }
       }
@@ -195,7 +195,7 @@
             box-sizing: border-box;
             @include input-focus-ring;
 
-            &::placeholder { color: var(--b3-theme-on-surface-muted); }
+            &::placeholder { color: var(--b3-theme-on-surface-light); }
           }
         }
       }

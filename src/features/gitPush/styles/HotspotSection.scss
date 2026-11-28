@@ -163,13 +163,13 @@
   cursor: default;
 
   &--hot {
-    background: var(--b3-theme-error-lightest);
+    background: rgba($c-danger, 0.12);
     color: var(--b3-theme-error);
   }
 
   &--warm {
-    background: var(--b3-theme-warning-lightest);
-    color: var(--b3-theme-warning);
+    background: rgba($c-warning, 0.12);
+    color: $c-warning;
   }
 
   &--cool {
@@ -228,13 +228,13 @@
   border-radius: $r-px2;
 
   &--hot {
-    background: var(--b3-theme-error-lightest);
+    background: rgba($c-danger, 0.12);
     border: 1px solid var(--b3-theme-error);
   }
 
   &--warm {
-    background: var(--b3-theme-warning-lightest);
-    border: 1px solid var(--b3-theme-warning);
+    background: rgba($c-warning, 0.12);
+    border: 1px solid $c-warning;
   }
 
   &--cool {
@@ -279,7 +279,7 @@
   padding: $s-2;
   font-size: $t-xs;
   color: var(--b3-theme-success);
-  background: var(--b3-theme-success-lightest);
-  border: 1px solid var(--b3-theme-success-lighter, var(--b3-theme-success));
+  background: rgba($c-success, 0.12);
+  border: 1px solid rgba($c-success, 0.24);
   border-radius: $r-sm;
 }

@@ -111,7 +111,7 @@
   font-family: $ff-mono;
   font-variant-numeric: tabular-nums;
   font-weight: $fw-semibold;
-  color: var(--b3-theme-warning);
+  color: $c-warning;
 }
 
 // 不合规提交列表（2 列网格；minmax(0,1fr) 防长内容撑破列宽）

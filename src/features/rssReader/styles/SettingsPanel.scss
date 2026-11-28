@@ -18,7 +18,7 @@
 
     .setting-desc {
       font-size: $t-xs;
-      color: var(--b3-theme-on-surface-muted);
+      color: var(--b3-theme-on-surface-light);
       margin-bottom: $s-1;
     }
 
@@ -67,7 +67,7 @@
         align-items: center;
         gap: $s-1;
         font-size: $t-xs;
-        color: var(--b3-theme-on-surface-muted);
+        color: var(--b3-theme-on-surface-light);
       }
     }
   }

@@ -22,7 +22,7 @@
     margin: $s-2 0 0;
     font-size: $t-2xs;
     line-height: $lh-normal;
-    color: var(--b3-theme-on-surface-variant, $c-muted);
+    color: var(--b3-theme-on-surface-light, $c-muted);
   }
 
   /* 子区块卡片：面板底色 + 卡片 surface 凸出 */
@@ -40,7 +40,7 @@
     font-family: $ff-mono;
     font-weight: $fw-semibold;
     text-transform: uppercase;
-    color: var(--b3-theme-on-surface-variant, $c-muted);
+    color: var(--b3-theme-on-surface-light, $c-muted);
   }
 
   /* 档位分段按钮组：字号 6 档在窄面板下自动换行 */

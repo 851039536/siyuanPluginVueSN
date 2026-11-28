@@ -28,7 +28,7 @@ $group-accent-width: 3px; // 组头左侧状态竖条宽度（与行内竖条一
 }
 
 .shortcut-list::-webkit-scrollbar-thumb:hover {
-  background: var(--b3-theme-on-surface-variant);
+  background: var(--b3-theme-on-surface-light);
 }
 
 // ==================== 空态 ====================
@@ -39,7 +39,7 @@ $group-accent-width: 3px; // 组头左侧状态竖条宽度（与行内竖条一
   justify-content: center;
   gap: $s-3;
   height: $empty-state-height;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 .shortcut-list__empty-icon {

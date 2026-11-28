@@ -173,7 +173,7 @@
 
   &:hover,
   &:focus-visible {
-    background: var(--b3-theme-error-lightest, rgba(231, 76, 60, 0.08));
+    background: rgba($c-danger, 0.12);
   }
 }
 

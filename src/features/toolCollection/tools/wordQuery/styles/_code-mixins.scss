@@ -44,10 +44,6 @@ $compact-gap: 6px;          // 紧凑间距 — 无全局精确对应（$s-1=4px
     &:last-child {
       border-bottom: none;
     }
-
-    &.highlight {
-      // no background — keep table-flat style
-    }
   }
 
   .row-label {

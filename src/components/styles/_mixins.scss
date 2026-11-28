@@ -62,11 +62,19 @@ $spacing-2_5: $s-px10;
 // 输出：--btn-color（主色）/ --btn-on-color（主色上的文字色）
 //       --btn-soft（hover 弱底色）/ --btn-soft-strong（active 加强底色）
 // 弱底色用相对颜色语法从主题变量取 alpha，明暗主题下自动正确（同 Tag.scss 既有写法）
+// $theme-var 传 null 表示思源无对应语义变量（如 info / warning），直接落到 $fallback 色
 @mixin btn-color-family($theme-var, $fallback, $on-color) {
-  --btn-color: var(#{$theme-var}, #{$fallback});
+  @if $theme-var {
+    --btn-color: var(#{$theme-var}, #{$fallback});
+    --btn-soft: hsla(from var(#{$theme-var}, #{$fallback}) h s l / 0.12);
+    --btn-soft-strong: hsla(from var(#{$theme-var}, #{$fallback}) h s l / 0.2);
+  } @else {
+    --btn-color: #{$fallback};
+    --btn-soft: hsla(from #{$fallback} h s l / 0.12);
+    --btn-soft-strong: hsla(from #{$fallback} h s l / 0.2);
+  }
+
   --btn-on-color: #{$on-color};
-  --btn-soft: hsla(from var(#{$theme-var}, #{$fallback}) h s l / 0.12);
-  --btn-soft-strong: hsla(from var(#{$theme-var}, #{$fallback}) h s l / 0.2);
 }
 
 // ========== focus 环（Codex 边框优先策略，替代 box-shadow） ==========

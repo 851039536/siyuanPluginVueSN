@@ -18,7 +18,7 @@
 @mixin info-text {
   margin: $s-1 0;
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 
   strong {
     color: var(--b3-theme-on-surface);
@@ -69,7 +69,7 @@
   }
 
   &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 }
 
@@ -100,7 +100,7 @@
       display: block;
       margin-bottom: $s-2;
       font-size: $t-2xs;
-      color: var(--b3-theme-on-surface-variant);
+      color: var(--b3-theme-on-surface-light);
       font-weight: $fw-medium;
     }
 

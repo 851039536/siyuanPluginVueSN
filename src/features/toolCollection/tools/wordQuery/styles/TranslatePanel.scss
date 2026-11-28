@@ -76,8 +76,8 @@
   gap: $s-2;
   padding: $s-2 $s-3;
   border-radius: $r-base;
-  background: var(--b3-theme-warning-light, #fef3c7);
-  color: var(--b3-theme-warning, #d97706);
+  background: rgba($c-warning, 0.18);
+  color: $c-warning;
   font-size: $t-2xs;
 
   .language-warning-text {

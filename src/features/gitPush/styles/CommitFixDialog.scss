@@ -34,9 +34,9 @@
   padding: 0 $s-px6;
   border-radius: $r-full;
   font-weight: $fw-semibold;
-  color: var(--b3-theme-warning);
-  background: var(--b3-theme-warning-lightest);
-  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  color: $c-warning;
+  background: rgba($c-warning, 0.12);
+  border: 1px solid rgba($c-warning, 0.24);
 }
 
 .gp-fix-block {
@@ -91,9 +91,9 @@
   align-items: flex-start;
   gap: $s-1;
   font-size: $t-2xs;
-  color: var(--b3-theme-warning);
-  background: var(--b3-theme-warning-lightest);
-  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  color: $c-warning;
+  background: rgba($c-warning, 0.12);
+  border: 1px solid rgba($c-warning, 0.24);
   border-radius: $r-base;
   padding: $s-2;
   line-height: $lh-normal;

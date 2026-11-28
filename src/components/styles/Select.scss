@@ -181,11 +181,11 @@
 
     &:hover,
     &--hovered {
-      background: var(--b3-list-hover, rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08));
+      background: var(--b3-list-hover, rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08));
     }
 
     &--selected {
-      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.15);
+      background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.15);
       // 选中态文字改用常规前景色 + 加粗：原 primary 在部分暗色主题下偏灰暗，文字几乎不可读，
       // 选中辨识改由高亮背景 + 字重承担
       color: var(--b3-theme-on-background);
@@ -193,7 +193,7 @@
 
       &:hover,
       &.si-select__option--hovered {
-        background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.25);
+        background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.25);
       }
     }
 

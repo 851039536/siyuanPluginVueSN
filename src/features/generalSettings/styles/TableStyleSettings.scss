@@ -27,7 +27,7 @@
 
 .toggle-description {
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   margin-top: $s-2;
   line-height: $lh-normal;
 }
@@ -56,7 +56,7 @@
   display: block;
   font-size: $t-xs;
   font-weight: $fw-medium;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   margin-bottom: $s-px6; // 标签与控件的紧凑间距（已收敛为全局 Token）
 }
 

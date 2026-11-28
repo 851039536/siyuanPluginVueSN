@@ -15,7 +15,7 @@
   font-size: $t-xs;
 
   &.log-fail {
-    background: rgba(var(--b3-theme-error-rgb, 212, 59, 59), 0.06);
+    background: rgb(from var(--b3-theme-error, #{$c-danger}) r g b / 0.06);
   }
 }
 

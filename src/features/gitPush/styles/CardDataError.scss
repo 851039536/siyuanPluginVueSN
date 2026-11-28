@@ -13,7 +13,7 @@
   padding: $s-px6 $s-2;
   border: 1px solid var(--b3-theme-error);
   border-radius: $r-sm;
-  background: var(--b3-theme-error-lightest);
+  background: rgba($c-danger, 0.12);
   color: var(--b3-theme-on-background);
 }
 

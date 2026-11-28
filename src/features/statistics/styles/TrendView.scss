@@ -15,7 +15,7 @@
       align-items: center;
       justify-content: space-between;
       padding: $s-2 $s-px10;
-      background: rgba(var(--b3-theme-primary-rgb), 0.04);
+      background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.04);
       border-bottom: 1px solid var(--b3-border-color);
 
       .subsection-title {
@@ -57,12 +57,12 @@
 
       &:hover {
         opacity: 0.85;
-        background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+        background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.05);
       }
 
       &.active {
         opacity: 1;
-        background: rgba(var(--b3-theme-primary-rgb), 0.1);
+        background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.1);
         border-color: var(--b3-theme-primary);
         color: var(--b3-theme-primary);
         font-weight: $fw-bold;
@@ -101,7 +101,7 @@
         }
 
         .chart-area {
-          fill: rgba(var(--b3-theme-primary-rgb), 0.08);
+          fill: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
         }
 
         .chart-line {

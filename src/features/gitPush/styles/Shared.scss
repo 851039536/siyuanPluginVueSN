@@ -3,12 +3,7 @@
 // 旋转动画（推送中/加载中状态）
 .gp-spin {
   display: inline-block;
-  animation: gp-spin 1s linear infinite;
-}
-
-@keyframes gp-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  animation: spin 1s linear infinite;
 }
 
 // 下拉菜单按钮尾部的展开箭头图标（IDE/拉取/推送菜单共用）

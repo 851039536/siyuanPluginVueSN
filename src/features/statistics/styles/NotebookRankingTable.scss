@@ -136,7 +136,7 @@
 .bar-track {
   flex: 1;
   height: 6px;
-  background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+  background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.06);
   border-radius: stats.$r-sm;
   overflow: hidden;
 }

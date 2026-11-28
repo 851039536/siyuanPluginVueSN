@@ -37,11 +37,11 @@
   }
 
   &--info {
-    border-left-color: var(--b3-theme-info, $c-info);
+    border-left-color: $c-info;
   }
 
   &--warn {
-    border-left-color: var(--b3-theme-warning, $c-warning);
+    border-left-color: $c-warning;
   }
 
   // ⚠️ 错误色只有 --b3-theme-error（--b3-theme-destructive 宿主从未定义）
@@ -85,11 +85,11 @@
 }
 
 .si-toast__message--info .si-toast__icon {
-  color: var(--b3-theme-info, $c-info);
+  color: $c-info;
 }
 
 .si-toast__message--warn .si-toast__icon {
-  color: var(--b3-theme-warning, $c-warning);
+  color: $c-warning;
 }
 
 .si-toast__message--error .si-toast__icon {

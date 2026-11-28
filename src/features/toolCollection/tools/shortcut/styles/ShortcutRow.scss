@@ -113,7 +113,7 @@ $motion-fast: 0.12s; // 悬停 / 聚焦过渡时长
 // 次显快捷键：次级色、透明底、中性描边；不参与压缩（空间不足时整体折行而非被压扁）
 .shortcut-row__hotkey {
   flex-shrink: 0;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   border: 1px solid var(--b3-border-color);
   white-space: nowrap;
 }
@@ -165,5 +165,5 @@ $motion-fast: 0.12s; // 悬停 / 聚焦过渡时长
   min-width: 0;
   font-size: $t-2xs;
   line-height: $lh-tight;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }

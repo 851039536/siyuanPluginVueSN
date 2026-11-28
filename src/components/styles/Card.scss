@@ -253,7 +253,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(var(--b3-theme-background-rgb, $c-bg), m.$opacity-overlay);
+    background: rgb(from var(--b3-theme-background, #{$c-bg}) r g b / #{m.$opacity-overlay});
     display: flex;
     align-items: center;
     justify-content: center;

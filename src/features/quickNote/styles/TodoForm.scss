@@ -58,7 +58,7 @@
 .qn-todo-form__cancel-btn {
   @extend %qn-cancel-btn;
   padding: $s-px2 $s-3;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   flex-shrink: 0;
 
   &:hover {
@@ -110,7 +110,7 @@
   display: flex;
   align-items: center;
   gap: $s-1;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   flex-shrink: 0;
 }
 

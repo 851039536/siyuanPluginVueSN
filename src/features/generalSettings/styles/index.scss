@@ -17,7 +17,7 @@
 
 .settings-header {
   padding: $s-4 $s-5;
-  border-bottom: 1px solid var(--b3-theme-surface-variant);
+  border-bottom: 1px solid var(--b3-theme-surface-lighter);
   flex-shrink: 0;
 
   h3 {
@@ -38,7 +38,7 @@
 .settings-sidebar {
   width: 150px;
   background: var(--b3-theme-surface);
-  border-right: 1px solid var(--b3-theme-surface-variant);
+  border-right: 1px solid var(--b3-theme-surface-lighter);
   overflow-y: auto;
   flex-shrink: 0;
   padding: $s-2 0;
@@ -48,7 +48,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
     border-radius: $r-px2;
   }
 }
@@ -61,11 +61,11 @@
   border-left: 3px solid transparent;
 
   &:hover {
-    background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.08);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
   }
 
   &.active {
-    background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.12);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12);
     border-left-color: var(--b3-theme-primary);
   }
 }
@@ -96,7 +96,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
     border-radius: $r-px3;
   }
 }
@@ -163,7 +163,7 @@
     overflow-y: hidden;
     padding: $s-1 $s-2;
     border-right: none;
-    border-bottom: 1px solid var(--b3-theme-surface-variant);
+    border-bottom: 1px solid var(--b3-theme-surface-lighter);
   }
 
   .sidebar-item {

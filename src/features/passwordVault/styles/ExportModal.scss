@@ -13,13 +13,13 @@
   .warning-icon {
     width: 40px;
     height: 40px;
-    color: var(--b3-theme-warning, #f0ad4e);
+    color: $c-warning;
     margin-bottom: $s-1;
   }
 
   .warning-text {
     font-size: $t-sm;
-    color: var(--b3-theme-warning, #f0ad4e);
+    color: $c-warning;
     line-height: $lh-normal;
     margin: 0;
   }

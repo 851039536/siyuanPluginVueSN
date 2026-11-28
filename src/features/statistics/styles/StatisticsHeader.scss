@@ -3,8 +3,6 @@
 @use "../styles/shared" as *;
 @use "../styles/index.scss" as stats;
 
-$stats-header-height: 56px;
-
 .statistics-header {
   display: flex;
   align-items: center;

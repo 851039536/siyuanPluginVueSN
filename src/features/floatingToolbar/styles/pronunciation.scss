@@ -104,7 +104,7 @@
   padding: g.$s-1 g.$s-2;
   border-radius: g.$r-lg;
   background: var(--b3-theme-surface-lighter);
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-weight: g.$fw-medium;
   white-space: nowrap;
 
@@ -213,7 +213,7 @@
 
   .info-label {
     font-size: g.$t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-weight: g.$fw-medium;
   }
 

@@ -75,70 +75,7 @@
   opacity: 1;
 }
 
-// ── 配置内容展示 ──
-.gp-gc-config-block {
-  background: var(--b3-theme-surface);
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  overflow: hidden;
-}
-
-.gp-gc-config-item {
-  display: flex;
-  align-items: flex-start;
-  padding: $s-1 $s-3;
-  font-size: $t-2xs;
-  font-family: $ff-mono;
-  line-height: $lh-normal;
-  border-bottom: 1px solid var(--b3-border-color);
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:hover {
-    background: var(--b3-list-hover);
-  }
-}
-
-.gp-gc-config-key {
-  color: var(--b3-theme-primary);
-  white-space: nowrap;
-  flex-shrink: 0;
-  font-weight: $fw-medium;
-}
-
-.gp-gc-config-desc {
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
-  white-space: nowrap;
-  flex-shrink: 0;
-  margin: 0 $s-1;
-  font-size: $t-2xs;
-  font-family: inherit;
-
-  &::before {
-    content: "(";
-  }
-
-  &::after {
-    content: ")";
-  }
-}
-
-.gp-gc-config-value {
-  color: var(--b3-theme-on-surface);
-  word-break: break-all;
-  margin-left: $s-px2;
-}
-
 // ── 底部操作栏 ──
 .gp-gc-footer {
   @include dialog-footer;
-}
-
-.gp-gc-config-count {
-  font-size: $t-2xs;
-  color: var(--b3-theme-on-surface);
-  opacity: 0.5;
 }

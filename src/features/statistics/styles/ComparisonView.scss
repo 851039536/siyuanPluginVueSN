@@ -94,7 +94,7 @@
   }
 
   td {
-    border-bottom: 1px solid rgba(var(--b3-theme-on-surface-rgb), 0.04);
+    border-bottom: 1px solid rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.04);
     color: var(--b3-theme-on-surface);
     font-family: stats.$font-mono;
     font-weight: $fw-medium;

@@ -18,7 +18,7 @@
       align-items: center;
       gap: $s-px6;
       padding: $s-2 $s-px10;
-      background: rgba(var(--b3-theme-primary-rgb), 0.06);
+      background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.06);
       border-bottom: 1px solid var(--b3-border-color);
 
       .comparison-icon {
@@ -100,7 +100,7 @@
           }
 
           &.neutral {
-            background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
+            background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.08);
             color: var(--b3-theme-on-surface);
             opacity: 0.5;
           }

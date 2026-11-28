@@ -160,7 +160,7 @@
   font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   padding: $s-px6 $s-2;
-  background: rgba(var(--b3-theme-primary-rgb), 0.05);
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.05);
   border-radius: stats.$r-sm;
   margin-bottom: $s-px6;
 

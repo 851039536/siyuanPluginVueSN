@@ -47,7 +47,7 @@
 .char-count {
   font-family: $ff-mono;
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 .file-btn {
@@ -83,7 +83,7 @@
   }
 
   &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     opacity: 0.6;
   }
 }

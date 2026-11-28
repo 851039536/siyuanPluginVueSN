@@ -8,7 +8,7 @@
 }
 
 .deepseek-hint {
-  background: rgba(var(--b3-theme-primary-rgb), 0.06);
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.06);
   border-radius: $r-sm;
   padding: $s-1 $s-2;
 }

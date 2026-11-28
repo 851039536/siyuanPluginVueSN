@@ -59,7 +59,7 @@
 
   .filter-separator {
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     flex-shrink: 0;
   }
 
@@ -73,7 +73,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-base;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     cursor: pointer;
     flex-shrink: 0;
 

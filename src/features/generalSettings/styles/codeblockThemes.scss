@@ -46,7 +46,7 @@ body[class*="codeblock-style-"] {
     }
 
     .hljs {
-      background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.015) !important;
+      background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.015) !important;
       padding: $codeblock-padding $s-2;
       font-size: $codeblock-font-size;
       line-height: $codeblock-line-height;
@@ -55,7 +55,7 @@ body[class*="codeblock-style-"] {
 
     /* 代码块内的选中效果 */
     .hljs ::selection {
-      background: rgba(var(--b3-theme-primary-rgb, 66, 133, 244), 0.3);
+      background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.3);
     }
 
     /* 代码块复制按钮优化：默认隐藏，hover 时显示 */
@@ -81,7 +81,7 @@ body.codeblock-style-github {
     }
 
     .protyle-action {
-      background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.03);
+      background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.03);
       border-bottom: 1px solid var(--b3-border-color);
       // 0.875rem(14px) 无对应间距 Token，保留精确值
       padding: $s-px2 0.875rem;
@@ -94,7 +94,7 @@ body.codeblock-style-github {
       }
 
       .protyle-icon {
-        color: var(--b3-theme-on-surface-variant);
+        color: var(--b3-theme-on-surface-light);
       }
     }
 
@@ -109,7 +109,7 @@ body.codeblock-style-github {
         width: 2em;
         margin-right: 1em;
         text-align: right;
-        color: var(--b3-theme-on-surface-variant);
+        color: var(--b3-theme-on-surface-light);
         opacity: 0.4;
         user-select: none;
       }
@@ -167,11 +167,11 @@ body.codeblock-style-mac {
       }
 
       &::-webkit-scrollbar-thumb {
-        background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.2);
+        background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.2);
         border-radius: $r-sm;
 
         &:hover {
-          background: rgba(var(--b3-theme-on-surface-rgb, 0, 0, 0), 0.3);
+          background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.3);
         }
       }
     }

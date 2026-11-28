@@ -131,23 +131,6 @@ $fc-pad-nav: 14px; // 14px 导航水平内边距（无匹配全局Token）
     font-family: $ff-mono;
   }
 
-  .panel-meta-key {
-    font-size: $t-2xs;
-    font-weight: $fw-bold;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.4;
-    flex-shrink: 0;
-  }
-
-  .panel-meta-val {
-    font-size: $t-xs;
-    color: var(--b3-theme-on-surface);
-    opacity: 0.65;
-    word-break: break-all;
-  }
-
   .category-filter {
     display: flex;
     align-items: center;

@@ -28,7 +28,7 @@
 .rule-index {
   font-size: $t-xs;
   font-weight: $fw-semibold;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 // ========== 字段行布局 ==========
@@ -60,7 +60,7 @@
 
 .preview-label-text {
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 .preview-tag {

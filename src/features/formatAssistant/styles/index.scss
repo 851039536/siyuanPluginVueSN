@@ -63,7 +63,7 @@ $fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微�
 
 .option-label {
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-weight: $fw-medium;
   white-space: nowrap;
 }
@@ -88,7 +88,7 @@ $fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微�
 
   &.active {
     border-color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb, 7, 193, 96), 0.08);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
   }
 
   &:hover:not(.active) {
@@ -243,7 +243,7 @@ $fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微�
 
 .char-count {
   font-size: $fa-font-11;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 // 输入区域
@@ -260,7 +260,7 @@ $fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微�
   line-height: $fa-lh-16;
 
   &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     opacity: 0.5;
   }
 }
@@ -290,7 +290,7 @@ $fa-preview-bg: #fff; // 无对应 Token：预览区须固定白底，对齐微�
   justify-content: center;
   height: 100%;
   gap: $s-3;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
 
   span {

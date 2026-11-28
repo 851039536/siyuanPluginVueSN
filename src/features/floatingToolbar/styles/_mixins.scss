@@ -228,7 +228,7 @@
   border: none;
   border-radius: $r-full;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
 
   &:hover {
@@ -267,7 +267,7 @@
   @include g.si-scrollbar-thin(
     $width: 5px,
     $radius: g.$r-px2,
-    $hover: var(--b3-theme-on-surface-variant)
+    $hover: var(--b3-theme-on-surface-light)
   );
 }
 
@@ -280,7 +280,7 @@
   @include flex-center;
   padding: g.$s-8 g.$s-5;
   text-align: center;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   background: var(--b3-theme-surface);
   border-radius: g.$r-base;
   border: 1px dashed var(--b3-theme-surface-lighter);

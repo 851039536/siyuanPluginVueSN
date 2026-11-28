@@ -192,12 +192,6 @@
   color: var(--b3-theme-primary);
 }
 
-.icon-glow,
-.input-focus-effect,
-.btn-ripple {
-  display: none;
-}
-
 .page-lock-mask__title {
   margin: 0;
   font-size: $t-lg;
@@ -274,7 +268,7 @@
   }
 
   &::placeholder {
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     opacity: 0.6;
   }
 }
@@ -302,7 +296,7 @@
   }
 
   &:active {
-    background: var(--b3-theme-primary-dark, var(--b3-theme-primary));
+    background: var(--b3-theme-primary);
   }
 }
 

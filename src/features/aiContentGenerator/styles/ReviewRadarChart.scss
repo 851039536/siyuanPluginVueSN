@@ -39,8 +39,8 @@
   }
 
   &.level-mid {
-    fill: var(--b3-theme-warning, #e6a23c);
-    stroke: var(--b3-theme-warning, #e6a23c);
+    fill: $c-warning;
+    stroke: $c-warning;
   }
 
   &.level-low {
@@ -59,7 +59,7 @@
   }
 
   &.level-mid {
-    fill: var(--b3-theme-warning, #e6a23c);
+    fill: $c-warning;
   }
 
   &.level-low {
@@ -78,7 +78,7 @@
   }
 
   &.level-mid {
-    fill: var(--b3-theme-warning, #e6a23c);
+    fill: $c-warning;
   }
 
   &.level-low {

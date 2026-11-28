@@ -528,3 +528,31 @@ src/features/myFeature/
 6. **契约真源**：本侧 `utils/projectTransferExport.ts` 的 `PROJECT_TRANSFER_SLOT_KEYS`；
    桌面端 `features/gitPush/types/projectTransfer.ts` 的 `PROJECT_SLOT_KEYS` / `PROJECT_CONFIG_VERSION`。
    两组常量必须逐字一致。
+
+## 自动审计映射（2026-11-28）
+
+本文件的检查点已由 `scripts/audit-scss.mjs` 静态覆盖，命令与门禁说明见 [`AGENTS_BUILD.md`](./AGENTS_BUILD.md#样式审计pnpm-auditscss)。
+新增/修改 SCSS 后先跑 `pnpm audit:scss -- --changed`，再按下表逐条目视核对——脚本只能查「声明写了什么」，查不出「视觉是否对」（层级、对齐、暗色观感仍需组件预览面板回归）。
+
+| 检查点（对应章节） | 规则 ID | 级别 |
+| --- | --- | --- |
+| 禁止硬编码色值 / 字号 / 字重 / 行高 / 圆角 / 间距 | `R3-hardcoded-color` / `-font-size` / `-font-weight` / `-line-height` / `-radius` / `-spacing` | P1 |
+| 卡片禁用装饰性阴影 | `R3-box-shadow` | P2 |
+| 禁止 `backdrop-filter` | `R3-backdrop-filter` | P1 |
+| 过渡统一 0.12s | `R3-transition-duration` | P2 |
+| `z-index` 基准 10000 | `R3-z-index` | P2 |
+| 移动端断点带 `(pointer: coarse) and (hover: none)` 兜底 | `R3-mobile-breakpoint` | P1 |
+| 非 scoped 样式禁用 `:deep()` | `R3-deep-in-nonscoped` | P1 |
+| `var(--b3-*)` 必须是当前思源版本的有效变量 | `R3-theme-var-unknown` | P0 / P1 |
+| 样式必须外置到 `styles/*.scss` | `R1-style-in-vue` | P1 |
+| 文件体量（拆分为 `.scss` 分片） | `R2-file-size` | P2 |
+| 嵌套深度 ≤4 层 | `R2-deep-nesting` | P2 |
+| 遮罩/弹窗范式应复用 `kit/mixins.scss` | `R2-shared-pattern` | P2 |
+| 重复声明 / 重复选择器 / 空块 / `!important` / 调试样式 | `R1-duplicate-*` / `R1-empty-block` / `R1-important` / `R1-debug-style` | P1 / P2 |
+
+判定口径：
+
+- **P0** 只在「`var(--b3-*)` 引用了当前思源版本不存在的变量且无 fallback」时出现，属样式实际失效，必须清零后才能进入下一轮。
+- 主题变量基准为 `scripts/data/siyuan-theme-vars.json`；**升级思源后先 `pnpm audit:scss -- --refresh-theme-vars <安装目录>`**，否则结论会漂移。
+- 业务性色板（代码图片输出样式、图表配色）走 `scripts/audit-scss.config.json` 白名单并写 `reason`，不在功能代码里加旁路注释。
+- 存量问题在 `scripts/audit-scss.baseline.json` 冻结，门禁只对新增生效；每轮收尾用 `--write-baseline` 收紧。

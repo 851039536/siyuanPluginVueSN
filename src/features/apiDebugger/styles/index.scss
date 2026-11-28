@@ -178,12 +178,12 @@
 
     &--get {
       background: rgba(59, 130, 246, 0.15);
-      color: var(--b3-theme-info);
+      color: $c-info;
     }
 
     &--put {
       background: rgba(245, 158, 11, 0.15);
-      color: var(--b3-theme-warning);
+      color: $c-warning;
     }
 
     &--delete {
@@ -239,7 +239,7 @@
 }
 
 .json-number {
-  color: var(--b3-theme-warning);
+  color: $c-warning;
 }
 
 .json-boolean {
@@ -247,5 +247,5 @@
 }
 
 .json-null {
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }

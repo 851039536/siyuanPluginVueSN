@@ -12,7 +12,33 @@
 >
 > - 验证只走既有入口：`read_lints`（IDE 诊断，覆盖 ESLint 类问题）+ `pnpm typecheck` / `pnpm i18n:verify` / `pnpm validate:icons` / `pnpm test`；`pnpm lint` / `pnpm vite build` / SCSS 编译由用户执行。
 > - 样式改动的自查手段：`read_lints` + 只使用 `src/components/kit/variables.scss` 中已存在的 Token 名（写完对照该文件核对），不另起脚本编译。
-> - 确实需要**可复用**的检查能力时：**行为断言 → 写入 `src/**/*.spec.ts`**；静态扫描类 → 在 `scripts/` 下以正式名称落地并在本文档登记（参考 `verify-i18n.mjs` / `audit-token-shorthand.mjs`），而不是写成临时文件。
+> - 确实需要**可复用**的检查能力时：**行为断言 → 写入 `src/**/*.spec.ts`**；静态扫描类 → 在 `scripts/` 下以正式名称落地并在本文档登记（参考 `verify-i18n.mjs` / `audit-token-shorthand.mjs` / `audit-scss.mjs`），而不是写成临时文件。
+
+### 样式审计：`pnpm audit:scss`
+
+`scripts/audit-scss.mjs` 是全项目 SCSS 静态审计入口，规则分三组，与三轮优化一一对应：
+
+| 组 | 目标 | 主要规则 ID |
+| --- | --- | --- |
+| R1 | 清理冗余 | `R1-duplicate-decl` / `R1-duplicate-selector` / `R1-commented-style` / `R1-empty-block` / `R1-important` / `R1-debug-style` / `R1-style-in-vue` / `R1-unused-class` |
+| R2 | 结构优化 | `R2-file-size` / `R2-deep-nesting` / `R2-selector-list` / `R2-shared-pattern` |
+| R3 | 规范对齐 | `R3-hardcoded-*` / `R3-theme-var-unknown` / `R3-mobile-breakpoint` / `R3-backdrop-filter` / `R3-transition-duration` / `R3-z-index` / `R3-deep-in-nonscoped` |
+
+```bash
+pnpm audit:scss                        # 全量报告（默认只有 P0 影响退出码）
+pnpm audit:scss -- --only=r1,r2        # 按轮次单跑
+pnpm audit:scss -- --json              # 机器可读，供批次推进消费
+pnpm audit:scss -- --fail-on=p0,p1     # 门禁
+pnpm audit:scss -- --changed           # 只扫 git 变更文件
+pnpm audit:scss -- --write-baseline    # 冻结存量指纹（只降不升）
+pnpm audit:scss -- --refresh-theme-vars "C:/xxx/SiYuan"
+```
+
+- 判定基准是 `scripts/data/siyuan-theme-vars.json`（思源主题变量快照），采集与重新采集方式见 [`docs/参考/siyuan-theme-vars.md`](./docs/参考/siyuan-theme-vars.md)。
+- 存量问题在 `scripts/audit-scss.baseline.json` 冻结，门禁只对**新增**生效；每轮收尾重跑 `--write-baseline` 收紧。
+- 豁免必须写进 `scripts/audit-scss.config.json` 的 `whitelist` 并带 `reason`，禁止在功能代码里加旁路注释。
+- **升级思源后必须先 `--refresh-theme-vars`**，否则 `R3-theme-var-*` 结论与运行时不符。
+- 改动 SCSS 后的自查顺序：`read_lints` → `pnpm audit:scss -- --changed` → `pnpm typecheck`；`pnpm lint` / `pnpm build` 仍由用户执行。
 
 ## 单元测试
 

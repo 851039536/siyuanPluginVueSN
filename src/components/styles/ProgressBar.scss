@@ -20,7 +20,7 @@
 
   // ========== 颜色语义档位 ==========
   &--warning {
-    --si-progressbar-value-bg: var(--b3-theme-warning, #{$c-warning});
+    --si-progressbar-value-bg: $c-warning;
   }
 
   &--danger {

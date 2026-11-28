@@ -213,8 +213,8 @@
   gap: $s-1;
   padding: $s-1 $s-2 $s-1 $s-px10;
   border-bottom: 1px solid var(--b3-border-color);
-  background: var(--b3-theme-warning-lightest, rgba(240, 173, 78, 0.08));
-  color: var(--b3-theme-warning);
+  background: rgba($c-warning, 0.12);
+  color: $c-warning;
   font-size: $t-2xs;
   line-height: $lh-normal;
 }

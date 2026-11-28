@@ -16,7 +16,7 @@
   border: 1px solid transparent;
   border-radius: $r-base;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
   transition: all 0.12s;
 
@@ -66,7 +66,7 @@
   font-size: $t-2xs;
   font-weight: $fw-semibold;
   text-transform: uppercase;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   padding-left: $s-1;
 }
 

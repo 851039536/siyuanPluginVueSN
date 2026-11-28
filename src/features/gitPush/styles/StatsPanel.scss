@@ -33,7 +33,7 @@
 }
 
 .gps-health-seg--ahead { background: var(--b3-theme-primary); }
-.gps-health-seg--behind { background: var(--b3-theme-warning); }
+.gps-health-seg--behind { background: $c-warning; }
 .gps-health-seg--synced { background: var(--b3-theme-success); }
 .gps-health-seg--none { background: var(--b3-border-color); }
 
@@ -75,7 +75,7 @@
 }
 
 .gps-health-dot--ahead { background: var(--b3-theme-primary); }
-.gps-health-dot--behind { background: var(--b3-theme-warning); }
+.gps-health-dot--behind { background: $c-warning; }
 .gps-health-dot--synced { background: var(--b3-theme-success); }
 .gps-health-dot--none { background: var(--b3-border-color); }
 
@@ -102,7 +102,7 @@
   opacity: 0.7;
 
   &--accent { color: var(--gp-accent-color); }
-  &--star { color: var(--b3-theme-warning); }
+  &--star { color: $c-warning; }
   &--muted { opacity: 0.4; }
 }
 
@@ -217,15 +217,15 @@
   }
 
   &--behind {
-    border-color: var(--b3-theme-warning-lighter);
-    color: var(--b3-theme-warning);
-    background: var(--b3-theme-warning-lightest);
+    border-color: rgba($c-warning, 0.24);
+    color: $c-warning;
+    background: rgba($c-warning, 0.12);
   }
 
   &--error {
-    border-color: var(--b3-theme-error-lighter);
+    border-color: rgba($c-danger, 0.24);
     color: var(--b3-theme-error);
-    background: var(--b3-theme-error-lightest);
+    background: rgba($c-danger, 0.12);
   }
 }
 
@@ -322,8 +322,8 @@
 }
 
 .gps-badge--warn {
-  background: var(--b3-theme-warning-lightest);
-  color: var(--b3-theme-warning);
+  background: rgba($c-warning, 0.12);
+  color: $c-warning;
 }
 
 .gps-badge--untracked {
@@ -356,5 +356,5 @@
 // 单元格四态图标颜色（match 复用成功色，mismatch 错误色，linkOnly 警告色，remoteOnly 主题色）
 .gps-audit-match { color: var(--b3-theme-success); }
 .gps-audit-mismatch { color: var(--b3-theme-error); }
-.gps-audit-linkonly { color: var(--b3-theme-warning); }
+.gps-audit-linkonly { color: $c-warning; }
 .gps-audit-remoteonly { color: var(--b3-theme-primary); }

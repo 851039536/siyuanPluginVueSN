@@ -104,7 +104,7 @@
   .confirm-card {
     padding: $s-3;
     background: var(--b3-theme-surface, #f8f8f8);
-    border: 1px solid var(--b3-theme-warning, #f0ad4e);
+    border: 1px solid $c-warning;
     border-radius: $r-base;
     display: flex;
     flex-direction: column;
@@ -120,7 +120,7 @@
 
   .confirm-hint {
     font-size: $t-xs;
-    color: var(--b3-theme-warning, #f0ad4e);
+    color: $c-warning;
     margin: 0;
     text-align: center;
   }

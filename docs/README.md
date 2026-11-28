@@ -17,8 +17,10 @@
 | 文件 | 主题 | 状态 |
 |---|---|---|
 | [elevation-assistant-code-review.md](elevation-assistant-code-review.md) | 提权助手代码审查（P0/P1/P2、内存、重复类型、死代码）与“自动扫描程序”设计 | 审查完成；修复与扫描**未执行**（2026-11-27） |
+| [scss-review.md](scss-review.md) | 全项目 SCSS 审查（以思源 3.8.12 主题变量为基准，P0/P1/P2、热点排行、四批计划） | P0 已清零（297→0）、未引用类名已清零，当前 999 条；R2 结构项与 R3 剩余项待执行（2026-11-28） |
+| [scss-refactor-log.md](scss-refactor-log.md) | SCSS 三轮改动记录（逐批五段式：改了什么/为什么/风险/验证/回滚）+ 视觉回归清单 | 第一轮与第三轮 P0 专项已落地；后续批次按其中「未执行」清单推进（2026-11-28） |
 
-## 一、参考文档（`docs/参考/`，9 份）
+## 一、参考文档（`docs/参考/`，10 份）
 
 | 文件 | 主题 | 被谁引用 |
 |---|---|---|
@@ -31,6 +33,7 @@
 | [斜杠命令说明.md](参考/斜杠命令说明.md) | 斜杠命令模块（`src/commands/`）与已支持命令清单 | — |
 | [codex-ui-reference.html](参考/codex-ui-reference.html) | Codex UI 视觉参考页（静态 HTML，供截图/对照） | — |
 | [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 存储规范（强制） |
+| [siyuan-theme-vars.md](参考/siyuan-theme-vars.md) | 思源主题 CSS 变量基准：三层来源（本地安装 / 运行时 / raw 上游）、快照结构、fallback 口径、重新采集命令 | `scripts/audit-scss.mjs` 的 `R3-theme-var-*` 规则；`AGENTS_STYLE.md` § 自动审计映射 |
 
 ## 二、归档文档（`docs/completed/`，18 份）
 
@@ -70,7 +73,7 @@
 
 | 文件名 | 行数 | 推测主题 |
 |---|---|---|
-| `hardcode-audit.md` | 894 | 硬编码值全量审计 |
+| `hardcode-audit.md` | 894 | 硬编码值全量审计（**能力已由 `scripts/audit-scss.mjs` 的 `R3-hardcoded-*` 规则承接，无需恢复**） |
 | `shared-component-usage-audit.md` | 666 | 共享组件使用审计 |
 | `s3-file-manager-redundancy-review.md` | 535 | S3 文件管理器冗余审查 |
 | `disk-browser-redundancy-review.md` | 358 | 磁盘浏览器冗余审查 |

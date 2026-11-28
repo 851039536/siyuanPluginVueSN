@@ -26,7 +26,7 @@
   padding: $s-1 $s-2;
   font-size: $t-2xs;
   color: var(--b3-theme-error);
-  background: var(--b3-theme-error-lightest);
+  background: rgba($c-danger, 0.12);
   border: 1px solid var(--b3-theme-error);
   border-radius: $r-sm;
 }

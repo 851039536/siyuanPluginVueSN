@@ -65,9 +65,9 @@
   align-items: flex-start;
   gap: $s-1;
   font-size: $t-2xs;
-  color: var(--b3-theme-warning);
-  background: var(--b3-theme-warning-lightest);
-  border: 1px solid var(--b3-theme-warning-lighter, var(--b3-theme-warning));
+  color: $c-warning;
+  background: rgba($c-warning, 0.12);
+  border: 1px solid rgba($c-warning, 0.24);
   border-radius: $r-sm;
   padding: $s-1 $s-2;
 

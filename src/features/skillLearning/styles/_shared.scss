@@ -46,7 +46,7 @@
   }
   &__counter {
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-feature-settings: "tnum";
     font-family: $ff-mono;
     flex-shrink: 0;

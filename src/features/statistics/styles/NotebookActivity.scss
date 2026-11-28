@@ -104,7 +104,7 @@
     border: 2px solid var(--b3-theme-primary);
     border-top-color: transparent;
     border-radius: 50%;
-    animation: activity-spin 0.8s linear infinite;
+    animation: spin 0.8s linear infinite;
   }
 }
 
@@ -114,10 +114,4 @@
   font-size: $t-xs;
   color: var(--b3-theme-on-surface);
   opacity: 0.5;
-}
-
-@keyframes activity-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

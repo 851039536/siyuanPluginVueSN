@@ -35,11 +35,6 @@
   font-size: $t-xs;
 }
 
-.gp-divider {
-  border-bottom: 1px solid var(--b3-border-color);
-  margin: $s-px10 0;
-}
-
 
 .gp-loading,
 .gp-empty {
@@ -307,12 +302,12 @@
 
   &--ok {
     color: var(--b3-theme-success);
-    background: var(--b3-theme-success-lightest);
+    background: rgba($c-success, 0.12);
   }
 
   &--fail {
     color: var(--b3-theme-error);
-    background: var(--b3-theme-error-lightest);
+    background: rgba($c-danger, 0.12);
   }
 
   &--skip {
@@ -893,9 +888,9 @@
 .gp-conflict-bar {
   margin: $s-2 0;
   padding: $s-2 $s-px10;
-  border: 1px solid var(--b3-theme-error-lighter);
+  border: 1px solid rgba($c-danger, 0.24);
   border-radius: $r-sm;
-  background: var(--b3-theme-error-lightest);
+  background: rgba($c-danger, 0.12);
 }
 
 .gp-conflict-header {

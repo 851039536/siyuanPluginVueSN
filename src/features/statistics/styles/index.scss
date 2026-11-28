@@ -13,7 +13,6 @@ $stats-card-radius: $r-sm;
 $font-mono: $ff-mono;
 
 $gradient-primary: linear-gradient(135deg, var(--b3-theme-primary) 0%, var(--b3-theme-primary-light, #5d87ff) 100%);
-$gradient-surface: linear-gradient(180deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
 
 // Status colors (GitHub-style, intentionally different from global $c-success/$c-danger/$c-warning)
 $c-success: #2da44e;
@@ -40,7 +39,7 @@ $color-rank-bronze: #cd7f32;
 @mixin codex-focus-glow {
   &:focus {
     border-color: var(--b3-theme-primary);
-    outline: 2px solid var(--b3-theme-primary-lightest, rgba(var(--b3-theme-primary-rgb), 0.12));
+    outline: 2px solid var(--b3-theme-primary-lightest, rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12));
     outline-offset: 0;
   }
 }
@@ -57,7 +56,7 @@ $color-rank-bronze: #cd7f32;
 
 @mixin progress-bar($height: 6px) {
   height: $height;
-  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.1);
   border-radius: $r-sm;
   overflow: hidden;
 
@@ -75,7 +74,7 @@ $color-rank-bronze: #cd7f32;
     color: $c-success;
   }
   &.tier-rare #{$child} {
-    background: rgba(var(--b3-theme-primary-rgb), 0.2);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.2);
     color: var(--b3-theme-primary);
   }
   &.tier-epic #{$child} {
@@ -97,13 +96,13 @@ $color-rank-bronze: #cd7f32;
     .chip-tier { background: rgba($c-success, 0.15); color: $c-success; }
   }
   &.tier-rare {
-    background: rgba(var(--b3-theme-primary-rgb), 0.08);
-    border-color: rgba(var(--b3-theme-primary-rgb), 0.15);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
+    border-color: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.15);
     .chip-label { color: var(--b3-theme-primary); }
-    .chip-tier { background: rgba(var(--b3-theme-primary-rgb), 0.15); color: var(--b3-theme-primary); }
+    .chip-tier { background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.15); color: var(--b3-theme-primary); }
   }
   &.tier-epic {
-    background: linear-gradient(135deg, rgba($color-tier-epic, 0.1), rgba(var(--b3-theme-primary-rgb), 0.06));
+    background: linear-gradient(135deg, rgba($color-tier-epic, 0.1), rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.06));
     border-color: rgba($color-tier-epic, 0.2);
     .chip-label { color: $color-tier-epic; }
     .chip-tier { background: rgba($color-tier-epic, 0.15); color: $color-tier-epic; }
@@ -117,7 +116,7 @@ $color-rank-bronze: #cd7f32;
 }
 
 @mixin heatmap-level-colors {
-  &.level-0 { background: rgba(var(--b3-theme-on-surface-rgb), 0.05); }
+  &.level-0 { background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.05); }
   &.level-1 { background: rgba($c-success, 0.2); }
   &.level-2 { background: rgba($c-success, 0.4); }
   &.level-3 { background: rgba($c-success, 0.6); }

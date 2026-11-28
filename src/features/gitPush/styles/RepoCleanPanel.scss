@@ -146,8 +146,8 @@
   }
 
   &--remote {
-    border-color: var(--b3-theme-warning, $c-warning);
-    color: var(--b3-theme-warning, $c-warning);
+    border-color: $c-warning;
+    color: $c-warning;
   }
 
   &--other {

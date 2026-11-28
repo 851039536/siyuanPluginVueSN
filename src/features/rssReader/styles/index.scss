@@ -67,7 +67,7 @@
       box-sizing: border-box;
       @include input-focus-ring;
 
-      &::placeholder { color: var(--b3-theme-on-surface-muted); font-size: $t-xs; }
+      &::placeholder { color: var(--b3-theme-on-surface-light); font-size: $t-xs; }
     }
 
     .rss-search-clear {
@@ -137,11 +137,6 @@
     padding-right: $s-3 + $s-2;
   }
 }
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 // 加载中图标（spin 动画唯一使用点）
 .loading-icon {
   animation: spin 1s linear infinite;

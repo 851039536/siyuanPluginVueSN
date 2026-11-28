@@ -44,7 +44,7 @@
   }
 
   &--warning {
-    color: var(--b3-theme-warning, $c-warning);
+    color: $c-warning;
   }
 
   // 禁用状态：三入口等价 —— disabled prop / 容器 data-disabled / 邻近兄弟控件被禁用
@@ -137,7 +137,7 @@
     }
 
     &.si-label--warning {
-      background: var(--b3-theme-warning, $c-warning);
+      background: $c-warning;
       color: var(--b3-theme-on-primary, $c-bg);
     }
 
@@ -147,7 +147,7 @@
     }
 
     &.si-label--info {
-      background: var(--b3-theme-info, $c-info);
+      background: $c-info;
       color: var(--b3-theme-on-primary, $c-bg);
     }
   }

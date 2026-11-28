@@ -83,7 +83,7 @@
 .qn-proj-item__flow-label {
   // 辅助文字
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.8;
 }
 
@@ -95,7 +95,7 @@
 }
 
 .qn-proj-item__flow-arrow {
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   opacity: 0.6;
   flex-shrink: 0;
   margin-top: $s-3;
@@ -150,7 +150,7 @@
 .qn-proj-item__progress-text {
   // 辅助文字
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   flex-shrink: 0;
 }
 
@@ -195,6 +195,6 @@
   // 已完成：删除线弱化
   &--done {
     text-decoration: line-through;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 }

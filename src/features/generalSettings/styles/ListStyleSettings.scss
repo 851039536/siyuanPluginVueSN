@@ -109,7 +109,7 @@
   user-select: none;
 
   &:hover {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
   }
 }
 
@@ -222,7 +222,7 @@
   transition: all 0.12s ease;
 
   &:hover {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
     border-color: var(--b3-theme-primary);
   }
 }

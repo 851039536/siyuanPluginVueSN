@@ -283,7 +283,7 @@
 // 已收藏星标：主色强调（(0,4,0) 覆盖共享 Button 的 text 取色）
 .git-push-panel .gp-card-name-row .gp-star-btn--active.si-button {
   opacity: 1;
-  color: var(--b3-theme-warning);
+  color: $c-warning;
 }
 
 // 归档角标：配色与内边距由共享 Tag 的 contrast + fill 承担，此处仅保留弱化
@@ -302,7 +302,7 @@
   &.gp-act-fresh { color: var(--b3-theme-success); opacity: 0.8; }
   &.gp-act-recent { opacity: 0.55; }
   &.gp-act-stale { opacity: 0.4; }
-  &.gp-act-dead { opacity: 0.3; color: var(--b3-theme-warning); }
+  &.gp-act-dead { opacity: 0.3; color: $c-warning; }
 }
 
 // 卡片上的多路径标记

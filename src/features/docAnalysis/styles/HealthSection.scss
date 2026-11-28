@@ -15,7 +15,7 @@
 .settings-subsection-title {
   font-size: $t-2xs;
   font-weight: $fw-semibold;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   margin-bottom: $s-px2;
 }
 
@@ -23,7 +23,7 @@
   margin: 0;
   padding: $s-px2 $s-1;
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 // ============ checkbox 行（健康度/0B 排除书签） ============

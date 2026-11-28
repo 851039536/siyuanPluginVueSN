@@ -62,26 +62,6 @@
   }
 }
 
-.examples-result-section {
-  border-top: 1px solid var(--b3-border-color);
-  padding-top: $s-3;
-
-  .examples-result-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $s-2;
-  }
-
-  .example-result-item {
-    padding: $s-1 $s-2;
-    background: var(--b3-theme-surface-light);
-    border-radius: $r-sm;
-    font-family: $ff-mono;
-    font-size: $t-xs;
-    color: var(--b3-theme-on-surface);
-  }
-}
-
 // ========== 测试区域 ==========
 .test-section {
   display: flex;
@@ -116,7 +96,7 @@
 
       .match-item {
         padding: $s-px2 $s-2;
-        background: var(--b3-theme-success-light, #dcfce7);
+        background: rgba($c-success, 0.18);
         border-radius: $r-sm;
         font-family: $ff-mono;
         font-size: $t-xs;

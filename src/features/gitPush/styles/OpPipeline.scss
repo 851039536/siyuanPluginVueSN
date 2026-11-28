@@ -28,7 +28,7 @@
 
   .gp-pipeline-lane--done & { color: var(--b3-theme-success); }
   .gp-pipeline-lane--fail & { color: var(--b3-theme-error); }
-  .gp-pipeline-lane--canceled & { color: var(--b3-theme-warning); }
+  .gp-pipeline-lane--canceled & { color: $c-warning; }
   .gp-pipeline-lane--skipped & { color: var(--b3-theme-on-surface-light); }
 }
 
@@ -172,7 +172,7 @@
 }
 
 .gp-pipeline-stage--canceled {
-  color: var(--b3-theme-warning);
+  color: $c-warning;
 
   .gp-pipeline-dot { background: currentColor; }
 }
@@ -186,7 +186,7 @@
 
 // 长时间无输出：改琥珀色并闪烁，但阶段不推进
 .gp-pipeline-stage.is-stalled {
-  color: var(--b3-theme-warning);
+  color: $c-warning;
 
   .gp-pipeline-dot {
     background: currentColor;

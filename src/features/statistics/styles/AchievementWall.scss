@@ -42,13 +42,13 @@
   transition: all 0.15s;
 
   &:hover {
-    border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
-    background: rgba(var(--b3-theme-primary-rgb), 0.04);
+    border-color: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.3);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.04);
   }
 
   &.active {
     border-color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
     color: var(--b3-theme-primary);
     font-weight: $fw-bold;
   }
@@ -84,7 +84,7 @@
 
   &.tier-active-rare {
     border-color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb), 0.08);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
     color: var(--b3-theme-primary);
   }
 

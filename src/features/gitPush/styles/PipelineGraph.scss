@@ -139,7 +139,7 @@
 }
 
 .gpg-minimap-view {
-  fill: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.12);
+  fill: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12);
   stroke: var(--b3-theme-primary);
   stroke-width: 1;
 }
@@ -277,7 +277,7 @@
 
 .gpg-node--running {
   .gpg-node-box {
-    fill: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.12);
+    fill: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12);
     stroke: var(--b3-theme-primary);
     animation: gpg-node-pulse 1.8s ease-in-out infinite;
   }
@@ -315,11 +315,11 @@
 }
 
 .gpg-cat--local {
-  fill: var(--b3-theme-warning);
+  fill: $c-warning;
 }
 
 .gpg-cat--stats {
-  fill: var(--b3-theme-info);
+  fill: $c-info;
 }
 
 // 悬停/锁定信息条：固定占位高度，避免出现/消失时画布跳动
@@ -440,7 +440,7 @@
   padding: $s-1 $s-2;
   border-left: 2px solid var(--b3-theme-error);
   border-radius: $r-sm;
-  background: rgba(var(--b3-theme-error-rgb, 239, 68, 68), 0.06);
+  background: rgb(from var(--b3-theme-error, #{$c-danger}) r g b / 0.06);
 }
 
 .gpg-fail-title {
@@ -547,7 +547,7 @@
   // 点击锁定：常驻高亮该操作路径，可多选叠加
   &.is-locked {
     border-color: var(--b3-theme-primary);
-    background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), 0.08);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
   }
 }
 

@@ -42,7 +42,7 @@
 
 // 完整发布判定切换
 .fullcheck-toggle {
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 
   &.active {
     color: var(--b3-theme-success, #22c55e);
@@ -101,7 +101,7 @@
   border: none;
   border-radius: $r-px3;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
   font-size: $t-base;
   transition: color 0.12s, background 0.12s;
@@ -130,7 +130,7 @@
   justify-content: center;
   gap: $s-1;
   padding: $s-2;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-size: $t-xs;
   opacity: 0.5;
 }

@@ -53,13 +53,13 @@ $_ease-out: cubic-bezier(0.4, 0, 0.2, 1);
     // 状态级别颜色（图标可见性合并到各颜色块，消除冗余选择器块）
     &[data-level="high"] {
       color: var(--b3-theme-error);
-      background: var(--b3-theme-error-lighter);
+      background: rgba($c-danger, 0.24);
       .monitor-icon { opacity: 1; }
     }
 
     &[data-level="medium"] {
-      color: var(--b3-theme-warning);
-      background: var(--b3-theme-warning-lighter);
+      color: $c-warning;
+      background: rgba($c-warning, 0.24);
       .monitor-icon { opacity: 1; }
     }
   }

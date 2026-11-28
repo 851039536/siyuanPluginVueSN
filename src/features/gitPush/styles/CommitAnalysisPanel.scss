@@ -74,7 +74,7 @@
 // 截断提示：与口径说明同行，略提亮以示「数据不完整」但不喧宾夺主（项目名在 tooltip）
 .gpa-scope-note-warn {
   margin-left: $s-2;
-  color: var(--b3-theme-warning, var(--b3-theme-on-surface));
+  color: var(--b3-theme-on-surface);
   opacity: 1;
 }
 

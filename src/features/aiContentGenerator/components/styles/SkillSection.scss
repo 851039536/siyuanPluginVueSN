@@ -49,7 +49,7 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  color: var(--b3-theme-warning, $c-warning);
+  color: $c-warning;
 }
 
 .source-dot {

@@ -42,10 +42,10 @@
 .gff-kind {
   flex-shrink: 0;
   padding: $s-px1 $s-px5;
-  border: 1px solid var(--b3-theme-warning);
+  border: 1px solid $c-warning;
   border-radius: $r-sm;
   font-size: $t-2xs;
-  color: var(--b3-theme-warning);
+  color: $c-warning;
   white-space: nowrap;
 }
 

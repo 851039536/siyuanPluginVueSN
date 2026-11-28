@@ -41,7 +41,7 @@
 
   &:focus-within {
     border-color: var(--b3-theme-primary);
-    outline: 2px solid rgba(var(--b3-theme-primary-rgb), 0.12);
+    outline: 2px solid rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12);
     outline-offset: 0;
   }
 }

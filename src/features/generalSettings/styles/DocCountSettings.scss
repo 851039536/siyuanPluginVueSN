@@ -35,7 +35,7 @@
 
 .toggle-description {
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   margin-top: $s-2;
   line-height: $lh-normal;
 }
@@ -48,7 +48,7 @@
   margin: 0;
   padding-left: $s-4;
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   line-height: $lh-relaxed;
 
   li {
@@ -82,7 +82,7 @@
   display: block;
   font-size: $t-2xs;
   font-weight: $fw-medium;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   margin-bottom: $s-1;
 }
 

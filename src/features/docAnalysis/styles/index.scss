@@ -93,7 +93,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-base;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-size: $t-xs;
     cursor: pointer;
     flex-shrink: 0;
@@ -139,14 +139,14 @@
 
   .result-count {
     font-size: $t-sm;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
 
     strong {
       color: var(--b3-theme-primary);
     }
 
     .empty-hint {
-      color: var(--b3-theme-on-surface-variant);
+      color: var(--b3-theme-on-surface-light);
     }
 
     .error-hint {
@@ -213,7 +213,7 @@
       background: var(--b3-theme-primary-lightest, rgba(53, 120, 226, 0.08));
     }
 
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-size: $t-lg;
   }
 }
@@ -225,7 +225,7 @@
   align-items: center;
   justify-content: center;
   padding: $s-10 $s-5;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-size: $t-sm;
   gap: $s-2;
 
@@ -271,7 +271,7 @@
   align-items: center;
   justify-content: center;
   padding: $s-3 $s-4;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-size: $t-xs;
 
   .loading-icon {
@@ -294,7 +294,7 @@
 
   .footer-hint {
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 
   .footer-toggle-tip {
@@ -340,7 +340,7 @@
     align-items: baseline;
     gap: $s-px10;
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     line-height: $lh-normal;
 
     code {
@@ -365,23 +365,23 @@
     justify-content: center;
 
     &.pending {
-      background: var(--b3-theme-warning-light, #fef3c7);
-      color: var(--b3-theme-warning-dark, #b45309);
+      background: rgba($c-warning, 0.18);
+      color: $c-warning;
     }
 
     &.published {
-      background: var(--b3-theme-info-light, #dbeafe);
-      color: var(--b3-theme-info-dark, #1d4ed8);
+      background: rgba($c-info, 0.18);
+      color: $c-info;
     }
 
     &.none {
       background: var(--b3-theme-background-light, #f3f4f6);
-      color: var(--b3-theme-on-surface-variant, #6b7280);
+      color: var(--b3-theme-on-surface-light, #6b7280);
     }
 
     &.category {
-      background: var(--b3-theme-success-light, #d1fae5);
-      color: var(--b3-theme-success-dark, #065f46);
+      background: rgba($c-success, 0.18);
+      color: var(--b3-theme-success, $c-success);
     }
   }
 }

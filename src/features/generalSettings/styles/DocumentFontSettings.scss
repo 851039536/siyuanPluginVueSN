@@ -117,7 +117,7 @@
   cursor: pointer;
 
   &:hover {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
     border-color: var(--b3-theme-primary);
   }
 
@@ -145,7 +145,7 @@
   cursor: pointer;
 
   &:hover {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
     border-color: var(--b3-theme-primary);
   }
 
@@ -175,7 +175,7 @@
   user-select: none;
 
   &:hover {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
   }
 }
 
@@ -236,7 +236,7 @@
   cursor: pointer;
 
   &:hover {
-    background: var(--b3-theme-surface-variant);
+    background: var(--b3-theme-surface-lighter);
     border-color: var(--b3-theme-primary);
   }
 }

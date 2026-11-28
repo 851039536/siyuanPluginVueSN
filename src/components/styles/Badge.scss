@@ -83,7 +83,7 @@
     }
 
     &--warning {
-      background: var(--b3-theme-warning, $c-warning);
+      background: $c-warning;
       color: var(--b3-theme-on-primary, $c-bg);
     }
 
@@ -93,7 +93,7 @@
     }
 
     &--info {
-      background: var(--b3-theme-info, $c-info);
+      background: $c-info;
       color: var(--b3-theme-on-primary, $c-bg);
     }
 

@@ -99,7 +99,7 @@
   font-size: $t-2xs;
   padding: $s-px1 $s-px6;
   border-radius: $r-sm;
-  background: rgba(var(--b3-theme-primary-rgb), 0.1);
+  background: rgb(from var(--b3-theme-primary, #5d87ff) r g b / 0.1);
   color: var(--b3-theme-primary);
   font-weight: $fw-bold;
 }

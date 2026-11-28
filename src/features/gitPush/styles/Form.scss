@@ -12,28 +12,6 @@
   @include gp-label-base;
 }
 
-.gp-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: $s-px7 $s-px10;
-  border: 1px solid var(--b3-border-color);
-  border-radius: $r-sm;
-  font-size: $t-xs;
-  font-family: $ff-mono;
-  background: var(--b3-theme-surface);
-  color: var(--b3-theme-on-surface);
-  outline: none;
-  transition: border-color 0.12s, outline-color 0.12s;
-
-  &:focus {
-    @include focus-ring;
-  }
-
-  &::placeholder {
-    opacity: 0.35;
-  }
-}
-
 // ── 公共表单辅助样式 ──
 .gp-path-row {
   display: flex;
@@ -48,24 +26,4 @@
 // 通用弹性占位列（flex 行内占满剩余宽度）
 .gp-grow {
   flex: 1;
-}
-
-.gp-checking {
-  font-size: $t-2xs;
-  display: flex;
-  align-items: center;
-  gap: $s-px6;
-  opacity: 0.6;
-}
-
-.gp-check-result {
-  font-size: $t-2xs;
-
-  &.success {
-    color: var(--b3-theme-primary);
-  }
-
-  &:not(.success) {
-    opacity: 0.5;
-  }
 }

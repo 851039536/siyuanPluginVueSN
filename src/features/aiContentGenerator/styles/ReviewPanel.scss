@@ -183,7 +183,7 @@
 }
 
 .score-fill-mid {
-  background: var(--b3-theme-warning, #e6a23c);
+  background: $c-warning;
 }
 
 .score-fill-low {
@@ -231,7 +231,7 @@
   }
 
   &.severity-中 {
-    border-left-color: var(--b3-theme-warning);
+    border-left-color: $c-warning;
   }
 
   &.severity-低 {
@@ -259,7 +259,7 @@
   }
 
   &.severity-中 {
-    color: var(--b3-theme-warning);
+    color: $c-warning;
     background: var(--b3-card-warning-background);
   }
 

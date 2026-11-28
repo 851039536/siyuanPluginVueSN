@@ -303,12 +303,7 @@
 
 // 旋转动画（分析中图标）
 .gca-spin {
-  animation: gca-rotate 1s linear infinite;
-}
-
-@keyframes gca-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  animation: spin 1s linear infinite;
 }
 
 // 窄屏适配

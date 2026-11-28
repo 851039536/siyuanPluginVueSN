@@ -262,7 +262,7 @@
   .bar-track {
     flex: 1;
     height: 18px;
-    background: rgba(var(--b3-theme-on-surface-rgb), 0.05);
+    background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.05);
     border-radius: stats.$r-sm;
     overflow: hidden;
   }

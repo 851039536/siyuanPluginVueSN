@@ -64,17 +64,11 @@
   color: var(--b3-theme-on-surface);
 }
 
-.sm-desc,
-.sm-hint {
+.sm-desc {
   margin: 0;
   font-size: $t-2xs;
   line-height: $lh-normal;
   color: var(--b3-theme-on-surface);
-}
-
-.sm-hint {
-  margin-top: $s-1;
-  font-family: $ff-mono;
 }
 
 .sm-empty {

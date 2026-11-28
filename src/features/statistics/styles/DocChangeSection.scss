@@ -15,14 +15,14 @@
     gap: $s-px6;
     width: 100%;
     padding: $s-2 $s-3;
-    background: rgba(var(--b3-theme-primary-rgb), 0.03);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.03);
     border: none;
     cursor: pointer;
     font-family: $ff-zh;
     color: var(--b3-theme-on-surface);
 
     &:hover {
-      background: rgba(var(--b3-theme-primary-rgb), 0.06);
+      background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.06);
     }
   }
 

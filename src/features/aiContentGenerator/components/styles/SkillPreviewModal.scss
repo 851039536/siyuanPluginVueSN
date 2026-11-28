@@ -47,7 +47,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: $t-xs;
-  color: var(--b3-theme-on-surface-variant, $c-muted);
+  color: var(--b3-theme-on-surface-light, $c-muted);
 }
 
 // Dialog 内容区自带内边距，这里只取排版骨架（$frame: false），否则会多出一圈卡片边框。

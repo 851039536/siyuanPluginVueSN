@@ -8,8 +8,7 @@
 
   .gp-dialog,
   .gp-confirm-dialog,
-  .gp-gc-dialog,
-  .gp-sr-dialog {
+  .gp-gc-dialog {
     transition: transform 0.12s ease;
   }
 }
@@ -20,8 +19,7 @@
 
   .gp-dialog,
   .gp-confirm-dialog,
-  .gp-gc-dialog,
-  .gp-sr-dialog {
+  .gp-gc-dialog {
     transform: scale(0.98);
   }
 }

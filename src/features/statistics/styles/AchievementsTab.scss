@@ -60,7 +60,7 @@
   font-size: $t-xs;
 
   &:hover {
-    border-color: rgba(var(--b3-theme-primary-rgb), 0.3);
+    border-color: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.3);
   }
 }
 
@@ -88,7 +88,7 @@
   flex-shrink: 0;
 
   &.tier-common { background: rgba(stats.$c-success, 0.15); color: stats.$c-success; }
-  &.tier-rare { background: rgba(var(--b3-theme-primary-rgb), 0.15); color: var(--b3-theme-primary); }
+  &.tier-rare { background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.15); color: var(--b3-theme-primary); }
   &.tier-epic { background: rgba(stats.$color-tier-epic, 0.15); color: stats.$color-tier-epic; }
   &.tier-legendary { background: rgba(stats.$color-tier-legendary, 0.2); color: stats.$color-tier-legendary; }
 }

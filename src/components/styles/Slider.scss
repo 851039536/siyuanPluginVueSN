@@ -108,11 +108,11 @@
 
     &:focus {
       &::-webkit-slider-thumb {
-        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $c-danger), 0.2);
+        box-shadow: 0 0 0 4px rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.2);
       }
 
       &::-moz-range-thumb {
-        box-shadow: 0 0 0 4px rgba(var(--b3-theme-primary-rgb, $c-danger), 0.2);
+        box-shadow: 0 0 0 4px rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.2);
       }
     }
 

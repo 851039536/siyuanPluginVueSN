@@ -20,7 +20,7 @@
 }
 
 .rt-area {
-  fill: rgba(var(--b3-theme-primary-rgb), 0.1);
+  fill: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.1);
   stroke: none;
 }
 

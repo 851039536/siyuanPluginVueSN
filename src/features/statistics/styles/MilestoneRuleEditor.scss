@@ -128,8 +128,8 @@
 .rule-editor-help {
   padding: $s-px10 $s-3;
   margin-bottom: $s-px10;
-  background: rgba(var(--b3-theme-primary-rgb), 0.04);
-  border: 1px solid rgba(var(--b3-theme-primary-rgb), 0.12);
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.04);
+  border: 1px solid rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12);
   border-radius: stats.$r-sm;
 }
 

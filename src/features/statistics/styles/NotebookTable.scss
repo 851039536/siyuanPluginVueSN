@@ -66,14 +66,14 @@
   }
 
   &.nb-tr-highlight {
-    background: rgba(var(--b3-theme-primary-rgb), 0.1);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.1);
     box-shadow: inset 3px 0 0 var(--b3-theme-primary);
   }
 }
 
 .nb-td {
   padding: $s-px5 $s-2;
-  border-bottom: 1px solid rgba(var(--b3-border-color-rgb, 128, 128, 128), 0.15);
+  border-bottom: 1px solid rgb(from var(--b3-border-color, #{$c-border}) r g b / 0.15);
 }
 
 .nb-td-name {
@@ -111,7 +111,7 @@
 .pct-bar-wrap {
   width: 48px;
   height: 6px;
-  background: rgba(var(--b3-theme-on-surface-rgb), 0.06);
+  background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.06);
   border-radius: $r-px3;
   overflow: hidden;
   flex-shrink: 0;

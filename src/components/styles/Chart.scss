@@ -50,7 +50,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(var(--b3-theme-background-rgb, 255, 255, 255), m.$opacity-subtle);
+    background: rgb(from var(--b3-theme-background, #{$c-bg}) r g b / #{m.$opacity-subtle});
     z-index: m.$z-local-overlay;
   }
 

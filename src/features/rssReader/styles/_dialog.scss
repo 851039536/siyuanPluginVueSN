@@ -41,7 +41,7 @@
           margin-bottom: $s-1;
         }
         .setting-desc, .hint {
-          font-size: $t-xs; color: var(--b3-theme-on-surface-muted);
+          font-size: $t-xs; color: var(--b3-theme-on-surface-light);
           margin-bottom: $s-1;
           &.hint { margin-bottom: 0; margin-top: $s-1; }
         }

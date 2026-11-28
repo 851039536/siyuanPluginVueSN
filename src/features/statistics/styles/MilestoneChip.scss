@@ -12,7 +12,7 @@
   min-width: 68px;
   border-radius: stats.$r-sm;
   position: relative;
-  background: rgba(var(--b3-theme-on-surface-rgb), 0.03);
+  background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.03);
   border: 1px solid transparent;
   transition: background 0.15s, border-color 0.15s;
 
@@ -21,8 +21,8 @@
   }
 
   &.next {
-    background: rgba(var(--b3-theme-primary-rgb), 0.06);
-    border: 1px dashed rgba(var(--b3-theme-primary-rgb), 0.3);
+    background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.06);
+    border: 1px dashed rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.3);
     opacity: 1;
 
     .chip-label {
@@ -61,7 +61,7 @@
 .chip-progress {
   width: 100%;
   height: 2px;
-  background: rgba(var(--b3-theme-on-surface-rgb), 0.08);
+  background: rgb(from var(--b3-theme-on-surface, #{$c-fg}) r g b / 0.08);
   border-radius: stats.$r-sm;
   overflow: hidden;
   margin-top: $s-px2;

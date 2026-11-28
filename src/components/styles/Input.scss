@@ -177,7 +177,7 @@
     }
 
     &:hover {
-      background: rgba(var(--b3-theme-primary-rgb, 201, 122, 93), 0.1);
+      background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.1);
     }
 
     &:active::before,

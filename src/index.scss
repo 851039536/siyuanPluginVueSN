@@ -19,6 +19,20 @@
   }
 }
 
+// 3.1 纯旋转关键帧：元素自身负责定位，动画只做 0→360。
+// 各功能模块（gitPush / rssReader / docAnalysis / skillLearning / statistics / resourceManager /
+// ideaGenerator / wordQuery）曾各自定义同名旋转动画（gp-spin、gp-header-spin、ai-spin、activity-spin、
+// rm-empty-spin、ig-spin、wq-spin、gca-rotate、spin），语义与时长完全一致，统一引用此处。
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .vp-dock-root,
 .vp-modal-mask {
   font-size: $t-xs;

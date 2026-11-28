@@ -213,7 +213,7 @@
 
   &__result-label {
     font-size: $t-sm;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 
   &__result-icon {
@@ -235,7 +235,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-md;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-size: $t-xs;
     cursor: pointer;
     transition: all 0.12s;

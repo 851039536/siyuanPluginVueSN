@@ -45,7 +45,7 @@
     gap: $s-2;
     margin-top: $s-1;
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     opacity: 0.6;
 
     .meta-notebook {
@@ -83,7 +83,7 @@
     padding: $s-px2 $s-px6;
     border-radius: $r-base;
     background: var(--b3-theme-surface-light);
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     white-space: nowrap;
 
     .badge-icon {
@@ -96,7 +96,7 @@
     }
 
     &.time-yellow {
-      color: var(--b3-theme-warning, #f59e0b);
+      color: $c-warning;
       background: rgba(245, 158, 11, 0.1);
     }
 
@@ -106,22 +106,22 @@
     }
 
     &.depth-badge {
-      color: var(--b3-theme-info, #06b6d4);
+      color: $c-info;
       background: rgba(6, 182, 212, 0.1);
     }
 
     &.ref-badge {
-      color: var(--b3-theme-info, #8b5cf6);
+      color: $c-info;
       background: rgba(139, 92, 246, 0.1);
     }
 
     &.img-badge {
-      color: var(--b3-theme-warning, #f97316);
+      color: $c-warning;
       background: rgba(249, 115, 22, 0.1);
     }
 
     &.bookmark-badge {
-      color: var(--b3-theme-warning, #eab308);
+      color: $c-warning;
       background: rgba(234, 179, 8, 0.1);
     }
   }
@@ -206,7 +206,7 @@
     border: 1px solid var(--b3-border-color);
     border-radius: $r-base;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     cursor: pointer;
     font-size: $t-base;
 
@@ -227,7 +227,7 @@
     .wordcount-value {
       font-size: $t-xs;
       font-family: $ff-mono;
-      color: var(--b3-theme-on-surface-variant);
+      color: var(--b3-theme-on-surface-light);
       background: var(--b3-theme-surface-light);
       padding: $s-px2 $s-2;
       border-radius: $r-base;
@@ -237,7 +237,7 @@
     .size-value {
       font-size: $t-xs;
       font-family: $ff-mono;
-      color: var(--b3-theme-on-surface-variant);
+      color: var(--b3-theme-on-surface-light);
       opacity: 0.7;
       white-space: nowrap;
     }

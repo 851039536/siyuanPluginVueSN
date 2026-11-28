@@ -37,7 +37,7 @@
   &::placeholder {
     // 辅助文字：占位提示
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 }
 
@@ -88,7 +88,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-full;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   // 辅助文字
   font-size: $t-2xs;
   cursor: pointer;

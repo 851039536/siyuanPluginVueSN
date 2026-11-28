@@ -68,6 +68,6 @@
 
   &__failed {
     flex: 0 0 auto;
-    color: var(--b3-theme-warning, #d97706);
+    color: $c-warning;
   }
 }

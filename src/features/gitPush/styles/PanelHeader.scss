@@ -58,12 +58,7 @@
 }
 
 .gp-header-progress-spin {
-  animation: gp-header-spin 1s linear infinite;
-}
-
-@keyframes gp-header-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  animation: spin 1s linear infinite;
 }
 
 .gp-header-left {

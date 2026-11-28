@@ -38,7 +38,7 @@
   }
   &__stat-label {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     margin-top: $s-px2;
   }
 
@@ -103,7 +103,7 @@
   }
   &__ring-sub {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
 
   // ---- bar charts ----
@@ -142,7 +142,7 @@
     width: 24px;
     text-align: right;
     font-size: $t-xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-feature-settings: "tnum";
     font-family: $ff-mono;
     flex-shrink: 0;

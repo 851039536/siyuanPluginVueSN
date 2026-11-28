@@ -13,19 +13,19 @@
 
     &.drag-over {
       border-color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-container);
+      background: var(--b3-theme-primary-lightest);
     }
 
     .upload-content {
       .upload-icon {
-        color: var(--b3-theme-on-surface-variant);
+        color: var(--b3-theme-on-surface-light);
         margin-bottom: $s-3;
       }
 
       .upload-text {
         // 上传区操作提示（辅助文字）
         margin: 0 0 $s-3 0;
-        color: var(--b3-theme-on-surface-variant);
+        color: var(--b3-theme-on-surface-light);
         font-size: $t-2xs;
       }
     }

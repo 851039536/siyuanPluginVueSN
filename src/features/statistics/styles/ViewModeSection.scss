@@ -71,7 +71,7 @@
     &:hover {
       border-color: var(--b3-theme-primary);
       color: var(--b3-theme-primary);
-      background: var(--b3-theme-primary-lighter, rgba(var(--b3-theme-primary-rgb), 0.05));
+      background: var(--b3-theme-primary-lighter, rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.05));
     }
 
     &.active {

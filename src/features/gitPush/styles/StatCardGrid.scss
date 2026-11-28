@@ -44,10 +44,10 @@
 
 // ── 语义色修饰（作用于数值；各视图按需选用）──
 .gp-statgrid-card--info .gp-statgrid-value { color: var(--b3-theme-primary); }
-.gp-statgrid-card--warn .gp-statgrid-value { color: var(--b3-theme-warning); }
+.gp-statgrid-card--warn .gp-statgrid-value { color: $c-warning; }
 .gp-statgrid-card--danger .gp-statgrid-value { color: var(--b3-theme-error); }
 .gp-statgrid-card--accent .gp-statgrid-value { color: var(--gp-accent-color); }
-.gp-statgrid-card--star .gp-statgrid-value { color: var(--b3-theme-warning); }
+.gp-statgrid-card--star .gp-statgrid-value { color: $c-warning; }
 .gp-statgrid-card--muted .gp-statgrid-value { opacity: 0.45; }
 
 // ── 数值附加色（行数统计：总新增绿 / 总删除红 / 总净增按正负 / 当前总行数中性）──

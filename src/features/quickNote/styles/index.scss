@@ -17,7 +17,7 @@
   border: 1px solid var(--b3-border-color);
   border-radius: $r-base;
   background: transparent;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.12s;
@@ -71,14 +71,14 @@
 %qn-helper-text {
   // 辅助文字
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 /** 空态提示（斜体 + 弱化） */
 %qn-empty-state {
   // 辅助文字
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   font-style: italic;
   opacity: 0.6;
 }

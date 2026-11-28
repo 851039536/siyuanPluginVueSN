@@ -22,7 +22,7 @@
   font-weight: $fw-bold;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 
   .st-header-spacer {
     flex: 1;
@@ -40,7 +40,7 @@
 .st-th {
   padding: $s-1 $s-2;
   font-weight: $fw-semibold;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
   text-align: left;
   background: var(--b3-theme-surface);
   border-bottom: 1px solid var(--b3-border-color);
@@ -83,7 +83,7 @@
 
 .st-td {
   padding: $s-1 $s-2;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 .st-td-name {
@@ -109,18 +109,18 @@
 // ============ 数量列语义色（原卡片 colorClass 迁移） ============
 .st-td-count {
   &.zero { color: var(--b3-theme-error, #ef4444); }
-  &.small, &.time-yellow { color: var(--b3-theme-warning, #eab308); }
-  &.medium, &.large, &.xlarge, &.time-cyan { color: var(--b3-theme-info, #3b82f6); }
-  &.dup, &.time-orange { color: var(--b3-theme-warning-dark, #ea580c); }
+  &.small, &.time-yellow { color: $c-warning; }
+  &.medium, &.large, &.xlarge, &.time-cyan { color: $c-info; }
+  &.dup, &.time-orange { color: $c-warning; }
   &.time-green { color: var(--b3-theme-success, #22c55e); }
   &.time-red { color: var(--b3-theme-error, #ef4444); }
-  &.time-purple { color: var(--b3-theme-on-surface-variant, #8b5cf6); }
+  &.time-purple { color: var(--b3-theme-on-surface-light, #8b5cf6); }
   &.depth-color { color: var(--b3-theme-primary, #6366f1); }
-  &.ref-color { color: var(--b3-theme-info-dark, #1d4ed8); }
-  &.img-color { color: var(--b3-theme-success-dark, #059669); }
-  &.bookmark-color { color: var(--b3-theme-warning-dark, #b45309); }
-  &.no-bookmark-color { color: var(--b3-theme-on-surface-variant); }
+  &.ref-color { color: $c-info; }
+  &.img-color { color: var(--b3-theme-success, $c-success); }
+  &.bookmark-color { color: $c-warning; }
+  &.no-bookmark-color { color: var(--b3-theme-on-surface-light); }
   &.full-publish-color { color: var(--b3-theme-success, #22c55e); }
-  &.partial-publish-color { color: var(--b3-theme-warning, #eab308); }
-  &.no-publish-color { color: var(--b3-theme-on-surface-variant); }
+  &.partial-publish-color { color: $c-warning; }
+  &.no-publish-color { color: var(--b3-theme-on-surface-light); }
 }

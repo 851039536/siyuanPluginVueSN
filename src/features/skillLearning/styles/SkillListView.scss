@@ -56,7 +56,7 @@
     border: none;
     border-radius: $r-sm;
     background: transparent;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     font-size: $t-sm; // 图标尺寸
     line-height: 1;
     cursor: pointer;
@@ -100,11 +100,11 @@
 
   &__card-category {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
   }
   &__card-count {
     font-size: $t-2xs;
-    color: var(--b3-theme-on-surface-variant);
+    color: var(--b3-theme-on-surface-light);
     margin-left: auto;
     font-feature-settings: "tnum";
     font-family: $ff-mono;

@@ -72,7 +72,7 @@
 
 .mode-card--active {
   border-color: var(--b3-theme-primary);
-  background: rgba(var(--b3-theme-primary-rgb), 0.06);
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.06);
 }
 
 .mode-card-icon {
@@ -202,12 +202,12 @@
   gap: $s-1;
   margin-top: $s-1;
   padding: $s-1 $s-2;
-  background: rgba(var(--b3-theme-primary-rgb), 0.08);
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.08);
   border-left: 3px solid var(--b3-theme-primary);
   border-radius: $r-sm;
   // 辅助提示文字，按两级字号制使用 2xs
   font-size: $t-2xs;
-  color: var(--b3-theme-on-surface-variant);
+  color: var(--b3-theme-on-surface-light);
 }
 
 .hint-icon {

@@ -88,7 +88,7 @@
 }
 
 .gpt-run-index {
-  color: var(--b3-theme-on-surface-variant, $c-muted);
+  color: var(--b3-theme-on-surface-light, $c-muted);
 }
 
 .gpt-run-total {
@@ -103,7 +103,7 @@
   }
 
   &.is-slower {
-    color: var(--b3-theme-warning);
+    color: $c-warning;
   }
 }
 
@@ -142,7 +142,7 @@
   padding: 0;
   border: none;
   border-right: 1px solid rgba(0, 0, 0, 0.12);
-  background: rgba(var(--b3-theme-primary-rgb, 59, 130, 246), var(--gpt-seg-alpha, 1));
+  background: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / var(--gpt-seg-alpha, 1));
   color: var(--b3-theme-on-surface);
   cursor: pointer;
   display: flex;
@@ -206,7 +206,7 @@
   }
 
   &.is-slower {
-    color: var(--b3-theme-warning);
+    color: $c-warning;
   }
 }
 
@@ -257,7 +257,7 @@
   }
 
   &.is-slower {
-    color: var(--b3-theme-warning);
+    color: $c-warning;
   }
 
   &.is-same,

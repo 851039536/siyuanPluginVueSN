@@ -84,7 +84,7 @@
         blockquote {
           border-left: 3px solid $rr-accent;
           padding-left: $s-2; margin-left: 0;
-          color: var(--b3-theme-on-surface-muted);
+          color: var(--b3-theme-on-surface-light);
         }
         // 宽表格：面板 overflow: hidden，不给横向滚动会被直接裁掉
         table {
@@ -124,7 +124,7 @@
     .font-size-label {
       font-size: $t-2xs;
       font-family: $ff-mono;
-      color: var(--b3-theme-on-surface-muted);
+      color: var(--b3-theme-on-surface-light);
       min-width: 18px;
       text-align: center;
     }

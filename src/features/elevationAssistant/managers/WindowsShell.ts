@@ -10,25 +10,36 @@ import type {
   CreateShortcutOutcome,
   CreateShortcutParams,
   PrivilegeResult,
+  ProgramScanOutcome,
   RunOutcome,
   ShortcutFailureKind,
 } from "../types"
-import { getNodeModules, getNodeProcessModules } from "@/utils/nodeModules"
+import {
+  getNodeModules,
+  getNodeProcessModules,
+} from "@/utils/nodeModules"
 import {
   buildCreateShortcutScript,
   buildRunElevatedScript,
+  buildScanProgramsScript,
   encodePowerShellCommand,
   isUacCanceled,
   mapIntegritySid,
+  normalizeProgramScanPayload,
   parsePowerShellJson,
   parseWhoamiGroups,
 } from "../utils"
+import { hasLnkExtension } from "../utils/shortcut"
+import { isAbsoluteWindowsPath } from "../utils/validation"
 
 /** 权限检测超时（whoami/reg 正常 <1s；给高负载机器留余量但不宜过长，超时后 UI 可重试） */
 const PRIVILEGE_TIMEOUT = 15_000
 const SHORTCUT_TIMEOUT = 30_000
 const RUN_TIMEOUT = 120_000
+/** 扫本机程序涉及开始菜单递归、注册表与进程枚举，冷启动更慢 */
+const SCAN_TIMEOUT = 60_000
 const MAX_OUTPUT = 1024 * 1024
+const SCAN_MAX_OUTPUT = 4 * 1024 * 1024
 
 interface RawExecResult {
   stdout: string
@@ -60,6 +71,16 @@ function asBoolean(value: unknown): boolean {
 
 function asNumberOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null
+}
+
+/** Windows 安装根目录（走 require 取 process.env，避免依赖全局 process） */
+function systemRoot(): string | null {
+  try {
+    const proc = require("node:process") as { env?: Record<string, string | undefined> }
+    return proc.env?.SystemRoot || proc.env?.WINDIR || null
+  } catch {
+    return null
+  }
 }
 
 function normalizeFailureKind(value: unknown): ShortcutFailureKind {
@@ -106,11 +127,22 @@ export class WindowsShellService {
       }
     }
 
-    const groups = await this.execRaw(
-      "whoami.exe",
-      ["/groups", "/fo", "csv", "/nh"],
-      PRIVILEGE_TIMEOUT,
-    )
+    // 系统命令只走绝对路径：提权相关工具不接受当前目录/PATH 中的同名程序
+    const whoami = this.resolveSystemExe("whoami.exe")
+    if (!whoami) {
+      return {
+        ok: false,
+        kind: "env",
+        message: "whoami.exe not found in system directory",
+      }
+    }
+
+    // 三条命令互不依赖：并行执行把最坏耗时从 3×15s 降到 15s
+    const [groups, userResult, uacEnabled] = await Promise.all([
+      this.execRaw(whoami, ["/groups", "/fo", "csv", "/nh"], PRIVILEGE_TIMEOUT),
+      this.execRaw(whoami, [], PRIVILEGE_TIMEOUT),
+      this.readUacEnabled(),
+    ])
     if (groups.error) {
       return {
         ok: false,
@@ -128,9 +160,6 @@ export class WindowsShellService {
       }
     }
     const integrity = mapIntegritySid(integritySid)
-
-    const userResult = await this.execRaw("whoami.exe", [], PRIVILEGE_TIMEOUT)
-    const uacEnabled = await this.readUacEnabled()
 
     return {
       ok: true,
@@ -177,9 +206,17 @@ export class WindowsShellService {
     }
 
     if (asBoolean(data.ok)) {
+      const path = asString(data.path)
+      // PowerShell 的输出同样不可盲信：必须是绝对路径且以 .lnk 结尾
+      if (!isAbsoluteWindowsPath(path) || !hasLnkExtension(path)) {
+        return {
+          ok: false,
+          kind: "invalid",
+        }
+      }
       return {
         ok: true,
-        path: asString(data.path),
+        path,
         runAsAdmin: asBoolean(data.runAsAdmin),
       }
     }
@@ -250,6 +287,34 @@ export class WindowsShellService {
     }
   }
 
+  /**
+   * 扫描本机可加入工具列表的 exe（开始菜单 / 桌面 / App Paths / 运行中进程）。
+   * 只读取路径，不执行目标程序、不写盘、不联网；结果在 JS 侧再次清洗与截断。
+   */
+  async scanPrograms(): Promise<ProgramScanOutcome> {
+    if (!this.isSupported()) {
+      return {
+        ok: false,
+        kind: "env",
+        message: "Windows is required",
+      }
+    }
+
+    const executed = await this.execPowerShell(
+      buildScanProgramsScript(),
+      SCAN_TIMEOUT,
+      SCAN_MAX_OUTPUT,
+    )
+    if (!executed.ok) {
+      return {
+        ok: false,
+        kind: executed.kind ?? "unknown",
+        message: executed.message,
+      }
+    }
+    return normalizeProgramScanPayload(executed.data)
+  }
+
   /** 取消在途 PowerShell 调用（面板关闭时使用） */
   cancelActive(): void {
     for (const child of this.active) {
@@ -270,8 +335,10 @@ export class WindowsShellService {
 
   /** 读取 UAC 总开关（EnableLUA）；读不到返回 null（不阻塞状态展示） */
   private async readUacEnabled(): Promise<boolean | null> {
+    const reg = this.resolveSystemExe("reg.exe")
+    if (!reg) return null
     const result = await this.execRaw(
-      "reg.exe",
+      reg,
       [
         "query",
         "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
@@ -286,7 +353,11 @@ export class WindowsShellService {
     return Number.parseInt(match[1], 16) !== 0
   }
 
-  private async execPowerShell(script: string, timeoutMs: number): Promise<PowerShellExecResult> {
+  private async execPowerShell(
+    script: string,
+    timeoutMs: number,
+    maxBuffer = MAX_OUTPUT,
+  ): Promise<PowerShellExecResult> {
     if (this.disposed) {
       return {
         ok: false,
@@ -295,11 +366,19 @@ export class WindowsShellService {
       }
     }
     const exe = this.resolvePowerShellPath()
+    if (!exe) {
+      return {
+        ok: false,
+        kind: "env",
+        message: "powershell.exe not found in system directory",
+      }
+    }
     const encoded = encodePowerShellCommand(script)
     const result = await this.execRaw(
       exe,
       ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded],
       timeoutMs,
+      maxBuffer,
     )
 
     if (result.error) {
@@ -331,7 +410,12 @@ export class WindowsShellService {
     }
   }
 
-  private execRaw(exe: string, args: string[], timeoutMs: number): Promise<RawExecResult> {
+  private execRaw(
+    exe: string,
+    args: string[],
+    timeoutMs: number,
+    maxBuffer = MAX_OUTPUT,
+  ): Promise<RawExecResult> {
     if (this.disposed) {
       return Promise.resolve({
         stdout: "",
@@ -359,7 +443,7 @@ export class WindowsShellService {
           {
             windowsHide: true,
             timeout: timeoutMs,
-            maxBuffer: MAX_OUTPUT,
+            maxBuffer,
             encoding: "utf8",
           },
           (error: Error | null, stdout: string, stderr: string) => {
@@ -385,11 +469,32 @@ export class WindowsShellService {
     })
   }
 
-  private resolvePowerShellPath(): string {
+  /**
+   * 解析 `%SystemRoot%\\System32\\<name>`（32 位进程回退 Sysnative）。
+   * 只返回绝对路径；找不到时返回 null，绝不回退到 PATH，避免同名程序劫持。
+   */
+  private resolveSystemExe(name: string): string | null {
     const node = getNodeModules()
-    if (!node) return "powershell.exe"
-    const root = process.env.SystemRoot || process.env.WINDIR
-    if (!root) return "powershell.exe"
+    const root = systemRoot()
+    if (!node || !root) return null
+    const candidates = [
+      node.path.join(root, "System32", name),
+      node.path.join(root, "Sysnative", name),
+    ]
+    for (const candidate of candidates) {
+      try {
+        if (node.fs.existsSync(candidate)) return candidate
+      } catch {
+        // 单个候选不可访问时继续尝试下一个
+      }
+    }
+    return null
+  }
+
+  private resolvePowerShellPath(): string | null {
+    const node = getNodeModules()
+    const root = systemRoot()
+    if (!node || !root) return null
     const candidate = node.path.join(
       root,
       "System32",
@@ -398,9 +503,9 @@ export class WindowsShellService {
       "powershell.exe",
     )
     try {
-      return node.fs.existsSync(candidate) ? candidate : "powershell.exe"
+      return node.fs.existsSync(candidate) ? candidate : null
     } catch {
-      return "powershell.exe"
+      return null
     }
   }
 }

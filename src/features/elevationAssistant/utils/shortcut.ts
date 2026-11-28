@@ -3,9 +3,7 @@
  *
  * 这里只做纯字节/字符串处理，不读写文件，便于 vitest 在 node 环境直接测试。
  */
-
-/** Shell Link 头固定长度（主 HeaderSize = 0x4C） */
-export const SHORTCUT_HEADER_SIZE = 0x4C
+import { windowsBasename } from "./validation"
 
 /** LinkFlags 第二个字节的偏移（0x14 起 4 字节 LinkFlags，bit13 = 0x2000） */
 export const RUN_AS_ADMIN_BYTE_OFFSET = 0x15
@@ -17,9 +15,9 @@ export const RUN_AS_ADMIN_MASK = 0x20
 export const SHORTCUT_NAME_MAX = 100
 
 /** Windows 文件名非法字符（校验用，无全局标志，避免 test 的 lastIndex 状态） */
-const ILLEGAL_SHORTCUT_NAME_CHARS = /[\\/:*?"<>|\u0000-\u001f]/
+const ILLEGAL_SHORTCUT_NAME_CHARS = /[\\/:*?"<>|\u0000-\u001F]/
 /** 同一字符集的全局版本（清洗用，replace 需替换全部命中） */
-const ILLEGAL_SHORTCUT_NAME_CHARS_GLOBAL = /[\\/:*?"<>|\u0000-\u001f]/g
+const ILLEGAL_SHORTCUT_NAME_CHARS_GLOBAL = /[\\/:*?"<>|\u0000-\u001F]/g
 
 /** Windows 保留设备名（扩展名无关，CON.lnk 同样不允许） */
 const RESERVED_DEVICE_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
@@ -44,21 +42,6 @@ export function isShortcutHeader(bytes: Uint8Array): boolean {
 export function hasRunAsAdminFlag(bytes: Uint8Array): boolean {
   return bytes.length > RUN_AS_ADMIN_BYTE_OFFSET
     && (bytes[RUN_AS_ADMIN_BYTE_OFFSET] & RUN_AS_ADMIN_MASK) !== 0
-}
-
-/**
- * 返回设置了 RunAsUser 标记的新字节数组。
- * 不修改入参；长度不足或不是合法 .lnk 时抛错，避免把任意文件当快捷方式改写。
- */
-export function withRunAsAdminFlag(bytes: Uint8Array, enabled: boolean): Uint8Array {
-  if (!isShortcutHeader(bytes) || bytes.length <= RUN_AS_ADMIN_BYTE_OFFSET) {
-    throw new Error("Invalid shortcut file")
-  }
-  const next = new Uint8Array(bytes)
-  next[RUN_AS_ADMIN_BYTE_OFFSET] = enabled
-    ? next[RUN_AS_ADMIN_BYTE_OFFSET] | RUN_AS_ADMIN_MASK
-    : next[RUN_AS_ADMIN_BYTE_OFFSET] & ~RUN_AS_ADMIN_MASK
-  return next
 }
 
 /** 去掉用户误输入的 .lnk 后缀（大小写不敏感，只去掉一层） */
@@ -104,8 +87,7 @@ export function sanitizeShortcutName(name: string, fallback = "shortcut"): strin
  * @param fallback 无法推导时使用的名称（由调用方传 i18n）
  */
 export function suggestToolName(targetPath: string, fallback = "shortcut"): string {
-  const normalized = targetPath.trim().replace(/["']/g, "")
-  const base = normalized.split(/[\\/]/).pop() || ""
+  const base = windowsBasename(targetPath.trim().replace(/["']/g, ""))
   const name = base.replace(/\.exe$/i, "").trim()
   return name ? sanitizeShortcutName(name, fallback) : fallback
 }

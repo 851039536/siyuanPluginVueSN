@@ -1,3 +1,4 @@
+import type { PermissionDiagnosis } from "../types"
 /**
  * 提权助手 - 目标文件权限诊断
  *
@@ -5,7 +6,6 @@
  * 不执行目标程序，不改动目标文件。
  */
 import type { PeReader } from "../utils/manifest"
-import type { PermissionDiagnosis } from "../types"
 import { getNodeModules } from "@/utils/nodeModules"
 import {
   decodeManifestBytes,
@@ -32,6 +32,18 @@ function emptyDiagnosis(partial: Partial<PermissionDiagnosis>): PermissionDiagno
     reasonCode: "readError",
     ...partial,
   }
+}
+
+/** 诊断过程中出现非预期异常时的兜底结果（不抛错给 UI） */
+export function createFailedDiagnosis(error?: unknown): PermissionDiagnosis {
+  return emptyDiagnosis({
+    kind: "error",
+    manifestSource: "unreadable",
+    reasonCode: "readError",
+    error: error === undefined
+      ? undefined
+      : (error instanceof Error ? error.message : String(error)),
+  })
 }
 
 function createFileReader(
@@ -76,7 +88,10 @@ export async function diagnoseExecutable(targetPath: string): Promise<Permission
     })
   }
 
-  const { fs, path } = node
+  const {
+    fs,
+    path,
+  } = node
   const ext = path.extname(targetPath).toLowerCase()
 
   let stat: Awaited<ReturnType<typeof fs.promises.stat>>

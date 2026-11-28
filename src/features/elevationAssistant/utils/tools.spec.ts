@@ -1,9 +1,13 @@
-import { describe, expect, it } from "vitest"
 import {
-  MAX_SHORTCUTS_PER_TOOL,
-  MAX_TOOLS,
+  describe,
+  expect,
+  it,
+} from "vitest"
+import {
   createToolId,
   findShortcutOwner,
+  MAX_SHORTCUTS_PER_TOOL,
+  MAX_TOOLS,
   sanitizeTools,
 } from "./tools"
 
@@ -37,8 +41,16 @@ describe("sanitizeTools", () => {
     const result = sanitizeTools([
       makeTool(1),
       makeTool(1),
-      { id: "x", name: "", path: "C:\\a.exe" },
-      { id: "y", name: "n", path: "" },
+      {
+        id: "x",
+        name: "",
+        path: "C:\\a.exe",
+      },
+      {
+        id: "y",
+        name: "n",
+        path: "",
+      },
       null,
       "text",
     ])
@@ -89,6 +101,36 @@ describe("sanitizeTools", () => {
     expect(sanitizeTools(null)).toEqual([])
     expect(sanitizeTools({})).toEqual([])
     expect(sanitizeTools("x")).toEqual([])
+  })
+
+  it("丢弃相对路径与非 exe 目标", () => {
+    const result = sanitizeTools([
+      makeTool(1, { path: "relative\\a.exe" }),
+      makeTool(2, { path: "C:\\Tools\\a.txt" }),
+      makeTool(3, { path: "  C:/Tools/tool3.EXE  " }),
+    ])
+    expect(result.map((tool) => tool.id)).toEqual(["tool-3"])
+    expect(result[0].path).toBe("C:\\Tools\\tool3.EXE")
+  })
+
+  it("清洗非法名称与相对工作目录", () => {
+    const result = sanitizeTools([
+      makeTool(1, {
+        name: "..\\..\\evil",
+        workingDir: "relative\\dir",
+        args: "x".repeat(5000),
+      }),
+    ])
+    expect(result[0].name).not.toContain("\\")
+    expect(result[0].name).not.toContain("/")
+    expect(result[0].workingDir).toBe("C:\\Tools")
+    expect(result[0].args).toHaveLength(4096)
+  })
+
+  it("超长 id 被截断且不因异常数据撑大存储", () => {
+    const longId = `elevation-${"a".repeat(500)}`
+    const result = sanitizeTools([makeTool(1, { id: longId })])
+    expect(result[0].id).toHaveLength(128)
   })
 })
 

@@ -5,12 +5,12 @@
  * 文件读取由 managers/diagnostics.ts 通过 PeReader 适配，便于单测用内存 buffer。
  */
 import type {
+  DiagnosisReasonCode,
   ElevationRecommendation,
   ManifestLevel,
+  ManifestSource,
+  PeArch,
 } from "../types"
-
-export type PeArch = "x86" | "x64" | "arm64" | "unknown"
-export type ManifestSource = "embedded" | "external" | "none" | "unreadable"
 
 /** PE 文件随机读取接口（异步，避免整文件载入内存） */
 export interface PeReader {
@@ -35,16 +35,7 @@ export interface ManifestDecision {
   requiresAdmin: boolean
   recommendedElevate: boolean
   recommendation: ElevationRecommendation
-  reasonCode:
-    | "manifestRequireAdministrator"
-    | "manifestHighestAvailable"
-    | "manifestAsInvoker"
-    | "manifestUiAccess"
-    | "manifestMissing"
-    | "externalManifest"
-    | "unsupportedFile"
-    | "readError"
-    | "parseError"
+  reasonCode: DiagnosisReasonCode
 }
 
 const MAX_MANIFEST_SIZE = 1024 * 1024
@@ -66,15 +57,11 @@ interface ResourceEntry {
   offset: number
 }
 
-/** 把内存 buffer 适配成 PeReader（单测/小文件用） */
-export function createBufferPeReader(buffer: Uint8Array): PeReader {
-  return {
-    size: buffer.length,
-    read: async (offset, length) => {
-      if (offset < 0 || length < 0 || offset + length > buffer.length) return null
-      return buffer.subarray(offset, offset + length)
-    },
-  }
+interface PeHeaders {
+  arch: PeArch
+  sections: PeSection[]
+  resourceRva: number
+  resourceSize: number
 }
 
 function u16(bytes: Uint8Array, offset: number): number | null {
@@ -112,10 +99,12 @@ async function readExact(reader: PeReader, offset: number, length: number): Prom
   }
 }
 
+/** RVA → 文件偏移；映射长度取 virtualSize 与 rawSize 的较小值 */
 function mapRvaToOffset(rva: number, sections: readonly PeSection[]): number | null {
   for (const section of sections) {
     const delta = rva - section.virtualAddress
-    if (delta >= 0 && delta < section.rawSize) {
+    const span = Math.min(section.virtualSize || section.rawSize, section.rawSize)
+    if (delta >= 0 && delta < span) {
       return section.rawPointer + delta
     }
   }
@@ -126,10 +115,87 @@ function archFromMachine(machine: number, optionalMagic: number): PeArch {
   if (machine === 0x8664) return "x64"
   if (machine === 0xAA64) return "arm64"
   if (machine === 0x014C) return "x86"
-  if (machine === 0x01C4) return "arm64"
+  // 0x01C4 为 ARMNT（ARM32），与 arm64 不是同一架构，不做猜测
+  if (machine === 0x01C4) return "unknown"
   if (optionalMagic === 0x20B) return "x64"
   if (optionalMagic === 0x10B) return "x86"
   return "unknown"
+}
+
+/**
+ * 一次读取 DOS 头、PE 头、可选头与节表。
+ * manifest 解析与架构展示共用同一份结果，避免每次诊断重复读 PE 头。
+ */
+async function readPeHeaders(reader: PeReader): Promise<PeHeaders | null> {
+  if (reader.size < 0x40) return null
+  const dos = await readExact(reader, 0, 0x40)
+  if (!dos) return null
+  if (dos[0] !== 0x4D || dos[1] !== 0x5A) return null
+  const peOffset = u32(dos, 0x3C)
+  if (peOffset === null || peOffset < 0x40 || peOffset + 24 > reader.size) return null
+
+  const peHeader = await readExact(reader, peOffset, 24)
+  if (!peHeader) return null
+  if (readAscii(peHeader, 0, 4) !== "PE\u0000\u0000") return null
+  const machine = u16(peHeader, 4) ?? 0
+  const numberOfSections = u16(peHeader, 6) ?? 0
+  const sizeOfOptionalHeader = u16(peHeader, 20) ?? 0
+  if (numberOfSections <= 0 || numberOfSections > MAX_SECTIONS) return null
+  if (sizeOfOptionalHeader < 0x70) return null
+
+  const optionalStart = peOffset + 24
+  const optional = await readExact(reader, optionalStart, Math.min(sizeOfOptionalHeader, 0x100))
+  if (!optional) return null
+
+  const magic = u16(optional, 0) ?? 0
+  const arch = archFromMachine(machine, magic)
+  const dataDirectoryOffset = magic === 0x10B ? 96 : magic === 0x20B ? 112 : -1
+  const hasDataDirectory = dataDirectoryOffset >= 0 && dataDirectoryOffset + 24 <= optional.length
+  const resourceRva = hasDataDirectory
+    ? u32(optional, dataDirectoryOffset + IMAGE_DIRECTORY_ENTRY_RESOURCE * 8) ?? 0
+    : 0
+  const resourceSize = hasDataDirectory
+    ? u32(optional, dataDirectoryOffset + IMAGE_DIRECTORY_ENTRY_RESOURCE * 8 + 4) ?? 0
+    : 0
+
+  const sectionTableOffset = optionalStart + sizeOfOptionalHeader
+  const sectionBytes = await readExact(reader, sectionTableOffset, numberOfSections * 40)
+  if (!sectionBytes) { return {
+    arch,
+    sections: [],
+    resourceRva: 0,
+    resourceSize: 0,
+  }
+  }
+  const sections: PeSection[] = []
+  for (let i = 0; i < numberOfSections; i++) {
+    const base = i * 40
+    const virtualSize = u32(sectionBytes, base + 8)
+    const virtualAddress = u32(sectionBytes, base + 12)
+    const rawSize = u32(sectionBytes, base + 16)
+    const rawPointer = u32(sectionBytes, base + 20)
+    if (virtualSize === null || virtualAddress === null || rawSize === null || rawPointer === null) {
+      return {
+        arch,
+        sections: [],
+        resourceRva: 0,
+        resourceSize: 0,
+      }
+    }
+    sections.push({
+      virtualAddress,
+      virtualSize,
+      rawSize,
+      rawPointer,
+    })
+  }
+
+  return {
+    arch,
+    sections,
+    resourceRva,
+    resourceSize,
+  }
 }
 
 async function readResourceEntries(
@@ -165,58 +231,10 @@ async function readResourceEntries(
   return entries
 }
 
-/** 从 PE 资源节读取 RT_MANIFEST（类型 24、名称 1 或首个名称项） */
-async function readEmbeddedManifest(reader: PeReader): Promise<string | null> {
-  if (reader.size < 0x40) return null
-  const dos = await readExact(reader, 0, 0x40)
-  if (!dos) return null
-  if (dos[0] !== 0x4D || dos[1] !== 0x5A) return null
-  const peOffset = u32(dos, 0x3C)
-  if (peOffset === null || peOffset < 0x40 || peOffset + 24 > reader.size) return null
-
-  const peHeader = await readExact(reader, peOffset, 24)
-  if (!peHeader) return null
-  const signature = readAscii(peHeader, 0, 4)
-  if (signature !== "PE\u0000\u0000") return null
-  const numberOfSections = u16(peHeader, 6) ?? 0
-  const sizeOfOptionalHeader = u16(peHeader, 20) ?? 0
-  if (numberOfSections <= 0 || numberOfSections > MAX_SECTIONS) return null
-  if (sizeOfOptionalHeader < 0x70) return null
-
-  const optionalStart = peOffset + 24
-  const optional = await readExact(reader, optionalStart, Math.min(sizeOfOptionalHeader, 0x100))
-  if (!optional) return null
-
-  const magic = u16(optional, 0) ?? 0
-  const dataDirectoryOffset = magic === 0x10B ? 96 : magic === 0x20B ? 112 : -1
-  if (dataDirectoryOffset < 0 || dataDirectoryOffset + 24 > optional.length) return null
-
-  const resourceRva = u32(optional, dataDirectoryOffset + IMAGE_DIRECTORY_ENTRY_RESOURCE * 8) ?? 0
-  const resourceSize = u32(optional, dataDirectoryOffset + IMAGE_DIRECTORY_ENTRY_RESOURCE * 8 + 4) ?? 0
-  if (!resourceRva || !resourceSize) return null
-
-  const sectionTableOffset = optionalStart + sizeOfOptionalHeader
-  const sectionBytes = await readExact(reader, sectionTableOffset, numberOfSections * 40)
-  if (!sectionBytes) return null
-  const sections: PeSection[] = []
-  for (let i = 0; i < numberOfSections; i++) {
-    const base = i * 40
-    const virtualSize = u32(sectionBytes, base + 8)
-    const virtualAddress = u32(sectionBytes, base + 12)
-    const rawSize = u32(sectionBytes, base + 16)
-    const rawPointer = u32(sectionBytes, base + 20)
-    if (virtualSize === null || virtualAddress === null || rawSize === null || rawPointer === null) {
-      return null
-    }
-    sections.push({
-      virtualAddress,
-      virtualSize,
-      rawSize,
-      rawPointer,
-    })
-  }
-
-  const resourceBase = mapRvaToOffset(resourceRva, sections)
+/** 从已解析的 PE 头读取 RT_MANIFEST（类型 24、名称 1 或首个名称项） */
+async function readEmbeddedManifest(reader: PeReader, headers: PeHeaders): Promise<string | null> {
+  if (!headers.resourceRva || !headers.resourceSize || headers.sections.length === 0) return null
+  const resourceBase = mapRvaToOffset(headers.resourceRva, headers.sections)
   if (resourceBase === null) return null
 
   const rootEntries = await readResourceEntries(reader, resourceBase, 0)
@@ -242,7 +260,7 @@ async function readEmbeddedManifest(reader: PeReader): Promise<string | null> {
   if (dataRva === null || dataSize === null || dataSize <= 0 || dataSize > MAX_MANIFEST_SIZE) {
     return null
   }
-  const dataOffset = mapRvaToOffset(dataRva, sections)
+  const dataOffset = mapRvaToOffset(dataRva, headers.sections)
   if (dataOffset === null) return null
   const manifestBytes = await readExact(reader, dataOffset, dataSize)
   if (!manifestBytes) return null
@@ -283,6 +301,9 @@ export function parseManifestLevel(xml: string): ManifestLevelInfo {
     level = "asInvoker"
   } else if (rawLevel) {
     level = "unknown"
+  } else if (hasRequestedLevel) {
+    // 声明了 requestedExecutionLevel 却没有可识别的 level：不能当作 asInvoker
+    level = "unknown"
   }
   const uiAccess = /\buiAccess\s*=\s*["']true["']/i.test(xml)
   return {
@@ -298,7 +319,11 @@ export function recommendFromManifest(input: {
   source: ManifestSource
   uiAccess: boolean
 }): ManifestDecision {
-  const { level, source, uiAccess } = input
+  const {
+    level,
+    source,
+    uiAccess,
+  } = input
 
   if (source === "unreadable") {
     return {
@@ -365,20 +390,19 @@ export function recommendFromManifest(input: {
 /** 读取 PE manifest；失败返回 error，不抛异常 */
 export async function readPeManifest(reader: PeReader): Promise<PeManifestResult> {
   try {
-    const xml = await readEmbeddedManifest(reader)
-    // 架构信息与 manifest 解析分开：即使没有清单也要能显示 x86/x64
-    const arch = await readPeArch(reader)
-    if (!xml) {
+    const headers = await readPeHeaders(reader)
+    if (!headers) {
       return {
         manifestXml: null,
-        arch,
+        arch: "unknown",
         embedded: false,
       }
     }
+    const xml = await readEmbeddedManifest(reader, headers)
     return {
       manifestXml: xml,
-      arch,
-      embedded: true,
+      arch: headers.arch,
+      embedded: xml !== null,
     }
   } catch (error) {
     return {
@@ -388,21 +412,4 @@ export async function readPeManifest(reader: PeReader): Promise<PeManifestResult
       error: error instanceof Error ? error.message : String(error),
     }
   }
-}
-
-/** 单独读取 PE 架构（供无 manifest 时展示） */
-async function readPeArch(reader: PeReader): Promise<PeArch> {
-  if (reader.size < 0x40) return "unknown"
-  const dos = await readExact(reader, 0, 0x40)
-  if (!dos) return "unknown"
-  const peOffset = u32(dos, 0x3C)
-  if (peOffset === null || peOffset + 24 > reader.size) return "unknown"
-  const peHeader = await readExact(reader, peOffset, 24)
-  if (!peHeader) return "unknown"
-  const machine = u16(peHeader, 4) ?? 0
-  const sizeOfOptionalHeader = u16(peHeader, 20) ?? 0
-  if (sizeOfOptionalHeader < 2) return archFromMachine(machine, 0)
-  const optional = await readExact(reader, peOffset + 24, 2)
-  if (!optional) return archFromMachine(machine, 0)
-  return archFromMachine(machine, u16(optional, 0) ?? 0)
 }

@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest"
+import {
+  describe,
+  expect,
+  it,
+} from "vitest"
 import {
   defaultWorkingDir,
   hasExeExtension,
@@ -27,7 +31,7 @@ describe("isAbsoluteWindowsPath", () => {
   })
 })
 
-describe("Windows 路径拆解", () => {
+describe("windows 路径拆解", () => {
   it("兼容反斜杠与正斜杠", () => {
     expect(windowsBasename("C:\\Tools\\sub\\tool.exe")).toBe("tool.exe")
     expect(windowsBasename("C:/Tools/sub/tool.exe")).toBe("tool.exe")
@@ -43,8 +47,15 @@ describe("Windows 路径拆解", () => {
     expect(windowsDirname("tool.exe")).toBe("")
   })
 
+  it("盘符根目录返回 C:\\ 而不是 C:", () => {
+    expect(windowsDirname("C:\\a.exe")).toBe("C:\\")
+    expect(windowsDirname("D:/b.exe")).toBe("D:\\")
+    expect(windowsDirname("C:\\")).toBe("")
+  })
+
   it("默认工作目录为 exe 所在目录", () => {
     expect(defaultWorkingDir("C:\\Tools\\tool.exe")).toBe("C:\\Tools")
+    expect(defaultWorkingDir("C:\\a.exe")).toBe("C:\\")
   })
 })
 

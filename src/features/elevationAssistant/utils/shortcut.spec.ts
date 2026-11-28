@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest"
+import {
+  describe,
+  expect,
+  it,
+} from "vitest"
 import {
   hasLnkExtension,
   hasRunAsAdminFlag,
@@ -8,7 +12,6 @@ import {
   stripLnkExtension,
   suggestToolName,
   validateShortcutName,
-  withRunAsAdminFlag,
 } from "./shortcut"
 
 /** 构造一个最小合法 .lnk 字节序列（0x4C 头 + 足够长度） */
@@ -44,31 +47,6 @@ describe("hasRunAsAdminFlag", () => {
 
   it("字节不足时视为未设置", () => {
     expect(hasRunAsAdminFlag(makeLnk(0x20, 0x10))).toBe(false)
-  })
-})
-
-describe("withRunAsAdminFlag", () => {
-  it("设置与清除标记且不改其他字节", () => {
-    const original = makeLnk(0x80)
-    const enabled = withRunAsAdminFlag(original, true)
-    expect(hasRunAsAdminFlag(enabled)).toBe(true)
-    expect(enabled[0x15]).toBe(0xA0)
-    expect(enabled[0x00]).toBe(0x4C)
-
-    const disabled = withRunAsAdminFlag(enabled, false)
-    expect(hasRunAsAdminFlag(disabled)).toBe(false)
-    expect(disabled[0x15]).toBe(0x80)
-  })
-
-  it("不改动入参（幂等）", () => {
-    const original = makeLnk(0x00)
-    withRunAsAdminFlag(original, true)
-    expect(original[0x15]).toBe(0x00)
-  })
-
-  it("非法快捷方式抛错", () => {
-    expect(() => withRunAsAdminFlag(new Uint8Array(0x20), true)).toThrow()
-    expect(() => withRunAsAdminFlag(makeLnk(0x00, 0x10), true)).toThrow()
   })
 })
 

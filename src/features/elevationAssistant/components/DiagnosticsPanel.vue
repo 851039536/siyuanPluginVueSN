@@ -17,6 +17,7 @@
           v-model="freePath"
           size="xsmall"
           :placeholder="i18n.targetPathPlaceholder"
+          @update:model-value="handleFreePathInput"
           @keydown.enter="handleDetectFree"
         />
         <Button
@@ -90,7 +91,7 @@
         variant="secondary"
         size="xsmall"
         icon="refresh"
-        :loading="isBusy(selectedTool.id)"
+        :loading="isDiagnosing(selectedTool.id)"
         @click="emit('refresh', selectedTool)"
       >
         {{ i18n.redetect }}
@@ -131,10 +132,10 @@
             >{{ record.path }}</span>
             <div class="elevation-diagnostics__shortcut-tags">
               <Tag
-                :variant="shortcutStatusFor(record.path)?.exists === false ? 'danger' : 'success'"
+                :variant="shortcutTagVariant(shortcutStatusFor(record.path))"
                 size="xsmall"
               >
-                {{ shortcutStatusFor(record.path)?.exists === false ? (i18n.shortcutMissing) : (i18n.shortcutExists) }}
+                {{ shortcutTagLabel(shortcutStatusFor(record.path)) }}
               </Tag>
               <Tag
                 :variant="record.runAsAdmin ? 'warning' : 'default'"
@@ -168,9 +169,16 @@
 </template>
 
 <script setup lang="ts">
-import type { ElevationTool, PermissionDiagnosis } from "../types"
-import type { ShortcutStatus } from "../composables/useElevationAssistant"
-import { computed, ref, watch } from "vue"
+import type {
+  ElevationTool,
+  PermissionDiagnosis,
+  ShortcutStatus,
+} from "../types"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
 import Card from "@/components/Card.vue"
 import Input from "@/components/Input.vue"
@@ -188,11 +196,13 @@ interface Props {
   i18n: Record<string, string>
   shortcutStatusFor: (path: string) => ShortcutStatus | undefined
   isBusy: (toolId: string) => boolean
+  isDiagnosing: (toolId: string) => boolean
 }
 
 interface Emits {
   (e: "selectTool", toolId: string | null): void
   (e: "diagnose", path: string): void
+  (e: "update:path", path: string): void
   (e: "addTool", path: string): void
   (e: "createShortcut", tool: ElevationTool): void
   (e: "run", tool: ElevationTool): void
@@ -217,8 +227,27 @@ const targetOptions = computed(() => [
     label: tool.name,
     value: tool.id,
   })),
-  { label: props.i18n.tempDetect, value: "__free__" },
+  {
+    label: props.i18n.tempDetect,
+    value: "__free__",
+  },
 ])
+
+/** 未检测 / 存在 / 已丢失 / 文件无效 / 无法检测 分别给出颜色与文案 */
+function shortcutTagVariant(status: ShortcutStatus | undefined): "default" | "success" | "warning" | "danger" {
+  if (!status || status.state === "unknown") return "default"
+  if (status.state === "exists" && status.valid) return "success"
+  if (status.state === "missing") return "danger"
+  return "warning"
+}
+
+function shortcutTagLabel(status: ShortcutStatus | undefined): string {
+  if (!status || status.state === "unknown") return props.i18n.shortcutUnknown
+  if (status.state === "exists") return props.i18n.shortcutExists
+  if (status.state === "missing") return props.i18n.shortcutMissing
+  if (status.state === "invalid") return props.i18n.shortcutInvalid
+  return props.i18n.shortcutUncheckable
+}
 
 function handleSelect(value: string | number): void {
   if (value === "__free__") {
@@ -226,6 +255,13 @@ function handleSelect(value: string | number): void {
     return
   }
   emit("selectTool", String(value))
+}
+
+/** 路径改动立即通知父组件清空旧诊断，避免「报告张冠李戴」 */
+function handleFreePathInput(value: string | number | null): void {
+  if (props.selectedTool) return
+  freePath.value = value === null ? "" : String(value)
+  emit("update:path", freePath.value)
 }
 
 function handleDetectFree(): void {
@@ -236,11 +272,15 @@ function handleDetectFree(): void {
 async function handleBrowseFree(): Promise<void> {
   const paths = await pickFiles(
     props.i18n.browseTitle,
-    [{ name: props.i18n.exeFilterName, extensions: ["exe"] }],
+    [{
+      name: props.i18n.exeFilterName,
+      extensions: ["exe"],
+    }],
   )
   const picked = paths?.[0]
   if (!picked) return
   freePath.value = picked
+  emit("update:path", picked)
   emit("diagnose", picked)
 }
 </script>

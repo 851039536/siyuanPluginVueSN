@@ -1,11 +1,26 @@
-import { describe, expect, it } from "vitest"
+import type { PeReader } from "./manifest"
 import {
-  createBufferPeReader,
+  describe,
+  expect,
+  it,
+} from "vitest"
+import {
   decodeManifestBytes,
   parseManifestLevel,
   readPeManifest,
   recommendFromManifest,
 } from "./manifest"
+
+/** 把内存 buffer 适配成 PeReader（仅测试使用） */
+function createBufferPeReader(buffer: Uint8Array): PeReader {
+  return {
+    size: buffer.length,
+    read: async (offset, length) => {
+      if (offset < 0 || length < 0 || offset + length > buffer.length) return null
+      return buffer.subarray(offset, offset + length)
+    },
+  }
+}
 
 const MANIFEST_REQUIRE = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
@@ -164,12 +179,14 @@ describe("parseManifestLevel", () => {
     expect(info.uiAccess).toBe(true)
   })
 
-  it("缺失 level 时默认 asInvoker 并标记 hasRequestedLevel", () => {
+  it("缺失 level 时：无标签默认 asInvoker，有标签却缺 level 判为 unknown", () => {
     expect(parseManifestLevel(MANIFEST_REQUIRE).hasRequestedLevel).toBe(true)
     const empty = parseManifestLevel("<assembly></assembly>")
     expect(empty.level).toBe("asInvoker")
     expect(empty.hasRequestedLevel).toBe(false)
     expect(empty.uiAccess).toBe(false)
+    // 声明了 requestedExecutionLevel 但没有 level：不能当作无需管理员
+    expect(parseManifestLevel("<requestedExecutionLevel uiAccess=\"false\"/>").level).toBe("unknown")
   })
 })
 
@@ -229,14 +246,14 @@ describe("decodeManifestBytes", () => {
 })
 
 describe("readPeManifest", () => {
-  it("PE32+ 内嵌清单：返回 x64 与 XML", async () => {
+  it("pE32+ 内嵌清单：返回 x64 与 XML", async () => {
     const result = await readPeManifest(createBufferPeReader(buildPe()))
     expect(result.arch).toBe("x64")
     expect(result.embedded).toBe(true)
     expect(result.manifestXml).toContain("requireAdministrator")
   })
 
-  it("PE32 内嵌清单：返回 x86", async () => {
+  it("pE32 内嵌清单：返回 x86", async () => {
     const result = await readPeManifest(createBufferPeReader(buildPe({
       magic: 0x10B,
       machine: 0x014C,
@@ -248,6 +265,11 @@ describe("readPeManifest", () => {
   it("arm64 通过 Machine 识别", async () => {
     const result = await readPeManifest(createBufferPeReader(buildPe({ machine: 0xAA64 })))
     expect(result.arch).toBe("arm64")
+  })
+
+  it("aRMNT（0x01C4）不映射为 arm64", async () => {
+    const result = await readPeManifest(createBufferPeReader(buildPe({ machine: 0x01C4 })))
+    expect(result.arch).toBe("unknown")
   })
 
   it("无资源目录时返回无清单但仍有架构", async () => {
@@ -268,7 +290,7 @@ describe("readPeManifest", () => {
     expect(truncatedResult.manifestXml).toBeNull()
   })
 
-  it("UTF-16LE BOM 清单可解析出级别", async () => {
+  it("uTF-16LE BOM 清单可解析出级别", async () => {
     const bytes = buildPe({ manifestEncoding: "utf16bom" })
     const result = await readPeManifest(createBufferPeReader(bytes))
     expect(result.manifestXml).toContain("requestedExecutionLevel")

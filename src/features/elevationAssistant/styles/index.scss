@@ -60,4 +60,31 @@
     color: $c-danger;
     font-size: $t-2xs;
   }
+
+  &__failures {
+    flex-shrink: 0;
+  }
+
+  &__failures-title {
+    color: $c-danger;
+    font-size: $t-xs;
+    font-weight: $fw-semibold;
+  }
+
+  &__failure-list {
+    overflow-y: auto;
+    max-height: 120px;
+    margin: 0;
+    padding-left: $s-4;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+    word-break: break-all;
+  }
+
+  &__failure-actions {
+    display: flex;
+    gap: $s-2;
+    margin-top: $s-2;
+  }
 }

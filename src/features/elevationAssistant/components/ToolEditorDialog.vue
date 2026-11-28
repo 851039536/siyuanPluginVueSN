@@ -19,6 +19,7 @@
             size="xsmall"
             :placeholder="i18n.targetPathPlaceholder"
             @blur="handlePathBlur"
+            @input="emit('pathChange')"
           />
           <Button
             variant="secondary"
@@ -49,13 +50,13 @@
         class="elevation-editor__diagnosis"
       >
         <Tag
-          :variant="diagnosisVariant"
+          :variant="view.variant"
           size="xsmall"
-          :icon="diagnosisIcon"
+          :icon="view.icon"
         >
-          {{ diagnosisLabel }}
+          {{ view.label }}
         </Tag>
-        <span class="elevation-editor__diagnosis-text">{{ diagnosisReason }}</span>
+        <span class="elevation-editor__diagnosis-text">{{ view.reason }}</span>
       </div>
 
       <FormField
@@ -188,8 +189,10 @@
 </template>
 
 <script setup lang="ts">
-import type { IconKey } from "@/components/kit/icons"
-import type { PermissionDiagnosis, ToolDraft } from "../types"
+import type {
+  PermissionDiagnosis,
+  ToolDraft,
+} from "../types"
 import {
   computed,
   reactive,
@@ -203,9 +206,16 @@ import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
 import Switch from "@/components/Switch.vue"
 import Tag from "@/components/Tag.vue"
-import { pickDirectory, pickFiles } from "@/utils/electronDialog"
+import {
+  pickDirectory,
+  pickFiles,
+} from "@/utils/electronDialog"
+import { presentDiagnosis } from "../utils/diagnosisView"
 import { suggestToolName } from "../utils/shortcut"
-import { defaultWorkingDir } from "../utils/validation"
+import {
+  defaultWorkingDir,
+  normalizeTargetPath,
+} from "../utils/validation"
 
 interface Props {
   visible: boolean
@@ -213,6 +223,8 @@ interface Props {
   initial: ToolDraft
   editing: boolean
   diagnosis: PermissionDiagnosis | null
+  /** diagnosis 对应的目标路径；与当前输入不一致时不套用推荐值 */
+  diagnosisPath?: string
   diagnosing: boolean
   saving: boolean
   error?: string
@@ -222,6 +234,7 @@ interface Emits {
   (e: "update:visible", visible: boolean): void
   (e: "save", draft: ToolDraft, createShortcut: boolean): void
   (e: "diagnose", path: string): void
+  (e: "pathChange"): void
 }
 
 const props = defineProps<Props>()
@@ -245,70 +258,30 @@ watch(() => props.visible, (visible) => {
 
 watch(() => props.diagnosis, (diagnosis) => {
   if (!diagnosis) return
+  // 旧路径的诊断不能改写当前表单（用户可能在检测期间改了路径）
+  const diagnosedPath = normalizeTargetPath(props.diagnosisPath || "")
+  if (diagnosedPath && diagnosedPath !== normalizeTargetPath(draft.path)) return
   if (!adminTouched.value) draft.requireAdmin = diagnosis.recommendedElevate
   if (!nameTouched.value) draft.name = suggestToolName(draft.path, props.i18n.defaultToolName)
   if (!workingDirTouched.value) draft.workingDir = defaultWorkingDir(draft.path)
 })
 
+const view = computed(() => presentDiagnosis(props.diagnosis, props.i18n))
+
 const locationOptions = computed(() => [
-  { label: props.i18n.locationDesktop, value: "desktop" },
-  { label: props.i18n.locationPrograms, value: "programs" },
-  { label: props.i18n.locationCustom, value: "custom" },
+  {
+    label: props.i18n.locationDesktop,
+    value: "desktop",
+  },
+  {
+    label: props.i18n.locationPrograms,
+    value: "programs",
+  },
+  {
+    label: props.i18n.locationCustom,
+    value: "custom",
+  },
 ])
-
-const diagnosisVariant = computed<"default" | "success" | "warning" | "danger">(() => {
-  if (!props.diagnosis) return "default"
-  if (props.diagnosis.manifestLevel === "requireAdministrator") return "danger"
-  if (props.diagnosis.manifestLevel === "highestAvailable") return "warning"
-  if (props.diagnosis.kind === "missing" || props.diagnosis.kind === "error") return "default"
-  return "success"
-})
-
-const diagnosisIcon = computed<IconKey>(() => {
-  if (!props.diagnosis) return "helpCircleOutline"
-  if (props.diagnosis.manifestLevel === "requireAdministrator") return "shieldAlert"
-  if (props.diagnosis.manifestLevel === "highestAvailable") return "shield"
-  if (props.diagnosis.kind === "missing" || props.diagnosis.kind === "error") return "helpCircleOutline"
-  return "shieldCheck"
-})
-
-const diagnosisLabel = computed(() => {
-  if (!props.diagnosis) return props.i18n.manifestUnknown
-  if (props.diagnosis.kind === "missing") return props.i18n.targetMissing
-  if (props.diagnosis.kind === "error") return props.i18n.diagnosisFailed
-  if (props.diagnosis.manifestLevel === "requireAdministrator") {
-    return props.i18n.manifestRequireAdministrator
-  }
-  if (props.diagnosis.manifestLevel === "highestAvailable") {
-    return props.i18n.manifestHighestAvailable
-  }
-  if (props.diagnosis.manifestLevel === "asInvoker") {
-    return props.i18n.manifestAsInvoker
-  }
-  return props.i18n.manifestUnknown
-})
-
-const diagnosisReason = computed(() => {
-  if (!props.diagnosis) return ""
-  if (props.diagnosis.kind === "missing") return props.i18n.reasonTargetMissing
-  if (props.diagnosis.kind === "error") return props.diagnosis.error || (props.i18n.diagnosisFailed)
-  switch (props.diagnosis.reasonCode) {
-    case "manifestRequireAdministrator":
-      return props.i18n.reasonRequireAdministrator
-    case "manifestHighestAvailable":
-      return props.i18n.reasonHighestAvailable
-    case "manifestAsInvoker":
-      return props.i18n.reasonAsInvoker
-    case "manifestUiAccess":
-      return props.i18n.reasonUiAccess
-    case "manifestMissing":
-      return props.i18n.reasonManifestMissing
-    case "parseError":
-      return props.i18n.reasonParseError
-    default:
-      return props.i18n.reasonReadError
-  }
-})
 
 function handleVisibleChange(visible: boolean): void {
   emit("update:visible", visible)
@@ -327,7 +300,10 @@ function handleDiagnose(): void {
 async function handleBrowseFile(): Promise<void> {
   const paths = await pickFiles(
     props.i18n.browseTitle,
-    [{ name: props.i18n.exeFilterName, extensions: ["exe"] }],
+    [{
+      name: props.i18n.exeFilterName,
+      extensions: ["exe"],
+    }],
   )
   const picked = paths?.[0]
   if (!picked) return

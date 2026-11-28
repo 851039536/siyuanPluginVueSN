@@ -13,6 +13,14 @@
       <Button
         variant="secondary"
         size="xsmall"
+        icon="search"
+        @click="emit('scan')"
+      >
+        {{ i18n.scanPrograms }}
+      </Button>
+      <Button
+        variant="secondary"
+        size="xsmall"
         icon="refresh"
         :loading="refreshing"
         @click="emit('refresh')"
@@ -41,6 +49,14 @@
       >
         {{ i18n.addTool }}
       </Button>
+      <Button
+        variant="secondary"
+        size="small"
+        icon="search"
+        @click="emit('scan')"
+      >
+        {{ i18n.scanPrograms }}
+      </Button>
     </div>
 
     <div
@@ -66,11 +82,11 @@
               :title="tool.name"
             >{{ tool.name }}</span>
             <Tag
-              :variant="manifestVariant(tool.id)"
+              :variant="viewFor(tool.id).variant"
               size="xsmall"
-              :icon="manifestIcon(tool.id)"
+              :icon="viewFor(tool.id).icon"
             >
-              {{ manifestLabel(tool.id) }}
+              {{ viewFor(tool.id).label }}
             </Tag>
           </div>
         </template>
@@ -161,12 +177,16 @@
 </template>
 
 <script setup lang="ts">
+import type {
+  ElevationTool,
+  PermissionDiagnosis,
+} from "../types"
 import type { IconKey } from "@/components/kit/icons"
-import type { ElevationTool, PermissionDiagnosis } from "../types"
 import Button from "@/components/Button.vue"
 import Card from "@/components/Card.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Tag from "@/components/Tag.vue"
+import { presentDiagnosis } from "../utils/diagnosisView"
 
 interface Props {
   tools: ElevationTool[]
@@ -178,6 +198,7 @@ interface Props {
 
 interface Emits {
   (e: "add"): void
+  (e: "scan"): void
   (e: "refresh"): void
   (e: "edit", tool: ElevationTool): void
   (e: "delete", tool: ElevationTool): void
@@ -190,39 +211,21 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-function manifestVariant(toolId: string): "default" | "success" | "warning" | "danger" | "info" {
-  const level = props.diagnosisFor(toolId)?.manifestLevel
-  if (level === "requireAdministrator") return "danger"
-  if (level === "highestAvailable") return "warning"
-  if (level === "asInvoker") return "success"
-  return "default"
-}
-
-function manifestIcon(toolId: string): IconKey {
-  const level = props.diagnosisFor(toolId)?.manifestLevel
-  if (level === "requireAdministrator") return "shieldAlert"
-  if (level === "highestAvailable") return "shield"
-  if (level === "asInvoker") return "shieldCheck"
-  return "helpCircleOutline"
-}
-
-function manifestLabel(toolId: string): string {
+/** 尚无诊断结果时显示「检测中」，其余统一交给 presentDiagnosis */
+function viewFor(toolId: string): { variant: "default" | "success" | "warning" | "danger", icon: IconKey, label: string } {
   const diagnosis = props.diagnosisFor(toolId)
-  if (!diagnosis) return props.i18n.diagnosing
-  if (diagnosis.kind === "missing") return props.i18n.targetMissing
-  if (diagnosis.kind === "error") return props.i18n.diagnosisFailed
-  if (diagnosis.manifestLevel === "requireAdministrator") return props.i18n.manifestRequireAdministrator
-  if (diagnosis.manifestLevel === "highestAvailable") return props.i18n.manifestHighestAvailable
-  if (diagnosis.manifestLevel === "asInvoker") return props.i18n.manifestAsInvoker
-  return props.i18n.manifestUnknown
+  if (!diagnosis) {
+    return {
+      variant: "default",
+      icon: "helpCircleOutline",
+      label: props.i18n.diagnosing,
+    }
+  }
+  return presentDiagnosis(diagnosis, props.i18n)
 }
 
 function formatTime(value: number): string {
-  try {
-    return new Date(value).toLocaleString()
-  } catch {
-    return "—"
-  }
+  return new Date(value).toLocaleString()
 }
 </script>
 

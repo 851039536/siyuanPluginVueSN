@@ -4,17 +4,12 @@
  * 所有用户输入都经 JSON + Base64 传入 PowerShell，脚本模板本身不拼接用户路径，
  * 从根上避免引号/命令注入问题。
  */
-import type { CreateShortcutParams } from "../types"
-import { clampArguments, clampDescription } from "./validation"
-
-export type IntegrityLevel =
-  | "low"
-  | "medium"
-  | "mediumPlus"
-  | "high"
-  | "system"
-  | "protected"
-  | "unknown"
+import type {
+  CreateShortcutParams,
+  IntegrityLevel,
+} from "../types"
+import { MAX_SCANNED_PROGRAMS_SCRIPT } from "./programs"
+import { clampArguments } from "./validation"
 
 const POWERSHELL_HEADER = [
   "$ErrorActionPreference = 'Stop'",
@@ -71,7 +66,6 @@ export function buildCreateShortcutScript(params: CreateShortcutParams): string 
   const payload = {
     ...params,
     args: clampArguments(params.args),
-    description: clampDescription(params.description),
   }
   const body = [
     // 整个流程都在 try 内：EXISTS / INVALID_LOCATION 等业务错误也必须走统一的
@@ -94,7 +88,6 @@ export function buildCreateShortcutScript(params: CreateShortcutParams): string 
     "  $shortcut.TargetPath = $p.targetPath",
     "  $shortcut.WorkingDirectory = $p.workingDir",
     "  $shortcut.Arguments = $p.args",
-    "  if ($p.description) { $shortcut.Description = $p.description }",
     "  $shortcut.Save()",
     "  [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shortcut)",
     "  [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shell)",
@@ -136,6 +129,79 @@ export function buildRunElevatedScript(targetPath: string, args: string, working
     args: clampArguments(args),
     workingDir,
   })
+}
+
+/**
+ * 扫描本机可加入工具列表的 exe。
+ *
+ * 只读取路径：不执行目标程序、不写盘、不联网；单个来源失败只记 warnings。
+ * 脚本内上限与 JS 侧上限见 programs.ts（脚本内先截断，避免输出过大）。
+ */
+export function buildScanProgramsScript(): string {
+  const body = [
+    "$items = [System.Collections.Generic.List[object]]::new()",
+    "$seenPath = @{}",
+    "$warnings = [System.Collections.Generic.List[string]]::new()",
+    "function Add-Program([string]$name, [string]$path, [string]$source) {",
+    "  if ([string]::IsNullOrWhiteSpace($path)) { return }",
+    "  $value = $path.Trim().Trim('\"')",
+    "  if ($value -notmatch '^[A-Za-z]:\\\\' -and $value -notmatch '^\\\\\\\\') { return }",
+    "  if ($value -notmatch '\\.exe$') { return }",
+    "  $key = $value.ToLowerInvariant()",
+    "  if ($seenPath.ContainsKey($key)) { return }",
+    "  $seenPath[$key] = $true",
+    "  $script:items.Add([pscustomobject]@{ name = $name; path = $value; source = $source })",
+    "}",
+    "$comShell = $null",
+    "try { $comShell = New-Object -ComObject WScript.Shell } catch { $warnings.Add('com') }",
+    "$folders = @(",
+    "  @{ path = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs); source = 'startMenu' },",
+    "  @{ path = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonPrograms); source = 'startMenu' },",
+    "  @{ path = [Environment]::GetFolderPath([Environment+SpecialFolder]::DesktopDirectory); source = 'desktop' },",
+    "  @{ path = [Environment]::GetFolderPath([Environment+SpecialFolder]::CommonDesktopDirectory); source = 'desktop' }",
+    ")",
+    "foreach ($folder in $folders) {",
+    "  if (-not $folder.path -or -not (Test-Path -LiteralPath $folder.path)) { continue }",
+    "  try {",
+    "    Get-ChildItem -LiteralPath $folder.path -Filter '*.lnk' -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {",
+    "      if (-not $comShell) { return }",
+    "      try {",
+    "        $target = $comShell.CreateShortcut($_.FullName).TargetPath",
+    "        if ($target) { Add-Program ([IO.Path]::GetFileNameWithoutExtension($_.Name)) $target $folder.source }",
+    "      } catch {}",
+    "    }",
+    "  } catch { $warnings.Add($folder.source) }",
+    "}",
+    "try {",
+    "  Get-ChildItem -LiteralPath ([Environment]::GetFolderPath([Environment+SpecialFolder]::DesktopDirectory)) -Filter '*.exe' -File -ErrorAction SilentlyContinue | ForEach-Object {",
+    "    Add-Program ([IO.Path]::GetFileNameWithoutExtension($_.Name)) $_.FullName 'desktop'",
+    "  }",
+    "} catch { $warnings.Add('desktopExe') }",
+    "$appPathRoots = @(",
+    "  'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths',",
+    "  'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths',",
+    "  'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths'",
+    ")",
+    "foreach ($root in $appPathRoots) {",
+    "  if (-not (Test-Path -LiteralPath $root)) { continue }",
+    "  try {",
+    "    Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue | ForEach-Object {",
+    "      try {",
+    "        $value = (Get-Item -LiteralPath $_.PSPath).GetValue('')",
+    "        if ($value) { Add-Program ([IO.Path]::GetFileNameWithoutExtension($_.PSChildName)) ([string]$value) 'appPaths' }",
+    "      } catch {}",
+    "    }",
+    "  } catch { $warnings.Add('appPaths') }",
+    "}",
+    "try {",
+    "  Get-Process -ErrorAction SilentlyContinue | ForEach-Object {",
+    "    try { if ($_.Path) { Add-Program $_.ProcessName $_.Path 'process' } } catch {}",
+    "  }",
+    "} catch { $warnings.Add('process') }",
+    `$truncated = $items.Count -ge ${MAX_SCANNED_PROGRAMS_SCRIPT}`,
+    "[pscustomobject]@{ programs = @($items); truncated = $truncated; warnings = @($warnings) } | ConvertTo-Json -Compress -Depth 4",
+  ].join("\n")
+  return buildPayloadScript(body, {})
 }
 
 /** 解析 PowerShell stdout 中的 JSON（去 BOM、容忍前后空白） */
@@ -193,7 +259,7 @@ export function isUacCanceled(input: { code?: number | string | null, message?: 
   const code = typeof input.code === "string" ? Number(input.code) : input.code
   if (typeof code === "number" && Number.isFinite(code)) {
     if (code === 1223) return true
-    // eslint-disable-next-line no-bitwise
+
     if ((code & 0xFFFF) === 1223) return true
   }
   const message = (input.message || "").toLowerCase()

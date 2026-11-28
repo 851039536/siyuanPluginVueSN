@@ -8,17 +8,15 @@ import type { ShortcutLocation } from "../types"
 
 /** 目标路径输入长度上限 */
 export const TARGET_PATH_MAX = 1024
-/** 快捷方式描述长度上限 */
-export const SHORTCUT_DESCRIPTION_MAX = 200
 /** 启动参数长度上限 */
 export const ARGUMENTS_MAX = 4096
 
 /** 是否 Windows 绝对路径（盘符、UNC、\\?\ 前缀） */
 export function isAbsoluteWindowsPath(value: string): boolean {
   if (!value) return false
-  if (/^[a-zA-Z]:[\\/]/.test(value)) return true
+  if (/^[a-z]:[\\/]/i.test(value)) return true
   if (/^\\\\[^\\]/.test(value)) return true
-  if (/^\\\\\?\\[a-zA-Z]:[\\/]/.test(value)) return true
+  if (/^\\\\\?\\[a-z]:[\\/]/i.test(value)) return true
   if (/^\\\\\?\\UNC\\/i.test(value)) return true
   return false
 }
@@ -30,12 +28,15 @@ export function windowsBasename(value: string): string {
   return parts[parts.length - 1] || ""
 }
 
-/** 取 Windows 路径的目录（兼容 / 与 \） */
+/** 取 Windows 路径的目录（兼容 / 与 \；盘符根目录返回 `C:\`） */
 export function windowsDirname(value: string): string {
   const normalized = value.replace(/[\\/]+$/, "")
   const index = Math.max(normalized.lastIndexOf("\\"), normalized.lastIndexOf("/"))
   if (index <= 0) return ""
-  return normalized.slice(0, index)
+  const parent = normalized.slice(0, index)
+  // "C:" 不是可用的绝对目录，盘符根统一补回分隔符
+  if (/^[a-z]:$/i.test(parent)) return `${parent}\\`
+  return parent
 }
 
 /** 是否 .exe 扩展名（大小写不敏感） */
@@ -93,9 +94,4 @@ export function isShortcutLocation(value: unknown): value is ShortcutLocation {
 /** 截断过长参数，避免 PowerShell EncodedCommand 过大 */
 export function clampArguments(value: string): string {
   return value.length > ARGUMENTS_MAX ? value.slice(0, ARGUMENTS_MAX) : value
-}
-
-/** 截断描述 */
-export function clampDescription(value: string): string {
-  return value.length > SHORTCUT_DESCRIPTION_MAX ? value.slice(0, SHORTCUT_DESCRIPTION_MAX) : value
 }

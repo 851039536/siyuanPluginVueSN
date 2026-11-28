@@ -12,11 +12,7 @@
 > `AGENTS_BUILD.md` / `AGENTS_I18N.md` 是**长期规则**，不适用本索引的归档规则，原地维护。
 > 功能模块的 `src/features/*/README.md` 同样原地维护，不迁入 docs。
 
-**当前 `docs/` 根下的活跃文档**：
-
-| 文件 | 主题 | 状态 |
-|---|---|---|
-| [elevation-assistant-code-review.md](elevation-assistant-code-review.md) | 提权助手代码审查（P0/P1/P2、内存、重复类型、死代码）与“自动扫描程序”设计 | 审查完成；修复与扫描**未执行**（2026-11-27） |
+**当前 `docs/` 根下的活跃文档**：暂无。
 
 ## 一、参考文档（`docs/参考/`，10 份）
 
@@ -33,11 +29,11 @@
 | [persistence.md](参考/persistence.md) | 持久化规范：分层判据、槽位命名与生命周期、存储注册表、备份还原契约、一次性迁移、新增槽位 checklist | `AGENTS.md` § 存储规范（强制） |
 | [siyuan-theme-vars.md](参考/siyuan-theme-vars.md) | 思源主题 CSS 变量基准：三层来源（本地安装 / 运行时 / raw 上游）、快照结构、fallback 口径、重新采集命令 | `scripts/audit-scss.mjs` 的 `R3-theme-var-*` 规则；`AGENTS_STYLE.md` § 自动审计映射 |
 
-## 二、归档文档（`docs/completed/`，20 份）
+## 二、归档文档（`docs/completed/`，21 份）
 
 前 11 份为 2026-10-28 提交 `caec10a5`「chore(docs): 清理过期审查报告并归档参考文档至参考目录」删除的审查报告，
 2026-11-01 从 git 历史恢复——**原因是代码/README 仍在引用它们**（引用点已改为指向本目录）；
-后 6 份是执行完成后按规则 2 归档的审查/计划文档（2026-11-05 至 2026-11-09）。
+其余为执行完成后按规则 2 归档的审查/计划文档（2026-11-05 起）。
 
 | 文件 | 主题 | 引用点 |
 |---|---|---|
@@ -61,6 +57,7 @@
 | [gitPush-settings-ui-review.md](completed/gitPush-settings-ui-review.md) | gitPush 设置弹窗 UI 审查与实施记录（数字输入钳位缺陷、保存模型统一、常规五分区分组、控件与密度统一、888→231 行拆分） | 无源码引用；结构约定落在 `src/features/gitPush/README.md` 组件树 |
 | [scss-review.md](completed/scss-review.md) | 全项目 SCSS 审查（思源 3.8.12 主题变量基准、P0/P1/P2、热点排行、分批计划） | 无源码引用；现行规则在 `AGENTS_STYLE.md` § 自动审计映射与 `scripts/audit-scss.mjs`（2026-11-28 归档） |
 | [scss-refactor-log.md](completed/scss-refactor-log.md) | SCSS 三轮改动记录（逐批五段式：改了什么/为什么/风险/验证/回滚）+ 遗留清单 + 视觉回归清单 | 无源码引用；工具用法见 `AGENTS_BUILD.md` § 样式审计（2026-11-28 归档） |
+| [elevation-assistant-code-review.md](completed/elevation-assistant-code-review.md) | 提权助手代码审查（P0/P1/P2、内存、重复类型、死代码）与“自动扫描程序”设计；Phase A–F 已落地（含程序扫描） | 无源码引用；行为约定落在 `src/features/elevationAssistant/README.md`（2026-11-28 归档） |
 
 **源码注释里的旧路径**：`src/features/gitPush/*.ts|vue`（6 处）、`src/features/superPanel/*.vue`（4 处）等
 仍写着 `docs/xxx-review.md`。这些是纯文本引用（不是可点链接），**本轮未改源码**；

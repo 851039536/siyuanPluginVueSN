@@ -11,23 +11,40 @@
  *   PowerShell: $env:DSH_WIN_INTEGRATION="1"; pnpm exec vitest run src/features/elevationAssistant/managers
  *   bash:       DSH_WIN_INTEGRATION=1 pnpm exec vitest run src/features/elevationAssistant/managers
  */
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs"
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { afterAll, describe, expect, it } from "vitest"
+import {
+  afterAll,
+  describe,
+  expect,
+  it,
+} from "vitest"
+import {
+  hasRunAsAdminFlag,
+  isShortcutHeader,
+} from "../utils/shortcut"
 import { diagnoseExecutable } from "./diagnostics"
 import { WindowsShellService } from "./WindowsShell"
-import { hasRunAsAdminFlag, isShortcutHeader } from "../utils/shortcut"
 
 const isWindows = process.platform === "win32"
 const enabled = isWindows && process.env.DSH_WIN_INTEGRATION === "1"
 const workDir = enabled ? mkdtempSync(join(tmpdir(), "dsh-elevation-")) : ""
 
 afterAll(() => {
-  if (workDir) rmSync(workDir, { recursive: true, force: true })
+  if (workDir) { rmSync(workDir, {
+    recursive: true,
+    force: true,
+  })
+  }
 })
 
-describe.skipIf(!enabled)("WindowsShellService（Windows 实机）", () => {
+describe.skipIf(!enabled)("windowsShellService（Windows 实机）", () => {
   const shell = new WindowsShellService()
   const target = "C:\\Windows\\System32\\notepad.exe"
 
@@ -52,14 +69,19 @@ describe.skipIf(!enabled)("WindowsShellService（Windows 实机）", () => {
       targetPath: target,
       args: "",
       workingDir: "C:\\Windows\\System32",
-      description: "elevation assistant test",
       location: "custom" as const,
       customDir: workDir,
       overwrite: false,
     }
 
-    const created = await shell.createShortcut({ ...base, runAsAdmin: true })
-    expect(created).toMatchObject({ ok: true, runAsAdmin: true })
+    const created = await shell.createShortcut({
+      ...base,
+      runAsAdmin: true,
+    })
+    expect(created).toMatchObject({
+      ok: true,
+      runAsAdmin: true,
+    })
     if (!created.ok) return
     expect(created.path.toLowerCase()).toBe(join(workDir, "elevation-test.lnk").toLowerCase())
 
@@ -68,12 +90,25 @@ describe.skipIf(!enabled)("WindowsShellService（Windows 实机）", () => {
     expect(hasRunAsAdminFlag(bytes)).toBe(true)
 
     // 同名文件存在且 overwrite=false 时必须报 exists，而不是覆盖
-    const conflict = await shell.createShortcut({ ...base, runAsAdmin: false })
-    expect(conflict).toMatchObject({ ok: false, kind: "exists" })
+    const conflict = await shell.createShortcut({
+      ...base,
+      runAsAdmin: false,
+    })
+    expect(conflict).toMatchObject({
+      ok: false,
+      kind: "exists",
+    })
 
     // 覆盖为普通权限：0x20 位要被清除
-    const replaced = await shell.createShortcut({ ...base, runAsAdmin: false, overwrite: true })
-    expect(replaced).toMatchObject({ ok: true, runAsAdmin: false })
+    const replaced = await shell.createShortcut({
+      ...base,
+      runAsAdmin: false,
+      overwrite: true,
+    })
+    expect(replaced).toMatchObject({
+      ok: true,
+      runAsAdmin: false,
+    })
     if (!replaced.ok) return
     expect(hasRunAsAdminFlag(readFileSync(replaced.path))).toBe(false)
   }, 150000)
@@ -93,7 +128,10 @@ describe.skipIf(!enabled)("diagnoseExecutable（Windows 实机）", () => {
     for (const path of candidates) {
       if (!existsSync(path)) continue
       const diagnosis = await diagnoseExecutable(path)
-      results.push({ path, diagnosis })
+      results.push({
+        path,
+        diagnosis,
+      })
       expect(diagnosis.kind).toBe("exe")
       expect(diagnosis.exists).toBe(true)
       expect(["x86", "x64", "arm64"]).toContain(diagnosis.arch)

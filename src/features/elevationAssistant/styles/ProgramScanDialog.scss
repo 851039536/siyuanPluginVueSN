@@ -1,0 +1,68 @@
+@use "@/variables.scss" as *;
+
+.elevation-scan {
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+
+  &__desc {
+    margin: 0;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+    line-height: $lh-normal;
+  }
+
+  &__status {
+    padding: $s-6 $s-4;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+    text-align: center;
+  }
+
+  &__error {
+    margin: 0;
+    padding: $s-2;
+    border: 1px solid rgba($c-danger, 0.3);
+    border-radius: $r-sm;
+    background: rgba($c-danger, 0.08);
+    color: $c-danger;
+    font-size: $t-2xs;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--b3-theme-secondary, $c-muted);
+    font-size: $t-2xs;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    min-width: 0;
+    width: 100%;
+  }
+
+  &__name {
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__warning {
+    margin: 0;
+    color: $c-warning;
+    font-size: $t-2xs;
+  }
+
+  &__footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: $s-2;
+  }
+}

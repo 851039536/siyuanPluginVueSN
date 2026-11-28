@@ -1,7 +1,12 @@
-import { describe, expect, it } from "vitest"
+import {
+  describe,
+  expect,
+  it,
+} from "vitest"
 import {
   buildCreateShortcutScript,
   buildRunElevatedScript,
+  buildScanProgramsScript,
   encodePowerShellCommand,
   encodeUtf8Base64,
   isUacCanceled,
@@ -36,7 +41,7 @@ describe("utf16leBytes / encodePowerShellCommand", () => {
     expect(Array.from(bytes)).toEqual([0x41, 0x00, 0x42, 0x00])
   })
 
-  it("UTF-8 Base64 往返", () => {
+  it("uTF-8 Base64 往返", () => {
     const text = "{\"路径\":\"C:\\\\工具\\\\a.exe\"}"
     const restored = new TextDecoder("utf-8").decode(decodeBase64(encodeUtf8Base64(text)))
     expect(restored).toBe(text)
@@ -51,7 +56,6 @@ describe("脚本构建不拼接用户输入", () => {
       targetPath: malicious,
       args: "'$(evil)",
       workingDir: "C:\\a b",
-      description: "x",
       location: "desktop",
       customDir: "",
       runAsAdmin: true,
@@ -73,6 +77,21 @@ describe("脚本构建不拼接用户输入", () => {
     const script = buildRunElevatedScript("C:\\Tools\\app.exe", "--x", "C:\\Tools")
     expect(script).toContain("RunAs")
     expect(script).not.toContain("C:\\Tools\\app.exe")
+  })
+})
+
+describe("buildScanProgramsScript", () => {
+  it("覆盖四类来源且只通过 Base64 载荷传参", () => {
+    const script = buildScanProgramsScript()
+    expect(script).toContain("FromBase64String")
+    expect(script).toContain("'startMenu'")
+    expect(script).toContain("App Paths")
+    expect(script).toContain("Get-Process")
+    expect(script).toContain("CreateShortcut")
+    expect(script).toContain("ConvertTo-Json -Compress -Depth 4")
+    // 不在脚本里启动目标程序
+    expect(script).not.toContain("Start-Process")
+    expect(script).not.toContain("Invoke-Item")
   })
 })
 
@@ -129,8 +148,17 @@ describe("isUacCanceled", () => {
     expect(isUacCanceled({ code: 1223 })).toBe(true)
     // 0x800704C7 的低 16 位即 1223
     expect(isUacCanceled({ code: "0x800704C7" })).toBe(true)
-    expect(isUacCanceled({ code: null, message: "The operation was canceled by the user." })).toBe(true)
-    expect(isUacCanceled({ code: null, message: "操作已被用户取消" })).toBe(true)
-    expect(isUacCanceled({ code: 0, message: "Access is denied" })).toBe(false)
+    expect(isUacCanceled({
+      code: null,
+      message: "The operation was canceled by the user.",
+    })).toBe(true)
+    expect(isUacCanceled({
+      code: null,
+      message: "操作已被用户取消",
+    })).toBe(true)
+    expect(isUacCanceled({
+      code: 0,
+      message: "Access is denied",
+    })).toBe(false)
   })
 })

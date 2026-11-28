@@ -1,6 +1,14 @@
 # 提权助手（elevationAssistant）代码审查报告
 
-> **状态（2026-11-27）**：审查完成；**本文所列修复与“自动扫描程序”均未执行**，仅作为后续实施依据。
+> **归档说明（2026-11-28）**：§8 的 Phase A–F 已在 `src/features/elevationAssistant/` 落地
+> （诊断竞态、持久化结果检查、操作锁、快捷方式状态机、统一展示、存储校验、删除语义、
+> 系统命令绝对路径、manifest 边界、§7 程序扫描均已实现），文档转为历史记录，不再更新。
+> 实施后的行为约定见 [`src/features/elevationAssistant/README.md`](../../src/features/elevationAssistant/README.md)。
+>
+> **状态（2026-11-28 实施后）**：修复与“自动扫描程序”均已执行；`pnpm test`（提权助手 79 passed / 5 skipped）、
+> `pnpm exec vue-tsc --noEmit`、`pnpm i18n:verify` 通过。`pnpm lint` 在 feature 目录仍有
+> 若干**既有**规则报错（`Buffer`/`process` 全局、控制字符正则等，非本次引入），按仓库约定由用户处理。
+>
 > 审查基线：提交 `3f46e469 feat(elevationAssistant): 新增提权助手功能，支持创建管理员快捷方式与权限诊断`。
 > 审查范围：`src/features/elevationAssistant/` 全部生产文件（19 个 TS/Vue + 6 个 spec + 6 个 SCSS + README），并核对功能注册、i18n、存储注册表、`DESTROYABLE_KEYS`。
 > 审查方式：静态走查（逐文件阅读 + 交叉引用检查）；执行 `pnpm exec vitest run src/features/elevationAssistant`，结果 **5 个测试文件 60 passed / 1 个 Windows 集成 spec 5 skipped**。

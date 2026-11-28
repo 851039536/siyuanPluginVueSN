@@ -4,8 +4,8 @@
 import type { Plugin } from "siyuan"
 import type { DockAppHandle } from "@/utils/vueAppHelper"
 import { createVueDockApp } from "@/utils/vueAppHelper"
-import { WindowsShellService } from "../managers/WindowsShell"
 import ElevationAssistantPanel from "../index.vue"
+import { WindowsShellService } from "../managers/WindowsShell"
 
 export type ShortcutLocation = "desktop" | "programs" | "custom"
 
@@ -29,6 +29,36 @@ export type IntegrityLevel =
   | "system"
   | "protected"
   | "unknown"
+
+/** PE 文件架构 */
+export type PeArch = "x86" | "x64" | "arm64" | "unknown"
+
+/** manifest 来源 */
+export type ManifestSource = "embedded" | "external" | "none" | "unreadable"
+
+/** 诊断结论原因码（单一来源，manifest 解析与 UI 展示共用） */
+export type DiagnosisReasonCode =
+  | "manifestRequireAdministrator"
+  | "manifestHighestAvailable"
+  | "manifestAsInvoker"
+  | "manifestUiAccess"
+  | "manifestMissing"
+  | "unsupportedFile"
+  | "readError"
+  | "parseError"
+
+/** 系统调用失败原因（PowerShell / 原生命令共用） */
+export type ShellFailureKind = "env" | "timeout" | "powershell" | "unknown"
+
+/** 快捷方式检测状态：未检测 / 存在 / 已丢失 / 文件无效 / 无法检测 */
+export type ShortcutState = "unknown" | "exists" | "missing" | "invalid" | "error"
+
+export interface ShortcutStatus {
+  state: ShortcutState
+  valid: boolean
+  runAsAdmin: boolean
+  error?: string
+}
 
 export interface ShortcutRecord {
   path: string
@@ -55,24 +85,15 @@ export interface PermissionDiagnosis {
   checkedAt: number
   exists: boolean
   kind: "exe" | "other" | "missing" | "error"
-  arch: "x86" | "x64" | "arm64" | "unknown"
+  arch: PeArch
   size: number
-  manifestSource: "embedded" | "external" | "none" | "unreadable"
+  manifestSource: ManifestSource
   manifestLevel: ManifestLevel
   uiAccess: boolean
   requiresAdmin: boolean
   recommendedElevate: boolean
   recommendation: ElevationRecommendation
-  reasonCode:
-    | "manifestRequireAdministrator"
-    | "manifestHighestAvailable"
-    | "manifestAsInvoker"
-    | "manifestUiAccess"
-    | "manifestMissing"
-    | "externalManifest"
-    | "unsupportedFile"
-    | "readError"
-    | "parseError"
+  reasonCode: DiagnosisReasonCode
   error?: string
 }
 
@@ -87,7 +108,7 @@ export interface PrivilegeStatus {
 
 export type PrivilegeResult =
   | { ok: true, status: PrivilegeStatus }
-  | { ok: false, kind: "env" | "timeout" | "powershell" | "unknown", message?: string }
+  | { ok: false, kind: ShellFailureKind, message?: string }
 
 export interface CreateShortcutParams {
   /** 不含 .lnk 后缀 */
@@ -95,7 +116,6 @@ export interface CreateShortcutParams {
   targetPath: string
   args: string
   workingDir: string
-  description: string
   location: ShortcutLocation
   customDir: string
   runAsAdmin: boolean
@@ -106,10 +126,8 @@ export type ShortcutFailureKind =
   | "exists"
   | "invalid"
   | "location"
-  | "env"
-  | "timeout"
-  | "powershell"
-  | "unknown"
+  | "limit"
+  | ShellFailureKind
 
 export type CreateShortcutOutcome =
   | { ok: true, path: string, runAsAdmin: boolean }
@@ -118,10 +136,10 @@ export type CreateShortcutOutcome =
 export type RunOutcome =
   | { ok: true, pid?: number }
   | {
-      ok: false
-      kind: "canceled" | "env" | "timeout" | "powershell" | "unknown"
-      message?: string
-    }
+    ok: false
+    kind: "canceled" | ShellFailureKind
+    message?: string
+  }
 
 /** 编辑器中维护的表单草稿 */
 export interface ToolDraft {
@@ -134,8 +152,18 @@ export interface ToolDraft {
   customDir: string
 }
 
-/** i18n 分片（平铺键，参照 scriptLauncher） */
-export type ElevationAssistantI18n = Record<string, string>
+/** 程序扫描来源 */
+export type ProgramScanSource = "startMenu" | "desktop" | "appPaths" | "process"
+
+export interface ProgramCandidate {
+  name: string
+  path: string
+  source: ProgramScanSource
+}
+
+export type ProgramScanOutcome =
+  | { ok: true, programs: ProgramCandidate[], truncated: boolean, warnings: string[] }
+  | { ok: false, kind: ShellFailureKind, message?: string }
 
 /** Dock 注册类：持有 shell 生命周期，插件卸载时统一 destroy */
 export class ElevationAssistant {
@@ -149,7 +177,7 @@ export class ElevationAssistant {
 
   public init(): void {
     this.registerIcon()
-    const i18n = this.plugin.i18n?.elevationAssistant as unknown as ElevationAssistantI18n | undefined
+    const i18n = this.plugin.i18n?.elevationAssistant as unknown as Record<string, string> | undefined
     this.dock = createVueDockApp(this.plugin, ElevationAssistantPanel, {
       position: "RightTop",
       width: 460,

@@ -1,5 +1,7 @@
 export * from "./commands"
+export * from "./diagnosisView"
 export * from "./manifest"
+export * from "./programs"
 export * from "./shortcut"
 export * from "./tools"
 export * from "./validation"

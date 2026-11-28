@@ -10,7 +10,8 @@
 | 审查起始 | 297 | 622 | 643 | 1562 |
 | 第一轮（清理冗余）后 | 297 | 621 | 588 | 1506 |
 | 第三轮（P0 专项）后 | **0** | 513 | 511 | 1024 |
-| 冗余移除（第一轮补充）后 | **0** | 514 | 486 | **999** |
+| 冗余移除（第一轮补充）后 | **0** | 514 | 486 | 999 |
+| 第二轮（遮罩收敛 + 拆分样板）后 | **0** | 492 | 467 | **959** |
 
 `scripts/audit-scss.baseline.json` 已按 1024 条重建，后续门禁只对新增生效。
 
@@ -152,6 +153,69 @@
 ### 5. 如何回滚
 
 单 commit 可整体回滚；若只回滚冗余删除、保留变量修复，需按上表逐个文件 `git checkout` 后重跑变量替换脚本（幂等）。
+
+---
+
+## 第二轮：结构优化（进行中）
+
+### 1. 改了什么
+
+| 项 | 位置 | 改动 | 量 |
+| --- | --- | --- | --- |
+| 内联样式误报修正 | 审计规则 `scanVue` | `R1-style-in-vue` 13 条经复核**全部是 `@use` 桥接块**（含注释），非真实内联；修正规则：先屏蔽 `<script>` 区域（模板字符串里的 `<style>` 常量）、剥离注释后再判桥接 | 13 → 0，零代码改动 |
+| 遮罩范式收敛 | 新增 `kit/mixins.scss` 的 `si-overlay($z-index, $bg)` | 13 处手写遮罩改为一行 `@include`，各自保留原 z-index / 底色 / 额外属性 | −100 行 |
+| 超大文件拆分（样板） | `componentPreview/styles/PreviewCard.scss` | 438 行拆为聚合壳 + 3 分片（Base 115 / Stage 115 / Demo 213），壳内按原顺序 `@use` | `R2-file-size` 4 → 3 |
+
+**13 处遮罩与其保留的差异参数**：
+
+| 模块 | 原 z-index | 原底色 | 保留的额外声明 |
+| --- | --- | --- | --- |
+| websiteNavigation `.wn-mask` | 10000 | 0.5 | `font-size: $t-xs` |
+| video `.dialog-overlay` | 1001 | 0.5 | `pointer-events: auto` |
+| video `.video-manager-overlay` | 1000 | 0.5 | `pointer-events: auto` |
+| docAnalysis `.attrs-panel-overlay` | 1000 | **0.4** | 无 |
+| docAnalysis `%modal-overlay`（placeholder） | 10000 | **0.35** | 无（内部改为 `@include`，`@extend` 用法不变） |
+| statistics `.rule-editor-overlay` | 10000 | 0.5 | `font-size: $t-xs` |
+| skillLearning `.skill-dialog-overlay` | 99999 | 0.5 | `padding` / `box-sizing` |
+| scriptLauncher `.script-editor-mask` | 10000 | 0.5 | 无 |
+| pageLock `.page-lock-dialog-mask` | 10000 | 0.5 | `pointer-events: auto` |
+| minimalBrowser `.mb-dialog-mask` | 11000 | 0.5 | `font-size: $t-xs` |
+| minimalBrowser `.mb-settings-mask` | 11000 | 0.5 | `font-size: $t-xs` |
+| imageCreation `.image-creation-overlay` | 100001 | **0.45** | `font-size`；**移除 `backdrop-filter: blur(2px)`** |
+| htmlViewer `.html-viewer-overlay` | 99999 | 0.5 | 嵌套 `&.modal-overlay { z-index: 100000 }` |
+| flashcardReading `.dialog-overlay` | 1000 | 0.5 | `font-size: $t-xs` |
+
+### 2. 为什么改
+
+- 13 处遮罩的几何（`fixed` + 四边 0）、居中对齐、底色写法完全同构，属 `AGENTS_STYLE.md` § 背景与过渡要求「统一口径」的对象；散落手写导致 z-index 出现 1000 / 1001 / 11000 / 99999 / 100001 五种值，改一处口径要翻 13 个文件。
+- `PreviewCard.scss` 超 12KB 阈值主因是「舞台分档 + 演示宿主类」两类与卡片外壳无关的规则堆在同一文件；三个 section 边界清晰、无局部变量，是低风险拆分样板。
+
+### 3. 可能带来的风险
+
+| 风险 | 处理 |
+| --- | --- |
+| 遮罩 mixin 改变层级 | 每处显式传原 z-index，`si-overlay` 默认值 10000 仅作兜底；`html-viewer` 的 `.modal-overlay` 覆盖层级保留 |
+| 遮罩底色差异被抹平 | 4 处非 0.5 底色（0.4 / 0.35 / 0.45）逐个传入，不统一成 0.5 |
+| `imageCreation` 移除 `blur(2px)` | 该声明违反「禁用 backdrop-filter」（Electron 滚动性能 + 全局观感），属规范修正；视觉上遮罩从「模糊」变为「纯半透明」，**这是本轮唯一可感知的视觉变化** |
+| placeholder 内 `@include` | `%modal-overlay` 仍可被 `@extend`，只是声明体来自 mixin；docAnalysis 各弹窗输出等价 |
+| 拆分改变 CSS 输出顺序 | 聚合壳按 Base → Stage → Demo 顺序 `@use`，与原单文件一致；`PreviewCard.vue` 的引用路径不变 |
+| 拆分导致重复发射 | 已确认 `PreviewCard.scss` 只有 1 个引入点（`PreviewCard.vue`），不存在 aiContentGenerator 那种「多组件各引一次」的重复风险 |
+
+### 4. 验证结果
+
+| 检查 | 结果 |
+| --- | --- |
+| `pnpm audit:scss --json` | P0 0 / P1 492 / P2 467（合计 959，起始 1562）；`R2-shared-pattern` 13 → **0**；`R2-file-size` 4 → 3；`R2-syntax-unbalanced` 0 |
+| 拆分完整性 | Base 115 / Stage 115 / Demo 213 行，section 标题与内容衔接无缺失 |
+| `pnpm typecheck` | 通过 |
+| `pnpm test` | 130 files / 1624 passed |
+| `pnpm audit:scss --fail-on=p0,p1` | ✅ 通过（基线重建为 959 条） |
+| 待用户 | `pnpm build`、13 个弹窗视觉回归、组件预览面板 |
+
+### 5. 如何回滚
+
+- 遮罩收敛：`git checkout -- <13 个文件>` 并删除 `kit/mixins.scss` 的 `si-overlay`（无其他引用则不影响编译）
+- PreviewCard 拆分：删除 3 个分片，`git checkout -- src/features/componentPreview/styles/PreviewCard.scss`
 
 ---
 

@@ -1,15 +1,9 @@
 @use "@/variables.scss" as *;
 
 .skill-dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include si-overlay(99999);
   padding: $s-4;
   box-sizing: border-box;
-  z-index: 99999;
 }
 .skill-dialog {
   width: 504px;

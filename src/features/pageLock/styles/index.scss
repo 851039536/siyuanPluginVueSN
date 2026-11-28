@@ -1,16 +1,7 @@
 @use "@/variables.scss" as *;
 
 .page-lock-dialog-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
+  @include si-overlay;
   pointer-events: auto;
 }
 

@@ -4,13 +4,8 @@
 @use "../styles/index.scss" as stats;
 
 .rule-editor-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10000; // 全屏遮罩统一层级
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5); // 遮罩统一透明度，不使用 backdrop-filter
+  @include si-overlay;
+
   // 弹窗遮罩基准字号（防止内部文字继承思源全局默认字号）
   font-size: $t-xs;
 }

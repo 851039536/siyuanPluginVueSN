@@ -1,0 +1,115 @@
+// 组件预览 — 组件舞台布局分档（自 PreviewCard.scss 拆出，按原顺序引入）
+@use '@/variables.scss' as *;
+
+// ==================== 舞台布局分档（按组件类型分层） ====================
+
+// 紧凑舞台：原子控件（Button / Tag / Badge / Avatar / Switch / Checkbox / RadioButton / Label / Divider…）
+// 内容仅 20~44px 高，沿用 96px 基线会留下大片空白并显著拉长面板滚动
+.cp-card__stage--compact {
+  min-height: 64px; // 紧凑舞台高度，无对应 Token
+}
+
+// 满宽容器类：Card / Panel / Message / Paginator 的根元素**没有 width**，
+// 而舞台是行方向 flex ⇒ 它们会被收缩成内容宽并居中，快照失真（看不出真实满宽形态）
+.cp-card__stage--fill {
+  align-items: flex-start;
+  justify-content: flex-start;
+
+  // 仅作用于组件根元素（直接子元素），不影响组件内部布局
+  > * {
+    width: 100%;
+  }
+}
+
+// 顶对齐：Timeline / Tabs / FileUpload / Listbox / Splitter 的内容高度随示例变化，
+// 垂直居中会让上边距随内容条数随机漂移（同 MegaMenu / TieredMenu 的既有处理思路）
+.cp-card__stage--top {
+  align-items: flex-start;
+}
+
+// 图表：Chart 默认档内容为 200×150，96px 基线会溢出或贴边（宽度由 260px 列宽保证）
+.cp-card__stage--chart {
+  min-height: 190px; // 150px 图表 + 上下内边距 2×16px，无对应 Token
+}
+
+// MeterGroup：横向示例只需 ~40px（细条 4px + 标签行），但**纵向示例**的竖条有
+// `height: 8rem`（128px）下限 ⇒ 舞台须给足，否则竖条会被卡片 `overflow: hidden` 裁掉。
+// 与 `--fill` 组合使用（根元素 width: 100%）。
+.cp-card__stage--meterGroup {
+  min-height: 200px; // 竖条 128px + 标签行 + 上下内边距，无对应 Token
+}
+
+// Loader 组件高度依赖父容器显式高度，单独给足舞台空间
+.cp-card__stage--loader {
+  height: 160px; // 动画展示高度，无对应 Token
+}
+
+// SpeedDial 展开后动作会沿轨迹外扩，需给足舞台高度（卡片为 overflow: hidden 会裁掉溢出部分）
+.cp-card__stage--speeddial {
+  height: 260px; // 轨迹展开所需高度，无对应 Token
+}
+
+// Dialog：三段结构比确认框更高，给足舞台高度；并把卡片最大高度限制在舞台内
+// （真实调用处为 80vh，沙箱内收敛后「长内容」示例演示的才是内容区内部滚动，而非整块被卡片裁掉）
+// 类名写两遍抬到 (0,3,0)，同 .cp-card__stage 内弹层覆盖的写法
+.cp-card__stage--dialog {
+  height: 300px; // 弹窗三段结构展示所需高度，无对应 Token
+
+  .si-dialog.si-dialog {
+    max-height: 100%;
+  }
+}
+
+// Drawer：贴边卡片需足够纵向空间演示左右抽屉与三段结构；同时把延伸量限制在舞台内
+// （真实调用处贴死视口边缘铺满对应方向，沙箱内收敛后「长内容」示例演示的才是内容区内部滚动）
+// 类名写两遍抬到 (0,3,0)，同 .cp-card__stage 内弹层覆盖的写法
+.cp-card__stage--drawer {
+  height: 260px; // 抽屉三段结构展示所需高度，无对应 Token
+
+  .si-drawer.si-drawer {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+// MegaMenu：展开面板绝对定位于根项下方，会超出卡片高度被 overflow: hidden 裁掉
+// ⇒ 给足舞台高度，并把面板限高收到舞台内（真实调用处为 20rem / 由 scrollHeight 指定）
+.cp-card__stage--megaMenu {
+  height: 340px; // 根菜单 + 多列面板展示所需高度，无对应 Token
+  align-items: flex-start; // 菜单贴舞台顶部，避免垂直居中后把面板推到卡片外
+  overflow: visible;
+
+  .si-megamenu__panel {
+    max-height: 260px; // 舞台内收敛，超出走面板内部滚动
+  }
+}
+
+// TieredMenu：子菜单向右偏移父项的 100%，会横向溢出卡片宽度被 overflow: hidden 裁掉
+// ⇒ 给足高度并把菜单靠左放（右侧留出子菜单空间），同时允许溢出可见以便展开时不被切。
+.cp-card__stage--tieredMenu {
+  height: 300px; // 三级菜单展示所需高度，无对应 Token
+  align-items: flex-start;
+  justify-content: flex-start;
+  overflow: visible;
+
+  .si-tieredmenu__submenu > .si-tieredmenu__list {
+    // 三级菜单在窄卡片里会超出舞台，允许其自身限高滚动
+    max-height: 240px;
+    overflow-y: auto;
+  }
+}
+
+// Toast：消息堆栈 + 八向停靠需要足够舞台高度（卡片为 overflow: hidden，低舞台会把堆叠的多条消息裁掉），
+// 且消息卡自身有宽度（默认 320px），窄卡片下需允许其收缩 —— 见 .cp-card__stage 内的定位覆盖。
+.cp-card__stage--toast {
+  height: 240px; // 多消息堆叠展示所需高度，无对应 Token
+  align-items: stretch; // 让绝对定位的消息堆栈相对整个舞台贴边，而非被居中内容盒收窄
+  overflow: hidden;
+
+  // ⚠️ 类名写两遍抬到 (0,2,0)+：组件侧经 scoped 编译后是 `.si-toast__message[data-v-hash]`（同为 (0,2,0)），
+  //    只靠源顺序取胜太脆弱（同本文件开头的沙箱覆盖写法）。
+  .si-toast__message.si-toast__message {
+    width: auto; // 窄卡片下由 max-width 收敛，避免固定 320px 溢出被裁
+  }
+}
+

@@ -603,13 +603,21 @@ function scanScss(text, file, scanCtx) {
 // ========== .vue 内联样式 ==========
 function scanVue(text, file, scanCtx) {
   const issues = []
+  // 屏蔽 <script> 区域：其中模板字符串可能含 `<style>...</style>`（如 iframe srcdoc 常量），
+  // 用等长空白替换以保持索引与行号不变
+  const masked = text.replace(/<script[\s\S]*?<\/script>/gi, m => m.replace(/[^\n]/g, " "))
   const styleRe = /<style([^>]*)>([\s\S]*?)<\/style>/g
-  for (const m of text.matchAll(styleRe)) {
+  for (const m of masked.matchAll(styleRe)) {
     const attrs = m[1] ?? ""
-    const body = m[2] ?? ""
+    const rawBlock = text.slice(m.index, m.index + m[0].length)
+    const body = rawBlock.replace(/^<style[^>]*>/, "").replace(/<\/style>\s*$/, "")
     if (!body.trim()) continue
-    // 纯 `@use` 桥接块：样式实体已外置到 styles/*.scss，属规范写法
-    const bridged = body.replace(/@(?:use|import|forward)\s+[^;]+;/g, "").trim()
+    // 纯 `@use` 桥接块（允许带注释）：样式实体已外置到 styles/*.scss，属规范写法
+    const bridged = body
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\n]*/g, "")
+      .replace(/@(?:use|import|forward)\s+[^;]+;/g, "")
+      .trim()
     if (!bridged) continue
     const startLine = text.slice(0, m.index).split("\n").length
     const collector = createCollector({ file, matchesWhitelist: scanCtx.matchesWhitelist })

@@ -5,13 +5,8 @@ $fc-gap-tight: 6px; // 6px 紧密间距（无匹配全局Token）
 
 .flashcard-reading-panel {
   .dialog-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    @include si-overlay(1000);
+
     // 弹窗遮罩层基准字号（硬规则：防止继承思源全局默认字号）
     font-size: $t-xs;
   }

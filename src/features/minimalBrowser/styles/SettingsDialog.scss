@@ -2,13 +2,8 @@
 @use '@/variables.scss' as *;
 
 .mb-settings-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 11000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
+  @include si-overlay(11000);
+
   // 弹窗遮罩显式基准字号
   font-size: $t-xs;
 }

@@ -118,6 +118,18 @@
   }
 }
 
+// 全屏居中遮罩：几何（fixed + inset:0）+ 居中对齐 + 层级 + 底色。
+// $bg 默认对齐 AGENTS_STYLE 的遮罩口径 rgba(0, 0, 0, 0.5)；历史模块存在 0.35–0.4 的变体，按模块传入。
+@mixin si-overlay($z-index: 10000, $bg: rgba(0, 0, 0, 0.5)) {
+  position: fixed;
+  inset: 0;
+  z-index: $z-index;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $bg;
+}
+
 // 卡片容器（上间距 + 内边距 + 表面底 + 描边 + 圆角）
 @mixin si-card-panel {
   margin-top: $s-5;

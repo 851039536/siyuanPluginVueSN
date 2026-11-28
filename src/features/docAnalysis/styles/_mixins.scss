@@ -25,18 +25,9 @@
 
 // ============ 共享弹窗基类（%placeholder，供各弹窗 SCSS @extend） ============
 
-// 弹窗遮罩层
+// 弹窗遮罩层（几何/居中对齐/层级委托 kit 的 si-overlay，仅保留本模块 0.35 底色）
 %modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.35);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include si-overlay(10000, rgba(0, 0, 0, 0.35));
 }
 
 // 弹窗面板容器

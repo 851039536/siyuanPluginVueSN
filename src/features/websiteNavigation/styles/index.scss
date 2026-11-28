@@ -61,13 +61,8 @@
 
 // ── 弹窗共享基座（WebsiteDialog / CategoryManager 共用，对齐 gitPush Dialog.scss）──
 .wn-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
+  @include si-overlay;
+
   // 基准字号：弹窗内未显式声明字号的提示文字继承内容级 12px
   font-size: $t-xs;
 }

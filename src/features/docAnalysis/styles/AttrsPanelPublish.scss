@@ -1,0 +1,185 @@
+// 属性面板 — 发布状态区（自 AttrsPanel.scss 拆出，按原顺序引入）
+@use '@/variables.scss' as *;
+@use './mixins' as *;
+
+.publish-status-section {
+  padding: $s-px14 $s-px18;
+  border-bottom: 1px solid var(--b3-border-color);
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    margin-bottom: $s-2;
+  }
+
+  // 两列网格行式卡片，超出高度内部滚动（右侧留出滚动条呼吸空间）
+  .platform-status-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $s-2;
+    max-height: 260px;
+    overflow-y: auto;
+    padding-right: $s-1;
+    @include da-scrollbar;
+  }
+
+  // 行式卡片：左（图标+平台名）→ 中（状态徽章）→ 右（操作按钮组）
+  .platform-status-item {
+    display: flex;
+    align-items: center;
+    gap: $s-2;
+    padding: $s-1 $s-2;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-base;
+    font-size: $t-xs;
+    background: var(--b3-theme-surface-light);
+    color: var(--b3-theme-on-background);
+    user-select: none;
+    transition: background 0.12s, border-color 0.12s;
+
+    .platform-info {
+      display: flex;
+      align-items: center;
+      gap: $s-1;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .status-icon {
+      font-size: $t-xs;
+      flex-shrink: 0;
+    }
+
+    .platform-name {
+      font-weight: $fw-medium;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // 状态徽章：辅助文字字号 + 小圆角底色标签
+    .status-badge {
+      flex-shrink: 0;
+      padding: 0 $s-2;
+      border-radius: $r-sm;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
+      letter-spacing: 0.04em;
+      line-height: $lh-normal;
+      background: var(--b3-theme-surface);
+      border: 1px solid var(--b3-border-color);
+      color: var(--b3-theme-on-surface-light);
+
+      &.is-published {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: rgba(34, 197, 94, 0.3);
+        color: var(--b3-theme-success, #16a34a);
+      }
+    }
+
+    .platform-actions {
+      display: flex;
+      align-items: center;
+      gap: $s-1;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+
+    .publish-go-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border: none;
+      border-radius: 50%;
+      background: var(--b3-theme-primary);
+      color: var(--b3-theme-on-primary);
+      cursor: pointer;
+      font-size: $t-xs;
+      flex-shrink: 0;
+
+      &:hover:not(:disabled) {
+        opacity: 0.85;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+    }
+
+    .publish-format-btn {
+      background: var(--b3-theme-success, #22c55e);
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: var(--b3-theme-success, #16a34a);
+      }
+    }
+
+    // 未发布行 hover：泛浅绿提示可标记
+    &.clickable {
+      cursor: pointer;
+
+      &:hover {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: var(--b3-theme-success, #22c55e);
+
+        .status-icon {
+          color: var(--b3-theme-success, #22c55e);
+        }
+
+        .status-badge.is-unpublished {
+          background: rgba(34, 197, 94, 0.12);
+          border-color: rgba(34, 197, 94, 0.3);
+          color: var(--b3-theme-success, #16a34a);
+        }
+      }
+    }
+
+    // 已发布行：浅绿底 + 绿徽章
+    &.published {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.25);
+      color: var(--b3-theme-success, #16a34a);
+
+      .status-icon {
+        color: var(--b3-theme-success, #22c55e);
+      }
+
+      // 已发布行 hover：泛浅红提示可取消
+      &.clickable:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--b3-theme-error, #dc2626);
+        color: var(--b3-theme-error, #dc2626);
+
+        .status-icon {
+          color: var(--b3-theme-error, #ef4444);
+        }
+
+        .status-badge.is-published {
+          background: rgba(239, 68, 68, 0.12);
+          border-color: rgba(239, 68, 68, 0.3);
+          color: var(--b3-theme-error, #dc2626);
+        }
+      }
+    }
+
+    &.marking {
+      cursor: wait;
+      opacity: 0.7;
+    }
+  }
+
+  .spin-icon {
+    @include da-spin-icon;
+  }
+}
+

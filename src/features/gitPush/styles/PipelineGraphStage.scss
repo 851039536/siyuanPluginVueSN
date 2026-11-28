@@ -1,0 +1,311 @@
+@use "@/variables.scss" as *;
+@use "./mixins" as *;
+
+// 流水线关系图：静态阶段网络（SVG）+ 图例 + 运行中高亮
+.gpg-panel {
+  @include panel-base;
+  display: flex;
+  flex-direction: column;
+  gap: $s-2;
+  font-size: $t-2xs;
+  color: var(--b3-theme-on-surface);
+}
+
+.gpg-head {
+  display: flex;
+  flex-direction: column;
+  gap: $s-px3;
+  padding: $s-1 $s-2 0 0;
+}
+
+.gpg-title {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-on-background);
+}
+
+.gpg-hint {
+  margin: 0;
+  color: var(--b3-theme-secondary);
+  line-height: $lh-normal;
+}
+
+// 画布视口：高度固定；内容超出时滚轮上下滑动、拖拽平移（Ctrl+滚轮缩放）
+.gpg-stage {
+  position: relative;
+  height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  background: var(--b3-theme-surface);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+
+  &.is-panning {
+    cursor: grabbing;
+  }
+}
+
+.gpg-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: max-content;
+  box-sizing: content-box;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.gpg-canvas {
+  display: block;
+  font-family: $ff-zh;
+}
+
+// 视图控制：缩放 / 实际大小 / 适应画布
+.gpg-view-controls {
+  position: absolute;
+  top: $s-px6;
+  right: $s-px6;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: $s-px2;
+  padding: $s-px2;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: var(--b3-theme-background);
+  opacity: 0.92;
+}
+
+.gpg-view-btn {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 $s-px5;
+  border: none;
+  border-radius: $r-px3;
+  background: none;
+  color: var(--b3-theme-secondary);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--b3-list-hover);
+    color: var(--b3-theme-on-surface);
+    outline: none;
+  }
+
+  &--text {
+    font-size: $t-2xs;
+  }
+}
+
+.gpg-zoom-label {
+  min-width: 34px;
+  color: var(--b3-theme-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  user-select: none;
+}
+
+// 迷你地图：放大时出现在右下角，点击跳转
+.gpg-minimap {
+  position: absolute;
+  right: $s-px6;
+  bottom: $s-px6;
+  z-index: 2;
+  cursor: crosshair;
+}
+
+.gpg-minimap-bg {
+  fill: var(--b3-theme-background);
+  stroke: var(--b3-border-color);
+  opacity: 0.92;
+}
+
+.gpg-minimap-node {
+  fill: var(--b3-border-color);
+
+  &--running { fill: var(--b3-theme-primary); }
+  &--done { fill: var(--b3-theme-success); }
+  &--fail { fill: var(--b3-theme-error); }
+  &--skipped,
+  &--canceled { opacity: 0.4; }
+}
+
+.gpg-minimap-view {
+  fill: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12);
+  stroke: var(--b3-theme-primary);
+  stroke-width: 1;
+}
+
+.gpg-edge {
+  fill: none;
+  stroke: var(--b3-border-color);
+  stroke-width: 1.2;
+  transition: opacity 0.15s ease, stroke 0.15s ease;
+
+  &.is-active {
+    stroke: var(--b3-theme-primary);
+    stroke-width: 2;
+    stroke-dasharray: 6 4;
+    animation: gpg-flow 1.2s linear infinite;
+  }
+
+  &.is-fail {
+    stroke: var(--b3-theme-error);
+  }
+
+  &.is-dimmed {
+    opacity: 0.22;
+  }
+}
+
+.gpg-node {
+  cursor: default;
+  outline: none;
+  transition: opacity 0.15s ease;
+
+  &.is-dimmed {
+    opacity: 0.22;
+  }
+
+  &:hover .gpg-node-box,
+  &:focus-visible .gpg-node-box {
+    stroke-width: 2;
+  }
+
+  // 选中节点（详情展开）：虚线圈与运行态区分
+  &.is-selected .gpg-node-box {
+    stroke: var(--b3-theme-primary);
+    stroke-width: 2;
+    stroke-dasharray: 3 2;
+  }
+
+  // 时间线回放：描边脉冲，不改节点自身的状态色
+  &.is-replay .gpg-node-box {
+    stroke: var(--b3-theme-primary);
+    stroke-width: 2;
+    animation: gpg-node-pulse 0.9s ease-in-out infinite;
+  }
+}
+
+.gpg-node-box {
+  fill: var(--b3-theme-background);
+  stroke: var(--b3-border-color);
+  stroke-width: 1;
+}
+
+.gpg-node-label {
+  font-size: 11px;
+  fill: var(--b3-theme-on-surface);
+  user-select: none;
+}
+
+// 节点底部「上次耗时」小字：只做参考，不抢阶段名
+.gpg-node-time {
+  fill: var(--b3-theme-secondary);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+  pointer-events: none;
+  user-select: none;
+}
+
+// 最近一次失败：红色描边 + 感叹号（成功一次即由状态层清除）
+.gpg-node.has-failure .gpg-node-box {
+  stroke: var(--b3-theme-error);
+}
+
+.gpg-node-fail {
+  fill: var(--b3-theme-error);
+  font-size: 10px;
+  font-weight: $fw-semibold;
+  pointer-events: none;
+  user-select: none;
+}
+
+// 状态图标：形状 + 颜色双编码，色弱与暗色主题下仍可辨
+.gpg-state {
+  fill: none;
+  stroke: var(--b3-border-color);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+
+  .gpg-state-dot {
+    stroke: none;
+  }
+}
+
+.gpg-state--running {
+  stroke: var(--b3-theme-primary);
+
+  .gpg-state-dot {
+    fill: var(--b3-theme-primary);
+  }
+}
+
+.gpg-state--done {
+  stroke: var(--b3-theme-success);
+}
+
+.gpg-state--fail {
+  stroke: var(--b3-theme-error);
+}
+
+.gpg-state--skipped,
+.gpg-state--canceled {
+  opacity: 0.8;
+}
+
+// 运行中真实进度条（仅在上报 percent 时出现）
+.gpg-progress-track {
+  fill: var(--b3-border-color);
+  opacity: 0.45;
+}
+
+.gpg-progress-fill {
+  fill: var(--b3-theme-primary);
+}
+
+.gpg-node--running {
+  .gpg-node-box {
+    fill: rgb(from var(--b3-theme-primary, #{$c-primary}) r g b / 0.12);
+    stroke: var(--b3-theme-primary);
+    animation: gpg-node-pulse 1.8s ease-in-out infinite;
+  }
+
+  .gpg-node-label {
+    fill: var(--b3-theme-primary);
+    font-weight: $fw-medium;
+  }
+}
+
+.gpg-node--done {
+  .gpg-node-box {
+    stroke: var(--b3-theme-success);
+  }
+}
+
+.gpg-node--fail {
+  .gpg-node-box {
+    stroke: var(--b3-theme-error);
+  }
+
+  .gpg-node-label {
+    fill: var(--b3-theme-error);
+  }
+}
+
+.gpg-node--skipped,
+.gpg-node--canceled {
+  opacity: 0.65;
+}
+

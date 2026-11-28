@@ -1,0 +1,215 @@
+// gitPush Tag 管理 / 冲突警告 / 搜索框 / 加载更多（自 index.scss 拆出）
+@use '@/variables.scss' as *;
+@use './mixins' as *;
+
+// ── Tag 管理 ──
+.gp-tag-panel {
+  .gp-tag-header {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+    margin-bottom: $s-1;
+  }
+
+  .gp-tag-label {
+    @include gp-label-base;
+    width: 36px;
+  }
+
+  .gp-tag-refresh-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .gp-tag-push-btn {
+    flex-shrink: 0;
+  }
+}
+
+.gp-tag-list {
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-gutter: stable; // 同上：Tag 增删（推送/删除/新建）时不抖动卡片宽度
+}
+
+.gp-tag-row {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-px2 0;
+  font-size: $t-2xs;
+  @include row-divider;
+}
+
+.gp-tag-name {
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-primary);
+  min-width: 0;
+  @include text-ellipsis;
+}
+
+.gp-tag-msg {
+  flex: 1;
+  opacity: 0.45;
+  font-size: $t-2xs;
+  @include text-ellipsis;
+}
+
+.gp-tag-date {
+  font-size: $t-2xs;
+  opacity: 0.35;
+  font-family: $ff-mono;
+}
+
+.gp-tag-empty {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-px6 0;
+  font-size: $t-2xs;
+  opacity: 0.35;
+  font-style: italic;
+}
+
+// ── 冲突警告条 ──
+.gp-conflict-bar {
+  margin: $s-2 0;
+  padding: $s-2 $s-px10;
+  border: 1px solid rgba($c-danger, 0.24);
+  border-radius: $r-sm;
+  background: rgba($c-danger, 0.12);
+}
+
+.gp-conflict-header {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  color: var(--b3-theme-error);
+  margin-bottom: $s-px6;
+}
+
+.gp-conflict-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s-1;
+  margin-bottom: $s-px6;
+}
+
+.gp-conflict-file {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-px2 $s-px6;
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: var(--b3-theme-surface);
+}
+
+.gp-conflict-actions {
+  display: flex;
+  gap: $s-px6;
+}
+
+// ── 搜索框 ──
+.gp-search-wrap {
+  padding: $s-1 $s-px10 $s-1 0;
+}
+
+// ── 加载更多（CommitAnalysisPanel 使用）──
+.gp-load-more {
+  display: flex;
+  justify-content: center;
+  padding: $s-2;
+}
+
+// ════ 代码统计报告（gpr-）共享基座：表格/徽章/区块标题原语（4 个分区 SCSS 复用，避免重复定义）════
+// 标题/计数样式与 StatsPanel.scss 的 .gp-stats-section-* 共用 _mixins.scss 的 gp-section-title-base / gp-section-count-base
+.gpr-section {
+  margin-bottom: $s-3;
+}
+
+.gpr-section-title {
+  @include gp-section-title-base;
+}
+
+// 注：.gpr-section-count（分区标题计数徽章）已移除 —— 报告页 4 个分区的条目数
+// 与分区 Tab 角标完全同源（authors/debt/hotspot/daily 同一计数），并排显示属重复渲染；
+// 现统一由 Tab 角标承担。热点分区原用的 analyzedFiles 因口径与 Tab 不同（全量 vs 截断后），
+// 已下移为表下方的分析口径提示（见 HotspotSection 的 analyzedText）。
+
+// 表格（技术债务/贡献度/热点汇总共用）：sticky 表头 + 行分割 + 等宽右对齐数字
+//
+// max-height 是 sticky 生效的前提：容器高度必须小于内容高度才有滚动行程，
+// 否则 sticky 表头没有可吸附的区间，会随外层面板一起滚走（此前只有 overflow-y:auto 无高度上限，吸顶实为失效）。
+// contain: paint 把重排范围限制在表格内，长表格（技术债务数百行）滚动时的布局计算不再外溢到整个面板。
+.gpr-table-wrap {
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  overflow-y: auto;
+  max-height: 50vh;
+  contain: paint;
+}
+
+.gpr-row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-px5 $s-2;
+  font-size: $t-xs;
+  @include row-divider;
+
+  &--head {
+    // sticky 表头：滚动时常驻顶部（实色背景防透出下层行）
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--b3-theme-surface);
+    color: var(--b3-theme-on-surface-light);
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+.gpr-cell {
+  flex-shrink: 0;
+
+  &--name {
+    flex: 1;
+    min-width: 0;
+    @include text-ellipsis;
+  }
+
+  // 文件路径（悬停提示完整路径，主题色强调）
+  &--file {
+    color: var(--b3-theme-primary);
+    @include text-ellipsis;
+  }
+
+  &--pct {
+    width: 48px;
+    text-align: right;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+  }
+
+  &--num {
+    width: 42px;
+    text-align: right;
+    padding-right: $s-1;
+    font-family: $ff-mono;
+    font-size: $t-2xs;
+  }
+
+}
+
+// 净增正负着色（代码贡献度）
+.gpr-cell--pos { color: var(--b3-theme-success); }
+.gpr-cell--neg { color: var(--b3-theme-error); }
+

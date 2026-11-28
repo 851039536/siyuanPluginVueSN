@@ -11,7 +11,8 @@
 | 第一轮（清理冗余）后 | 297 | 621 | 588 | 1506 |
 | 第三轮（P0 专项）后 | **0** | 513 | 511 | 1024 |
 | 冗余移除（第一轮补充）后 | **0** | 514 | 486 | 999 |
-| 第二轮（遮罩收敛 + 拆分样板）后 | **0** | 492 | 467 | **959** |
+| 第二轮（遮罩收敛 + 拆分样板）后 | **0** | 492 | 467 | 959 |
+| 第二轮（全部超大文件拆分）后 | **0** | 492 | 464 | **956** |
 
 `scripts/audit-scss.baseline.json` 已按 1024 条重建，后续门禁只对新增生效。
 
@@ -164,7 +165,10 @@
 | --- | --- | --- | --- |
 | 内联样式误报修正 | 审计规则 `scanVue` | `R1-style-in-vue` 13 条经复核**全部是 `@use` 桥接块**（含注释），非真实内联；修正规则：先屏蔽 `<script>` 区域（模板字符串里的 `<style>` 常量）、剥离注释后再判桥接 | 13 → 0，零代码改动 |
 | 遮罩范式收敛 | 新增 `kit/mixins.scss` 的 `si-overlay($z-index, $bg)` | 13 处手写遮罩改为一行 `@include`，各自保留原 z-index / 底色 / 额外属性 | −100 行 |
-| 超大文件拆分（样板） | `componentPreview/styles/PreviewCard.scss` | 438 行拆为聚合壳 + 3 分片（Base 115 / Stage 115 / Demo 213），壳内按原顺序 `@use` | `R2-file-size` 4 → 3 |
+| 超大文件拆分 | `componentPreview/styles/PreviewCard.scss` | 438 行 → 壳 + 3 分片（Base 115 / Stage 115 / Demo 213） | `R2-file-size` 4 → 3 |
+| 超大文件拆分 | `docAnalysis/styles/AttrsPanel.scss` | 510 行 → 壳 + 3 分片（Base 106 / Publish 186 / Table 229） | 3 → 2 |
+| 超大文件拆分 | `gitPush/styles/PipelineGraph.scss` | 646 行 → 壳 + 2 分片（Stage 312 / Detail 340） | 2 → 1 |
+| 超大文件拆分 | `gitPush/styles/index.scss` | 1027 行 / 25KB → 壳 23 行 + 4 分片（`_core` 265 / `_console` 291 / `_edit-dialog` 259 / `_tag-aux` 216） | 1 → 0 |
 
 **13 处遮罩与其保留的差异参数**：
 

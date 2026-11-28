@@ -1,0 +1,228 @@
+// 属性面板 — 属性表格与页脚（自 AttrsPanel.scss 拆出，按原顺序引入）
+@use '@/variables.scss' as *;
+@use './mixins' as *;
+
+.attrs-table {
+  margin: $s-px14 $s-px18;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-base;
+  overflow: hidden;
+
+  .attr-row {
+    display: flex;
+    border-bottom: 1px solid var(--b3-border-color, rgba(0, 0, 0, 0.04));
+    transition: background 0.12s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    // 数据行 hover 高亮（表头行除外）
+    &:not(.attr-head):hover {
+      background: var(--b3-list-hover);
+    }
+  }
+
+  // 表头行：表面底色连成整行 + 强下边框 + 等宽大写标签，与 .attr-key 风格呼应
+  .attr-head {
+    border-bottom: 1px solid var(--b3-border-color);
+
+    .attr-key,
+    .attr-value {
+      background: var(--b3-theme-surface);
+      font-family: $ff-mono;
+      font-size: $t-2xs;
+      font-weight: $fw-bold;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.45;
+    }
+  }
+
+  .attr-key {
+    width: 160px;
+    flex-shrink: 0;
+    padding: $s-px10 $s-4;
+    font-size: $t-2xs;
+    font-weight: $fw-bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    background: var(--b3-theme-surface, rgba(0, 0, 0, 0.02));
+    border-right: 1px solid var(--b3-border-color, rgba(0, 0, 0, 0.04));
+    word-break: break-all;
+  }
+
+  .attr-value {
+    flex: 1;
+    padding: $s-px10 $s-4;
+    font-size: $t-xs;
+    color: var(--b3-theme-on-background);
+    word-break: break-all;
+    min-width: 0;
+
+    .attr-text {
+      line-height: $lh-normal;
+    }
+
+    .attr-empty {
+      color: var(--b3-theme-on-surface-light);
+      opacity: 0.5;
+    }
+
+    .attr-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: $r-sm;
+      background: transparent;
+      color: var(--b3-theme-on-surface-light);
+      cursor: pointer;
+      font-size: $t-xs;
+      flex-shrink: 0;
+      vertical-align: middle;
+      margin-left: $s-2;
+      opacity: 0.4;
+      transition: opacity 0.15s;
+
+      &:hover {
+        opacity: 1;
+        color: var(--b3-theme-primary);
+        background: var(--b3-theme-surface-light);
+      }
+    }
+  }
+
+  .yaml-toggle {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+    cursor: pointer;
+    padding: $s-px2 0;
+    user-select: none;
+
+    .toggle-icon {
+      font-size: $t-sm;
+      flex-shrink: 0;
+    }
+
+    .yaml-label {
+      font-weight: $fw-medium;
+    }
+
+    .yaml-size {
+      font-size: $t-xs;
+      color: var(--b3-theme-on-surface-light);
+      opacity: 0.7;
+    }
+
+    &:hover {
+      color: var(--b3-theme-primary);
+    }
+  }
+
+  .yaml-content {
+    margin-top: $s-2;
+    padding: $s-px10 $s-px14;
+    background: var(--b3-theme-surface, rgba(0, 0, 0, 0.03));
+    border-radius: $r-base;
+    font-size: $t-xs;
+    line-height: $lh-normal;
+    font-family: $ff-mono;
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--b3-border-color, rgba(0, 0, 0, 0.06));
+
+    &::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--b3-scroll-color);
+      border-radius: $r-sm;
+    }
+  }
+}
+
+.attrs-panel-footer {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-3 $s-px18;
+  border-top: 1px solid var(--b3-border-color);
+
+  .footer-spacer {
+    flex: 1;
+  }
+
+  .footer-btn {
+    display: flex;
+    align-items: center;
+    gap: $s-1;
+    padding: $s-px6 $s-px14;
+    border: 1px solid var(--b3-border-color);
+    border-radius: $r-base;
+    background: var(--b3-theme-background);
+    color: var(--b3-theme-on-background);
+    font-size: $t-xs;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--b3-theme-surface-light);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .md-copy-btn {
+    color: var(--b3-theme-on-primary);
+    background: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+      background: var(--b3-theme-primary);
+    }
+
+    .spin-icon {
+      @include da-spin-icon;
+    }
+  }
+
+  .doocs-btn {
+    color: #fff;
+    background: var(--b3-theme-success, #22c55e);
+    border-color: var(--b3-theme-success, #22c55e);
+
+    &:hover:not(:disabled) {
+      opacity: 0.85;
+      background: var(--b3-theme-success, #16a34a);
+    }
+  }
+}
+
+// 移动端：平台状态两列在窄屏会把平台名/状态/按钮挤成一行窄条，改为单列
+@media (max-width: $bp-mobile) {
+  .publish-status-section {
+    .platform-status-list {
+      grid-template-columns: 1fr;
+      max-height: none;
+
+      .platform-status-item {
+        // 触摸目标：行内操作按钮密集，整行留足高度避免误触
+        min-height: 40px;
+      }
+    }
+  }
+}
+

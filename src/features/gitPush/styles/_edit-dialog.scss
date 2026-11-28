@@ -1,0 +1,258 @@
+// gitPush 克隆日志 + 编辑弹窗（自 index.scss 拆出）
+@use '@/variables.scss' as *;
+@use './mixins' as *;
+
+// ── 克隆日志面板（EditProjectDialog：git clone --progress 实时输出）──
+.gp-clone-log {
+  margin-top: $s-1;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  overflow: hidden;
+}
+
+.gp-clone-log-header {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-1 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  font-size: $t-2xs;
+  font-weight: $fw-semibold;
+}
+
+// 日志面板头部关闭按钮（推到最右侧）
+.gp-clone-log-close {
+  margin-left: auto;
+}
+
+.gp-clone-log-body {
+  max-height: 140px; // 约 10 行日志高度，超出滚动，避免撑高弹窗
+  overflow-y: auto;
+  padding: $s-1 $s-2;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  opacity: 0.8;
+}
+
+.gp-clone-log-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+
+  // 空行占位（换行提交后的待写入行）
+  &:empty {
+    height: 1em;
+  }
+}
+
+// 设置汇总弹窗布局 → SettingsDialog.scss
+
+// 扫描导入弹窗：加宽以容纳扫描结果的完整路径展示
+.gp-dialog--scan {
+  width: 520px;
+}
+
+// 项目编辑弹窗：加宽以容纳多设备路径行与远程列表
+.gp-dialog--edit {
+  width: 754px;
+}
+
+// 扫描按钮行：居中放置"开始扫描"按钮
+.gp-scan-action-row {
+  display: flex;
+  justify-content: center;
+  margin-top: $s-1;
+}
+
+// 结果列表头部的"全选"按钮（辅助操作，用 2xs 字号）
+.gp-scan-select-all {
+  font-size: $t-2xs;
+}
+
+.gp-scan-results {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  padding: $s-2;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+.gp-scan-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 $s-px6;
+}
+
+.gp-scan-count {
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+  opacity: 0.6;
+}
+
+.gp-scan-item {
+  @include row-divider;
+}
+
+.gp-scan-item-row {
+  display: flex;
+  align-items: center;
+  gap: $s-2;
+  padding: $s-px6 $s-1;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover {
+    background: var(--b3-theme-surface);
+  }
+
+  &.gp-scan-imported {
+    opacity: 0.4;
+    cursor: default;
+    pointer-events: none;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+}
+
+.gp-scan-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $s-px1;
+}
+
+.gp-scan-item-name {
+  font-size: $t-xs;
+  font-weight: $fw-semibold;
+}
+
+.gp-scan-item-path {
+  font-size: $t-2xs;
+  font-family: $ff-mono;
+  opacity: 0.5;
+  @include text-ellipsis;
+}
+
+.gp-scan-badge {
+  font-size: $t-2xs;
+  font-weight: $fw-bold;
+  padding: $s-px2 $s-px6;
+  border-radius: $r-sm;
+  background: var(--b3-theme-primary-lightest);
+  color: var(--b3-theme-primary);
+  white-space: nowrap;
+}
+
+
+// 卡片顶栏信息区/操作区/状态样式 → CardHeader.scss / CardRemotes.scss / CardActionBar.scss
+
+// ========== 编辑弹窗 ==========
+.gp-edit-row {
+  display: flex;
+  align-items: flex-end;
+  gap: $s-px10;
+}
+
+.gp-edit-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.gp-edit-toggles {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.gp-toggle-row {
+  display: flex;
+  gap: $s-1;
+  align-items: center;
+  height: 32px;
+  flex-wrap: nowrap;
+}
+
+.gp-toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-px3;
+  padding: $s-px2 $s-px6;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  font-size: $t-2xs;
+  cursor: pointer;
+  transition: opacity 0.12s, border-color 0.12s, background 0.12s;
+  opacity: 0.55;
+  flex-shrink: 0;
+  white-space: nowrap;
+
+  &:hover { opacity: 0.85; }
+
+  &.active {
+    opacity: 1;
+    background: var(--b3-theme-primary-lightest);
+    color: var(--b3-theme-primary);
+    border-color: var(--b3-theme-primary);
+  }
+}
+
+// 编辑弹窗：多本地路径编辑
+.gp-label-hint {
+  font-size: $t-2xs;
+  font-weight: $fw-normal;
+  opacity: 0.45;
+  margin-left: $s-1;
+}
+
+.gp-edit-paths {
+  display: flex;
+  flex-direction: column;
+  gap: $s-1;
+  margin-bottom: $s-px6;
+}
+
+.gp-edit-path-row {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+
+  input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // 设备电脑名输入（可选标注）：固定窄列，不参与路径输入的 flex 伸展
+  .gp-path-device {
+    flex: 0 0 110px;
+
+    input {
+      flex: none;
+      width: 100%;
+    }
+  }
+}
+
+.gp-add-path-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: $s-1;
+  font-size: $t-2xs;
+  opacity: 0.6;
+  transition: opacity 0.12s;
+  &:hover { opacity: 1; }
+}
+
+// 卡片多路径标记样式 → CardHeader.scss
+
+// 按钮样式已提取到 styles/Buttons.scss
+

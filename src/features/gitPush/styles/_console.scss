@@ -1,0 +1,290 @@
+// gitPush 控制台输出面板 + 设置弹窗分支模式（自 index.scss 拆出）
+@use '@/variables.scss' as *;
+@use './mixins' as *;
+
+.gp-output {
+  margin-top: $s-2;
+  max-height: 200px; // 输出面板高度上限，超出滚动
+  border-radius: $r-sm;
+  background: var(--b3-theme-surface);
+  overflow: hidden; // 裁剪摘要行底色，使其贴合圆角
+  font-family: $ff-mono;
+  // 控制台输出统一 2xs 等宽字号
+  font-size: $t-2xs;
+  line-height: $lh-normal;
+  color: var(--b3-theme-on-surface);
+  user-select: text;
+}
+
+// 结果摘要头行：状态图标 + 结论文案 + 计数 + 关闭按钮（一行内右对齐关闭）
+// 三态底色由 --ok / --fail / --skip 修饰类给出，与下方逐行输出共用同一套语义色。
+.gp-output-head {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+  padding: $s-1 $s-1 $s-1 $s-2;
+  border-bottom: 1px solid var(--b3-border-color);
+  font-weight: $fw-semibold;
+  // 摘要是 UI 文案而非控制台输出：用界面字体，与下方等宽输出区分开
+  font-family: inherit;
+
+  &--ok {
+    color: var(--b3-theme-success);
+    background: rgba($c-success, 0.12);
+  }
+
+  &--fail {
+    color: var(--b3-theme-error);
+    background: rgba($c-danger, 0.12);
+  }
+
+  &--skip {
+    color: var(--b3-theme-on-surface-light);
+    background: var(--b3-theme-surface);
+  }
+
+  // 结论文案后接计数：弱化，避免与结论抢读
+  .gp-output-head-counts {
+    opacity: 0.7;
+    font-weight: $fw-normal;
+  }
+}
+
+// 关闭按钮贴右端（header 内正常流，不再绝对定位 —— 摘要行已为它留好位置）
+.gp-output-head .gp-output-close {
+  margin-left: auto;
+  opacity: 0.55;
+  transition: opacity 0.12s;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+  }
+}
+
+.gp-output-scroll {
+  max-height: 170px; // 减去摘要行高度后与 .gp-output 的 200px 上限对齐
+  overflow-y: auto;
+  padding: $s-2;
+
+  // 流水线自带内边距，避免双层 padding 把阶段链挤窄
+  &--pipeline { padding: 0; }
+}
+
+// 流水线运行中的动作文案 + 累计耗时：两端对齐，与阶段链分隔
+.gp-pipeline-elapsed {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 $s-2 $s-1;
+}
+
+// 控制台单行：头行按状态着色，stdout/stderr 详情行缩进
+.gp-console-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+
+  // 运行中过程行：主题色 + 旋转图标（gp-spin 为全局既有类）
+  &--run {
+    display: inline-flex;
+    align-items: baseline;
+    gap: $s-1;
+    color: var(--b3-theme-primary);
+  }
+
+  // 运行中动作文案（"推送中..."/"拉取中..."）：弱化，主题让位于平台列表
+  .gp-console-action {
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  // 运行中平台名列表：主题色强调（当前仍在推送/拉取的平台）
+  .gp-console-remotes {
+    color: var(--b3-theme-primary);
+    font-weight: $fw-medium;
+  }
+
+  // 运行中实时耗时：等宽 + 表格数字对齐（数值文本规范）
+  .gp-console-elapsed {
+    font-family: $ff-mono;
+    font-variant-numeric: tabular-nums;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  &--ok {
+    color: var(--b3-theme-success);
+  }
+
+  &--fail {
+    color: var(--b3-theme-error);
+  }
+
+  &--skip {
+    color: var(--b3-theme-on-surface-light);
+    opacity: 0.6;
+  }
+
+  &--out {
+    padding-left: $s-3;
+    color: var(--b3-theme-on-surface-light);
+  }
+
+  &--err {
+    padding-left: $s-3;
+    color: var(--b3-theme-error);
+  }
+}
+
+// 输出面板底部 AI 分析按钮区（失败条目时显示）
+.gp-output-ai {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 $s-2 $s-2;
+}
+
+// AI 分析入口按钮：主色文字由此处覆盖共享 Button 的 ghost 取色（(0,3,0)）
+.git-push-panel .gp-output-ai-btn.si-button {
+  color: var(--b3-theme-primary);
+
+  &:hover:not(:disabled) {
+    background: var(--b3-theme-primary-lightest);
+  }
+}
+
+// ── 设置弹窗：分支模式 radio（外观由共享 RadioButton 承担；同排内联以省纵向空间） ──
+.gp-set-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: $s-2;
+  align-items: center;
+}
+
+// dialog/form styles → Dialog.scss / Form.scss
+
+// 设置弹窗内设置行
+.gp-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s-2;
+}
+
+// 设置弹窗分组小标题（如「实时探测」）：与上方设置项拉开距离并加分隔线，
+// 使同一分区内的多组设置仍有视觉层次。
+// ⚠️ 不用 opacity 做弱化——opacity 会连 border-top 一起变淡，使该分隔线比其他分隔线更浅。
+// 改为显式降低文字色，分隔线保持与其他分隔线一致
+.gp-set-section-title {
+  margin-top: $s-3;
+  padding-top: $s-2;
+  border-top: 1px solid var(--b3-border-color);
+  color: var(--b3-theme-on-surface);
+  font-size: $t-xs;
+  font-weight: 600;
+}
+
+.gp-set-label {
+  font-size: $t-xs;
+  white-space: nowrap;
+}
+
+.gp-set-input-row {
+  display: flex;
+  align-items: center;
+  gap: $s-1;
+}
+
+// 数字输入框：固定窄宽度（容纳范围上限的位数即可）
+.gp-set-number-input {
+  width: 78px;
+}
+
+// 文本输入框（PR 基线分支等）
+.gp-set-text-input {
+  width: 160px;
+}
+
+// 探测已监听项目数（跟随开关的旁注，不另占一行）
+.gp-set-watched {
+  font-size: $t-2xs;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+// 设置弹窗：可选规则开关 checkbox（与 radio 同主题色）
+.gp-set-switch {
+  accent-color: var(--b3-theme-primary);
+  cursor: pointer;
+}
+
+.gp-set-hint {
+  font-size: $t-2xs;
+  opacity: 0.4;
+}
+
+// 索引目录路径（设置弹窗内展示，超长省略并以 title 提供完整路径）
+.gp-set-index-dir {
+  margin-top: 2px;
+  font-family: monospace;
+  @include text-ellipsis;
+}
+
+// 分类管理（列表/添加行/颜色字段）→ CategorySettingsSection.scss（设置弹窗「分类」分区）
+
+// 卡片内联分类下拉样式 → CardHeader.scss
+
+// 添加弹窗中的分类下拉
+// .gp-select 已被公共 Select 组件替代
+
+// 扫描导入弹窗
+.gp-remote-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--b3-border-color);
+  border-radius: $r-sm;
+}
+
+.gp-remote-row {
+  display: flex;
+  align-items: center;
+  gap: $s-px6;
+  padding: $s-1 $s-px6;
+  font-size: $t-xs;
+  @include row-divider;
+}
+
+.gp-remote-name {
+  font-family: $ff-mono;
+  font-weight: $fw-semibold;
+  flex-shrink: 0;
+}
+
+.gp-remote-url {
+  flex: 1;
+  font-family: $ff-mono;
+  font-size: $t-2xs;
+  opacity: 0.5;
+  @include text-ellipsis;
+}
+
+.gp-remote-empty {
+  padding: $s-3;
+  text-align: center;
+  font-size: $t-xs;
+  opacity: 0.4;
+}
+
+.gp-remote-add {
+  display: flex;
+  gap: $s-1;
+  margin-top: $s-1;
+}
+
+// 添加行的平台下拉（固定窄宽，URL 输入占满剩余）
+.gp-remote-platform {
+  width: 130px;
+}
+
+// 远程区块错误提示与上方内容留出间距
+.gp-remote-error {
+  margin-top: $s-1;
+}
+

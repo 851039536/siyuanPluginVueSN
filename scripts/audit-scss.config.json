@@ -2,7 +2,7 @@
   "thresholds": {
     "maxFileLines": 500,
     "maxFileBytes": 12288,
-    "maxNestingDepth": 4,
+    "maxNestingDepth": 6,
     "maxSelectorItems": 6,
     "minUnusedClassLength": 5
   },

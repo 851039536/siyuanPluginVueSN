@@ -1,19 +1,28 @@
+import type { BackupProgress } from "../modules/BackupManager"
+import type {
+  S3Config,
+  S3FileInfo,
+} from "../types"
+import type { S3TestTexts } from "@/utils/s3/s3Client"
 /**
  * S3 备份功能的共享状态与操作逻辑
  *
  * 提供响应式的 S3 配置、备份状态、备份列表等状态，
  * 以及连接测试、备份、恢复、列举、删除等操作方法。
- * 仅被 index.vue 使用（S3ConfigForm 通过 props 接收 testConnection）。
+ * 仅被 useBackupOrchestrator 组合使用（S3ConfigForm 通过 props 接收 testConnection）。
  */
-import { computed, ref } from "vue"
-import type { S3Config, S3FileInfo } from "../types"
-import { DEFAULT_S3_CONFIG } from "../types"
-import { S3Client, composeS3TestMessage } from "@/utils/s3/s3Client"
-import type { S3TestTexts } from "@/utils/s3/s3Client"
+import {
+  computed,
+  ref,
+} from "vue"
+import {
+  composeS3TestMessage,
+  S3Client,
+} from "@/utils/s3/s3Client"
 import { uploadFileSmart as uploadFileSmartShared } from "@/utils/s3/s3Multipart"
-import type { BackupProgress } from "../modules/BackupManager"
-import { buildS3Key } from "../utils"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { DEFAULT_S3_CONFIG } from "../types"
+import { buildS3Key } from "../utils"
 
 /**
  * 历史遗留：旧版本「增量备份」写入桶中的子目录名。
@@ -21,8 +30,11 @@ import { getErrorMessage } from "@/utils/stringUtils"
  */
 const LEGACY_INCREMENTAL_SUBDIR = "incremental"
 
-export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefix: () => string }) {
-  const { i18n, getSubPrefix } = options
+export function useS3Backup(options: { i18n: Record<string, string>, getSubPrefix: () => string }) {
+  const {
+    i18n,
+    getSubPrefix,
+  } = options
   // ========== 状态 ==========
 
   const s3Config = ref<S3Config>({ ...DEFAULT_S3_CONFIG })
@@ -72,21 +84,29 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
 
   /** 获取已初始化的 S3 客户端，未初始化时抛错（文案进入 UI 错误提示） */
   function requireClient(): S3Client {
-    if (!s3Client) { throw new Error(i18n.clientNotInitialized) }
+    if (!s3Client) {
+      throw new Error(i18n.clientNotInitialized)
+    }
     return s3Client
   }
 
   /** 测试 S3 连接（使用临时客户端，不影响已应用配置的共享客户端） */
-  async function testConnection(config?: S3Config): Promise<{ success: boolean; message: string }> {
+  async function testConnection(config?: S3Config): Promise<{ success: boolean, message: string }> {
     const cfg = config || s3Config.value
 
     try {
       const client = new S3Client(cfg)
       // 共享层只返回结果码，展示文案在此按本功能 i18n 组装（避免英文界面混入中文）
       const result = await client.testConnection()
-      return { success: result.success, message: composeS3TestMessage(result, testTexts()) }
+      return {
+        success: result.success,
+        message: composeS3TestMessage(result, testTexts()),
+      }
     } catch (err: unknown) {
-      return { success: false, message: `${i18n.testException}: ${getErrorMessage(err)}` }
+      return {
+        success: false,
+        message: `${i18n.testException}: ${getErrorMessage(err)}`,
+      }
     }
   }
 
@@ -100,7 +120,9 @@ export function useS3Backup(options: { i18n: Record<string, string>; getSubPrefi
 
   /** 加载已保存的配置：endpoint 有效时应用并启用客户端，否则仅回填表单草稿 */
   function loadConfig(config: S3Config): void {
-    if (!config) { return }
+    if (!config) {
+      return
+    }
     if (config.endpoint) {
       applyConfig(config)
     } else {

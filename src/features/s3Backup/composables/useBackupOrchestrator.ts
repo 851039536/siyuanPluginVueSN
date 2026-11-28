@@ -16,7 +16,6 @@ import {
   watch,
 } from "vue"
 import { useStatusBarTask } from "@/features/statusBar/composables/useStatusBarTask"
-import { getNodeModules } from "@/utils/nodeModules"
 import { getErrorMessage } from "@/utils/stringUtils"
 import {
   getS3BackupInstance,
@@ -27,6 +26,7 @@ import {
   buildBackupUploadKey,
   localizeBackupError,
   makeBackupTimestamp,
+  resolveBackupDir,
 } from "../utils"
 import { useAutoBackupTrigger } from "./useAutoBackupTrigger"
 import { useBackupRecords } from "./useBackupRecords"
@@ -38,7 +38,7 @@ import { useS3Backup } from "./useS3Backup"
 import { useS3ConfigStorage } from "./useS3ConfigStorage"
 import { useWorkspaceSettings } from "./useWorkspaceSettings"
 
-/** 依赖注入：日志/校验值与配置持久化由本层内部 composable 持有 */
+/** 依赖注入：面板传入 i18n；日志/校验值与配置持久化由本层内部 composable 持有 */
 export interface BackupOrchestratorDeps {
   i18n: Record<string, string>
 }
@@ -57,42 +57,8 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     persistChecksums,
     clearChecksums,
     removeOneChecksum,
-    hydrate: hydrateRecords,
+    hydrate,
   } = useBackupRecords()
-
-  // ========== 领域 composable 组合 ==========
-
-  const {
-    s3Config,
-    isConfigured,
-    isBackingUp,
-    isLoading,
-    backupProgress,
-    backupList,
-    phaseLabel,
-    testConnection,
-    applyConfig,
-    uploadFileSmart,
-    deleteObject,
-    listBackups,
-    listExistingKeys,
-    downloadBackup,
-    loadConfig,
-    getListPrefix,
-  } = useS3Backup({
-    i18n,
-    // 惰性读取当前工作区子路径：s3SubPrefix 在下方 useWorkspaceSettings 中声明，
-    // 该 getter 仅在运行时（刷新列表/去重）才求值，setup 阶段无 TDZ 风险
-    getSubPrefix: () => s3SubPrefix.value,
-  })
-
-  // ========== S3 配置持久化（加解密读写，存储键与 enc: 格式保持不变） ==========
-
-  const { loadS3Config, saveS3Config } = useS3ConfigStorage({
-    loadConfig,
-    applyConfig,
-    refreshBackupList: () => refreshBackupList(),
-  })
 
   // ========== 基础状态 ==========
 
@@ -128,18 +94,49 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     i18n,
   })
 
+  // ========== 领域 composable 组合 ==========
+
+  const {
+    s3Config,
+    isConfigured,
+    isBackingUp,
+    isLoading,
+    backupProgress,
+    backupList,
+    phaseLabel,
+    testConnection,
+    applyConfig,
+    uploadFileSmart,
+    deleteObject,
+    listBackups,
+    listExistingKeys,
+    downloadBackup,
+    loadConfig,
+    getListPrefix,
+  } = useS3Backup({
+    i18n,
+    getSubPrefix: () => s3SubPrefix.value,
+  })
+
+  // ========== S3 配置持久化（加解密读写，存储键与 enc: 格式保持不变） ==========
+
+  const {
+    loadS3Config,
+    saveS3Config,
+  } = useS3ConfigStorage({
+    loadConfig,
+    applyConfig,
+    refreshBackupList,
+  })
+
   // ========== 路径预览 ==========
 
-  const node = getNodeModules()
-  const pathModule = node?.path
-
-  /** 本地备份 ZIP 文件保存的完整路径预览 */
+  /** 本地备份 ZIP 文件保存的完整路径预览（与下载落盘共用 resolveBackupDir 规则） */
   const resolvedLocalBackupPath = computed(() => {
-    if (!workspaceRoot.value || !localBackupDir.value) { return "" }
-    if (pathModule) {
-      return pathModule.join(workspaceRoot.value, localBackupDir.value)
+    if (!workspaceRoot.value || !localBackupDir.value) {
+      return ""
     }
-    return `${workspaceRoot.value}/${localBackupDir.value}`
+    return resolveBackupDir(workspaceRoot.value, localBackupDir.value)
   })
 
   /** S3 上传在桶中的完整路径预览（复用 useS3Backup.getListPrefix，消除重复拼接） */
@@ -177,7 +174,9 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   /** 幂等初始化/同步备份管理器：工作区路径就绪后可随时调用（含启动后首次选择路径场景） */
   function initBackupManager(): void {
-    if (!workspaceRoot.value) { return }
+    if (!workspaceRoot.value) {
+      return
+    }
     if (backupManager) {
       backupManager.updateWorkspacePaths(workspaceRoot.value)
     } else {
@@ -201,7 +200,9 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   /** 确保工作区路径就绪：未设置时提示并弹出目录选择，返回是否就绪（含用户取消） */
   async function ensureWorkspaceReady(): Promise<boolean> {
-    if (workspaceRoot.value) { return true }
+    if (workspaceRoot.value) {
+      return true
+    }
     showMessage(i18n.noWorkspace, 3000, "info")
     await selectWorkspacePath()
     return !!workspaceRoot.value
@@ -231,18 +232,22 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     // 与全量上传共用同一 buildUploadKey（日期段取备份文件自身日期），消除两套 key 规则
     buildUploadKey,
     uploadFileSmart,
-    refreshBackupList: () => refreshBackupList(),
-    addLog: (entry) => addLog(entry),
+    refreshBackupList,
+    addLog,
     i18n,
   })
 
   /** 水合上传来源设备映射（云端备份列表展示用）；失败仅告警 */
   async function hydrateUploadHostMap(): Promise<void> {
     const instance = getS3BackupInstance()
-    if (!instance) { return }
+    if (!instance) {
+      return
+    }
     try {
       const data = await instance.getStorage().uploadHostMap.load()
-      if (data?.map) { uploadHostMap.value = data.map }
+      if (data?.map) {
+        uploadHostMap.value = data.map
+      }
     } catch (err: unknown) {
       console.warn("[S3备份] 加载上传来源映射失败:", getErrorMessage(err))
     }
@@ -255,13 +260,13 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     triggerZipBackupOnly,
   } = useLocalZipBackup({
     i18n,
-    addLog: (entry) => addLog(entry),
+    addLog,
     getBackupManager: () => backupManager,
     backupProgress,
     useDateFolder,
     keepBackupCount,
     localBackupList,
-    persistStorage: persistS3BackupStorage,
+    persist: persistS3BackupStorage,
     saveChecksum,
     isAnyTaskRunning,
     isZipBackingUp,
@@ -279,11 +284,11 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     listExistingKeys,
     uploadFileSmart,
     backupProgress,
-    addLog: (entry) => addLog(entry),
+    addLog,
     saveChecksum,
     persistChecksums,
     recordUploadHosts,
-    refreshBackupList: () => refreshBackupList(),
+    refreshBackupList,
     i18n,
   })
 
@@ -298,7 +303,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     localBackupDir,
     downloadBackup,
     deleteObject,
-    addLog: (entry) => addLog(entry),
+    addLog,
     // 下载期间在状态栏展示进度（面板打开时全局 toast 被遮罩盖住，状态栏是面板内的可靠反馈）
     statusTask,
     // 惰性求值：isAnyTaskRunning 依赖本块解构的运行标志，构造期不可直接读值
@@ -309,7 +314,9 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
   // 任务运行中实时同步进度到状态栏；结束时的 complete/fail 由各入口函数显式调用
   // 注：watch 会在 setup 阶段立即求值源 computed，必须放在状态声明之后，否则触发 TDZ 错误
   watch([isAnyTaskRunning, backupProgress], () => {
-    if (!isAnyTaskRunning.value) { return }
+    if (!isAnyTaskRunning.value) {
+      return
+    }
     statusTask.progress({
       // 状态栏主文本："备份中"
       label: i18n.statusBackingUp,
@@ -320,7 +327,9 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
 
   /** 刷新云端备份列表（listBackups 内部已吞异常，无需再包 try/catch） */
   async function refreshBackupList(): Promise<void> {
-    if (!isConfigured.value) { return }
+    if (!isConfigured.value) {
+      return
+    }
     await listBackups()
   }
 
@@ -334,9 +343,13 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
       return false
     }
     // 互斥守卫：任一备份/下载任务运行中都不启动新的全量流程（防止并发写共享进度）
-    if (isAnyTaskRunning.value) { return false }
+    if (isAnyTaskRunning.value) {
+      return false
+    }
     // 备份模式全关（或 S3 模式未配置）时直接跳过，避免空跑却更新备份时间并显示"备份完成"
-    if (!canBackup.value) { return false }
+    if (!canBackup.value) {
+      return false
+    }
 
     // 进入即置位：目录对话框挂起期间也纳入互斥范围，防止自动备份 tick 穿透空窗并发执行
     isBackingUp.value = true
@@ -353,7 +366,9 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
           })
           return false
         }
-        if (!(await ensureWorkspaceReady())) { return false }
+        if (!(await ensureWorkspaceReady())) {
+          return false
+        }
       }
 
       // 根据备份模式分发
@@ -372,7 +387,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
       statusTask.complete(i18n.statusBackupDone)
       return true
     } catch (err: unknown) {
-      console.error("备份失败:", err)
+      console.error("[S3备份] 备份失败:", err)
       // 状态栏："备份失败"
       statusTask.fail(i18n.statusBackupFailed)
       showMessage(`${i18n.backupFailed}: ${localizeBackupError(err, i18n)}`, 5000, "error")
@@ -393,7 +408,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     autoBackupEnabled,
     backupFrequency,
     backupTime,
-    addLog: (entry) => addLog(entry),
+    addLog,
     // 失败/跳过时的防重标记回滚由 useAutoBackupTrigger 统一处理（此处不再重复回滚）
     runAutoBackup: () => performManualBackup(true),
   })
@@ -407,7 +422,7 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     await detectWorkspacePath()
     isInitialLoad.value = false
     initBackupManager()
-    await Promise.all([hydrateRecords(), hydrateUploadHostMap()])
+    await Promise.all([hydrate(), hydrateUploadHostMap()])
     await loadLocalBackupList()
     if (isConfigured.value) {
       await refreshBackupList()

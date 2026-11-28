@@ -1,12 +1,18 @@
+import type { Ref } from "vue"
+import type {
+  BackupFrequency,
+  BackupLogInput,
+} from "../types"
 /**
  * 自动备份触发与定时器重启 composable
  *
  * 封装 autoBackupTrigger 事件处理（互斥跳过 + 忙碌日志节流 + 失败回滚防重标记）
  * 与自动备份设置变更后的定时器重启（isInitialLoad 阻塞初始化期误触发）。
  */
-import { ref, watch } from "vue"
-import type { Ref } from "vue"
-import type { BackupLog, BackupFrequency } from "../types"
+import {
+  ref,
+  watch,
+} from "vue"
 import { getS3BackupInstance } from "../instance"
 
 /** 依赖注入：备份执行由编排层提供，设置状态来自 useWorkspaceSettings */
@@ -16,13 +22,16 @@ export interface AutoBackupTriggerDeps {
   autoBackupEnabled: Ref<boolean>
   backupFrequency: Ref<BackupFrequency>
   backupTime: Ref<string>
-  addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
+  addLog: (entry: BackupLogInput) => void
   /** 执行一次无人值守备份（编排层 performManualBackup(true)），返回是否成功 */
   runAutoBackup: () => Promise<boolean>
 }
 
 export function useAutoBackupTrigger(deps: AutoBackupTriggerDeps) {
-  const { i18n, addLog } = deps
+  const {
+    i18n,
+    addLog,
+  } = deps
 
   // 忙碌跳过日志的节流间隔：长任务期间避免每 60s 重复记录并全量落盘
   const BUSY_LOG_THROTTLE_MS = 5 * 60 * 1000
@@ -74,7 +83,9 @@ export function useAutoBackupTrigger(deps: AutoBackupTriggerDeps) {
   const isInitialLoad = ref(true)
 
   function handleTimerRestart(): void {
-    if (isInitialLoad.value) { return }
+    if (isInitialLoad.value) {
+      return
+    }
     getS3BackupInstance()?.restartAutoBackupTimer(
       deps.autoBackupEnabled.value,
       deps.backupFrequency.value,
@@ -87,5 +98,8 @@ export function useAutoBackupTrigger(deps: AutoBackupTriggerDeps) {
     () => handleTimerRestart(),
   )
 
-  return { handleAutoBackupTrigger, isInitialLoad }
+  return {
+    handleAutoBackupTrigger,
+    isInitialLoad,
+  }
 }

@@ -1,3 +1,8 @@
+import type {
+  BackupLog,
+  BackupLogInput,
+  PersistFn,
+} from "../types"
 /**
  * S3 备份操作日志管理 composable
  *
@@ -5,9 +10,8 @@
  * 通过依赖注入的 persist 写入存储槽，不直接接触插件实例。
  */
 import { ref } from "vue"
-import type { BackupLog, PersistFn } from "../types"
-import { MAX_LOG_COUNT } from "../types"
 import { getErrorMessage } from "@/utils/stringUtils"
+import { MAX_LOG_COUNT } from "../types"
 import { getHostname } from "../utils"
 
 export function useBackupLogs(deps: { persist: PersistFn }) {
@@ -16,7 +20,7 @@ export function useBackupLogs(deps: { persist: PersistFn }) {
   let logSeq = 0
 
   /** 追加一条日志（自动补 id/时间/主机名）并异步落盘，超出上限截断；落盘失败仅告警不产生 unhandled rejection */
-  function addLog(entry: Omit<BackupLog, "id" | "time" | "hostname">): void {
+  function addLog(entry: BackupLogInput): void {
     const log: BackupLog = {
       ...entry,
       id: `${Date.now()}-${logSeq++}`,
@@ -41,5 +45,9 @@ export function useBackupLogs(deps: { persist: PersistFn }) {
     await saveLogs()
   }
 
-  return { backupLogs, addLog, clearLogs }
+  return {
+    backupLogs,
+    addLog,
+    clearLogs,
+  }
 }

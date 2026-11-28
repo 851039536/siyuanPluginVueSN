@@ -2,7 +2,7 @@
  * 云端备份列表操作 composable
  *
  * 提供云端备份文件的下载到本地备份目录与删除（确认 + 日志 + 消息提示）能力。
- * 依赖注入方式接入 index.vue，不接触其他 composable 的内部状态。
+ * 依赖由编排层注入，不接触其他 composable 的内部状态。
  *
  * 反馈通道约定：面板由 createModalVueApp 承载（遮罩 z-index 10000，见 @/utils/vueAppHelper），
  * 而思源全局 toast（#message）层级取自自增的 window.siyuan.zIndex（基准 10），
@@ -11,7 +11,7 @@
  */
 import type { Ref } from "vue"
 import type {
-  BackupLog,
+  BackupLogInput,
   S3FileInfo,
 } from "../types"
 import type { TaskHandle } from "@/features/statusBar/composables/useStatusBarTask"
@@ -43,7 +43,7 @@ export interface CloudBackupActionsDeps {
     onProgress?: (received: number, total: number) => void,
   ) => Promise<void>
   deleteObject: (key: string, syncList?: boolean) => Promise<void>
-  addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
+  addLog: (entry: BackupLogInput) => void
   /** 状态栏任务句柄（下载期间在状态栏展示进度，面板隐藏时仍可见） */
   statusTask: TaskHandle
   /** 是否有其他备份/还原任务在跑：下载也写 statusTask，必须与备份进度互斥，避免互相覆盖 */
@@ -69,7 +69,9 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
   /** 下载云端对象到本地备份目录，返回落盘绝对路径 */
   async function downloadToLocalDir(backup: S3FileInfo): Promise<string> {
     const node = getNodeModules()
-    if (!node) { throw new Error(MSG_DESKTOP_ONLY) }
+    if (!node) {
+      throw new Error(MSG_DESKTOP_ONLY)
+    }
     const fs = node.fs.promises
     const pathModule = node.path
 
@@ -84,7 +86,9 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
       await deps.downloadBackup(backup.key, localPath, (received, total) => {
         // total 为 0 表示服务端未返回 Content-Length（分块传输/代理）：
         // 无法计算百分比，保持 null 让 UI 走不确定态，绝不拿已收字节硬凑百分比
-        if (total <= 0) { return }
+        if (total <= 0) {
+          return
+        }
         const percent = Math.min(100, Math.round((received / total) * 100))
         downloadPercent.value = percent
         statusTask.progress({
@@ -113,7 +117,9 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
     }
     // 全局互斥：同一时刻只允许一个下载任务；
     // 备份/还原进行中时也拒绝（两者共用 statusTask，并发会互相覆盖进度）
-    if (downloadingKey.value !== null || deps.isAnyTaskRunning()) { return }
+    if (downloadingKey.value !== null || deps.isAnyTaskRunning()) {
+      return
+    }
 
     downloadingKey.value = backup.key
     lastDownloadResult.value = null
@@ -161,8 +167,11 @@ export function useCloudBackupActions(deps: CloudBackupActionsDeps) {
   }
 
   async function handleDelete(backup: S3FileInfo): Promise<void> {
+    // eslint-disable-next-line no-alert -- 面板内统一使用原生确认框
     const confirmed = confirm(i18n.confirmDeleteBackup)
-    if (!confirmed) { return }
+    if (!confirmed) {
+      return
+    }
 
     try {
       // syncList: 删除成功后同步从云端列表移除

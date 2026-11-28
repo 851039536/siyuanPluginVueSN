@@ -9,7 +9,7 @@
 import type { Ref } from "vue"
 import type { BackupManager } from "../modules/BackupManager"
 import type {
-  BackupLog,
+  BackupLogInput,
   LocalBackupInfo,
   PersistFn,
   S3FileInfo,
@@ -27,7 +27,7 @@ import {
   getHostname,
 } from "../utils"
 
-/** 依赖注入：全部来自 index.vue 已有的状态与方法 */
+/** 依赖注入：状态与方法均由编排层提供 */
 export interface LocalBackupListDeps {
   getBackupManager: () => BackupManager | null
   persist: PersistFn
@@ -40,7 +40,7 @@ export interface LocalBackupListDeps {
   /** 大文件感知上传本地备份磁盘文件（>100MB 自动分片，小文件整读单 PUT） */
   uploadFileSmart: (filePath: string, key: string) => Promise<void>
   refreshBackupList: () => Promise<void>
-  addLog: (entry: Omit<BackupLog, "id" | "time" | "hostname">) => void
+  addLog: (entry: BackupLogInput) => void
   i18n: Record<string, string>
 }
 
@@ -71,7 +71,7 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
         }
       }
     } catch (error) {
-      console.error("加载本地备份列表失败:", error)
+      console.error("[S3备份] 加载本地备份列表失败:", error)
     } finally {
       isLoadingLocal.value = false
     }
@@ -79,8 +79,11 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
 
   async function deleteLocalBackup(backup: LocalBackupInfo): Promise<void> {
     try {
+      // eslint-disable-next-line no-alert -- 面板内统一使用原生确认框
       const confirmDelete = confirm(i18n.confirmDeleteBackup)
-      if (!confirmDelete) { return }
+      if (!confirmDelete) {
+        return
+      }
       const backupManager = deps.getBackupManager()
       if (!backupManager) {
         deps.addLog({
@@ -94,7 +97,7 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
         return
       }
       await backupManager.deleteBackupFile(backup.path)
-      // A11 修复：按 path 过滤而非 name，避免同名文件误删
+      // 按 path 过滤而非 name，避免同名文件误删
       localBackupList.value = localBackupList.value.filter((b) => b.path !== backup.path)
       await deps.persist((s) => s.backupHistory.save({ list: localBackupList.value }))
       // 与云端删除对称：本地删除同样写入操作日志，避免日志页漏记
@@ -107,7 +110,7 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
       })
       showMessage(i18n.deleteSuccessBackup, 2000, "info")
     } catch (error) {
-      console.error("删除本地备份失败:", error)
+      console.error("[S3备份] 删除本地备份失败:", error)
       deps.addLog({
         type: "localZip",
         action: i18n.deleteBackup,
@@ -128,7 +131,9 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
   /** 批量记录上传来源设备名并持久化（仅传入实际上传成功的文件；超限丢弃最旧条目） */
   async function recordUploadHosts(fileNames: string[]): Promise<void> {
     const hostname = getHostname()
-    if (!hostname || fileNames.length === 0) { return }
+    if (!hostname || fileNames.length === 0) {
+      return
+    }
     const next = { ...uploadHostMap.value }
     for (const name of fileNames) {
       next[getBaseName(name)] = hostname
@@ -145,8 +150,9 @@ export function useLocalBackupList(deps: LocalBackupListDeps) {
   }
 
   async function uploadLocalBackup(backup: LocalBackupInfo): Promise<void> {
-    const node = getNodeModules()
-    if (!node || !deps.isConfigured.value) { return }
+    if (!getNodeModules() || !deps.isConfigured.value) {
+      return
+    }
     // 检查 S3 上是否已存在同名文件，已存在则提示并跳过
     if (isAlreadyUploaded(backup.name)) {
       showMessage(i18n.alreadyUploaded, 3000, "info")

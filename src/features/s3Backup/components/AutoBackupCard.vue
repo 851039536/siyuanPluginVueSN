@@ -61,10 +61,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import type { BackupFrequency } from "../types"
+import {
+  computed,
+  ref,
+  watch,
+} from "vue"
 import Input from "@/components/Input.vue"
 import Select from "@/components/Select.vue"
-import type { BackupFrequency } from "../types"
+
+const props = defineProps<{
+  i18n: Record<string, string>
+}>()
 
 // 保留份数输入值清洗 — 防止 NaN/0 持久化导致本地备份保留清理失效
 function sanitizeKeepCount(raw: unknown): number {
@@ -101,19 +109,30 @@ function onBackupTimeKeydown(e: KeyboardEvent): void {
   }
 }
 
-const props = defineProps<{
-  i18n: Record<string, string>
-}>()
-
 const autoBackupOptions = computed(() => [
-  { value: false, label: props.i18n.disabledLabel },
-  { value: true, label: props.i18n.enabledLabel },
+  {
+    value: false,
+    label: props.i18n.disabledLabel,
+  },
+  {
+    value: true,
+    label: props.i18n.enabledLabel,
+  },
 ])
 
 const frequencyOptions = computed(() => [
-  { value: "minute", label: props.i18n.everyMinute },
-  { value: "hourly", label: props.i18n.everyHour },
-  { value: "daily", label: props.i18n.everyDay },
+  {
+    value: "minute",
+    label: props.i18n.everyMinute,
+  },
+  {
+    value: "hourly",
+    label: props.i18n.everyHour,
+  },
+  {
+    value: "daily",
+    label: props.i18n.everyDay,
+  },
 ])
 </script>
 

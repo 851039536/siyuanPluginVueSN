@@ -229,15 +229,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue"
+import type { S3Config } from "../types"
 import { Icon } from "@iconify/vue"
+import {
+  computed,
+  reactive,
+  ref,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
 import Input from "@/components/Input.vue"
 import Switch from "@/components/Switch.vue"
 import Tag from "@/components/Tag.vue"
 import { getErrorMessage } from "@/utils/stringUtils"
-import type { S3Config } from "../types"
-import { DEFAULT_S3_CONFIG, DEFAULT_UPLOAD_TIMEOUT_SEC } from "../types"
+import {
+  DEFAULT_S3_CONFIG,
+  DEFAULT_UPLOAD_TIMEOUT_SEC,
+} from "../types"
 
 // ========== Props ==========
 
@@ -247,7 +255,7 @@ const props = defineProps<{
   /** i18n 翻译对象 */
   i18n: Record<string, string>
   /** 测试连接回调（父传服务函数） */
-  onTestConnection: (config: S3Config) => Promise<{ success: boolean; message: string }>
+  onTestConnection: (config: S3Config) => Promise<{ success: boolean, message: string }>
 }>()
 
 // ========== Emits ==========
@@ -260,7 +268,7 @@ const emit = defineEmits<{
 
 const showGuide = ref(false)
 const isConnecting = ref(false)
-const lastTestResult = ref<{ success: boolean; message: string } | null>(null)
+const lastTestResult = ref<{ success: boolean, message: string } | null>(null)
 
 const localConfig = reactive<S3Config>({ ...DEFAULT_S3_CONFIG })
 
@@ -298,7 +306,10 @@ async function handleTestConnection(): Promise<void> {
     lastTestResult.value = await props.onTestConnection({ ...localConfig })
   } catch (err: unknown) {
     // 错误前缀："测试异常"
-    lastTestResult.value = { success: false, message: `${props.i18n.testException}: ${getErrorMessage(err)}` }
+    lastTestResult.value = {
+      success: false,
+      message: `${props.i18n.testException}: ${getErrorMessage(err)}`,
+    }
   } finally {
     isConnecting.value = false
   }

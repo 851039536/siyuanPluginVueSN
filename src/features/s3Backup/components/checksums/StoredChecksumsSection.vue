@@ -28,18 +28,28 @@
       </div>
     </div>
     <!-- 校验值列表 -->
-    <div v-if="storedItems.length > 0" class="checksum-list">
+    <div
+      v-if="storedItems.length > 0"
+      class="checksum-list"
+    >
       <div
         v-for="item in storedItems"
         :key="item.fileName"
         class="checksum-item"
-        :class="{ 'verify-mismatch': verifyResults[item.fileName] === false, 'verify-match': verifyResults[item.fileName] === true }"
+        :class="{
+          'verify-mismatch': verifyResults[item.fileName] === false,
+          'verify-match': verifyResults[item.fileName] === true,
+        }"
       >
         <div class="checksum-main">
           <!-- 文件名 -->
           <span class="checksum-name">{{ item.fileName }}</span>
           <!-- 文件路径提示图标 -->
-          <span class="checksum-path-icon" :title="item.filePath" :aria-label="item.filePath">
+          <span
+            class="checksum-path-icon"
+            :title="item.filePath"
+            :aria-label="item.filePath"
+          >
             <Icon icon="mdi:information-outline" />
           </span>
           <!-- 文件大小 + 时间 -->
@@ -94,7 +104,10 @@
       </div>
     </div>
     <!-- 空状态 -->
-    <div v-else class="empty-state">
+    <div
+      v-else
+      class="empty-state"
+    >
       <!-- 提示："暂无校验值" -->
       <p>{{ i18n.noChecksums }}</p>
     </div>
@@ -102,14 +115,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import type { FileChecksum } from "../../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
-import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
-import { getErrorMessage } from "@/utils/stringUtils"
+import {
+  ref,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
 import Tag from "@/components/Tag.vue"
-import type { FileChecksum } from "../../types"
+import {
+  formatFileSize,
+  formatRelativeTime,
+  formatTime,
+} from "@/utils/format"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 const props = defineProps<{
   storedItems: FileChecksum[]
@@ -133,10 +153,14 @@ const isVerifyingAll = ref(false)
 watch(() => props.storedItems, (items) => {
   const names = new Set(items.map((i) => i.fileName))
   for (const key of Object.keys(verifyResults.value)) {
-    if (!names.has(key)) { delete verifyResults.value[key] }
+    if (!names.has(key)) {
+      delete verifyResults.value[key]
+    }
   }
   for (const key of Object.keys(verifyingItems.value)) {
-    if (!names.has(key)) { delete verifyingItems.value[key] }
+    if (!names.has(key)) {
+      delete verifyingItems.value[key]
+    }
   }
 }, { deep: true })
 
@@ -144,7 +168,9 @@ async function verifyOne(item: FileChecksum): Promise<void> {
   verifyingItems.value[item.fileName] = true
   try {
     const hash = await props.computeHash(item.filePath)
-    if (hash === null) { return }
+    if (hash === null) {
+      return
+    }
     verifyResults.value[item.fileName] = hash === item.checksum
   } catch (err: unknown) {
     verifyResults.value[item.fileName] = false
@@ -163,14 +189,20 @@ async function verifyAll(): Promise<void> {
 }
 
 function confirmRemoveOne(fileName: string): void {
+  // eslint-disable-next-line no-alert -- 面板内统一使用原生确认框
   const confirmed = confirm(props.i18n.confirmRemoveChecksum)
-  if (!confirmed) { return }
+  if (!confirmed) {
+    return
+  }
   emit("removeOne", fileName)
 }
 
 function confirmClearAll(): void {
+  // eslint-disable-next-line no-alert -- 面板内统一使用原生确认框
   const confirmed = confirm(props.i18n.confirmClearAll)
-  if (!confirmed) { return }
+  if (!confirmed) {
+    return
+  }
   emit("clear")
 }
 </script>

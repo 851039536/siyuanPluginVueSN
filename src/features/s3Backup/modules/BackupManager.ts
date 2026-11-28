@@ -6,10 +6,12 @@
  * 2. ZIP 流式打包（performFullBackup）— 供本地压缩备份使用
  * 扫描实现（scanBackupDir/scanDirectory/SKIP_DIRS）拆分至 backupScanner.ts，此处仅委托调用。
  */
+import type { Buffer } from "node:buffer"
 import type {
   DataFileEntry,
   LocalBackupInfo,
 } from "../types"
+import type { ScannerDeps } from "./backupScanner"
 import JSZip from "jszip"
 import {
   getNodeCrypto,
@@ -98,6 +100,24 @@ export function toLocalBackupInfo(result: BackupResult, time?: string): LocalBac
 /** 本地 ZIP 压缩级别（DEFLATE 默认档） */
 const COMPRESSION_LEVEL = 6
 
+/** 统一上报备份进度：固定五字段结构，避免各处重复拼装对象 */
+function emitProgress(
+  onProgress: ((progress: BackupProgress) => void) | undefined,
+  phase: BackupProgress["phase"],
+  percent: number,
+  filesProcessed: number,
+  totalFiles: number,
+  currentFile = "",
+): void {
+  onProgress?.({
+    phase,
+    currentFile,
+    filesProcessed,
+    totalFiles,
+    percent,
+  })
+}
+
 // ========== BackupManager ==========
 
 export class BackupManager {
@@ -135,7 +155,7 @@ export class BackupManager {
   }
 
   /** 更新工作区根目录 */
-  updateWorkspacePaths(workspaceRoot: string) {
+  updateWorkspacePaths(workspaceRoot: string): void {
     this.workspaceRoot = workspaceRoot
   }
 
@@ -149,13 +169,7 @@ export class BackupManager {
   async getWorkspaceFiles(
     onProgress?: (progress: BackupProgress) => void,
   ): Promise<WorkspaceFile[]> {
-    onProgress?.({
-      phase: "scanning",
-      currentFile: "",
-      filesProcessed: 0,
-      totalFiles: 0,
-      percent: 0,
-    })
+    emitProgress(onProgress, "scanning", 0, 0, 0)
 
     const archives = await this.scanBackupDir()
     const files = archives.map((a) => ({
@@ -163,13 +177,7 @@ export class BackupManager {
       relativePath: a.name,
     }))
 
-    onProgress?.({
-      phase: "scanning",
-      currentFile: "",
-      filesProcessed: files.length,
-      totalFiles: files.length,
-      percent: 100,
-    })
+    emitProgress(onProgress, "scanning", 100, files.length, files.length)
 
     return files
   }
@@ -194,20 +202,14 @@ export class BackupManager {
     const zip = new JSZip()
 
     // 阶段1：扫描文件
-    onProgress?.({
-      phase: "scanning",
-      currentFile: "",
-      filesProcessed: 0,
-      totalFiles: 0,
-      percent: 0,
-    })
+    emitProgress(onProgress, "scanning", 0, 0, 0)
 
     const allFiles: DataFileEntry[] = []
     // 单文件 stat 失败不中止整次备份：登记为跳过文件，最终随 BackupResult 上报
     const skippedFiles: string[] = []
     await scanDirectoryImpl(this.scannerDeps(), backupSourcePath, "", skipDirs, allFiles, (relativePath, err) => {
       skippedFiles.push(relativePath)
-      console.warn(`无法读取文件信息，已跳过: ${relativePath}`, getErrorMessage(err))
+      console.warn(`[S3备份] 无法读取文件信息，已跳过: ${relativePath}`, getErrorMessage(err))
     })
 
     const totalFiles = allFiles.length
@@ -221,13 +223,14 @@ export class BackupManager {
     const lazyStreams: { destroy: (err?: Error) => void }[] = []
     for (let i = 0; i < allFiles.length; i++) {
       const file = allFiles[i]
-      onProgress?.({
-        phase: "packing",
-        currentFile: file.relativePath,
-        filesProcessed: i + 1,
+      emitProgress(
+        onProgress,
+        "packing",
+        Math.round(((i + 1) / totalFiles) * 70),
+        i + 1,
         totalFiles,
-        percent: Math.round(((i + 1) / totalFiles) * 70),
-      })
+        file.relativePath,
+      )
       try {
         // 预探测可访问性：扫描与打包之间文件可能被删除/占用，此处兜底登记为跳过
         await this.fs.access(file.fullPath)
@@ -236,7 +239,7 @@ export class BackupManager {
         zip.file(file.relativePath, lazy)
       } catch (err) {
         skippedFiles.push(file.relativePath)
-        console.warn(`无法读取文件: ${file.fullPath}`, err)
+        console.warn(`[S3备份] 无法读取文件: ${file.fullPath}`, err)
       }
     }
 
@@ -267,13 +270,7 @@ export class BackupManager {
     zip.file("backup-info.json", JSON.stringify(backupInfo, null, 2))
 
     // 阶段3：压缩（generateNodeStream 流式写盘，避免整包 Buffer 驻留内存）
-    onProgress?.({
-      phase: "compressing",
-      currentFile: "",
-      filesProcessed: totalFiles,
-      totalFiles,
-      percent: 75,
-    })
+    emitProgress(onProgress, "compressing", 75, totalFiles, totalFiles)
 
     const fileName = buildBackupFileName(now, useDateFolder)
     const zipFilePath = this.path.join(this.backupDir, fileName)
@@ -299,13 +296,14 @@ export class BackupManager {
               compressionOptions: { level: COMPRESSION_LEVEL },
             },
             (metadata) => {
-              onProgress?.({
-                phase: "compressing",
-                currentFile: metadata.currentFile ?? "",
-                filesProcessed: totalFiles,
+              emitProgress(
+                onProgress,
+                "compressing",
+                75 + Math.round(metadata.percent * 0.2),
                 totalFiles,
-                percent: 75 + Math.round(metadata.percent * 0.2),
-              })
+                totalFiles,
+                metadata.currentFile ?? "",
+              )
             },
           ),
           output,
@@ -321,30 +319,22 @@ export class BackupManager {
     } catch (err) {
       // 压缩中断：统一销毁全部惰性读取流（防止底层 fd 泄漏），再清理半成品 ZIP
       for (const lazy of lazyStreams) {
-        try { lazy.destroy() } catch { /* 忽略单个流销毁失败 */ }
+        try {
+          lazy.destroy()
+        } catch {
+          /* 忽略单个流销毁失败 */
+        }
       }
       await this.cleanupFailedZip(zipFilePath)
       throw err
     }
 
     // 阶段4：保存完成
-    onProgress?.({
-      phase: "saving",
-      currentFile: "",
-      filesProcessed: totalFiles,
-      totalFiles,
-      percent: 95,
-    })
+    emitProgress(onProgress, "saving", 95, totalFiles, totalFiles)
 
     const stats = await this.fs.stat(zipFilePath)
 
-    onProgress?.({
-      phase: "saving",
-      currentFile: "",
-      filesProcessed: totalFiles,
-      totalFiles,
-      percent: 100,
-    })
+    emitProgress(onProgress, "saving", 100, totalFiles, totalFiles)
 
     return {
       success: true,
@@ -369,7 +359,7 @@ export class BackupManager {
       try {
         await this.fs.rename(zipFilePath, `${zipFilePath}.part`)
       } catch (renameErr: unknown) {
-        console.warn(`清理失败半成品备份失败: ${zipFilePath}`, getErrorMessage(renameErr))
+        console.warn(`[S3备份] 清理失败半成品备份失败: ${zipFilePath}`, getErrorMessage(renameErr))
       }
     }
   }
@@ -403,7 +393,7 @@ export class BackupManager {
   }
 
   /** 扫描依赖快照（fs.promises 与 path 注入 backupScanner） */
-  private scannerDeps() {
+  private scannerDeps(): ScannerDeps {
     return {
       fs: this.fs,
       path: this.path,
@@ -436,7 +426,7 @@ export class BackupManager {
 
   // ========== 私有方法 ==========
 
-  private async validatePath(p: string) {
+  private async validatePath(p: string): Promise<void> {
     try {
       await this.fs.access(p)
     } catch {

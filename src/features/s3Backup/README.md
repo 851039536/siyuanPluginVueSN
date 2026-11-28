@@ -53,6 +53,7 @@
 - **存储**：PluginStorage + TypedStorage 持久化配置；操作日志上限 200 条、校验值上限 100 条、上传来源映射上限 200 条（均超限丢弃最旧），抑制存储单调膨胀
 - **任务编排**：三个入口（立即备份/压缩包备份/云端下载）共用互斥守卫，运行标志在进入时即置位（含目录选择对话框挂起期间），避免并发空窗
 - **错误本地化**：模块层（`BackupManager` / `backupScanner`）零文案依赖，只抛 `BackupError`（错误码 + 不含文案的技术细节）；视图层经 `utils.localizeBackupError` 按 `BACKUP_ERROR_KEYS` 映射 i18n 键后拼接展示，模块层保持纯净且文案可翻译
+- **日志约定**：本模块所有 `console.*` 输出统一以 `[S3备份]` 前缀开头，便于控制台过滤定位；写入操作日志统一使用 `BackupLogInput`（`id` / `time` / `hostname` 由 `useBackupLogs` 补齐）
 - **代码分层**：纯函数集中在 `utils.ts`（`withRetry` / `resolveBackupDir` / `localizeBackupError` / key 构建等），常量与类型在 `types/index.ts`，实例辅助（`persistS3BackupStorage`）在 `instance.ts`，同一规则全模块只有一处定义
 - **面板结构**：`index.vue` 仅负责头部、Tab 壳与初始化编排；四个 Tab 各自为独立组件（`BackupTab` / `ConfigTab` / `LogTab` / `ChecksumsTab`），统一接收 `{ orch, i18n }`。操作日志、校验值与 S3 配置的持久化由编排层及其 `useBackupRecords` / `useS3ConfigStorage` 持有
 - **UI**：Vue 3 Modal，Codex 风格；标签栏复用共享组件 `Tabs` 五件套（`lazy` 保持「进入即挂载、离开即卸载」），徽章统一用 `Tag`（日志类型 5 种配色齐全、状态/比对结果走 success/danger），下拉用 `Select`，进度条用 `ProgressBar`（自带 `role="progressbar"` 无障碍语义）

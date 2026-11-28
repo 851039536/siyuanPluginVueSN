@@ -15,7 +15,10 @@
         :model-value="model[s.key]"
         size="xsmall"
         :label="i18n[s.labelKey]"
-        @update:model-value="model = { ...model, [s.key]: $event }"
+        @update:model-value="model = {
+          ...model,
+          [s.key]: $event,
+        }"
       />
       <span class="form-hint">{{ i18n[s.hintKey] }}</span>
     </div>
@@ -27,21 +30,29 @@
 </template>
 
 <script setup lang="ts">
-import Switch from "@/components/Switch.vue"
 import type { BackupMode } from "../types"
-
-const model = defineModel<BackupMode>({ required: true })
+import Switch from "@/components/Switch.vue"
 
 defineProps<{
   i18n: Record<string, string>
 }>()
 
+const model = defineModel<BackupMode>({ required: true })
+
 /** 开关渲染元数据：模式字段 → i18n 标签键 / 提示键 */
-const SWITCHES: Array<{ key: keyof BackupMode; labelKey: string; hintKey: string }> = [
+const SWITCHES: Array<{ key: keyof BackupMode, labelKey: string, hintKey: string }> = [
   // 标签："本地 ZIP 备份"；提示："打包为 data-*.zip 保存到工作区 data-backup/ 目录"
-  { key: "localZip", labelKey: "localZipBackup", hintKey: "localZipHint" },
+  {
+    key: "localZip",
+    labelKey: "localZipBackup",
+    hintKey: "localZipHint",
+  },
   // 标签："上传到 S3"；提示："逐文件上传到 S3 兼容存储（需先完成 S3 配置）"
-  { key: "s3Upload", labelKey: "s3Upload", hintKey: "s3UploadHint" },
+  {
+    key: "s3Upload",
+    labelKey: "s3Upload",
+    hintKey: "s3UploadHint",
+  },
 ]
 </script>
 

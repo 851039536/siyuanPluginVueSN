@@ -15,7 +15,10 @@
       </Button>
     </div>
     <!-- 日志列表 -->
-    <div v-if="logs.length > 0" class="log-list">
+    <div
+      v-if="logs.length > 0"
+      class="log-list"
+    >
       <div
         v-for="log in logs"
         :key="log.id"
@@ -28,19 +31,35 @@
           :class="{ 'log-row-expandable': expandableIds.has(log.id) }"
           @click="expandableIds.has(log.id) && toggleExpand(log.id)"
         >
-          <!-- 类型徽章（i18n："压缩/上传/下载/删除/增量/自动"） -->
-          <Tag class="log-type" :variant="TYPE_VARIANTS[log.type]" size="xsmall">
+          <!-- 类型徽章（i18n："压缩/上传/下载/删除/自动"） -->
+          <Tag
+            class="log-type"
+            :variant="TYPE_VARIANTS[log.type]"
+            size="xsmall"
+          >
             {{ typeLabel(log.type) }}
           </Tag>
           <span class="log-filename">{{ log.fileName }}</span>
           <span class="log-meta">
-            <span v-if="log.fileSize" class="log-size">{{ formatFileSize(log.fileSize) }}</span>
-            <span v-if="log.fileSize" class="log-sep">·</span>
+            <span
+              v-if="log.fileSize"
+              class="log-size"
+            >{{ formatFileSize(log.fileSize) }}</span>
+            <span
+              v-if="log.fileSize"
+              class="log-sep"
+            >·</span>
             <span class="log-time">{{ formatTime(log.time) }}</span>
             <!-- 相对时间（如"5分钟前"） -->
             <span class="log-relative">{{ formatRelativeTime(log.time) }}</span>
-            <span v-if="log.hostname" class="log-sep">·</span>
-            <span v-if="log.hostname" class="log-hostname">{{ log.hostname }}</span>
+            <span
+              v-if="log.hostname"
+              class="log-sep"
+            >·</span>
+            <span
+              v-if="log.hostname"
+              class="log-hostname"
+            >{{ log.hostname }}</span>
           </span>
           <Tag
             class="log-status"
@@ -51,14 +70,28 @@
             {{ log.success ? i18n.success : i18n.failed }}
           </Tag>
           <!-- 消息预览（单行省略，悬停可见全文，展开详情区可见完整内容） -->
-          <span v-if="log.message" class="log-msg" :title="log.message">{{ log.message }}</span>
+          <span
+            v-if="log.message"
+            class="log-msg"
+            :title="log.message"
+          >{{ log.message }}</span>
           <!-- 展开/收起箭头 -->
-          <span v-if="expandableIds.has(log.id)" class="log-chevron" :class="{ 'log-chevron-open': expandedIds.has(log.id) }">
-            <IconWrapper name="chevronRight" :size="10" />
+          <span
+            v-if="expandableIds.has(log.id)"
+            class="log-chevron"
+            :class="{ 'log-chevron-open': expandedIds.has(log.id) }"
+          >
+            <IconWrapper
+              name="chevronRight"
+              :size="10"
+            />
           </span>
         </div>
         <!-- 详情区（v-if 懒渲染，防止 200 条日志一次性生成大量 DOM） -->
-        <div v-if="expandedIds.has(log.id)" class="log-detail">
+        <div
+          v-if="expandedIds.has(log.id)"
+          class="log-detail"
+        >
           <div class="log-detail-toolbar">
             <Button
               variant="ghost"
@@ -70,11 +103,19 @@
             </Button>
           </div>
           <!-- 完整 message 折行显示（列表行内为单行省略） -->
-          <div v-if="log.message" class="log-detail-message">{{ log.message }}</div>
+          <div
+            v-if="log.message"
+            class="log-detail-message"
+          >
+            {{ log.message }}
+          </div>
         </div>
       </div>
     </div>
-    <div v-else class="empty-state">
+    <div
+      v-else
+      class="empty-state"
+    >
       <!-- 空状态："暂无操作记录" -->
       <p>{{ i18n.noLogs }}</p>
     </div>
@@ -82,14 +123,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from "vue"
+import type { BackupLog } from "../types"
 import { showMessage } from "siyuan"
-import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
-import { copyToClipboard } from "@/utils/domUtils"
+import {
+  computed,
+  reactive,
+  watch,
+} from "vue"
 import Button from "@/components/Button.vue"
 import IconWrapper from "@/components/IconWrapper.vue"
 import Tag from "@/components/Tag.vue"
-import type { BackupLog } from "../types"
+import { copyToClipboard } from "@/utils/domUtils"
+import {
+  formatFileSize,
+  formatRelativeTime,
+  formatTime,
+} from "@/utils/format"
 
 const props = defineProps<{
   logs: BackupLog[]
@@ -121,17 +170,24 @@ const expandableIds = computed(() => new Set(props.logs.filter(isExpandable).map
 
 // 日志被截断/清空时剔除已不存在的 id，避免展开集合随会话无界增长（长期运行的内存泄漏）
 watch(() => props.logs, (logs) => {
-  if (expandedIds.size === 0) { return }
+  if (expandedIds.size === 0) {
+    return
+  }
   const alive = new Set(logs.map((log) => log.id))
   for (const id of expandedIds) {
-    if (!alive.has(id)) { expandedIds.delete(id) }
+    if (!alive.has(id)) {
+      expandedIds.delete(id)
+    }
   }
 })
 
 function confirmClear(): void {
   // 清空确认："确定要清空全部日志吗？"
+  // eslint-disable-next-line no-alert -- 面板内统一使用原生确认框，无需额外引入对话框组件
   const confirmed = confirm(props.i18n.confirmClearLogs)
-  if (!confirmed) { return }
+  if (!confirmed) {
+    return
+  }
   emit("clear")
 }
 

@@ -49,7 +49,10 @@
         :placeholder="DEFAULT_BACKUP_DIR"
       />
       <!-- 本地路径预览 -->
-      <div v-if="resolvedLocalBackupPath" class="path-preview">
+      <div
+        v-if="resolvedLocalBackupPath"
+        class="path-preview"
+      >
         <!-- 标签："实际路径" -->
         <span class="path-preview-label">{{ i18n.pathPreview }}</span>
         <code class="path-preview-value">{{ resolvedLocalBackupPath }}</code>
@@ -64,7 +67,10 @@
         :placeholder="DEFAULT_BACKUP_DIR"
       />
       <!-- S3 路径预览 -->
-      <div v-if="resolvedS3Path" class="path-preview">
+      <div
+        v-if="resolvedS3Path"
+        class="path-preview"
+      >
         <!-- 标签："云存储路径" -->
         <span class="path-preview-label">{{ i18n.s3PathPreview }}</span>
         <code class="path-preview-value">{{ resolvedS3Path }}</code>
@@ -84,11 +90,6 @@ import Input from "@/components/Input.vue"
 import Switch from "@/components/Switch.vue"
 import { DEFAULT_BACKUP_DIR } from "../types"
 
-// defineModel — 双向绑定（对齐同模块 AutoBackupCard 写法）
-const useDateFolder = defineModel<boolean>("useDateFolder", { required: true })
-const localBackupDir = defineModel<string>("localBackupDir", { required: true })
-const s3SubPrefix = defineModel<string>("s3SubPrefix", { required: true })
-
 const props = defineProps<{
   isAnyTaskRunning: boolean
   isBackingUp: boolean
@@ -101,17 +102,24 @@ const props = defineProps<{
   isZipBackingUp: boolean
   i18n: Record<string, string>
 }>()
-
 defineEmits<{
   (e: "performBackup"): void
   (e: "triggerZipBackup"): void
 }>()
+// defineModel — 双向绑定（对齐同模块 AutoBackupCard 写法）
+const useDateFolder = defineModel<boolean>("useDateFolder", { required: true })
+const localBackupDir = defineModel<string>("localBackupDir", { required: true })
+const s3SubPrefix = defineModel<string>("s3SubPrefix", { required: true })
 
 const backupHintText = computed(() => {
   // 动态列出已勾选的备份模式，明确「立即备份」将执行的动作
   const modes: string[] = []
-  if (props.backupModeLocalZip) { modes.push(props.i18n.localZipBackup) }
-  if (props.backupModeS3Upload) { modes.push(props.i18n.s3Upload) }
+  if (props.backupModeLocalZip) {
+    modes.push(props.i18n.localZipBackup)
+  }
+  if (props.backupModeS3Upload) {
+    modes.push(props.i18n.s3Upload)
+  }
   if (modes.length === 0) {
     return props.i18n.backupNowHintNone
   }

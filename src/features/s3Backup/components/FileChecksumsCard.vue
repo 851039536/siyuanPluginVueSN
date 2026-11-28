@@ -21,9 +21,9 @@
 </template>
 
 <script setup lang="ts">
+import type { FileChecksum } from "../types"
 import { showMessage } from "siyuan"
 import { getErrorMessage } from "@/utils/stringUtils"
-import type { FileChecksum } from "../types"
 import { BackupManager } from "../modules/BackupManager"
 import DropVerifySection from "./checksums/DropVerifySection.vue"
 import StoredChecksumsSection from "./checksums/StoredChecksumsSection.vue"
@@ -44,7 +44,9 @@ let cachedManager: BackupManager | null = null
 let cachedRoot = ""
 
 function getManager(): BackupManager | null {
-  if (!props.workspaceRoot) { return null }
+  if (!props.workspaceRoot) {
+    return null
+  }
   if (!cachedManager || cachedRoot !== props.workspaceRoot) {
     try {
       cachedManager = new BackupManager(props.workspaceRoot)
@@ -60,7 +62,9 @@ function getManager(): BackupManager | null {
 /** 计算文件 SHA-256 校验值；工作区未就绪时返回 null（由调用方决定提示策略） */
 async function computeHash(filePath: string): Promise<string | null> {
   const manager = getManager()
-  if (!manager) { return null }
+  if (!manager) {
+    return null
+  }
   return manager.computeFileHash(filePath)
 }
 </script>

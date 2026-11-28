@@ -1,3 +1,10 @@
+import type { BackupManager } from "../modules/BackupManager"
+import type {
+  BackupFrequency,
+  BackupMode,
+  BackupSettings,
+} from "../types"
+import { showMessage } from "siyuan"
 /**
  * 工作区路径与备份设置管理 composable
  *
@@ -5,16 +12,23 @@
  * 提供路径检测/选择、设置加载/保存与备份完成时间标记能力。
  * 通过 getS3BackupInstance 与插件实例侧的设置存储同步。
  */
-import { reactive, ref, watch } from "vue"
-import { showMessage } from "siyuan"
+import {
+  reactive,
+  ref,
+  watch,
+} from "vue"
 import { getWorkspaceDir } from "@/api"
-import { pickDirectory, openFolderInExplorer } from "@/utils/electronDialog"
-import type { BackupManager } from "../modules/BackupManager"
-import type { BackupMode, BackupFrequency } from "../types"
-import { DEFAULT_BACKUP_MODE, DEFAULT_BACKUP_DIR } from "../types"
+import {
+  openFolderInExplorer,
+  pickDirectory,
+} from "@/utils/electronDialog"
 import { getS3BackupInstance } from "../instance"
+import {
+  DEFAULT_BACKUP_DIR,
+  DEFAULT_BACKUP_MODE,
+} from "../types"
 
-/** 依赖注入：backupManager 由 index.vue 持有（初始化时机在 onMounted） */
+/** 依赖注入：backupManager 由编排层持有（面板 onMounted 后初始化） */
 export interface WorkspaceSettingsDeps {
   getBackupManager: () => BackupManager | null
   /** 工作区路径变更后回调：由宿主幂等创建/同步 BackupManager（覆盖启动后首次选择路径场景） */
@@ -56,14 +70,16 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
       const dir = await getWorkspaceDir()
       return dir || null
     } catch (e) {
-      console.error("通过 API 获取工作区路径失败:", e)
+      console.error("[S3备份] 通过 API 获取工作区路径失败:", e)
     }
     return null
   }
 
   async function detectWorkspacePath(): Promise<void> {
     // 已有路径（loadWorkspaceSettings 的持久化兜底或此前检测过）时无需重复检测
-    if (workspaceRoot.value) { return }
+    if (workspaceRoot.value) {
+      return
+    }
     const apiPath = await fetchWorkspacePath()
     if (apiPath) {
       applyWorkspaceRoot(apiPath)
@@ -87,7 +103,9 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   }
 
   async function openWorkspaceFolder(): Promise<void> {
-    if (!workspaceRoot.value) { return }
+    if (!workspaceRoot.value) {
+      return
+    }
     const opened = await openFolderInExplorer(workspaceRoot.value)
     if (!opened) {
       showMessage(`${i18n.workspacePath}: ${workspaceRoot.value}`, 3000, "info")
@@ -112,44 +130,48 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
 
   let persistedSignature = ""
 
+  /** 将持久化设置回填到运行时状态（字段兜底与旧数据兼容集中在此） */
+  function applyPersistedSettings(data: BackupSettings): void {
+    lastBackupTime.value = data.lastBackupTime
+    useDateFolder.value = data.useDateFolder
+    autoBackupEnabled.value = data.autoBackupEnabled
+    backupFrequency.value = FREQUENCIES.includes(data.backupFrequency) ? data.backupFrequency : "daily"
+    backupTime.value = data.backupTime
+    // 保留份数下限 1：0 会让保留清理把刚生成的备份立即删掉（旧数据/手改存储可能为 0）
+    keepBackupCount.value = Math.max(1, Math.floor(data.keepBackupCount) || 7)
+    // 空字符串视为未设置，回退默认目录
+    localBackupDir.value = data.localBackupDir || DEFAULT_BACKUP_DIR
+    s3SubPrefix.value = data.s3SubPrefix || DEFAULT_BACKUP_DIR
+
+    // 备份模式（同一份数据，无需二次读取存储）
+    // 旧数据可能残留已下线的 s3Incremental 字段，读取时直接忽略（不再回填到运行时状态）
+    if (data.backupMode) {
+      backupModeLocal.localZip = data.backupMode.localZip ?? true
+      backupModeLocal.s3Upload = data.backupMode.s3Upload ?? false
+    }
+
+    // 持久化路径兜底：API 不可用时从设置恢复（detectWorkspacePath 检测到已有路径会跳过 API）
+    if (!workspaceRoot.value && data.workspaceRoot) {
+      workspaceRoot.value = data.workspaceRoot
+    }
+  }
+
   async function loadWorkspaceSettings(): Promise<void> {
     try {
       const instance = getS3BackupInstance()
       if (instance) {
         // loadOrDefault 已与 DEFAULT_BACKUP_SETTINGS 浅合并，字段保证完整，无需逐字段兜底
-        const data = await instance.loadWorkspaceSettings()
-        lastBackupTime.value = data.lastBackupTime
-        useDateFolder.value = data.useDateFolder
-        autoBackupEnabled.value = data.autoBackupEnabled
-        backupFrequency.value = FREQUENCIES.includes(data.backupFrequency) ? data.backupFrequency : "daily"
-        backupTime.value = data.backupTime
-        // 保留份数下限 1：0 会让保留清理把刚生成的备份立即删掉（旧数据/手改存储可能为 0）
-        keepBackupCount.value = Math.max(1, Math.floor(data.keepBackupCount) || 7)
-        // 空字符串视为未设置，回退默认目录
-        localBackupDir.value = data.localBackupDir || DEFAULT_BACKUP_DIR
-        s3SubPrefix.value = data.s3SubPrefix || DEFAULT_BACKUP_DIR
-
-        // 备份模式（同一份数据，无需二次读取存储）
-        // 旧数据可能残留已下线的 s3Incremental 字段，读取时直接忽略（不再回填到运行时状态）
-        if (data.backupMode) {
-          backupModeLocal.localZip = data.backupMode.localZip ?? true
-          backupModeLocal.s3Upload = data.backupMode.s3Upload ?? false
-        }
-
-        // 持久化路径兜底：API 不可用时从设置恢复（detectWorkspacePath 检测到已有路径会跳过 API）
-        if (!workspaceRoot.value && data.workspaceRoot) {
-          workspaceRoot.value = data.workspaceRoot
-        }
+        applyPersistedSettings(await instance.loadWorkspaceSettings())
       }
     } catch (err) {
-      console.error("加载工作区设置失败:", err)
+      console.error("[S3备份] 加载工作区设置失败:", err)
     }
     // 水合完成后再建立基线：阻断初始化赋值被 watch 当作编辑回写
     persistedSignature = settingsSignature()
   }
 
   /** 构建持久化设置对象（消除 markBackupCompleted 与 saveWorkspaceSettings 的参数重复构造） */
-  function buildWorkspaceSettings() {
+  function buildWorkspaceSettings(): BackupSettings {
     return {
       lastBackupTime: lastBackupTime.value,
       // 旧数据兼容字段：与 workspaceRoot 恒等，读侧新代码只认 workspaceRoot
@@ -175,13 +197,15 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
         await instance.saveWorkspaceSettings(buildWorkspaceSettings())
       }
     } catch (err) {
-      console.error("保存工作区设置失败:", err)
+      console.error("[S3备份] 保存工作区设置失败:", err)
     }
   }
 
   // 用户编辑设置后统一落盘：替代各组件逐个 @update 调用 saveWorkspaceSettings
   watch(settingsSignature, (next) => {
-    if (next === persistedSignature) { return }
+    if (next === persistedSignature) {
+      return
+    }
     persistedSignature = next
     void saveWorkspaceSettings()
   })

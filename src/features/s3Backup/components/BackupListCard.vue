@@ -15,7 +15,10 @@
       </Button>
     </div>
     <!-- 备份条目列表 -->
-    <div v-if="items.length > 0" class="backup-list">
+    <div
+      v-if="items.length > 0"
+      class="backup-list"
+    >
       <!-- key 用云端对象 key / 本地 path 优先，云端不同目录同名对象时仍保持唯一 -->
       <div
         v-for="item in items"
@@ -28,7 +31,10 @@
           <!-- 备份时间 -->
           <span class="backup-time">{{ formatTime(item.time ?? item.lastModified ?? "") }}</span>
           <!-- 相对时间（如"5分钟前"，仅有真实时间戳时展示） -->
-          <span v-if="item.timestamp" class="backup-relative">{{ formatRelativeTime(item.timestamp) }}</span>
+          <span
+            v-if="item.timestamp"
+            class="backup-relative"
+          >{{ formatRelativeTime(item.timestamp) }}</span>
           <span class="backup-sep">·</span>
           <!-- 备份文件大小 -->
           <span class="backup-size">{{ formatFileSize(item.size) }}</span>
@@ -40,21 +46,31 @@
         </div>
         <!-- 操作按钮区（具名插槽） -->
         <div class="backup-actions">
-          <slot name="actions" :item="item" />
+          <slot
+            name="actions"
+            :item="item"
+          />
         </div>
       </div>
     </div>
     <!-- 空状态提示 -->
-    <div v-else class="empty-state">
+    <div
+      v-else
+      class="empty-state"
+    >
       <p>{{ emptyText }}</p>
     </div>
   </section>
 </template>
 
 <script setup lang="ts" generic="T extends BackupListDisplayItem">
-import { formatFileSize, formatRelativeTime, formatTime } from "@/utils/format"
 import type { BackupListDisplayItem } from "../types"
 import Button from "@/components/Button.vue"
+import {
+  formatFileSize,
+  formatRelativeTime,
+  formatTime,
+} from "@/utils/format"
 
 defineProps<{
   title: string

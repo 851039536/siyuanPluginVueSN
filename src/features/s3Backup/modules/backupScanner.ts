@@ -1,3 +1,7 @@
+import type {
+  DataFileEntry,
+  LocalBackupInfo,
+} from "../types"
 /**
  * 备份目录与数据目录扫描实现
  *
@@ -5,9 +9,8 @@
  * 与数据目录递归扫描（scanDirectory），以 fs/path 依赖注入方式供 BackupManager 委托调用。
  */
 import { getErrorMessage } from "@/utils/stringUtils"
-import { isArchiveFile } from "../utils"
 import { BackupError } from "../types"
-import type { DataFileEntry, LocalBackupInfo } from "../types"
+import { isArchiveFile } from "../utils"
 
 /**
  * 扫描时始终跳过的目录（思源临时目录/回收站/内核健康检查目录）
@@ -32,14 +35,22 @@ export interface ScannerDeps {
  * - 按修改时间倒序（新的在前），供列表展示与保留数清理使用
  */
 export async function scanBackupDir(deps: ScannerDeps, backupDir: string): Promise<LocalBackupInfo[]> {
-  const { fs, path } = deps
-  const collected: { name: string; path: string; mtimeMs: number; size: number }[] = []
+  const {
+    fs,
+    path,
+  } = deps
+  const collected: { name: string, path: string, mtimeMs: number, size: number }[] = []
 
   /** 收集单个归档文件的元信息（无法读取的文件静默跳过） */
   const collect = async (name: string, filePath: string): Promise<void> => {
     try {
       const stats = await fs.stat(filePath)
-      collected.push({ name, path: filePath, mtimeMs: stats.mtime.getTime(), size: stats.size })
+      collected.push({
+        name,
+        path: filePath,
+        mtimeMs: stats.mtime.getTime(),
+        size: stats.size,
+      })
     } catch {
       // 跳过无法读取的文件
     }
@@ -98,7 +109,10 @@ export async function scanDirectory(
   result: DataFileEntry[],
   onFileError: (relativePath: string, error: unknown) => void,
 ): Promise<void> {
-  const { fs, path } = deps
+  const {
+    fs,
+    path,
+  } = deps
   let entries
   try {
     entries = await fs.readdir(dirPath, { withFileTypes: true })
@@ -113,7 +127,9 @@ export async function scanDirectory(
     const relativePath = zipPath ? `${zipPath}/${entry.name}` : entry.name
 
     if (entry.isDirectory()) {
-      if (skipDirs.has(entry.name)) { continue }
+      if (skipDirs.has(entry.name)) {
+        continue
+      }
       await scanDirectory(deps, fullPath, relativePath, skipDirs, result, onFileError)
     } else if (entry.isFile()) {
       try {

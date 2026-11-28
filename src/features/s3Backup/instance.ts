@@ -26,5 +26,7 @@ export function setS3BackupInstance(instance: S3Backup | null): void {
  */
 export const persistS3BackupStorage: PersistFn = async (save) => {
   const instance = getS3BackupInstance()
-  if (instance) { await save(instance.getStorage()) }
+  if (instance) {
+    await save(instance.getStorage())
+  }
 }

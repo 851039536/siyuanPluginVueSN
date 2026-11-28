@@ -39,13 +39,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
 import type { BackupOrchestrator } from "../composables/useBackupOrchestrator"
 import type { S3Config } from "../types"
+import { ref } from "vue"
+import Message from "@/components/Message.vue"
 import AutoBackupCard from "./AutoBackupCard.vue"
 import BackupModeSelector from "./BackupModeSelector.vue"
 import S3ConfigForm from "./S3ConfigForm.vue"
-import Message from "@/components/Message.vue"
 
 const props = defineProps<{
   /** 备份编排聚合对象（由面板持有，本组件仅做视图投影） */
@@ -65,7 +65,10 @@ async function handleConfigSaved(config: S3Config): Promise<void> {
   const result = await props.orch.saveS3Config(config)
   if (result.success) {
     // 提示："配置已保存"
-    saveFeedback.value = { severity: "success", text: props.i18n.configSaved }
+    saveFeedback.value = {
+      severity: "success",
+      text: props.i18n.configSaved,
+    }
     return
   }
   // 提示："配置保存失败"（技术原因仅作补充）

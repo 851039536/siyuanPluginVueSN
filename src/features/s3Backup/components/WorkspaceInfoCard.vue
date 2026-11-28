@@ -10,10 +10,19 @@
         <div class="workspace-path-row">
           <span class="info-value workspace-path">{{ workspaceRoot || (i18n.notSet) }}</span>
           <div class="path-actions">
-            <Button variant="ghost" size="xsmall" @click="$emit('selectPath')">
+            <Button
+              variant="ghost"
+              size="xsmall"
+              @click="$emit('selectPath')"
+            >
               {{ i18n.selectPath }}
             </Button>
-            <Button variant="ghost" size="xsmall" :disabled="!workspaceRoot" @click="$emit('openFolder')">
+            <Button
+              variant="ghost"
+              size="xsmall"
+              :disabled="!workspaceRoot"
+              @click="$emit('openFolder')"
+            >
               {{ i18n.openFolder }}
             </Button>
           </div>

@@ -1,3 +1,7 @@
+import type {
+  FileChecksum,
+  PersistFn,
+} from "../types"
 /**
  * 备份文件校验值管理 composable
  *
@@ -6,7 +10,6 @@
  * 通过依赖注入的 persist 写入存储槽，不直接接触插件实例。
  */
 import { ref } from "vue"
-import type { FileChecksum, PersistFn } from "../types"
 import { MAX_CHECKSUM_COUNT } from "../types"
 
 export function useChecksums(deps: { persist: PersistFn }) {
@@ -14,6 +17,10 @@ export function useChecksums(deps: { persist: PersistFn }) {
 
   /**
    * 保存一条校验值（同名覆盖并移到头部），默认立即落盘。
+   * @param fileName 文件名（去重键）
+   * @param filePath 文件绝对路径
+   * @param fileSize 文件大小（字节）
+   * @param checksum SHA-256 十六进制摘要
    * @param persistNow 传 false 时只更新内存不落盘，供批量循环场景使用
    */
   async function saveChecksum(
@@ -60,5 +67,11 @@ export function useChecksums(deps: { persist: PersistFn }) {
     await persistChecksums()
   }
 
-  return { checksums, saveChecksum, persistChecksums, clearChecksums, removeOneChecksum }
+  return {
+    checksums,
+    saveChecksum,
+    persistChecksums,
+    clearChecksums,
+    removeOneChecksum,
+  }
 }

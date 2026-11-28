@@ -1,3 +1,8 @@
+import type {
+  BackupFrequency,
+  BackupSettings,
+} from "./types"
+import type { TimerHandle } from "@/utils/timerRegistry"
 /**
  * S3 备份功能模块
  *
@@ -9,12 +14,24 @@
 import type { ModalAppInstance } from "@/utils/vueAppHelper"
 import { Plugin } from "siyuan"
 import { emitCustomEvent } from "@/utils/eventBus"
+import {
+
+  TimerRegistry,
+} from "@/utils/timerRegistry"
 import { createModalVueApp } from "@/utils/vueAppHelper"
-import { TimerRegistry, type TimerHandle } from "@/utils/timerRegistry"
 import S3BackupPanel from "./index.vue"
-import { AUTO_BACKUP_TRIGGER_EVENT, S3BackupStorage, DEFAULT_BACKUP_SETTINGS } from "./types"
-import type { BackupSettings, BackupFrequency } from "./types"
-import { getS3BackupInstance, setS3BackupInstance } from "./instance"
+import {
+  getS3BackupInstance,
+  setS3BackupInstance,
+} from "./instance"
+import {
+  AUTO_BACKUP_TRIGGER_EVENT,
+  DEFAULT_BACKUP_SETTINGS,
+  S3BackupStorage,
+} from "./types"
+
+/** 自动备份定时器的检查间隔（每分钟 tick 一次） */
+const AUTO_BACKUP_TICK_MS = 60 * 1000
 
 export class S3Backup {
   private plugin: Plugin
@@ -25,7 +42,7 @@ export class S3Backup {
   private autoBackupTimer: TimerHandle | null = null
   /** 上次备份时间戳（运行时唯一事实源；持久化值经 initAutoBackup 回填，完成后经 updateLastBackupTime 更新） */
   private lastBackupTimestamp = 0
-  /** A6 修复：防重复执行状态提升为实例字段，避免重启定时器时丢失 */
+  /** 防重执行状态（实例字段，重启定时器时不会被闭包重置丢失） */
   private lastExecutedHour = -1
   private lastExecutedDateStr = ""
   /** 设置保存串行链：面板多个 @update 连发时防止 load-merge-save 交错覆盖 */
@@ -74,7 +91,7 @@ export class S3Backup {
 
   // ========== 自动备份定时器 ==========
 
-  private async initAutoBackup() {
+  private async initAutoBackup(): Promise<void> {
     try {
       const data = await this.storage.backupSettings.loadOrDefault()
       this.lastBackupTimestamp = data.lastBackupTimestamp || 0
@@ -84,104 +101,111 @@ export class S3Backup {
         this.startAutoBackupTimer(data.backupFrequency, data.backupTime)
       }
     } catch (error) {
-      console.error("初始化自动备份失败:", error)
+      console.error("[S3备份] 初始化自动备份失败:", error)
     }
   }
 
-  public startAutoBackupTimer(backupFrequency: BackupFrequency, backupTime: string) {
+  public startAutoBackupTimer(backupFrequency: BackupFrequency, backupTime: string): void {
     this.stopAutoBackupTimer()
 
-    // A6 修复：重置实例字段而非闭包局部变量
     this.lastExecutedHour = -1
     this.lastExecutedDateStr = ""
-
-    // B17 修复：基于持久化的 lastBackupTimestamp 回填防重复标记
-    // 防止程序重启后因 lastExecutedDateStr="" 导致 daily/hourly 模式误触发
-    if (this.lastBackupTimestamp > 0) {
-      const lastBackupDate = new Date(this.lastBackupTimestamp)
-      const todayStr = new Date().toDateString()
-      if (lastBackupDate.toDateString() === todayStr) {
-        this.lastExecutedDateStr = todayStr
-        if (backupFrequency === "hourly") {
-          this.lastExecutedHour = lastBackupDate.getHours()
-        }
-      }
-    }
+    this.backfillExecutionMarks(backupFrequency)
 
     const timerStartTime = Date.now()
-
-    const checkAndBackup = () => {
-      const now = new Date()
-      const currentTime = now.getTime()
-      const currentHour = now.getHours()
-      const currentMinute = now.getMinutes()
-      const currentDateStr = now.toDateString()
-      const timeSinceTimerStart = currentTime - timerStartTime
-      const timeSinceLastBackup = currentTime - this.lastBackupTimestamp
-
-      let shouldBackup = false
-
-      switch (backupFrequency) {
-        case "minute":
-          if (timeSinceLastBackup >= 60 * 1000 && timeSinceTimerStart >= 60 * 1000) {
-            shouldBackup = true
-          }
-          break
-
-        case "hourly":
-          // B12 修复：移除 currentMinute === 0 精确匹配，改用 lastExecutedHour 防重复
-          // setInterval(60000) 精度有限，tick 偏移到 :01 就会错过整小时
-          if (
-            this.lastExecutedHour !== currentHour
-            && timeSinceTimerStart >= 60 * 1000
-            && timeSinceLastBackup >= 60 * 60 * 1000
-          ) {
-            shouldBackup = true
-            this.lastExecutedHour = currentHour
-          }
-          break
-
-        case "daily": {
-          const parts = backupTime.split(":")
-          // B19 修复：校验 backupTime 格式，防止异常输入产生 NaN 导致 daily 模式永不触发
-          if (parts.length < 2 || parts.some((p) => Number.isNaN(Number(p)))) {
-            console.warn(`[S3备份] backupTime 格式异常: "${backupTime}"，跳过本次检查`)
-            break
-          }
-          const targetHour = Number(parts[0])
-          const targetMinute = Number(parts[1])
-          // A5 修复：用宽松窗口替代精确分钟匹配，避免因 setInterval 偏移错过备份
-          // B18 修复：增加 timeSinceTimerStart 守卫，防止程序重启时第一 tick 立即误触发
-          // 条件：当前时间已过目标时间、定时器已运行 ≥ 60s、今天尚未执行、距离上次备份 ≥ 1 分钟
-          const targetTotal = targetHour * 60 + targetMinute
-          const currentTotal = currentHour * 60 + currentMinute
-          if (
-            currentTotal >= targetTotal
-            && timeSinceTimerStart >= 60 * 1000
-            && this.lastExecutedDateStr !== currentDateStr
-            && timeSinceLastBackup >= 60 * 1000
-          ) {
-            shouldBackup = true
-            this.lastExecutedDateStr = currentDateStr
-          }
-          break
-        }
-      }
-
-      if (shouldBackup) {
+    this.autoBackupTimer = this.timers.setInterval(() => {
+      if (this.shouldTriggerBackup(backupFrequency, backupTime, timerStartTime, new Date())) {
         emitCustomEvent(AUTO_BACKUP_TRIGGER_EVENT)
       }
-    }
-
-    this.autoBackupTimer = this.timers.setInterval(checkAndBackup, 60000)
+    }, AUTO_BACKUP_TICK_MS)
   }
 
-  public stopAutoBackupTimer() {
+  /** 用持久化的 lastBackupTimestamp 回填防重标记，防止程序重启后 daily/hourly 模式误触发 */
+  private backfillExecutionMarks(backupFrequency: BackupFrequency): void {
+    if (this.lastBackupTimestamp <= 0) {
+      return
+    }
+    const lastBackupDate = new Date(this.lastBackupTimestamp)
+    const todayStr = new Date().toDateString()
+    if (lastBackupDate.toDateString() !== todayStr) {
+      return
+    }
+    this.lastExecutedDateStr = todayStr
+    if (backupFrequency === "hourly") {
+      this.lastExecutedHour = lastBackupDate.getHours()
+    }
+  }
+
+  /** 解析 "HH:mm" 格式的备份时间；格式异常返回 null，避免 NaN 使 daily 模式永不触发 */
+  private parseBackupTime(backupTime: string): { hour: number, minute: number } | null {
+    const parts = backupTime.split(":")
+    if (parts.length < 2 || parts.some((p) => Number.isNaN(Number(p)))) {
+      console.warn(`[S3备份] backupTime 格式异常: "${backupTime}"，跳过本次检查`)
+      return null
+    }
+    return {
+      hour: Number(parts[0]),
+      minute: Number(parts[1]),
+    }
+  }
+
+  /**
+   * 判定本 tick 是否应触发自动备份；命中时同步写入防重标记（下次 tick 不再重复触发）。
+   * 所有频率都要求定时器已运行 ≥ 1 分钟，避免程序启动瞬间立即误触发。
+   */
+  private shouldTriggerBackup(
+    backupFrequency: BackupFrequency,
+    backupTime: string,
+    timerStartTime: number,
+    now: Date,
+  ): boolean {
+    const timeSinceTimerStart = now.getTime() - timerStartTime
+    const timeSinceLastBackup = now.getTime() - this.lastBackupTimestamp
+    const timerReady = timeSinceTimerStart >= 60 * 1000
+
+    switch (backupFrequency) {
+      case "minute":
+        return timerReady && timeSinceLastBackup >= 60 * 1000
+
+      case "hourly": {
+        // 用 lastExecutedHour 防重：setInterval 精度有限，精确匹配整点会因 tick 偏移而错过
+        const currentHour = now.getHours()
+        if (this.lastExecutedHour === currentHour || !timerReady || timeSinceLastBackup < 60 * 60 * 1000) {
+          return false
+        }
+        this.lastExecutedHour = currentHour
+        return true
+      }
+
+      case "daily": {
+        const target = this.parseBackupTime(backupTime)
+        if (!target) {
+          return false
+        }
+        // 宽松窗口避免 setInterval 偏移错过目标时间；今天已执行过则不再触发
+        const currentTotal = now.getHours() * 60 + now.getMinutes()
+        const targetTotal = target.hour * 60 + target.minute
+        if (
+          currentTotal < targetTotal
+          || !timerReady
+          || this.lastExecutedDateStr === now.toDateString()
+          || timeSinceLastBackup < 60 * 1000
+        ) {
+          return false
+        }
+        this.lastExecutedDateStr = now.toDateString()
+        return true
+      }
+    }
+    return false
+  }
+
+  public stopAutoBackupTimer(): void {
     this.timers.clear(this.autoBackupTimer)
     this.autoBackupTimer = null
   }
 
-  public updateLastBackupTime(timestamp: number) {
+  public updateLastBackupTime(timestamp: number): void {
     this.lastBackupTimestamp = timestamp
     // 备份完成后立即恢复防重标记，避免长时间任务期间 busy 分支反复 resetExecutionMarks
     // 导致每天/每小时任务在完成后被下一分钟重复触发。
@@ -201,7 +225,7 @@ export class S3Backup {
     this.lastExecutedDateStr = ""
   }
 
-  public restartAutoBackupTimer(enabled: boolean, frequency: BackupFrequency, backupTime: string) {
+  public restartAutoBackupTimer(enabled: boolean, frequency: BackupFrequency, backupTime: string): void {
     this.stopAutoBackupTimer()
     if (enabled) {
       this.startAutoBackupTimer(frequency, backupTime)
@@ -215,7 +239,10 @@ export class S3Backup {
     try {
       return await this.storage.backupSettings.loadOrDefault()
     } catch {
-      return { ...DEFAULT_BACKUP_SETTINGS, backupMode: { ...DEFAULT_BACKUP_SETTINGS.backupMode } }
+      return {
+        ...DEFAULT_BACKUP_SETTINGS,
+        backupMode: { ...DEFAULT_BACKUP_SETTINGS.backupMode },
+      }
     }
   }
 
@@ -223,7 +250,10 @@ export class S3Backup {
     // 串行执行 load-merge-save：并发调用交错读写会用过期快照覆盖刚写入的字段
     const task = this.saveChain.then(async () => {
       const existing = await this.storage.backupSettings.loadOrDefault()
-      await this.storage.backupSettings.save({ ...existing, ...settings })
+      await this.storage.backupSettings.save({
+        ...existing,
+        ...settings,
+      })
     })
     // 链上吞错防断链，错误仍通过 task 抛给当前调用方
     this.saveChain = task.catch(() => {})
@@ -262,6 +292,6 @@ export function registerS3Backup(plugin: Plugin): void {
   // 挂到 plugin 实例供 onunload() 销毁钩子调用（缺失会导致定时器与事件监听器泄漏）
   ;(plugin as any).__s3Backup = instance
   instance.init().catch((err) => {
-    console.error("S3 备份初始化失败:", err)
+    console.error("[S3备份] 初始化失败:", err)
   })
 }

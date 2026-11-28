@@ -19,15 +19,18 @@
       <span class="progress-percent">{{ progress.percent }}%</span>
     </div>
     <!-- 当前处理文件（v-if 懒显示） -->
-    <div v-if="progress.currentFile" class="progress-current-file">
+    <div
+      v-if="progress.currentFile"
+      class="progress-current-file"
+    >
       {{ progress.currentFile }}
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import ProgressBar from "@/components/ProgressBar.vue"
 import type { BackupProgress } from "../modules/BackupManager"
+import ProgressBar from "@/components/ProgressBar.vue"
 
 defineProps<{
   progress: BackupProgress

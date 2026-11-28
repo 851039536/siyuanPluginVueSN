@@ -5,13 +5,27 @@
  * S3 对象 key 构建（含备份上传 key 归一化）、主机名获取（模块级缓存）、
  * 插件备份文件名判定、归档文件识别与惰性读取流创建、错误本地化与重试执行器。
  */
-import { getNodeModules, getNodeStream } from "@/utils/nodeModules"
-import { getErrorMessage } from "@/utils/stringUtils"
+import type { Buffer } from "node:buffer"
+import {
+  getNodeModules,
+  getNodeStream,
+} from "@/utils/nodeModules"
 import { runWithRetries } from "@/utils/s3/concurrency"
-import { DEFAULT_S3_PREFIX, DEFAULT_BACKUP_DIR, MSG_DESKTOP_ONLY, TRANSFER_MAX_RETRIES, BACKUP_ERROR_KEYS, BackupError } from "./types"
+import { getErrorMessage } from "@/utils/stringUtils"
+import {
+  BACKUP_ERROR_KEYS,
+  BackupError,
+  DEFAULT_BACKUP_DIR,
+  DEFAULT_S3_PREFIX,
+  MSG_DESKTOP_ONLY,
+  TRANSFER_MAX_RETRIES,
+} from "./types"
 
 // 并发池与主机名已提升至共享层，再导出保持模块内既有 import 零改动
-export { getHostname, runWithConcurrency } from "@/utils/s3/concurrency"
+export {
+  getHostname,
+  runWithConcurrency,
+} from "@/utils/s3/concurrency"
 
 // ========== 错误本地化与重试 ==========
 
@@ -28,10 +42,15 @@ export function localizeBackupError(err: unknown, i18n: Record<string, string>):
   return getErrorMessage(err)
 }
 
-/** 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/删除/下载共用）
- *  重试循环本身由共享层 runWithRetries 承担，此处只保留 s3Backup 的「警告 + 布尔出口」语义 */
+/**
+ * 通用重试执行器：任务成功返回 true，重试耗尽后记警告并返回 false（上传/删除/下载共用）
+ *  重试循环本身由共享层 runWithRetries 承担，此处只保留 s3Backup 的「警告 + 布尔出口」语义
+ */
 export async function withRetry(task: () => Promise<void>, failLabel: string): Promise<boolean> {
-  const { ok, error } = await runWithRetries(task)
+  const {
+    ok,
+    error,
+  } = await runWithRetries(task)
   if (!ok) {
     console.warn(`[S3备份] ${failLabel}（已重试 ${TRANSFER_MAX_RETRIES} 次）`, getErrorMessage(error))
   }
@@ -72,7 +91,9 @@ export function createLazyReadStream(fsRaw: any, filePath: string): NodeJS.Reada
       }
       source = fsRaw.createReadStream(filePath)
       source.on("data", (chunk: Buffer) => {
-        if (!lazy.push(chunk)) { source.pause() }
+        if (!lazy.push(chunk)) {
+          source.pause()
+        }
       })
       source.on("end", () => lazy.push(null))
       source.on("error", (err: Error) => lazy.destroy(err))
@@ -117,7 +138,9 @@ export function buildS3Key(prefix: string, sub: string, relativePath: string, da
     (prefix || DEFAULT_S3_PREFIX).replace(/\/+$/, ""),
     (sub || DEFAULT_BACKUP_DIR).replace(/\/+$/, ""),
   ].filter(Boolean)
-  if (datePath) { parts.push(datePath.replace(/\/+$/, "")) }
+  if (datePath) {
+    parts.push(datePath.replace(/\/+$/, ""))
+  }
   parts.push(relativePath.replace(/^\/+/, ""))
   return parts.join("/")
 }
@@ -131,7 +154,7 @@ const DATA_DATE_DIR_RE = /^data-(\d{8})$/
 const DATA_DATE_IN_NAME_RE = /^data-(\d{8})-/
 
 /** 备份归档相对路径拆解结果：datePath 为日期段（YYYYMMDD），baseName 为末段文件名 */
-export interface SplitRelativePath {
+interface SplitRelativePath {
   datePath: string
   baseName: string
 }
@@ -142,17 +165,23 @@ export interface SplitRelativePath {
  * - 否则从文件名 data-YYYYMMDD- 前缀提取（data-backup 顶层归档）
  * - 均无时回退 fallbackDate（今日，latestZip 场景文件名即当日）
  */
-export function splitBackupRelativePath(relativePath: string, fallbackDate: string): SplitRelativePath {
+function splitBackupRelativePath(relativePath: string, fallbackDate: string): SplitRelativePath {
   const segments = relativePath.split("/")
   const baseName = segments[segments.length - 1] || relativePath
   if (segments.length >= 2) {
     const dirMatch = DATA_DATE_DIR_RE.exec(segments[0])
     if (dirMatch) {
-      return { datePath: dirMatch[1], baseName }
+      return {
+        datePath: dirMatch[1],
+        baseName,
+      }
     }
   }
   const nameMatch = DATA_DATE_IN_NAME_RE.exec(baseName)
-  return { datePath: nameMatch ? nameMatch[1] : fallbackDate, baseName }
+  return {
+    datePath: nameMatch ? nameMatch[1] : fallbackDate,
+    baseName,
+  }
 }
 
 /**
@@ -167,6 +196,9 @@ export function buildBackupUploadKey(
   useDateFolder: boolean,
   fallbackDate: string,
 ): string {
-  const { datePath, baseName } = splitBackupRelativePath(relativePath, fallbackDate)
+  const {
+    datePath,
+    baseName,
+  } = splitBackupRelativePath(relativePath, fallbackDate)
   return buildS3Key(prefix, sub, baseName, useDateFolder ? datePath : "")
 }

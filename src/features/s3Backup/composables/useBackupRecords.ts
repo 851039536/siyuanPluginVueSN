@@ -5,18 +5,33 @@
  * 水合仅在内存为空时写入，避免覆盖初始化期间新产生的记录。
  */
 import { getErrorMessage } from "@/utils/stringUtils"
-import { getS3BackupInstance, persistS3BackupStorage } from "../instance"
+import {
+  getS3BackupInstance,
+  persistS3BackupStorage,
+} from "../instance"
 import { useBackupLogs } from "./useBackupLogs"
 import { useChecksums } from "./useChecksums"
 
 export function useBackupRecords() {
-  const { backupLogs, addLog, clearLogs } = useBackupLogs({ persist: persistS3BackupStorage })
-  const { checksums, saveChecksum, persistChecksums, clearChecksums, removeOneChecksum } = useChecksums({ persist: persistS3BackupStorage })
+  const {
+    backupLogs,
+    addLog,
+    clearLogs,
+  } = useBackupLogs({ persist: persistS3BackupStorage })
+  const {
+    checksums,
+    saveChecksum,
+    persistChecksums,
+    clearChecksums,
+    removeOneChecksum,
+  } = useChecksums({ persist: persistS3BackupStorage })
 
   /** 从存储水合日志/校验值；仅在内存为空时写入，避免覆盖初始化期间的新记录 */
   async function hydrate(): Promise<void> {
     const instance = getS3BackupInstance()
-    if (!instance) { return }
+    if (!instance) {
+      return
+    }
     const storage = instance.getStorage()
     const [logData, checksumData] = await Promise.all([
       storage.backupLogs.load().catch((err: unknown) => {

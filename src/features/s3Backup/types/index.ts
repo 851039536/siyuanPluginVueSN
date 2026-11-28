@@ -7,18 +7,23 @@
  */
 import type { Plugin } from "siyuan"
 import type { S3Config } from "@/utils/s3/types"
-import { S3_BACKUP_CONFIG_KEY } from "@/utils/s3/types"
 import { PluginStorage } from "@/utils/pluginStorage"
+import { S3_BACKUP_CONFIG_KEY } from "@/utils/s3/types"
 import { TypedStorage } from "@/utils/typedStorage"
 
 // ========== S3 共享层再导出（定义已提升至 @/utils/s3/types，保持原路径可用） ==========
 
-export type { S3Config, S3FileInfo } from "@/utils/s3/types"
+export type {
+  S3Config,
+  S3FileInfo,
+} from "@/utils/s3/types"
 export {
-  MSG_DESKTOP_ONLY, DEFAULT_UPLOAD_TIMEOUT_SEC, DEFAULT_S3_PREFIX,
   DEFAULT_S3_CONFIG,
-  // 跨模块共享常量（与 s3FileManager 同名同值，提升后避免各自维护一份）
-  TRANSFER_MAX_RETRIES, MAX_LOG_COUNT,
+  DEFAULT_S3_PREFIX,
+  DEFAULT_UPLOAD_TIMEOUT_SEC,
+  MAX_LOG_COUNT,
+  MSG_DESKTOP_ONLY, // 跨模块共享常量（与 s3FileManager 同名同值，提升后避免各自维护一份）
+  TRANSFER_MAX_RETRIES,
 } from "@/utils/s3/types"
 
 // ========== 备份模式接口 ==========
@@ -111,6 +116,9 @@ export interface BackupLog {
   /** 操作来源设备名 */
   hostname?: string
 }
+
+/** 新增日志入参：id / time / hostname 由 useBackupLogs 统一补齐 */
+export type BackupLogInput = Omit<BackupLog, "id" | "time" | "hostname">
 
 // ========== 默认值常量 ==========
 

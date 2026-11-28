@@ -10,7 +10,7 @@
       @open-folder="orch.openWorkspaceFolder"
     />
 
-    <!-- 备份进度（含独立压缩包/增量备份/还原运行期间） -->
+    <!-- 备份进度（立即备份 / 压缩包备份运行期间） -->
     <BackupProgressSection
       v-if="orch.isAnyTaskRunning"
       :progress="orch.backupProgress"
@@ -55,7 +55,11 @@
         >
           {{ orch.isAlreadyUploaded(item.name) ? i18n.alreadyUploaded : i18n.uploadToS3 }}
         </Button>
-        <Button variant="danger" size="xsmall" @click="orch.deleteLocalBackup(item)">
+        <Button
+          variant="danger"
+          size="xsmall"
+          @click="orch.deleteLocalBackup(item)"
+        >
           {{ i18n.deleteBackup }}
         </Button>
       </template>
@@ -80,14 +84,21 @@
         >
           {{ orch.downloadingKey === item.key ? i18n.downloading : i18n.download }}
         </Button>
-        <Button variant="danger" size="xsmall" @click="orch.handleDelete(item)">
+        <Button
+          variant="danger"
+          size="xsmall"
+          @click="orch.handleDelete(item)"
+        >
           {{ i18n.deleteBackup }}
         </Button>
       </template>
     </BackupListCard>
 
     <!-- 下载进度：按已接收/总字节展示百分比；服务端未给 Content-Length 时走不确定态（不定态动画） -->
-    <div v-if="orch.downloadingKey !== null" class="download-progress">
+    <div
+      v-if="orch.downloadingKey !== null"
+      class="download-progress"
+    >
       <ProgressBar
         :value="orch.downloadPercent ?? undefined"
         :mode="orch.downloadPercent === null ? 'indeterminate' : 'determinate'"
@@ -125,14 +136,14 @@
 
 <script setup lang="ts">
 import type { BackupOrchestrator } from "../composables/useBackupOrchestrator"
-import WorkspaceInfoCard from "./WorkspaceInfoCard.vue"
-import BackupProgressSection from "./BackupProgressSection.vue"
-import ManualBackupCard from "./ManualBackupCard.vue"
-import BackupListCard from "./BackupListCard.vue"
 import Button from "@/components/Button.vue"
 import ProgressBar from "@/components/ProgressBar.vue"
 import { openFolderInExplorer } from "@/utils/electronDialog"
 import { getNodeModules } from "@/utils/nodeModules"
+import BackupListCard from "./BackupListCard.vue"
+import BackupProgressSection from "./BackupProgressSection.vue"
+import ManualBackupCard from "./ManualBackupCard.vue"
+import WorkspaceInfoCard from "./WorkspaceInfoCard.vue"
 
 defineProps<{
   /** 备份编排聚合对象（由面板持有，本组件仅做视图投影） */

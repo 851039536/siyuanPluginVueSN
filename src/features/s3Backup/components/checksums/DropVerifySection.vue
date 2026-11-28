@@ -6,7 +6,12 @@
       <!-- 标题："拖放文件校验" -->
       <h4>{{ i18n.dropVerify }}</h4>
       <!-- 按钮："清空结果" -->
-      <Button v-if="droppedResults.length > 0" variant="ghost" size="xsmall" @click="clearDropResults">
+      <Button
+        v-if="droppedResults.length > 0"
+        variant="ghost"
+        size="xsmall"
+        @click="clearDropResults"
+      >
         {{ i18n.clearResults }}
       </Button>
     </div>
@@ -20,17 +25,26 @@
       @dragenter.prevent="onDragEnter"
     >
       <div class="drop-zone-content">
-        <Icon icon="mdi:folder-open-outline" class="drop-zone-icon" />
+        <Icon
+          icon="mdi:folder-open-outline"
+          class="drop-zone-icon"
+        />
         <span>{{ i18n.dropHint }}</span>
       </div>
     </div>
     <!-- 拖放校验结果列表 -->
-    <div v-if="droppedResults.length > 0" class="drop-results">
+    <div
+      v-if="droppedResults.length > 0"
+      class="drop-results"
+    >
       <div
         v-for="(result, index) in droppedResults"
         :key="index"
         class="drop-result-item"
-        :class="{ 'drop-compare-match': compareResults[index] === true, 'drop-compare-mismatch': compareResults[index] === false }"
+        :class="{
+          'drop-compare-match': compareResults[index] === true,
+          'drop-compare-mismatch': compareResults[index] === false,
+        }"
       >
         <!-- 文件名 + 大小 -->
         <div class="drop-result-info">
@@ -54,18 +68,32 @@
             @update:model-value="onCompareChange(index, $event)"
           />
           <!-- 徽章："匹配" -->
-          <Tag v-if="compareResults[index] === true" class="compare-badge" variant="success" size="xsmall">
+          <Tag
+            v-if="compareResults[index] === true"
+            class="compare-badge"
+            variant="success"
+            size="xsmall"
+          >
             &#10003; {{ i18n.match }}
           </Tag>
           <!-- 徽章："不匹配" -->
-          <Tag v-else-if="compareResults[index] === false" class="compare-badge" variant="danger" size="xsmall">
+          <Tag
+            v-else-if="compareResults[index] === false"
+            class="compare-badge"
+            variant="danger"
+            size="xsmall"
+          >
             &#10007; {{ i18n.mismatch }}
           </Tag>
         </div>
         <!-- 复制哈希 -->
         <div class="drop-result-copy">
           <!-- 按钮："复制" -->
-          <Button variant="ghost" size="xsmall" @click="copyHash(result.checksum)">
+          <Button
+            variant="ghost"
+            size="xsmall"
+            @click="copyHash(result.checksum)"
+          >
             {{ i18n.copy }}
           </Button>
         </div>
@@ -75,17 +103,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import type { FileChecksum } from "../../types"
 import { Icon } from "@iconify/vue"
 import { showMessage } from "siyuan"
-import { formatFileSize } from "@/utils/format"
-import { copyToClipboard } from "@/utils/domUtils"
-import { getNodeModules } from "@/utils/nodeModules"
-import { getErrorMessage } from "@/utils/stringUtils"
+import {
+  computed,
+  ref,
+} from "vue"
 import Button from "@/components/Button.vue"
 import Select from "@/components/Select.vue"
 import Tag from "@/components/Tag.vue"
-import type { FileChecksum } from "../../types"
+import { copyToClipboard } from "@/utils/domUtils"
+import { formatFileSize } from "@/utils/format"
+import { getNodeModules } from "@/utils/nodeModules"
+import { getErrorMessage } from "@/utils/stringUtils"
 
 const props = defineProps<{
   storedItems: FileChecksum[]
@@ -113,8 +144,14 @@ function clearDropResults(): void {
 
 /** 比对目标下拉选项（首项为空值 = 未选择，与原生 select 的占位项语义一致） */
 const compareOptions = computed(() => [
-  { value: "", label: props.i18n.compareWith },
-  ...props.storedItems.map((item) => ({ value: item.fileName, label: item.fileName })),
+  {
+    value: "",
+    label: props.i18n.compareWith,
+  },
+  ...props.storedItems.map((item) => ({
+    value: item.fileName,
+    label: item.fileName,
+  })),
 ])
 
 /** 比对目标变更：先写回选中值再比对，不依赖 v-model 的写回时序 */
@@ -148,7 +185,9 @@ function onDragLeave(): void {
 async function onDrop(e: DragEvent): Promise<void> {
   isDragging.value = false
   const fileList = e.dataTransfer?.files
-  if (!fileList || fileList.length === 0) { return }
+  if (!fileList || fileList.length === 0) {
+    return
+  }
   if (!props.hasWorkspace) {
     // 提示："请先选择工作区路径"
     showMessage(props.i18n.noWorkspace, 3000, "error")
@@ -158,13 +197,21 @@ async function onDrop(e: DragEvent): Promise<void> {
   for (let i = 0; i < fileList.length; i++) {
     const file = fileList[i]
     const resolved = await resolveDropPath(file)
-    if (!resolved) { continue }
+    if (!resolved) {
+      continue
+    }
 
-    const { filePath, fileName, fileSize } = resolved
+    const {
+      filePath,
+      fileName,
+      fileSize,
+    } = resolved
 
     try {
       const hash = await props.computeHash(filePath)
-      if (hash === null) { continue }
+      if (hash === null) {
+        continue
+      }
       droppedResults.value.push({
         fileName,
         filePath,
@@ -199,12 +246,17 @@ async function resolveDropPath(file: File): Promise<Omit<DropResult, "checksum">
     const rawPath = (file as File & { path?: string }).path
     if (rawPath) {
       try {
-        if (node) { await node.fs.promises.access(rawPath); filePath = rawPath }
+        if (node) {
+          await node.fs.promises.access(rawPath)
+          filePath = rawPath
+        }
       } catch { /* fall through */ }
     }
   }
 
-  if (!filePath) { return null }
+  if (!filePath) {
+    return null
+  }
 
   // 获取实际文件名和大小
   try {
@@ -225,8 +277,12 @@ async function resolveDropPath(file: File): Promise<Omit<DropResult, "checksum">
   }
 }
 
-function copyHash(hash: string): void {
-  copyToClipboard(hash)
+/** 复制哈希并给出结果反馈（复制失败时不误报成功） */
+async function copyHash(hash: string): Promise<void> {
+  const ok = await copyToClipboard(hash)
+  if (!ok) {
+    return
+  }
   // 提示："SHA-256 已复制"
   showMessage(props.i18n.hashCopied, 1500, "info")
 }

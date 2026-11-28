@@ -33,22 +33,34 @@
       <TabPanels>
         <!-- Tab: 备份 -->
         <TabPanel value="backup">
-          <BackupTab :orch="orch" :i18n="i18n" />
+          <BackupTab
+            :orch="orch"
+            :i18n="i18n"
+          />
         </TabPanel>
 
         <!-- Tab: 配置 -->
         <TabPanel value="config">
-          <ConfigTab :orch="orch" :i18n="i18n" />
+          <ConfigTab
+            :orch="orch"
+            :i18n="i18n"
+          />
         </TabPanel>
 
         <!-- Tab: 日志 -->
         <TabPanel value="log">
-          <LogTab :orch="orch" :i18n="i18n" />
+          <LogTab
+            :orch="orch"
+            :i18n="i18n"
+          />
         </TabPanel>
 
         <!-- Tab: 校验 -->
         <TabPanel value="checksums">
-          <ChecksumsTab :orch="orch" :i18n="i18n" />
+          <ChecksumsTab
+            :orch="orch"
+            :i18n="i18n"
+          />
         </TabPanel>
       </TabPanels>
     </Tabs>
@@ -56,20 +68,24 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue"
-import { useBackupOrchestrator } from "./composables/useBackupOrchestrator"
 import type { BackupOrchestrator } from "./composables/useBackupOrchestrator"
-import { AUTO_BACKUP_TRIGGER_EVENT } from "./types"
+import {
+  onMounted,
+  onUnmounted,
+  ref,
+} from "vue"
+import Button from "@/components/Button.vue"
+import Tab from "@/components/Tab.vue"
+import TabList from "@/components/TabList.vue"
+import TabPanel from "@/components/TabPanel.vue"
+import TabPanels from "@/components/TabPanels.vue"
+import Tabs from "@/components/Tabs.vue"
 import BackupTab from "./components/BackupTab.vue"
+import ChecksumsTab from "./components/ChecksumsTab.vue"
 import ConfigTab from "./components/ConfigTab.vue"
 import LogTab from "./components/LogTab.vue"
-import ChecksumsTab from "./components/ChecksumsTab.vue"
-import Button from "@/components/Button.vue"
-import Tabs from "@/components/Tabs.vue"
-import TabList from "@/components/TabList.vue"
-import Tab from "@/components/Tab.vue"
-import TabPanels from "@/components/TabPanels.vue"
-import TabPanel from "@/components/TabPanel.vue"
+import { useBackupOrchestrator } from "./composables/useBackupOrchestrator"
+import { AUTO_BACKUP_TRIGGER_EVENT } from "./types"
 
 // ========== Props ==========
 
@@ -94,10 +110,22 @@ interface TabMeta {
 }
 
 const TABS: TabMeta[] = [
-  { value: "backup", labelKey: "backupTab" },
-  { value: "config", labelKey: "configTab" },
-  { value: "log", labelKey: "logTab" },
-  { value: "checksums", labelKey: "checksumsTab" },
+  {
+    value: "backup",
+    labelKey: "backupTab",
+  },
+  {
+    value: "config",
+    labelKey: "configTab",
+  },
+  {
+    value: "log",
+    labelKey: "logTab",
+  },
+  {
+    value: "checksums",
+    labelKey: "checksumsTab",
+  },
 ]
 
 /** 当前激活 Tab（Tabs 的 value 载荷为 string | number，保持宽类型以匹配 v-model） */
@@ -112,7 +140,10 @@ const orch: BackupOrchestrator = useBackupOrchestrator({ i18n: props.i18n })
 function handleClose(): void {
   if (orch.isAnyTaskRunning) {
     // 关闭确认："正在备份中，关闭窗口不会中断备份。确定要隐藏窗口吗？"
-    if (!confirm(props.i18n.closeWhileBackingUp)) { return }
+    // eslint-disable-next-line no-alert -- 面板内统一使用原生确认框
+    if (!confirm(props.i18n.closeWhileBackingUp)) {
+      return
+    }
   }
   props.onClose?.()
 }

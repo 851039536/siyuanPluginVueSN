@@ -5,8 +5,11 @@
  * 保存结果以判别对象返回，供配置 Tab 做面板内联反馈。
  */
 import type { S3Config } from "../types"
+import {
+  decryptSetting,
+  encryptSettingStrict,
+} from "@/utils/settingsCrypto"
 import { getErrorMessage } from "@/utils/stringUtils"
-import { decryptSetting, encryptSettingStrict } from "@/utils/settingsCrypto"
 import { getS3BackupInstance } from "../instance"
 
 export interface SaveS3ConfigResult {
@@ -31,10 +34,14 @@ export function useS3ConfigStorage(deps: S3ConfigStorageDeps) {
   /** 读取并解密已保存配置；失败仅告警，不阻断面板初始化 */
   async function loadS3Config(): Promise<void> {
     const instance = getS3BackupInstance()
-    if (!instance) { return }
+    if (!instance) {
+      return
+    }
     try {
       const saved = await instance.getStorage().s3Config.load()
-      if (!saved) { return }
+      if (!saved) {
+        return
+      }
       deps.loadConfig({
         ...saved,
         accessKey: await decryptSetting(saved.accessKey),
@@ -69,7 +76,10 @@ export function useS3ConfigStorage(deps: S3ConfigStorageDeps) {
       return { success: true }
     } catch (err: unknown) {
       console.error("[S3备份] 保存 S3 配置失败:", err)
-      return { success: false, error: getErrorMessage(err) }
+      return {
+        success: false,
+        error: getErrorMessage(err),
+      }
     }
   }
 
@@ -81,5 +91,8 @@ export function useS3ConfigStorage(deps: S3ConfigStorageDeps) {
     return task
   }
 
-  return { loadS3Config, saveS3Config }
+  return {
+    loadS3Config,
+    saveS3Config,
+  }
 }

@@ -9,7 +9,7 @@ import { showMessage } from "siyuan"
  * 工作区路径与备份设置管理 composable
  *
  * 拥有工作区路径、备份模式、自动备份设置等持久化状态，
- * 提供路径检测/选择、设置加载/保存与备份完成时间标记能力。
+ * 提供路径检测、设置加载/保存与备份完成时间标记能力。
  * 通过 getS3BackupInstance 与插件实例侧的设置存储同步。
  */
 import {
@@ -20,8 +20,8 @@ import {
 import { getWorkspaceDir } from "@/api"
 import {
   openFolderInExplorer,
-  pickDirectory,
 } from "@/utils/electronDialog"
+import { getNodeModules } from "@/utils/nodeModules"
 import { getS3BackupInstance } from "../instance"
 import {
   DEFAULT_BACKUP_DIR,
@@ -75,31 +75,31 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     return null
   }
 
-  async function detectWorkspacePath(): Promise<void> {
-    // 已有路径（loadWorkspaceSettings 的持久化兜底或此前检测过）时无需重复检测
-    if (workspaceRoot.value) {
-      return
+  /** 校验路径是否仍为有效工作区（含 data 目录）；无 Node 能力时不做阻断 */
+  async function isUsableWorkspaceRoot(root: string): Promise<boolean> {
+    const node = getNodeModules()
+    if (!node) {
+      return true
     }
-    const apiPath = await fetchWorkspacePath()
-    if (apiPath) {
-      applyWorkspaceRoot(apiPath)
+    try {
+      const stats = await node.fs.promises.stat(node.path.join(root, "data"))
+      return stats.isDirectory()
+    } catch {
+      return false
     }
   }
 
-  async function selectWorkspacePath(): Promise<void> {
-    if (!workspaceRoot.value) {
-      const wsPath = await fetchWorkspacePath()
-      if (wsPath) {
-        applyWorkspaceRoot(wsPath, true)
-        showMessage(i18n.workspaceAutoDetected, 2000, "info")
-        return
-      }
+  /**
+   * 以思源 API 返回的当前工作区为准。
+   * 多台电脑共用同一份插件存储时，持久化的绝对路径在另一台机器上必然失效，
+   * 因此每次初始化都向内核确认当前工作区；API 不可用时才保留持久化兜底值。
+   */
+  async function detectWorkspacePath(): Promise<void> {
+    const apiPath = await fetchWorkspacePath()
+    if (!apiPath || apiPath === workspaceRoot.value) {
+      return
     }
-    const selectedPath = await pickDirectory(i18n.selectWorkspaceTitle)
-    if (selectedPath) {
-      applyWorkspaceRoot(selectedPath, true)
-      showMessage(i18n.workspacePathSet, 2000, "info")
-    }
+    applyWorkspaceRoot(apiPath)
   }
 
   async function openWorkspaceFolder(): Promise<void> {
@@ -131,7 +131,7 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
   let persistedSignature = ""
 
   /** 将持久化设置回填到运行时状态（字段兜底与旧数据兼容集中在此） */
-  function applyPersistedSettings(data: BackupSettings): void {
+  async function applyPersistedSettings(data: BackupSettings): Promise<void> {
     lastBackupTime.value = data.lastBackupTime
     useDateFolder.value = data.useDateFolder
     autoBackupEnabled.value = data.autoBackupEnabled
@@ -150,8 +150,8 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
       backupModeLocal.s3Upload = data.backupMode.s3Upload ?? false
     }
 
-    // 持久化路径兜底：API 不可用时从设置恢复（detectWorkspacePath 检测到已有路径会跳过 API）
-    if (!workspaceRoot.value && data.workspaceRoot) {
+    // 持久化路径仅作 API 不可用时的兜底；换机后旧路径可能已不存在，需校验 data 目录
+    if (!workspaceRoot.value && data.workspaceRoot && await isUsableWorkspaceRoot(data.workspaceRoot)) {
       workspaceRoot.value = data.workspaceRoot
     }
   }
@@ -161,7 +161,7 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
       const instance = getS3BackupInstance()
       if (instance) {
         // loadOrDefault 已与 DEFAULT_BACKUP_SETTINGS 浅合并，字段保证完整，无需逐字段兜底
-        applyPersistedSettings(await instance.loadWorkspaceSettings())
+        await applyPersistedSettings(await instance.loadWorkspaceSettings())
       }
     } catch (err) {
       console.error("[S3备份] 加载工作区设置失败:", err)
@@ -230,7 +230,6 @@ export function useWorkspaceSettings(deps: WorkspaceSettingsDeps) {
     backupTime,
     keepBackupCount,
     detectWorkspacePath,
-    selectWorkspacePath,
     openWorkspaceFolder,
     loadWorkspaceSettings,
     markBackupCompleted,

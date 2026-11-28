@@ -13,13 +13,6 @@
             <Button
               variant="ghost"
               size="xsmall"
-              @click="$emit('selectPath')"
-            >
-              {{ i18n.selectPath }}
-            </Button>
-            <Button
-              variant="ghost"
-              size="xsmall"
               :disabled="!workspaceRoot"
               @click="$emit('openFolder')"
             >
@@ -46,7 +39,6 @@ defineProps<{
 }>()
 
 defineEmits<{
-  (e: "selectPath"): void
   (e: "openFolder"): void
 }>()
 </script>

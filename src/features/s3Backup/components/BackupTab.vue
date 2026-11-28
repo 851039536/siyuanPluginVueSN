@@ -6,7 +6,6 @@
       :workspace-root="orch.workspaceRoot"
       :last-backup-time="orch.lastBackupTime"
       :i18n="i18n"
-      @select-path="orch.selectWorkspacePath"
       @open-folder="orch.openWorkspaceFolder"
     />
 

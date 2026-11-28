@@ -111,15 +111,29 @@ function padNum(n: number): string {
   return n.toString().padStart(2, "0")
 }
 
+/** 日期子文件夹命名规则（data-YYYYMMDD，捕获日期段） */
+const DATA_DATE_DIR_RE = /^data-(\d{8})$/
+
+/** 日期子目录内插件备份文件名（YYYYMMDD-HHmmss.zip） */
+const PLUGIN_TIME_NAME_RE = /^\d{8}-\d{6}\.zip$/i
+
 /** 取路径末段文件名（本地列表条目 name 可能含日期子目录，如 "data-20260707/xxx.zip"） */
 export function getBaseName(name: string): string {
   return name.split("/").pop() || name
 }
 
-/** 判断是否为插件自动生成的备份文件（data- 前缀 + .zip），保留数清理只删除此类文件 */
+/** 判断是否为插件自动生成的备份文件（保留数清理只删除此类文件，用户手工归档不受影响） */
 export function isPluginBackupFile(name: string): boolean {
-  const base = getBaseName(name)
-  return base.startsWith("data-") && base.toLowerCase().endsWith(".zip")
+  const segments = name.split("/")
+  const base = segments[segments.length - 1] || name
+  // 顶层归档：沿用历史判定（data- 前缀 + .zip）
+  if (base.startsWith("data-") && base.toLowerCase().endsWith(".zip")) {
+    return true
+  }
+  // 日期子目录内：文件名不带 data- 前缀，按插件时间戳命名 + 父目录为插件日期目录双重确认
+  return segments.length >= 2
+    && DATA_DATE_DIR_RE.test(segments[0])
+    && PLUGIN_TIME_NAME_RE.test(base)
 }
 
 /** 生成备份时间戳（格式 YYYYMMDD-HHmmss） */
@@ -135,20 +149,17 @@ export function makeBackupTimestamp(d: Date = new Date()): string {
  */
 export function buildS3Key(prefix: string, sub: string, relativePath: string, datePath = ""): string {
   const parts: string[] = [
-    (prefix || DEFAULT_S3_PREFIX).replace(/\/+$/, ""),
-    (sub || DEFAULT_BACKUP_DIR).replace(/\/+$/, ""),
+    (prefix || DEFAULT_S3_PREFIX).replace(/^\/+|\/+$/g, ""),
+    (sub || DEFAULT_BACKUP_DIR).replace(/^\/+|\/+$/g, ""),
   ].filter(Boolean)
   if (datePath) {
-    parts.push(datePath.replace(/\/+$/, ""))
+    parts.push(datePath.replace(/^\/+|\/+$/g, ""))
   }
   parts.push(relativePath.replace(/^\/+/, ""))
   return parts.join("/")
 }
 
 // ========== 备份上传 key 归一化 ==========
-
-/** 日期子目录名匹配（data-YYYYMMDD，捕获日期段） */
-const DATA_DATE_DIR_RE = /^data-(\d{8})$/
 
 /** 备份文件名内嵌日期段匹配（data-YYYYMMDD-HHmmss.zip） */
 const DATA_DATE_IN_NAME_RE = /^data-(\d{8})-/

@@ -16,7 +16,7 @@
 2. 打开 S3 备份面板，填写 S3 服务器配置
 3. 点击「测试连接」验证配置正确
 4. 点击「保存配置」
-5. 选择工作区路径后，点击「立即备份」
+5. 确认工作区路径（默认自动取当前思源工作区）后，点击「立即备份」
 6. 可在云端备份列表查看、下载或删除历史备份
 
 面板含四个 Tab：**备份**（工作区信息/进度/手动备份/备份列表）、**配置**（备份模式/自动备份/S3 配置）、**日志**、**校验**。
@@ -53,6 +53,7 @@
 - **存储**：PluginStorage + TypedStorage 持久化配置；操作日志上限 200 条、校验值上限 100 条、上传来源映射上限 200 条（均超限丢弃最旧），抑制存储单调膨胀
 - **任务编排**：三个入口（立即备份/压缩包备份/云端下载）共用互斥守卫，运行标志在进入时即置位（含目录选择对话框挂起期间），避免并发空窗
 - **错误本地化**：模块层（`BackupManager` / `backupScanner`）零文案依赖，只抛 `BackupError`（错误码 + 不含文案的技术细节）；视图层经 `utils.localizeBackupError` 按 `BACKUP_ERROR_KEYS` 映射 i18n 键后拼接展示，模块层保持纯净且文案可翻译
+- **工作区路径**：每次初始化以思源 API 返回的当前工作区为准；持久化路径仅作 API 不可用时的兜底，且需通过 `data` 目录存在性校验，避免多机共用同一份插件存储时沿用旧机器路径
 - **日志约定**：本模块所有 `console.*` 输出统一以 `[S3备份]` 前缀开头，便于控制台过滤定位；写入操作日志统一使用 `BackupLogInput`（`id` / `time` / `hostname` 由 `useBackupLogs` 补齐）
 - **代码分层**：纯函数集中在 `utils.ts`（`withRetry` / `resolveBackupDir` / `localizeBackupError` / key 构建等），常量与类型在 `types/index.ts`，实例辅助（`persistS3BackupStorage`）在 `instance.ts`，同一规则全模块只有一处定义
 - **面板结构**：`index.vue` 仅负责头部、Tab 壳与初始化编排；四个 Tab 各自为独立组件（`BackupTab` / `ConfigTab` / `LogTab` / `ChecksumsTab`），统一接收 `{ orch, i18n }`。操作日志、校验值与 S3 配置的持久化由编排层及其 `useBackupRecords` / `useS3ConfigStorage` 持有

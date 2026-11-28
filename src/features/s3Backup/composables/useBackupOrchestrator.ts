@@ -83,13 +83,12 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     backupTime,
     keepBackupCount,
     detectWorkspacePath,
-    selectWorkspacePath,
     openWorkspaceFolder,
     loadWorkspaceSettings,
     markBackupCompleted,
   } = useWorkspaceSettings({
     getBackupManager: () => backupManager,
-    // 路径变更时幂等创建/同步 BackupManager（覆盖启动时无工作区、之后才选择路径的场景）
+    // 路径变更时幂等创建/同步 BackupManager（覆盖启动时无工作区、之后才检测到路径的场景）
     onWorkspaceUpdated: () => initBackupManager(),
     i18n,
   })
@@ -198,14 +197,16 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     backupModeLocal.s3Upload = mode.s3Upload
   }
 
-  /** 确保工作区路径就绪：未设置时提示并弹出目录选择，返回是否就绪（含用户取消） */
+  /** 确保工作区路径就绪：未就绪时再向内核确认一次，仍失败则提示并返回 false */
   async function ensureWorkspaceReady(): Promise<boolean> {
+    if (!workspaceRoot.value) {
+      await detectWorkspacePath()
+    }
     if (workspaceRoot.value) {
       return true
     }
     showMessage(i18n.noWorkspace, 3000, "info")
-    await selectWorkspacePath()
-    return !!workspaceRoot.value
+    return false
   }
 
   // ========== 本地备份列表管理（composable） ==========
@@ -467,7 +468,6 @@ export function useBackupOrchestrator(deps: BackupOrchestratorDeps) {
     clearLogs,
     clearChecksums,
     removeOneChecksum,
-    selectWorkspacePath,
     openWorkspaceFolder,
     onLocalBackupDirChanged,
     onBackupModeChanged,
